@@ -49,13 +49,22 @@ export function MentalHealthHistory({
 }: MentalHealthHistoryProps) {
   const [searchTerm, setSearchTerm] = useState("")
 
-  // Filter entries based on search term
-  const filteredEntries = entries.filter(entry => 
-    entry.notes.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    entry.therapyNotes.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    entry.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    entry.emotionalState.some(emotion => emotion.toLowerCase().includes(searchTerm.toLowerCase()))
-  )
+  // Filter entries based on search term - safely handle undefined/null values
+  const filteredEntries = entries.filter(entry => {
+    if (!entry) return false
+
+    const notes = entry.notes || ''
+    const therapyNotes = entry.therapyNotes || ''
+    const tags = entry.tags || []
+    const emotionalState = entry.emotionalState || []
+
+    return (
+      notes.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      therapyNotes.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      tags.some(tag => tag && tag.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      emotionalState.some(emotion => emotion && emotion.toLowerCase().includes(searchTerm.toLowerCase()))
+    )
+  })
 
   // Get mood emoji for display
   const getMoodEmoji = (moodValue: string) => {
@@ -171,7 +180,16 @@ export function MentalHealthHistory({
                         {getMoodLabel(entry.mood)} Mood
                       </CardTitle>
                       <CardDescription>
-                        {format(new Date(`${entry.date}T${entry.time}`), 'h:mm a')}
+                        {entry.time && entry.date ?
+                          (() => {
+                            try {
+                              return format(new Date(`${entry.date}T${entry.time}`), 'h:mm a')
+                            } catch {
+                              return entry.time || 'No time'
+                            }
+                          })()
+                          : 'No time'
+                        }
                       </CardDescription>
                     </div>
                   </div>
@@ -196,24 +214,24 @@ export function MentalHealthHistory({
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                   <div className="flex items-center gap-2">
                     <Heart className="h-4 w-4 text-red-500" />
-                    <span>Anxiety: {SCALE_LABELS.anxiety[entry.anxietyLevel] || entry.anxietyLevel}</span>
+                    <span>Anxiety: {(SCALE_LABELS?.anxiety && entry.anxietyLevel) ? SCALE_LABELS.anxiety[entry.anxietyLevel] || entry.anxietyLevel : 'N/A'}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Brain className="h-4 w-4 text-blue-500" />
-                    <span>Depression: {SCALE_LABELS.depression[entry.depressionLevel] || entry.depressionLevel}</span>
+                    <span>Depression: {(SCALE_LABELS?.depression && entry.depressionLevel) ? SCALE_LABELS.depression[entry.depressionLevel] || entry.depressionLevel : 'N/A'}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-yellow-500">⚡</span>
-                    <span>Energy: {SCALE_LABELS.energy[entry.energyLevel] || entry.energyLevel}</span>
+                    <span>Energy: {(SCALE_LABELS?.energy && entry.energyLevel) ? SCALE_LABELS.energy[entry.energyLevel] || entry.energyLevel : 'N/A'}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Cloud className="h-4 w-4 text-gray-500" />
-                    <span>Brain Fog: {SCALE_LABELS.brainFog[entry.brainFogSeverity] || entry.brainFogSeverity}</span>
+                    <span>Brain Fog: {(SCALE_LABELS?.brainFog && entry.brainFogSeverity) ? SCALE_LABELS.brainFog[entry.brainFogSeverity] || entry.brainFogSeverity : 'N/A'}</span>
                   </div>
                 </div>
 
                 {/* Emotional States */}
-                {entry.emotionalState.length > 0 && (
+                {entry.emotionalState && entry.emotionalState.length > 0 && (
                   <div>
                     <p className="text-sm font-medium mb-2">Emotions:</p>
                     <div className="flex flex-wrap gap-1">
@@ -227,7 +245,7 @@ export function MentalHealthHistory({
                 )}
 
                 {/* Cognitive Symptoms */}
-                {entry.cognitiveSymptoms.length > 0 && (
+                {entry.cognitiveSymptoms && entry.cognitiveSymptoms.length > 0 && (
                   <div>
                     <p className="text-sm font-medium mb-2">Cognitive Symptoms:</p>
                     <div className="flex flex-wrap gap-1">
@@ -241,7 +259,7 @@ export function MentalHealthHistory({
                 )}
 
                 {/* Triggers */}
-                {entry.triggers.length > 0 && (
+                {entry.triggers && entry.triggers.length > 0 && (
                   <div>
                     <p className="text-sm font-medium mb-2">Triggers:</p>
                     <div className="flex flex-wrap gap-1">
@@ -255,7 +273,7 @@ export function MentalHealthHistory({
                 )}
 
                 {/* Coping Strategies */}
-                {entry.copingStrategies.length > 0 && (
+                {entry.copingStrategies && entry.copingStrategies.length > 0 && (
                   <div>
                     <p className="text-sm font-medium mb-2">Coping Strategies:</p>
                     <div className="flex flex-wrap gap-1">
@@ -300,7 +318,7 @@ export function MentalHealthHistory({
                 )}
 
                 {/* Tags */}
-                {entry.tags.length > 0 && (
+                {entry.tags && entry.tags.length > 0 && (
                   <div>
                     <p className="text-sm font-medium mb-2">Tags:</p>
                     <div className="flex flex-wrap gap-1">

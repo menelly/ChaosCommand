@@ -38,6 +38,7 @@ import { useGoblinMode } from "@/lib/goblin-mode-context"
 import { useToast } from "@/hooks/use-toast"
 import { format } from "date-fns"
 import DigestiveFlaskAnalytics from '../../modules/trackers/body/upper-digestive/digestive-flask-analytics'
+import { GraphAnalytics } from '../../components/graph-analytics'
 
 interface UpperDigestiveEntry {
   id: string
@@ -248,6 +249,8 @@ export default function UpperDigestiveTracker() {
     setEditingEntry(null)
     setIsAddDialogOpen(false)
   }
+
+
 
   const handleEdit = (entry: UpperDigestiveEntry) => {
     setSelectedDate(entry.date)
@@ -466,7 +469,7 @@ export default function UpperDigestiveTracker() {
                         <CardContent className="pt-4">
                           <div className="flex justify-between items-start mb-3">
                             <div className="flex items-center gap-2">
-                              <Badge variant="outline">{entry.time}</Badge>
+                              <Badge variant="outline">{entry.date} {entry.time}</Badge>
                               {entry.severity && (
                                 <Badge variant={entry.severity === 'extreme' ? 'destructive' : 'secondary'}>
                                   {SEVERITY_LEVELS.find(s => s.value === entry.severity)?.emoji} {entry.severity}
@@ -561,11 +564,28 @@ export default function UpperDigestiveTracker() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="analytics" className="space-y-4">
+          <TabsContent value="analytics" className="space-y-6">
+            {/* Flask-Powered Traditional Analytics */}
             <DigestiveFlaskAnalytics
-              entries={entries}
+              entries={[]}
               currentDate={selectedDate}
             />
+
+            {/* Separator */}
+            <div className="border-t border-dashed border-gray-300 my-8"></div>
+
+            {/* Nova's Graph-Based Correlation Analytics */}
+            <div className="space-y-4">
+              <div className="text-center">
+                <h3 className="text-lg font-semibold text-purple-900 dark:text-purple-100">
+                  🔗 Advanced Correlation Analytics
+                </h3>
+                <p className="text-sm text-purple-700 dark:text-purple-300">
+                  Powered by Nova's SQLite Graph Overlay - discover hidden patterns across all your trackers
+                </p>
+              </div>
+              <GraphAnalytics />
+            </div>
           </TabsContent>
         </Tabs>
 

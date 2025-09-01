@@ -42,6 +42,7 @@
 import { useDailyData } from './hooks/use-daily-data'
 import { getMedicalSQLiteDB } from './sqlite-db'
 import { CATEGORIES, SUBCATEGORIES } from './dexie-db'
+import { graphService } from '../graph-service'
 
 // ============================================================================
 // NOVA'S ENHANCED ROUTING CONFIGURATION
@@ -283,6 +284,18 @@ export class AdvancedHybridDatabaseRouter {
     
     // Update search index
     await this.updateSearchIndex(data)
+
+    // 🔗 NOVA'S GRAPH MIRRORING - Mirror to graph for correlation analysis
+    try {
+      await graphService.mirrorToGraph({
+        table: data.category + (data.subcategory ? `_${data.subcategory}` : ''),
+        id: Date.now(), // Use timestamp as ID for now
+        data: data.content,
+        timestamp: data.date
+      })
+    } catch (error) {
+      console.warn('Graph mirroring failed (non-critical):', error)
+    }
   }
   
   // Nova's generic query with intelligent routing
