@@ -440,6 +440,20 @@ export const AFTERMATH_FEELINGS_OPTIONS = [
   'Stronger than before'
 ]
 
+// Crisis intensity levels
+export const CRISIS_INTENSITY_LABELS = {
+  1: 'Mild distress',
+  2: 'Noticeable upset',
+  3: 'Moderate distress',
+  4: 'Significant distress',
+  5: 'High distress',
+  6: 'Very high distress',
+  7: 'Severe crisis',
+  8: 'Extreme crisis',
+  9: 'Life-threatening crisis',
+  10: 'Maximum crisis intensity'
+}
+
 // Crisis Support Goblinisms
 export const CRISIS_GOBLINISMS = [
   "Crisis documented with courage. The protective spirits surround you with love. 💜🛡️",

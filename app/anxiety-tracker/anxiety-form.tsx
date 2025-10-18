@@ -422,7 +422,7 @@ export function AnxietyForm({ initialData, onSave, onCancel }: AnxietyFormProps)
             <Checkbox
               id="shutdown-after"
               checked={shutdownAfter}
-              onCheckedChange={setShutdownAfter}
+              onCheckedChange={(checked) => setShutdownAfter(checked === true)}
             />
             <Label htmlFor="shutdown-after">
               Did you shut down/withdraw after?

@@ -158,10 +158,14 @@ export function parseDataKey(key: string): { date: string; category: string; sub
 }
 
 /**
- * Format date for consistent storage
+ * Format date for consistent storage (timezone-safe)
+ * Uses local timezone instead of UTC to prevent date shifts
  */
 export function formatDateForStorage(date: Date): string {
-  return date.toISOString().split('T')[0]; // '2025-06-16'
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}` // '2025-06-16'
 }
 
 /**

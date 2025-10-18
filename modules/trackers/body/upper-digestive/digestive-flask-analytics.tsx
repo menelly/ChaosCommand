@@ -32,9 +32,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Loader2, Utensils, TrendingUp, AlertCircle, Clock, Target, Activity } from 'lucide-react'
+import { Loader2, Utensils, TrendingUp, AlertCircle, Clock, Target, Activity, Heart } from 'lucide-react'
 import { useDailyData, CATEGORIES } from "@/lib/database"
 import { format, subDays } from "date-fns"
+import { graphService } from "@/lib/graph-service"
 
 interface DigestiveEntry {
   entry_date: string
@@ -172,31 +173,41 @@ export default function DigestiveFlaskAnalytics({ entries, currentDate }: Digest
         tags: entry.tags || []
       }))
 
-      console.log('🍽️ Sending digestive data to Flask:', flaskEntries.length, 'entries from', days, 'days')
+      console.log('🍽️ Analyzing digestive data with Graph Service:', flaskEntries.length, 'entries from', days, 'days')
       console.log('📊 Sample entry:', flaskEntries[0])
       console.log('📅 Date range:', dateRangeArray.map(d => format(d, 'yyyy-MM-dd')))
 
-      const response = await fetch('http://localhost:5000/api/analytics/upper-digestive', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      // 🚀 Use Graph Service instead of Flask for lightning-fast local analytics!
+      const [symptomCorrelations, effectiveInterventions] = await Promise.all([
+        graphService.findSymptomCorrelations('digestive'),
+        graphService.findEffectiveInterventions('nausea')
+      ])
+
+      // Generate comprehensive analytics from Graph Service data
+      const data = {
+        period: {
+          start: dateRangeArray[0] ? format(dateRangeArray[0], 'yyyy-MM-dd') : '',
+          end: dateRangeArray[dateRangeArray.length - 1] ? format(dateRangeArray[dateRangeArray.length - 1], 'yyyy-MM-dd') : '',
+          days: parseInt(dateRange)
         },
-        body: JSON.stringify({
-          entries: flaskEntries,
-          dateRange: parseInt(dateRange)
-        })
-      })
-
-      if (!response.ok) {
-        throw new Error(`Flask analytics failed: ${response.status}`)
+        total_episodes: flaskEntries.length,
+        avg_severity: flaskEntries.length > 0 ? flaskEntries.reduce((sum, e) => sum + e.severity, 0) / flaskEntries.length : 0,
+        weekly_average: (flaskEntries.length / parseInt(dateRange)) * 7,
+        symptom_analysis: {
+          symptom_types: flaskEntries.reduce((acc, entry) => {
+            acc[entry.episodeType] = (acc[entry.episodeType] || 0) + 1
+            return acc
+          }, {} as Record<string, number>),
+          most_common: flaskEntries.length > 0 ? flaskEntries[0].episodeType : '',
+          correlations: symptomCorrelations
+        },
+        interventions: {
+          most_effective: effectiveInterventions,
+          success_rate: effectiveInterventions.length > 0 ? effectiveInterventions[0].effectiveness : 0
+        }
       }
 
-      const data = await response.json()
-      console.log('🎯 Flask digestive analytics response:', data)
-
-      if (data.error) {
-        throw new Error(data.error)
-      }
+      console.log('🎯 Graph Service digestive analytics generated:', data)
 
       setAnalyticsData(data)
     } catch (err) {

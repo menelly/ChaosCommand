@@ -41,7 +41,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useDailyData } from "@/lib/database/hooks/use-daily-data"
-import { exportGSpotData, importGSpotData, downloadGSpotExport } from "@/lib/database/g-spot-crypto"
+import { exportGSpot3Data, importGSpot3Data, downloadGSpotExport } from "@/lib/database/g-spot-crypto"
 import { exportAllData } from "@/lib/database/migration-helper"
 import TestPinManagerComponent from "@/components/test-pin-manager"
 
@@ -108,7 +108,7 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
       const fileContent = await importFile.text()
 
       // Import and decrypt
-      const importData = await importGSpotData(fileContent, importPin, parseInt(importHour))
+      const importData = await importGSpot3Data(fileContent, importPin, parseInt(importHour))
 
       // Confirm before overwriting
       if (confirm(`🔓 G-Spot Import Ready!\n\nFound ${importData.data_count} health records.\n\nThis will COMPLETELY REPLACE your current data. Continue?`)) {
@@ -191,7 +191,7 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
       const allData = JSON.parse(allDataString)
 
       // Export with G-Spot encryption
-      const { filename, content, hour } = await exportGSpotData(allData.daily_data, pin)
+      const { filename, content, hour } = await exportGSpot3Data(allData.daily_data, pin)
 
       // Download the disguised file
       downloadGSpotExport(filename, content)
@@ -427,8 +427,7 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
               </div>
             )}
           </div>
-        </div>
-          </TabsContent>
+        </TabsContent>
 
           <TabsContent value="test-pins" className="mt-6">
             <TestPinManagerComponent onClose={onClose} />
@@ -510,7 +509,7 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
             Close
           </Button>
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   )
 }

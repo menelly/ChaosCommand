@@ -23,7 +23,11 @@
  * Tauri-powered desktop notifications for health tracking alerts
  */
 
-import { isPermissionGranted, requestPermission, sendNotification } from '@tauri-apps/plugin-notification'
+// import { isPermissionGranted, requestPermission, sendNotification } from '@tauri-apps/plugin-notification'
+// TODO: Install @tauri-apps/plugin-notification package
+const isPermissionGranted = async () => true
+const requestPermission = async () => 'granted'
+const sendNotification = async (options: any) => console.log('Notification:', options)
 
 export interface NotificationOptions {
   title: string

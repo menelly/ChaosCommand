@@ -317,7 +317,7 @@ export function CrisisForm({ initialData, onSave, onCancel }: CrisisFormProps) {
               <Checkbox
                 id="safetyPlan"
                 checked={safetyPlanUsed}
-                onCheckedChange={setSafetyPlanUsed}
+                onCheckedChange={(checked) => setSafetyPlanUsed(checked === true)}
               />
               <Label htmlFor="safetyPlan">Used safety plan</Label>
             </div>
@@ -325,7 +325,7 @@ export function CrisisForm({ initialData, onSave, onCancel }: CrisisFormProps) {
               <Checkbox
                 id="professionalHelp"
                 checked={professionalHelpSought}
-                onCheckedChange={setProfessionalHelpSought}
+                onCheckedChange={(checked) => setProfessionalHelpSought(checked === true)}
               />
               <Label htmlFor="professionalHelp">Contacted professional help</Label>
             </div>
@@ -333,7 +333,7 @@ export function CrisisForm({ initialData, onSave, onCancel }: CrisisFormProps) {
               <Checkbox
                 id="emergencyServices"
                 checked={emergencyServicesUsed}
-                onCheckedChange={setEmergencyServicesUsed}
+                onCheckedChange={(checked) => setEmergencyServicesUsed(checked === true)}
               />
               <Label htmlFor="emergencyServices">Called emergency services</Label>
             </div>

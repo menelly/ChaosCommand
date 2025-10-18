@@ -477,6 +477,26 @@ export default function BathroomTracker() {
           </TabsList>
 
           <TabsContent value="entry" className="space-y-6">
+            {/* Current Date Display */}
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5 text-muted-foreground" />
+                    <span className="text-lg font-medium">
+                      Tracking for: {format(new Date(selectedDate), 'EEEE, MMMM d, yyyy')}
+                    </span>
+                  </div>
+                  <Input
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    className="w-auto"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Add Entry Button */}
             <div className="flex justify-center">
               <Button

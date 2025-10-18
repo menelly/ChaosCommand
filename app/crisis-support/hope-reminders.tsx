@@ -69,7 +69,7 @@ export function HopeReminders() {
         setIsLoading(true)
         const data = await getAllCategoryData(CATEGORIES.TRACKER)
         
-        const hopeData = data.find(item => item.key === 'hope-reminders')
+        const hopeData = data.find(item => item.subcategory === 'hope-reminders')
         if (hopeData) {
           const reminders = typeof hopeData.content === 'string' 
             ? JSON.parse(hopeData.content) 

@@ -67,7 +67,7 @@ export function CrisisHistory({ refreshTrigger, onEdit, onDelete }: CrisisHistor
         const data = await getAllCategoryData(CATEGORIES.TRACKER)
         
         const crisisEntries = data
-          .filter(item => item.key?.startsWith('crisis-'))
+          .filter(item => item.subcategory?.startsWith('crisis-'))
           .map(item => {
             try {
               return typeof item.content === 'string' 

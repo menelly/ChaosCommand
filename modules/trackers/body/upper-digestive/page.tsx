@@ -32,7 +32,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Utensils, Plus, Edit, Trash2, Calendar, AlertCircle, Info } from "lucide-react"
+import { Utensils, Plus, Edit, Trash2, Calendar, CalendarIcon, AlertCircle, Info } from "lucide-react"
 import DigestiveFlaskAnalytics from './digestive-flask-analytics'
 import { useDailyData, CATEGORIES, formatDateForStorage } from "@/lib/database"
 import { useGoblinMode } from "@/lib/goblin-mode-context"
@@ -107,6 +107,7 @@ export default function UpperDigestiveTracker() {
   
   // UI state
   const [entries, setEntries] = useState<UpperDigestiveEntry[]>([])
+  const [allEntries, setAllEntries] = useState<UpperDigestiveEntry[]>([]) // For history view
   const [editingEntry, setEditingEntry] = useState<UpperDigestiveEntry | null>(null)
   const [activeTab, setActiveTab] = useState("entry")
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
@@ -114,12 +115,20 @@ export default function UpperDigestiveTracker() {
   // Load entries on mount
   useEffect(() => {
     loadEntries()
+    loadAllEntries() // Load all entries for history view
   }, [])
 
   // Load entries for selected date
   useEffect(() => {
     loadEntries()
   }, [selectedDate])
+
+  // Load all entries when history tab is accessed
+  useEffect(() => {
+    if (activeTab === 'history') {
+      loadAllEntries()
+    }
+  }, [activeTab])
 
   const loadEntries = async () => {
     try {
@@ -155,6 +164,56 @@ export default function UpperDigestiveTracker() {
       toast({
         title: "Error",
         description: "Failed to load entries. Please try again.",
+        variant: "destructive"
+      })
+    }
+  }
+
+  const loadAllEntries = async () => {
+    try {
+      // Get entries from the last 30 days using getDateRange
+      const endDate = new Date()
+      const startDate = new Date()
+      startDate.setDate(startDate.getDate() - 30)
+
+      const allRecords = await getDateRange(
+        format(startDate, 'yyyy-MM-dd'),
+        format(endDate, 'yyyy-MM-dd'),
+        'upper-digestive'
+      )
+
+      let allEntriesArray: UpperDigestiveEntry[] = []
+
+      // Process all records and extract entries
+      for (const record of allRecords) {
+        if (record.content?.entries) {
+          let entries = record.content.entries
+          if (typeof entries === 'string') {
+            try {
+              entries = JSON.parse(entries)
+            } catch (e) {
+              console.error('Failed to parse JSON:', e)
+              continue
+            }
+          }
+          if (!Array.isArray(entries)) {
+            entries = [entries]
+          }
+          allEntriesArray.push(...entries)
+        }
+      }
+
+      // Sort by date and time, most recent first
+      allEntriesArray.sort((a: UpperDigestiveEntry, b: UpperDigestiveEntry) => {
+        return new Date(`${b.date}T${b.time}`).getTime() - new Date(`${a.date}T${a.time}`).getTime()
+      })
+
+      setAllEntries(allEntriesArray)
+    } catch (error) {
+      console.error('Failed to load all upper digestive entries:', error)
+      toast({
+        title: "Error",
+        description: "Failed to load history. Please try again.",
         variant: "destructive"
       })
     }
@@ -343,6 +402,26 @@ export default function UpperDigestiveTracker() {
           </TabsList>
 
           <TabsContent value="entry" className="space-y-6">
+            {/* Current Date Display */}
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <CalendarIcon className="h-5 w-5 text-muted-foreground" />
+                    <span className="text-lg font-medium">
+                      Tracking for: {format(new Date(selectedDate), 'EEEE, MMMM d, yyyy')}
+                    </span>
+                  </div>
+                  <Input
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    className="w-auto"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Add Entry Button */}
             <div className="flex justify-center">
               <Button
@@ -446,22 +525,22 @@ export default function UpperDigestiveTracker() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Calendar className="h-5 w-5" />
-                  Recent Entries
+                  All Entries ({allEntries.length})
                 </CardTitle>
                 <CardDescription>
-                  Your upper digestive symptom history
+                  Your complete upper digestive symptom history (last 30 days)
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {entries.length === 0 ? (
+                {allEntries.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
                     <AlertCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>No entries found for {selectedDate}</p>
+                    <p>No entries found in the last 30 days</p>
                     <p className="text-sm">Start tracking your upper digestive symptoms!</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {entries.map((entry) => (
+                    {allEntries.map((entry) => (
                       <Card key={entry.id} className="border-l-4 border-l-orange-500">
                         <CardContent className="pt-4">
                           <div className="flex justify-between items-start mb-3">

@@ -78,7 +78,7 @@ export class GraphService {
       }
 
       // Store in Dexie with special graph category
-      await db.dailyData.put({
+      await db.daily_data.put({
         date: timestamp.split('T')[0], // Extract date part
         category: 'GRAPH_MIRROR',
         subcategory: table,
@@ -178,7 +178,7 @@ export class GraphService {
       const db = getDB(this.userPin)
 
       // Get all graph mirror data
-      const graphData = await db.dailyData
+      const graphData = await db.daily_data
         .where('category')
         .equals('GRAPH_MIRROR')
         .toArray()
@@ -226,7 +226,7 @@ export class GraphService {
       const db = getDB(this.userPin)
 
       // Get all graph mirror data
-      const graphData = await db.dailyData
+      const graphData = await db.daily_data
         .where('category')
         .equals('GRAPH_MIRROR')
         .toArray()

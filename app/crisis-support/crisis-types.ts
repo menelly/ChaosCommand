@@ -39,35 +39,37 @@ export interface CrisisEntry {
   // Coping & Actions
   copingStrategiesUsed: string[] // what coping tools did you use
   copingEffectiveness: number // 1-10 how well coping worked
-  locationDuringCrisis: string // where were you
-  aloneOrWithOthers: 'alone' | 'with-others'
-  
+  currentMood: number // 1-10 current mood level
+  locationDuringCrisis?: string // where were you
+  aloneOrWithOthers?: 'alone' | 'with-others'
+
   // Physical State
   physicalSymptoms: string[] // what your body experienced
-  substanceUse: boolean // any substances involved
-  sleepAffected: boolean // did this affect sleep
-  eatingAffected: boolean // did this affect eating
-  
+  medicationsTaken: string[] // medications taken during crisis
+  substanceUse?: boolean // any substances involved
+  sleepAffected?: boolean // did this affect sleep
+  eatingAffected?: boolean // did this affect eating
+
   // Recovery & Aftermath
-  recoveryTime: string // how long until you felt more stable
-  aftermathFeelings: string[] // how you felt after
-  lessonsLearned: string[] // insights gained
-  whatHelped: string[] // what was most helpful
-  whatDidntHelp: string[] // what wasn't helpful
-  
+  recoveryTime?: string // how long until you felt more stable
+  aftermathFeelings?: string[] // how you felt after
+  lessonsLearned?: string[] // insights gained
+  whatHelped?: string[] // what was most helpful
+  whatDidntHelp?: string[] // what wasn't helpful
+
   // Follow-up Planning
-  nextSteps: string[] // what you plan to do next
-  safetyPlanUpdates: string[] // changes to make to safety plan
-  supportNeeded: string[] // what support you need going forward
-  
+  nextSteps?: string[] // what you plan to do next
+  safetyPlanUpdates?: string[] // changes to make to safety plan
+  supportNeeded?: string[] // what support you need going forward
+
   // Hope & Meaning
-  reasonsToLive: string[] // what kept you going
-  hopefulThoughts: string[] // positive thoughts that helped
-  gratefulFor: string[] // what you're grateful for
-  futureGoals: string[] // things you want to do/see
+  reasonsToLive?: string[] // what kept you going
+  hopefulThoughts?: string[] // positive thoughts that helped
+  gratefulFor?: string[] // what you're grateful for
+  futureGoals?: string[] // things you want to do/see
   
   // General
-  notes: string
+  notes?: string
   tags: string[]
   
   // Metadata

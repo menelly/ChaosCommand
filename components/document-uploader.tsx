@@ -41,6 +41,7 @@ interface ParsedMedicalEvent {
   date: string;
   endDate?: string;
   provider?: string;
+  providerId?: string;
   location?: string;
   description: string;
   status: 'active' | 'resolved' | 'ongoing' | 'scheduled';
@@ -52,6 +53,14 @@ interface ParsedMedicalEvent {
   suggestions?: string[];
   rawText?: string; // Original text for reference
   incidentalFindings?: IncidentalFinding[];
+  provider_info?: {
+    name: string;
+    specialty?: string;
+    organization?: string;
+    phone?: string;
+    address?: string;
+    confidence: number;
+  };
 }
 
 interface IncidentalFinding {
@@ -290,8 +299,8 @@ export default function DocumentUploader({ onEventsExtracted, className = "" }: 
           if (shouldCreateProvider) {
             const provider = providersToCreate.get(providerKey);
             event.providerId = provider.id;
+            event.provider = provider.name;
           }
-          event.provider = provider.name;
         }
       }
 
@@ -677,11 +686,13 @@ export default function DocumentUploader({ onEventsExtracted, className = "" }: 
                               type="checkbox"
                               checked={providerToggleStates[event.provider_info.name.toLowerCase()] || false}
                               onChange={(e) => {
-                                const providerKey = event.provider_info.name.toLowerCase();
-                                setProviderToggleStates(prev => ({
-                                  ...prev,
-                                  [providerKey]: e.target.checked
-                                }));
+                                const providerKey = event.provider_info?.name.toLowerCase();
+                                if (providerKey) {
+                                  setProviderToggleStates(prev => ({
+                                    ...prev,
+                                    [providerKey]: e.target.checked
+                                  }));
+                                }
                               }}
                               className="rounded border-green-300 text-green-600 focus:ring-green-500"
                             />

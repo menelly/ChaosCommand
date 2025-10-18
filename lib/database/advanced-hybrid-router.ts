@@ -237,7 +237,7 @@ export class AdvancedHybridDatabaseRouter {
         
       } catch (error) {
         // Update retry count and error
-        await this.dexieHook.outboxRetry(job.id, error.message)
+        await this.dexieHook.outboxRetry(job.id, (error as Error).message)
         failed++
       }
     }

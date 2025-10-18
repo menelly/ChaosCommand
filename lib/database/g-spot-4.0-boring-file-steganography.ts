@@ -143,7 +143,7 @@ class SecureEncryptionEngine {
       return JSON.parse(new TextDecoder().decode(decrypted));
       
     } catch (error) {
-      throw new Error(`Decryption failed: ${error.message}`);
+      throw new Error(`Decryption failed: ${(error as Error).message}`);
     }
   }
   
@@ -640,7 +640,7 @@ export class GSpot4BoringFileExporter {
       return {
         success: false,
         files: [],
-        message: `Export failed: ${error.message}`
+        message: `Export failed: ${(error as Error).message}`
       };
     }
   }
@@ -714,7 +714,7 @@ export class GSpot4BoringFileExporter {
     } catch (error) {
       return {
         success: false,
-        message: `Import failed: ${error.message}`
+        message: `Import failed: ${(error as Error).message}`
       };
     }
   }

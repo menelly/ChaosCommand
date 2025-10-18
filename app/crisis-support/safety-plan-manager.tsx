@@ -84,7 +84,7 @@ export function SafetyPlanManager({ refreshTrigger }: SafetyPlanManagerProps) {
         setIsLoading(true)
         const data = await getAllCategoryData(CATEGORIES.TRACKER)
         
-        const safetyPlanData = data.find(item => item.key === 'safety-plan')
+        const safetyPlanData = data.find(item => item.subcategory === 'safety-plan')
         if (safetyPlanData) {
           const plan = typeof safetyPlanData.content === 'string' 
             ? JSON.parse(safetyPlanData.content) 
@@ -95,9 +95,9 @@ export function SafetyPlanManager({ refreshTrigger }: SafetyPlanManagerProps) {
           const defaultPlan: SafetyPlan = {
             id: 'safety-plan-default',
             warningSignsPersonal: [],
-            copingStrategiesPersonal: [],
-            socialSupports: [],
-            professionalContacts: [],
+            copingStrategiesAlone: [],
+            supportPeopleInformal: [],
+            supportPeopleProfessional: [],
             crisisHotlines: [
               {
                 name: '988 Suicide & Crisis Lifeline',
@@ -341,8 +341,8 @@ export function SafetyPlanManager({ refreshTrigger }: SafetyPlanManagerProps) {
                   onKeyPress={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault()
-                      addToArray(copingStrategiesInput, safetyPlan.copingStrategiesPersonal, (arr) => 
-                        setSafetyPlan({...safetyPlan, copingStrategiesPersonal: arr})
+                      addToArray(copingStrategiesInput, safetyPlan.copingStrategiesAlone, (arr) =>
+                        setSafetyPlan({...safetyPlan, copingStrategiesAlone: arr})
                       )
                       setCopingStrategiesInput('')
                     }
@@ -353,8 +353,8 @@ export function SafetyPlanManager({ refreshTrigger }: SafetyPlanManagerProps) {
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    addToArray(copingStrategiesInput, safetyPlan.copingStrategiesPersonal, (arr) => 
-                      setSafetyPlan({...safetyPlan, copingStrategiesPersonal: arr})
+                    addToArray(copingStrategiesInput, safetyPlan.copingStrategiesAlone, (arr) =>
+                      setSafetyPlan({...safetyPlan, copingStrategiesAlone: arr})
                     )
                     setCopingStrategiesInput('')
                   }}
@@ -366,15 +366,15 @@ export function SafetyPlanManager({ refreshTrigger }: SafetyPlanManagerProps) {
           ) : null}
           
           <div className="flex flex-wrap gap-2 mt-2">
-            {safetyPlan.copingStrategiesPersonal.map((strategy, index) => (
+            {safetyPlan.copingStrategiesAlone.map((strategy, index) => (
               <Badge key={index} variant="secondary" className="flex items-center gap-1">
                 <Star className="h-3 w-3" />
                 {strategy}
                 {isEditing && (
                   <X 
                     className="h-3 w-3 cursor-pointer" 
-                    onClick={() => removeFromArray(strategy, safetyPlan.copingStrategiesPersonal, (arr) => 
-                      setSafetyPlan({...safetyPlan, copingStrategiesPersonal: arr})
+                    onClick={() => removeFromArray(strategy, safetyPlan.copingStrategiesAlone, (arr) =>
+                      setSafetyPlan({...safetyPlan, copingStrategiesAlone: arr})
                     )}
                   />
                 )}

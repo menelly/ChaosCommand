@@ -355,7 +355,7 @@ export function SelfCareForm({ initialData, selectedCategory, onSave, onCancel }
             <Checkbox
               id="interrupted"
               checked={interrupted}
-              onCheckedChange={setInterrupted}
+              onCheckedChange={(checked) => setInterrupted(checked === true)}
             />
             <Label htmlFor="interrupted">I was interrupted during this self-care</Label>
           </div>
@@ -364,7 +364,7 @@ export function SelfCareForm({ initialData, selectedCategory, onSave, onCancel }
             <Checkbox
               id="guilty"
               checked={feltGuilty}
-              onCheckedChange={setFeltGuilty}
+              onCheckedChange={(checked) => setFeltGuilty(checked === true)}
             />
             <Label htmlFor="guilty">I felt guilty for taking time for myself</Label>
           </div>
@@ -373,7 +373,7 @@ export function SelfCareForm({ initialData, selectedCategory, onSave, onCancel }
             <Checkbox
               id="would-do-again"
               checked={wouldDoAgain}
-              onCheckedChange={setWouldDoAgain}
+              onCheckedChange={(checked) => setWouldDoAgain(checked === true)}
             />
             <Label htmlFor="would-do-again">I would do this self-care activity again</Label>
           </div>

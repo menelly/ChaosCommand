@@ -111,7 +111,8 @@ export const SCALE_LABELS = {
   mania: ['None', 'Minimal', 'Mild', 'Moderate', 'High', 'Severe', 'Extreme', 'Crisis', 'Emergency', 'Maximum'],
   energy: ['Exhausted', 'Very Low', 'Low', 'Below Average', 'Moderate', 'Average', 'Good', 'High', 'Very High', 'Energized'],
   stress: ['None', 'Minimal', 'Mild', 'Moderate', 'High', 'Severe', 'Extreme', 'Crisis', 'Emergency', 'Maximum'],
-  moodIntensity: ['Barely', 'Slightly', 'Mildly', 'Moderately', 'Quite', 'Very', 'Extremely', 'Intensely', 'Overwhelmingly', 'Completely']
+  moodIntensity: ['Barely', 'Slightly', 'Mildly', 'Moderately', 'Quite', 'Very', 'Extremely', 'Intensely', 'Overwhelmingly', 'Completely'],
+  brainFog: ['Clear', 'Slightly Hazy', 'Mild Fog', 'Moderate Fog', 'Noticeable Fog', 'Heavy Fog', 'Very Heavy', 'Severe Fog', 'Extreme Fog', 'Complete Fog']
 }
 
 // Goblinisms for mental health

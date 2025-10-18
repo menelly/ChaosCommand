@@ -64,9 +64,11 @@ export function MentalHealthForm({ initialData, onSave, onCancel }: MentalHealth
   const [maniaLevel, setManiaLevel] = useState([0])
   const [energyLevel, setEnergyLevel] = useState([5])
   const [stressLevel, setStressLevel] = useState([0])
+  const [brainFogSeverity, setBrainFogSeverity] = useState([0])
 
   // Symptoms & Triggers
   const [triggers, setTriggers] = useState<string[]>([])
+  const [cognitiveSymptoms, setCognitiveSymptoms] = useState<string[]>([])
   const [copingStrategies, setCopingStrategies] = useState<string[]>([])
 
   // Therapy & Treatment
@@ -121,7 +123,9 @@ export function MentalHealthForm({ initialData, onSave, onCancel }: MentalHealth
       maniaLevel: maniaLevel[0],
       energyLevel: energyLevel[0],
       stressLevel: stressLevel[0],
+      brainFogSeverity: brainFogSeverity[0],
       triggers,
+      cognitiveSymptoms,
       copingStrategies,
       therapyNotes,
       medicationTaken,

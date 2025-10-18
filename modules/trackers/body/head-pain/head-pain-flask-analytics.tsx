@@ -32,7 +32,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Loader2, Brain, Zap, TrendingUp, AlertCircle, Clock, Target } from 'lucide-react'
+import { Loader2, Brain, Zap, TrendingUp, AlertCircle, Clock, Target, Heart } from 'lucide-react'
+import { graphService } from "@/lib/graph-service"
 
 interface HeadPainEntry {
   entry_date: string
@@ -48,6 +49,36 @@ interface HeadPainEntry {
   effectiveness?: number
   notes: string
   tags?: string[]
+}
+
+interface AnalyticsData {
+  pain_analysis: {
+    avg_severity: number
+    max_severity: number
+    most_common_type: string
+    pain_types: Record<string, number>
+  }
+  duration: {
+    has_data: boolean
+    avg_duration: number
+  }
+  patterns: {
+    weekly_average: number
+  }
+  triggers: {
+    top_triggers: string[]
+    trigger_counts: Record<string, number>
+  }
+  medications: {
+    most_effective: string[]
+    effectiveness_avg: Record<string, number>
+  }
+  relief: {
+    relief_methods: Record<string, number>
+    avg_effectiveness: number
+  }
+  total_episodes: number
+  insights?: string[]
 }
 
 interface HeadPainFlaskAnalyticsProps {
@@ -134,50 +165,65 @@ export default function HeadPainFlaskAnalytics({ entries, currentDate, loadAllEn
 
       // 🚨 CRITICAL: Map actual HeadPainEntry structure to Flask format
       const flaskEntries = allEntries.map(entry => ({
-        date: entry.date,
-        time: entry.timestamp,
-        painType: entry.painType || [],
-        severity: entry.painIntensity,
-        location: entry.painLocation || [],
-        duration: entry.duration,
+        date: entry.entry_date,
+        time: entry.entry_time,
+        painType: entry.pain_type || [],
+        severity: entry.severity,
+        location: entry.location || [],
+        duration: entry.duration_hours,
         triggers: entry.triggers || [],
-        symptoms: entry.associatedSymptoms || [],
-        auraPresent: entry.auraPresent || false,
-        auraSymptoms: entry.auraSymptoms || [],
-        treatments: entry.treatments || [],
-        effectiveness: entry.treatmentEffectiveness,
-        functionalImpact: entry.functionalImpact,
+        symptoms: entry.symptoms || [],
+        auraPresent: false, // Not in interface, default to false
+        auraSymptoms: [], // Not in interface, default to empty
+        treatments: entry.medications || [],
+        effectiveness: entry.effectiveness,
+        functionalImpact: 0, // Not in interface, default to 0
         notes: entry.notes || '',
         tags: entry.tags || []
       }))
 
-      console.log('🧠 Sending head pain data to Flask:', flaskEntries.length, 'entries')
-      console.log('🧠 Sample entry being sent:', flaskEntries[0])
+      console.log('🧠 Analyzing head pain data with Graph Service:', flaskEntries.length, 'entries')
+      console.log('🧠 Sample entry being analyzed:', flaskEntries[0])
       console.log('🧠 Date range:', dateRange)
 
-      const response = await fetch('http://localhost:5000/api/analytics/head-pain', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          entries: flaskEntries,
-          dateRange: parseInt(dateRange)
-        })
-      })
+      // 🚀 Use Graph Service for instant local head pain analytics!
+      const [headacheCorrelations, effectiveTreatments] = await Promise.all([
+        graphService.findSymptomCorrelations('headache'),
+        graphService.findEffectiveInterventions('head pain')
+      ])
 
-      if (!response.ok) {
-        throw new Error(`Flask analytics failed: ${response.status}`)
+      // Generate comprehensive head pain analytics
+      const data = {
+        period: {
+          start: flaskEntries.length > 0 ? flaskEntries[0].entry_date : '',
+          end: flaskEntries.length > 0 ? flaskEntries[flaskEntries.length - 1].entry_date : '',
+          days: parseInt(dateRange)
+        },
+        total_episodes: flaskEntries.length,
+        avg_severity: flaskEntries.length > 0 ? flaskEntries.reduce((sum, e) => sum + e.severity, 0) / flaskEntries.length : 0,
+        weekly_average: (flaskEntries.length / parseInt(dateRange)) * 7,
+        pain_analysis: {
+          pain_types: flaskEntries.reduce((acc, entry) => {
+            acc[entry.pain_type] = (acc[entry.pain_type] || 0) + 1
+            return acc
+          }, {} as Record<string, number>),
+          location_frequency: flaskEntries.reduce((acc, entry) => {
+            entry.location.forEach(loc => {
+              acc[loc] = (acc[loc] || 0) + 1
+            })
+            return acc
+          }, {} as Record<string, number>),
+          correlations: headacheCorrelations
+        },
+        treatments: {
+          most_effective: effectiveTreatments,
+          success_rate: effectiveTreatments.length > 0 ? effectiveTreatments[0].effectiveness : 0
+        }
       }
 
-      const data = await response.json()
-      console.log('🎯 Flask head pain analytics response:', data)
+      console.log('🎯 Graph Service head pain analytics generated:', data)
       console.log('🎯 Response keys:', Object.keys(data))
       console.log('🎯 Total episodes:', data.total_episodes)
-
-      if (data.error) {
-        throw new Error(data.error)
-      }
 
       setAnalyticsData(data)
     } catch (err) {
@@ -228,14 +274,14 @@ export default function HeadPainFlaskAnalytics({ entries, currentDate, loadAllEn
   }
 
   const {
-    pain_analysis = {},
-    duration = {},
-    triggers = {},
-    medications = {},
-    patterns = {},
-    relief = {},
+    pain_analysis = { avg_severity: 0, max_severity: 0, most_common_type: 'N/A', pain_types: {} },
+    duration = { has_data: false, avg_duration: 0 },
+    triggers = { top_triggers: [], trigger_counts: {} },
+    medications = { most_effective: [], effectiveness_avg: {} },
+    patterns = { weekly_average: 0 },
+    relief = { relief_methods: {}, avg_effectiveness: 0 },
     insights = []
-  } = analyticsData || {}
+  } = (analyticsData || {}) as Partial<AnalyticsData>
 
   return (
     <div className="space-y-6">

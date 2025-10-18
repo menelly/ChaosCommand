@@ -150,7 +150,7 @@ export default function PatternsPage() {
   const [graphData, setGraphData] = useState<GraphData | null>(null)
   const [activeTab, setActiveTab] = useState('overview')
   const { toast } = useToast()
-  const { getCategoryData } = useDailyData()
+  const { getDateRange } = useDailyData()
 
   const syncToGraph = async () => {
     setIsLoading(true)
@@ -160,30 +160,34 @@ export default function PatternsPage() {
         description: "Analyzing patterns across all your trackers...",
       })
 
+      // Calculate date range for last 90 days
+      const endDate = new Date().toISOString().split('T')[0] // Today
+      const startDate = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // 90 days ago
+
       // Get data from all trackers
       const allData = await Promise.all([
-        getCategoryData('upper-digestive', 90), // Last 90 days
-        getCategoryData('pain', 90),
-        getCategoryData('sleep', 90),
-        getCategoryData('mental-health', 90),
-        getCategoryData('brain-fog', 90),
-        getCategoryData('movement', 90),
-        getCategoryData('hydration', 90),
-        getCategoryData('energy', 90),
-        getCategoryData('anxiety', 90),
-        getCategoryData('sensory', 90),
-        getCategoryData('self-care', 90),
-        getCategoryData('weather', 90),
-        getCategoryData('food-choice', 90),
-        getCategoryData('dysautonomia', 90),
-        getCategoryData('seizure', 90),
-        getCategoryData('reproductive', 90),
-        getCategoryData('food-allergens', 90),
-        getCategoryData('bathroom', 90),
-        getCategoryData('head-pain', 90),
-        getCategoryData('crisis', 90),
-        getCategoryData('coping', 90),
-        getCategoryData('other', 90)
+        getDateRange(startDate, endDate, 'upper-digestive'), // Last 90 days
+        getDateRange(startDate, endDate, 'pain'),
+        getDateRange(startDate, endDate, 'sleep'),
+        getDateRange(startDate, endDate, 'mental-health'),
+        getDateRange(startDate, endDate, 'brain-fog'),
+        getDateRange(startDate, endDate, 'movement'),
+        getDateRange(startDate, endDate, 'hydration'),
+        getDateRange(startDate, endDate, 'energy'),
+        getDateRange(startDate, endDate, 'anxiety'),
+        getDateRange(startDate, endDate, 'sensory'),
+        getDateRange(startDate, endDate, 'self-care'),
+        getDateRange(startDate, endDate, 'weather'),
+        getDateRange(startDate, endDate, 'food-choice'),
+        getDateRange(startDate, endDate, 'dysautonomia'),
+        getDateRange(startDate, endDate, 'seizure'),
+        getDateRange(startDate, endDate, 'reproductive'),
+        getDateRange(startDate, endDate, 'food-allergens'),
+        getDateRange(startDate, endDate, 'bathroom'),
+        getDateRange(startDate, endDate, 'head-pain'),
+        getDateRange(startDate, endDate, 'crisis'),
+        getDateRange(startDate, endDate, 'coping'),
+        getDateRange(startDate, endDate, 'other')
       ])
 
       const [

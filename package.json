@@ -4,7 +4,7 @@
   "private": true,
   "description": "Chaos Command Center - Desktop app with Dexie.js unified database for date-first hierarchical storage",
   "scripts": {
-    "dev": "next dev -p 334455",
+    "dev": "next dev -p 33445",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",

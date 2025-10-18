@@ -26,7 +26,7 @@
  */
 
 // Dexie (primary database) - RESTORED!
-export { useDailyData } from './hooks/use-daily-data';
+export { useDailyData } from '../hooks/use-daily-data';
 export { db } from './dexie-db';
 
 // Re-export common constants and utilities

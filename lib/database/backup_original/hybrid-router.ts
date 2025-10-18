@@ -30,7 +30,7 @@
 
 'use client';
 
-import { useDailyData } from './hooks/use-daily-data';
+import { useDailyData } from '../hooks/use-daily-data';
 import { getMedicalSQLiteDB, MedicalEvent, Provider, Appointment } from './sqlite-db';
 import { CATEGORIES, SUBCATEGORIES } from './dexie-db';
 

@@ -141,13 +141,13 @@ export default function CommandZone() {
     // If we have saved state for today, apply it; otherwise reset all to unchecked
     if (savedGearState) {
       const gearState = JSON.parse(savedGearState)
-      gearItems = gearItems.map(item => ({
+      gearItems = gearItems.map((item: any) => ({
         ...item,
         completed: gearState[item.id] || false
       }))
     } else {
       // Reset all checkboxes for new day
-      gearItems = gearItems.map(item => ({ ...item, completed: false }))
+      gearItems = gearItems.map((item: any) => ({ ...item, completed: false }))
     }
 
     setGearCheck(gearItems)

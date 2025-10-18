@@ -58,7 +58,7 @@ export function CrisisAnalytics({ refreshTrigger }: CrisisAnalyticsProps) {
         const data = await getAllCategoryData(CATEGORIES.TRACKER)
         
         const crisisEntries = data
-          .filter(item => item.key?.startsWith('crisis-'))
+          .filter(item => item.subcategory?.startsWith('crisis-'))
           .map(item => {
             try {
               return typeof item.content === 'string' 
@@ -270,7 +270,7 @@ export function CrisisAnalytics({ refreshTrigger }: CrisisAnalyticsProps) {
                     value={(count as number / analytics.totalCrises) * 100} 
                     className="w-24" 
                   />
-                  <span className="text-sm font-medium">{count}</span>
+                  <span className="text-sm font-medium">{count as number}</span>
                 </div>
               </div>
             ))}

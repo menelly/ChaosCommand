@@ -45,8 +45,8 @@ import {
 } from "lucide-react"
 import DailyDashboardToggle from "@/components/daily-dashboard-toggle"
 import { useState, useEffect } from 'react'
-import { getCategoryData } from "@/lib/dexie-db"
-import { CATEGORIES } from "@/lib/constants"
+import { useDailyData } from "@/lib/database/hooks/use-daily-data"
+import { CATEGORIES } from "@/lib/database/dexie-db"
 
 interface TrackerButton {
   id: string
@@ -76,6 +76,7 @@ export default function PhysicalHealthIndex() {
   // 🔥 CUSTOM TRACKER STATE - THE MISSING RECEIVER ANTENNA!
   const [customTrackers, setCustomTrackers] = useState<TrackerButton[]>([])
   const [isLoadingCustom, setIsLoadingCustom] = useState(true)
+  const { getCategoryData } = useDailyData()
 
   // 📡 LOAD CUSTOM TRACKERS FROM FORGE DEPLOYMENTS
   const loadCustomTrackers = async () => {

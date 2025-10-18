@@ -34,9 +34,11 @@ export interface MentalHealthEntry {
   maniaLevel: number
   energyLevel: number
   stressLevel: number
+  brainFogSeverity: number
 
   // Symptoms & Triggers
   triggers: string[]
+  cognitiveSymptoms: string[]
   copingStrategies: string[]
   
   // Therapy & Treatment

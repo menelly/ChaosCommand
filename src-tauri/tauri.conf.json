@@ -2,10 +2,10 @@
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Chaos Command",
   "version": "0.1.0",
-  "identifier": "com.tauri.dev",
+  "identifier": "com.chaoscascade.command",
   "build": {
     "frontendDist": "../out",
-    "devUrl": "http://localhost:3000",
+    "devUrl": "http://localhost:33445",
     "beforeDevCommand": "npm run dev",
 
     "beforeBuildCommand": "npm run build"
