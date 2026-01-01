@@ -34,22 +34,7 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Loader2, Brain, Zap, TrendingUp, AlertCircle, Clock, Target, Heart } from 'lucide-react'
 import { graphService } from "@/lib/graph-service"
-
-interface HeadPainEntry {
-  entry_date: string
-  entry_time: string
-  pain_type: string
-  severity: number
-  location: string[]
-  duration_hours?: number
-  triggers: string[]
-  symptoms: string[]
-  medications: string[]
-  relief_methods: string[]
-  effectiveness?: number
-  notes: string
-  tags?: string[]
-}
+import { HeadPainEntry } from "@/app/head-pain/head-pain-types"
 
 interface AnalyticsData {
   pain_analysis: {
@@ -222,7 +207,7 @@ export default function HeadPainFlaskAnalytics({ entries, currentDate, loadAllEn
       // Calculate medication effectiveness
       const medCounts: Record<string, number[]> = {}
       flaskEntries.forEach(entry => {
-        const effectiveness = entry.treatmentEffectiveness || 0
+        const effectiveness = entry.treatmentEffectiveness || 0;
         (entry.treatments || []).forEach((med: string) => {
           if (!medCounts[med]) medCounts[med] = []
           medCounts[med].push(effectiveness)
@@ -259,6 +244,7 @@ export default function HeadPainFlaskAnalytics({ entries, currentDate, loadAllEn
         pain_analysis: {
           avg_severity: avgSeverity,
           max_severity: maxSeverity,
+          severity_distribution: {},
           most_common_type: mostCommonType,
           pain_types: painTypeCounts
         },
@@ -271,11 +257,15 @@ export default function HeadPainFlaskAnalytics({ entries, currentDate, loadAllEn
           trigger_counts: triggerCounts
         },
         medications: {
+          medication_counts: medCounts as unknown as Record<string, number>,
           most_effective: mostEffective,
           effectiveness_avg: effectivenessAvg
         },
         patterns: {
-          weekly_average: parseFloat(((flaskEntries.length / parseInt(dateRange)) * 7).toFixed(1))
+          episodes_by_day: {},
+          episodes_by_hour: {},
+          weekly_average: parseFloat(((flaskEntries.length / parseInt(dateRange)) * 7).toFixed(1)),
+          daily_average: parseFloat((flaskEntries.length / parseInt(dateRange)).toFixed(2))
         },
         relief: {
           relief_methods: {},
@@ -286,7 +276,8 @@ export default function HeadPainFlaskAnalytics({ entries, currentDate, loadAllEn
              avgSeverity >= 7 ? `Your average pain level (${avgSeverity}/10) is high - consider discussing with your doctor.` : '',
              topTriggers.length > 0 ? `Most common trigger: ${topTriggers[0]}` : ''
             ].filter(Boolean)
-          : []
+          : [],
+        charts: {}
       }
 
       console.log('🎯 Graph Service head pain analytics generated:', data)

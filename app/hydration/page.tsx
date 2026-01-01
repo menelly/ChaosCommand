@@ -31,7 +31,8 @@ import { Slider } from "@/components/ui/slider"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Progress } from "@/components/ui/progress"
-import { Droplets, Edit, Trash2, Calendar, Target, Settings } from "lucide-react"
+import { Droplets, Edit, Trash2, Calendar, Target, Settings, Loader2, TrendingUp, Award, BarChart3 } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useDailyData, formatDateForStorage } from "@/lib/database"
 import { useToast } from "@/hooks/use-toast"
 import { format } from "date-fns"
@@ -100,6 +101,18 @@ export default function HydrationTracker() {
   const [reminderInterval, setReminderInterval] = useState(2) // 2 hours
   const [showGoalDialog, setShowGoalDialog] = useState(false)
 
+  // Analytics state
+  const [analyticsData, setAnalyticsData] = useState<{
+    totalEntries: number
+    avgDailyIntake: number
+    goalAchievementRate: number
+    drinkTypeBreakdown: Record<string, number>
+    daysTracked: number
+    bestStreak: number
+  } | null>(null)
+  const [analyticsLoading, setAnalyticsLoading] = useState(false)
+  const [analyticsRange, setAnalyticsRange] = useState('30')
+
   // Load entries for selected date
   useEffect(() => {
     loadEntries()
@@ -151,6 +164,119 @@ export default function HydrationTracker() {
       console.error('Failed to load hydration goals:', error)
     }
   }
+
+  // Load all entries across date range for analytics
+  const loadAllEntries = async (days: number): Promise<HydrationEntry[]> => {
+    try {
+      const endDate = new Date()
+      const startDate = new Date()
+      startDate.setDate(endDate.getDate() - days + 1)
+
+      const allEntries: HydrationEntry[] = []
+
+      for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+        const dateKey = format(d, 'yyyy-MM-dd')
+        const data = await getCategoryData(dateKey, 'tracker')
+        const hydrationEntries = data
+          .filter(record => record.subcategory.startsWith('hydration-'))
+          .map(record => {
+            try {
+              let parsed: HydrationEntry
+              if (typeof record.content === 'string') {
+                parsed = JSON.parse(record.content) as HydrationEntry
+              } else {
+                parsed = record.content as HydrationEntry
+              }
+              return { ...parsed, date: dateKey }
+            } catch {
+              return null
+            }
+          })
+          .filter(Boolean) as HydrationEntry[]
+
+        allEntries.push(...hydrationEntries)
+      }
+
+      return allEntries
+    } catch (error) {
+      console.error('Failed to load all hydration entries:', error)
+      return []
+    }
+  }
+
+  // Load analytics data
+  const loadAnalytics = async () => {
+    setAnalyticsLoading(true)
+    try {
+      const days = parseInt(analyticsRange)
+      const allEntries = await loadAllEntries(days)
+
+      if (allEntries.length === 0) {
+        setAnalyticsData(null)
+        setAnalyticsLoading(false)
+        return
+      }
+
+      // Group entries by date
+      const entriesByDate = new Map<string, HydrationEntry[]>()
+      allEntries.forEach(entry => {
+        const date = entry.date
+        if (!entriesByDate.has(date)) {
+          entriesByDate.set(date, [])
+        }
+        entriesByDate.get(date)!.push(entry)
+      })
+
+      // Calculate daily totals
+      const dailyTotals: number[] = []
+      let goalMetDays = 0
+      let currentStreak = 0
+      let bestStreak = 0
+
+      entriesByDate.forEach((dayEntries) => {
+        const dayTotal = dayEntries.reduce((sum, entry) => {
+          const drinkType = DRINK_TYPES.find(t => t.value === entry.drinkType) || DRINK_TYPES[0]
+          return sum + (entry.amount * drinkType.multiplier)
+        }, 0)
+        dailyTotals.push(dayTotal)
+
+        if (dayTotal >= dailyGoal) {
+          goalMetDays++
+          currentStreak++
+          bestStreak = Math.max(bestStreak, currentStreak)
+        } else {
+          currentStreak = 0
+        }
+      })
+
+      // Calculate drink type breakdown
+      const drinkTypeBreakdown: Record<string, number> = {}
+      allEntries.forEach(entry => {
+        const type = entry.drinkType || 'water'
+        drinkTypeBreakdown[type] = (drinkTypeBreakdown[type] || 0) + entry.amount
+      })
+
+      setAnalyticsData({
+        totalEntries: allEntries.length,
+        avgDailyIntake: dailyTotals.length > 0 ? Math.round(dailyTotals.reduce((a, b) => a + b, 0) / dailyTotals.length) : 0,
+        goalAchievementRate: entriesByDate.size > 0 ? Math.round((goalMetDays / entriesByDate.size) * 100) : 0,
+        drinkTypeBreakdown,
+        daysTracked: entriesByDate.size,
+        bestStreak
+      })
+    } catch (error) {
+      console.error('Failed to load analytics:', error)
+    } finally {
+      setAnalyticsLoading(false)
+    }
+  }
+
+  // Load analytics when tab changes or range changes
+  useEffect(() => {
+    if (activeTab === 'analytics') {
+      loadAnalytics()
+    }
+  }, [activeTab, analyticsRange])
 
   const saveGoals = async () => {
     try {
@@ -513,19 +639,141 @@ export default function HydrationTracker() {
           </TabsContent>
 
           {/* Analytics Tab */}
-          <TabsContent value="analytics">
+          <TabsContent value="analytics" className="space-y-4">
+            {/* Date Range Selector */}
             <Card>
-              <CardContent className="text-center py-12">
-                <Droplets className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Flask Analytics Coming Soon</h3>
-                <p className="text-muted-foreground">
-                  Advanced hydration pattern analysis with mathematical insights will be available here.
-                </p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  🧮 Mathematical engines for hydration correlation analysis in development
-                </p>
-              </CardContent>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5" />
+                    Hydration Analytics
+                  </span>
+                  <Select value={analyticsRange} onValueChange={setAnalyticsRange}>
+                    <SelectTrigger className="w-32">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="7">7 Days</SelectItem>
+                      <SelectItem value="14">14 Days</SelectItem>
+                      <SelectItem value="30">30 Days</SelectItem>
+                      <SelectItem value="90">90 Days</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </CardTitle>
+                <CardDescription>
+                  Track your hydration patterns and progress over time
+                </CardDescription>
+              </CardHeader>
             </Card>
+
+            {analyticsLoading ? (
+              <Card>
+                <CardContent className="text-center py-12">
+                  <Loader2 className="h-8 w-8 mx-auto animate-spin text-blue-500 mb-4" />
+                  <p className="text-muted-foreground">Loading analytics...</p>
+                </CardContent>
+              </Card>
+            ) : analyticsData ? (
+              <>
+                {/* Summary Stats */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <Card>
+                    <CardContent className="pt-6 text-center">
+                      <div className="text-3xl font-bold text-blue-500">{analyticsData.avgDailyIntake}oz</div>
+                      <p className="text-sm text-muted-foreground">Avg Daily Intake</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="pt-6 text-center">
+                      <div className="text-3xl font-bold text-green-500">{analyticsData.goalAchievementRate}%</div>
+                      <p className="text-sm text-muted-foreground">Goal Achievement</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="pt-6 text-center">
+                      <div className="text-3xl font-bold text-purple-500">{analyticsData.daysTracked}</div>
+                      <p className="text-sm text-muted-foreground">Days Tracked</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="pt-6 text-center">
+                      <div className="text-3xl font-bold text-orange-500">{analyticsData.bestStreak}</div>
+                      <p className="text-sm text-muted-foreground">Best Streak</p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Drink Type Breakdown */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <TrendingUp className="h-5 w-5" />
+                      Drink Type Breakdown
+                    </CardTitle>
+                    <CardDescription>
+                      What you've been drinking over the past {analyticsRange} days
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {Object.entries(analyticsData.drinkTypeBreakdown)
+                        .sort(([, a], [, b]) => b - a)
+                        .map(([type, amount]) => {
+                          const drinkInfo = DRINK_TYPES.find(d => d.value === type) || DRINK_TYPES[0]
+                          const percentage = Math.round((amount / Object.values(analyticsData.drinkTypeBreakdown).reduce((a, b) => a + b, 0)) * 100)
+                          return (
+                            <div key={type} className="flex items-center gap-3">
+                              <span className="text-2xl">{drinkInfo.emoji}</span>
+                              <div className="flex-1">
+                                <div className="flex justify-between mb-1">
+                                  <span className="font-medium">{drinkInfo.label.replace(/^.+ /, '')}</span>
+                                  <span className="text-sm text-muted-foreground">{Math.round(amount)}oz ({percentage}%)</span>
+                                </div>
+                                <Progress value={percentage} className="h-2" />
+                              </div>
+                            </div>
+                          )
+                        })}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Insights */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Award className="h-5 w-5" />
+                      Hydration Insights
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      {analyticsData.goalAchievementRate >= 80 ? (
+                        <Badge variant="default" className="bg-green-500">🎉 Excellent hydration habits! Keep it up!</Badge>
+                      ) : analyticsData.goalAchievementRate >= 50 ? (
+                        <Badge variant="secondary">💧 Good progress! Try to hit your goal more consistently.</Badge>
+                      ) : (
+                        <Badge variant="outline">🌊 Room for improvement - try setting reminders!</Badge>
+                      )}
+                      <p className="text-sm text-muted-foreground mt-2">
+                        You've logged {analyticsData.totalEntries} drinks over {analyticsData.daysTracked} days.
+                        {analyticsData.bestStreak > 0 && ` Your best streak of meeting your goal was ${analyticsData.bestStreak} days!`}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </>
+            ) : (
+              <Card>
+                <CardContent className="text-center py-12">
+                  <Droplets className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No Data Yet</h3>
+                  <p className="text-muted-foreground">
+                    Start logging your hydration to see analytics!
+                  </p>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
 

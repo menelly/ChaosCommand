@@ -82,10 +82,12 @@ export class GraphService {
         date: timestamp.split('T')[0], // Extract date part
         category: 'GRAPH_MIRROR',
         subcategory: table,
-        data: graphData,
+        content: graphData,
         tags: ['graph', 'correlation', 'analytics'],
-        createdAt: new Date(),
-        updatedAt: new Date()
+        metadata: {
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
       })
 
       console.log(`🔗 Mirrored ${table}:${id} to graph with ${nodes.length} nodes`)
@@ -187,7 +189,7 @@ export class GraphService {
       const correlations = new Map<string, { count: number, weight: number }>()
 
       for (const entry of graphData) {
-        const nodes = entry.data.nodes || []
+        const nodes = entry.content?.nodes || []
         const hasTargetSymptom = nodes.some((node: any) =>
           node.type === 'symptom' && node.label.toLowerCase().includes(symptomLabel.toLowerCase())
         )
@@ -235,7 +237,7 @@ export class GraphService {
       const interventions = new Map<string, { count: number, effectiveness: number }>()
 
       for (const entry of graphData) {
-        const nodes = entry.data.nodes || []
+        const nodes = entry.content?.nodes || []
         const hasTargetSymptom = nodes.some((node: any) =>
           node.type === 'symptom' && node.label.toLowerCase().includes(symptomLabel.toLowerCase())
         )

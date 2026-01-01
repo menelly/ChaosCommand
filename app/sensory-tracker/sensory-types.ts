@@ -24,7 +24,7 @@ export interface SensoryEntry {
   time: string
   
   // Entry Type
-  entryType: 'overload' | 'preference' | 'comfort' | 'trigger' | 'safe-space'
+  entryType: 'overload' | 'toolkit'
   
   // Overload Specific
   overloadLevel: number // 1-10 scale

@@ -390,7 +390,7 @@ export function useDailyData(): UseDailyDataReturn {
       const recordsWithMetadata = newRecords.map(record => ({
         ...record,
         metadata: {
-          created_at: record.metadata?.created_at || now,
+          created_at: now,
           updated_at: now,
           user_id: 'bland-user',
           version: 1

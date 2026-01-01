@@ -120,15 +120,6 @@ export default function SensoryTracker() {
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <div className="text-center space-y-4">
-          <div className="flex items-center justify-center gap-3">
-            <Link href="/mind">
-              <Button variant="ghost" size="sm">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Mind
-              </Button>
-            </Link>
-          </div>
-          
           <div className="space-y-2">
             <div className="text-6xl">🌈</div>
             <h1 className="text-3xl font-bold text-foreground">
@@ -161,39 +152,27 @@ export default function SensoryTracker() {
           {/* Track Tab */}
           <TabsContent value="track" className="space-y-6">
             {!isFormOpen ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
                 {/* Sensory Overload */}
-                <Card className="border-2 border-red-200 hover:border-red-300 transition-colors cursor-pointer" 
+                <Card className="border-2 border-red-200 hover:border-red-300 transition-colors cursor-pointer group"
                       onClick={() => setIsFormOpen(true)}>
                   <CardHeader className="text-center pb-4">
-                    <div className="mx-auto mb-2 text-4xl">🌪️</div>
+                    <div className="mx-auto mb-2 text-5xl group-hover:scale-110 transition-transform">🌪️</div>
                     <CardTitle className="text-lg">Sensory Overload</CardTitle>
                     <p className="text-sm text-muted-foreground">
-                      Track overwhelming sensory experiences
+                      Track overwhelming sensory experiences, triggers, and recovery
                     </p>
                   </CardHeader>
                 </Card>
 
-                {/* Sensory Preferences */}
-                <Card className="border-2 border-purple-200 hover:border-purple-300 transition-colors cursor-pointer" 
+                {/* Sensory Toolkit */}
+                <Card className="border-2 border-purple-200 hover:border-purple-300 transition-colors cursor-pointer group"
                       onClick={() => setIsFormOpen(true)}>
                   <CardHeader className="text-center pb-4">
-                    <div className="mx-auto mb-2 text-4xl">💜</div>
-                    <CardTitle className="text-lg">Sensory Preferences</CardTitle>
+                    <div className="mx-auto mb-2 text-5xl group-hover:scale-110 transition-transform">🧰</div>
+                    <CardTitle className="text-lg">Sensory Toolkit</CardTitle>
                     <p className="text-sm text-muted-foreground">
-                      Document what sensory input you prefer
-                    </p>
-                  </CardHeader>
-                </Card>
-
-                {/* Comfort & Safe Spaces */}
-                <Card className="border-2 border-green-200 hover:border-green-300 transition-colors cursor-pointer" 
-                      onClick={() => setIsFormOpen(true)}>
-                  <CardHeader className="text-center pb-4">
-                    <div className="mx-auto mb-2 text-4xl">🤗</div>
-                    <CardTitle className="text-lg">Comfort & Safe Spaces</CardTitle>
-                    <p className="text-sm text-muted-foreground">
-                      Track what brings sensory comfort
+                      Document your tools, preferences & safe spaces
                     </p>
                   </CardHeader>
                 </Card>
@@ -224,6 +203,16 @@ export default function SensoryTracker() {
             <SensoryAnalytics refreshTrigger={refreshTrigger} />
           </TabsContent>
         </Tabs>
+
+        {/* Back to Mind Button - Bottom Center */}
+        <div className="flex justify-center pt-4">
+          <Button variant="outline" asChild>
+            <Link href="/mind">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Mind
+            </Link>
+          </Button>
+        </div>
       </div>
     </AppCanvas>
   )

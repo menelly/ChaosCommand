@@ -112,7 +112,7 @@ export default function CustomTrackerPage() {
           // Initialize form data with default values
           const initialData: Record<string, any> = {}
           foundTracker.fields.forEach(field => {
-            if (field.type === 'boolean') {
+            if (field.type === 'checkbox') {
               initialData[field.id] = false
             } else if (field.type === 'scale') {
               initialData[field.id] = field.min || 1
@@ -162,7 +162,7 @@ export default function CustomTrackerPage() {
       // Reset form
       const resetData: Record<string, any> = {}
       tracker.fields.forEach(field => {
-        if (field.type === 'boolean') {
+        if (field.type === 'checkbox') {
           resetData[field.id] = false
         } else if (field.type === 'scale') {
           resetData[field.id] = field.min || 1

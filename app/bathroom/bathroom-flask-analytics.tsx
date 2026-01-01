@@ -180,26 +180,27 @@ export default function BathroomFlaskAnalytics({ entries, currentDate, loadAllEn
         frequency_patterns: {
           daily_average: flaskEntries.length / parseInt(dateRange),
           weekly_average: (flaskEntries.length / parseInt(dateRange)) * 7,
+          frequency_by_day: {},
           consistency_score: 0.8
         },
         pain_analysis: {
-          has_data: flaskEntries.some(e => e.painLevel && e.painLevel > 0),
+          has_data: flaskEntries.some(e => e.painLevel && parseInt(e.painLevel) > 0),
           avg_pain_level: flaskEntries.filter(e => e.painLevel).length > 0
-            ? flaskEntries.filter(e => e.painLevel).reduce((sum, e) => sum + (e.painLevel || 0), 0) / flaskEntries.filter(e => e.painLevel).length
+            ? flaskEntries.filter(e => e.painLevel).reduce((sum, e) => sum + (parseInt(e.painLevel) || 0), 0) / flaskEntries.filter(e => e.painLevel).length
             : 0,
-          max_pain_level: Math.max(...flaskEntries.map(e => e.painLevel || 0), 0),
-          painful_episodes: flaskEntries.filter(e => e.painLevel && e.painLevel >= 5).length
+          max_pain_level: Math.max(...flaskEntries.map(e => parseInt(e.painLevel) || 0), 0),
+          pain_distribution: {},
+          painful_episodes: flaskEntries.filter(e => e.painLevel && parseInt(e.painLevel) >= 5).length
         },
         timing_patterns: {
-          morning_percentage: 0,
-          afternoon_percentage: 0,
-          evening_percentage: 0,
-          peak_hour: 'N/A',
-          peak_hours: []
+          time_distribution: {},
+          peak_hours: [] as string[],
+          morning_percentage: 0
         },
         insights: flaskEntries.length > 0
           ? [`You logged ${flaskEntries.length} bathroom visits in the last ${dateRange} days.`]
           : [],
+        charts: {},
         correlations: digestiveCorrelations,
         interventions: effectiveInterventions
       }

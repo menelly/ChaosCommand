@@ -128,15 +128,6 @@ export default function SelfCareTracker() {
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <div className="text-center space-y-4">
-          <div className="flex items-center justify-center gap-3">
-            <Link href="/mind">
-              <Button variant="ghost" size="sm">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Mind
-              </Button>
-            </Link>
-          </div>
-          
           <div className="space-y-2">
             <div className="text-6xl">💖</div>
             <h1 className="text-3xl font-bold text-foreground">
@@ -241,6 +232,16 @@ export default function SelfCareTracker() {
             <SelfCareAnalytics refreshTrigger={refreshTrigger} />
           </TabsContent>
         </Tabs>
+
+        {/* Back to Mind Button - Bottom Center */}
+        <div className="flex justify-center pt-4">
+          <Button variant="outline" asChild>
+            <Link href="/mind">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Mind
+            </Link>
+          </Button>
+        </div>
       </div>
     </AppCanvas>
   )

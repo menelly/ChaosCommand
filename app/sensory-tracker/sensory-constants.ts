@@ -30,32 +30,11 @@ export const ENTRY_TYPES: SensoryTypeOption[] = [
     color: 'bg-red-100 text-red-800'
   },
   {
-    value: 'preference',
-    label: 'Sensory Preference',
-    emoji: '💜',
-    description: 'Documenting what sensory input you prefer',
+    value: 'toolkit',
+    label: 'Sensory Toolkit',
+    emoji: '🧰',
+    description: 'Document preferences, comfort items & safe spaces',
     color: 'bg-purple-100 text-purple-800'
-  },
-  {
-    value: 'comfort',
-    label: 'Comfort Seeking',
-    emoji: '🤗',
-    description: 'Finding sensory comfort and regulation',
-    color: 'bg-green-100 text-green-800'
-  },
-  {
-    value: 'trigger',
-    label: 'Trigger Identification',
-    emoji: '⚠️',
-    description: 'Identifying specific sensory triggers',
-    color: 'bg-orange-100 text-orange-800'
-  },
-  {
-    value: 'safe-space',
-    label: 'Safe Space Creation',
-    emoji: '🏠',
-    description: 'Creating or finding sensory-safe environments',
-    color: 'bg-blue-100 text-blue-800'
   }
 ]
 

@@ -94,8 +94,13 @@ export function SafetyPlanManager({ refreshTrigger }: SafetyPlanManagerProps) {
           // Create default safety plan
           const defaultPlan: SafetyPlan = {
             id: 'safety-plan-default',
+            name: 'My Safety Plan',
+            isActive: true,
             warningSignsPersonal: [],
+            warningSignsExternal: [],
             copingStrategiesAlone: [],
+            copingStrategiesSocial: [],
+            copingStrategiesDistraction: [],
             supportPeopleInformal: [],
             supportPeopleProfessional: [],
             crisisHotlines: [

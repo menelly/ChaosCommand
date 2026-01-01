@@ -28,7 +28,7 @@ import { Database, Download, Upload, Shield, Zap, Beaker } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useDailyData } from "@/lib/database/hooks/use-daily-data"
-import { GSpot4BoringFileExporter } from "@/lib/database/g-spot-4.0-boring-file-steganography"
+import { GSpot4BoringFileExporter, BoringFileType } from "@/lib/database/g-spot-4.0-boring-file-steganography"
 import { exportAllData } from "@/lib/database/migration-helper"
 import TestPinManagerComponent from "@/components/test-pin-manager"
 
@@ -106,13 +106,13 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
       const result = await GSpot4BoringFileExporter.exportMedicalData(
         allData.daily_data,
         pin,
-        'costco_receipt' // Default to Costco receipt - perfectly boring!
+        BoringFileType.COSTCO_RECEIPT // Default to Costco receipt - perfectly boring!
       )
 
       if (result.success) {
         // Download the boring file
         const file = result.files[0]
-        const blob = new Blob([file.content], { type: file.mimeType })
+        const blob = new Blob([file.content], { type: 'application/json' })
         const url = URL.createObjectURL(blob)
         const a = document.createElement('a')
         a.href = url
@@ -145,14 +145,17 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
       const fileContent = await importFile.text()
 
       // Import and decrypt with G-Spot 4.0
-      const importResult = await GSpot4BoringFileExporter.importMedicalData([importFile], importPin)
+      const importResult = await GSpot4BoringFileExporter.importMedicalData([{
+        filename: importFile.name,
+        content: fileContent
+      }], importPin)
 
       // Confirm before overwriting
       if (importResult.success && confirm(`🔓 G-Spot 4.0 Import Ready!\n\nFound medical data in boring file.\n\nThis will COMPLETELY REPLACE your current data. Continue?`)) {
         // Overwrite with imported data
         await secureOverwriteAllData(importResult.data)
 
-        alert(`✅ G-Spot Import Complete!\n\n${importData.data_count} records restored successfully!`)
+        alert(`✅ G-Spot Import Complete!\n\nRecords restored successfully!`)
 
         // Reset import form
         setImportFile(null)

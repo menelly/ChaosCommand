@@ -29,7 +29,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Slider } from '@/components/ui/slider'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Waves, Save, X } from 'lucide-react'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import { Waves, Save, X, ChevronDown, ChevronRight } from 'lucide-react'
 import { format } from 'date-fns'
 
 import { SensoryEntry } from './sensory-types'
@@ -58,7 +59,7 @@ export function SensoryForm({ initialData, onSave, onCancel }: SensoryFormProps)
   // Basic info
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'))
   const [time, setTime] = useState(format(new Date(), 'HH:mm'))
-  const [entryType, setEntryType] = useState<'overload' | 'preference' | 'comfort' | 'trigger' | 'safe-space'>('overload')
+  const [entryType, setEntryType] = useState<'overload' | 'toolkit'>('overload')
   
   // Overload specific
   const [overloadLevel, setOverloadLevel] = useState([5])
@@ -83,10 +84,32 @@ export function SensoryForm({ initialData, onSave, onCancel }: SensoryFormProps)
   const [energyLevel, setEnergyLevel] = useState([5])
   const [stressLevel, setStressLevel] = useState([5])
   
+  // Sensory tools
+  const [sensoryTools, setSensoryTools] = useState<string[]>([])
+
   // General
   const [notes, setNotes] = useState('')
   const [tags, setTags] = useState<string[]>([])
   const [tagInput, setTagInput] = useState('')
+
+  // "Other" custom inputs
+  const [otherTrigger, setOtherTrigger] = useState('')
+  const [otherSymptom, setOtherSymptom] = useState('')
+  const [otherRecovery, setOtherRecovery] = useState('')
+  const [otherTool, setOtherTool] = useState('')
+
+  // Collapsible section states - start collapsed
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
+    triggers: false,
+    symptoms: false,
+    recovery: false,
+    tools: false,
+    environment: false
+  })
+
+  const toggleSection = (section: string) => {
+    setOpenSections(prev => ({ ...prev, [section]: !prev[section] }))
+  }
 
   // Helper function to toggle array items
   const toggleArrayItem = (array: string[], item: string, setter: (arr: string[]) => void) => {
@@ -111,16 +134,30 @@ export function SensoryForm({ initialData, onSave, onCancel }: SensoryFormProps)
 
   // Handle form submission
   const handleSubmit = () => {
+    // Combine selected items with custom "other" entries
+    const finalTriggers = otherTrigger.trim()
+      ? [...overloadTriggers, otherTrigger.trim()]
+      : overloadTriggers
+    const finalSymptoms = otherSymptom.trim()
+      ? [...overloadSymptoms, otherSymptom.trim()]
+      : overloadSymptoms
+    const finalRecovery = otherRecovery.trim()
+      ? [...recoveryStrategies, otherRecovery.trim()]
+      : recoveryStrategies
+    const finalTools = otherTool.trim()
+      ? [...sensoryTools, otherTool.trim()]
+      : sensoryTools
+
     const formData = {
       date,
       time,
       entryType,
       overloadLevel: overloadLevel[0],
       overloadType,
-      overloadTriggers,
-      overloadSymptoms,
+      overloadTriggers: finalTriggers,
+      overloadSymptoms: finalSymptoms,
       overloadDuration,
-      recoveryStrategies,
+      recoveryStrategies: finalRecovery,
       recoveryTime,
       shutdownAfter,
       sensoryNeeds,
@@ -132,15 +169,15 @@ export function SensoryForm({ initialData, onSave, onCancel }: SensoryFormProps)
       timeOfDay,
       energyLevel: energyLevel[0],
       stressLevel: stressLevel[0],
-      sensoryTriggers: [], // TODO: Add more fields
+      sensoryTriggers: finalTriggers,
       environmentalFactors: [],
       emotionalState: [],
       physicalState: [],
-      copingStrategies: recoveryStrategies,
+      copingStrategies: finalRecovery,
       copingEffectiveness: {},
       preventionAttempts: [],
       supportReceived: [],
-      sensoryTools: [],
+      sensoryTools: finalTools,
       accommodationsUsed: [],
       accommodationsNeeded: [],
       patterns: [],
@@ -150,7 +187,7 @@ export function SensoryForm({ initialData, onSave, onCancel }: SensoryFormProps)
       notes,
       tags
     }
-    
+
     onSave(formData)
   }
 
@@ -191,17 +228,16 @@ export function SensoryForm({ initialData, onSave, onCancel }: SensoryFormProps)
         {/* Entry Type */}
         <div>
           <Label>What type of sensory experience is this?</Label>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
+          <div className="grid grid-cols-2 gap-4 mt-2">
             {ENTRY_TYPES.map((type) => (
               <Button
                 key={type.value}
                 variant={entryType === type.value ? "default" : "outline"}
-                size="sm"
                 onClick={() => setEntryType(type.value as any)}
-                className="h-auto p-3 flex flex-col items-center gap-1"
+                className="h-auto p-4 flex flex-col items-center gap-2"
               >
-                <span className="text-lg">{type.emoji}</span>
-                <span className="text-xs text-center">{type.label}</span>
+                <span className="text-2xl">{type.emoji}</span>
+                <span className="text-sm font-medium">{type.label}</span>
               </Button>
             ))}
           </div>
@@ -245,6 +281,236 @@ export function SensoryForm({ initialData, onSave, onCancel }: SensoryFormProps)
               ))}
             </div>
           </div>
+        )}
+
+        {/* Overload Triggers - Collapsible */}
+        {entryType === 'overload' && (
+          <Collapsible open={openSections.triggers} onOpenChange={() => toggleSection('triggers')}>
+            <CollapsibleTrigger asChild>
+              <Button variant="outline" className="w-full justify-between h-auto py-3">
+                <div className="flex items-center gap-2">
+                  {openSections.triggers ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                  <span>What triggered the overload?</span>
+                </div>
+                <Badge variant={overloadTriggers.length > 0 ? "default" : "secondary"}>
+                  {overloadTriggers.length} selected
+                </Badge>
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pt-3">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 p-3 border rounded-lg bg-muted/30">
+                {OVERLOAD_TRIGGERS.map((trigger) => (
+                  <div key={trigger} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`trigger-${trigger}`}
+                      checked={overloadTriggers.includes(trigger)}
+                      onCheckedChange={() => toggleArrayItem(overloadTriggers, trigger, setOverloadTriggers)}
+                    />
+                    <Label htmlFor={`trigger-${trigger}`} className="text-sm cursor-pointer">
+                      {trigger}
+                    </Label>
+                  </div>
+                ))}
+                <div className="col-span-full mt-2 pt-2 border-t">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="trigger-other"
+                      checked={otherTrigger.length > 0}
+                      onCheckedChange={(checked) => { if (!checked) setOtherTrigger('') }}
+                    />
+                    <Label htmlFor="trigger-other" className="text-sm">Other:</Label>
+                    <Input
+                      value={otherTrigger}
+                      onChange={(e) => setOtherTrigger(e.target.value)}
+                      placeholder="Type custom trigger..."
+                      className="flex-1 h-8"
+                    />
+                  </div>
+                </div>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+        )}
+
+        {/* Overload Symptoms - Collapsible */}
+        {entryType === 'overload' && (
+          <Collapsible open={openSections.symptoms} onOpenChange={() => toggleSection('symptoms')}>
+            <CollapsibleTrigger asChild>
+              <Button variant="outline" className="w-full justify-between h-auto py-3">
+                <div className="flex items-center gap-2">
+                  {openSections.symptoms ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                  <span>How did it affect you?</span>
+                </div>
+                <Badge variant={overloadSymptoms.length > 0 ? "default" : "secondary"}>
+                  {overloadSymptoms.length} selected
+                </Badge>
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pt-3">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 p-3 border rounded-lg bg-muted/30">
+                {OVERLOAD_SYMPTOMS.map((symptom) => (
+                  <div key={symptom} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`symptom-${symptom}`}
+                      checked={overloadSymptoms.includes(symptom)}
+                      onCheckedChange={() => toggleArrayItem(overloadSymptoms, symptom, setOverloadSymptoms)}
+                    />
+                    <Label htmlFor={`symptom-${symptom}`} className="text-sm cursor-pointer">
+                      {symptom}
+                    </Label>
+                  </div>
+                ))}
+                <div className="col-span-full mt-2 pt-2 border-t">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="symptom-other"
+                      checked={otherSymptom.length > 0}
+                      onCheckedChange={(checked) => { if (!checked) setOtherSymptom('') }}
+                    />
+                    <Label htmlFor="symptom-other" className="text-sm">Other:</Label>
+                    <Input
+                      value={otherSymptom}
+                      onChange={(e) => setOtherSymptom(e.target.value)}
+                      placeholder="Type custom symptom..."
+                      className="flex-1 h-8"
+                    />
+                  </div>
+                </div>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+        )}
+
+        {/* Recovery Strategies - Collapsible */}
+        {entryType === 'overload' && (
+          <Collapsible open={openSections.recovery} onOpenChange={() => toggleSection('recovery')}>
+            <CollapsibleTrigger asChild>
+              <Button variant="outline" className="w-full justify-between h-auto py-3">
+                <div className="flex items-center gap-2">
+                  {openSections.recovery ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                  <span>What helped you recover?</span>
+                </div>
+                <Badge variant={recoveryStrategies.length > 0 ? "default" : "secondary"}>
+                  {recoveryStrategies.length} selected
+                </Badge>
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pt-3">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 p-3 border rounded-lg bg-muted/30">
+                {RECOVERY_STRATEGIES.map((strategy) => (
+                  <div key={strategy} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`recovery-${strategy}`}
+                      checked={recoveryStrategies.includes(strategy)}
+                      onCheckedChange={() => toggleArrayItem(recoveryStrategies, strategy, setRecoveryStrategies)}
+                    />
+                    <Label htmlFor={`recovery-${strategy}`} className="text-sm cursor-pointer">
+                      {strategy}
+                    </Label>
+                  </div>
+                ))}
+                <div className="col-span-full mt-2 pt-2 border-t">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="recovery-other"
+                      checked={otherRecovery.length > 0}
+                      onCheckedChange={(checked) => { if (!checked) setOtherRecovery('') }}
+                    />
+                    <Label htmlFor="recovery-other" className="text-sm">Other:</Label>
+                    <Input
+                      value={otherRecovery}
+                      onChange={(e) => setOtherRecovery(e.target.value)}
+                      placeholder="Type custom strategy..."
+                      className="flex-1 h-8"
+                    />
+                  </div>
+                </div>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+        )}
+
+        {/* Sensory Tools - Collapsible (show for both overload and toolkit) */}
+        {(entryType === 'overload' || entryType === 'toolkit') && (
+          <Collapsible open={openSections.tools} onOpenChange={() => toggleSection('tools')}>
+            <CollapsibleTrigger asChild>
+              <Button variant="outline" className="w-full justify-between h-auto py-3">
+                <div className="flex items-center gap-2">
+                  {openSections.tools ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                  <span>{entryType === 'toolkit' ? 'Your Sensory Tools' : 'Which sensory tools did you use?'}</span>
+                </div>
+                <Badge variant={sensoryTools.length > 0 ? "default" : "secondary"}>
+                  {sensoryTools.length} selected
+                </Badge>
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pt-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 p-3 border rounded-lg bg-muted/30">
+                {SENSORY_TOOLS.map((tool) => (
+                  <div key={tool.value} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`tool-${tool.value}`}
+                      checked={sensoryTools.includes(tool.value)}
+                      onCheckedChange={() => toggleArrayItem(sensoryTools, tool.value, setSensoryTools)}
+                    />
+                    <Label htmlFor={`tool-${tool.value}`} className="text-sm cursor-pointer flex items-center gap-1">
+                      <span>{tool.emoji}</span>
+                      {tool.label}
+                    </Label>
+                  </div>
+                ))}
+                <div className="col-span-full mt-2 pt-2 border-t">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="tool-other"
+                      checked={otherTool.length > 0}
+                      onCheckedChange={(checked) => { if (!checked) setOtherTool('') }}
+                    />
+                    <Label htmlFor="tool-other" className="text-sm">Other:</Label>
+                    <Input
+                      value={otherTool}
+                      onChange={(e) => setOtherTool(e.target.value)}
+                      placeholder="Type custom tool..."
+                      className="flex-1 h-8"
+                    />
+                  </div>
+                </div>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+        )}
+
+        {/* Environment Preferences - Collapsible (for toolkit) */}
+        {entryType === 'toolkit' && (
+          <Collapsible open={openSections.environment} onOpenChange={() => toggleSection('environment')}>
+            <CollapsibleTrigger asChild>
+              <Button variant="outline" className="w-full justify-between h-auto py-3">
+                <div className="flex items-center gap-2">
+                  {openSections.environment ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                  <span>Environment Preferences</span>
+                </div>
+                <Badge variant={environmentPrefs.length > 0 ? "default" : "secondary"}>
+                  {environmentPrefs.length} selected
+                </Badge>
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pt-3">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 p-3 border rounded-lg bg-muted/30">
+                {ENVIRONMENT_PREFERENCES.map((pref) => (
+                  <div key={pref} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`env-${pref}`}
+                      checked={environmentPrefs.includes(pref)}
+                      onCheckedChange={() => toggleArrayItem(environmentPrefs, pref, setEnvironmentPrefs)}
+                    />
+                    <Label htmlFor={`env-${pref}`} className="text-sm cursor-pointer">
+                      {pref}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
         )}
 
         {/* Context */}

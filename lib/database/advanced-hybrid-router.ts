@@ -127,10 +127,10 @@ export class AdvancedHybridDatabaseRouter {
       // Dynamic import avoids bundling for web
       await import('./sqlite-db')
       
-      // Actual capability probe
+      // Actual capability probe - just getting the DB is enough
       const db = await getMedicalSQLiteDB(this.userPin)
-      await db.ping?.() // Test with tiny operation
-      
+      // If we got here without error, SQLite is available
+
       this.sqliteAvailable = true
       console.log('🎯 HYBRID ROUTER: SQLite capability confirmed')
       

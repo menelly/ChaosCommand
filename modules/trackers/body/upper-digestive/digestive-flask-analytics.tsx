@@ -36,23 +36,23 @@ import { Loader2, Utensils, TrendingUp, AlertCircle, Clock, Target, Activity, He
 import { useDailyData, CATEGORIES } from "@/lib/database"
 import { format, subDays } from "date-fns"
 
-interface DigestiveEntry {
-  entry_date: string
-  entry_time: string
-  symptom_type: string
-  severity: number
-  duration_minutes?: number
+// Match UpperDigestiveEntry from page.tsx
+interface UpperDigestiveEntry {
+  id: string
+  date: string
+  time: string
+  symptoms: string[]
+  severity: string
   triggers: string[]
-  foods_eaten: string[]
-  medications: string[]
-  relief_methods: string[]
-  effectiveness?: number
+  treatments: string[]
   notes: string
-  tags?: string[]
+  tags: string[]
+  createdAt: string
+  updatedAt: string
 }
 
 interface DigestiveFlaskAnalyticsProps {
-  entries: DigestiveEntry[]
+  entries: UpperDigestiveEntry[]
   currentDate: string
 }
 
@@ -272,7 +272,8 @@ export default function DigestiveFlaskAnalytics({ entries, currentDate }: Digest
         },
         insights: allEntries.length > 0
           ? [`You logged ${allEntries.length} digestive episodes in the last ${days} days.`]
-          : []
+          : [],
+        charts: {}
       }
 
       console.log('🎯 Analytics generated:', data)

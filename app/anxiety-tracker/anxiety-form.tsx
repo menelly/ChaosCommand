@@ -29,7 +29,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Slider } from '@/components/ui/slider'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Heart, Save, X } from 'lucide-react'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import { Heart, Save, X, ChevronDown, ChevronRight } from 'lucide-react'
 import { format } from 'date-fns'
 
 import { AnxietyEntry } from './anxiety-types'
@@ -98,6 +99,26 @@ export function AnxietyForm({ initialData, onSave, onCancel }: AnxietyFormProps)
   const [tags, setTags] = useState<string[]>([])
   const [tagInput, setTagInput] = useState('')
 
+  // "Other" custom inputs for each section
+  const [otherPhysical, setOtherPhysical] = useState('')
+  const [otherMental, setOtherMental] = useState('')
+  const [otherTrigger, setOtherTrigger] = useState('')
+  const [otherCoping, setOtherCoping] = useState('')
+  const [otherAfterEffect, setOtherAfterEffect] = useState('')
+
+  // Collapsible section states - start collapsed for less overwhelm!
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
+    physical: false,
+    mental: false,
+    triggers: false,
+    coping: false,
+    afterEffects: false
+  })
+
+  const toggleSection = (section: string) => {
+    setOpenSections(prev => ({ ...prev, [section]: !prev[section] }))
+  }
+
   // Load initial data if editing
   useEffect(() => {
     if (initialData) {
@@ -152,35 +173,52 @@ export function AnxietyForm({ initialData, onSave, onCancel }: AnxietyFormProps)
 
   // Handle form submission
   const handleSubmit = () => {
+    // Combine selected items with custom "other" entries
+    const finalPhysicalSymptoms = otherPhysical.trim()
+      ? [...physicalSymptoms, otherPhysical.trim()]
+      : physicalSymptoms
+    const finalMentalSymptoms = otherMental.trim()
+      ? [...mentalSymptoms, otherMental.trim()]
+      : mentalSymptoms
+    const finalTriggers = otherTrigger.trim()
+      ? [...triggers, otherTrigger.trim()]
+      : triggers
+    const finalCopingStrategies = otherCoping.trim()
+      ? [...copingStrategies, otherCoping.trim()]
+      : copingStrategies
+    const finalAfterEffects = otherAfterEffect.trim()
+      ? [...afterEffects, otherAfterEffect.trim()]
+      : afterEffects
+
     const formData = {
       date,
       time,
       anxietyLevel: anxietyLevel[0],
       panicLevel: panicLevel[0],
       anxietyType,
-      physicalSymptoms,
-      mentalSymptoms,
-      triggers,
+      physicalSymptoms: finalPhysicalSymptoms,
+      mentalSymptoms: finalMentalSymptoms,
+      triggers: finalTriggers,
       location,
       socialContext,
       duration,
       peakIntensity: peakIntensity[0],
       onsetSpeed,
-      copingStrategies,
+      copingStrategies: finalCopingStrategies,
       copingEffectiveness: {}, // TODO: Add effectiveness tracking
       recoveryTime,
       panicSymptoms,
       meltdownTriggers,
       shutdownAfter,
       supportReceived,
-      afterEffects,
+      afterEffects: finalAfterEffects,
       warningSigns,
       preventionAttempts,
       lessonsLearned,
       notes,
       tags
     }
-    
+
     onSave(formData)
   }
 
@@ -271,62 +309,155 @@ export function AnxietyForm({ initialData, onSave, onCancel }: AnxietyFormProps)
           </div>
         </div>
 
-        {/* Physical Symptoms */}
-        <div>
-          <Label>Physical Symptoms (select all that apply)</Label>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
-            {PHYSICAL_SYMPTOMS.map((symptom) => (
-              <div key={symptom} className="flex items-center space-x-2">
-                <Checkbox
-                  id={`physical-${symptom}`}
-                  checked={physicalSymptoms.includes(symptom)}
-                  onCheckedChange={() => toggleArrayItem(physicalSymptoms, symptom, setPhysicalSymptoms)}
-                />
-                <Label htmlFor={`physical-${symptom}`} className="text-sm">
-                  {symptom}
-                </Label>
+        {/* Physical Symptoms - Collapsible */}
+        <Collapsible open={openSections.physical} onOpenChange={() => toggleSection('physical')}>
+          <CollapsibleTrigger asChild>
+            <Button variant="outline" className="w-full justify-between h-auto py-3">
+              <div className="flex items-center gap-2">
+                {openSections.physical ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                <span>Physical Symptoms</span>
               </div>
-            ))}
-          </div>
-        </div>
+              <Badge variant={physicalSymptoms.length > 0 ? "default" : "secondary"}>
+                {physicalSymptoms.length} selected
+              </Badge>
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="pt-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 p-3 border rounded-lg bg-muted/30">
+              {PHYSICAL_SYMPTOMS.map((symptom) => (
+                <div key={symptom} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`physical-${symptom}`}
+                    checked={physicalSymptoms.includes(symptom)}
+                    onCheckedChange={() => toggleArrayItem(physicalSymptoms, symptom, setPhysicalSymptoms)}
+                  />
+                  <Label htmlFor={`physical-${symptom}`} className="text-sm cursor-pointer">
+                    {symptom}
+                  </Label>
+                </div>
+              ))}
+              {/* Other option */}
+              <div className="col-span-full mt-2 pt-2 border-t">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="physical-other"
+                    checked={otherPhysical.length > 0}
+                    onCheckedChange={(checked) => {
+                      if (!checked) setOtherPhysical('')
+                    }}
+                  />
+                  <Label htmlFor="physical-other" className="text-sm">Other:</Label>
+                  <Input
+                    value={otherPhysical}
+                    onChange={(e) => setOtherPhysical(e.target.value)}
+                    placeholder="Type custom symptom..."
+                    className="flex-1 h-8"
+                  />
+                </div>
+              </div>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
 
-        {/* Mental/Emotional Symptoms */}
-        <div>
-          <Label>Mental/Emotional Symptoms (select all that apply)</Label>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
-            {MENTAL_SYMPTOMS.map((symptom) => (
-              <div key={symptom} className="flex items-center space-x-2">
-                <Checkbox
-                  id={`mental-${symptom}`}
-                  checked={mentalSymptoms.includes(symptom)}
-                  onCheckedChange={() => toggleArrayItem(mentalSymptoms, symptom, setMentalSymptoms)}
-                />
-                <Label htmlFor={`mental-${symptom}`} className="text-sm">
-                  {symptom}
-                </Label>
+        {/* Mental/Emotional Symptoms - Collapsible */}
+        <Collapsible open={openSections.mental} onOpenChange={() => toggleSection('mental')}>
+          <CollapsibleTrigger asChild>
+            <Button variant="outline" className="w-full justify-between h-auto py-3">
+              <div className="flex items-center gap-2">
+                {openSections.mental ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                <span>Mental/Emotional Symptoms</span>
               </div>
-            ))}
-          </div>
-        </div>
+              <Badge variant={mentalSymptoms.length > 0 ? "default" : "secondary"}>
+                {mentalSymptoms.length} selected
+              </Badge>
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="pt-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 p-3 border rounded-lg bg-muted/30">
+              {MENTAL_SYMPTOMS.map((symptom) => (
+                <div key={symptom} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`mental-${symptom}`}
+                    checked={mentalSymptoms.includes(symptom)}
+                    onCheckedChange={() => toggleArrayItem(mentalSymptoms, symptom, setMentalSymptoms)}
+                  />
+                  <Label htmlFor={`mental-${symptom}`} className="text-sm cursor-pointer">
+                    {symptom}
+                  </Label>
+                </div>
+              ))}
+              {/* Other option */}
+              <div className="col-span-full mt-2 pt-2 border-t">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="mental-other"
+                    checked={otherMental.length > 0}
+                    onCheckedChange={(checked) => {
+                      if (!checked) setOtherMental('')
+                    }}
+                  />
+                  <Label htmlFor="mental-other" className="text-sm">Other:</Label>
+                  <Input
+                    value={otherMental}
+                    onChange={(e) => setOtherMental(e.target.value)}
+                    placeholder="Type custom symptom..."
+                    className="flex-1 h-8"
+                  />
+                </div>
+              </div>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
 
-        {/* Triggers */}
-        <div>
-          <Label>What triggered this? (select all that apply)</Label>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
-            {COMMON_TRIGGERS.map((trigger) => (
-              <div key={trigger} className="flex items-center space-x-2">
-                <Checkbox
-                  id={`trigger-${trigger}`}
-                  checked={triggers.includes(trigger)}
-                  onCheckedChange={() => toggleArrayItem(triggers, trigger, setTriggers)}
-                />
-                <Label htmlFor={`trigger-${trigger}`} className="text-sm">
-                  {trigger}
-                </Label>
+        {/* Triggers - Collapsible */}
+        <Collapsible open={openSections.triggers} onOpenChange={() => toggleSection('triggers')}>
+          <CollapsibleTrigger asChild>
+            <Button variant="outline" className="w-full justify-between h-auto py-3">
+              <div className="flex items-center gap-2">
+                {openSections.triggers ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                <span>What triggered this?</span>
               </div>
-            ))}
-          </div>
-        </div>
+              <Badge variant={triggers.length > 0 ? "default" : "secondary"}>
+                {triggers.length} selected
+              </Badge>
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="pt-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 p-3 border rounded-lg bg-muted/30">
+              {COMMON_TRIGGERS.map((trigger) => (
+                <div key={trigger} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`trigger-${trigger}`}
+                    checked={triggers.includes(trigger)}
+                    onCheckedChange={() => toggleArrayItem(triggers, trigger, setTriggers)}
+                  />
+                  <Label htmlFor={`trigger-${trigger}`} className="text-sm cursor-pointer">
+                    {trigger}
+                  </Label>
+                </div>
+              ))}
+              {/* Other option */}
+              <div className="col-span-full mt-2 pt-2 border-t">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="trigger-other"
+                    checked={otherTrigger.length > 0}
+                    onCheckedChange={(checked) => {
+                      if (!checked) setOtherTrigger('')
+                    }}
+                  />
+                  <Label htmlFor="trigger-other" className="text-sm">Other:</Label>
+                  <Input
+                    value={otherTrigger}
+                    onChange={(e) => setOtherTrigger(e.target.value)}
+                    placeholder="Type custom trigger..."
+                    className="flex-1 h-8"
+                  />
+                </div>
+              </div>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
 
         {/* Context */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -387,25 +518,56 @@ export function AnxietyForm({ initialData, onSave, onCancel }: AnxietyFormProps)
           </div>
         </div>
 
-        {/* Coping Strategies */}
-        <div>
-          <Label>What coping strategies did you try? (select all that apply)</Label>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
-            {COPING_STRATEGIES.map((strategy) => (
-              <div key={strategy.value} className="flex items-center space-x-2">
-                <Checkbox
-                  id={`coping-${strategy.value}`}
-                  checked={copingStrategies.includes(strategy.value)}
-                  onCheckedChange={() => toggleArrayItem(copingStrategies, strategy.value, setCopingStrategies)}
-                />
-                <Label htmlFor={`coping-${strategy.value}`} className="text-sm flex items-center gap-1">
-                  <span>{strategy.emoji}</span>
-                  {strategy.label}
-                </Label>
+        {/* Coping Strategies - Collapsible */}
+        <Collapsible open={openSections.coping} onOpenChange={() => toggleSection('coping')}>
+          <CollapsibleTrigger asChild>
+            <Button variant="outline" className="w-full justify-between h-auto py-3">
+              <div className="flex items-center gap-2">
+                {openSections.coping ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                <span>What coping strategies did you try?</span>
               </div>
-            ))}
-          </div>
-        </div>
+              <Badge variant={copingStrategies.length > 0 ? "default" : "secondary"}>
+                {copingStrategies.length} selected
+              </Badge>
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="pt-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 p-3 border rounded-lg bg-muted/30">
+              {COPING_STRATEGIES.map((strategy) => (
+                <div key={strategy.value} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`coping-${strategy.value}`}
+                    checked={copingStrategies.includes(strategy.value)}
+                    onCheckedChange={() => toggleArrayItem(copingStrategies, strategy.value, setCopingStrategies)}
+                  />
+                  <Label htmlFor={`coping-${strategy.value}`} className="text-sm flex items-center gap-1 cursor-pointer">
+                    <span>{strategy.emoji}</span>
+                    {strategy.label}
+                  </Label>
+                </div>
+              ))}
+              {/* Other option */}
+              <div className="col-span-full mt-2 pt-2 border-t">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="coping-other"
+                    checked={otherCoping.length > 0}
+                    onCheckedChange={(checked) => {
+                      if (!checked) setOtherCoping('')
+                    }}
+                  />
+                  <Label htmlFor="coping-other" className="text-sm">Other:</Label>
+                  <Input
+                    value={otherCoping}
+                    onChange={(e) => setOtherCoping(e.target.value)}
+                    placeholder="Type custom strategy..."
+                    className="flex-1 h-8"
+                  />
+                </div>
+              </div>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
 
         {/* Recovery & Aftermath */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -430,24 +592,55 @@ export function AnxietyForm({ initialData, onSave, onCancel }: AnxietyFormProps)
           </div>
         </div>
 
-        {/* After Effects */}
-        <div>
-          <Label>How did you feel afterward? (select all that apply)</Label>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
-            {AFTER_EFFECTS.map((effect) => (
-              <div key={effect} className="flex items-center space-x-2">
-                <Checkbox
-                  id={`after-${effect}`}
-                  checked={afterEffects.includes(effect)}
-                  onCheckedChange={() => toggleArrayItem(afterEffects, effect, setAfterEffects)}
-                />
-                <Label htmlFor={`after-${effect}`} className="text-sm">
-                  {effect}
-                </Label>
+        {/* After Effects - Collapsible */}
+        <Collapsible open={openSections.afterEffects} onOpenChange={() => toggleSection('afterEffects')}>
+          <CollapsibleTrigger asChild>
+            <Button variant="outline" className="w-full justify-between h-auto py-3">
+              <div className="flex items-center gap-2">
+                {openSections.afterEffects ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                <span>How did you feel afterward?</span>
               </div>
-            ))}
-          </div>
-        </div>
+              <Badge variant={afterEffects.length > 0 ? "default" : "secondary"}>
+                {afterEffects.length} selected
+              </Badge>
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="pt-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 p-3 border rounded-lg bg-muted/30">
+              {AFTER_EFFECTS.map((effect) => (
+                <div key={effect} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`after-${effect}`}
+                    checked={afterEffects.includes(effect)}
+                    onCheckedChange={() => toggleArrayItem(afterEffects, effect, setAfterEffects)}
+                  />
+                  <Label htmlFor={`after-${effect}`} className="text-sm cursor-pointer">
+                    {effect}
+                  </Label>
+                </div>
+              ))}
+              {/* Other option */}
+              <div className="col-span-full mt-2 pt-2 border-t">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="after-other"
+                    checked={otherAfterEffect.length > 0}
+                    onCheckedChange={(checked) => {
+                      if (!checked) setOtherAfterEffect('')
+                    }}
+                  />
+                  <Label htmlFor="after-other" className="text-sm">Other:</Label>
+                  <Input
+                    value={otherAfterEffect}
+                    onChange={(e) => setOtherAfterEffect(e.target.value)}
+                    placeholder="Type custom feeling..."
+                    className="flex-1 h-8"
+                  />
+                </div>
+              </div>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
 
         {/* Notes & Lessons */}
         <div>

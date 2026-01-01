@@ -46,7 +46,6 @@ import { CrisisHistory } from './crisis-history'
 import { CrisisAnalytics } from './crisis-analytics'
 import { SafetyPlanManager } from './safety-plan-manager'
 import { CrisisResources } from './crisis-resources'
-import { CopingToolkit } from './coping-toolkit'
 import { HopeReminders } from './hope-reminders'
 import { CrisisEntry } from './crisis-types'
 import { CRISIS_RESOURCES, CRISIS_GOBLINISMS } from './crisis-constants'
@@ -179,15 +178,9 @@ export default function CrisisSupport() {
 
         {/* Header */}
         <div className="text-center space-y-4">
-          <div className="flex items-center justify-center gap-3">
-            <Link href="/mind">
-              <Button variant="ghost" size="sm">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Mind
-              </Button>
-            </Link>
-            {!crisisMode && (
-              <Button 
+          {!crisisMode && (
+            <div className="flex justify-center">
+              <Button
                 onClick={() => setCrisisMode(true)}
                 variant="destructive"
                 size="sm"
@@ -195,8 +188,8 @@ export default function CrisisSupport() {
                 <AlertTriangle className="h-4 w-4 mr-2" />
                 I'm in Crisis
               </Button>
-            )}
-          </div>
+            </div>
+          )}
           
           <div className="space-y-2">
             <div className="text-6xl">🛡️</div>
@@ -212,8 +205,8 @@ export default function CrisisSupport() {
 
         {/* Quick Access Emergency Resources */}
         <Card className="border-2 border-primary">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-red-600">
+          <CardHeader className="text-center pb-2">
+            <CardTitle className="flex items-center justify-center gap-2 text-red-600">
               <Phone className="h-5 w-5" />
               Immediate Help - Available 24/7
             </CardTitle>
@@ -222,37 +215,31 @@ export default function CrisisSupport() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Button
                 onClick={() => handleEmergencyCall('988')}
-                className="h-16 text-lg bg-[var(--crisis-accent)] hover:bg-[var(--crisis-border)] text-[var(--crisis-text)] border-[var(--crisis-border)]"
+                className="h-auto py-4 flex flex-col items-center gap-1 bg-red-500 hover:bg-red-600 text-white"
               >
-                <div className="text-center">
-                  <Phone className="h-6 w-6 mx-auto mb-1" />
-                  <div>988 Crisis Line</div>
-                  <div className="text-sm opacity-90">Suicide & Crisis</div>
-                </div>
+                <Phone className="h-6 w-6" />
+                <span className="font-semibold">988 Crisis Line</span>
+                <span className="text-xs opacity-90">Suicide & Crisis</span>
               </Button>
 
               <Button
                 onClick={() => handleEmergencyCall('741741')}
                 variant="outline"
-                className="h-16 text-lg border-[var(--accent-orange)] text-[var(--accent-orange)] hover:bg-[var(--accent-orange)] hover:text-white"
+                className="h-auto py-4 flex flex-col items-center gap-1 border-orange-500 text-orange-600 hover:bg-orange-500 hover:text-white"
               >
-                <div className="text-center">
-                  <MessageSquare className="h-6 w-6 mx-auto mb-1" />
-                  <div>Text HOME to 741741</div>
-                  <div className="text-sm opacity-90">Crisis Text Line</div>
-                </div>
+                <MessageSquare className="h-6 w-6" />
+                <span className="font-semibold">Text HOME to 741741</span>
+                <span className="text-xs opacity-90">Crisis Text Line</span>
               </Button>
 
               <Button
                 onClick={() => handleEmergencyCall('911')}
                 variant="outline"
-                className="h-16 text-lg border-[var(--hover-glow)] text-[var(--hover-glow)] hover:bg-[var(--hover-glow)] hover:text-white"
+                className="h-auto py-4 flex flex-col items-center gap-1 border-purple-500 text-purple-600 hover:bg-purple-500 hover:text-white"
               >
-                <div className="text-center">
-                  <AlertTriangle className="h-6 w-6 mx-auto mb-1" />
-                  <div>911 Emergency</div>
-                  <div className="text-sm opacity-90">Life-threatening</div>
-                </div>
+                <AlertTriangle className="h-6 w-6" />
+                <span className="font-semibold">911 Emergency</span>
+                <span className="text-xs opacity-90">Life-threatening</span>
               </Button>
             </div>
           </CardContent>
@@ -387,7 +374,98 @@ export default function CrisisSupport() {
 
           {/* Coping Tab */}
           <TabsContent value="coping">
-            <CopingToolkit />
+            <div className="space-y-6">
+              {/* Emergency Actions */}
+              <Card className="border-2 border-red-200 bg-red-50 dark:bg-red-950">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-red-700 dark:text-red-300">
+                    <AlertTriangle className="h-5 w-5" />
+                    Emergency Actions - Use These First
+                  </CardTitle>
+                  <p className="text-sm text-red-600 dark:text-red-400">
+                    If you're in immediate danger or thinking of hurting yourself, start here.
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <Card className="cursor-pointer transition-all hover:shadow-md hover:border-red-300">
+                      <CardContent className="p-4">
+                        <h3 className="font-medium text-sm">Call for Help</h3>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Reach out to 988, a trusted person, or emergency services
+                        </p>
+                        <Button
+                          onClick={() => handleEmergencyCall('988')}
+                          className="mt-2 w-full bg-red-500 hover:bg-red-600"
+                          size="sm"
+                        >
+                          <Phone className="h-4 w-4 mr-2" />
+                          Call 988 Now
+                        </Button>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="cursor-pointer transition-all hover:shadow-md hover:border-red-300">
+                      <CardContent className="p-4">
+                        <h3 className="font-medium text-sm">Remove Means</h3>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Put distance between yourself and anything you could use to hurt yourself
+                        </p>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="cursor-pointer transition-all hover:shadow-md hover:border-red-300">
+                      <CardContent className="p-4">
+                        <h3 className="font-medium text-sm">Get Somewhere Safe</h3>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Move to a safe location - a public place or with someone you trust
+                        </p>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="cursor-pointer transition-all hover:shadow-md hover:border-red-300">
+                      <CardContent className="p-4">
+                        <h3 className="font-medium text-sm">Use Your Safety Plan</h3>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Follow the steps in your safety plan if you have one
+                        </p>
+                        <Button
+                          onClick={() => setActiveTab('safety')}
+                          variant="outline"
+                          className="mt-2 w-full"
+                          size="sm"
+                        >
+                          <Shield className="h-4 w-4 mr-2" />
+                          Go to Safety Plan
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Link to Coping & Regulation */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Lightbulb className="h-5 w-5" />
+                    Full Coping Toolkit
+                  </CardTitle>
+                  <p className="text-muted-foreground">
+                    Your complete coping strategies library - grounding techniques,
+                    physical activities, creative outlets, breathing exercises, and more.
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <Button asChild className="w-full">
+                    <Link href="/coping-regulation">
+                      <Heart className="h-4 w-4 mr-2" />
+                      Go to Coping & Regulation
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           {/* Safety Plan Tab */}
@@ -443,6 +521,16 @@ export default function CrisisSupport() {
             <CrisisAnalytics refreshTrigger={refreshTrigger} />
           </TabsContent>
         </Tabs>
+
+        {/* Back to Mind Button - Bottom Center */}
+        <div className="flex justify-center pt-4">
+          <Button variant="outline" asChild>
+            <Link href="/mind">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Mind
+            </Link>
+          </Button>
+        </div>
       </div>
     </AppCanvas>
   )

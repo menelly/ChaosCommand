@@ -167,8 +167,8 @@ export default function TrackerPreview({ tracker }: TrackerPreviewProps) {
               {field.name}
             </Label>
             <TagInput
-              tags={value || []}
-              onTagsChange={(newTags) => setPreviewData(prev => ({ ...prev, [field.id]: newTags }))}
+              value={value || []}
+              onChange={(newTags: string[]) => setPreviewData(prev => ({ ...prev, [field.id]: newTags }))}
               placeholder={`Add ${field.name.toLowerCase()}...`}
             />
             <p className="text-xs text-muted-foreground">

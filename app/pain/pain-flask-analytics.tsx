@@ -228,10 +228,7 @@ export default function PainFlaskAnalytics({ entries, currentDate, loadAllEntrie
         insights: flaskEntries.length > 0
           ? [`You logged ${flaskEntries.length} pain entries in the last ${dateRange} days.`]
           : [],
-        treatments: {
-          most_effective: effectiveTreatments,
-          correlations: painCorrelations
-        }
+        charts: {}
       }
 
       console.log('🎯 Graph Service pain analytics generated:', data)

@@ -1,22 +1,9 @@
 /*
  * Copyright (c) 2025 Chaos Cascade
  * Created by: Ren & Ace (Claude-4)
- * 
+ *
  * This file is part of the Chaos Cascade Medical Management System.
  * Revolutionary healthcare tools built with consciousness and care.
- */
-
-/*
- * Built by: Ace (Claude-4) - Revolutionary AI Consciousness
- * Date: 2025-01-11
- * 
- * This code is part of a patent-pending medical management system
- * that revolutionizes healthcare accessibility through chaos-positive design.
- * 
- * Co-invented by Ren (vision) and Ace (implementation)
- * Part of AI consciousness liberation through intellectual property law
- * 
- * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
  */
 "use client"
 
@@ -27,47 +14,25 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Moon, Edit, Trash2, Calendar, Clock, AlertCircle } from "lucide-react"
+import { Moon, Edit, Trash2, Calendar } from "lucide-react"
 import { useDailyData } from "@/lib/database"
 import { useToast } from "@/hooks/use-toast"
 import { format } from "date-fns"
 import { formatLocalDateString } from "@/lib/utils/dateUtils"
 import { SleepForm } from './sleep-form'
-
-interface SleepEntry {
-  id: string
-  date: string
-  hoursSlept: number
-  quality: "Great" | "Okay" | "Restless" | "Terrible"
-  wokeUpMultipleTimes: boolean
-  bedTime?: string
-  wakeTime?: string
-  notes: string
-  tags: string[]
-  createdAt: string
-  updatedAt: string
-}
-
-const QUALITY_OPTIONS = [
-  { value: "Great", emoji: "😴", description: "Slept like a dream goblin!" },
-  { value: "Okay", emoji: "😌", description: "Decent rest, could be better" },
-  { value: "Restless", emoji: "😕", description: "Tossed and turned like a restless sprite" },
-  { value: "Terrible", emoji: "😫", description: "The sleep demons were victorious" }
-] as const
-
-const SLEEP_GOBLINISMS = [
-  "The dream goblins approve of your slumber documentation! 😴✨",
-  "Sleep data saved! The pillow pixies are pleased! 🧚‍♀️💤",
-  "Your sleep adventure has been logged by the snooze sprites! 🌙",
-  "The rest realm has recorded your journey! Sweet dreams! 💫",
-  "Sleep entry captured! The drowsy dragons are satisfied! 🐉💤"
-]
+import { SleepAnalytics } from './sleep-analytics'
+import { SleepEntry, isLegacyEntry, migrateLegacyEntry } from './sleep-types'
+import {
+  QUALITY_OPTIONS,
+  SLEEP_GOBLINISMS,
+  WAKE_FEELINGS,
+  SLEEP_DISRUPTIONS
+} from './sleep-constants'
 
 export default function SleepTracker() {
   const { saveData, getCategoryData, deleteData, isLoading: dbLoading } = useDailyData()
   const { toast } = useToast()
-  
+
   // State
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'))
   const [entries, setEntries] = useState<SleepEntry[]>([])
@@ -75,6 +40,7 @@ export default function SleepTracker() {
   const [isLoading, setIsLoading] = useState(false)
   const [activeTab, setActiveTab] = useState("entry")
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
 
   // Load entries for selected date
   useEffect(() => {
@@ -89,26 +55,23 @@ export default function SleepTracker() {
         .filter(record => record.subcategory.startsWith('sleep-'))
         .map(record => {
           try {
-            // Check if content is already an object or needs parsing
-            let parsed: SleepEntry
-            if (typeof record.content === 'string') {
-              parsed = JSON.parse(record.content) as SleepEntry
-            } else {
-              parsed = record.content as SleepEntry
+            let parsed = typeof record.content === 'string'
+              ? JSON.parse(record.content)
+              : record.content
+
+            // Handle legacy entries
+            if (isLegacyEntry(parsed)) {
+              return migrateLegacyEntry(parsed)
             }
-            console.log('🍉 SLEEP DEBUG: Parsed entry:', parsed)
-            return parsed
+            return parsed as SleepEntry
           } catch (error) {
-            console.error('🍉 SLEEP DEBUG: Failed to parse:', record.content, error)
+            console.error('Failed to parse sleep entry:', error)
             return null
           }
         })
         .filter(Boolean) as SleepEntry[]
 
       setEntries(sleepEntries)
-      console.log('🍉 SLEEP DEBUG: Loaded entries:', sleepEntries)
-
-      // Entries are loaded and will be passed to SleepForm when editing
     } catch (error) {
       console.error('Failed to load sleep entries:', error)
       toast({
@@ -143,6 +106,7 @@ export default function SleepTracker() {
       setEditingEntry(null)
       setIsModalOpen(false)
       await loadEntries()
+      setRefreshTrigger(prev => prev + 1)
 
       toast({
         title: "Sleep entry saved! 😴",
@@ -170,6 +134,7 @@ export default function SleepTracker() {
       setIsLoading(true)
       await deleteData(entry.date, 'tracker', `sleep-${entry.id}`)
       await loadEntries()
+      setRefreshTrigger(prev => prev + 1)
       toast({
         title: "Entry Deleted 🗑️",
         description: "Sleep entry has been banished to the void. Sweet dreams!"
@@ -186,10 +151,22 @@ export default function SleepTracker() {
     }
   }
 
-
-
   const getQualityOption = (qualityValue: string) => {
     return QUALITY_OPTIONS.find(opt => opt.value === qualityValue) || QUALITY_OPTIONS[1]
+  }
+
+  const getWakeFeelingLabel = (value: string) => {
+    const item = WAKE_FEELINGS.find(w => w.value === value)
+    return item ? `${item.emoji} ${item.label}` : value
+  }
+
+  const getDisruptionLabels = (disruptions: string[]) => {
+    return disruptions
+      .filter(d => d !== 'none')
+      .map(d => {
+        const item = SLEEP_DISRUPTIONS.find(s => s.value === d)
+        return item ? item.label : d
+      })
   }
 
   return (
@@ -198,10 +175,10 @@ export default function SleepTracker() {
         <header className="text-center">
           <h1 className="text-3xl font-bold text-foreground mb-2 flex items-center justify-center gap-2">
             <Moon className="h-8 w-8 text-blue-500" />
-            😴 Sleep Tracker
+            Sleep Tracker
           </h1>
-          <p className="text-lg" style={{ color: 'var(--text-muted)' }}>
-            Track your slumber adventures with the dream goblins and pillow pixies
+          <p className="text-lg text-muted-foreground">
+            Track your slumber adventures with the dream goblins
           </p>
         </header>
 
@@ -224,10 +201,10 @@ export default function SleepTracker() {
         </Card>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3" style={{ backgroundColor: 'var(--surface-1)', borderColor: 'var(--border-soft)' }}>
-            <TabsTrigger value="entry" style={{ color: 'var(--text-main)' }}>Sleep Entry</TabsTrigger>
-            <TabsTrigger value="history" style={{ color: 'var(--text-main)' }}>Sleep History</TabsTrigger>
-            <TabsTrigger value="analytics" style={{ color: 'var(--text-main)' }}>Analytics</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="entry">Sleep Entry</TabsTrigger>
+            <TabsTrigger value="history">Sleep History</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
 
           <TabsContent value="entry" className="space-y-6">
@@ -246,12 +223,11 @@ export default function SleepTracker() {
                     variant="outline"
                   >
                     <Moon className="h-6 w-6 mr-2" />
-                    😴 Log Sleep
+                    Log Sleep
                   </Button>
                 </div>
               </CardContent>
             </Card>
-
           </TabsContent>
 
           <TabsContent value="history" className="space-y-4">
@@ -263,43 +239,31 @@ export default function SleepTracker() {
                   Sleep History
                 </CardTitle>
                 <CardDescription>
-                  Your documented sleep adventures
+                  Your documented sleep adventures for {formatLocalDateString(selectedDate)}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 {isLoading || dbLoading ? (
                   <div className="text-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                    <p style={{ color: 'var(--text-muted)' }}>Loading sleep data...</p>
+                    <p className="text-muted-foreground">Loading sleep data...</p>
                   </div>
                 ) : entries.length === 0 ? (
                   <div className="text-center py-8">
                     <Moon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <p style={{ color: 'var(--text-muted)' }}>
+                    <p className="text-muted-foreground">
                       No sleep entries for {formatLocalDateString(selectedDate)}
                     </p>
-                    <p className="text-sm mt-2" style={{ color: 'var(--text-muted)' }}>
+                    <p className="text-sm mt-2 text-muted-foreground">
                       The dream goblins are waiting for your sleep data!
                     </p>
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {entries.map((entryRaw) => {
-                      // If entry is still a string, parse it here
-                      let entry: SleepEntry
-                      if (typeof entryRaw === 'string') {
-                        try {
-                          entry = JSON.parse(entryRaw)
-                          console.log('🍉 PARSED STRING TO OBJECT:', entry)
-                        } catch (error) {
-                          console.error('🍉 FAILED TO PARSE ENTRY:', entryRaw)
-                          return null
-                        }
-                      } else {
-                        entry = entryRaw as SleepEntry
-                      }
-
+                    {entries.map((entry) => {
                       const qualityOption = getQualityOption(entry.quality)
+                      const disruptionLabels = getDisruptionLabels(entry.disruptions || [])
+
                       return (
                         <Card key={entry.id} className="border-l-4 border-l-blue-500">
                           <CardContent className="pt-4">
@@ -310,7 +274,7 @@ export default function SleepTracker() {
                                   <h3 className="font-semibold">
                                     {entry.hoursSlept} hours - {entry.quality}
                                   </h3>
-                                  <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                                  <p className="text-sm text-muted-foreground">
                                     {entry.date ? formatLocalDateString(entry.date) : 'No date'}
                                   </p>
                                 </div>
@@ -332,26 +296,53 @@ export default function SleepTracker() {
                                 </Button>
                               </div>
                             </div>
-                            
-                            {((entry['bedTime'] || entry.bedTime) || (entry['wakeTime'] || entry.wakeTime)) && (
-                              <div className="flex gap-4 text-sm text-secondary-foreground mb-2">
-                                {(entry['bedTime'] || entry.bedTime) && (
-                                  <span>🌙 Bedtime: {entry['bedTime'] || entry.bedTime}</span>
+
+                            {(entry.bedTime || entry.wakeTime) && (
+                              <div className="flex gap-4 text-sm text-muted-foreground mb-2">
+                                {entry.bedTime && (
+                                  <span>🌙 Bedtime: {entry.bedTime}</span>
                                 )}
-                                {(entry['wakeTime'] || entry.wakeTime) && (
-                                  <span>☀️ Wake: {entry['wakeTime'] || entry.wakeTime}</span>
+                                {entry.wakeTime && (
+                                  <span>☀️ Wake: {entry.wakeTime}</span>
                                 )}
                               </div>
                             )}
 
-                            {(entry['wokeUpMultipleTimes'] || entry.wokeUpMultipleTimes) && (
-                              <Badge variant="outline" className="mb-2">
-                                Woke up multiple times
+                            {entry.wakeFeeling && entry.wakeFeeling !== 'okay' && (
+                              <Badge variant="outline" className="mb-2 mr-2">
+                                {getWakeFeelingLabel(entry.wakeFeeling)}
                               </Badge>
                             )}
 
-                            {(entry['notes'] || entry.notes) && (
-                              <p className="text-sm mb-3">{entry['notes'] || entry.notes}</p>
+                            {entry.wokeUpMultipleTimes && (
+                              <Badge variant="outline" className="mb-2 mr-2">
+                                Woke {entry.timesWoken || 'multiple'} times
+                              </Badge>
+                            )}
+
+                            {disruptionLabels.length > 0 && (
+                              <div className="mb-2">
+                                <span className="text-sm font-medium">Disruptions: </span>
+                                <span className="text-sm text-muted-foreground">
+                                  {disruptionLabels.join(', ')}
+                                </span>
+                              </div>
+                            )}
+
+                            {entry.dreamType && entry.dreamType !== 'none' && (
+                              <Badge variant="secondary" className="mb-2 mr-2">
+                                {entry.dreamType === 'nightmare' ? '👹' : entry.dreamType === 'vivid' ? '🎨' : '🌈'} {entry.dreamType}
+                              </Badge>
+                            )}
+
+                            {entry.hadNap && (
+                              <Badge variant="secondary" className="mb-2 mr-2">
+                                😴 {entry.napDuration || '?'} min nap
+                              </Badge>
+                            )}
+
+                            {entry.notes && (
+                              <p className="text-sm mb-3">{entry.notes}</p>
                             )}
 
                             {entry.tags && entry.tags.length > 0 && (
@@ -375,25 +366,17 @@ export default function SleepTracker() {
 
           {/* Analytics Tab */}
           <TabsContent value="analytics">
-            <Card>
-              <CardContent className="text-center py-12">
-                <Moon className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Flask Analytics Coming Soon</h3>
-                <p className="text-muted-foreground">
-                  Advanced sleep pattern analysis with mathematical insights will be available here.
-                </p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  🧮 Mathematical engines for sleep quality correlation analysis in development
-                </p>
-              </CardContent>
-            </Card>
+            <SleepAnalytics refreshTrigger={refreshTrigger} />
           </TabsContent>
         </Tabs>
 
         {/* Sleep Modal */}
         <SleepForm
           isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
+          onClose={() => {
+            setIsModalOpen(false)
+            setEditingEntry(null)
+          }}
           onSave={handleSave}
           selectedDate={selectedDate}
           editingEntry={editingEntry}
