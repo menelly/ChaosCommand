@@ -21,7 +21,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { ChevronLeft, ChevronRight, Star } from "lucide-react"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { getTodayLocalDate, formatDateForUrl } from "@/lib/utils/dateUtils"
 import { useDailyData, formatDateForStorage, CATEGORIES, SUBCATEGORIES } from "@/lib/database"
@@ -42,7 +42,8 @@ interface CalendarWeek {
 export default function MonthlyCalendar() {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [calendarData, setCalendarData] = useState<CalendarWeek[]>([])
-  const [isBookmarked, setIsBookmarked] = useState(false)
+  const [monthGoals, setMonthGoals] = useState("")
+  const [monthNotes, setMonthNotes] = useState("")
   const { getSpecificData, saveData, isLoading } = useDailyData()
 
   // Load calendar content from storage
@@ -203,23 +204,64 @@ export default function MonthlyCalendar() {
 
 
 
-  // Toggle bookmark
-  const toggleBookmark = () => {
-    setIsBookmarked(!isBookmarked)
-    // TODO: Save to storage
-  }
-
   // Generate calendar data when date changes
   useEffect(() => {
     const loadCalendar = async () => {
       const data = await generateCalendarData(currentDate)
       setCalendarData(data)
+
+      // Load goals and notes for this month
+      const year = currentDate.getFullYear()
+      const month = currentDate.getMonth()
+      const monthKey = `${year}-${String(month + 1).padStart(2, '0')}-01`
+
+      try {
+        const goalsData = await getSpecificData(monthKey, CATEGORIES.CALENDAR, 'monthly-goals')
+        if (goalsData?.content) {
+          setMonthGoals(typeof goalsData.content === 'string' ? goalsData.content : '')
+        } else {
+          setMonthGoals('')
+        }
+
+        const notesData = await getSpecificData(monthKey, CATEGORIES.CALENDAR, 'monthly-notes')
+        if (notesData?.content) {
+          setMonthNotes(typeof notesData.content === 'string' ? notesData.content : '')
+        } else {
+          setMonthNotes('')
+        }
+      } catch (error) {
+        console.error('Failed to load goals/notes:', error)
+      }
     }
 
     if (!isLoading) {
       loadCalendar()
     }
   }, [currentDate, isLoading])
+
+  // Save goals for current month
+  const saveMonthGoals = async (content: string) => {
+    const year = currentDate.getFullYear()
+    const month = currentDate.getMonth()
+    const monthKey = `${year}-${String(month + 1).padStart(2, '0')}-01`
+    try {
+      await saveData(monthKey, CATEGORIES.CALENDAR, 'monthly-goals', content)
+    } catch (error) {
+      console.error('Failed to save goals:', error)
+    }
+  }
+
+  // Save notes for current month
+  const saveMonthNotes = async (content: string) => {
+    const year = currentDate.getFullYear()
+    const month = currentDate.getMonth()
+    const monthKey = `${year}-${String(month + 1).padStart(2, '0')}-01`
+    try {
+      await saveData(monthKey, CATEGORIES.CALENDAR, 'monthly-notes', content)
+    } catch (error) {
+      console.error('Failed to save notes:', error)
+    }
+  }
 
   const monthNames = [
     "January", "February", "March", "April", "May", "June",
@@ -231,38 +273,29 @@ export default function MonthlyCalendar() {
   return (
     <AppCanvas currentPage="calendar">
       <div className="space-y-6">
-            {/* Header with navigation */}
-            <div className="flex items-center justify-between mb-6">
+            {/* Header with navigation - Centered and cute! */}
+            <div className="flex items-center justify-center mb-6">
               <div className="flex items-center gap-4">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={goToPreviousMonth}
-                  className="p-2"
+                  className="p-2 hover:bg-primary/10"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <h1 className="text-2xl font-bold">
+                <h1 className="text-3xl font-bold text-center min-w-[280px] bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
                   {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
                 </h1>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={goToNextMonth}
-                  className="p-2"
+                  className="p-2 hover:bg-primary/10"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={toggleBookmark}
-                className={`p-2 ${isBookmarked ? 'text-yellow-500' : 'text-muted-foreground'}`}
-              >
-                <Star className={`h-4 w-4 ${isBookmarked ? 'fill-current' : ''}`} />
-              </Button>
             </div>
 
             {/* Calendar Grid */}
@@ -304,47 +337,18 @@ export default function MonthlyCalendar() {
                             {day.date}
                           </a>
                           
-                          {/* Calendar Events */}
-                          <div className="mt-8 text-xs leading-tight min-h-[60px] p-1">
-                            {(() => {
-                              // Parse calendar events from JSON
-                              if (day.content) {
-                                try {
-                                  const calendarData = JSON.parse(day.content)
-                                  if (calendarData.events && Array.isArray(calendarData.events)) {
-                                    return calendarData.events.map((event: any, index: number) => (
-                                      <div
-                                        key={event.id || index}
-                                        className="mb-1 p-1 rounded text-xs flex items-center gap-1"
-                                        style={{
-                                          backgroundColor: event.color || '#6b7280',
-                                          color: 'white',
-                                          fontSize: 'clamp(9px, 0.65rem, 10px)'
-                                        }}
-                                      >
-                                        <span className="truncate">{event.title}</span>
-                                      </div>
-                                    ))
-                                  }
-                                } catch (e) {
-                                  // If JSON parsing fails, show raw content as editable text
-                                  return (
-                                    <div
-                                      contentEditable
-                                      suppressContentEditableWarning
-                                      className="cursor-text"
-                                      style={{ wordWrap: 'break-word' }}
-                                      onBlur={(e) => {
-                                        const content = e.currentTarget.textContent || ""
-                                        saveMonthlyContent(day.date!, content)
-                                      }}
-                                      dangerouslySetInnerHTML={{ __html: day.content }}
-                                    />
-                                  )
-                                }
-                              }
-                              return null
-                            })()}
+                          {/* Calendar Events - Always editable */}
+                          <div
+                            contentEditable
+                            suppressContentEditableWarning
+                            className="mt-8 text-xs leading-tight min-h-[60px] p-1 cursor-text hover:bg-muted/30 rounded"
+                            style={{ wordWrap: 'break-word' }}
+                            onBlur={(e) => {
+                              const content = e.currentTarget.textContent || ""
+                              saveMonthlyContent(day.date!, content)
+                            }}
+                          >
+                            {day.content || ""}
                           </div>
                         </>
                       )}
@@ -354,27 +358,29 @@ export default function MonthlyCalendar() {
               ))}
             </div>
 
-            {/* Bottom links */}
-            <div className="flex justify-center gap-8">
-              <Button
-                variant="outline"
-                asChild
-                className="px-6"
-              >
-                <a href="/goals">
-                  📋 GOALS
-                </a>
-              </Button>
-              <Button
-                variant="outline"
-                asChild
-                className="px-6"
-              >
-                <a href="/notes">
-                  📝 NOTES
-                </a>
-              </Button>
-        </div>
+            {/* Goals and Notes for this month */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-card rounded-lg border p-4">
+                <h3 className="font-medium mb-2 text-sm">📋 Goals for {monthNames[currentDate.getMonth()]}</h3>
+                <textarea
+                  value={monthGoals}
+                  onChange={(e) => setMonthGoals(e.target.value)}
+                  onBlur={(e) => saveMonthGoals(e.target.value)}
+                  placeholder="What do you want to accomplish this month?"
+                  className="w-full min-h-[100px] p-2 text-sm bg-background border rounded resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
+                />
+              </div>
+              <div className="bg-card rounded-lg border p-4">
+                <h3 className="font-medium mb-2 text-sm">📝 Notes for {monthNames[currentDate.getMonth()]}</h3>
+                <textarea
+                  value={monthNotes}
+                  onChange={(e) => setMonthNotes(e.target.value)}
+                  onBlur={(e) => saveMonthNotes(e.target.value)}
+                  placeholder="Any notes or reminders for this month..."
+                  className="w-full min-h-[100px] p-2 text-sm bg-background border rounded resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
+                />
+              </div>
+            </div>
       </div>
     </AppCanvas>
   )

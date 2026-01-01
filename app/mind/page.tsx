@@ -20,25 +20,25 @@
  */
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import AppCanvas from "@/components/app-canvas"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
 import {
   Brain,
   Cloud,
-  AlertTriangle,
   Ear,
-  Phone,
   Heart,
   Shield,
-  Smile,
   Frown,
   HelpCircle,
-  Palette
+  Settings2
 } from "lucide-react"
+
+const HIDDEN_TRACKERS_KEY = 'chaos-mind-hidden-trackers'
 
 interface TrackerButton {
   id: string
@@ -51,7 +51,41 @@ interface TrackerButton {
 }
 
 export default function MentalHealthIndex() {
-  const trackers: TrackerButton[] = [
+  // Hidden trackers state - persisted to localStorage
+  const [hiddenTrackers, setHiddenTrackers] = useState<string[]>([])
+  const [isCustomizeOpen, setIsCustomizeOpen] = useState(false)
+
+  // Load hidden trackers from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(HIDDEN_TRACKERS_KEY)
+      if (saved) {
+        setHiddenTrackers(JSON.parse(saved))
+      }
+    } catch (e) {
+      console.error('Failed to load hidden trackers:', e)
+    }
+  }, [])
+
+  // Save hidden trackers to localStorage when changed
+  const updateHiddenTrackers = (newHidden: string[]) => {
+    setHiddenTrackers(newHidden)
+    try {
+      localStorage.setItem(HIDDEN_TRACKERS_KEY, JSON.stringify(newHidden))
+    } catch (e) {
+      console.error('Failed to save hidden trackers:', e)
+    }
+  }
+
+  const toggleTrackerVisibility = (trackerId: string) => {
+    if (hiddenTrackers.includes(trackerId)) {
+      updateHiddenTrackers(hiddenTrackers.filter(id => id !== trackerId))
+    } else {
+      updateHiddenTrackers([...hiddenTrackers, trackerId])
+    }
+  }
+
+  const allTrackers: TrackerButton[] = [
     {
       id: 'brain-fog',
       name: 'Brain Fog & Cognitive',
@@ -110,8 +144,11 @@ export default function MentalHealthIndex() {
     }
   ]
 
+  // Filter trackers based on hidden preferences
+  const trackers = allTrackers.filter(tracker => !hiddenTrackers.includes(tracker.id))
+
   const handleTrackerClick = (trackerId: string) => {
-    const tracker = trackers.find(t => t.id === trackerId)
+    const tracker = allTrackers.find(t => t.id === trackerId)
     if (tracker?.status === 'available' && tracker.href) {
       window.location.href = tracker.href
     } else {
@@ -181,21 +218,84 @@ export default function MentalHealthIndex() {
           ))}
         </div>
 
-        {/* HELP SECTION */}
+        {/* CUSTOMIZE TRACKERS */}
         <Card className="mt-8">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <HelpCircle className="h-5 w-5" />
-              Mental Health Help
+              <Settings2 className="h-5 w-5" />
+              Customize Your Trackers
             </CardTitle>
             <CardDescription>
-              Comprehensive guides and tutorials for all mental health trackers
+              Show only the trackers you actually use. Hidden trackers can always be shown again.
+              {hiddenTrackers.length > 0 && (
+                <span className="block mt-1 text-primary">
+                  {hiddenTrackers.length} tracker{hiddenTrackers.length !== 1 ? 's' : ''} hidden
+                </span>
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button variant="outline" className="w-full">
-              📖 Open Mental Health Guide
-            </Button>
+            <Dialog open={isCustomizeOpen} onOpenChange={setIsCustomizeOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="w-full">
+                  <Settings2 className="h-4 w-4 mr-2" />
+                  Customize Visible Trackers
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Settings2 className="h-5 w-5" />
+                    Customize Mind Trackers
+                  </DialogTitle>
+                  <DialogDescription>
+                    Toggle off trackers you don't need. They won't appear on the Mind page, but you can always turn them back on.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 mt-4">
+                  {allTrackers.map((tracker) => (
+                    <div key={tracker.id} className="flex items-center justify-between gap-4 py-2 border-b border-border/50">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="text-primary shrink-0">
+                          {tracker.icon}
+                        </div>
+                        <div className="min-w-0">
+                          <Label htmlFor={`toggle-${tracker.id}`} className="font-medium cursor-pointer">
+                            {tracker.name}
+                          </Label>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {tracker.shortDescription}
+                          </p>
+                        </div>
+                      </div>
+                      <Switch
+                        id={`toggle-${tracker.id}`}
+                        checked={!hiddenTrackers.includes(tracker.id)}
+                        onCheckedChange={() => toggleTrackerVisibility(tracker.id)}
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div className="flex gap-2 mt-4 pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => updateHiddenTrackers([])}
+                    disabled={hiddenTrackers.length === 0}
+                  >
+                    Show All
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsCustomizeOpen(false)}
+                    className="ml-auto"
+                  >
+                    Done
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           </CardContent>
         </Card>
 

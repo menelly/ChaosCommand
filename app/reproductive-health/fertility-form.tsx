@@ -28,7 +28,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Slider } from "@/components/ui/slider"
-import { Thermometer, Moon, Activity, Droplets, Calendar } from 'lucide-react'
+import { Thermometer, Moon, Activity, Droplets } from 'lucide-react'
 import { TagInput } from "@/components/tag-input"
 import { ReproductiveHealthEntry, OPK_LEVELS, FERTILITY_SYMPTOM_OPTIONS } from './reproductive-health-tracker'
 
@@ -70,33 +70,6 @@ export function FertilityForm({ formData, updateFormData, onSave, isLoading }: F
 
         {/* LEFT COLUMN - Data Entry */}
         <div className="space-y-6">
-
-          {/* LMP Date */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-purple-500" />
-                📅 Last Menstrual Period
-              </CardTitle>
-              <CardDescription>
-                When did your last period start? Even a rough estimate helps with cycle day calculations!
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div>
-                <Label className="text-sm font-medium">Date of LMP</Label>
-                <Input
-                  type="date"
-                  value={formData.lmpDate || ''}
-                  onChange={(e) => updateFormData('lmpDate', e.target.value || null)}
-                  className="mt-1"
-                />
-                <div className="mt-1 text-xs text-muted-foreground">
-                  💡 This helps calculate your current cycle day more accurately
-                </div>
-              </div>
-            </CardContent>
-          </Card>
 
           {/* BBT & Cervical Fluid Combined */}
           <Card>

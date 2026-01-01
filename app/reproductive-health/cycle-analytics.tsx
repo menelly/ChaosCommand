@@ -54,7 +54,8 @@ export function CycleAnalytics({ entries, lmpDate, averageCycleLength = 28, clas
     setIsClient(true)
     if (lmpDate) {
       const today = new Date()
-      setCurrentCycleDay(differenceInDays(today, new Date(lmpDate)) + 1)
+      // Add T12:00:00 to fix timezone issues with date-only strings
+      setCurrentCycleDay(differenceInDays(today, new Date(lmpDate + 'T12:00:00')) + 1)
     }
   }, [lmpDate])
   
@@ -62,7 +63,8 @@ export function CycleAnalytics({ entries, lmpDate, averageCycleLength = 28, clas
   const totalEntries = entries.length
   const entriesWithFlow = entries.filter(e => e.flow && e.flow !== 'none').length
   const entriesWithBBT = entries.filter(e => e.bbt !== null && e.bbt !== undefined).length
-  const entriesWithOPK = entries.filter(e => e.opk && e.opk !== 'negative').length
+  const entriesWithOPK = entries.filter(e => e.opk !== null && e.opk !== undefined).length
+  const entriesWithPositiveOPK = entries.filter(e => e.opk && e.opk !== 'negative').length
   
   // Pain level distribution (simple)
   const painData = [
@@ -189,7 +191,7 @@ export function CycleAnalytics({ entries, lmpDate, averageCycleLength = 28, clas
               <p>• You have {entriesWithBBT} BBT temperature readings</p>
             )}
             {entriesWithOPK > 0 && (
-              <p>• You've done {entriesWithOPK} ovulation tests</p>
+              <p>• You've done {entriesWithOPK} OPK tests ({entriesWithPositiveOPK} positive)</p>
             )}
             {totalEntries >= 7 && (
               <p>• Great job tracking consistently! Keep it up for better insights.</p>

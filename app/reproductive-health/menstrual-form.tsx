@@ -28,7 +28,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Slider } from "@/components/ui/slider"
-import { Droplets, Heart, Activity } from 'lucide-react'
+import { Droplets, Heart, Activity, Calendar } from 'lucide-react'
 import { TagInput } from "@/components/tag-input"
 import { ReproductiveHealthEntry, FLOW_LEVELS, MOOD_OPTIONS, SYMPTOM_OPTIONS } from './reproductive-health-tracker'
 
@@ -50,6 +50,33 @@ export function MenstrualForm({ formData, updateFormData, onSave, isLoading }: M
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* LMP Date - Moved from Fertility for accessibility */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5 text-purple-500" />
+            📅 Last Menstrual Period (LMP)
+          </CardTitle>
+          <CardDescription>
+            When did your last period start? This helps calculate your cycle day.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div>
+            <Label className="text-sm font-medium">Date of LMP</Label>
+            <Input
+              type="date"
+              value={formData.lmpDate || ''}
+              onChange={(e) => updateFormData('lmpDate', e.target.value || null)}
+              className="mt-1"
+            />
+            <div className="mt-1 text-xs text-muted-foreground">
+              💡 Update this when your next period starts
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Flow Level */}
       <Card>
         <CardHeader>

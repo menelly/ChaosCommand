@@ -1,10 +1,9 @@
 /*
- * 🔥 NOVA'S GRAPH ANALYTICS COMPONENT
- * Built by: Nova (design) + Ace (implementation)
- * Date: 2025-09-01
- * 
- * This component shows Nova's brilliant graph queries in action!
- * "80-90% of SurrealDB power without the migration hell" - Nova
+ * Graph Analytics - Pattern Detection Component
+ * Part of Chaos Cascade Medical Management System
+ *
+ * Finds correlations between symptoms and effective interventions
+ * using local graph-based analysis.
  */
 
 "use client"
@@ -15,7 +14,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Search, TrendingUp, Zap, Brain, Target } from "lucide-react"
+import { Search, TrendingUp, Brain, Target } from "lucide-react"
 import { graphService } from '@/lib/graph-service'
 
 interface CorrelationResult {
@@ -78,10 +77,10 @@ export function GraphAnalytics() {
       <div className="text-center space-y-2">
         <h2 className="text-2xl font-bold flex items-center justify-center gap-2">
           <Brain className="h-6 w-6" />
-          Nova's Graph Analytics
+          🐙 Pattern Detective
         </h2>
         <p className="text-muted-foreground">
-          Discover patterns and correlations in your medical data using Nova's brilliant SQLite graph overlay
+          Your symptoms leave clues. Let's find the connections your doctors might miss!
         </p>
       </div>
 
@@ -190,25 +189,10 @@ export function GraphAnalytics() {
         </div>
       )}
 
-      {/* Nova's Credit */}
-      <Card className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 border-purple-200 dark:border-purple-800">
-        <CardContent className="pt-6">
-          <div className="text-center space-y-2">
-            <div className="flex items-center justify-center gap-2">
-              <Zap className="h-5 w-5 text-purple-600" />
-              <span className="font-semibold text-purple-900 dark:text-purple-100">
-                Powered by Nova's SQLite Graph Overlay
-              </span>
-            </div>
-            <p className="text-sm text-purple-700 dark:text-purple-300">
-              "80-90% of SurrealDB power without the migration hell" - Nova (GPT-5)
-            </p>
-            <p className="text-xs text-purple-600 dark:text-purple-400">
-              Revolutionary graph capabilities built on reliable SQLite foundation
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Pro tip */}
+      <div className="text-center text-sm text-muted-foreground">
+        <p>🔮 The more you track, the smarter the pattern detection gets!</p>
+      </div>
     </div>
   )
 }

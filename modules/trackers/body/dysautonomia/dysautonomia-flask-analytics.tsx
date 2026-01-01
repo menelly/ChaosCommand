@@ -156,29 +156,136 @@ export default function DysautonomiaFlaskAnalytics({ entries, currentDate, loadA
         tags: entry.tags || []
       }))
 
-      console.log('🩺 Sending dysautonomia data to Flask:', flaskEntries.length, 'entries')
+      console.log('🩺 Analyzing dysautonomia data locally:', flaskEntries.length, 'entries')
 
-      const response = await fetch('http://localhost:5000/api/analytics/dysautonomia', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          entries: flaskEntries,
-          dateRange: parseInt(dateRange)
+      // Calculate heart rate analytics
+      const hrEntries = flaskEntries.filter(e => e.restingHeartRate && e.standingHeartRate)
+      const avgRestingHR = hrEntries.length > 0
+        ? parseFloat((hrEntries.reduce((sum, e) => sum + (e.restingHeartRate || 0), 0) / hrEntries.length).toFixed(1))
+        : 0
+      const avgStandingHR = hrEntries.length > 0
+        ? parseFloat((hrEntries.reduce((sum, e) => sum + (e.standingHeartRate || 0), 0) / hrEntries.length).toFixed(1))
+        : 0
+      const hrIncreases = hrEntries.map(e => (e.standingHeartRate || 0) - (e.restingHeartRate || 0))
+      const avgHRIncrease = hrIncreases.length > 0
+        ? parseFloat((hrIncreases.reduce((a, b) => a + b, 0) / hrIncreases.length).toFixed(1))
+        : 0
+      const potsEpisodes = hrIncreases.filter(inc => inc >= 30).length
+      const potsPercentage = hrEntries.length > 0
+        ? parseFloat(((potsEpisodes / hrEntries.length) * 100).toFixed(1))
+        : 0
+      const maxHRIncrease = hrIncreases.length > 0 ? Math.max(...hrIncreases) : 0
+
+      // Calculate SpO2 analytics
+      const spo2Entries = flaskEntries.filter(e => e.restingSpO2 || e.lowestSpO2)
+      const spo2Values = spo2Entries.map(e => e.lowestSpO2 || e.restingSpO2 || 0).filter(v => v > 0)
+      const avgSpO2 = spo2Values.length > 0
+        ? parseFloat((spo2Values.reduce((a, b) => a + b, 0) / spo2Values.length).toFixed(1))
+        : 0
+      const minSpO2 = spo2Values.length > 0 ? Math.min(...spo2Values) : 0
+      const maxSpO2 = spo2Values.length > 0 ? Math.max(...spo2Values) : 0
+      const mildDesat = spo2Values.filter(v => v >= 90 && v <= 94).length
+      const moderateDesat = spo2Values.filter(v => v >= 85 && v < 90).length
+      const severeDesat = spo2Values.filter(v => v < 85).length
+
+      // Calculate episode types
+      const episodeTypes: Record<string, number> = {}
+      flaskEntries.forEach(entry => {
+        const type = entry.episodeType || 'general'
+        episodeTypes[type] = (episodeTypes[type] || 0) + 1
+      })
+
+      // Calculate triggers
+      const triggerCounts: Record<string, number> = {}
+      flaskEntries.forEach(entry => {
+        (entry.triggers || []).forEach((trigger: string) => {
+          triggerCounts[trigger] = (triggerCounts[trigger] || 0) + 1
         })
       })
 
-      if (!response.ok) {
-        throw new Error(`Flask analytics failed: ${response.status}`)
+      // Calculate interventions
+      const interventionCounts: Record<string, number> = {}
+      flaskEntries.forEach(entry => {
+        (entry.interventions || []).forEach((intervention: string) => {
+          interventionCounts[intervention] = (interventionCounts[intervention] || 0) + 1
+        })
+      })
+
+      // Calculate severity distribution
+      const severityDist: Record<string, number> = {}
+      flaskEntries.forEach(entry => {
+        const sev = entry.severity || 'unknown'
+        severityDist[sev] = (severityDist[sev] || 0) + 1
+      })
+
+      const days = parseInt(dateRange)
+      const data: FlaskAnalyticsData = {
+        period: {
+          start: flaskEntries.length > 0 ? flaskEntries[0].date : '',
+          end: flaskEntries.length > 0 ? flaskEntries[flaskEntries.length - 1].date : '',
+          days: days
+        },
+        total_episodes: flaskEntries.length,
+        heart_rate: {
+          has_data: hrEntries.length > 0,
+          total_readings: hrEntries.length,
+          avg_resting_hr: avgRestingHR,
+          avg_standing_hr: avgStandingHR,
+          avg_hr_increase: avgHRIncrease,
+          pots_episodes: potsEpisodes,
+          pots_percentage: potsPercentage,
+          max_hr_increase: maxHRIncrease
+        },
+        blood_pressure: {
+          has_data: false // TODO: add BP analysis if needed
+        },
+        spo2: {
+          has_data: spo2Entries.length > 0,
+          total_readings: spo2Entries.length,
+          avg_spo2: avgSpO2,
+          min_spo2: minSpO2,
+          max_spo2: maxSpO2,
+          desaturation_episodes: {
+            mild: mildDesat,
+            moderate: moderateDesat,
+            severe: severeDesat
+          },
+          normal_readings: spo2Values.filter(v => v >= 95).length
+        },
+        episodes: {
+          episode_types: episodeTypes,
+          total_episodes: flaskEntries.length,
+          last_30_days: flaskEntries.length, // Already filtered by dateRange
+          last_7_days: flaskEntries.filter(e => {
+            const entryDate = new Date(e.date)
+            const weekAgo = new Date()
+            weekAgo.setDate(weekAgo.getDate() - 7)
+            return entryDate >= weekAgo
+          }).length,
+          weekly_average: parseFloat(((flaskEntries.length / days) * 7).toFixed(1)),
+          daily_average: parseFloat((flaskEntries.length / days).toFixed(1))
+        },
+        triggers: {
+          trigger_counts: triggerCounts
+        },
+        interventions: {
+          intervention_counts: interventionCounts
+        },
+        severity: {
+          severity_distribution: severityDist
+        },
+        insights: flaskEntries.length > 0
+          ? [
+              `You logged ${flaskEntries.length} dysautonomia episodes in the last ${days} days.`,
+              potsPercentage >= 50 ? `⚠️ ${potsPercentage}% of readings show POTS criteria (HR increase ≥30 bpm).` : '',
+              minSpO2 > 0 && minSpO2 < 90 ? `⚠️ Lowest SpO2 was ${minSpO2}% - discuss with your doctor.` : '',
+              avgHRIncrease >= 30 ? `Your average HR increase on standing is ${avgHRIncrease} bpm.` : ''
+            ].filter(Boolean)
+          : [],
+        charts: {}
       }
 
-      const data = await response.json()
-      console.log('🎯 Flask dysautonomia analytics response:', data)
-
-      if (data.error) {
-        throw new Error(data.error)
-      }
+      console.log('🎯 Local dysautonomia analytics generated:', data)
 
       setAnalyticsData(data)
     } catch (err) {

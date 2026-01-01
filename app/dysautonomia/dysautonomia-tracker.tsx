@@ -225,11 +225,11 @@ export default function DysautonomiaTracker() {
 
   // Navigation functions
   const goToPreviousDay = () => {
-    setSelectedDate(prev => format(subDays(new Date(prev), 1), 'yyyy-MM-dd'))
+    setSelectedDate(prev => format(subDays(new Date(prev + 'T12:00:00'), 1), 'yyyy-MM-dd'))
   }
 
   const goToNextDay = () => {
-    setSelectedDate(prev => format(addDays(new Date(prev), 1), 'yyyy-MM-dd'))
+    setSelectedDate(prev => format(addDays(new Date(prev + 'T12:00:00'), 1), 'yyyy-MM-dd'))
   }
 
   const goToToday = () => {
@@ -239,20 +239,7 @@ export default function DysautonomiaTracker() {
   const todaysEntries = entries.filter(entry => entry.date === selectedDate)
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      {/* Back Button */}
-      <div className="mb-4">
-        <Button
-          onClick={() => router.push('/physical-health')}
-          variant="outline"
-          size="sm"
-          className="text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4 mr-1" />
-          Physical Health
-        </Button>
-      </div>
-
+    <div className="max-w-4xl mx-auto space-y-6 pt-6">
       {/* Centered Header */}
       <div className="text-center mb-6">
         <h1 className="text-3xl font-bold text-foreground flex items-center justify-center gap-2">
@@ -292,7 +279,7 @@ export default function DysautonomiaTracker() {
                 </Button>
                 <div className="text-center">
                   <span className="text-lg font-medium">
-                    {format(new Date(selectedDate), 'EEEE, MMMM d, yyyy')}
+                    {format(new Date(selectedDate + 'T12:00:00'), 'EEEE, MMMM d, yyyy')}
                   </span>
                   {selectedDate !== format(new Date(), 'yyyy-MM-dd') && (
                     <Button variant="link" size="sm" onClick={goToToday} className="ml-2">
@@ -423,6 +410,14 @@ export default function DysautonomiaTracker() {
           />
         </TabsContent>
       </Tabs>
+
+      {/* Back to Body Button */}
+      <div className="mt-6 flex justify-center">
+        <Button variant="outline" onClick={() => router.push('/body')}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Body
+        </Button>
+      </div>
 
       {/* Episode Modals */}
       <PotsEpisodeModal

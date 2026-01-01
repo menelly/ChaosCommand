@@ -35,6 +35,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { toast } from "@/hooks/use-toast"
 import { useDailyData, formatDateForStorage, CATEGORIES } from '@/lib/database'
 import { format, addDays, subDays } from 'date-fns'
+import { useRouter } from 'next/navigation'
 import {
   Calendar as CalendarIcon,
   ChevronLeft,
@@ -44,7 +45,8 @@ import {
   Moon,
   Sparkles,
   History,
-  TrendingUp
+  TrendingUp,
+  ArrowLeft
 } from 'lucide-react'
 import { cn } from "@/lib/utils"
 
@@ -110,6 +112,7 @@ export const FERTILITY_SYMPTOM_OPTIONS = [
 ]
 
 export default function ReproductiveHealthTracker() {
+  const router = useRouter()
   const { saveData, getSpecificData, deleteData, isLoading } = useDailyData()
   const [currentDate, setCurrentDate] = useState(() => {
     const today = new Date()
@@ -227,8 +230,11 @@ export default function ReproductiveHealthTracker() {
   }, [getSpecificData])
 
   useEffect(() => {
-    const savedFertilityTracking = localStorage.getItem('fertility-tracking-enabled')
-    setFertilityTrackingEnabled(savedFertilityTracking !== 'false') // Default to true
+    // Check the body page's hide fertility setting (inverted - if hide=true, enabled=false)
+    const hideFertility = localStorage.getItem('chaos-hide-fertility-features')
+    if (hideFertility) {
+      setFertilityTrackingEnabled(!JSON.parse(hideFertility))
+    }
   }, [])
 
   // Load data for current date
@@ -236,6 +242,16 @@ export default function ReproductiveHealthTracker() {
     loadEntryForDate(currentDate)
     loadAllEntries()
   }, [currentDate, loadEntryForDate, loadAllEntries])
+
+  // Find the most recent LMP date from entries
+  const currentLmpDate = React.useMemo(() => {
+    // First check if current form has LMP set
+    if (formData.lmpDate) return formData.lmpDate
+
+    // Otherwise find most recent entry with LMP
+    const entryWithLmp = entries.find(e => e.lmpDate)
+    return entryWithLmp?.lmpDate || null
+  }, [entries, formData.lmpDate])
 
   const handleSave = async () => {
     try {
@@ -321,7 +337,9 @@ export default function ReproductiveHealthTracker() {
                 <Sparkles className="h-6 w-6 text-slate-500" />
               </CardTitle>
               <CardDescription className="mt-2">
-                Track your menstrual cycle, ovulation signs, and reproductive wellness
+                {fertilityTrackingEnabled
+                  ? "Track your menstrual cycle, ovulation signs, and reproductive wellness"
+                  : "Track your menstrual cycle and reproductive wellness"}
               </CardDescription>
             </div>
 
@@ -425,7 +443,7 @@ export default function ReproductiveHealthTracker() {
         <TabsContent value="chart" className="mt-6">
           <div className="space-y-6">
             {/* Ovulation Prediction - ON TOP like you said! */}
-            <OvulationPredictionCard entries={entries} />
+            <OvulationPredictionCard entries={entries} lmpDate={currentLmpDate} />
 
             {/* BBT Chart */}
             <BBTChart entries={entries} />
@@ -433,6 +451,36 @@ export default function ReproductiveHealthTracker() {
         </TabsContent>
 
         <TabsContent value="calendar" className="mt-6">
+          {/* Cycle Day Counter - Always visible */}
+          {currentLmpDate && (
+            <Card className="mb-4 border-primary/50">
+              <CardContent className="py-4">
+                <div className="flex items-center justify-center gap-4">
+                  <div className="text-center">
+                    <div className="text-4xl font-bold text-primary">
+                      Day {Math.max(1, Math.floor((new Date().getTime() - new Date(currentLmpDate + 'T12:00:00').getTime()) / (1000 * 60 * 60 * 24)) + 1)}
+                    </div>
+                    <div className="text-sm text-muted-foreground mt-1">
+                      of your cycle
+                    </div>
+                  </div>
+                  <div className="text-muted-foreground text-sm">
+                    <div>LMP: {format(new Date(currentLmpDate + 'T12:00:00'), 'MMM d, yyyy')}</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          {!currentLmpDate && (
+            <Card className="mb-4 border-dashed">
+              <CardContent className="py-4 text-center text-muted-foreground">
+                <div className="text-sm">
+                  💡 Set your Last Menstrual Period date in the Menstrual tab to see your cycle day
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -440,7 +488,9 @@ export default function ReproductiveHealthTracker() {
                 Cycle Calendar View
               </CardTitle>
               <CardDescription>
-                Visual calendar showing your menstrual cycle, fertile days, and symptoms
+                {fertilityTrackingEnabled
+                  ? "Visual calendar showing your menstrual cycle, fertile days, and symptoms"
+                  : "Visual calendar showing your menstrual cycle and symptoms"}
               </CardDescription>
             </CardHeader>
             <CardContent className="p-4">
@@ -450,9 +500,11 @@ export default function ReproductiveHealthTracker() {
                   onSelect={(date: Date) => setCurrentDate(date)}
                   className="w-full mx-auto rounded-md border"
                   modifiers={{
-                    menstrual: entries.filter(e => e.flow && e.flow !== 'none').map(e => new Date(e.date)),
-                    fertile: entries.filter(e => e.cervicalFluid && ['egg-white', 'creamy'].includes(e.cervicalFluid)).map(e => new Date(e.date)),
-                    ovulation: entries.filter(e => e.opk === 'peak').map(e => new Date(e.date))
+                    menstrual: entries.filter(e => e.flow && e.flow !== 'none').map(e => new Date(e.date + 'T12:00:00')),
+                    ...(fertilityTrackingEnabled ? {
+                      fertile: entries.filter(e => e.cervicalFluid && ['egg-white', 'creamy'].includes(e.cervicalFluid)).map(e => new Date(e.date + 'T12:00:00')),
+                      ovulation: entries.filter(e => e.opk === 'peak').map(e => new Date(e.date + 'T12:00:00'))
+                    } : {})
                   }}
                 />
 
@@ -462,14 +514,18 @@ export default function ReproductiveHealthTracker() {
                     <div className="w-4 h-4 bg-red-500 rounded"></div>
                     <span>Menstrual Days</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-green-500 rounded"></div>
-                    <span>Fertile Days</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-purple-500 rounded"></div>
-                    <span>Ovulation</span>
-                  </div>
+                  {fertilityTrackingEnabled && (
+                    <>
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 bg-green-500 rounded"></div>
+                        <span>Fertile Days</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 bg-purple-500 rounded"></div>
+                        <span>Ovulation</span>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -490,11 +546,19 @@ export default function ReproductiveHealthTracker() {
         <TabsContent value="analytics" className="mt-6">
           <CycleAnalytics
             entries={entries}
-            lmpDate={null} // TODO: Get from user settings
+            lmpDate={currentLmpDate}
             averageCycleLength={28}
           />
         </TabsContent>
       </Tabs>
+
+      {/* Back to Body Button */}
+      <div className="mt-6 flex justify-center">
+        <Button variant="outline" onClick={() => router.push('/body')}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Body
+        </Button>
+      </div>
     </div>
   )
 }

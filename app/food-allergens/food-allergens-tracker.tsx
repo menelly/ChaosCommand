@@ -34,6 +34,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { toast } from "@/hooks/use-toast"
 import { useDailyData, formatDateForStorage, CATEGORIES } from '@/lib/database'
 import { format, addDays, subDays } from 'date-fns'
+import { useRouter } from 'next/navigation'
+import { ArrowLeft } from 'lucide-react'
 import {
   Calendar as CalendarIcon,
   ChevronLeft,
@@ -57,6 +59,7 @@ import { useGoblinMode } from "@/lib/goblin-mode-context"
 import { FoodAllergensForm } from "./food-allergens-form"
 import { FoodAllergensHistory } from "./food-allergens-history"
 import { AllergenManagement } from "./allergen-management"
+import FoodAllergensAnalytics from "./food-allergens-analytics"
 
 // 🧙‍♂️ Food Allergen Management Interface
 export interface KnownAllergen {
@@ -143,6 +146,7 @@ export const EXPOSURE_SOURCES = [
 ]
 
 export function FoodAllergensTracker() {
+  const router = useRouter()
   const { goblinMode } = useGoblinMode()
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [activeTab, setActiveTab] = useState("allergens")
@@ -208,6 +212,38 @@ export function FoodAllergensTracker() {
         variant: "destructive"
       })
     }
+  }
+
+  // Load all entries for analytics across date range
+  const loadAllEntries = async (days: number = 90): Promise<FoodAllergenEntry[]> => {
+    const allEntries: FoodAllergenEntry[] = []
+    const today = new Date()
+
+    for (let i = 0; i < days; i++) {
+      const date = subDays(today, i)
+      const dateKeyForDay = formatDateForStorage(new Date(format(date, 'yyyy-MM-dd') + 'T12:00:00'))
+
+      try {
+        const data = await getSpecificData(dateKeyForDay, CATEGORIES.TRACKER, 'food-allergens')
+        if (data?.content) {
+          let parsed: any
+          if (typeof data.content === 'string') {
+            parsed = JSON.parse(data.content)
+          } else {
+            parsed = data.content
+          }
+
+          if (parsed?.entries) {
+            allEntries.push(...parsed.entries)
+          }
+        }
+      } catch (error) {
+        // Skip days with errors
+        console.error(`Error loading entries for ${dateKeyForDay}:`, error)
+      }
+    }
+
+    return allEntries
   }
 
   const handleAddEntry = async (entry: Omit<FoodAllergenEntry, 'id' | 'timestamp'>) => {
@@ -506,20 +542,21 @@ export function FoodAllergensTracker() {
 
         {/* Analytics Tab */}
         <TabsContent value="analytics">
-          <Card>
-            <CardContent className="text-center py-12">
-              <BarChart3 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Flask Analytics Coming Soon</h3>
-              <p className="text-muted-foreground">
-                Advanced allergen pattern analysis with mathematical insights will be available here.
-              </p>
-              <p className="text-sm text-muted-foreground mt-2">
-                🧮 Mathematical engines for allergen correlation analysis in development
-              </p>
-            </CardContent>
-          </Card>
+          <FoodAllergensAnalytics
+            entries={todayEntries}
+            currentDate={dateKey}
+            loadAllEntries={loadAllEntries}
+          />
         </TabsContent>
       </Tabs>
+
+      {/* Back to Body Button */}
+      <div className="mt-6 flex justify-center">
+        <Button variant="outline" onClick={() => router.push('/body')}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Body
+        </Button>
+      </div>
 
       {/* Add Entry Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>

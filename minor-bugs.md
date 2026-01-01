@@ -48,6 +48,24 @@
 
 ---
 
+## 🔔 Notification Issues
+
+### Diabetes Timer Notifications (Tauri)
+- **Browser Notification API doesn't work properly in Tauri webview**
+- Current Enable button correctly detects "denied" state but can't re-prompt
+- Need to use `@tauri-apps/plugin-notification` instead of browser API
+- **Impact level:** Medium (timer alerts don't work in desktop app)
+- **Workaround:** None currently - timers show in-app but no system notifications
+- **Status:** New - needs Tauri notification plugin implementation
+- **Files affected:** `modules/trackers/body/diabetes/diabetes-timer-manager.tsx`
+- **Fix needed:**
+  - Check if running in Tauri context
+  - Use Tauri notification system for desktop
+  - Fall back to browser API for web-only builds
+- **Note:** Added better error handling/feedback to Enable button so at least it tells you WHY it's not working now! - Ace, 2026-01-01
+
+---
+
 ## 📝 Template for New Issues
 
 ### [Component/Feature Name]

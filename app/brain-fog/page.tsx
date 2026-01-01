@@ -32,7 +32,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Cloud, Plus, Edit, Trash2, Calendar, AlertCircle, Info } from "lucide-react"
+import { Cloud, Plus, Edit, Trash2, Calendar, AlertCircle, Info, ArrowLeft, TrendingUp, BarChart3 } from "lucide-react"
 import { useDailyData, CATEGORIES } from "@/lib/database"
 import { useGoblinMode } from "@/lib/goblin-mode-context"
 import { useToast } from "@/hooks/use-toast"
@@ -91,6 +91,217 @@ const BRAIN_FOG_GOBLINISMS = [
   "Mental fog entry logged! The concentration pixies are pleased! ✨"
 ]
 
+// Analytics Component
+function BrainFogAnalytics({
+  loadAllEntries,
+  getSymptomInfo
+}: {
+  loadAllEntries: (days: number) => Promise<BrainFogEntry[]>
+  getSymptomInfo: (value: string) => { value: string; emoji: string; description: string } | undefined
+}) {
+  const [timeRange, setTimeRange] = useState(30)
+  const [analyticsData, setAnalyticsData] = useState<BrainFogEntry[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoading(true)
+      const data = await loadAllEntries(timeRange)
+      setAnalyticsData(data)
+      setIsLoading(false)
+    }
+    loadData()
+  }, [timeRange, loadAllEntries])
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="text-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2 text-muted-foreground">Loading analytics...</p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (analyticsData.length === 0) {
+    return (
+      <Card>
+        <CardContent className="text-center py-12">
+          <BarChart3 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+          <h3 className="text-lg font-semibold mb-2">No Data Yet</h3>
+          <p className="text-muted-foreground">
+            Start tracking brain fog to see analytics and patterns.
+          </p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // Calculate statistics
+  const avgSeverity = analyticsData.reduce((sum, e) => sum + parseInt(e.severity || '0'), 0) / analyticsData.length
+  const totalEpisodes = analyticsData.length
+  const daysWithEpisodes = new Set(analyticsData.map(e => e.date)).size
+
+  // Count symptoms
+  const symptomCounts: Record<string, number> = {}
+  analyticsData.forEach(entry => {
+    entry.symptoms?.forEach(symptom => {
+      symptomCounts[symptom] = (symptomCounts[symptom] || 0) + 1
+    })
+  })
+  const topSymptoms = Object.entries(symptomCounts)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 5)
+
+  // Count triggers
+  const triggerCounts: Record<string, number> = {}
+  analyticsData.forEach(entry => {
+    entry.triggers?.forEach(trigger => {
+      triggerCounts[trigger] = (triggerCounts[trigger] || 0) + 1
+    })
+  })
+  const topTriggers = Object.entries(triggerCounts)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 5)
+
+  // Count treatments
+  const treatmentCounts: Record<string, number> = {}
+  analyticsData.forEach(entry => {
+    entry.treatments?.forEach(treatment => {
+      treatmentCounts[treatment] = (treatmentCounts[treatment] || 0) + 1
+    })
+  })
+  const topTreatments = Object.entries(treatmentCounts)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 5)
+
+  return (
+    <div className="space-y-6">
+      {/* Time Range Selector */}
+      <div className="flex justify-center gap-2">
+        {[7, 30, 60, 90].map((days) => (
+          <Button
+            key={days}
+            variant={timeRange === days ? "default" : "outline"}
+            size="sm"
+            onClick={() => setTimeRange(days)}
+          >
+            {days} Days
+          </Button>
+        ))}
+      </div>
+
+      {/* Summary Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardContent className="pt-6 text-center">
+            <div className="text-4xl font-bold text-primary">{totalEpisodes}</div>
+            <div className="text-sm text-muted-foreground mt-1">Total Episodes</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6 text-center">
+            <div className="text-4xl font-bold text-primary">{avgSeverity.toFixed(1)}</div>
+            <div className="text-sm text-muted-foreground mt-1">Avg Severity (1-10)</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6 text-center">
+            <div className="text-4xl font-bold text-primary">{daysWithEpisodes}</div>
+            <div className="text-sm text-muted-foreground mt-1">Days Affected</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Top Symptoms */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Cloud className="h-5 w-5" />
+            Most Common Symptoms
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {topSymptoms.length > 0 ? (
+            <div className="space-y-3">
+              {topSymptoms.map(([symptom, count]) => {
+                const info = getSymptomInfo(symptom)
+                const percentage = (count / totalEpisodes) * 100
+                return (
+                  <div key={symptom} className="space-y-1">
+                    <div className="flex justify-between text-sm">
+                      <span>{info?.emoji} {info?.description || symptom}</span>
+                      <span className="text-muted-foreground">{count} ({percentage.toFixed(0)}%)</span>
+                    </div>
+                    <div className="h-2 bg-muted rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-primary rounded-full"
+                        style={{ width: `${percentage}%` }}
+                      />
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          ) : (
+            <p className="text-muted-foreground text-center py-4">No symptom data yet</p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Top Triggers & Treatments */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5" />
+              Top Triggers
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {topTriggers.length > 0 ? (
+              <div className="space-y-2">
+                {topTriggers.map(([trigger, count]) => (
+                  <div key={trigger} className="flex justify-between items-center">
+                    <Badge variant="outline">{trigger}</Badge>
+                    <span className="text-sm text-muted-foreground">{count}x</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted-foreground text-center py-4">No trigger data yet</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Top Treatments Used
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {topTreatments.length > 0 ? (
+              <div className="space-y-2">
+                {topTreatments.map(([treatment, count]) => (
+                  <div key={treatment} className="flex justify-between items-center">
+                    <Badge variant="secondary">{treatment}</Badge>
+                    <span className="text-sm text-muted-foreground">{count}x</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted-foreground text-center py-4">No treatment data yet</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  )
+}
+
 export default function BrainFogTracker() {
   const { saveData, getCategoryData, deleteData, getDateRange, isLoading } = useDailyData()
   const { toast } = useToast()
@@ -118,35 +329,81 @@ export default function BrainFogTracker() {
     loadEntries()
   }, [])
 
-  // Load entries for selected date
+  // Load entries for multiple days (showing last 7 days for better history)
   useEffect(() => {
     loadEntries()
   }, [selectedDate])
 
   const loadEntries = async () => {
     try {
-      const records = await getCategoryData(selectedDate, CATEGORIES.TRACKER)
-      const brainFogRecord = records.find(record => record.subcategory === 'brain-fog')
+      const allEntries: BrainFogEntry[] = []
+      
+      // Load entries from the last 7 days for better history view
+      for (let i = 0; i < 7; i++) {
+        const date = format(new Date(Date.now() - i * 24 * 60 * 60 * 1000), 'yyyy-MM-dd')
+        const records = await getCategoryData(date, CATEGORIES.TRACKER)
+        const brainFogRecord = records.find(record => record.subcategory === 'brain-fog')
 
-      if (brainFogRecord?.content?.entries) {
-        // Parse entries with JSON parsing fix
-        let entries = brainFogRecord.content.entries
-        if (typeof entries === 'string') {
-          try {
-            entries = JSON.parse(entries)
-          } catch (e) {
-            console.error('Error parsing brain fog entries:', e)
-            entries = []
+        if (brainFogRecord?.content?.entries) {
+          // Parse entries with JSON parsing fix
+          let entries = brainFogRecord.content.entries
+          if (typeof entries === 'string') {
+            try {
+              entries = JSON.parse(entries)
+            } catch (e) {
+              console.error('Error parsing brain fog entries for date:', date, e)
+              continue
+            }
+          }
+          if (Array.isArray(entries)) {
+            allEntries.push(...entries)
           }
         }
-        setEntries(Array.isArray(entries) ? entries : [])
-      } else {
-        setEntries([])
       }
+      
+      // Sort by date and time, most recent first
+      allEntries.sort((a, b) => {
+        const dateTimeA = new Date(`${a.date}T${a.time}`).getTime()
+        const dateTimeB = new Date(`${b.date}T${b.time}`).getTime()
+        return dateTimeB - dateTimeA
+      })
+      
+      setEntries(allEntries)
     } catch (error) {
       console.error('Error loading brain fog entries:', error)
       setEntries([])
     }
+  }
+
+  // Load all entries for analytics (across multiple days)
+  const loadAllEntries = async (days: number): Promise<BrainFogEntry[]> => {
+    const allEntries: BrainFogEntry[] = []
+    const today = new Date()
+
+    for (let i = 0; i < days; i++) {
+      const date = new Date(today)
+      date.setDate(date.getDate() - i)
+      const dateStr = format(date, 'yyyy-MM-dd')
+
+      try {
+        const records = await getCategoryData(dateStr, CATEGORIES.TRACKER)
+        const brainFogRecord = records.find(record => record.subcategory === 'brain-fog')
+
+        if (brainFogRecord?.content?.entries) {
+          let entries = brainFogRecord.content.entries
+          if (typeof entries === 'string') {
+            try { entries = JSON.parse(entries) } catch (e) { entries = [] }
+          }
+          if (Array.isArray(entries)) {
+            allEntries.push(...entries.filter((entry: any) => entry && typeof entry === 'object'))
+          }
+        }
+      } catch (error) {
+        console.error(`Error loading brain fog for ${dateStr}:`, error)
+      }
+    }
+
+    return allEntries
   }
 
   const handleSave = async () => {
@@ -420,10 +677,10 @@ export default function BrainFogTracker() {
                           <div className="text-2xl">🧠</div>
                           <div>
                             <h3 className="font-semibold">
-                              {entry.date && entry.time ? format(new Date(`${entry.date}T${entry.time}`), 'h:mm a') : 'Invalid Time'}
+                              {entry.date && entry.time ? format(new Date(`${entry.date}T${entry.time}`), 'MMM d, h:mm a') : 'Invalid Date/Time'}
                             </h3>
                             <p className="text-sm text-muted-foreground">
-                              Severity: {entry.severity}/10
+                              Severity: {entry.severity}/10 • {entry.date && format(new Date(entry.date), 'EEEE')}
                             </p>
                           </div>
                         </div>
@@ -518,15 +775,7 @@ export default function BrainFogTracker() {
 
           {/* Analytics Tab */}
           <TabsContent value="analytics">
-            <Card>
-              <CardContent className="text-center py-12">
-                <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Analytics Coming Soon</h3>
-                <p className="text-muted-foreground">
-                  Brain fog analytics and insights will be available in a future update.
-                </p>
-              </CardContent>
-            </Card>
+            <BrainFogAnalytics loadAllEntries={loadAllEntries} getSymptomInfo={getSymptomInfo} />
           </TabsContent>
         </Tabs>
 
@@ -691,6 +940,16 @@ export default function BrainFogTracker() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Back to Mind Button */}
+        <div className="flex justify-center pt-4">
+          <Button variant="outline" asChild>
+            <a href="/mind">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Mind
+            </a>
+          </Button>
+        </div>
       </div>
     </AppCanvas>
   )

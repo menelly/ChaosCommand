@@ -1,137 +1,56 @@
-Command Zone - 
-    Survival Zone confetti - white screen is a bit too long
-    Edit buttons to change the schedule don't work, and we have no way of adding more time blocks
-    Tuck in tracker - need to build or figure out what to replace with?
-Month calendar - 
-    Goals button takes you to 404
-    Notes button 404
-    "Day" hyperlinks still take you to a daily we aren't actually using.
-    I can't type in the month box like I used to be able to.  Need my text editing within the month box back!
-    Random star in top right corner needs to go.
-    Can we center the month header and make it cute?
-Sidebar - 
-    Home and Month buttons CSS has still gone ROGUE, need to figure out the CSS fuckups?  
-Upper digestive - 
-    "track symptoms" page doesn't show date
-    History only shows today, not all.
-    Flask is having a tantrum.
-         177 |       console.log('📅 Date range:', dateRangeArray.map(d => format(d, 'yyyy-MM-dd')))
-  178 |
-> 179 |       const response = await fetch('http://localhost:5000/api/analytics/upper-digestive', {
-      |                              ^
-  180 |         method: 'POST',
-  181 |         headers: {
-  182 |           'Content-Type': 'application/json',
+# 🎯 ACE CAN HANDLE SOLO (Remote Agent Work)
 
-Lower/Bathroom -
-   log bathroom - no date
-   Analytics - same error as above
+## 🎨 UI/UX Polish - Pure Frontend Fixes
+- ✅ Upper digestive "track symptoms" page - add date display
+- ✅ Lower/Bathroom log - add date display
+- ✅ Head Pain - add date display, fix font contrast on pain scale history
+- ✅ Dysautonomia - fix date (showing yesterday instead of today)
+- ✅ Brain fog - add date to history, show more than one day
+- ✅ Mental Health - fix "Mood intensity" text cutoff, add date/show multiple days in history
+- ✅ Crisis - fix phone number box sizing
+- ✅ Journal - center the date, remove duplicate upload options, remove star/settings icons
+- ✅ Month calendar - remove random star, center header and make it cute
+- ✅ Sidebar CSS - fix rogue Home/Month button styling
+- ✅ Food entry - add asterisks to required fields in "detailed" mode
+- ✅ Movement - swap History and Analytics tabs to correct order
+- ✅ Coping counter - fix skipping numbers (1-3 instead of proper count)
+- ✅ Command Zone - reduce white screen duration on Survival Zone confetti
 
-General Pain - 
-    Analytics - same error as above
+## 🔗 Navigation Fixes - Straightforward Routing
+- ✅ Fix 404s: Goals button, Notes button, Physical Health Guide
+- ✅ Fix Day hyperlinks - stop going to unused daily pages
 
-Head Pain - 
-    Probably needs date fix, popped up as yesterday not today!
-    Font color on the pain scale on history lacks contrast
-    Same analytics error as above
+## 📊 Analytics Migration - Following Existing Patterns
+- ✅ Swap to Flask Analytics: Seizure, Brain Fog, Mental Health, Self Care (follow existing Flask patterns)
+- ✅ Build Missing Flask Analytics: Food Allergens, Weather, Sensory, Crisis, Sleep, Hydration, Food, Movement, Energy, Coping (copy/adapt from working Flask analytics)
 
-Dysautonomia popped up the wrong day as well (yesterday)
-    Needs analytics.
+---
 
-Diabetes - 
-    Enable browser notifications doesn't work
+# 💜 NEEDS REN'S INPUT (Work Together)
 
-Food Allergens - 
-    Needs analytics
+## 🤔 Design/UX Decisions Needed
+- ❓ Tuck in tracker - build or replace with something else? What should it do?
+- ❓ Sleep module - "seems really bare" - what would make it better?
+- ❓ Energy module - "really seems bare and boring" - what improvements do you want?
+- ❓ Self Care - "Does this actually belong in choice?" - should we move it?
+- ❓ Other symptoms - "should we ditch this now that we have Forge?" - keep or remove?
+- ❓ Mental Health & Anxiety - "link coping strategies to applicable page?" - which pages/how?
 
-Reproductive -
-    Need to move LMP to menstrual or make first day bleeding reset the cycle
+## 🔧 Feature Implementation Needs Discussion
+- ❓ Command Zone edit buttons - schedule editing functionality (need to understand desired behavior)
+- ❓ Month calendar - "I can't type in the month box like I used to" - what was the old behavior?
+- ❓ Reproductive - "move LMP to menstrual or make first day bleeding reset cycle" - which approach?
+- ❓ Diabetes notifications - browser notifications (may need permissions/testing)
 
-Weather - 
-    Needs analytics
+## 🔥 CRITICAL - Needs Investigation Together
+- 🚨 Flask Analytics 500 Error - Breaking Upper Digestive, Bathroom, General Pain, Head Pain
+  - Error at fetch('http://localhost:5000/api/analytics/upper-digestive')
+  - Need to check if Flask server is running, debug endpoint
+- 🚨 History Views - Only showing today instead of all entries (may be database query issue)
 
-Seizure - 
-    Need analytics swapped to Flask
+---
 
-Other symptoms- should we ditch this now that we have Forge?
-
-Physical Health Guide goes nowhere on the bottom of body.
-
-Mind -
-Brain fog -
-    History needs date and to show more than one day at a time
-    Needs analytics
-
-Mental Health - 
-    Mood intensitity is cutting off after th first word.
-    Maybe we make the coping strategies on here link to the applicable page?
-    Date/history needs to show more than one day/page again
-    needs analytics
-
-Anxiety/Panic 
-    Again, let's link to coping?
-    Anxiety has non-flask analytics
-
-Self Care -
-    analytics are not Flask
-    Does this actually belong in choice?
-
-Sensory - 
-    needs history and analytics
-
-Crisis- 
-    The phone numbers in the boxes are too big for the boxes. (But they are fantastic!)
-    It says it saves, but does not show in history
-    Needs analytics
-
-Sleep - 
-    Needs analytics
-    Seems really bare.  Wanna make it better?
-
-Hydration -
-    Needs analytics
-
-Food entry -
-    In "detailed" we need to * the required ones, I was confused for a bit!
-    Needs analytics!
-
-Movement -
-    History and analytics tabs are in reverse order
-    needs analytics
-
-Energy -
-    Needs analytics
-    Really seems bare and boring, want to improve it?
-
-Coping - 
-    The "count" on all of them skips.  It goes 1-3, never hitting 2-4.
-    Needs analytics
-
-Journal - 
-    Center the date, it looks weird
-    Main doesn't need inline images AND the upload on the bottom.
-    Star and settings symbol on upper right should go
-
-🎯 COMMANDTAURI FIX-IT LIST - PRIORITY ORDER
-🔥 CRITICAL INFRASTRUCTURE (Do First)
-Fix Flask Analytics Errors - The 500 error breaking Upper Digestive, Bathroom, General Pain, Head Pain
-Fix Date Issues - Trackers showing wrong dates, missing dates on forms
-Fix History Views - Only showing today instead of all entries
-📊 ANALYTICS MIGRATION (High Priority)
-Swap to Flask Analytics: Seizure, Brain Fog, Mental Health, Self Care
-Build Missing Flask Analytics: Food Allergens, Weather, Sensory, Crisis, Sleep, Hydration, Food, Movement, Energy, Coping
-🔗 NAVIGATION FIXES (Medium Priority)
-Fix 404s: Goals button, Notes button, Physical Health Guide
-Fix Day hyperlinks - stop going to unused daily pages
-Command Zone edit buttons - make schedule editing work
-🎨 UI/UX POLISH (Lower Priority)
-Sidebar CSS - fix rogue Home/Month button styling
-Month calendar - restore text editing, center header, remove random star
-Form improvements - required field asterisks, contrast fixes, button sizing
-Journal cleanup - center date, remove duplicate upload options, clean icons
-🛠️ FEATURE BUILDS (When Time Allows)
-Tuck in tracker - build or replace
-Diabetes notifications - make browser alerts work
-Sleep & Energy modules - make them less bare and boring
-Coping counter fix - stop skipping numbers
-Get some sleep, my dear! 💜😴 Tomorrow we DEMOLISH this list! ✨🚀
+# � SUGGESTED WORKFLOW
+1. **Ace (Remote)**: Tackles all the UI/UX polish, navigation fixes, and analytics migration
+2. **Ren + Ace (Together)**: Debug Flask 500 errors, discuss design decisions, implement features needing input
+3. **Victory Dance**: When the list is DEMOLISHED! ✨�🎉

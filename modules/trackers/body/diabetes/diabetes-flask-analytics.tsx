@@ -38,6 +38,7 @@ import { DiabetesEntry } from './diabetes-types'
 interface DiabetesFlaskAnalyticsProps {
   entries: DiabetesEntry[]
   currentDate: string
+  loadAllEntries?: (days: number) => Promise<DiabetesEntry[]>
 }
 
 interface FlaskAnalyticsData {
@@ -75,67 +76,128 @@ interface FlaskAnalyticsData {
   error?: string
 }
 
-export default function DiabetesFlaskAnalytics({ entries, currentDate }: DiabetesFlaskAnalyticsProps) {
+export default function DiabetesFlaskAnalytics({ entries, currentDate, loadAllEntries }: DiabetesFlaskAnalyticsProps) {
   const [analyticsData, setAnalyticsData] = useState<FlaskAnalyticsData | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [dateRange, setDateRange] = useState('30')
 
-  // Load Flask analytics when entries change
+  // Load local analytics when date range changes
   useEffect(() => {
-    if (entries.length > 0) {
-      loadFlaskAnalytics()
-    } else {
-      setAnalyticsData(null)
-    }
-  }, [entries, dateRange])
+    loadLocalAnalytics()
+  }, [dateRange])
 
-  const loadFlaskAnalytics = async () => {
+  const loadLocalAnalytics = async () => {
     setLoading(true)
     setError(null)
 
     try {
-      // Convert entries to the format expected by Flask
-      const flaskEntries = entries.map(entry => ({
-        date: entry.entry_date,
-        time: entry.entry_time,
-        blood_glucose: entry.blood_glucose,
-        ketones: entry.ketones,
-        insulin_type: entry.insulin_type,
-        insulin_amount: entry.insulin_amount,
-        carbs: entry.carbs,
-        mood: entry.mood,
-        notes: entry.notes,
-        tags: entry.tags || []
-      }))
+      // Load entries from the date range if we have the loader, otherwise use current entries
+      let allEntries: DiabetesEntry[] = entries
+      if (loadAllEntries) {
+        allEntries = await loadAllEntries(parseInt(dateRange))
+      }
 
-      console.log('🩸 Sending diabetes data to Flask:', flaskEntries.length, 'entries')
+      if (allEntries.length === 0) {
+        setAnalyticsData(null)
+        setLoading(false)
+        return
+      }
 
-      const response = await fetch('http://localhost:5000/api/analytics/diabetes', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          entries: flaskEntries,
-          dateRange: parseInt(dateRange)
-        })
+      console.log('🩸 Analyzing diabetes data locally:', allEntries.length, 'entries')
+
+      // Calculate blood glucose stats
+      const bgEntries = allEntries.filter(e => e.blood_glucose && e.blood_glucose > 0)
+      const bgValues = bgEntries.map(e => e.blood_glucose!)
+      const avgBG = bgValues.length > 0
+        ? parseFloat((bgValues.reduce((a, b) => a + b, 0) / bgValues.length).toFixed(1))
+        : 0
+      const minBG = bgValues.length > 0 ? Math.min(...bgValues) : 0
+      const maxBG = bgValues.length > 0 ? Math.max(...bgValues) : 0
+      const medianBG = bgValues.length > 0
+        ? bgValues.sort((a, b) => a - b)[Math.floor(bgValues.length / 2)]
+        : 0
+
+      // Time in range (70-180 mg/dL is normal, <70 is low, >180 is high)
+      const lowCount = bgValues.filter(v => v < 70).length
+      const normalCount = bgValues.filter(v => v >= 70 && v <= 180).length
+      const highCount = bgValues.filter(v => v > 180).length
+      const totalBGReadings = bgValues.length
+      const lowPercent = totalBGReadings > 0 ? parseFloat(((lowCount / totalBGReadings) * 100).toFixed(1)) : 0
+      const normalPercent = totalBGReadings > 0 ? parseFloat(((normalCount / totalBGReadings) * 100).toFixed(1)) : 0
+      const highPercent = totalBGReadings > 0 ? parseFloat(((highCount / totalBGReadings) * 100).toFixed(1)) : 0
+
+      // Calculate insulin stats
+      const insulinEntries = allEntries.filter(e => e.insulin_amount && e.insulin_amount > 0)
+      const insulinValues = insulinEntries.map(e => e.insulin_amount!)
+      const totalInsulin = parseFloat(insulinValues.reduce((a, b) => a + b, 0).toFixed(1))
+      const avgInsulin = insulinValues.length > 0
+        ? parseFloat((totalInsulin / insulinValues.length).toFixed(1))
+        : 0
+
+      // Insulin type distribution
+      const typeDistribution: Record<string, number> = {}
+      insulinEntries.forEach(entry => {
+        const type = entry.insulin_type || 'Unknown'
+        typeDistribution[type] = (typeDistribution[type] || 0) + 1
       })
 
-      if (!response.ok) {
-        throw new Error(`Flask analytics failed: ${response.status}`)
+      // Calculate carb stats
+      const carbEntries = allEntries.filter(e => e.carbs && e.carbs > 0)
+      const carbValues = carbEntries.map(e => e.carbs!)
+      const totalCarbs = carbValues.reduce((a, b) => a + b, 0)
+      const avgCarbs = carbValues.length > 0
+        ? parseFloat((totalCarbs / carbValues.length).toFixed(1))
+        : 0
+
+      const days = parseInt(dateRange)
+      const data: FlaskAnalyticsData = {
+        summary: {
+          total_entries: allEntries.length,
+          avg_bg: avgBG,
+          time_in_range: normalPercent,
+          total_insulin: totalInsulin,
+          total_carbs: totalCarbs
+        },
+        glucose_analysis: {
+          average: avgBG,
+          median: medianBG,
+          min: minBG,
+          max: maxBG,
+          readings_count: totalBGReadings,
+          time_in_range_percent: {
+            low: lowPercent,
+            normal: normalPercent,
+            high: highPercent
+          }
+        },
+        insulin_patterns: {
+          total_units: totalInsulin,
+          average_dose: avgInsulin,
+          doses_count: insulinEntries.length,
+          type_distribution: typeDistribution
+        },
+        carb_analysis: {
+          total_grams: totalCarbs,
+          average_per_meal: avgCarbs,
+          meals_count: carbEntries.length
+        },
+        insights: allEntries.length > 0
+          ? [
+              `You logged ${allEntries.length} diabetes entries in the last ${days} days.`,
+              normalPercent >= 70 ? `✅ Great work! ${normalPercent}% time in range.` : '',
+              lowPercent >= 10 ? `⚠️ ${lowPercent}% of readings are low (<70) - watch for hypos.` : '',
+              highPercent >= 30 ? `⚠️ ${highPercent}% of readings are high (>180) - consider adjusting.` : '',
+              avgBG > 0 ? `Your average blood glucose is ${avgBG} mg/dL.` : ''
+            ].filter(Boolean)
+          : []
       }
 
-      const data = await response.json()
-      console.log('🎯 Flask analytics response:', data)
-
-      if (data.error) {
-        throw new Error(data.error)
-      }
+      console.log('🎯 Local diabetes analytics generated:', data)
 
       setAnalyticsData(data)
     } catch (err) {
-      console.error('Flask analytics error:', err)
+      console.error('Diabetes analytics error:', err)
       setError(err instanceof Error ? err.message : 'Failed to load analytics')
     } finally {
       setLoading(false)
@@ -147,7 +209,7 @@ export default function DiabetesFlaskAnalytics({ entries, currentDate }: Diabete
       <Card>
         <CardContent className="p-8 text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading Flask-powered analytics...</p>
+          <p className="text-muted-foreground">Loading diabetes analytics...</p>
         </CardContent>
       </Card>
     )
@@ -159,7 +221,7 @@ export default function DiabetesFlaskAnalytics({ entries, currentDate }: Diabete
         <CardContent className="p-8 text-center">
           <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-4" />
           <p className="text-red-600 mb-4">Analytics Error: {error}</p>
-          <Button onClick={loadFlaskAnalytics} variant="outline">
+          <Button onClick={loadLocalAnalytics} variant="outline">
             Retry Analytics
           </Button>
         </CardContent>
@@ -167,14 +229,14 @@ export default function DiabetesFlaskAnalytics({ entries, currentDate }: Diabete
     )
   }
 
-  if (!analyticsData || entries.length === 0) {
+  if (!analyticsData || analyticsData.summary.total_entries === 0) {
     return (
       <Card>
         <CardContent className="p-8 text-center">
           <Droplets className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
           <h3 className="text-lg font-semibold mb-2">No Diabetes Data</h3>
           <p className="text-muted-foreground">
-            Start tracking blood glucose, insulin, and carbs to see Flask-powered analytics!
+            Start tracking blood glucose, insulin, and carbs to see pattern analytics!
           </p>
         </CardContent>
       </Card>
@@ -189,7 +251,7 @@ export default function DiabetesFlaskAnalytics({ entries, currentDate }: Diabete
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold flex items-center gap-2">
           <Droplets className="h-6 w-6 text-red-500" />
-          Flask-Powered Diabetes Analytics 🩸
+          Diabetes Analytics 🩸
         </h2>
         <Select value={dateRange} onValueChange={setDateRange}>
           <SelectTrigger className="w-32">

@@ -648,6 +648,12 @@ export default function UpperDigestiveTracker() {
           </TabsContent>
         </Tabs>
 
+        <div className="text-center mt-6">
+          <Button variant="outline" onClick={() => window.location.href = '/body'}>
+            ← Back to Body
+          </Button>
+        </div>
+
         {/* Add/Edit Entry Modal */}
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">

@@ -25,7 +25,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
-import { Plus, Package, Clock, Moon, ChevronRight, ChevronDown, Backpack, Heart } from 'lucide-react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
+import { Plus, Package, Clock, Moon, ChevronRight, ChevronDown, Backpack, Heart, Pencil, Trash2 } from 'lucide-react'
 import SurvivalButton from '@/components/survival-button'
 import DailyPrompts from '@/components/daily-prompts'
 import confetti from 'canvas-confetti'
@@ -112,13 +114,18 @@ export default function CommandZone() {
     { id: '3', name: 'Phone', completed: false, essential: true },
     { id: '4', name: 'Keys', completed: false, essential: true },
   ])
-  const [schedule, setSchedule] = useState<ScheduleBlock[]>([
+  const [schedule, setSchedule] = useState<ScheduleBlock[]>([])
+  const [editingBlock, setEditingBlock] = useState<ScheduleBlock | null>(null)
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false)
+
+  const defaultSchedule: ScheduleBlock[] = [
     { id: '1', name: 'Morning Routine', startTime: '08:00', endTime: '09:00', color: 'bg-[var(--surface-1)]' },
     { id: '2', name: 'Work/Focus Time', startTime: '09:00', endTime: '12:00', color: 'bg-[var(--surface-2)]' },
     { id: '3', name: 'Lunch Break', startTime: '12:00', endTime: '13:00', color: 'bg-[var(--grounding-bg)]' },
     { id: '4', name: 'Afternoon Tasks', startTime: '13:00', endTime: '17:00', color: 'bg-[var(--surface-1)]' },
     { id: '5', name: 'Evening Wind Down', startTime: '17:00', endTime: '21:00', color: 'bg-[var(--surface-2)]' },
-  ])
+  ]
+
 
   // Load data from localStorage
   useEffect(() => {
@@ -127,8 +134,16 @@ export default function CommandZone() {
     const savedTasks = localStorage.getItem(`daily-tasks-${today}`)
     const savedGearState = localStorage.getItem(`gear-check-${today}`)
     const savedGearItems = localStorage.getItem(`gear-items-${userPin}`) // Persistent items list per user
+    const savedSchedule = localStorage.getItem(`schedule-${userPin}`) // Persistent schedule per user
 
     if (savedTasks) setDailyTasks(JSON.parse(savedTasks))
+
+    // Load schedule (persistent per user)
+    if (savedSchedule) {
+      setSchedule(JSON.parse(savedSchedule))
+    } else {
+      setSchedule(defaultSchedule)
+    }
 
     // Load gear items (persistent) and gear state (daily reset)
     let gearItems = savedGearItems ? JSON.parse(savedGearItems) : [
@@ -177,6 +192,57 @@ export default function CommandZone() {
       gearState[item.id] = item.completed
     })
     localStorage.setItem(`gear-check-${today}`, JSON.stringify(gearState))
+  }
+
+  const saveSchedule = (blocks: ScheduleBlock[]) => {
+    const userPin = localStorage.getItem('chaos-user-pin') || 'default'
+    localStorage.setItem(`schedule-${userPin}`, JSON.stringify(blocks))
+  }
+
+  const openAddBlock = () => {
+    setEditingBlock({
+      id: '',
+      name: '',
+      startTime: '09:00',
+      endTime: '10:00',
+      color: 'bg-muted/50'
+    })
+    setIsScheduleModalOpen(true)
+  }
+
+  const openEditBlock = (block: ScheduleBlock) => {
+    setEditingBlock({ ...block })
+    setIsScheduleModalOpen(true)
+  }
+
+  const saveBlock = () => {
+    if (!editingBlock || !editingBlock.name.trim()) return
+
+    let updatedSchedule: ScheduleBlock[]
+    if (editingBlock.id) {
+      // Editing existing block
+      updatedSchedule = schedule.map(block =>
+        block.id === editingBlock.id ? editingBlock : block
+      )
+    } else {
+      // Adding new block
+      const newBlock = { ...editingBlock, id: Date.now().toString() }
+      updatedSchedule = [...schedule, newBlock]
+    }
+
+    // Sort by start time
+    updatedSchedule.sort((a, b) => a.startTime.localeCompare(b.startTime))
+
+    setSchedule(updatedSchedule)
+    saveSchedule(updatedSchedule)
+    setIsScheduleModalOpen(false)
+    setEditingBlock(null)
+  }
+
+  const deleteBlock = (blockId: string) => {
+    const updatedSchedule = schedule.filter(block => block.id !== blockId)
+    setSchedule(updatedSchedule)
+    saveSchedule(updatedSchedule)
   }
 
   const addTask = () => {
@@ -290,9 +356,15 @@ export default function CommandZone() {
         {/* Daily Schedule */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-[var(--accent-orange)]" />
-              Today's Schedule
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Clock className="h-5 w-5 text-[var(--accent-orange)]" />
+                Today's Schedule
+              </div>
+              <Button onClick={openAddBlock} size="sm" variant="outline">
+                <Plus className="h-4 w-4 mr-1" />
+                Add
+              </Button>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
@@ -302,11 +374,29 @@ export default function CommandZone() {
                   <div className="font-medium">{block.name}</div>
                   <div className="text-sm text-muted-foreground">{block.startTime} - {block.endTime}</div>
                 </div>
-                <Button variant="ghost" size="sm" className="text-muted-foreground">
-                  Edit
-                </Button>
+                <div className="flex gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => openEditBlock(block)}
+                    className="text-muted-foreground hover:text-[var(--primary-purple)]"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => deleteBlock(block.id)}
+                    className="text-muted-foreground hover:text-[var(--crisis-accent)]"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             ))}
+            {schedule.length === 0 && (
+              <p className="text-muted-foreground text-center py-4">No schedule blocks yet - add one above!</p>
+            )}
           </CardContent>
         </Card>
 
@@ -419,6 +509,56 @@ export default function CommandZone() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Schedule Edit Modal */}
+      <Dialog open={isScheduleModalOpen} onOpenChange={setIsScheduleModalOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>
+              {editingBlock?.id ? 'Edit Schedule Block' : 'Add Schedule Block'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="block-name">Block Name</Label>
+              <Input
+                id="block-name"
+                value={editingBlock?.name || ''}
+                onChange={(e) => setEditingBlock(prev => prev ? { ...prev, name: e.target.value } : null)}
+                placeholder="e.g., Morning Routine"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="start-time">Start Time</Label>
+                <Input
+                  id="start-time"
+                  type="time"
+                  value={editingBlock?.startTime || ''}
+                  onChange={(e) => setEditingBlock(prev => prev ? { ...prev, startTime: e.target.value } : null)}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="end-time">End Time</Label>
+                <Input
+                  id="end-time"
+                  type="time"
+                  value={editingBlock?.endTime || ''}
+                  onChange={(e) => setEditingBlock(prev => prev ? { ...prev, endTime: e.target.value } : null)}
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsScheduleModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={saveBlock}>
+              {editingBlock?.id ? 'Save Changes' : 'Add Block'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Luka's Epic Celebration Overlay! 🎉🐧 */}
       {celebrationEmojis.length > 0 && (

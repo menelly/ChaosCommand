@@ -35,7 +35,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, Utensils, TrendingUp, AlertCircle, Clock, Target, Activity, Heart } from 'lucide-react'
 import { useDailyData, CATEGORIES } from "@/lib/database"
 import { format, subDays } from "date-fns"
-import { graphService } from "@/lib/graph-service"
 
 interface DigestiveEntry {
   entry_date: string
@@ -113,30 +112,34 @@ export default function DigestiveFlaskAnalytics({ entries, currentDate }: Digest
   const [dateRange, setDateRange] = useState('30')
   const { getCategoryData } = useDailyData()
 
-  // Load Flask analytics when date range changes
+  // Load analytics when date range changes
   useEffect(() => {
-    loadFlaskAnalytics()
+    loadAnalytics()
   }, [dateRange, currentDate])
 
-  const loadFlaskAnalytics = async () => {
+  const loadAnalytics = async () => {
     setLoading(true)
     setError(null)
 
     try {
-      // Load entries from multiple dates across the date range
       const days = parseInt(dateRange)
-      const endDate = new Date(currentDate)
       const allEntries: any[] = []
 
-      // Generate date range
-      const dateRangeArray = []
+      // Generate date range - start from currentDate (today) and go back
+      // Parse currentDate properly to avoid timezone issues
+      const [year, month, day] = currentDate.split('-').map(Number)
+      const endDate = new Date(year, month - 1, day) // month is 0-indexed
+
+      const dateRangeArray: string[] = []
       for (let i = 0; i < days; i++) {
-        dateRangeArray.push(subDays(endDate, i))
+        const date = subDays(endDate, i)
+        dateRangeArray.push(format(date, 'yyyy-MM-dd'))
       }
 
-      // Collect all entries from database
-      for (const date of dateRangeArray) {
-        const dateKey = format(date, 'yyyy-MM-dd')
+      console.log('🍽️ Loading digestive data for dates:', dateRangeArray.slice(0, 5), '...')
+
+      // Collect all entries from Dexie
+      for (const dateKey of dateRangeArray) {
         const records = await getCategoryData(dateKey, CATEGORIES.TRACKER)
         const upperDigestiveRecord = records.find(record => record.subcategory === 'upper-digestive')
 
@@ -151,67 +154,131 @@ export default function DigestiveFlaskAnalytics({ entries, currentDate }: Digest
             }
           }
           if (Array.isArray(entries)) {
-            // Add the date to each entry since it's missing from the database entries
             const entriesWithDate = entries.map(entry => ({
               ...entry,
-              date: entry.date || dateKey  // Use the dateKey if entry.date is missing
+              date: entry.date || dateKey
             }))
             allEntries.push(...entriesWithDate)
           }
         }
       }
 
-      // Convert entries to the format expected by Flask
-      const flaskEntries = allEntries.map(entry => ({
-        date: entry.date,
-        time: entry.time,
-        symptoms: entry.symptoms || [],
-        severity: entry.severity,
-        triggers: entry.triggers || [],
-        treatments: entry.treatments || [],
-        notes: entry.notes || '',
-        tags: entry.tags || []
-      }))
+      console.log('🍽️ Found', allEntries.length, 'entries from', days, 'days')
+      if (allEntries.length > 0) {
+        console.log('📊 Sample entry:', allEntries[0])
+      }
 
-      console.log('🍽️ Analyzing digestive data with Graph Service:', flaskEntries.length, 'entries from', days, 'days')
-      console.log('📊 Sample entry:', flaskEntries[0])
-      console.log('📅 Date range:', dateRangeArray.map(d => format(d, 'yyyy-MM-dd')))
-
-      // 🚀 Use Graph Service instead of Flask for lightning-fast local analytics!
-      const [symptomCorrelations, effectiveInterventions] = await Promise.all([
-        graphService.findSymptomCorrelations('digestive'),
-        graphService.findEffectiveInterventions('nausea')
-      ])
-
-      // Generate comprehensive analytics from Graph Service data
-      const data = {
-        period: {
-          start: dateRangeArray[0] ? format(dateRangeArray[0], 'yyyy-MM-dd') : '',
-          end: dateRangeArray[dateRangeArray.length - 1] ? format(dateRangeArray[dateRangeArray.length - 1], 'yyyy-MM-dd') : '',
-          days: parseInt(dateRange)
-        },
-        total_episodes: flaskEntries.length,
-        avg_severity: flaskEntries.length > 0 ? flaskEntries.reduce((sum, e) => sum + e.severity, 0) / flaskEntries.length : 0,
-        weekly_average: (flaskEntries.length / parseInt(dateRange)) * 7,
-        symptom_analysis: {
-          symptom_types: flaskEntries.reduce((acc, entry) => {
-            acc[entry.episodeType] = (acc[entry.episodeType] || 0) + 1
-            return acc
-          }, {} as Record<string, number>),
-          most_common: flaskEntries.length > 0 ? flaskEntries[0].episodeType : '',
-          correlations: symptomCorrelations
-        },
-        interventions: {
-          most_effective: effectiveInterventions,
-          success_rate: effectiveInterventions.length > 0 ? effectiveInterventions[0].effectiveness : 0
+      // Convert text severity to number
+      const severityToNumber = (severity: string | number): number => {
+        if (typeof severity === 'number') return severity
+        switch (severity?.toLowerCase()) {
+          case 'mild': return 3
+          case 'moderate': return 5
+          case 'severe': return 8
+          default: return 0
         }
       }
 
-      console.log('🎯 Graph Service digestive analytics generated:', data)
+      // Calculate simple analytics from the entries
+      const symptomCounts: Record<string, number> = {}
+      const triggerCounts: Record<string, number> = {}
+      const treatmentCounts: Record<string, number> = {}
+      let totalSeverity = 0
+      let maxSeverity = 0
 
+      allEntries.forEach(entry => {
+        // Count symptoms
+        if (entry.symptoms && Array.isArray(entry.symptoms)) {
+          entry.symptoms.forEach((s: string) => {
+            symptomCounts[s] = (symptomCounts[s] || 0) + 1
+          })
+        }
+        // Count triggers
+        if (entry.triggers && Array.isArray(entry.triggers)) {
+          entry.triggers.forEach((t: string) => {
+            triggerCounts[t] = (triggerCounts[t] || 0) + 1
+          })
+        }
+        // Count treatments
+        if (entry.treatments && Array.isArray(entry.treatments)) {
+          entry.treatments.forEach((t: string) => {
+            treatmentCounts[t] = (treatmentCounts[t] || 0) + 1
+          })
+        }
+        // Sum severity (convert text to number)
+        const severityNum = severityToNumber(entry.severity)
+        totalSeverity += severityNum
+        if (severityNum > maxSeverity) maxSeverity = severityNum
+      })
+
+      // Find most common symptom
+      const mostCommonSymptom = Object.entries(symptomCounts)
+        .sort((a, b) => b[1] - a[1])[0]?.[0] || ''
+
+      // Build analytics data with all required fields
+      const data = {
+        period: {
+          start: dateRangeArray[dateRangeArray.length - 1] || '',
+          end: dateRangeArray[0] || '',
+          days: days
+        },
+        total_episodes: allEntries.length,
+        avg_severity: allEntries.length > 0 ? totalSeverity / allEntries.length : 0,
+        weekly_average: (allEntries.length / days) * 7,
+        symptom_analysis: {
+          symptom_types: symptomCounts,
+          most_common: mostCommonSymptom,
+          avg_severity: allEntries.length > 0 ? totalSeverity / allEntries.length : 0,
+          max_severity: maxSeverity,
+          severity_distribution: {},
+          most_common_symptom: mostCommonSymptom,
+          correlations: []
+        },
+        duration: {
+          has_data: false // We're not tracking duration in the simple version
+        },
+        triggers: {
+          trigger_counts: triggerCounts,
+          top_triggers: Object.entries(triggerCounts)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5)
+            .map(([name]) => name)
+        },
+        foods: {
+          food_counts: {},
+          problematic_foods: []
+        },
+        medications: {
+          medication_counts: {},
+          effectiveness_avg: {},
+          most_effective: []
+        },
+        patterns: {
+          episodes_by_day: {},
+          episodes_by_hour: {},
+          weekly_average: (allEntries.length / days) * 7,
+          daily_average: allEntries.length / days
+        },
+        relief: {
+          relief_methods: treatmentCounts,
+          avg_effectiveness: 0
+        },
+        interventions: {
+          most_effective: Object.entries(treatmentCounts)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5)
+            .map(([name, count]) => ({ intervention: name, frequency: count })),
+          success_rate: 0
+        },
+        insights: allEntries.length > 0
+          ? [`You logged ${allEntries.length} digestive episodes in the last ${days} days.`]
+          : []
+      }
+
+      console.log('🎯 Analytics generated:', data)
       setAnalyticsData(data)
     } catch (err) {
-      console.error('Flask digestive analytics error:', err)
+      console.error('Digestive analytics error:', err)
       setError(err instanceof Error ? err.message : 'Failed to load analytics')
     } finally {
       setLoading(false)
@@ -223,7 +290,7 @@ export default function DigestiveFlaskAnalytics({ entries, currentDate }: Digest
       <Card>
         <CardContent className="p-8 text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading Flask-powered digestive analytics...</p>
+          <p className="text-muted-foreground">Crunching your digestive data...</p>
         </CardContent>
       </Card>
     )
@@ -235,7 +302,7 @@ export default function DigestiveFlaskAnalytics({ entries, currentDate }: Digest
         <CardContent className="p-8 text-center">
           <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-4" />
           <p className="text-red-600 mb-4">Analytics Error: {error}</p>
-          <Button onClick={loadFlaskAnalytics} variant="outline">
+          <Button onClick={loadAnalytics} variant="outline">
             Retry Analytics
           </Button>
         </CardContent>
@@ -243,14 +310,14 @@ export default function DigestiveFlaskAnalytics({ entries, currentDate }: Digest
     )
   }
 
-  if (!analyticsData || entries.length === 0) {
+  if (!analyticsData || analyticsData.total_episodes === 0) {
     return (
       <Card>
         <CardContent className="p-8 text-center">
           <Utensils className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
           <h3 className="text-lg font-semibold mb-2">No Digestive Data</h3>
           <p className="text-muted-foreground">
-            Record digestive symptoms to see Flask-powered food correlation and trigger analytics!
+            Record digestive symptoms to see pattern analytics!
           </p>
         </CardContent>
       </Card>
@@ -265,7 +332,7 @@ export default function DigestiveFlaskAnalytics({ entries, currentDate }: Digest
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold flex items-center gap-2">
           <Utensils className="h-6 w-6 text-green-500" />
-          Flask-Powered Digestive Analytics 🍽️
+          Digestive Analytics 🍽️
         </h2>
         <Select value={dateRange} onValueChange={setDateRange}>
           <SelectTrigger className="w-32">
@@ -305,7 +372,7 @@ export default function DigestiveFlaskAnalytics({ entries, currentDate }: Digest
         <Card>
           <CardContent className="p-4 text-center">
             <TrendingUp className="h-8 w-8 mx-auto mb-2 text-red-500" />
-            <div className="text-2xl font-bold">{symptom_analysis.avg_severity}/10</div>
+            <div className="text-2xl font-bold">{symptom_analysis.avg_severity.toFixed(1)}/10</div>
             <div className="text-sm text-muted-foreground">Avg Severity</div>
           </CardContent>
         </Card>
@@ -323,7 +390,7 @@ export default function DigestiveFlaskAnalytics({ entries, currentDate }: Digest
         <Card>
           <CardContent className="p-4 text-center">
             <Target className="h-8 w-8 mx-auto mb-2 text-purple-500" />
-            <div className="text-2xl font-bold">{patterns.weekly_average}</div>
+            <div className="text-2xl font-bold">{patterns.weekly_average.toFixed(1)}</div>
             <div className="text-sm text-muted-foreground">Weekly Average</div>
           </CardContent>
         </Card>
@@ -362,23 +429,23 @@ export default function DigestiveFlaskAnalytics({ entries, currentDate }: Digest
           </CardContent>
         </Card>
 
-        {/* Problematic Foods */}
+        {/* Triggers */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <AlertCircle className="h-5 w-5 text-red-500" />
-              Problematic Foods 🚫
+              Triggers Identified
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {foods.problematic_foods.slice(0, 5).map((food, index) => (
-              <div key={food} className="flex justify-between">
-                <span className="text-sm">{food}</span>
-                <Badge variant="destructive">{foods.food_counts[food]}</Badge>
+            {triggers.top_triggers.slice(0, 5).map((trigger) => (
+              <div key={trigger} className="flex justify-between">
+                <span className="text-sm">{trigger}</span>
+                <Badge variant="destructive">{triggers.trigger_counts[trigger]}</Badge>
               </div>
             ))}
-            {foods.problematic_foods.length === 0 && (
-              <p className="text-sm text-muted-foreground">No clear food triggers identified</p>
+            {triggers.top_triggers.length === 0 && (
+              <p className="text-sm text-muted-foreground">No triggers identified yet</p>
             )}
           </CardContent>
         </Card>

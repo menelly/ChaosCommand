@@ -153,7 +153,7 @@ export default function PainFlaskAnalytics({ entries, currentDate, loadAllEntrie
 
       // 🚀 Use Graph Service for instant local pain analytics!
       const [painCorrelations, effectiveTreatments] = await Promise.all([
-        graphService.findSymptomCorrelations('pain'),
+        graphService.findCoOccurringSymptoms('pain'),
         graphService.findEffectiveInterventions('pain')
       ])
 
@@ -183,9 +183,51 @@ export default function PainFlaskAnalytics({ entries, currentDate, loadAllEntrie
             })
             return acc
           }, {} as Record<string, number>),
-          most_common_location: 'back', // Could be calculated
-          affected_areas: new Set(flaskEntries.flatMap(e => e.painLocations)).size
+          most_common_location: (() => {
+            const freq = flaskEntries.reduce((acc, entry) => {
+              entry.painLocations.forEach(loc => { acc[loc] = (acc[loc] || 0) + 1 })
+              return acc
+            }, {} as Record<string, number>)
+            return Object.entries(freq).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A'
+          })(),
+          affected_areas: new Set(flaskEntries.flatMap(e => e.painLocations)).size,
+          location_patterns: {}
         },
+        trigger_analysis: {
+          trigger_frequency: flaskEntries.reduce((acc, entry) => {
+            entry.painTriggers.forEach(trigger => {
+              acc[trigger] = (acc[trigger] || 0) + 1
+            })
+            return acc
+          }, {} as Record<string, number>),
+          most_common_trigger: (() => {
+            const freq = flaskEntries.reduce((acc, entry) => {
+              entry.painTriggers.forEach(t => { acc[t] = (acc[t] || 0) + 1 })
+              return acc
+            }, {} as Record<string, number>)
+            return Object.entries(freq).sort((a, b) => b[1] - a[1])[0]?.[0] || 'None identified'
+          })(),
+          trigger_patterns: {},
+          avoidable_triggers: []
+        },
+        treatment_analysis: {
+          has_data: flaskEntries.some(e => e.treatments && e.treatments.length > 0),
+          treatment_effectiveness: {},
+          most_effective_treatment: effectiveTreatments[0]?.intervention || 'N/A',
+          avg_effectiveness: flaskEntries.filter(e => e.effectiveness).length > 0
+            ? flaskEntries.filter(e => e.effectiveness).reduce((sum, e) => sum + e.effectiveness, 0) / flaskEntries.filter(e => e.effectiveness).length
+            : 0,
+          treatment_recommendations: []
+        },
+        pattern_analysis: {
+          pain_consistency: 70, // Stored as percentage
+          weekly_patterns: {},
+          severity_trends: {},
+          correlation_insights: []
+        },
+        insights: flaskEntries.length > 0
+          ? [`You logged ${flaskEntries.length} pain entries in the last ${dateRange} days.`]
+          : [],
         treatments: {
           most_effective: effectiveTreatments,
           correlations: painCorrelations
@@ -290,7 +332,7 @@ export default function PainFlaskAnalytics({ entries, currentDate, loadAllEntrie
         <Card>
           <CardContent className="p-4 text-center">
             <TrendingUp className="h-8 w-8 mx-auto mb-2 text-orange-500" />
-            <div className="text-2xl font-bold">{pain_level_analysis.avg_pain_level}/10</div>
+            <div className="text-2xl font-bold">{pain_level_analysis.avg_pain_level.toFixed(1)}/10</div>
             <div className="text-sm text-muted-foreground">Avg Pain Level</div>
           </CardContent>
         </Card>
@@ -325,7 +367,7 @@ export default function PainFlaskAnalytics({ entries, currentDate, loadAllEntrie
           <CardContent className="space-y-3">
             <div className="flex justify-between">
               <span>Average Pain:</span>
-              <Badge variant="outline">{pain_level_analysis.avg_pain_level}/10</Badge>
+              <Badge variant="outline">{pain_level_analysis.avg_pain_level.toFixed(1)}/10</Badge>
             </div>
             <div className="flex justify-between">
               <span>Max Pain:</span>
@@ -437,7 +479,7 @@ export default function PainFlaskAnalytics({ entries, currentDate, loadAllEntrie
               <div className="flex justify-between">
                 <span>Avg Effectiveness:</span>
                 <Badge variant={treatment_analysis.avg_effectiveness >= 7 ? "default" : "secondary"}>
-                  {treatment_analysis.avg_effectiveness}/10
+                  {treatment_analysis.avg_effectiveness.toFixed(1)}/10
                 </Badge>
               </div>
               <div className="space-y-2">

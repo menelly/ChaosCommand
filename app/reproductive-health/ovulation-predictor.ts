@@ -54,8 +54,8 @@ export interface OvulationPrediction {
  * Weighs BBT, OPK, cervical mucus, and ferning together
  */
 function analyzeAllFertilitySigns(entries: CycleEntry[], today: Date): FertilityAnalysis {
-  // Sort entries by date (most recent first)
-  entries.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  // Sort entries by date (most recent first) - add T12:00:00 to fix timezone issues
+  entries.sort((a, b) => new Date(b.date + 'T12:00:00').getTime() - new Date(a.date + 'T12:00:00').getTime())
 
   // Get recent data for each sign
   const recentOPKs = entries.filter(e => e.opk && e.opk !== 'negative')
@@ -112,9 +112,9 @@ function analyzeBBTShift(bbtEntries: CycleEntry[], today: Date): FertilityAnalys
     return { ovulationDetected: false, confidence: 'low', method: 'insufficient-bbt', daysUntilOvulation: null, status: 'unknown', message: '' }
   }
 
-  // Sort by date (most recent first)
+  // Sort by date (most recent first) - add T12:00:00 to fix timezone issues
   const sortedBBT = bbtEntries
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .sort((a, b) => new Date(b.date + 'T12:00:00').getTime() - new Date(a.date + 'T12:00:00').getTime())
     .slice(0, 10) // Last 10 days
 
   // Look for temperature shift pattern
@@ -133,7 +133,7 @@ function analyzeBBTShift(bbtEntries: CycleEntry[], today: Date): FertilityAnalys
 
     if (tempRise >= 0.2) {
       // Found temperature shift!
-      const ovulationDate = new Date(sortedBBT[i].date)
+      const ovulationDate = new Date(sortedBBT[i].date + 'T12:00:00')
       const daysAgo = differenceInDays(today, ovulationDate)
 
       return {
@@ -159,7 +159,7 @@ function analyzeOPKWithSupport(opkEntries: CycleEntry[], cmEntries: CycleEntry[]
   }
 
   const mostRecentOPK = opkEntries[0]
-  const daysSinceOPK = differenceInDays(today, new Date(mostRecentOPK.date))
+  const daysSinceOPK = differenceInDays(today, new Date(mostRecentOPK.date + 'T12:00:00'))
 
   if (daysSinceOPK > 7) {
     return { ovulationDetected: false, confidence: 'low', method: 'old-opk', daysUntilOvulation: null, status: 'unknown', message: '' }
@@ -169,8 +169,8 @@ function analyzeOPKWithSupport(opkEntries: CycleEntry[], cmEntries: CycleEntry[]
   let supportingSignsCount = 0
   const supportingDetails: string[] = []
 
-  // Check cervical mucus
-  const recentCM = cmEntries.find(e => differenceInDays(today, new Date(e.date)) <= 3)
+  // Check cervical mucus - add T12:00:00 to fix timezone issues
+  const recentCM = cmEntries.find(e => differenceInDays(today, new Date(e.date + 'T12:00:00')) <= 3)
   if (recentCM) {
     if (recentCM.cervicalFluid === 'egg-white') {
       supportingSignsCount++
@@ -181,8 +181,8 @@ function analyzeOPKWithSupport(opkEntries: CycleEntry[], cmEntries: CycleEntry[]
     }
   }
 
-  // Check ferning
-  const recentFerning = ferningEntries.find(e => differenceInDays(today, new Date(e.date)) <= 2)
+  // Check ferning - add T12:00:00 to fix timezone issues
+  const recentFerning = ferningEntries.find(e => differenceInDays(today, new Date(e.date + 'T12:00:00')) <= 2)
   if (recentFerning?.ferning === 'full') {
     supportingSignsCount++
     supportingDetails.push('full ferning')
@@ -215,7 +215,8 @@ function analyzeCervicalMucus(cmEntries: CycleEntry[], today: Date): FertilityAn
     return { ovulationDetected: false, confidence: 'low', method: 'insufficient-cm', daysUntilOvulation: null, status: 'unknown', message: '' }
   }
 
-  const sortedCM = cmEntries.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  // Sort by date - add T12:00:00 to fix timezone issues
+  const sortedCM = cmEntries.sort((a, b) => new Date(b.date + 'T12:00:00').getTime() - new Date(a.date + 'T12:00:00').getTime())
 
   // Look for egg-white to creamy/sticky transition (indicates ovulation occurred)
   for (let i = 0; i < sortedCM.length - 1; i++) {
@@ -223,7 +224,7 @@ function analyzeCervicalMucus(cmEntries: CycleEntry[], today: Date): FertilityAn
     const previous = sortedCM[i + 1]
 
     if (['creamy', 'sticky'].includes(current.cervicalFluid!) && previous.cervicalFluid === 'egg-white') {
-      const daysAgo = differenceInDays(today, new Date(previous.date))
+      const daysAgo = differenceInDays(today, new Date(previous.date + 'T12:00:00'))
       if (daysAgo <= 5) {
         return {
           ovulationDetected: true,
@@ -249,7 +250,8 @@ function analyzeBasicOPK(opkEntries: CycleEntry[], today: Date): FertilityAnalys
   }
 
   const mostRecentOPK = opkEntries[0]
-  const daysSinceOPK = differenceInDays(today, new Date(mostRecentOPK.date))
+  // Add T12:00:00 to fix timezone issues
+  const daysSinceOPK = differenceInDays(today, new Date(mostRecentOPK.date + 'T12:00:00'))
 
   if (mostRecentOPK.opk === 'peak' && daysSinceOPK <= 7) {
     return {
@@ -309,11 +311,12 @@ export function predictOvulation(
   // Check for recent OPK data FIRST (last 7 days only - ignore ancient history!)
   const recentEntries = entries
     .filter(entry => {
-      const entryDate = new Date(entry.date)
+      // Add T12:00:00 to fix timezone issues with date-only strings
+      const entryDate = new Date(entry.date + 'T12:00:00')
       const daysAgo = differenceInDays(today, entryDate)
       return daysAgo >= 0 && daysAgo <= 7 // Only last week
     })
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) // Most recent first
+    .sort((a, b) => new Date(b.date + 'T12:00:00').getTime() - new Date(a.date + 'T12:00:00').getTime()) // Most recent first
 
   const recentOPKs = recentEntries.filter(entry => entry.opk && entry.opk !== 'negative')
   const mostRecentOPK = recentOPKs[0]
@@ -348,7 +351,8 @@ export function predictOvulation(
   }
 
   // Calculate current cycle day (only if we have LMP)
-  const cycleDay = differenceInDays(today, new Date(lmpDate)) + 1
+  // Add T12:00:00 to fix timezone issues
+  const cycleDay = differenceInDays(today, new Date(lmpDate + 'T12:00:00')) + 1
 
   // Basic cycle-based prediction (ovulation around day 14 for 28-day cycle)
   const estimatedOvulationDay = Math.round(averageCycleLength * 0.5) // Roughly middle of cycle

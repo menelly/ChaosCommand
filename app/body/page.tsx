@@ -20,27 +20,24 @@
  */
 "use client"
 
+import { useState, useEffect } from "react"
 import AppCanvas from "@/components/app-canvas"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
 import {
-  Pill,
-  Stethoscope,
-  TrendingUp,
-  FileText,
   Heart,
-  Activity,
   Utensils,
-  Moon,
   Shield,
   Droplets,
   MapPin,
-  Thermometer,
   Cloud,
   HelpCircle,
   Zap,
-  Brain
+  Brain,
+  Settings2
 } from "lucide-react"
 
 interface TrackerButton {
@@ -52,10 +49,61 @@ interface TrackerButton {
   edition: 'core' | 'cares' | 'companion' | 'command'
 }
 
+const HIDDEN_TRACKERS_KEY = 'chaos-body-hidden-trackers'
+const HIDE_FERTILITY_KEY = 'chaos-hide-fertility-features'
+
 export default function PhysicalHealthIndex() {
   // TODO: Get this from user profile/settings
   const userEdition: 'cares' | 'companion' | 'command' = 'command'; // For now, show everything
   // Test different editions: 'cares' | 'companion' | 'command'
+
+  // Hidden trackers state - persisted to localStorage
+  const [hiddenTrackers, setHiddenTrackers] = useState<string[]>([])
+  const [hideFertility, setHideFertility] = useState(false)
+  const [isCustomizeOpen, setIsCustomizeOpen] = useState(false)
+
+  // Load hidden trackers from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(HIDDEN_TRACKERS_KEY)
+      if (saved) {
+        setHiddenTrackers(JSON.parse(saved))
+      }
+      const fertilityPref = localStorage.getItem(HIDE_FERTILITY_KEY)
+      if (fertilityPref) {
+        setHideFertility(JSON.parse(fertilityPref))
+      }
+    } catch (e) {
+      console.error('Failed to load hidden trackers:', e)
+    }
+  }, [])
+
+  // Save hidden trackers to localStorage when changed
+  const updateHiddenTrackers = (newHidden: string[]) => {
+    setHiddenTrackers(newHidden)
+    try {
+      localStorage.setItem(HIDDEN_TRACKERS_KEY, JSON.stringify(newHidden))
+    } catch (e) {
+      console.error('Failed to save hidden trackers:', e)
+    }
+  }
+
+  const toggleTrackerVisibility = (trackerId: string) => {
+    if (hiddenTrackers.includes(trackerId)) {
+      updateHiddenTrackers(hiddenTrackers.filter(id => id !== trackerId))
+    } else {
+      updateHiddenTrackers([...hiddenTrackers, trackerId])
+    }
+  }
+
+  const toggleFertilityFeatures = (hide: boolean) => {
+    setHideFertility(hide)
+    try {
+      localStorage.setItem(HIDE_FERTILITY_KEY, JSON.stringify(hide))
+    } catch (e) {
+      console.error('Failed to save fertility preference:', e)
+    }
+  }
 
   const allTrackers: TrackerButton[] = [
     // CORE MEDICAL TRACKING - Moved to Manage section
@@ -144,21 +192,14 @@ export default function PhysicalHealthIndex() {
       icon: <Zap className="h-5 w-5" />,
       edition: 'cares'
     },
-    {
-      id: 'other-symptoms',
-      name: 'Other Symptoms',
-      shortDescription: 'Random symptoms, aches, and "that weird thing that happens sometimes" 🤷‍♀️',
-      helpContent: 'Track miscellaneous symptoms that don\'t fit into other categories. Perfect for those random aches, weird sensations, or "something feels off" moments. Rate severity, add notes, and use tags to identify patterns over time.',
-      icon: <Stethoscope className="h-5 w-5" />,
-      edition: 'cares'
-    }
   ]
 
-  // Filter trackers based on user's edition
+  // Filter trackers based on user's edition AND hidden preferences
   const trackers = allTrackers.filter(tracker =>
-    tracker.edition === 'core' || // Always show core features
+    (tracker.edition === 'core' || // Always show core features
     tracker.edition === userEdition || // Show user's edition
-    userEdition === 'command' // Command edition sees everything
+    userEdition === 'command') && // Command edition sees everything
+    !hiddenTrackers.includes(tracker.id) // Respect user's hidden preferences
   );
 
   const getTrackerHref = (trackerId: string): string => {
@@ -175,7 +216,6 @@ export default function PhysicalHealthIndex() {
       case 'seizure-tracking': return '/seizure'
       case 'diabetes-tracker': return '/diabetes'
       case 'vitals': return '/vitals'
-      case 'other-symptoms': return '/other-symptoms'
       default: return '#' // TODO: Implement navigation to other trackers
     }
   }
@@ -252,21 +292,106 @@ export default function PhysicalHealthIndex() {
           ))}
         </div>
 
-        {/* HELP SECTION */}
+        {/* CUSTOMIZE TRACKERS */}
         <Card className="mt-8">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <HelpCircle className="h-5 w-5" />
-              Physical Health Help
+              <Settings2 className="h-5 w-5" />
+              Customize Your Trackers
             </CardTitle>
             <CardDescription>
-              Comprehensive guides and tutorials for all physical health trackers
+              Show only the trackers you actually use. Hidden trackers can always be shown again.
+              {hiddenTrackers.length > 0 && (
+                <span className="block mt-1 text-primary">
+                  {hiddenTrackers.length} tracker{hiddenTrackers.length !== 1 ? 's' : ''} hidden
+                </span>
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button variant="outline" className="w-full">
-              📖 Open Physical Health Guide
-            </Button>
+            <Dialog open={isCustomizeOpen} onOpenChange={setIsCustomizeOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="w-full">
+                  <Settings2 className="h-4 w-4 mr-2" />
+                  Customize Visible Trackers
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Settings2 className="h-5 w-5" />
+                    Customize Body Trackers
+                  </DialogTitle>
+                  <DialogDescription>
+                    Toggle off trackers you don't need. They won't appear on the Body page, but you can always turn them back on.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 mt-4">
+                  {allTrackers.map((tracker) => (
+                    <div key={tracker.id}>
+                      <div className="flex items-center justify-between gap-4 py-2 border-b border-border/50">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <div className="text-primary shrink-0">
+                            {tracker.icon}
+                          </div>
+                          <div className="min-w-0">
+                            <Label htmlFor={`toggle-${tracker.id}`} className="font-medium cursor-pointer">
+                              {tracker.name}
+                            </Label>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {tracker.shortDescription}
+                            </p>
+                          </div>
+                        </div>
+                        <Switch
+                          id={`toggle-${tracker.id}`}
+                          checked={!hiddenTrackers.includes(tracker.id)}
+                          onCheckedChange={() => toggleTrackerVisibility(tracker.id)}
+                        />
+                      </div>
+                      {/* Sub-option for Reproductive Health - hide fertility/ovulation features */}
+                      {tracker.id === 'reproductive-health' && !hiddenTrackers.includes('reproductive-health') && (
+                        <div className="ml-8 mt-2 mb-2 p-3 bg-muted/50 rounded-lg border border-border/50">
+                          <div className="flex items-center justify-between gap-4">
+                            <div className="min-w-0">
+                              <Label htmlFor="toggle-fertility" className="text-sm font-medium cursor-pointer">
+                                Hide Fertility & Ovulation
+                              </Label>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Hides BBT, ovulation tracking, and fertility predictions. For those post-menopause, post-surgery, not trying to conceive, or who just don't need it.
+                              </p>
+                            </div>
+                            <Switch
+                              id="toggle-fertility"
+                              checked={hideFertility}
+                              onCheckedChange={toggleFertilityFeatures}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <div className="flex gap-2 mt-4 pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => updateHiddenTrackers([])}
+                    disabled={hiddenTrackers.length === 0}
+                  >
+                    Show All
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsCustomizeOpen(false)}
+                    className="ml-auto"
+                  >
+                    Done
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           </CardContent>
         </Card>
 

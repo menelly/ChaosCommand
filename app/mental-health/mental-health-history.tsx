@@ -183,12 +183,12 @@ export function MentalHealthHistory({
                         {entry.time && entry.date ?
                           (() => {
                             try {
-                              return format(new Date(`${entry.date}T${entry.time}`), 'h:mm a')
+                              return format(new Date(`${entry.date}T${entry.time}`), 'MMM d, h:mm a')
                             } catch {
-                              return entry.time || 'No time'
+                              return `${entry.date || 'No date'} ${entry.time || 'No time'}`
                             }
                           })()
-                          : 'No time'
+                          : 'No date/time'
                         }
                       </CardDescription>
                     </div>

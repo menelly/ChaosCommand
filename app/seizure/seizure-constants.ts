@@ -53,7 +53,7 @@ export const AURA_SYMPTOMS = [
   'Rising Sensation'
 ]
 
-// Seizure Symptoms (During seizure)
+// Seizure Symptoms (During seizure) - Legacy flat list for backwards compatibility
 export const SEIZURE_SYMPTOMS = [
   'Muscle Stiffening',
   'Jerking Movements',
@@ -68,6 +68,214 @@ export const SEIZURE_SYMPTOMS = [
   'Incontinence',
   'Tongue Biting'
 ]
+
+// === DYNAMIC SYMPTOMS BY SEIZURE TYPE ===
+// Organized by symptom category for medical accuracy
+
+export const SYMPTOM_CATEGORIES = {
+  motor_focal: {
+    label: 'Motor (Focal)',
+    symptoms: [
+      'Twitching (one side)',
+      'Jerking (one side)',
+      'Hand/Arm Movements',
+      'Leg Movements',
+      'Facial Twitching'
+    ]
+  },
+  motor_generalized: {
+    label: 'Motor (Generalized)',
+    symptoms: [
+      'Muscle Stiffening (Tonic)',
+      'Rhythmic Jerking (Clonic)',
+      'Loss of Muscle Tone',
+      'Whole Body Stiffening',
+      'Bilateral Jerking'
+    ]
+  },
+  sensory: {
+    label: 'Sensory',
+    symptoms: [
+      'Tingling/Numbness',
+      'Visual Disturbances',
+      'Auditory Changes',
+      'Strange Tastes',
+      'Strange Smells',
+      'Vertigo/Spinning'
+    ]
+  },
+  cognitive: {
+    label: 'Cognitive/Emotional',
+    symptoms: [
+      'Déjà Vu',
+      'Jamais Vu',
+      'Fear/Panic',
+      'Memory Disturbance',
+      'Confusion During',
+      'Difficulty Speaking',
+      'Forced Thoughts',
+      'Emotional Surge'
+    ]
+  },
+  autonomic: {
+    label: 'Autonomic',
+    symptoms: [
+      'Racing Heart',
+      'Nausea',
+      'Flushing/Sweating',
+      'Goosebumps',
+      'Rising Sensation (Epigastric)',
+      'Breathing Changes'
+    ]
+  },
+  awareness: {
+    label: 'Awareness Changes',
+    symptoms: [
+      'Staring/Unresponsive',
+      'Confusion During',
+      'Loss of Consciousness',
+      'Partial Awareness'
+    ]
+  },
+  automatisms: {
+    label: 'Automatisms',
+    symptoms: [
+      'Lip Smacking',
+      'Chewing Motions',
+      'Hand Fumbling',
+      'Picking at Clothes',
+      'Walking/Wandering',
+      'Repetitive Movements'
+    ]
+  },
+  severe: {
+    label: 'Severe/Emergency Signs',
+    symptoms: [
+      'Incontinence',
+      'Tongue Biting',
+      'Cyanosis (Blue Lips)',
+      'Fall/Collapse',
+      'Injury During'
+    ]
+  },
+  brief: {
+    label: 'Brief Episodes',
+    symptoms: [
+      'Eye Fluttering',
+      'Brief Staring',
+      'Sudden Jerk',
+      'Head Drop',
+      'Brief Blank'
+    ]
+  }
+}
+
+// Map seizure types to their relevant symptom categories
+export const SEIZURE_TYPE_SYMPTOMS: Record<string, string[]> = {
+  'Focal Aware (Simple Partial)': [
+    // Person stays fully conscious - these are the "aura as seizure" symptoms
+    ...SYMPTOM_CATEGORIES.motor_focal.symptoms,
+    ...SYMPTOM_CATEGORIES.sensory.symptoms,
+    ...SYMPTOM_CATEGORIES.cognitive.symptoms,
+    ...SYMPTOM_CATEGORIES.autonomic.symptoms,
+  ],
+  'Focal Impaired Awareness (Complex Partial)': [
+    // Altered awareness + automatisms
+    ...SYMPTOM_CATEGORIES.motor_focal.symptoms,
+    ...SYMPTOM_CATEGORIES.sensory.symptoms,
+    ...SYMPTOM_CATEGORIES.cognitive.symptoms,
+    ...SYMPTOM_CATEGORIES.autonomic.symptoms,
+    ...SYMPTOM_CATEGORIES.awareness.symptoms,
+    ...SYMPTOM_CATEGORIES.automatisms.symptoms,
+  ],
+  'Focal to Bilateral Tonic-Clonic': [
+    // Starts focal, spreads to full tonic-clonic
+    ...SYMPTOM_CATEGORIES.motor_focal.symptoms,
+    ...SYMPTOM_CATEGORIES.motor_generalized.symptoms,
+    ...SYMPTOM_CATEGORIES.awareness.symptoms,
+    ...SYMPTOM_CATEGORIES.autonomic.symptoms,
+    ...SYMPTOM_CATEGORIES.severe.symptoms,
+  ],
+  'Generalized Tonic-Clonic': [
+    // Full body from start, loss of consciousness
+    ...SYMPTOM_CATEGORIES.motor_generalized.symptoms,
+    ...SYMPTOM_CATEGORIES.awareness.symptoms,
+    ...SYMPTOM_CATEGORIES.autonomic.symptoms,
+    ...SYMPTOM_CATEGORIES.severe.symptoms,
+  ],
+  'Absence': [
+    // Brief staring, subtle automatisms
+    ...SYMPTOM_CATEGORIES.brief.symptoms,
+    'Lip Smacking',
+    'Hand Fumbling',
+    'Staring/Unresponsive',
+  ],
+  'Myoclonic': [
+    // Quick jerks, usually aware
+    'Sudden Jerk',
+    'Arm/Leg Jerk',
+    'Whole Body Jerk',
+    'Cluster of Jerks',
+    'Drop (from jerk)',
+  ],
+  'Atonic (Drop Attack)': [
+    // Sudden loss of muscle tone
+    'Loss of Muscle Tone',
+    'Head Drop',
+    'Fall/Collapse',
+    'Sudden Drop',
+    'Brief Limpness',
+  ],
+  'Tonic': [
+    // Stiffening only
+    ...SYMPTOM_CATEGORIES.motor_generalized.symptoms.filter(s => s.includes('Stiffening')),
+    'Whole Body Stiffening',
+    'Limb Stiffening',
+    'Fall (from stiffening)',
+    ...SYMPTOM_CATEGORIES.awareness.symptoms,
+  ],
+  'Clonic': [
+    // Jerking only
+    'Rhythmic Jerking (Clonic)',
+    'Bilateral Jerking',
+    'Jerking (one side)',
+    ...SYMPTOM_CATEGORIES.awareness.symptoms,
+  ],
+  'Unknown/Uncertain': [
+    // Show everything - we don't know what type
+    ...SYMPTOM_CATEGORIES.motor_focal.symptoms,
+    ...SYMPTOM_CATEGORIES.motor_generalized.symptoms,
+    ...SYMPTOM_CATEGORIES.sensory.symptoms,
+    ...SYMPTOM_CATEGORIES.cognitive.symptoms,
+    ...SYMPTOM_CATEGORIES.autonomic.symptoms,
+    ...SYMPTOM_CATEGORIES.awareness.symptoms,
+    ...SYMPTOM_CATEGORIES.automatisms.symptoms,
+    ...SYMPTOM_CATEGORIES.severe.symptoms,
+    ...SYMPTOM_CATEGORIES.brief.symptoms,
+  ],
+}
+
+// Helper function to get symptoms for a seizure type
+export const getSymptomsForType = (seizureType: string): string[] => {
+  if (!seizureType || seizureType === '') {
+    // No type selected - show a helpful subset
+    return [
+      'Staring/Unresponsive',
+      'Confusion During',
+      'Muscle Stiffening (Tonic)',
+      'Jerking Movements',
+      'Automatisms',
+      '(Select seizure type for full list)'
+    ]
+  }
+  return SEIZURE_TYPE_SYMPTOMS[seizureType] || SEIZURE_TYPE_SYMPTOMS['Unknown/Uncertain']
+}
+
+// Get unique symptoms (removes duplicates from category merging)
+export const getUniqueSymptomsForType = (seizureType: string): string[] => {
+  const symptoms = getSymptomsForType(seizureType)
+  return [...new Set(symptoms)].filter(s => !s.startsWith('('))
+}
 
 // Post-Seizure Symptoms (Recovery phase) - COMPLETE MEDICAL LIST
 export const POST_SEIZURE_SYMPTOMS = [

@@ -28,9 +28,7 @@ import { Badge } from '@/components/ui/badge';
 import {
   ChevronLeft,
   ChevronRight,
-  Settings,
   Search,
-  Star,
   BookOpen,
   Brain,
   MessageCircle,
@@ -106,8 +104,6 @@ export default function UnifiedJournal() {
 
   // UI state
   const [searchQuery, setSearchQuery] = useState('');
-  const [isBookmarked, setIsBookmarked] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
 
   // Get enabled tabs only
   const enabledTabs = availableTabs.filter(tab => tab.enabled);
@@ -141,9 +137,9 @@ export default function UnifiedJournal() {
         </p>
       </header>
 
-      {/* Header with Date Navigation */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+      {/* Header with Date Navigation - Centered */}
+      <div className="flex items-center justify-center">
+        <div className="flex items-center gap-4">
           <Button
             variant="outline"
             size="sm"
@@ -156,7 +152,7 @@ export default function UnifiedJournal() {
           <Button
             variant="ghost"
             onClick={goToToday}
-            className="text-lg font-semibold min-w-[200px]"
+            className="text-lg font-semibold min-w-[200px] text-center"
           >
             {format(currentDate, 'EEEE, MMMM d, yyyy')}
           </Button>
@@ -168,25 +164,6 @@ export default function UnifiedJournal() {
             className="h-8 w-8 p-0"
           >
             <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsBookmarked(!isBookmarked)}
-            className={isBookmarked ? 'text-yellow-500' : ''}
-          >
-            <Star className={`h-4 w-4 ${isBookmarked ? 'fill-current' : ''}`} />
-          </Button>
-          
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowSettings(!showSettings)}
-          >
-            <Settings className="h-4 w-4" />
           </Button>
         </div>
       </div>

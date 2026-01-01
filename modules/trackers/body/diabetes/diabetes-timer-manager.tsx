@@ -461,16 +461,63 @@ export function DiabetesTimerManager({ timers, onTimersChange, currentUserId }: 
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => {
-                  if ('Notification' in window) {
-                    Notification.requestPermission().then(permission => {
-                      setNotificationsEnabled(permission === 'granted')
-                      if (permission === 'granted') {
-                        toast({
-                          title: "🔔 Notifications Enabled!",
-                          description: "You'll get alerts when timers are about to expire."
-                        })
-                      }
+                onClick={async () => {
+                  console.log('🔔 Enable notifications clicked')
+
+                  if (!('Notification' in window)) {
+                    toast({
+                      title: "❌ Not Supported",
+                      description: "Your browser doesn't support notifications.",
+                      variant: "destructive"
+                    })
+                    return
+                  }
+
+                  const currentPermission = Notification.permission
+                  console.log('🔔 Current permission:', currentPermission)
+
+                  if (currentPermission === 'denied') {
+                    toast({
+                      title: "🚫 Notifications Blocked",
+                      description: "You previously blocked notifications. Please enable them in your browser settings.",
+                      variant: "destructive"
+                    })
+                    return
+                  }
+
+                  try {
+                    const permission = await Notification.requestPermission()
+                    console.log('🔔 Permission result:', permission)
+
+                    if (permission === 'granted') {
+                      setNotificationsEnabled(true)
+                      toast({
+                        title: "🔔 Notifications Enabled!",
+                        description: "You'll get alerts when timers are about to expire."
+                      })
+                      // Send a test notification
+                      new Notification('🩸 Notifications Active!', {
+                        body: 'You\'ll now receive timer alerts.',
+                        icon: '/icon-192x192.png'
+                      })
+                    } else if (permission === 'denied') {
+                      toast({
+                        title: "🚫 Permission Denied",
+                        description: "Notifications were blocked. Check browser settings to enable.",
+                        variant: "destructive"
+                      })
+                    } else {
+                      toast({
+                        title: "⏸️ Permission Dismissed",
+                        description: "Click Enable again to try once more.",
+                      })
+                    }
+                  } catch (error) {
+                    console.error('🔔 Permission error:', error)
+                    toast({
+                      title: "❌ Error",
+                      description: "Failed to request notification permission.",
+                      variant: "destructive"
                     })
                   }
                 }}

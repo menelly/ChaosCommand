@@ -189,7 +189,9 @@ export function MentalHealthForm({ initialData, onSave, onCancel }: MentalHealth
           
           {mood && (
             <div className="mt-4 space-y-2">
-              <Label>Mood Intensity: {SCALE_LABELS.moodIntensity[moodIntensity[0] - 1] || 'Select'}</Label>
+              <Label className="block text-sm font-medium">
+                Mood Intensity: <span className="font-normal">{SCALE_LABELS.moodIntensity[moodIntensity[0] - 1] || 'Select'}</span>
+              </Label>
               <Slider
                 value={moodIntensity}
                 onValueChange={setMoodIntensity}

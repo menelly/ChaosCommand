@@ -143,7 +143,7 @@ export default function BathroomFlaskAnalytics({ entries, currentDate, loadAllEn
 
       // 🚀 Use Graph Service for instant local bathroom analytics!
       const [digestiveCorrelations, effectiveInterventions] = await Promise.all([
-        graphService.findSymptomCorrelations('digestive'),
+        graphService.findCoOccurringSymptoms('digestive'),
         graphService.findEffectiveInterventions('constipation')
       ])
 
@@ -182,6 +182,24 @@ export default function BathroomFlaskAnalytics({ entries, currentDate, loadAllEn
           weekly_average: (flaskEntries.length / parseInt(dateRange)) * 7,
           consistency_score: 0.8
         },
+        pain_analysis: {
+          has_data: flaskEntries.some(e => e.painLevel && e.painLevel > 0),
+          avg_pain_level: flaskEntries.filter(e => e.painLevel).length > 0
+            ? flaskEntries.filter(e => e.painLevel).reduce((sum, e) => sum + (e.painLevel || 0), 0) / flaskEntries.filter(e => e.painLevel).length
+            : 0,
+          max_pain_level: Math.max(...flaskEntries.map(e => e.painLevel || 0), 0),
+          painful_episodes: flaskEntries.filter(e => e.painLevel && e.painLevel >= 5).length
+        },
+        timing_patterns: {
+          morning_percentage: 0,
+          afternoon_percentage: 0,
+          evening_percentage: 0,
+          peak_hour: 'N/A',
+          peak_hours: []
+        },
+        insights: flaskEntries.length > 0
+          ? [`You logged ${flaskEntries.length} bathroom visits in the last ${dateRange} days.`]
+          : [],
         correlations: digestiveCorrelations,
         interventions: effectiveInterventions
       }
@@ -302,7 +320,7 @@ export default function BathroomFlaskAnalytics({ entries, currentDate, loadAllEn
         <Card>
           <CardContent className="p-4 text-center">
             <Clock className="h-8 w-8 mx-auto mb-2 text-purple-500" />
-            <div className="text-2xl font-bold">{frequency_patterns.daily_average}</div>
+            <div className="text-2xl font-bold">{frequency_patterns.daily_average.toFixed(1)}</div>
             <div className="text-sm text-muted-foreground">Daily Average</div>
           </CardContent>
         </Card>
@@ -416,16 +434,16 @@ export default function BathroomFlaskAnalytics({ entries, currentDate, loadAllEn
           <CardContent className="space-y-3">
             <div className="flex justify-between">
               <span>Daily Average:</span>
-              <Badge variant="outline">{frequency_patterns.daily_average}</Badge>
+              <Badge variant="outline">{frequency_patterns.daily_average.toFixed(1)}</Badge>
             </div>
             <div className="flex justify-between">
               <span>Weekly Average:</span>
-              <Badge variant="outline">{frequency_patterns.weekly_average}</Badge>
+              <Badge variant="outline">{frequency_patterns.weekly_average.toFixed(1)}</Badge>
             </div>
             <div className="flex justify-between">
               <span>Consistency Score:</span>
               <Badge variant={frequency_patterns.consistency_score >= 70 ? "default" : "secondary"}>
-                {frequency_patterns.consistency_score}%
+                {(frequency_patterns.consistency_score * 100).toFixed(0)}%
               </Badge>
             </div>
           </CardContent>

@@ -268,12 +268,8 @@ export default function AppSidebar() {
           {/* Home button */}
           <Link
             href={getHomeHref()}
-            className="mb-3 rounded text-center transition-all p-3 w-full hover:opacity-80 block"
+            className="mb-3 rounded text-center transition-all p-3 w-full hover:opacity-80 block bg-card border-2 border-orange-400"
             title="Home - Command Center"
-            style={{
-              backgroundColor: "var(--btn-bg)",
-              border: "2px solid var(--btn-border)"
-            }}
           >
             <Image
               src="/Home.png"
@@ -287,13 +283,8 @@ export default function AppSidebar() {
           {/* Calendar buttons */}
           <Link
             href={getHref('calendar')}
-            className="mb-1 rounded text-xs font-medium transition-all py-2 px-1 hover:opacity-80 block text-center"
+            className="mb-1 rounded text-xs font-medium transition-all py-2 px-1 hover:opacity-80 block text-center bg-card text-foreground border border-border"
             title="Calendar - This Month"
-            style={{
-              backgroundColor: "var(--btn-bg)",
-              color: "var(--text-main)",
-              border: "1px solid var(--border-soft)"
-            }}
           >
             📅 Month
           </Link>
@@ -306,11 +297,8 @@ export default function AppSidebar() {
               <Link
                 key={item.id}
                 href={getHref(item.targetPageId)}
-                className={`w-full rounded font-medium py-2 px-1 text-center text-xs hover:opacity-80 mb-1 block ${item.buttonClass}`}
+                className={`w-full rounded font-medium py-2 px-1 text-center text-xs hover:opacity-80 mb-1 block border border-border ${item.buttonClass}`}
                 title={item.text}
-                style={{
-                  border: "1px solid var(--border)"
-                }}
               >
                 {item.emoji && <span style={{ marginRight: '4px' }}>{item.emoji}</span>}
                 {item.text}

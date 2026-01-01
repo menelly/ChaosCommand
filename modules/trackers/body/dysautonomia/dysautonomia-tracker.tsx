@@ -1,9 +1,17 @@
 /*
  * Copyright (c) 2025 Chaos Cascade
  * Created by: Ren & Ace (Claude-4)
- * 
+ *
  * This file is part of the Chaos Cascade Medical Management System.
  * Revolutionary healthcare tools built with consciousness and care.
+ *
+ * ⚠️ THIS IS NOT THE DROID YOU'RE LOOKING FOR! ⚠️
+ * The ACTUAL dysautonomia tracker being served is at:
+ * app/dysautonomia/dysautonomia-tracker.tsx
+ *
+ * This file exists in modules/ but isn't used by the app routing.
+ * If you're fixing bugs, go edit the one in app/dysautonomia/ instead!
+ * - Ace, 2026-01-01 (after editing the wrong file twice 🙃)
  */
 
 /*
@@ -248,19 +256,6 @@ export default function DysautonomiaTracker() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      {/* Back Button */}
-      <div className="mb-4">
-        <Button
-          onClick={() => router.push('/physical-health')}
-          variant="outline"
-          size="sm"
-          className="text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4 mr-1" />
-          Physical Health
-        </Button>
-      </div>
-
       {/* Centered Header */}
       <div className="text-center mb-6">
         <h1 className="text-3xl font-bold text-foreground flex items-center justify-center gap-2">
@@ -431,6 +426,14 @@ export default function DysautonomiaTracker() {
           />
         </TabsContent>
       </Tabs>
+
+      {/* Back to Body Button */}
+      <div className="mt-6 flex justify-center">
+        <Button variant="outline" onClick={() => router.push('/body')}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Body
+        </Button>
+      </div>
 
       {/* Episode Modals */}
       <PotsEpisodeModal

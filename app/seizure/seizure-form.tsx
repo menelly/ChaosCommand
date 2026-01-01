@@ -44,16 +44,17 @@ import {
   DialogHeader, 
   DialogTitle 
 } from '@/components/ui/dialog'
-import { 
-  SEIZURE_TYPES, 
-  AURA_SYMPTOMS, 
-  SEIZURE_SYMPTOMS, 
+import {
+  SEIZURE_TYPES,
+  AURA_SYMPTOMS,
+  SEIZURE_SYMPTOMS,
   POST_SEIZURE_SYMPTOMS,
   COMMON_TRIGGERS,
   CONSCIOUSNESS_LEVELS,
   DURATION_OPTIONS,
   RECOVERY_TIME_OPTIONS,
-  getRandomSafetyMessage
+  getRandomSafetyMessage,
+  getUniqueSymptomsForType
 } from './seizure-constants'
 import { SeizureEntry, SeizureFormData } from './seizure-types'
 
@@ -293,11 +294,22 @@ export function SeizureForm({ isOpen, onClose, onSave, editEntry }: SeizureFormP
             )}
           </div>
 
-          {/* Seizure Symptoms */}
+          {/* Seizure Symptoms - Dynamic based on seizure type */}
           <div>
             <Label>Seizure Symptoms (during seizure)</Label>
+            {!seizureType && (
+              <p className="text-sm text-muted-foreground mt-1 mb-2">
+                💡 Select a seizure type above to see relevant symptoms
+              </p>
+            )}
+            {seizureType && (
+              <p className="text-sm text-blue-600 mt-1 mb-2">
+                Showing symptoms typical for: {seizureType}
+              </p>
+            )}
             <div className="grid grid-cols-3 gap-2 mt-2">
-              {SEIZURE_SYMPTOMS.map((symptom) => (
+              {/* Merge type-specific symptoms with any already-selected symptoms (for backwards compat) */}
+              {[...new Set([...getUniqueSymptomsForType(seizureType), ...seizureSymptoms])].map((symptom) => (
                 <div key={symptom} className="flex items-center space-x-2">
                   <Checkbox
                     id={`seizure-${symptom}`}

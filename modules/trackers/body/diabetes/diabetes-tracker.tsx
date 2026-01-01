@@ -38,6 +38,7 @@ import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, Plus, Edit, Trash2, Droplets, Zap, Apple } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { db, CATEGORIES, formatDateForStorage, getCurrentTimestamp } from '@/lib/database'
+import { format, subDays } from 'date-fns'
 import { useDailyData } from '@/lib/database/hooks/use-daily-data'
 import { toast } from '@/hooks/use-toast'
 
@@ -163,6 +164,37 @@ export default function DiabetesTracker() {
     } catch (error) {
       console.error('Error loading timers:', error)
       setTimers([])
+    }
+  }
+
+  // Load ALL entries across date range for analytics
+  const loadAllEntries = async (days: number = 30): Promise<DiabetesEntry[]> => {
+    try {
+      const allEntries: DiabetesEntry[] = []
+      const today = new Date()
+
+      for (let i = 0; i < days; i++) {
+        const date = format(subDays(today, i), 'yyyy-MM-dd')
+        const dateKey = formatDateForStorage(new Date(date + 'T12:00:00'))
+
+        const diabetesRecord = await db.daily_data
+          .where('[date+category+subcategory]')
+          .equals([dateKey, CATEGORIES.HEALTH, 'diabetes'])
+          .first()
+
+        if (diabetesRecord?.content) {
+          const loadedEntries = Array.isArray(diabetesRecord.content)
+            ? diabetesRecord.content
+            : [diabetesRecord.content]
+          allEntries.push(...loadedEntries)
+        }
+      }
+
+      console.log(`🩸 Loaded ${allEntries.length} diabetes entries across ${days} days`)
+      return allEntries
+    } catch (error) {
+      console.error('Error loading all diabetes entries:', error)
+      return []
     }
   }
 
@@ -315,26 +347,16 @@ export default function DiabetesTracker() {
       <div className="max-w-4xl mx-auto p-6">
         {/* Header */}
         <div className="text-center mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => router.back()}
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <div className="flex-1" />
-            {/* Expired Timer Alert in Header */}
-            {timers.some(timer => getTimeRemaining(timer).expired) && (
-              <div className="flex items-center gap-2 px-3 py-1 bg-red-100 border border-red-300 rounded-lg animate-pulse">
-                <span className="text-red-600 font-bold text-sm">
-                  🚨 {timers.filter(timer => getTimeRemaining(timer).expired).length} Timer(s) Expired!
-                </span>
-              </div>
-            )}
-          </div>
+          {/* Expired Timer Alert */}
+          {timers.some(timer => getTimeRemaining(timer).expired) && (
+            <div className="flex items-center justify-center gap-2 px-3 py-1 mb-4 bg-red-100 border border-red-300 rounded-lg animate-pulse">
+              <span className="text-red-600 font-bold text-sm">
+                🚨 {timers.filter(timer => getTimeRemaining(timer).expired).length} Timer(s) Expired!
+              </span>
+            </div>
+          )}
 
-          {/* Cute Centered Title */}
+          {/* Centered Title */}
           <div className="text-center">
             <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--primary-purple)' }}>
               🩸💉 DIABETES TRACKER
@@ -643,9 +665,21 @@ export default function DiabetesTracker() {
 
           {/* Analytics Tab */}
           <TabsContent value="analytics" className="space-y-6">
-            <DiabetesFlaskAnalytics entries={entries} currentDate={currentDate} />
+            <DiabetesFlaskAnalytics
+              entries={entries}
+              currentDate={currentDate}
+              loadAllEntries={loadAllEntries}
+            />
           </TabsContent>
         </Tabs>
+
+        {/* Back to Body Button */}
+        <div className="mt-6 flex justify-center">
+          <Button variant="outline" onClick={() => router.push('/body')}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Body
+          </Button>
+        </div>
       </div>
     </div>
   )

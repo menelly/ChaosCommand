@@ -722,8 +722,8 @@ export default function BathroomTracker() {
         </Tabs>
 
         <div className="text-center">
-          <Button variant="outline" onClick={() => window.location.href = '/physical-health'}>
-            ← Back to Physical Health
+          <Button variant="outline" onClick={() => window.location.href = '/body'}>
+            ← Back to Body
           </Button>
         </div>
 

@@ -163,21 +163,23 @@ export default function HeadPainFlaskAnalytics({ entries, currentDate, loadAllEn
       console.log('🧠 Raw entry structure:', allEntries[0])
       console.log('🧠 Entry keys:', Object.keys(allEntries[0] || {}))
 
-      // 🚨 CRITICAL: Map actual HeadPainEntry structure to Flask format
-      const flaskEntries = allEntries.map(entry => ({
-        date: entry.entry_date,
-        time: entry.entry_time,
-        painType: entry.pain_type || [],
-        severity: entry.severity,
-        location: entry.location || [],
-        duration: entry.duration_hours,
+      // 🚨 CRITICAL: Map actual HeadPainEntry structure (the REAL one from types file)
+      // Actual fields: id, timestamp, date, painIntensity, painLocation[], painType[],
+      // auraPresent, auraSymptoms[], triggers[], duration, treatments[], treatmentEffectiveness
+      const flaskEntries = allEntries.map((entry: any) => ({
+        date: entry.date || '',
+        time: entry.timestamp || entry.onsetTime || '',
+        painType: entry.painType || [],
+        painIntensity: entry.painIntensity || 0,
+        painLocation: entry.painLocation || [],
+        duration: entry.duration || '',
         triggers: entry.triggers || [],
-        symptoms: entry.symptoms || [],
-        auraPresent: false, // Not in interface, default to false
-        auraSymptoms: [], // Not in interface, default to empty
-        treatments: entry.medications || [],
-        effectiveness: entry.effectiveness,
-        functionalImpact: 0, // Not in interface, default to 0
+        symptoms: entry.associatedSymptoms || [],
+        auraPresent: entry.auraPresent || false,
+        auraSymptoms: entry.auraSymptoms || [],
+        treatments: entry.treatments || [],
+        treatmentEffectiveness: entry.treatmentEffectiveness || 0,
+        functionalImpact: entry.functionalImpact || 'none',
         notes: entry.notes || '',
         tags: entry.tags || []
       }))
@@ -188,37 +190,103 @@ export default function HeadPainFlaskAnalytics({ entries, currentDate, loadAllEn
 
       // 🚀 Use Graph Service for instant local head pain analytics!
       const [headacheCorrelations, effectiveTreatments] = await Promise.all([
-        graphService.findSymptomCorrelations('headache'),
+        graphService.findCoOccurringSymptoms('headache'),
         graphService.findEffectiveInterventions('head pain')
       ])
 
-      // Generate comprehensive head pain analytics
+      // Calculate pain type frequency to find most common
+      const painTypeCounts: Record<string, number> = {}
+      flaskEntries.forEach(entry => {
+        if (Array.isArray(entry.painType)) {
+          entry.painType.forEach((type: string) => {
+            painTypeCounts[type] = (painTypeCounts[type] || 0) + 1
+          })
+        } else if (entry.painType) {
+          painTypeCounts[entry.painType] = (painTypeCounts[entry.painType] || 0) + 1
+        }
+      })
+      const mostCommonType = Object.entries(painTypeCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A'
+
+      // Calculate trigger frequency
+      const triggerCounts: Record<string, number> = {}
+      flaskEntries.forEach(entry => {
+        (entry.triggers || []).forEach((trigger: string) => {
+          triggerCounts[trigger] = (triggerCounts[trigger] || 0) + 1
+        })
+      })
+      const topTriggers = Object.entries(triggerCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10)
+        .map(([trigger]) => trigger)
+
+      // Calculate medication effectiveness
+      const medCounts: Record<string, number[]> = {}
+      flaskEntries.forEach(entry => {
+        const effectiveness = entry.treatmentEffectiveness || 0
+        (entry.treatments || []).forEach((med: string) => {
+          if (!medCounts[med]) medCounts[med] = []
+          medCounts[med].push(effectiveness)
+        })
+      })
+      const effectivenessAvg: Record<string, number> = {}
+      Object.entries(medCounts).forEach(([med, scores]) => {
+        effectivenessAvg[med] = scores.length > 0
+          ? parseFloat((scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1))
+          : 0
+      })
+      const mostEffective = Object.entries(effectivenessAvg)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([med]) => med)
+
+      // Calculate pain intensities
+      const painIntensities = flaskEntries.map(e => e.painIntensity || 0)
+      const avgSeverity = painIntensities.length > 0
+        ? parseFloat((painIntensities.reduce((a, b) => a + b, 0) / painIntensities.length).toFixed(1))
+        : 0
+      const maxSeverity = painIntensities.length > 0
+        ? Math.max(...painIntensities)
+        : 0
+
+      // Generate comprehensive head pain analytics - structure matches what UI expects!
       const data = {
         period: {
-          start: flaskEntries.length > 0 ? flaskEntries[0].entry_date : '',
-          end: flaskEntries.length > 0 ? flaskEntries[flaskEntries.length - 1].entry_date : '',
+          start: flaskEntries.length > 0 ? flaskEntries[0].date : '',
+          end: flaskEntries.length > 0 ? flaskEntries[flaskEntries.length - 1].date : '',
           days: parseInt(dateRange)
         },
         total_episodes: flaskEntries.length,
-        avg_severity: flaskEntries.length > 0 ? flaskEntries.reduce((sum, e) => sum + e.severity, 0) / flaskEntries.length : 0,
-        weekly_average: (flaskEntries.length / parseInt(dateRange)) * 7,
         pain_analysis: {
-          pain_types: flaskEntries.reduce((acc, entry) => {
-            acc[entry.pain_type] = (acc[entry.pain_type] || 0) + 1
-            return acc
-          }, {} as Record<string, number>),
-          location_frequency: flaskEntries.reduce((acc, entry) => {
-            entry.location.forEach(loc => {
-              acc[loc] = (acc[loc] || 0) + 1
-            })
-            return acc
-          }, {} as Record<string, number>),
-          correlations: headacheCorrelations
+          avg_severity: avgSeverity,
+          max_severity: maxSeverity,
+          most_common_type: mostCommonType,
+          pain_types: painTypeCounts
         },
-        treatments: {
-          most_effective: effectiveTreatments,
-          success_rate: effectiveTreatments.length > 0 ? effectiveTreatments[0].effectiveness : 0
-        }
+        duration: {
+          has_data: flaskEntries.some(e => e.duration),
+          avg_duration: 0 // Would need to parse duration strings
+        },
+        triggers: {
+          top_triggers: topTriggers,
+          trigger_counts: triggerCounts
+        },
+        medications: {
+          most_effective: mostEffective,
+          effectiveness_avg: effectivenessAvg
+        },
+        patterns: {
+          weekly_average: parseFloat(((flaskEntries.length / parseInt(dateRange)) * 7).toFixed(1))
+        },
+        relief: {
+          relief_methods: {},
+          avg_effectiveness: 0
+        },
+        insights: flaskEntries.length > 0
+          ? [`You logged ${flaskEntries.length} head pain episodes in the last ${dateRange} days.`,
+             avgSeverity >= 7 ? `Your average pain level (${avgSeverity}/10) is high - consider discussing with your doctor.` : '',
+             topTriggers.length > 0 ? `Most common trigger: ${topTriggers[0]}` : ''
+            ].filter(Boolean)
+          : []
       }
 
       console.log('🎯 Graph Service head pain analytics generated:', data)
@@ -259,14 +327,14 @@ export default function HeadPainFlaskAnalytics({ entries, currentDate, loadAllEn
     )
   }
 
-  if (!analyticsData || entries.length === 0) {
+  if (!analyticsData || analyticsData.total_episodes === 0) {
     return (
       <Card>
         <CardContent className="p-8 text-center">
           <Brain className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
           <h3 className="text-lg font-semibold mb-2">No Head Pain Data</h3>
           <p className="text-muted-foreground">
-            Record head pain episodes to see Flask-powered migraine and trigger analytics!
+            Record head pain episodes to see pattern analytics!
           </p>
         </CardContent>
       </Card>

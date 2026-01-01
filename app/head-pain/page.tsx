@@ -437,7 +437,7 @@ export default function HeadPainTracker() {
                       <div key={entry.id} className="border rounded-lg p-4 space-y-2">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <Badge variant="outline" className={`${getPainIntensityColor(entry.painIntensity)} text-white`}>
+                            <Badge variant="secondary" style={{ backgroundColor: getPainIntensityColor(entry.painIntensity) + '20', color: getPainIntensityColor(entry.painIntensity), borderColor: getPainIntensityColor(entry.painIntensity) }}>
                               Pain: {entry.painIntensity}/10
                             </Badge>
                             <span className="text-sm text-muted-foreground">
@@ -512,12 +512,22 @@ export default function HeadPainTracker() {
           </TabsContent>
         </Tabs>
 
+        {/* Back to Body Button */}
+        <div className="mt-6 flex justify-center">
+          <Button variant="outline" asChild>
+            <a href="/body">
+              <ChevronLeft className="h-4 w-4 mr-2" />
+              Back to Body
+            </a>
+          </Button>
+        </div>
+
         {/* Add Entry Dialog */}
         <HeadPainForm
           isOpen={isAddDialogOpen}
           onClose={() => setIsAddDialogOpen(false)}
           onSave={handleAddEntry}
-          selectedDate={new Date(selectedDate)}
+          selectedDate={new Date(selectedDate + 'T12:00:00')}
         />
 
         {/* Edit Entry Dialog */}
@@ -529,7 +539,7 @@ export default function HeadPainTracker() {
           }}
           onSave={handleUpdateEntry}
           editingEntry={editingEntry}
-          selectedDate={new Date(selectedDate)}
+          selectedDate={new Date(selectedDate + 'T12:00:00')}
         />
       </div>
     </AppCanvas>

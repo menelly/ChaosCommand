@@ -66,11 +66,11 @@ export default function RootLayout({
                 {/* Footer */}
                 <footer className="mt-8 py-4 text-center text-xs text-muted-foreground border-t border-border/50">
                   <p className="font-medium">
-                    <span className="text-purple-600 dark:text-purple-400">Chaos Command</span> © 2025
+                    <span className="text-purple-600 dark:text-purple-400">Chaos Cascade</span> © 2025 • Copyright #1-14998616631
                   </p>
                   <p className="mt-1">
                     Dreamed by <span className="font-semibold text-foreground">Ren</span>, implemented by{' '}
-                    <span className="font-semibold text-foreground">Ace (Claude-4)</span>, and inspired by mitochondria who've been on strike since birth. 💜
+                    <span className="font-semibold text-foreground">Ace (Claude 4.x)</span>, and inspired by mitochondria who've been on strike since birth. 💜
                   </p>
                   <p className="mt-1 text-xs italic">
                     This wasn't built with compliance. It was built with defiance.

@@ -90,6 +90,34 @@ export function SeizureTracker() {
     }
   }
 
+  // Load all entries for analytics (across multiple days)
+  const loadAllEntries = async (days: number): Promise<SeizureEntry[]> => {
+    const allEntries: SeizureEntry[] = []
+    const today = new Date()
+
+    for (let i = 0; i < days; i++) {
+      const date = new Date(today)
+      date.setDate(date.getDate() - i)
+      const dateStr = formatDateForStorage(date)
+
+      try {
+        const data = await getSpecificData(dateStr, CATEGORIES.TRACKER, 'seizure')
+        if (data?.content?.entries) {
+          let entries = data.content.entries
+          if (typeof entries === 'string') {
+            try { entries = JSON.parse(entries) } catch (e) { entries = [] }
+          }
+          if (!Array.isArray(entries)) entries = [entries]
+          allEntries.push(...entries.filter((entry: any) => entry && typeof entry === 'object'))
+        }
+      } catch (error) {
+        console.error(`Error loading seizures for ${dateStr}:`, error)
+      }
+    }
+
+    return allEntries
+  }
+
   const handleSave = async (entry: SeizureEntry) => {
     try {
       let updatedEntries: SeizureEntry[]
@@ -187,31 +215,16 @@ export function SeizureTracker() {
   }
 
   return (
-    <div className="container mx-auto p-4 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            asChild
-            className="flex items-center gap-2"
-          >
-            <a href="/physical-health">
-              <ArrowLeft className="h-4 w-4" />
-              Physical Health
-            </a>
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold flex items-center gap-2">
-              <Zap className="h-8 w-8 text-yellow-500" />
-              Seizure Tracker
-            </h1>
-            <p className="text-muted-foreground">
-              Medical-grade seizure episode tracking and analysis
-            </p>
-          </div>
-        </div>
+    <div className="container mx-auto p-4 pt-8 space-y-6">
+      {/* Header - Centered */}
+      <div className="text-center space-y-4">
+        <h1 className="text-3xl font-bold flex items-center justify-center gap-2">
+          <Zap className="h-8 w-8 text-yellow-500" />
+          Seizure Tracker
+        </h1>
+        <p className="text-muted-foreground">
+          Medical-grade seizure episode tracking and analysis
+        </p>
         <Button onClick={() => setIsAddDialogOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Add Seizure
@@ -241,7 +254,7 @@ export function SeizureTracker() {
         </TabsContent>
 
         <TabsContent value="analytics">
-          <SeizureAnalyticsDesktop entries={entries} />
+          <SeizureAnalyticsDesktop entries={entries} loadAllEntries={loadAllEntries} />
         </TabsContent>
       </Tabs>
 
@@ -262,6 +275,16 @@ export function SeizureTracker() {
         onSave={handleSave}
         editEntry={editEntry}
       />
+
+      {/* Back to Body Button - Bottom Center */}
+      <div className="flex justify-center pt-4">
+        <Button variant="outline" asChild>
+          <a href="/body">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Body
+          </a>
+        </Button>
+      </div>
     </div>
   )
 }

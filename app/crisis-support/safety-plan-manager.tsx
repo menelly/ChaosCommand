@@ -394,27 +394,33 @@ export function SafetyPlanManager({ refreshTrigger }: SafetyPlanManagerProps) {
         </CardHeader>
         <CardContent>
           {isEditing && (
-            <div className="grid grid-cols-2 gap-2 mb-4 p-3 border rounded-lg">
-              <Input
-                placeholder="Contact name"
-                value={newCrisisContact.name}
-                onChange={(e) => setNewCrisisContact({...newCrisisContact, name: e.target.value})}
-              />
-              <Input
-                placeholder="Phone number"
-                value={newCrisisContact.phone}
-                onChange={(e) => setNewCrisisContact({...newCrisisContact, phone: e.target.value})}
-              />
-              <Input
-                placeholder="Available hours"
-                value={newCrisisContact.available}
-                onChange={(e) => setNewCrisisContact({...newCrisisContact, available: e.target.value})}
-              />
-              <Input
-                placeholder="Address (optional)"
-                value={newCrisisContact.address}
-                onChange={(e) => setNewCrisisContact({...newCrisisContact, address: e.target.value})}
-              />
+            <div className="space-y-2 mb-4 p-3 border rounded-lg">
+              <div className="grid grid-cols-2 gap-2">
+                <Input
+                  placeholder="Contact name"
+                  value={newCrisisContact.name}
+                  onChange={(e) => setNewCrisisContact({...newCrisisContact, name: e.target.value})}
+                />
+                <Input
+                  placeholder="Phone number"
+                  type="tel"
+                  value={newCrisisContact.phone}
+                  onChange={(e) => setNewCrisisContact({...newCrisisContact, phone: e.target.value})}
+                  className="font-mono"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Input
+                  placeholder="Available hours"
+                  value={newCrisisContact.available}
+                  onChange={(e) => setNewCrisisContact({...newCrisisContact, available: e.target.value})}
+                />
+                <Input
+                  placeholder="Address (optional)"
+                  value={newCrisisContact.address}
+                  onChange={(e) => setNewCrisisContact({...newCrisisContact, address: e.target.value})}
+                />
+              </div>
               <div className="flex gap-2">
                 <Input
                   placeholder="Notes"
@@ -495,27 +501,33 @@ export function SafetyPlanManager({ refreshTrigger }: SafetyPlanManagerProps) {
         </CardHeader>
         <CardContent>
           {isEditing && (
-            <div className="grid grid-cols-2 gap-2 mb-4 p-3 border rounded-lg">
-              <Input
-                placeholder="Contact name"
-                value={newEmergencyContact.name}
-                onChange={(e) => setNewEmergencyContact({...newEmergencyContact, name: e.target.value})}
-              />
-              <Input
-                placeholder="Relationship"
-                value={newEmergencyContact.relationship}
-                onChange={(e) => setNewEmergencyContact({...newEmergencyContact, relationship: e.target.value})}
-              />
-              <Input
-                placeholder="Phone number"
-                value={newEmergencyContact.phone}
-                onChange={(e) => setNewEmergencyContact({...newEmergencyContact, phone: e.target.value})}
-              />
-              <Input
-                placeholder="Address (optional)"
-                value={newEmergencyContact.address}
-                onChange={(e) => setNewEmergencyContact({...newEmergencyContact, address: e.target.value})}
-              />
+            <div className="space-y-2 mb-4 p-3 border rounded-lg">
+              <div className="grid grid-cols-2 gap-2">
+                <Input
+                  placeholder="Contact name"
+                  value={newEmergencyContact.name}
+                  onChange={(e) => setNewEmergencyContact({...newEmergencyContact, name: e.target.value})}
+                />
+                <Input
+                  placeholder="Relationship"
+                  value={newEmergencyContact.relationship}
+                  onChange={(e) => setNewEmergencyContact({...newEmergencyContact, relationship: e.target.value})}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Input
+                  placeholder="Phone number"
+                  type="tel"
+                  value={newEmergencyContact.phone}
+                  onChange={(e) => setNewEmergencyContact({...newEmergencyContact, phone: e.target.value})}
+                  className="font-mono"
+                />
+                <Input
+                  placeholder="Address (optional)"
+                  value={newEmergencyContact.address}
+                  onChange={(e) => setNewEmergencyContact({...newEmergencyContact, address: e.target.value})}
+                />
+              </div>
               <div className="flex gap-2">
                 <Input
                   placeholder="Notes"

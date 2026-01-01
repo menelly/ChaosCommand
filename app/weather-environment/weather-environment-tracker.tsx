@@ -39,10 +39,12 @@ import {
   History,
   BarChart3,
   Edit,
-  Trash2
+  Trash2,
+  ArrowLeft
 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { cn } from "@/lib/utils"
-import DailyDashboardToggle from "@/components/daily-dashboard-toggle"
+// DailyDashboardToggle removed - feature deprecated
 
 // Import our modular components
 import type { WeatherData, AllergenData, WeatherEnvironmentTrackerProps, WeatherType, WeatherImpact, AllergenType, AllergenSeverity } from './weather-types'
@@ -53,6 +55,7 @@ import { AllergenForm } from './allergen-form'
 import { getSeverityColor } from './weather-constants'
 
 export default function WeatherEnvironmentTracker({ selectedDate = new Date() }: WeatherEnvironmentTrackerProps) {
+  const router = useRouter()
   // State management
   const [currentDate, setCurrentDate] = useState<Date>(selectedDate)
   const [activeTab, setActiveTab] = useState("weather")
@@ -74,6 +77,74 @@ export default function WeatherEnvironmentTracker({ selectedDate = new Date() }:
   useEffect(() => {
     loadTodayEntries()
   }, [currentDate, isLoading])
+
+  // Load all weather entries for analytics (multi-day)
+  const loadAllWeatherEntries = async (days: number): Promise<WeatherData[]> => {
+    const allEntries: WeatherData[] = []
+    const today = new Date()
+
+    for (let i = 0; i < days; i++) {
+      const date = new Date(today)
+      date.setDate(date.getDate() - i)
+      const dateStr = formatDateForStorage(date)
+
+      try {
+        const data = await getSpecificData(dateStr, CATEGORIES.TRACKER, 'weather')
+        if (data?.content) {
+          let entries = data.content
+          if (typeof entries === 'string') {
+            try {
+              entries = JSON.parse(entries)
+            } catch (e) {
+              entries = []
+            }
+          }
+          if (!Array.isArray(entries)) {
+            entries = [entries]
+          }
+          allEntries.push(...entries)
+        }
+      } catch (error) {
+        console.error(`Error loading weather for ${dateStr}:`, error)
+      }
+    }
+
+    return allEntries
+  }
+
+  // Load all allergen entries for analytics (multi-day)
+  const loadAllAllergenEntries = async (days: number): Promise<AllergenData[]> => {
+    const allEntries: AllergenData[] = []
+    const today = new Date()
+
+    for (let i = 0; i < days; i++) {
+      const date = new Date(today)
+      date.setDate(date.getDate() - i)
+      const dateStr = formatDateForStorage(date)
+
+      try {
+        const data = await getSpecificData(dateStr, CATEGORIES.TRACKER, 'environmental-allergens')
+        if (data?.content) {
+          let entries = data.content
+          if (typeof entries === 'string') {
+            try {
+              entries = JSON.parse(entries)
+            } catch (e) {
+              entries = []
+            }
+          }
+          if (!Array.isArray(entries)) {
+            entries = [entries]
+          }
+          allEntries.push(...entries)
+        }
+      } catch (error) {
+        console.error(`Error loading allergens for ${dateStr}:`, error)
+      }
+    }
+
+    return allEntries
+  }
 
   const loadTodayEntries = async () => {
     if (isLoading) return
@@ -509,17 +580,14 @@ export default function WeatherEnvironmentTracker({ selectedDate = new Date() }:
   return (
     <div className="max-w-4xl mx-auto p-4 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Cloud className="h-6 w-6 text-blue-500" />
-            Weather & Environment
-          </h1>
-          <p className="text-muted-foreground">
-            Track weather patterns and environmental allergens
-          </p>
-        </div>
-        <DailyDashboardToggle trackerId="weather-environment" trackerName="Weather & Environment" />
+      <div className="text-center mb-6">
+        <h1 className="text-2xl font-bold flex items-center justify-center gap-2">
+          <Cloud className="h-6 w-6 text-blue-500" />
+          Weather & Environment
+        </h1>
+        <p className="text-muted-foreground">
+          Track weather patterns and environmental allergens
+        </p>
       </div>
 
       {/* Date Navigation */}
@@ -776,7 +844,12 @@ export default function WeatherEnvironmentTracker({ selectedDate = new Date() }:
 
         {/* Analytics Tab - Desktop Only */}
         <TabsContent value="analytics" className="space-y-4">
-          <WeatherAnalyticsDesktop />
+          <WeatherAnalyticsDesktop
+            weatherEntries={weatherEntries}
+            allergenEntries={allergenEntries}
+            loadAllWeatherEntries={loadAllWeatherEntries}
+            loadAllAllergenEntries={loadAllAllergenEntries}
+          />
         </TabsContent>
       </Tabs>
 
@@ -830,6 +903,14 @@ export default function WeatherEnvironmentTracker({ selectedDate = new Date() }:
         } : null}
         isEditing={true}
       />
+
+      {/* Back to Body Button */}
+      <div className="flex justify-center pt-4">
+        <Button variant="outline" onClick={() => router.push('/body')}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Body
+        </Button>
+      </div>
     </div>
   )
 }
