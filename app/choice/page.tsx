@@ -20,11 +20,14 @@
  */
 'use client'
 
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import AppCanvas from '@/components/app-canvas'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
 import {
   Bed,
   Droplets,
@@ -32,12 +35,50 @@ import {
   Activity,
   Battery,
   Heart,
-  ArrowRight
+  ArrowRight,
+  Settings2
 } from 'lucide-react'
 
+const HIDDEN_TRACKERS_KEY = 'chaos-choice-hidden-trackers'
+
 export default function ChoicePage() {
-  const choiceAreas = [
+  // Hidden trackers state - persisted to localStorage
+  const [hiddenTrackers, setHiddenTrackers] = useState<string[]>([])
+  const [isCustomizeOpen, setIsCustomizeOpen] = useState(false)
+
+  // Load hidden trackers from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(HIDDEN_TRACKERS_KEY)
+      if (saved) {
+        setHiddenTrackers(JSON.parse(saved))
+      }
+    } catch (e) {
+      console.error('Failed to load hidden trackers:', e)
+    }
+  }, [])
+
+  // Save hidden trackers to localStorage when changed
+  const updateHiddenTrackers = (newHidden: string[]) => {
+    setHiddenTrackers(newHidden)
+    try {
+      localStorage.setItem(HIDDEN_TRACKERS_KEY, JSON.stringify(newHidden))
+    } catch (e) {
+      console.error('Failed to save hidden trackers:', e)
+    }
+  }
+
+  const toggleTrackerVisibility = (trackerId: string) => {
+    if (hiddenTrackers.includes(trackerId)) {
+      updateHiddenTrackers(hiddenTrackers.filter(id => id !== trackerId))
+    } else {
+      updateHiddenTrackers([...hiddenTrackers, trackerId])
+    }
+  }
+
+  const allChoiceAreas = [
     {
+      id: "sleep",
       title: "Sleep",
       description: "Track sleep quality, duration, and your bedtime routines",
       icon: Bed,
@@ -45,6 +86,7 @@ export default function ChoicePage() {
       route: "/sleep",
     },
     {
+      id: "hydration",
       title: "Hydration",
       description: "Monitor water intake and hydration habits you control",
       icon: Droplets,
@@ -52,6 +94,7 @@ export default function ChoicePage() {
       route: "/hydration"
     },
     {
+      id: "food-choice",
       title: "Food Choice",
       description: "Track what you choose to eat and your relationship with food",
       icon: Utensils,
@@ -59,6 +102,7 @@ export default function ChoicePage() {
       route: "/food-choice"
     },
     {
+      id: "movement",
       title: "Movement",
       description: "Log physical activity and movement you choose to do",
       icon: Activity,
@@ -66,6 +110,7 @@ export default function ChoicePage() {
       route: "/movement"
     },
     {
+      id: "energy",
       title: "Energy & Pacing",
       description: "Manage your energy levels and pacing decisions",
       icon: Battery,
@@ -73,6 +118,7 @@ export default function ChoicePage() {
       route: "/energy"
     },
     {
+      id: "coping-regulation",
       title: "Coping & Regulation",
       description: "Track coping strategies and regulation tools you use",
       icon: Heart,
@@ -80,6 +126,9 @@ export default function ChoicePage() {
       route: "/coping-regulation"
     }
   ]
+
+  // Filter out hidden trackers
+  const choiceAreas = allChoiceAreas.filter(area => !hiddenTrackers.includes(area.id))
 
   const handleNavigation = (route: string) => {
     window.location.href = route
@@ -99,12 +148,12 @@ export default function ChoicePage() {
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {choiceAreas.map((area, index) => {
+          {choiceAreas.map((area) => {
             const IconComponent = area.icon
 
             return (
               <Card
-                key={index}
+                key={area.id}
                 className="relative overflow-hidden transition-all duration-200 hover:shadow-lg cursor-pointer"
                 onClick={() => handleNavigation(area.route)}
               >
@@ -135,6 +184,90 @@ export default function ChoicePage() {
             that remain yours. Track your self-care wins and build sustainable habits at your own pace.
           </p>
         </div>
+
+        {/* CUSTOMIZE TRACKERS */}
+        <Card className="mt-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Settings2 className="h-5 w-5" />
+              Customize Your Trackers
+            </CardTitle>
+            <CardDescription>
+              Show only the trackers you actually use. Hidden trackers can always be shown again.
+              {hiddenTrackers.length > 0 && (
+                <span className="block mt-1 text-primary">
+                  {hiddenTrackers.length} tracker{hiddenTrackers.length !== 1 ? 's' : ''} hidden
+                </span>
+              )}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Dialog open={isCustomizeOpen} onOpenChange={setIsCustomizeOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="w-full">
+                  <Settings2 className="h-4 w-4 mr-2" />
+                  Customize Visible Trackers
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Settings2 className="h-5 w-5" />
+                    Customize Choice Trackers
+                  </DialogTitle>
+                  <DialogDescription>
+                    Toggle off trackers you don't need. They won't appear on the Choice page, but you can always turn them back on.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 mt-4">
+                  {allChoiceAreas.map((area) => {
+                    const IconComponent = area.icon
+                    return (
+                      <div key={area.id} className="flex items-center justify-between gap-4 py-2 border-b border-border/50">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <div className={`p-1.5 rounded ${area.color} text-white shrink-0`}>
+                            <IconComponent className="h-4 w-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <Label htmlFor={`toggle-${area.id}`} className="font-medium cursor-pointer">
+                              {area.title}
+                            </Label>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {area.description}
+                            </p>
+                          </div>
+                        </div>
+                        <Switch
+                          id={`toggle-${area.id}`}
+                          checked={!hiddenTrackers.includes(area.id)}
+                          onCheckedChange={() => toggleTrackerVisibility(area.id)}
+                        />
+                      </div>
+                    )
+                  })}
+                </div>
+                <div className="flex gap-2 mt-4 pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => updateHiddenTrackers([])}
+                    disabled={hiddenTrackers.length === 0}
+                  >
+                    Show All
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsCustomizeOpen(false)}
+                    className="ml-auto"
+                  >
+                    Done
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </CardContent>
+        </Card>
 
         <div className="mt-8 text-center">
           <Button variant="outline" onClick={() => window.location.href = '/'}>

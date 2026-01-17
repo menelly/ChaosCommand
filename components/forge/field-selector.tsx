@@ -141,6 +141,7 @@ export default function FieldSelector({ onAddField }: FieldSelectorProps) {
   const [selectedCategory, setSelectedCategory] = useState<keyof typeof MEDICAL_TERMS>('symptoms');
   const [customFieldName, setCustomFieldName] = useState('');
   const [selectedFieldType, setSelectedFieldType] = useState<keyof typeof FIELD_TYPES>('scale');
+  const [medicalFieldType, setMedicalFieldType] = useState<keyof typeof FIELD_TYPES>('scale');
 
   // 🔍 FILTER MEDICAL TERMS
   const filteredTerms = MEDICAL_TERMS[selectedCategory].filter(term =>
@@ -149,15 +150,14 @@ export default function FieldSelector({ onAddField }: FieldSelectorProps) {
 
   // 🏥 ADD MEDICAL FIELD
   const addMedicalField = (term: string) => {
-    const fieldType = selectedCategory === 'measurements' ? 'number' : 'scale';
     const field: TrackerField = {
       id: '', // Will be set by parent
       name: term,
-      type: fieldType,
+      type: medicalFieldType,
       required: false,
       medicalTerm: term,
-      description: `Track ${term.toLowerCase()} levels`,
-      ...FIELD_TYPES[fieldType].defaultConfig
+      description: `Track ${term.toLowerCase()}`,
+      ...FIELD_TYPES[medicalFieldType].defaultConfig
     };
     onAddField(field);
   };
@@ -224,8 +224,27 @@ export default function FieldSelector({ onAddField }: FieldSelectorProps) {
             ))}
           </div>
 
+          {/* Field Type Selector for Medical Terms */}
+          <div>
+            <Label className="text-xs text-muted-foreground">Add as field type:</Label>
+            <div className="flex flex-wrap gap-1 mt-1">
+              {(['scale', 'checkbox', 'dropdown', 'number', 'text'] as const).map((type) => (
+                <Button
+                  key={type}
+                  variant={medicalFieldType === type ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setMedicalFieldType(type)}
+                  className="h-7 text-xs px-2"
+                >
+                  {FIELD_TYPES[type].icon}
+                  <span className="ml-1">{FIELD_TYPES[type].name}</span>
+                </Button>
+              ))}
+            </div>
+          </div>
+
           {/* Medical Terms List */}
-          <div className="max-h-48 overflow-y-auto space-y-2">
+          <div className="max-h-40 overflow-y-auto space-y-2">
             {filteredTerms.map((term) => (
               <div key={term} className="flex items-center justify-between p-2 bg-muted rounded-lg">
                 <div className="flex items-center gap-2">
@@ -240,7 +259,7 @@ export default function FieldSelector({ onAddField }: FieldSelectorProps) {
                   className="flex items-center gap-1"
                 >
                   <Plus className="h-3 w-3" />
-                  Add
+                  Add as {FIELD_TYPES[medicalFieldType].name}
                 </Button>
               </div>
             ))}
@@ -268,12 +287,12 @@ export default function FieldSelector({ onAddField }: FieldSelectorProps) {
                   variant={selectedFieldType === type ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setSelectedFieldType(type as keyof typeof FIELD_TYPES)}
-                  className="flex items-center gap-2 h-auto p-3 flex-col"
+                  className="flex items-center gap-2 h-auto p-3 flex-col justify-start"
                 >
                   {config.icon}
-                  <div className="text-xs text-center">
+                  <div className="text-xs text-center w-full">
                     <div className="font-medium">{config.name}</div>
-                    <div className="text-muted-foreground">{config.description}</div>
+                    <div className="text-muted-foreground whitespace-normal break-words">{config.description}</div>
                   </div>
                 </Button>
               ))}

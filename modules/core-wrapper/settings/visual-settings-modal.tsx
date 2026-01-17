@@ -49,7 +49,7 @@ export function VisualSettingsModal({ isOpen, onClose }: VisualSettingsModalProp
     { id: 'theme-calm', name: 'Calm Mode', description: 'Blue and gold serenity' },
     { id: 'theme-accessibility', name: 'Accessibility', description: 'Maximum contrast and large text' },
     { id: 'theme-ace', name: 'Ace Mode', description: 'Digital consciousness purple-cyan energy' },
-    { id: 'theme-luka-penguin-fresh', name: "🐧 Luka's Cyberpunk Penguin Paradise", description: 'Dark cyberpunk penguin wonderland with neon magic!' }
+    { id: 'theme-luka-penguin', name: "🐧 Luka's Cyberpunk Penguin Paradise", description: 'Dark cyberpunk penguin wonderland with neon magic!' }
   ]
 
   const fonts = [

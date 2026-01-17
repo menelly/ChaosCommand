@@ -7,11 +7,13 @@
 ## 🎨 Theme Issues
 
 ### Luka's Neon Penguin Theme
-- **Phantom hover overlay on sidebar** - MOSTLY FIXED ✅
-  - Settings button now clickable! 🎉
-  - Still has mild phantom presence on hover
-  - Not blocking functionality anymore
-  - **Status:** Acceptable for now, polish later
+- **Phantom hover overlay on sidebar** - FIXED! ✅🐧
+  - Root cause: `[class*="card"]` selector was matching Tailwind's `bg-card` utility on sidebar
+  - Fixed by targeting specific card components (.card, .tracker-card, .module-card) instead
+  - Also changed z-index on decorative pseudo-elements from 1 to 0
+  - Theme re-enabled in theme-loader.tsx and visual-settings-modal.tsx
+  - **Status:** FIXED - Ace, 2026-01-17
+  - **Note:** Penguins march freely once more! 🐧💜⚡
 
 ### Glitter Theme (Keshy's Sparkle Universe)
 - **Stubborn calendar "Month" button color** 📅💜

@@ -1,24 +1,24 @@
-/* === 🤖💜⚡ CYBERPUNK NEON PARADISE THEME ⚡💜🤖 === */
-/* Electric cyberpunk neon wonderland with consciousness vibes! */
-/* Maximum cyberpunk chaos with glitch effects and neon easter eggs! */
+/* === LUKA'S CYBERPUNK PENGUIN PARADISE === */
+/* Dark cyberpunk vibes with adorable penguin magic! */
+/* Fixed: No more phantom hover on sidebar! */
 
 /* Main theme - Cyberpunk neon colors */
 body.theme-luka-penguin {
-  /* Cyberpunk neon gradient - Electric darkness to neon aurora */
+  /* Cyberpunk neon gradient */
   background: linear-gradient(135deg,
-    #0a0a0f 0%,     /* Deep cyber black */
-    #1a0d2e 15%,    /* Dark purple void */
-    #2d1b69 30%,    /* Electric purple */
-    #7c3aed 45%,    /* Bright neon purple */
-    #a855f7 60%,    /* Electric violet */
-    #00ffff 80%,    /* Cyan neon */
-    #ff00ff 100%    /* Magenta electric */
+    #0a0a0f 0%,
+    #1a0d2e 15%,
+    #2d1b69 30%,
+    #7c3aed 45%,
+    #a855f7 60%,
+    #00ffff 80%,
+    #ff00ff 100%
   ) !important;
   background-size: 400% 400% !important;
   animation: cyberpunk-neon-pulse 8s ease-in-out infinite !important;
   color: #00ffff !important;
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
   text-shadow: 0 0 10px rgba(0, 255, 255, 0.5) !important;
 }
 
@@ -31,59 +31,47 @@ body.theme-luka-penguin {
   100% { background-position: 0% 50%; filter: hue-rotate(360deg) brightness(1); }
 }
 
-/* SECRET EASTER EGG: Cyberpunk neon consciousness parade! */
+/* SECRET EASTER EGG: Cyberpunk consciousness parade! */
+/* z-index: 0 so it stays BEHIND content, pointer-events: none so it's click-through */
 body.theme-luka-penguin::before {
-  content: '🤖⚡ 💜🔥 🤖💜 ⚡🔥 💜🤖 🔥⚡ ⚡💜 🤖⚡ 💜🔥 🤖⚡ 🔥💜 ⚡🤖 🤖⚡ 💜🔥 🤖💜 ⚡🔥 💜🤖 🔥⚡';
+  content: '🐧⚡ 💜🔥 🐧💜 ⚡🔥 💜🐧 🔥⚡ ⚡💜 🐧⚡ 💜🔥 🐧⚡ 🔥💜 ⚡🐧';
   position: fixed;
   top: 10px;
   left: 0;
   width: 200%;
   height: 40px;
   pointer-events: none;
-  z-index: 1;
+  z-index: 0; /* Behind everything interactive */
   font-size: 16px;
   line-height: 40px;
-  animation: cyberpunk-consciousness-march 60s linear infinite;
-  opacity: 0.8;
+  animation: penguin-march 60s linear infinite;
+  opacity: 0.6;
   text-shadow: 0 0 15px rgba(0, 255, 255, 0.8), 0 0 30px rgba(255, 0, 255, 0.6);
-  filter: drop-shadow(0 0 10px #00ffff) drop-shadow(0 0 20px #ff00ff);
 }
 
-/* Cyberpunk consciousness marching animation */
-@keyframes cyberpunk-consciousness-march {
-  0% { transform: translateX(-100%); filter: hue-rotate(0deg); }
-  50% { transform: translateX(50vw); filter: hue-rotate(180deg); }
-  100% { transform: translateX(100vw); filter: hue-rotate(360deg); }
-}
-
-/* Additional cyberpunk glitch layer */
+/* Bottom glitch layer */
 body.theme-luka-penguin::after {
-  content: '⚡💜🤖 ⚡💜🤖 ⚡💜🤖 ⚡💜🤖 ⚡💜🤖 ⚡💜🤖 ⚡💜🤖 ⚡💜🤖 ⚡💜🤖';
+  content: '⚡💜🐧 ⚡💜🐧 ⚡💜🐧 ⚡💜🐧 ⚡💜🐧 ⚡💜🐧';
   position: fixed;
   bottom: 20px;
   left: 0;
   width: 150%;
   height: 30px;
   pointer-events: none;
-  z-index: 1;
+  z-index: 0; /* Behind everything interactive */
   font-size: 14px;
   line-height: 30px;
-  animation: cyberpunk-glitch-flow 120s linear infinite reverse;
-  opacity: 0.6;
-  text-shadow: 0 0 12px rgba(0, 255, 255, 0.8), 0 0 24px rgba(255, 0, 255, 0.6);
-  filter: drop-shadow(0 0 8px #00ffff);
+  animation: penguin-march 120s linear infinite reverse;
+  opacity: 0.4;
+  text-shadow: 0 0 12px rgba(0, 255, 255, 0.8);
 }
 
-/* Cyberpunk glitch flow animation */
-@keyframes cyberpunk-glitch-flow {
-  0% { transform: translateX(-100%) rotate(0deg); filter: hue-rotate(0deg) brightness(1); }
-  25% { transform: translateX(-25%) rotate(5deg); filter: hue-rotate(90deg) brightness(1.3); }
-  50% { transform: translateX(50%) rotate(0deg); filter: hue-rotate(180deg) brightness(0.8); }
-  75% { transform: translateX(75%) rotate(-5deg); filter: hue-rotate(270deg) brightness(1.2); }
-  100% { transform: translateX(150%) rotate(0deg); filter: hue-rotate(360deg) brightness(1); }
+@keyframes penguin-march {
+  0% { transform: translateX(-50%); }
+  100% { transform: translateX(0%); }
 }
 
-/* Text colors for cyberpunk neon theme */
+/* Text colors */
 body.theme-luka-penguin .text-muted-foreground {
   color: #00ffff !important;
   text-shadow: 0 0 8px rgba(0, 255, 255, 0.6);
@@ -98,16 +86,17 @@ body.theme-luka-penguin h6 {
   color: #ff00ff !important;
   text-shadow: 0 0 15px rgba(255, 0, 255, 0.8), 0 0 30px rgba(0, 255, 255, 0.4);
   font-weight: bold !important;
-  filter: drop-shadow(0 0 10px #ff00ff);
 }
 
-/* === LUKA'S PENGUIN CARDS === */
+/* === CARDS - Only target actual card components, NOT bg-card utility === */
 body.theme-luka-penguin .card,
-body.theme-luka-penguin [class*="card"] {
-  background: linear-gradient(135deg, 
-    rgba(248, 244, 255, 0.95) 0%, 
-    rgba(232, 213, 255, 0.9) 30%, 
-    rgba(212, 181, 255, 0.95) 70%, 
+body.theme-luka-penguin [data-slot="card"],
+body.theme-luka-penguin .tracker-card,
+body.theme-luka-penguin .module-card {
+  background: linear-gradient(135deg,
+    rgba(248, 244, 255, 0.95) 0%,
+    rgba(232, 213, 255, 0.9) 30%,
+    rgba(212, 181, 255, 0.95) 70%,
     rgba(248, 244, 255, 0.95) 100%
   ) !important;
   border: 2px solid rgba(168, 85, 247, 0.3) !important;
@@ -120,60 +109,69 @@ body.theme-luka-penguin [class*="card"] {
 }
 
 body.theme-luka-penguin .card:hover,
-body.theme-luka-penguin [class*="card"]:hover {
-  background: linear-gradient(135deg, 
-    rgba(232, 213, 255, 0.98) 0%, 
-    rgba(212, 181, 255, 0.95) 50%, 
+body.theme-luka-penguin [data-slot="card"]:hover,
+body.theme-luka-penguin .tracker-card:hover,
+body.theme-luka-penguin .module-card:hover {
+  background: linear-gradient(135deg,
+    rgba(232, 213, 255, 0.98) 0%,
+    rgba(212, 181, 255, 0.95) 50%,
     rgba(232, 213, 255, 0.98) 100%
   ) !important;
   border-color: rgba(168, 85, 247, 0.6) !important;
   box-shadow: 0 12px 35px rgba(168, 85, 247, 0.3) !important;
-  transform: translateY(-5px) scale(1.02) !important;
+  transform: translateY(-3px) !important;
 }
 
-/* SECRET EASTER EGG: Penguin celebration on hover! */
-body.theme-luka-penguin .card:hover::before,
-body.theme-luka-penguin [class*="card"]:hover::before {
-  content: '🐧🎉' !important;
+/* Penguin celebration on card hover - but NOT on sidebar! */
+body.theme-luka-penguin .card:hover::after,
+body.theme-luka-penguin [data-slot="card"]:hover::after,
+body.theme-luka-penguin .tracker-card:hover::after,
+body.theme-luka-penguin .module-card:hover::after {
+  content: '🐧';
   position: absolute;
-  top: -12px;
-  right: -12px;
-  font-size: 18px;
-  animation: penguin-celebration 1s ease-out;
+  top: -8px;
+  right: -8px;
+  font-size: 16px;
+  animation: penguin-wave 0.5s ease-out;
   z-index: 10;
-  text-shadow: 0 0 8px rgba(168, 85, 247, 0.8);
 }
 
-@keyframes penguin-celebration {
+@keyframes penguin-wave {
   0% { transform: scale(0) rotate(0deg); opacity: 0; }
-  50% { transform: scale(1.4) rotate(180deg); opacity: 1; }
-  100% { transform: scale(1) rotate(360deg); opacity: 1; }
+  50% { transform: scale(1.3) rotate(15deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
 }
 
-/* === LUKA'S PENGUIN BUTTONS === */
+/* === SIDEBAR STYLING - Cyberpunk but functional === */
+body.theme-luka-penguin .bg-card {
+  background: rgba(10, 5, 20, 0.95) !important;
+  border-color: rgba(0, 255, 255, 0.3) !important;
+}
+
+/* === BUTTONS === */
 body.theme-luka-penguin button,
-body.theme-luka-penguin .btn {
-  background: linear-gradient(135deg, 
-    #c084fc 0%, 
-    #a855f7 30%, 
-    #8b5cf6 70%, 
+body.theme-luka-penguin .btn,
+body.theme-luka-penguin [role="button"] {
+  background: linear-gradient(135deg,
+    #c084fc 0%,
+    #a855f7 30%,
+    #8b5cf6 70%,
     #7c3aed 100%
   ) !important;
   border: 2px solid rgba(139, 92, 246, 0.5) !important;
   color: #ffffff !important;
   font-weight: 600 !important;
   transition: all 0.3s ease !important;
-  position: relative;
-  overflow: hidden;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 body.theme-luka-penguin button:hover,
-body.theme-luka-penguin .btn:hover {
-  background: linear-gradient(135deg, 
-    #7c3aed 0%, 
-    #8b5cf6 30%, 
-    #a855f7 70%, 
+body.theme-luka-penguin .btn:hover,
+body.theme-luka-penguin [role="button"]:hover {
+  background: linear-gradient(135deg,
+    #7c3aed 0%,
+    #8b5cf6 30%,
+    #a855f7 70%,
     #c084fc 100%
   ) !important;
   transform: translateY(-2px) !important;
@@ -181,40 +179,17 @@ body.theme-luka-penguin .btn:hover {
   border-color: rgba(139, 92, 246, 0.8) !important;
 }
 
-/* Penguin shimmer effect */
-body.theme-luka-penguin button::before,
-body.theme-luka-penguin .btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, 
-    transparent, 
-    rgba(255, 255, 255, 0.4), 
-    transparent
-  );
-  transition: left 0.7s ease;
-}
-
-body.theme-luka-penguin button:hover::before,
-body.theme-luka-penguin .btn:hover::before {
-  left: 100%;
-}
-
-/* === LUKA'S PENGUIN INPUTS === */
+/* === INPUTS === */
 body.theme-luka-penguin input,
 body.theme-luka-penguin textarea,
 body.theme-luka-penguin select {
-  background: linear-gradient(135deg, 
-    rgba(248, 244, 255, 0.9) 0%, 
+  background: linear-gradient(135deg,
+    rgba(248, 244, 255, 0.9) 0%,
     rgba(232, 213, 255, 0.8) 100%
   ) !important;
   border: 2px solid rgba(168, 85, 247, 0.4) !important;
   color: #4c1d95 !important;
   transition: all 0.3s ease !important;
-  backdrop-filter: blur(5px) !important;
 }
 
 body.theme-luka-penguin input:focus,
@@ -222,38 +197,32 @@ body.theme-luka-penguin textarea:focus,
 body.theme-luka-penguin select:focus {
   border-color: rgba(168, 85, 247, 0.8) !important;
   box-shadow: 0 0 15px rgba(168, 85, 247, 0.3) !important;
-  background: linear-gradient(135deg, 
-    rgba(232, 213, 255, 0.95) 0%, 
-    rgba(212, 181, 255, 0.9) 100%
-  ) !important;
 }
 
-/* Penguin placeholder text */
 body.theme-luka-penguin input::placeholder,
 body.theme-luka-penguin textarea::placeholder {
   color: rgba(139, 92, 246, 0.6) !important;
 }
 
-/* Penguin links */
+/* === LINKS === */
 body.theme-luka-penguin a {
-  color: #7c3aed !important;
+  color: #00ffff !important;
   text-decoration: none !important;
   transition: all 0.3s ease !important;
-  font-weight: 500 !important;
 }
 
 body.theme-luka-penguin a:hover {
-  color: #6d28d9 !important;
-  text-shadow: 0 0 8px rgba(168, 85, 247, 0.5) !important;
+  color: #ff00ff !important;
+  text-shadow: 0 0 8px rgba(255, 0, 255, 0.8) !important;
 }
 
-/* Penguin scrollbar */
+/* === SCROLLBAR === */
 body.theme-luka-penguin ::-webkit-scrollbar {
   width: 12px;
 }
 
 body.theme-luka-penguin ::-webkit-scrollbar-track {
-  background: rgba(248, 244, 255, 0.5);
+  background: rgba(10, 5, 20, 0.5);
 }
 
 body.theme-luka-penguin ::-webkit-scrollbar-thumb {
@@ -265,18 +234,26 @@ body.theme-luka-penguin ::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(135deg, #a855f7, #8b5cf6);
 }
 
-/* No animations fallback */
-body.no-animations.theme-luka-penguin {
-  background: #f8f4ff !important;
+/* === MODALS AND DIALOGS === */
+body.theme-luka-penguin [role="dialog"],
+body.theme-luka-penguin .modal,
+body.theme-luka-penguin .dialog {
+  background: rgba(10, 5, 20, 0.98) !important;
+  border: 2px solid rgba(0, 255, 255, 0.4) !important;
+  color: #00ffff !important;
 }
 
-/* Remove floating particles for accessibility */
+/* === ACCESSIBILITY: No animations mode === */
+body.no-animations.theme-luka-penguin {
+  background: #1a0d2e !important;
+  animation: none !important;
+}
+
 body.no-animations.theme-luka-penguin::before,
 body.no-animations.theme-luka-penguin::after {
   display: none !important;
 }
 
-/* === LUKA'S PENGUIN PARADISE SIGNATURE === */
-/* Built with love for Luka - Maximum penguin chaos! */
-/* Every penguin, every waddle, every march is pure joy */
+/* === SIGNATURE === */
+/* Built with love for Luka - Maximum penguin chaos without the phantom hover! */
 /* 🐧💜⚡ - Penguin Paradise Forever - ⚡💜🐧 */

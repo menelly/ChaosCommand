@@ -28,6 +28,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Switch } from '@/components/ui/switch';
 import {
   Hammer,
   Plus,
@@ -41,7 +42,10 @@ import {
   Settings,
   Search,
   CheckCircle,
-  Rocket
+  Rocket,
+  ChevronDown,
+  ChevronUp,
+  X
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useDailyData, CATEGORIES } from '@/lib/database';
@@ -82,6 +86,8 @@ export default function TrackerBuilder() {
   });
   const [isDeploying, setIsDeploying] = useState(false);
   const [deploySuccess, setDeploySuccess] = useState(false);
+  const [expandedFieldId, setExpandedFieldId] = useState<string | null>(null);
+  const [newOptionText, setNewOptionText] = useState('');
 
   // 🔨 HOOKS
   const { toast } = useToast();
@@ -325,29 +331,177 @@ export default function TrackerBuilder() {
                   <Sparkles className="h-5 w-5 text-purple-500" />
                   Current Fields ({tracker.fields?.length || 0})
                 </CardTitle>
+                <CardDescription>
+                  Click a field to configure its options
+                </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-3 max-h-[500px] overflow-y-auto">
                 {tracker.fields?.length === 0 ? (
                   <p className="text-muted-foreground text-sm text-center py-4">
                     No fields added yet. Use the field selector to add some!
                   </p>
                 ) : (
                   tracker.fields?.map((field) => (
-                    <div key={field.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                      <div>
-                        <div className="font-medium">{field.name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {field.type} {field.required && '(required)'}
-                        </div>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeField(field.id)}
-                        className="text-red-500 hover:text-red-700"
+                    <div key={field.id} className="bg-muted rounded-lg overflow-hidden">
+                      {/* Field Header - Click to expand */}
+                      <div
+                        className="flex items-center justify-between p-3 cursor-pointer hover:bg-muted/80"
+                        onClick={() => setExpandedFieldId(expandedFieldId === field.id ? null : field.id)}
                       >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                        <div className="flex items-center gap-2">
+                          {expandedFieldId === field.id ? (
+                            <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                          )}
+                          <div>
+                            <div className="font-medium">{field.name}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {field.type} {field.required && '• required'}
+                              {(field.type === 'dropdown' || field.type === 'multiselect') &&
+                                ` • ${field.options?.length || 0} options`}
+                            </div>
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeField(field.id);
+                          }}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+
+                      {/* Expanded Edit Panel */}
+                      {expandedFieldId === field.id && (
+                        <div className="p-3 pt-0 border-t border-border/50 space-y-3">
+                          {/* Field Name */}
+                          <div>
+                            <Label className="text-xs">Field Name</Label>
+                            <Input
+                              value={field.name}
+                              onChange={(e) => updateField(field.id, { name: e.target.value })}
+                              className="h-8 text-sm"
+                            />
+                          </div>
+
+                          {/* Required Toggle */}
+                          <div className="flex items-center justify-between">
+                            <Label className="text-xs">Required field</Label>
+                            <Switch
+                              checked={field.required}
+                              onCheckedChange={(checked) => updateField(field.id, { required: checked })}
+                            />
+                          </div>
+
+                          {/* Scale/Number: Min/Max */}
+                          {(field.type === 'scale' || field.type === 'number') && (
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <Label className="text-xs">Min</Label>
+                                <Input
+                                  type="number"
+                                  value={field.min ?? 1}
+                                  onChange={(e) => updateField(field.id, { min: parseInt(e.target.value) || 0 })}
+                                  className="h-8 text-sm"
+                                />
+                              </div>
+                              <div>
+                                <Label className="text-xs">Max</Label>
+                                <Input
+                                  type="number"
+                                  value={field.max ?? 10}
+                                  onChange={(e) => updateField(field.id, { max: parseInt(e.target.value) || 10 })}
+                                  className="h-8 text-sm"
+                                />
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Dropdown/Multiselect: Options */}
+                          {(field.type === 'dropdown' || field.type === 'multiselect') && (
+                            <div className="space-y-2">
+                              <Label className="text-xs">Options</Label>
+
+                              {/* Current options */}
+                              <div className="space-y-1">
+                                {(field.options || []).map((option, idx) => (
+                                  <div key={idx} className="flex items-center gap-2">
+                                    <Input
+                                      value={option}
+                                      onChange={(e) => {
+                                        const newOptions = [...(field.options || [])];
+                                        newOptions[idx] = e.target.value;
+                                        updateField(field.id, { options: newOptions });
+                                      }}
+                                      className="h-7 text-xs flex-1"
+                                    />
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-7 w-7 p-0 text-red-500 hover:text-red-700"
+                                      onClick={() => {
+                                        const newOptions = (field.options || []).filter((_, i) => i !== idx);
+                                        updateField(field.id, { options: newOptions });
+                                      }}
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                ))}
+                              </div>
+
+                              {/* Add new option */}
+                              <div className="flex items-center gap-2">
+                                <Input
+                                  placeholder="Add new option..."
+                                  value={newOptionText}
+                                  onChange={(e) => setNewOptionText(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && newOptionText.trim()) {
+                                      updateField(field.id, {
+                                        options: [...(field.options || []), newOptionText.trim()]
+                                      });
+                                      setNewOptionText('');
+                                    }
+                                  }}
+                                  className="h-7 text-xs flex-1"
+                                />
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-7 px-2"
+                                  onClick={() => {
+                                    if (newOptionText.trim()) {
+                                      updateField(field.id, {
+                                        options: [...(field.options || []), newOptionText.trim()]
+                                      });
+                                      setNewOptionText('');
+                                    }
+                                  }}
+                                >
+                                  <Plus className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Description */}
+                          <div>
+                            <Label className="text-xs">Description (optional)</Label>
+                            <Input
+                              value={field.description || ''}
+                              onChange={(e) => updateField(field.id, { description: e.target.value })}
+                              placeholder="What does this field track?"
+                              className="h-8 text-sm"
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))
                 )}
