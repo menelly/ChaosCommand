@@ -30,6 +30,7 @@ import { Calendar, TrendingUp, AlertTriangle, Clock, Target, Download, Activity,
 import { useDailyData, CATEGORIES } from '@/lib/database'
 import { format, subDays, parseISO, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns'
 import { HeadPainEntry } from './head-pain-types'
+import { filterForAnalytics } from '@/lib/utils/analytics-filters'
 
 interface AnalyticsProps {
   className?: string
@@ -121,9 +122,11 @@ export default function HeadPainAnalyticsDesktop({ className }: AnalyticsProps) 
         entry.treatmentEffectiveness >= 0 && entry.treatmentEffectiveness <= 5
       )
 
-      console.log('🔍 Clean entries after sanitization:', cleanEntries)
+      // 🏷️ Filter out NOPE and I KNOW tagged entries from analytics
+      const filteredEntries = filterForAnalytics(cleanEntries)
+      console.log('🔍 After tag filtering:', filteredEntries.length, '(excluded:', cleanEntries.length - filteredEntries.length, ')')
 
-      setEntries(cleanEntries)
+      setEntries(filteredEntries)
       setHasValidData(cleanEntries.length > 0)
     } catch (error) {
       console.error('Failed to load analytics data:', error)

@@ -15,6 +15,11 @@ pytesseract==0.3.10
 opencv-python==4.8.1.78
 python-dateutil==2.8.2
 
+# 🧠 spaCy NLP for medical entity recognition (fast, offline, accurate!)
+# Works on Grandma Anne's potato MacBook!
+spacy>=3.7.0
+# Download model after install: python -m spacy download en_core_web_sm
+
 # Data processing (minimal set)
 numpy>=1.26.0
 pandas>=2.2.0

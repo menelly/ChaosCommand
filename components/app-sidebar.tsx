@@ -29,6 +29,7 @@ import Link from "next/link"
 export default function AppSidebar() {
   // Start with undefined to prevent hydration mismatch
   const [showSidebar, setShowSidebar] = useState<boolean | undefined>(undefined)
+  const [isMobile, setIsMobile] = useState(false) // Default to desktop to prevent mobile backdrop flash
   const [shortcuts, setShortcuts] = useState<Array<{id: string, name: string, icon: string, category: string}>>([])
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null)
   const [holdTimer, setHoldTimer] = useState<NodeJS.Timeout | null>(null)
@@ -155,8 +156,16 @@ export default function AppSidebar() {
     ]
   }
 
-  // Check if mobile - but don't use it for initial state
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
+  // Load preferences and check mobile AFTER initial render to prevent hydration issues
+  useEffect(() => {
+    // Check if mobile - must be in useEffect to avoid SSR/hydration mismatch
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   // Load preferences AFTER initial render to prevent hydration issues
   useEffect(() => {

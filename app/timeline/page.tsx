@@ -46,7 +46,8 @@ import {
   Stethoscope,
   Pill,
   Hospital,
-  Clock
+  Clock,
+  Printer
 } from 'lucide-react';
 
 import MedicalTimeline from '@/components/medical-timeline';
@@ -204,10 +205,13 @@ export default function TimelinePage() {
     };
 
     try {
+      // Use compound subcategory with event ID for unique storage
+      const subcategory = `${SUBCATEGORIES.MEDICAL_EVENTS}-${newEvent.id}`;
+
       console.log('🏥 SAVING TO DATABASE:', {
         date: formatDateForStorage(new Date(newEvent.date)),
         category: CATEGORIES.USER,
-        subcategory: SUBCATEGORIES.MEDICAL_EVENTS, // 🐉 FIXED: Use consistent subcategory!
+        subcategory: subcategory,
         event: newEvent
       });
 
@@ -215,7 +219,7 @@ export default function TimelinePage() {
       await saveData(
         formatDateForStorage(new Date(newEvent.date)),
         CATEGORIES.USER,
-        SUBCATEGORIES.MEDICAL_EVENTS,
+        subcategory,
         JSON.stringify(newEvent)
       );
 
@@ -292,6 +296,7 @@ export default function TimelinePage() {
       case 'treatment': return <Stethoscope className="h-4 w-4" />;
       case 'test': return <FileText className="h-4 w-4" />;
       case 'medication': return <Pill className="h-4 w-4" />;
+      case 'dismissed_findings': return <FileText className="h-4 w-4" />; // Could use AlertTriangle but keeping it simple
       default: return <Calendar className="h-4 w-4" />;
     }
   };
@@ -303,6 +308,7 @@ export default function TimelinePage() {
       case 'resolved': return 'bg-green-100 text-green-800';
       case 'ongoing': return 'bg-blue-100 text-blue-800';
       case 'scheduled': return 'bg-yellow-100 text-yellow-800';
+      case 'needs_review': return 'bg-orange-100 text-orange-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -310,12 +316,202 @@ export default function TimelinePage() {
   // Filter events
   const filteredEvents = medicalEvents.filter(event => {
     const matchesType = filterType === 'all' || event.type === filterType;
-    const matchesSearch = searchTerm === '' || 
+    const matchesSearch = searchTerm === '' ||
       event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       event.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
       event.provider?.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesType && matchesSearch;
   });
+
+  // Print timeline for appointments
+  const handlePrint = () => {
+    if (filteredEvents.length === 0) {
+      alert('No events to print');
+      return;
+    }
+
+    const getTypeLabel = (type: string) => {
+      const labels: Record<string, string> = {
+        'diagnosis': 'Diagnosis',
+        'surgery': 'Surgery',
+        'hospitalization': 'Hospitalization',
+        'treatment': 'Treatment',
+        'test': 'Test/Lab',
+        'medication': 'Medication',
+        'dismissed_findings': 'Dismissed Finding'
+      };
+      return labels[type] || type;
+    };
+
+    const getStatusLabel = (status: string) => {
+      const labels: Record<string, string> = {
+        'active': 'Active',
+        'resolved': 'Resolved',
+        'ongoing': 'Ongoing',
+        'scheduled': 'Scheduled',
+        'needs_review': 'Needs Review'
+      };
+      return labels[status] || status;
+    };
+
+    // Group events by year for print layout
+    const eventsByYear: Record<string, MedicalEvent[]> = {};
+    filteredEvents.forEach(event => {
+      const year = new Date(event.date).getFullYear().toString();
+      if (!eventsByYear[year]) eventsByYear[year] = [];
+      eventsByYear[year].push(event);
+    });
+
+    const printContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Medical Timeline</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      line-height: 1.5;
+    }
+    h1 {
+      color: #1e40af;
+      border-bottom: 2px solid #1e40af;
+      padding-bottom: 10px;
+    }
+    h2 {
+      color: #374151;
+      margin-top: 24px;
+      background: #f3f4f6;
+      padding: 8px 12px;
+      border-radius: 4px;
+    }
+    .event {
+      margin: 16px 0;
+      padding: 12px;
+      border-left: 4px solid #3b82f6;
+      background: #fafafa;
+    }
+    .event-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+    .event-title {
+      font-weight: 600;
+      font-size: 1.1em;
+    }
+    .event-meta {
+      font-size: 0.85em;
+      color: #6b7280;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.75em;
+      font-weight: 500;
+    }
+    .badge-active { background: #fee2e2; color: #991b1b; }
+    .badge-resolved { background: #dcfce7; color: #166534; }
+    .badge-ongoing { background: #dbeafe; color: #1e40af; }
+    .badge-scheduled { background: #fef3c7; color: #92400e; }
+    .badge-needs_review { background: #ffedd5; color: #c2410c; }
+    .badge-type { background: #e0e7ff; color: #3730a3; margin-right: 8px; }
+    .description { margin-top: 8px; }
+    .notes { font-style: italic; color: #6b7280; margin-top: 8px; font-size: 0.9em; }
+    .tags { margin-top: 8px; }
+    .tag {
+      display: inline-block;
+      padding: 2px 6px;
+      background: #e5e7eb;
+      border-radius: 3px;
+      font-size: 0.75em;
+      margin-right: 4px;
+    }
+    .footer {
+      margin-top: 40px;
+      padding-top: 16px;
+      border-top: 1px solid #e5e7eb;
+      font-size: 0.85em;
+      color: #6b7280;
+    }
+    @media print {
+      body { padding: 0; }
+      .event { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Medical Timeline</h1>
+  <p style="color: #6b7280;">Generated ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+
+  ${Object.keys(eventsByYear)
+    .sort((a, b) => parseInt(b) - parseInt(a))
+    .map(year => `
+      <h2>${year}</h2>
+      ${eventsByYear[year]
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .map(event => `
+          <div class="event">
+            <div class="event-header">
+              <div>
+                <span class="badge badge-type">${getTypeLabel(event.type)}</span>
+                <span class="event-title">${event.title}</span>
+              </div>
+              <span class="badge badge-${event.status}">${getStatusLabel(event.status)}</span>
+            </div>
+            <div class="event-meta">
+              ${new Date(event.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+              ${event.endDate ? ` - ${new Date(event.endDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}` : ''}
+              ${event.provider ? ` • ${event.provider}` : ''}
+              ${event.location ? ` • ${event.location}` : ''}
+              ${event.severity ? ` • Severity: ${event.severity}` : ''}
+            </div>
+            ${event.description ? `<div class="description">${event.description}</div>` : ''}
+            ${event.notes ? `<div class="notes">Notes: ${event.notes}</div>` : ''}
+            ${event.tags && event.tags.length > 0 ? `
+              <div class="tags">
+                ${event.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+              </div>
+            ` : ''}
+          </div>
+        `).join('')}
+    `).join('')}
+
+  <div class="footer">
+    <p>Generated by Chaos Command Center</p>
+  </div>
+</body>
+</html>
+    `;
+
+    // Use iframe approach for Tauri compatibility
+    const printFrame = document.createElement('iframe');
+    printFrame.style.position = 'fixed';
+    printFrame.style.right = '0';
+    printFrame.style.bottom = '0';
+    printFrame.style.width = '0';
+    printFrame.style.height = '0';
+    printFrame.style.border = 'none';
+    document.body.appendChild(printFrame);
+
+    const frameDoc = printFrame.contentWindow?.document;
+    if (frameDoc) {
+      frameDoc.open();
+      frameDoc.write(printContent);
+      frameDoc.close();
+
+      setTimeout(() => {
+        printFrame.contentWindow?.print();
+        setTimeout(() => {
+          document.body.removeChild(printFrame);
+        }, 1000);
+      }, 250);
+    }
+  };
 
   return (
     <AppCanvas currentPage="manage">
@@ -333,17 +529,48 @@ export default function TimelinePage() {
 
         {/* 🔥 REVOLUTIONARY DOCUMENT UPLOADER */}
         <DocumentUploader
-          onEventsExtracted={(events: any[]) => {
-            // Add extracted events to the medical events list
-            const newEvents = events.map((event: any) => ({
-              ...event,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
+          onEventsExtracted={async (events: any[]) => {
+            // Add extracted events to the medical events list AND SAVE TO DATABASE!
+            const now = new Date().toISOString();
+            const newEvents: MedicalEvent[] = events.map((event: any) => ({
+              id: event.id || `medical-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              type: event.type || 'diagnosis',
+              title: event.title,
+              date: event.date || now.split('T')[0],
+              endDate: event.endDate,
+              provider: event.provider,
+              providerId: event.providerId,
+              location: event.location,
+              description: event.description || '',
+              status: event.status || 'needs_review',
+              severity: event.severity,
+              tags: event.tags || ['imported'],
+              notes: event.notes,
+              createdAt: now,
+              updatedAt: now
             }));
+
+            // 🔥 SAVE EACH EVENT TO DEXIE DATABASE!
+            for (const event of newEvents) {
+              try {
+                const subcategory = `${SUBCATEGORIES.MEDICAL_EVENTS}-${event.id}`;
+                await saveData(
+                  formatDateForStorage(new Date(event.date)),
+                  CATEGORIES.USER,
+                  subcategory,
+                  JSON.stringify(event)
+                );
+                console.log(`✅ Saved event to Dexie: ${event.title}`);
+              } catch (error) {
+                console.error(`❌ Failed to save event "${event.title}":`, error);
+              }
+            }
+
+            // Update React state
             setMedicalEvents(prev => [...newEvents, ...prev].sort((a, b) =>
               new Date(b.date).getTime() - new Date(a.date).getTime()
             ));
-            console.log(`🎉 Added ${events.length} events from document parsing!`);
+            console.log(`🎉 Added AND SAVED ${events.length} events from document parsing!`);
           }}
           className="mb-8"
         />
@@ -388,6 +615,7 @@ export default function TimelinePage() {
                 <SelectItem value="treatment">Treatments</SelectItem>
                 <SelectItem value="test">Tests</SelectItem>
                 <SelectItem value="medication">Medications</SelectItem>
+                <SelectItem value="dismissed_findings">Dismissed Findings</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -425,6 +653,7 @@ export default function TimelinePage() {
                         <SelectItem value="treatment">Treatment</SelectItem>
                         <SelectItem value="test">Test/Lab Work</SelectItem>
                         <SelectItem value="medication">Medication Change</SelectItem>
+                        <SelectItem value="dismissed_findings">Dismissed Finding</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -439,6 +668,7 @@ export default function TimelinePage() {
                         <SelectItem value="resolved">Resolved</SelectItem>
                         <SelectItem value="ongoing">Ongoing</SelectItem>
                         <SelectItem value="scheduled">Scheduled</SelectItem>
+                        <SelectItem value="needs_review">Needs Review</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -619,21 +849,43 @@ export default function TimelinePage() {
               </Card>
             ) : (
               filteredEvents.map(event => (
-                <Card key={event.id} className="hover:shadow-md transition-shadow">
+                <Card key={event.id} className={`hover:shadow-md transition-shadow ${
+                  event.type === 'dismissed_findings' ? 'border-l-4 border-l-slate-400 bg-slate-50/50' : ''
+                }`}>
                   <CardContent className="p-6">
+                    {/* Dismissed findings label */}
+                    {event.type === 'dismissed_findings' && (
+                      <div className="text-xs text-slate-500 mb-2 font-medium uppercase tracking-wide">
+                        Dismissed Finding - Important to Track
+                      </div>
+                    )}
                     <div className="flex items-start justify-between">
                       <div className="flex items-start gap-3 flex-1">
-                        <div className="p-2 rounded-lg bg-blue-100 text-blue-600">
+                        <div className={`p-2 rounded-lg ${
+                          event.type === 'dismissed_findings'
+                            ? 'bg-slate-100 text-slate-600'
+                            : 'bg-blue-100 text-blue-600'
+                        }`}>
                           {getEventIcon(event.type)}
                         </div>
                         <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
+                          <div className="flex items-center gap-2 mb-2 flex-wrap">
                             <h3 className="font-semibold text-lg">{event.title}</h3>
                             <Badge className={getStatusColor(event.status)}>
-                              {event.status}
+                              {event.status.replace('_', ' ')}
                             </Badge>
                             {event.severity && event.type === 'diagnosis' && (
-                              <Badge variant="outline">{event.severity}</Badge>
+                              <Badge
+                                variant="outline"
+                                className={
+                                  event.severity === 'critical' ? 'border-red-500 text-red-700' :
+                                  event.severity === 'severe' ? 'border-orange-500 text-orange-700' :
+                                  event.severity === 'moderate' ? 'border-yellow-500 text-yellow-700' :
+                                  'border-green-500 text-green-700'
+                                }
+                              >
+                                {event.severity}
+                              </Badge>
                             )}
                           </div>
                           <div className="flex items-center gap-4 text-sm text-muted-foreground mb-2">
@@ -703,6 +955,24 @@ export default function TimelinePage() {
             onViewProvider={(providerId) => window.open(`/providers#${providerId}`, '_blank')}
           />
         )}
+
+        {/* Bottom Actions */}
+        <div className="mt-8 flex justify-center gap-4">
+          <Button
+            variant="outline"
+            onClick={handlePrint}
+            disabled={filteredEvents.length === 0}
+            className="gap-2"
+          >
+            <Printer className="h-4 w-4" />
+            Print Timeline
+          </Button>
+          <Button variant="outline" asChild>
+            <a href="/manage">
+              ← Back to Manage
+            </a>
+          </Button>
+        </div>
       </div>
     </AppCanvas>
   );

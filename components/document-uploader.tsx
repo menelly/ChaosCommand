@@ -25,18 +25,22 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Upload, FileText, Image, X, AlertCircle, CheckCircle, Eye, Edit3, Stethoscope, Sparkles } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Upload, FileText, Image, X, AlertCircle, CheckCircle, Eye, Edit3, Stethoscope, Sparkles, ClipboardPaste, Calendar, Pill, Heart, Activity } from 'lucide-react';
 import { useDailyData } from '@/lib/database/hooks/use-daily-data';
 import { CATEGORIES, SUBCATEGORIES, formatDateForStorage } from '@/lib/database/dexie-db';
 // TEMPORARILY COMMENTED OUT FOR DEBUGGING
 // import { useHybridDatabase, quickSaveMedicalEvent, quickSaveProvider } from '@/lib/database/hybrid-router';
 
 // 🔥 REVOLUTIONARY BACKEND API INTEGRATION
+import { backendFetch, FLASK_URL } from '@/lib/utils/tauri-fetch';
 
 // 🧠 REVOLUTIONARY MEDICAL DOCUMENT PARSER INTERFACES
 interface ParsedMedicalEvent {
   id: string;
-  type: 'diagnosis' | 'surgery' | 'hospitalization' | 'treatment' | 'test' | 'medication';
+  type: 'diagnosis' | 'surgery' | 'hospitalization' | 'treatment' | 'test' | 'medication' | 'dismissed_findings';
   title: string;
   date: string;
   endDate?: string;
@@ -103,6 +107,37 @@ export default function DocumentUploader({ onEventsExtracted, className = "" }: 
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
   const [providerToggleStates, setProviderToggleStates] = useState<Record<string, boolean>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 📋 PASTE TEXT MODAL STATE
+  const [showPasteModal, setShowPasteModal] = useState(false);
+  const [pastedText, setPastedText] = useState('');
+  const [parsedFromPaste, setParsedFromPaste] = useState<ParsedMedicalEvent[]>([]);
+  const [isParsing, setIsParsing] = useState(false);
+  const [parseError, setParseError] = useState<string | null>(null);
+
+  // 📋 QUICK PASTE TEMPLATES
+  const pasteTemplates = [
+    {
+      name: "Diagnosis",
+      icon: Heart,
+      example: "Diagnosed with Type 2 Diabetes - January 15, 2024\nA1C was 7.8%, started on Metformin 500mg twice daily"
+    },
+    {
+      name: "Surgery",
+      icon: Activity,
+      example: "Surgery: Appendectomy at City Hospital - March 3, 2023\nDr. Smith performed laparoscopic procedure, discharged next day"
+    },
+    {
+      name: "Test Result",
+      icon: FileText,
+      example: "Blood work results - 2/15/2024\nCholesterol: 220 (high), Blood sugar: 105, Kidney function normal"
+    },
+    {
+      name: "Medication",
+      icon: Pill,
+      example: "Started Lisinopril 10mg daily for blood pressure - 4/1/2024\nPrescribed by Dr. Johnson at Main Street Clinic"
+    }
+  ];
 
   // 🎨 THEME-AWARE DRAG AND DROP HANDLERS
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -200,14 +235,32 @@ export default function DocumentUploader({ onEventsExtracted, className = "" }: 
   };
 
   // 🔥 REVOLUTIONARY BACKEND API PROCESSING
+  // NOTE: Tauri's HTTP plugin doesn't handle FormData/File uploads well through the
+  // Rust IPC bridge, so we read the file to base64 and send as JSON instead.
   const processFileWithBackend = async (file: File): Promise<{extractedText: string, events: ParsedMedicalEvent[]}> => {
-    const formData = new FormData();
-    formData.append('file', file);
-
     try {
-      const response = await fetch('http://localhost:5000/api/documents/parse', {
+      // Read file to base64 (avoids Tauri FormData serialization issues)
+      const arrayBuffer = await file.arrayBuffer();
+      const bytes = new Uint8Array(arrayBuffer);
+      let binary = '';
+      for (let i = 0; i < bytes.length; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      const base64Data = btoa(binary);
+
+      console.log(`📤 Sending ${file.name} (${(bytes.length / 1024).toFixed(1)} KB) to Flask as base64 JSON...`);
+
+      const response = await backendFetch(`${FLASK_URL}/api/documents/parse-base64`, {
         method: 'POST',
-        body: formData,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          filename: file.name,
+          fileType: file.type,
+          fileData: base64Data,
+        }),
+        timeout: 60000, // PDFs can take a moment with spaCy
       });
 
       if (!response.ok) {
@@ -336,6 +389,214 @@ export default function DocumentUploader({ onEventsExtracted, className = "" }: 
     setEditingEventId(editingEventId === eventId ? null : eventId);
   };
 
+  // 📋 PASTE TEXT PARSING - Client-side magic for Google Keep etc.
+  const parseTextFromPaste = (text: string): ParsedMedicalEvent[] => {
+    const events: ParsedMedicalEvent[] = [];
+
+    // 🔍 SMART LIST DETECTION: Check if this looks like a simple line-by-line list
+    // (short lines, one item per line, typical of diagnosis/condition lists)
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    const avgLineLength = lines.reduce((sum, l) => sum + l.length, 0) / (lines.length || 1);
+    const isSimpleList = lines.length >= 3 && avgLineLength < 60 && lines.every(l => l.length < 100);
+
+    let chunks: string[];
+
+    if (isSimpleList) {
+      // For simple lists (like diagnosis lists), treat each line as a separate item
+      chunks = lines.filter(s => s.length > 2);
+      console.log(`📋 Detected simple list format: ${chunks.length} items`);
+    } else {
+      // For prose/paragraphs, split by double newlines, bullets, numbered lists
+      chunks = text
+        .split(/(?:\n\s*\n|\n\s*[-•●]\s*|\n\s*\d+[.)]\s*)/)
+        .map(s => s.trim())
+        .filter(s => s.length > 5);
+      console.log(`📋 Detected prose/paragraph format: ${chunks.length} chunks`);
+    }
+
+    // Medical keywords for type detection
+    const diagnosisKeywords = /\b(diagnosed|diagnosis|dx|condition|syndrome|disorder|disease|chronic|diabetic|diabetes|lupus|adhd|autistic|autism|migraines?|anemia|deficiency|cyst|hearing loss|enlarged)\b/i;
+    const surgeryKeywords = /\b(surgery|operation|procedure|removed|repair|replacement|laparoscop|appendectomy|cholecystectomy|hysterectomy|c.?section|bypass|augmentation|gallbladder removed|repaired)\b/i;
+    const testKeywords = /\b(test|lab|blood|urine|mri|ct|x-ray|xray|ultrasound|biopsy|screening|panel|results)\b/i;
+    const medicationKeywords = /\b(prescribed|medication|rx|mg|tablet|capsule|started|taking|dose|refill)\b/i;
+    const treatmentKeywords = /\b(treatment|therapy|pt|physical therapy|injection|infusion|session)\b/i;
+    const hospitalKeywords = /\b(hospital|admitted|er|emergency|inpatient|discharged|stay|hospitalization)\b/i;
+    const historyKeywords = /\b(hx of|history of|hx|previous|prior|past)\b/i;
+    const dismissedKeywords = /\b(dismissed|ignored|said it was nothing|normal|fine|anxiety|stress|in your head|all in your head|no concern|not worried|benign)\b/i;
+
+    // Date patterns
+    const datePatterns = [
+      /(\d{1,2}\/\d{1,2}\/\d{2,4})/,  // 1/15/2024 or 01/15/24
+      /(\d{4}-\d{2}-\d{2})/,            // 2024-01-15
+      /((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{1,2},?\s+\d{4})/i,  // January 15, 2024
+      /(\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{4})/i,    // 15 January 2024
+    ];
+
+    for (const chunk of chunks) {
+      // For simple lists, allow shorter items (GERD, IBS, ADHD etc are valid!)
+      const minLength = isSimpleList ? 2 : 10;
+      if (chunk.length < minLength) continue;
+
+      // Detect event type (dismissed_findings checked first - important for chronic illness tracking!)
+      let type: 'diagnosis' | 'surgery' | 'hospitalization' | 'treatment' | 'test' | 'medication' | 'dismissed_findings' = 'diagnosis';
+      if (dismissedKeywords.test(chunk)) type = 'dismissed_findings';
+      else if (surgeryKeywords.test(chunk)) type = 'surgery';
+      else if (hospitalKeywords.test(chunk)) type = 'hospitalization';
+      else if (testKeywords.test(chunk)) type = 'test';
+      else if (medicationKeywords.test(chunk)) type = 'medication';
+      else if (treatmentKeywords.test(chunk)) type = 'treatment';
+      // "Hx of" items - check if it's surgical history or just general history
+      else if (historyKeywords.test(chunk)) {
+        // Check if it's a surgical history item
+        if (surgeryKeywords.test(chunk) || /\b(removed|repair|repaired|ectomy)\b/i.test(chunk)) {
+          type = 'surgery';
+        }
+        // Otherwise default to diagnosis (medical history)
+      }
+
+      // Try to extract a date
+      let eventDate = new Date().toISOString().split('T')[0]; // Default to today
+      for (const pattern of datePatterns) {
+        const match = chunk.match(pattern);
+        if (match) {
+          try {
+            const parsed = new Date(match[1]);
+            if (!isNaN(parsed.getTime())) {
+              eventDate = parsed.toISOString().split('T')[0];
+              break;
+            }
+          } catch (e) {
+            // Keep default date
+          }
+        }
+      }
+
+      // Extract title (for simple lists, use the whole chunk; for prose, first sentence)
+      let title: string;
+      if (isSimpleList) {
+        // For list items, the whole line IS the title
+        title = chunk.trim();
+        // Clean up common prefixes like "Hx of", "History of" for cleaner titles
+        title = title.replace(/^(Hx of|History of|Dx of|Diagnosis of)\s*/i, '');
+        if (title.length > 80) {
+          title = title.substring(0, 80) + '...';
+        }
+      } else {
+        // For prose, extract first sentence
+        title = chunk.split(/[.\n]/)[0].trim();
+        if (title.length > 80) {
+          title = title.substring(0, 80) + '...';
+        }
+      }
+
+      // Skip if title is too short (but allow 3+ for acronyms like IBS, GERD)
+      if (title.length < 3) continue;
+
+      // Determine status - surgical history items are resolved, current conditions are ongoing
+      let status: 'active' | 'resolved' | 'ongoing' | 'scheduled' = 'ongoing';
+      if (type === 'surgery' || historyKeywords.test(chunk) || /\b(removed|repaired|had)\b/i.test(chunk)) {
+        status = 'resolved'; // Past surgical procedures
+      }
+
+      const event: ParsedMedicalEvent = {
+        id: `paste-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        type,
+        title,
+        date: eventDate,
+        description: isSimpleList ? title : chunk, // For lists, description = title (cleaner)
+        status,
+        tags: ['pasted', 'needs-review'],
+        confidence: isSimpleList ? 70 : 60, // Slightly higher for clear list items
+        sources: ['paste-text'],
+        needsReview: true,
+        rawText: chunk
+      };
+
+      events.push(event);
+    }
+
+    return events;
+  };
+
+  // 🔥 REVOLUTIONARY BACKEND TEXT PARSING - Much more powerful than client-side!
+  const parseTextWithBackend = async (text: string): Promise<ParsedMedicalEvent[]> => {
+    try {
+      const response = await backendFetch(`${FLASK_URL}/api/documents/parse-text`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: text,
+          source: 'Pasted Notes'
+        }),
+        timeout: 60000,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Backend text parsing failed');
+      }
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.message || 'Text parsing failed');
+      }
+
+      console.log(`🎉 BACKEND TEXT PARSE SUCCESS: ${result.eventCount} events`);
+      return result.events;
+
+    } catch (error) {
+      console.warn('Backend text parsing failed, falling back to client-side:', error);
+      // Fall back to client-side parsing if backend is unavailable
+      return parseTextFromPaste(text);
+    }
+  };
+
+  const handlePasteTextSubmit = async () => {
+    if (!pastedText.trim()) return;
+
+    setIsParsing(true);
+    setParseError(null);
+
+    try {
+      // Try backend parsing first (much more powerful!)
+      let events = await parseTextWithBackend(pastedText);
+
+      if (events.length === 0) {
+        // If no structured events found, create a single generic event
+        const singleEvent: ParsedMedicalEvent = {
+          id: `paste-${Date.now()}`,
+          type: 'diagnosis',
+          title: 'Imported from notes',
+          date: new Date().toISOString().split('T')[0],
+          description: pastedText,
+          status: 'active',
+          tags: ['pasted', 'needs-review'],
+          confidence: 50,
+          sources: ['paste-text'],
+          needsReview: true,
+          rawText: pastedText
+        };
+        events.push(singleEvent);
+      }
+
+      setParsedFromPaste(events);
+      setAllParsedEvents(prev => [...prev, ...events]);
+      setShowPasteModal(false);
+      setPastedText('');
+      setShowPreview(true);
+
+      console.log(`📋 Parsed ${events.length} events from pasted text!`);
+    } catch (error) {
+      console.error('Paste parsing error:', error);
+      setParseError(error instanceof Error ? error.message : 'Failed to parse text');
+    } finally {
+      setIsParsing(false);
+    }
+  };
+
   // 🎨 CONFIDENCE COLOR CODING (THEME AWARE!)
   const getConfidenceColor = (confidence: number) => {
     if (confidence >= 80) return 'bg-green-100 text-green-800 border-green-200';
@@ -420,6 +681,136 @@ export default function DocumentUploader({ onEventsExtracted, className = "" }: 
                   <Upload className="h-4 w-4 mr-2" />
                   Choose Files
                 </Button>
+
+                {/* 📋 PASTE TEXT BUTTON - For Google Keep etc! */}
+                <Dialog open={showPasteModal} onOpenChange={(open) => {
+                  setShowPasteModal(open);
+                  if (!open) {
+                    setParseError(null);
+                  }
+                }}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="gap-2">
+                      <ClipboardPaste className="h-4 w-4" />
+                      Paste Text
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center gap-2">
+                        <ClipboardPaste className="h-5 w-5 text-blue-500" />
+                        Paste Medical Notes
+                      </DialogTitle>
+                      <DialogDescription>
+                        Paste from Google Keep, notes apps, emails, MyChart, or anywhere! Our revolutionary parser will extract medical events, detect dismissed findings, and identify providers.
+                      </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-4 mt-4">
+                      {/* 🎨 QUICK TEMPLATES */}
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">Quick Templates (click to use)</Label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {pasteTemplates.map((template, idx) => (
+                            <button
+                              key={idx}
+                              onClick={() => setPastedText(prev => prev ? prev + '\n\n' + template.example : template.example)}
+                              className="flex items-center gap-2 p-2 text-left text-sm border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors"
+                            >
+                              <template.icon className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                              <span className="text-gray-700">{template.name}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="pasteText">Your notes</Label>
+                          <span className={`text-xs ${pastedText.length > 10000 ? 'text-orange-600' : 'text-gray-500'}`}>
+                            {pastedText.length.toLocaleString()} characters
+                            {pastedText.length > 0 && ` • ~${Math.ceil(pastedText.split(/\s+/).filter(w => w).length / 200)} min read`}
+                          </span>
+                        </div>
+                        <Textarea
+                          id="pasteText"
+                          value={pastedText}
+                          onChange={(e) => setPastedText(e.target.value)}
+                          placeholder={`Paste your medical notes here...
+
+Example formats that work great:
+• Diagnosed with Type 2 Diabetes - January 15, 2024
+• Started Metformin 500mg twice daily
+• 3/15/2024 - Blood work showed elevated A1C
+• Surgery: Appendectomy at City Hospital
+• Dr. Smith said my symptoms were "just anxiety" (we'll flag that!)
+
+Or just paste your whole Google Keep note - we'll figure it out!`}
+                          className="min-h-[200px] font-mono text-sm"
+                          disabled={isParsing}
+                        />
+                      </div>
+
+                      {/* Error display */}
+                      {parseError && (
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                          <div className="flex items-center gap-2 text-red-700 text-sm">
+                            <AlertCircle className="h-4 w-4" />
+                            <span>{parseError}</span>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-3">
+                        <div className="flex items-center gap-2 text-blue-700 text-sm font-medium mb-1">
+                          <Sparkles className="h-4 w-4" />
+                          Revolutionary Parser Powers
+                        </div>
+                        <div className="text-xs text-blue-600 space-y-1">
+                          <p>✨ <strong>Multi-layer detection:</strong> Diagnoses, surgeries, medications, tests, treatments, hospitalizations</p>
+                          <p>🚨 <strong>Dismissed findings:</strong> Flags things doctors called "incidental" or "normal variant"</p>
+                          <p>🏥 <strong>Provider extraction:</strong> Automatically detects doctor names and organizations</p>
+                          <p>📅 <strong>Smart dates:</strong> Handles most date formats (MM/DD/YYYY, Jan 15 2024, etc.)</p>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-between items-center gap-2 pt-2 border-t">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setPastedText('')}
+                          disabled={!pastedText || isParsing}
+                          className="text-gray-500"
+                        >
+                          Clear
+                        </Button>
+                        <div className="flex gap-2">
+                          <Button variant="outline" onClick={() => setShowPasteModal(false)} disabled={isParsing}>
+                            Cancel
+                          </Button>
+                          <Button
+                            onClick={handlePasteTextSubmit}
+                            disabled={!pastedText.trim() || isParsing}
+                            className="gap-2 min-w-[140px]"
+                          >
+                            {isParsing ? (
+                              <>
+                                <Sparkles className="h-4 w-4 animate-spin" />
+                                Parsing...
+                              </>
+                            ) : (
+                              <>
+                                <Sparkles className="h-4 w-4" />
+                                Parse & Extract
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+
                 <span className="text-[var(--text-muted)] text-sm">
                   or drag and drop files here
                 </span>
@@ -643,6 +1034,7 @@ export default function DocumentUploader({ onEventsExtracted, className = "" }: 
                             <option value="treatment">Treatment</option>
                             <option value="test">Test</option>
                             <option value="medication">Medication</option>
+                            <option value="dismissed_findings">Dismissed Finding</option>
                           </select>
                         ) : (
                           <span className="ml-2 text-[var(--text-main)] cursor-pointer hover:text-blue-600"

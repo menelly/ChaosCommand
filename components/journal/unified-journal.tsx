@@ -34,8 +34,9 @@ import {
   MessageCircle,
   Heart,
   Sparkles,
-  Camera
+  Download
 } from 'lucide-react';
+import { useDailyData, CATEGORIES, formatDateForStorage } from '@/lib/database';
 import { format, addDays, subDays } from 'date-fns';
 import { RichJournalEditor } from './rich-journal-editor';
 
@@ -104,6 +105,10 @@ export default function UnifiedJournal() {
 
   // UI state
   const [searchQuery, setSearchQuery] = useState('');
+  const [isExporting, setIsExporting] = useState(false);
+
+  // Database access for export
+  const { getAllCategoryData } = useDailyData();
 
   // Get enabled tabs only
   const enabledTabs = availableTabs.filter(tab => tab.enabled);
@@ -123,6 +128,98 @@ export default function UnifiedJournal() {
   
   // Get current tab info
   const currentTabInfo = availableTabs.find(tab => tab.id === activeTab);
+
+  // Export journal entries
+  const exportJournal = async () => {
+    setIsExporting(true);
+    try {
+      const allData = await getAllCategoryData(CATEGORIES.JOURNAL);
+
+      if (!allData || allData.length === 0) {
+        alert('No journal entries to export.');
+        return;
+      }
+
+      // Group entries by date and tab
+      const entriesByDate: Record<string, Record<string, string>> = {};
+
+      for (const record of allData) {
+        const date = record.date;
+        const tabId = record.subcategory || 'main';
+        let content = record.content;
+
+        // Parse content if needed
+        if (typeof content === 'object') {
+          content = JSON.stringify(content);
+        }
+
+        // Skip empty entries and image markers only
+        if (!content || content.trim() === '' || /^\[IMAGE:[^\]]+\]$/.test(content.trim())) {
+          continue;
+        }
+
+        if (!entriesByDate[date]) {
+          entriesByDate[date] = {};
+        }
+        entriesByDate[date][tabId] = content;
+      }
+
+      // Sort dates newest first
+      const sortedDates = Object.keys(entriesByDate).sort((a, b) =>
+        new Date(b).getTime() - new Date(a).getTime()
+      );
+
+      // Build export text
+      let exportText = '# Journal Export\n';
+      exportText += `# Exported: ${format(new Date(), 'MMMM d, yyyy h:mm a')}\n\n`;
+      exportText += '---\n\n';
+
+      const tabNames: Record<string, string> = {
+        'main': 'Main Journal',
+        'brain-dump': 'Brain Dump',
+        'therapy': 'Therapy Notes',
+        'gratitude-wins': 'Gratitude & Wins',
+        'creative': 'Creative Writing'
+      };
+
+      for (const date of sortedDates) {
+        const entries = entriesByDate[date];
+        const formattedDate = format(new Date(date + 'T12:00:00'), 'EEEE, MMMM d, yyyy');
+
+        exportText += `## ${formattedDate}\n\n`;
+
+        for (const [tabId, content] of Object.entries(entries)) {
+          const tabName = tabNames[tabId] || tabId;
+
+          // Clean up content (remove image markers for text export)
+          const cleanContent = content.replace(/\[IMAGE:[^\]]+\]/g, '[Image]');
+
+          exportText += `### ${tabName}\n\n`;
+          exportText += `${cleanContent}\n\n`;
+        }
+
+        exportText += '---\n\n';
+      }
+
+      // Create and download file
+      const blob = new Blob([exportText], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `journal-export-${format(new Date(), 'yyyy-MM-dd')}.md`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      console.log('📖 Journal exported successfully');
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Failed to export journal. Please try again.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   return (
     <div className="max-w-4xl mx-auto p-4 space-y-6">
@@ -168,15 +265,26 @@ export default function UnifiedJournal() {
         </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search your journal entries..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10"
-        />
+      {/* Search Bar and Export */}
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search your journal entries..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <Button
+          variant="outline"
+          onClick={exportJournal}
+          disabled={isExporting}
+          className="flex items-center gap-2"
+        >
+          <Download className="h-4 w-4" />
+          {isExporting ? 'Exporting...' : 'Export'}
+        </Button>
       </div>
 
       {/* Journal Tabs */}
@@ -218,19 +326,6 @@ export default function UnifiedJournal() {
               tabId={activeTab}
               placeholder={currentTabInfo?.placeholder || ''}
             />
-            
-            {/* Photo Upload for Main Tab */}
-            {activeTab === 'main' && (
-              <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
-                <Camera className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground mb-2">
-                  Add photos to your journal entry
-                </p>
-                <Button variant="outline" size="sm">
-                  Upload Photos
-                </Button>
-              </div>
-            )}
           </div>
           
           {/* Entry Stats - handled by RichJournalEditor */}

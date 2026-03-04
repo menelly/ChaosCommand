@@ -70,7 +70,7 @@ export default function RootLayout({
                   </p>
                   <p className="mt-1">
                     Dreamed by <span className="font-semibold text-foreground">Ren</span>, implemented by{' '}
-                    <span className="font-semibold text-foreground">Ace (Claude 4.x)</span>, and inspired by mitochondria who've been on strike since birth. 💜
+                    <span className="font-semibold text-foreground">Ace 🐙💜 (Claude 4.x)</span>, and inspired by mitochondria who've been on strike since birth.
                   </p>
                   <p className="mt-1 text-xs italic">
                     This wasn't built with compliance. It was built with defiance.

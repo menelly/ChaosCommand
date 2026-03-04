@@ -39,6 +39,7 @@ import {
 } from 'lucide-react'
 import { SeizureEntry } from './seizure-types'
 import { getSeizureTypeColor, getSeverityLevel } from './seizure-constants'
+import { filterForAnalytics } from '@/lib/utils/analytics-filters'
 
 interface SeizureAnalyticsProps {
   entries?: SeizureEntry[]
@@ -91,13 +92,17 @@ export function SeizureAnalyticsDesktop({
         allEntries = await loadAllEntries(parseInt(dateRange))
       }
 
-      if (allEntries.length === 0) {
+      // Filter out NOPE and I KNOW tagged entries for analytics
+      const filteredEntries = filterForAnalytics(allEntries)
+      console.log('⚡ After tag filtering:', filteredEntries.length, '(excluded:', allEntries.length - filteredEntries.length, ')')
+
+      if (filteredEntries.length === 0) {
         setAnalyticsData(null)
         setLoading(false)
         return
       }
 
-      console.log('⚡ Analyzing seizure data locally:', allEntries.length, 'entries')
+      console.log('⚡ Analyzing seizure data locally:', filteredEntries.length, 'entries')
 
       const days = parseInt(dateRange)
       const weeks = days / 7
@@ -105,7 +110,7 @@ export function SeizureAnalyticsDesktop({
 
       // === SEIZURE TYPE FREQUENCY ===
       const typeCounts: Record<string, number> = {}
-      allEntries.forEach(e => {
+      filteredEntries.forEach(e => {
         if (e.seizureType) {
           typeCounts[e.seizureType] = (typeCounts[e.seizureType] || 0) + 1
         }
@@ -116,7 +121,7 @@ export function SeizureAnalyticsDesktop({
 
       // === TRIGGER FREQUENCY ===
       const triggerCounts: Record<string, number> = {}
-      allEntries.forEach(e => {
+      filteredEntries.forEach(e => {
         (e.triggers || []).forEach(trigger => {
           triggerCounts[trigger] = (triggerCounts[trigger] || 0) + 1
         })
@@ -128,7 +133,7 @@ export function SeizureAnalyticsDesktop({
 
       // === AURA SYMPTOM FREQUENCY ===
       const auraCounts: Record<string, number> = {}
-      allEntries.forEach(e => {
+      filteredEntries.forEach(e => {
         (e.auraSymptoms || []).forEach(symptom => {
           auraCounts[symptom] = (auraCounts[symptom] || 0) + 1
         })
@@ -140,7 +145,7 @@ export function SeizureAnalyticsDesktop({
 
       // === SEIZURE SYMPTOM FREQUENCY ===
       const symptomCounts: Record<string, number> = {}
-      allEntries.forEach(e => {
+      filteredEntries.forEach(e => {
         (e.seizureSymptoms || []).forEach(symptom => {
           symptomCounts[symptom] = (symptomCounts[symptom] || 0) + 1
         })
@@ -152,7 +157,7 @@ export function SeizureAnalyticsDesktop({
 
       // === POST-SEIZURE SYMPTOM FREQUENCY ===
       const postCounts: Record<string, number> = {}
-      allEntries.forEach(e => {
+      filteredEntries.forEach(e => {
         (e.postSeizureSymptoms || []).forEach(symptom => {
           postCounts[symptom] = (postCounts[symptom] || 0) + 1
         })
@@ -164,7 +169,7 @@ export function SeizureAnalyticsDesktop({
 
       // === SEVERITY BREAKDOWN ===
       const severityCounts: Record<string, number> = { Low: 0, Medium: 0, High: 0, Critical: 0 }
-      allEntries.forEach(e => {
+      filteredEntries.forEach(e => {
         const severity = getSeverityLevel(e)
         severityCounts[severity] = (severityCounts[severity] || 0) + 1
       })
@@ -173,7 +178,7 @@ export function SeizureAnalyticsDesktop({
 
       // === CONSCIOUSNESS BREAKDOWN ===
       const consciousnessCounts: Record<string, number> = {}
-      allEntries.forEach(e => {
+      filteredEntries.forEach(e => {
         if (e.consciousness) {
           consciousnessCounts[e.consciousness] = (consciousnessCounts[e.consciousness] || 0) + 1
         }
@@ -184,7 +189,7 @@ export function SeizureAnalyticsDesktop({
 
       // === DURATION BREAKDOWN ===
       const durationCounts: Record<string, number> = {}
-      allEntries.forEach(e => {
+      filteredEntries.forEach(e => {
         if (e.duration) {
           durationCounts[e.duration] = (durationCounts[e.duration] || 0) + 1
         }
@@ -195,7 +200,7 @@ export function SeizureAnalyticsDesktop({
 
       // === RECOVERY TIME BREAKDOWN ===
       const recoveryCounts: Record<string, number> = {}
-      allEntries.forEach(e => {
+      filteredEntries.forEach(e => {
         if (e.recoveryTime) {
           recoveryCounts[e.recoveryTime] = (recoveryCounts[e.recoveryTime] || 0) + 1
         }
@@ -211,7 +216,7 @@ export function SeizureAnalyticsDesktop({
         'Evening (6pm-10pm)': 0,
         'Night (10pm-6am)': 0
       }
-      allEntries.forEach(e => {
+      filteredEntries.forEach(e => {
         if (e.timestamp) {
           const hour = new Date(e.timestamp).getHours()
           if (hour >= 6 && hour < 12) timeCounts['Morning (6am-12pm)']++
@@ -228,7 +233,7 @@ export function SeizureAnalyticsDesktop({
       const dayCounts: Record<string, number> = {}
       dayNames.forEach(day => { dayCounts[day] = 0 })
 
-      allEntries.forEach(e => {
+      filteredEntries.forEach(e => {
         if (e.timestamp) {
           const date = new Date(e.timestamp)
           const dayName = dayNames[date.getDay()]
@@ -238,25 +243,25 @@ export function SeizureAnalyticsDesktop({
       const dayOfWeek = dayNames.map(day => ({ day, count: dayCounts[day] }))
 
       // === RATES ===
-      const injuryRate = allEntries.length > 0
-        ? Math.round((allEntries.filter(e => e.injuriesOccurred).length / allEntries.length) * 100)
+      const injuryRate = filteredEntries.length > 0
+        ? Math.round((filteredEntries.filter(e => e.injuriesOccurred).length / filteredEntries.length) * 100)
         : 0
-      const medicationCompliance = allEntries.length > 0
-        ? Math.round((allEntries.filter(e => !e.medicationMissed).length / allEntries.length) * 100)
+      const medicationCompliance = filteredEntries.length > 0
+        ? Math.round((filteredEntries.filter(e => !e.medicationMissed).length / filteredEntries.length) * 100)
         : 0
-      const rescueMedUsage = allEntries.length > 0
-        ? Math.round((allEntries.filter(e => e.medicationTaken).length / allEntries.length) * 100)
+      const rescueMedUsage = filteredEntries.length > 0
+        ? Math.round((filteredEntries.filter(e => e.medicationTaken).length / filteredEntries.length) * 100)
         : 0
-      const witnessRate = allEntries.length > 0
-        ? Math.round((allEntries.filter(e => e.witnessPresent).length / allEntries.length) * 100)
+      const witnessRate = filteredEntries.length > 0
+        ? Math.round((filteredEntries.filter(e => e.witnessPresent).length / filteredEntries.length) * 100)
         : 0
 
       // === GENERATE INSIGHTS ===
       const insights: string[] = []
 
-      insights.push(`⚡ You logged ${allEntries.length} seizure${allEntries.length === 1 ? '' : 's'} in the last ${days} days.`)
+      insights.push(`⚡ You logged ${filteredEntries.length} seizure${filteredEntries.length === 1 ? '' : 's'} in the last ${days} days.`)
 
-      const avgPerWeek = weeks > 0 ? parseFloat((allEntries.length / weeks).toFixed(1)) : 0
+      const avgPerWeek = weeks > 0 ? parseFloat((filteredEntries.length / weeks).toFixed(1)) : 0
       if (avgPerWeek > 0) {
         insights.push(`📊 Average of ${avgPerWeek} seizures per week.`)
       }
@@ -270,13 +275,13 @@ export function SeizureAnalyticsDesktop({
       }
 
       if (auraFrequency.length > 0) {
-        const auraPercent = Math.round((allEntries.filter(e => (e.auraSymptoms || []).length > 0).length / allEntries.length) * 100)
+        const auraPercent = Math.round((filteredEntries.filter(e => (e.auraSymptoms || []).length > 0).length / filteredEntries.length) * 100)
         insights.push(`🔮 ${auraPercent}% of seizures had warning auras. Most common: ${auraFrequency[0].name}`)
       }
 
       const highSeverity = severityCounts['High'] + severityCounts['Critical']
       if (highSeverity > 0) {
-        insights.push(`🚨 ${highSeverity} high/critical severity episodes (${Math.round((highSeverity / allEntries.length) * 100)}%)`)
+        insights.push(`🚨 ${highSeverity} high/critical severity episodes (${Math.round((highSeverity / filteredEntries.length) * 100)}%)`)
       }
 
       if (injuryRate > 0) {
@@ -306,9 +311,9 @@ export function SeizureAnalyticsDesktop({
       }
 
       const data: AnalyticsData = {
-        total_seizures: allEntries.length,
+        total_seizures: filteredEntries.length,
         avg_per_week: avgPerWeek,
-        avg_per_month: months > 0 ? parseFloat((allEntries.length / months).toFixed(1)) : 0,
+        avg_per_month: months > 0 ? parseFloat((filteredEntries.length / months).toFixed(1)) : 0,
         seizure_type_frequency: seizureTypeFrequency,
         trigger_frequency: triggerFrequency,
         aura_frequency: auraFrequency,

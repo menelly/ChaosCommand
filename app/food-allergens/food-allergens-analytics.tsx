@@ -34,6 +34,7 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Loader2, Shield, AlertTriangle, Pill, Activity, TrendingUp, Calendar, Clock, Apple } from 'lucide-react'
 import { FoodAllergenEntry } from './food-allergens-tracker'
+import { filterForAnalytics } from '@/lib/utils/analytics-filters'
 
 interface FoodAllergensAnalyticsProps {
   entries: FoodAllergenEntry[]
@@ -82,32 +83,36 @@ export default function FoodAllergensAnalytics({ entries, currentDate, loadAllEn
         allEntries = await loadAllEntries(parseInt(dateRange))
       }
 
-      if (allEntries.length === 0) {
+      // Filter out NOPE and I KNOW tagged entries
+      const filteredEntries = filterForAnalytics(allEntries)
+      console.log('🛡️ After tag filtering:', filteredEntries.length, '(excluded:', allEntries.length - filteredEntries.length, ')')
+
+      if (filteredEntries.length === 0) {
         setAnalyticsData(null)
         setLoading(false)
         return
       }
 
-      console.log('🛡️ Analyzing food allergen data locally:', allEntries.length, 'entries')
+      console.log('🛡️ Analyzing food allergen data locally:', filteredEntries.length, 'entries')
 
       const days = parseInt(dateRange)
       const weeks = days / 7
 
       // Severity breakdown
       const severityBreakdown = {
-        mild: allEntries.filter(e => e.reactionSeverity === 'Mild').length,
-        moderate: allEntries.filter(e => e.reactionSeverity === 'Moderate').length,
-        severe: allEntries.filter(e => e.reactionSeverity === 'Severe').length,
-        life_threatening: allEntries.filter(e => e.reactionSeverity === 'Life-threatening').length
+        mild: filteredEntries.filter(e => e.reactionSeverity === 'Mild').length,
+        moderate: filteredEntries.filter(e => e.reactionSeverity === 'Moderate').length,
+        severe: filteredEntries.filter(e => e.reactionSeverity === 'Severe').length,
+        life_threatening: filteredEntries.filter(e => e.reactionSeverity === 'Life-threatening').length
       }
 
       // EpiPen and emergency stats
-      const epipenUses = allEntries.filter(e => e.epipenUsed).length
-      const emergencyContacts = allEntries.filter(e => e.emergencyContacted).length
+      const epipenUses = filteredEntries.filter(e => e.epipenUsed).length
+      const emergencyContacts = filteredEntries.filter(e => e.emergencyContacted).length
 
       // Allergen frequency
       const allergenCounts: Record<string, number> = {}
-      allEntries.forEach(e => {
+      filteredEntries.forEach(e => {
         const name = e.allergenName.toLowerCase()
         allergenCounts[name] = (allergenCounts[name] || 0) + 1
       })
@@ -118,7 +123,7 @@ export default function FoodAllergensAnalytics({ entries, currentDate, loadAllEn
 
       // Symptom frequency
       const symptomCounts: Record<string, number> = {}
-      allEntries.forEach(e => {
+      filteredEntries.forEach(e => {
         (e.symptoms || []).forEach(symptom => {
           symptomCounts[symptom] = (symptomCounts[symptom] || 0) + 1
         })
@@ -130,7 +135,7 @@ export default function FoodAllergensAnalytics({ entries, currentDate, loadAllEn
 
       // Exposure source analysis
       const sourceCounts: Record<string, number> = {}
-      allEntries.forEach(e => {
+      filteredEntries.forEach(e => {
         const source = e.exposureSource || 'Unknown'
         sourceCounts[source] = (sourceCounts[source] || 0) + 1
       })
@@ -140,7 +145,7 @@ export default function FoodAllergensAnalytics({ entries, currentDate, loadAllEn
 
       // Treatment frequency
       const treatmentCounts: Record<string, number> = {}
-      allEntries.forEach(e => {
+      filteredEntries.forEach(e => {
         (e.treatmentGiven || []).forEach(treatment => {
           treatmentCounts[treatment] = (treatmentCounts[treatment] || 0) + 1
         })
@@ -155,7 +160,7 @@ export default function FoodAllergensAnalytics({ entries, currentDate, loadAllEn
       const dayCounts: Record<string, number> = {}
       dayNames.forEach(day => dayCounts[day] = 0)
 
-      allEntries.forEach(e => {
+      filteredEntries.forEach(e => {
         if (e.timestamp) {
           const date = new Date(e.timestamp)
           const dayName = dayNames[date.getDay()]
@@ -167,9 +172,9 @@ export default function FoodAllergensAnalytics({ entries, currentDate, loadAllEn
       // Generate insights
       const insights: string[] = []
 
-      insights.push(`You logged ${allEntries.length} allergic reactions in the last ${days} days.`)
+      insights.push(`You logged ${filteredEntries.length} allergic reactions in the last ${days} days.`)
 
-      const avgPerWeek = weeks > 0 ? parseFloat((allEntries.length / weeks).toFixed(1)) : 0
+      const avgPerWeek = weeks > 0 ? parseFloat((filteredEntries.length / weeks).toFixed(1)) : 0
       if (avgPerWeek > 0) {
         insights.push(`Average of ${avgPerWeek} reactions per week.`)
       }
@@ -207,7 +212,7 @@ export default function FoodAllergensAnalytics({ entries, currentDate, loadAllEn
 
       const data: AnalyticsData = {
         summary: {
-          total_reactions: allEntries.length,
+          total_reactions: filteredEntries.length,
           epipen_uses: epipenUses,
           emergency_contacts: emergencyContacts,
           avg_reactions_per_week: avgPerWeek

@@ -241,18 +241,18 @@ export default function SurvivalButton() {
               className={`
                 relative min-w-[60px] h-[60px] rounded-xl transition-all duration-300
                 ${checked
-                  ? 'bg-green-500 hover:bg-green-600 border-green-500 shadow-lg shadow-green-500/25'
+                  ? 'bg-primary hover:bg-primary/90 border-primary shadow-lg shadow-primary/25'
                   : 'border-2 border-dashed border-muted-foreground/30 hover:border-primary'
                 }
               `}
             >
               {checked ? (
-                <Check className="h-6 w-6 text-white" />
+                <Check className="h-6 w-6 text-primary-foreground" />
               ) : (
                 <div className="w-6 h-6 border-2 border-muted-foreground/50 rounded" />
               )}
               {checked && (
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse" />
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary/80 rounded-full animate-pulse" />
               )}
             </Button>
 
@@ -263,17 +263,17 @@ export default function SurvivalButton() {
 
           <div className="flex-1 space-y-3">
             {!checked ? (
-              <div className="p-4 bg-pink-50 dark:bg-pink-950/20 rounded-lg border border-pink-200 dark:border-pink-800">
-                <p className="text-pink-700 dark:text-pink-300 font-medium text-lg mb-2">
+              <div className="p-4 bg-muted/50 rounded-lg border border-border">
+                <p className="text-foreground font-medium text-lg mb-2">
                   If you just <strong>CAN'T</strong> today, that's OK.
                 </p>
-                <p className="text-pink-600 dark:text-pink-400 text-sm">
+                <p className="text-muted-foreground text-sm">
                   Check this box ☐ as a mark of surviving another day, and know you did it!
                 </p>
               </div>
             ) : (
-              <div className="p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
-                <p className="text-green-700 dark:text-green-300 font-medium">
+              <div className="p-4 bg-primary/10 rounded-lg border border-primary/30">
+                <p className="text-foreground font-medium">
                   🎉 {currentPhrase}
                 </p>
               </div>
@@ -288,8 +288,8 @@ export default function SurvivalButton() {
         </div>
 
         {checked && (
-          <div className="mt-4 p-3 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
-            <p className="text-sm text-green-700 dark:text-green-300 font-medium">
+          <div className="mt-4 p-3 bg-primary/10 rounded-lg border border-primary/30">
+            <p className="text-sm text-foreground font-medium">
               🎉 {currentPhrase}
             </p>
           </div>

@@ -20,33 +20,42 @@
  */
 /**
  * MEDICATIONS PAGE
- * 
+ *
  * Main page for medication tracking functionality.
  * Simple wrapper that renders the main medication tracker component.
  */
 
-import { Metadata } from 'next';
-import { MedicationTracker } from '@/components/medications/medication-tracker';
+'use client';
 
-export const metadata: Metadata = {
-  title: 'Medications | Compendium',
-  description: 'Track your medications, dosages, refill dates, and reminders',
-};
+import { Pill } from 'lucide-react';
+import { MedicationTracker } from '@/components/medications/medication-tracker';
+import { Button } from '@/components/ui/button';
+import AppCanvas from '@/components/app-canvas';
 
 export default function MedicationsPage() {
   return (
-    <div className="container mx-auto p-6 max-w-7xl">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-foreground mb-2">
-          💊 Medication Tracker
-        </h1>
-        <p className="text-muted-foreground">
-          Keep track of your medications, dosages, refill dates, and set up reminders. 
-          Only a medication name is required - add as much or as little detail as you want!
-        </p>
+    <AppCanvas currentPage="medications">
+      <div className="max-w-6xl mx-auto space-y-6">
+        <header className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-foreground mb-2 flex items-center justify-center gap-2">
+            <Pill className="h-8 w-8 text-purple-500" />
+            Medication Tracker
+          </h1>
+          <p className="text-lg text-muted-foreground">
+            Keep track of your medications, dosages, refill dates, and set up reminders
+          </p>
+        </header>
+
+        <MedicationTracker />
+
+        <div className="text-center">
+          <Button variant="outline" asChild>
+            <a href="/manage">
+              ← Back to Manage
+            </a>
+          </Button>
+        </div>
       </div>
-      
-      <MedicationTracker />
-    </div>
+    </AppCanvas>
   );
 }

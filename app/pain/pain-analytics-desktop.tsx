@@ -29,6 +29,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Calendar, TrendingUp, AlertTriangle, Clock, Target, Download, Activity, MapPin, Zap } from 'lucide-react'
 import { useDailyData, CATEGORIES } from '@/lib/database'
 import { format, subDays, parseISO, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns'
+import { filterForAnalytics } from '@/lib/utils/analytics-filters'
 
 interface PainEntry {
   id: string
@@ -136,9 +137,11 @@ export default function PainAnalyticsDesktop({ className }: AnalyticsProps) {
         entry.effectiveness >= 0 && entry.effectiveness <= 10
       )
 
-      console.log('🔍 Clean entries after sanitization:', cleanEntries)
+      // 🏷️ Filter out NOPE and I KNOW tagged entries from analytics
+      const filteredEntries = filterForAnalytics(cleanEntries)
+      console.log('🔍 After tag filtering:', filteredEntries.length, '(excluded:', cleanEntries.length - filteredEntries.length, ')')
 
-      setEntries(cleanEntries)
+      setEntries(filteredEntries)
       setHasValidData(cleanEntries.length > 0)
     } catch (error) {
       console.error('Failed to load analytics data:', error)

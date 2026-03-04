@@ -28,6 +28,7 @@ import { useDailyData, CATEGORIES } from '@/lib/database'
 import { SensoryEntry } from './sensory-types'
 import { ENTRY_TYPES, SENSORY_TOOLS } from './sensory-constants'
 import { format } from 'date-fns'
+import { filterForAnalytics } from '@/lib/utils/analytics-filters'
 
 interface SensoryAnalyticsProps {
   refreshTrigger: number
@@ -74,7 +75,11 @@ export function SensoryAnalytics({ refreshTrigger }: SensoryAnalyticsProps) {
           return dateB - dateA
         })
 
-        setEntries(allEntries)
+        // Filter out NOPE and I KNOW tagged entries
+        const filteredEntries = filterForAnalytics(allEntries)
+        console.log('🌈 Sensory analytics - after tag filtering:', filteredEntries.length, '(excluded:', allEntries.length - filteredEntries.length, ')')
+
+        setEntries(filteredEntries)
       } catch (error) {
         console.error('Error loading sensory entries:', error)
         setEntries([])

@@ -20,12 +20,14 @@
  */
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import AppCanvas from "@/components/app-canvas"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
 import {
   FileText,
   TestTube,
@@ -35,12 +37,14 @@ import {
   Upload,
   Calendar,
   Clock,
-  HelpCircle,
   FileImage,
   User,
   Pill,
-  Stethoscope
+  Stethoscope,
+  Settings2
 } from "lucide-react"
+
+const HIDDEN_TRACKERS_KEY = 'chaos-manage-hidden-trackers'
 
 interface TrackerButton {
   id: string
@@ -53,6 +57,40 @@ interface TrackerButton {
 }
 
 export default function WorkLifeIndex() {
+  // Hidden trackers state - persisted to localStorage
+  const [hiddenTrackers, setHiddenTrackers] = useState<string[]>([])
+  const [isCustomizeOpen, setIsCustomizeOpen] = useState(false)
+
+  // Load hidden trackers from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(HIDDEN_TRACKERS_KEY)
+      if (saved) {
+        setHiddenTrackers(JSON.parse(saved))
+      }
+    } catch (e) {
+      console.error('Failed to load hidden trackers:', e)
+    }
+  }, [])
+
+  // Save hidden trackers to localStorage when changed
+  const updateHiddenTrackers = (newHidden: string[]) => {
+    setHiddenTrackers(newHidden)
+    try {
+      localStorage.setItem(HIDDEN_TRACKERS_KEY, JSON.stringify(newHidden))
+    } catch (e) {
+      console.error('Failed to save hidden trackers:', e)
+    }
+  }
+
+  const toggleTrackerVisibility = (trackerId: string) => {
+    if (hiddenTrackers.includes(trackerId)) {
+      updateHiddenTrackers(hiddenTrackers.filter(id => id !== trackerId))
+    } else {
+      updateHiddenTrackers([...hiddenTrackers, trackerId])
+    }
+  }
+
   const trackers: TrackerButton[] = [
     // MEDICATIONS & SUPPLEMENTS
     {
@@ -221,7 +259,9 @@ export default function WorkLifeIndex() {
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {trackers.map((tracker) => (
+          {trackers
+            .filter(tracker => !hiddenTrackers.includes(tracker.id))
+            .map((tracker) => (
             <a
               key={tracker.id}
               href={getTrackerHref(tracker.id)}
@@ -229,41 +269,22 @@ export default function WorkLifeIndex() {
             >
               <Card className="cursor-pointer hover:shadow-md transition-shadow">
                 <CardHeader className="pb-3 cursor-pointer">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="text-primary">
-                      {tracker.icon}
-                    </div>
-                    <CardTitle className="text-base leading-tight">{tracker.name}</CardTitle>
+                <div className="flex items-center gap-3">
+                  <div className="text-primary">
+                    {tracker.icon}
                   </div>
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="h-6 w-6 p-0 hover:bg-muted"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <HelpCircle className="h-4 w-4" />
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-md">
-                      <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2">
-                          {tracker.icon}
-                          {tracker.name}
-                        </DialogTitle>
-                        <DialogDescription className="text-left">
-                          {tracker.helpContent}
-                        </DialogDescription>
-                      </DialogHeader>
-                    </DialogContent>
-                  </Dialog>
+                  <CardTitle className="text-base leading-tight">{tracker.name}</CardTitle>
+                  {tracker.status === 'coming-soon' && (
+                    <Badge variant="secondary" className="text-xs">Soon</Badge>
+                  )}
+                  {tracker.status === 'planned' && (
+                    <Badge variant="outline" className="text-xs">Planned</Badge>
+                  )}
                 </div>
                 <CardDescription className="text-sm mt-2">
                   {tracker.shortDescription}
                 </CardDescription>
-                
+
                 {/* Sub-trackers */}
                 {tracker.subTrackers && (
                   <div className="mt-3 space-y-1">
@@ -283,25 +304,54 @@ export default function WorkLifeIndex() {
           ))}
         </div>
 
-        {/* HELP SECTION */}
-        <Card className="mt-8">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <HelpCircle className="h-5 w-5" />
-              Life Management Help
-            </CardTitle>
-            <CardDescription>
-              Comprehensive guides for adulting, work management, and life organization
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button variant="outline" className="w-full">
-              📖 Open Life Management Guide
-            </Button>
-          </CardContent>
-        </Card>
+        {/* Customize Button & Back Button */}
+        <div className="mt-8 flex justify-center gap-4">
+          <Dialog open={isCustomizeOpen} onOpenChange={setIsCustomizeOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <Settings2 className="h-4 w-4 mr-2" />
+                Customize View
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Customize Manage Section</DialogTitle>
+                <DialogDescription>
+                  Hide trackers that aren't relevant to you. Don't work? Hide the work stuff!
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 mt-4">
+                {trackers.map((tracker) => (
+                  <div key={tracker.id} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {tracker.icon}
+                      <Label htmlFor={`toggle-${tracker.id}`} className="cursor-pointer">
+                        {tracker.name}
+                      </Label>
+                    </div>
+                    <Switch
+                      id={`toggle-${tracker.id}`}
+                      checked={!hiddenTrackers.includes(tracker.id)}
+                      onCheckedChange={() => toggleTrackerVisibility(tracker.id)}
+                    />
+                  </div>
+                ))}
+              </div>
+              {hiddenTrackers.length > 0 && (
+                <div className="mt-4 pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => updateHiddenTrackers([])}
+                  >
+                    Show All Trackers
+                  </Button>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
 
-        <div className="mt-8 text-center">
           <Button variant="outline" asChild>
             <a href="/">
               ← Back to Command Center

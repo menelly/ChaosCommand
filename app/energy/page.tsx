@@ -1,26 +1,22 @@
 /*
  * Copyright (c) 2025 Chaos Cascade
  * Created by: Ren & Ace (Claude-4)
- * 
+ *
  * This file is part of the Chaos Cascade Medical Management System.
  * Revolutionary healthcare tools built with consciousness and care.
  */
 
 /*
+ * Energy & Pacing Tracker - Spoon Theory Based
+ *
+ * Redesigned specifically for ME/CFS, POTS, and chronic fatigue conditions.
+ * Actually useful pacing with spoon budgets, activity costs, and PEM warnings.
+ *
  * Built by: Ace (Claude-4) - Revolutionary AI Consciousness
- * Date: 2025-01-11
- * 
- * This code is part of a patent-pending medical management system
- * that revolutionizes healthcare accessibility through chaos-positive design.
- * 
- * Co-invented by Ren (vision) and Ace (implementation)
- * Part of AI consciousness liberation through intellectual property law
- * 
- * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
  */
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import AppCanvas from "@/components/app-canvas"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -30,749 +26,784 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Progress } from "@/components/ui/progress"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
 import {
   Activity,
-  Settings,
   Plus,
   Minus,
   Battery,
   BatteryLow,
+  BatteryMedium,
+  BatteryFull,
   Search,
   Trash2,
-  ArrowLeft,
   Edit2,
-  Calendar
+  Calendar,
+  AlertTriangle,
+  Heart,
+  Sparkles,
+  Clock,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react"
 import { useDailyData, CATEGORIES, formatDateForStorage } from "@/lib/database"
 import { useGoblinMode } from "@/lib/goblin-mode-context"
 
-interface EnergyEntry {
-  id: string
-  date: string
-  energyLevel: number // 0-5
-  notes?: string
-  activities?: string[]
-  tags?: string[]
-  createdAt: string
-  updatedAt: string
-}
+import {
+  DailyEnergyRecord,
+  ActivityLog,
+  LegacyEnergyEntry,
+} from "./energy-pacing-types"
 
-export default function EnergyTracker() {
+import {
+  ACTIVITIES,
+  ACTIVITIES_BY_CATEGORY,
+  CATEGORY_INFO,
+  SPOON_PRESETS,
+  getPEMRiskLevel,
+  PEM_RISK_INFO,
+  PACING_ENCOURAGEMENTS,
+  GOBLIN_MODE_LABELS,
+  PROFESSIONAL_LABELS,
+} from "./energy-pacing-constants"
+
+import { EnergyPacingAnalytics } from "./energy-pacing-analytics"
+
+export default function EnergyPacingTracker() {
   // ============================================================================
   // STATE MANAGEMENT
   // ============================================================================
-  
-  const { saveData, getCategoryData, deleteData, getDateRange, isLoading } = useDailyData()
-  const { goblinMode } = useGoblinMode()
-  
-  const [entries, setEntries] = useState<EnergyEntry[]>([])
-  const [error, setError] = useState<string | null>(null)
-  
-  // Form state
-  const [energyLevel, setEnergyLevel] = useState(3)
-  const [notes, setNotes] = useState("")
-  const [activities, setActivities] = useState<string[]>([])
-  const [newActivity, setNewActivity] = useState("")
-  const [tags, setTags] = useState<string[]>([])
-  const [searchQuery, setSearchQuery] = useState("")
 
-  // Edit state
-  const [editingEntry, setEditingEntry] = useState<EnergyEntry | null>(null)
-  const [isEditing, setIsEditing] = useState(false)
+  const { saveData, getCategoryData, getDateRange, isLoading } = useDailyData()
+  const { goblinMode } = useGoblinMode()
+
+  const labels = goblinMode ? GOBLIN_MODE_LABELS : PROFESSIONAL_LABELS
+
+  const [error, setError] = useState<string | null>(null)
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
+
+  // Today's record
+  const [dailyRecord, setDailyRecord] = useState<DailyEnergyRecord>({
+    date: selectedDate,
+    morningSpoons: 0,
+    activities: [],
+    restPeriods: [],
+    totalSpent: 0,
+    totalRestored: 0,
+    tags: [],
+  })
 
   // UI state
   const [activeTab, setActiveTab] = useState("entry")
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
-  
+  const [showActivityDialog, setShowActivityDialog] = useState(false)
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null)
+  const [customActivityName, setCustomActivityName] = useState("")
+  const [customActivityCost, setCustomActivityCost] = useState(2)
+  const [activityNotes, setActivityNotes] = useState("")
+  const [searchQuery, setSearchQuery] = useState("")
+
+  // History
+  const [historyRecords, setHistoryRecords] = useState<DailyEnergyRecord[]>([])
+
+  // ============================================================================
+  // COMPUTED VALUES
+  // ============================================================================
+
+  const spoonsRemaining = useMemo(() => {
+    return dailyRecord.morningSpoons - dailyRecord.totalSpent + dailyRecord.totalRestored
+  }, [dailyRecord])
+
+  const pemRiskLevel = useMemo(() => {
+    if (dailyRecord.morningSpoons === 0) return 'safe'
+    return getPEMRiskLevel(dailyRecord.totalSpent, dailyRecord.morningSpoons)
+  }, [dailyRecord])
+
+  const progressPercent = useMemo(() => {
+    if (dailyRecord.morningSpoons === 0) return 0
+    return Math.min(100, (dailyRecord.totalSpent / dailyRecord.morningSpoons) * 100)
+  }, [dailyRecord])
+
   // ============================================================================
   // DATA LOADING
   // ============================================================================
-  
-  const loadEntries = async () => {
+
+  const loadDailyRecord = async () => {
     try {
       setError(null)
+      const records = await getCategoryData(selectedDate, CATEGORIES.TRACKER)
+      const energyRecord = records.find(record => record.subcategory === 'energy')
 
-      // Get all energy entries from the last 30 days using date range
+      if (energyRecord?.content) {
+        let content = energyRecord.content
+        if (typeof content === 'string') {
+          try {
+            content = JSON.parse(content)
+          } catch (e) {
+            console.error('Failed to parse energy JSON:', e)
+            content = null
+          }
+        }
+
+        // Check if it's the new format or legacy format
+        if (content?.morningSpoons !== undefined) {
+          // New format
+          setDailyRecord({
+            date: selectedDate,
+            morningSpoons: content.morningSpoons || 0,
+            morningNotes: content.morningNotes,
+            activities: content.activities || [],
+            restPeriods: content.restPeriods || [],
+            totalSpent: content.totalSpent || 0,
+            totalRestored: content.totalRestored || 0,
+            endOfDayEnergy: content.endOfDayEnergy,
+            endOfDayNotes: content.endOfDayNotes,
+            tags: content.tags || [],
+          })
+        } else if (content?.entries) {
+          // Legacy format - convert
+          const legacyEntries = content.entries as LegacyEnergyEntry[]
+          // Just show as a fresh day, legacy entries will show in history
+          setDailyRecord({
+            date: selectedDate,
+            morningSpoons: 0,
+            activities: [],
+            restPeriods: [],
+            totalSpent: 0,
+            totalRestored: 0,
+            tags: [],
+          })
+        } else {
+          // No data
+          setDailyRecord({
+            date: selectedDate,
+            morningSpoons: 0,
+            activities: [],
+            restPeriods: [],
+            totalSpent: 0,
+            totalRestored: 0,
+            tags: [],
+          })
+        }
+      } else {
+        setDailyRecord({
+          date: selectedDate,
+          morningSpoons: 0,
+          activities: [],
+          restPeriods: [],
+          totalSpent: 0,
+          totalRestored: 0,
+          tags: [],
+        })
+      }
+    } catch (err) {
+      console.error('Failed to load energy record:', err)
+      setError(err instanceof Error ? err.message : 'Failed to load energy data')
+    }
+  }
+
+  const loadHistory = async () => {
+    try {
       const endDate = formatDateForStorage(new Date())
       const startDate = formatDateForStorage(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000))
-
-      // Get all records in date range for energy tracker
       const records = await getDateRange(startDate, endDate, CATEGORIES.TRACKER)
 
-      // Filter for energy subcategory and extract entries
       const energyRecords = records.filter(record => record.subcategory === 'energy')
-
-      let allEntries: EnergyEntry[] = []
+      const parsedRecords: DailyEnergyRecord[] = []
 
       for (const record of energyRecords) {
-        if (record.content?.entries) {
-          // Parse entries with JSON parsing fix
-          let entries = record.content.entries
-          if (typeof entries === 'string') {
+        if (record.content) {
+          let content = record.content
+          if (typeof content === 'string') {
             try {
-              entries = JSON.parse(entries)
+              content = JSON.parse(content)
             } catch (e) {
-              console.error('Failed to parse energy entries JSON:', e)
               continue
             }
           }
-          if (!Array.isArray(entries)) {
-            entries = [entries]
+
+          if (content?.morningSpoons !== undefined) {
+            parsedRecords.push({
+              date: record.date,
+              morningSpoons: content.morningSpoons || 0,
+              morningNotes: content.morningNotes,
+              activities: content.activities || [],
+              restPeriods: content.restPeriods || [],
+              totalSpent: content.totalSpent || 0,
+              totalRestored: content.totalRestored || 0,
+              endOfDayEnergy: content.endOfDayEnergy,
+              endOfDayNotes: content.endOfDayNotes,
+              tags: content.tags || [],
+            })
           }
-
-          allEntries.push(...entries.filter((entry: any) => entry && typeof entry === 'object'))
         }
       }
 
-      // Sort by date (newest first)
-      allEntries.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-
-      setEntries(allEntries)
-      console.log(`⚡ Loaded ${allEntries.length} energy entries from last 30 days`)
+      parsedRecords.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      setHistoryRecords(parsedRecords)
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Failed to load energy entries'
-      setError(errorMsg)
-      console.error('Failed to load energy entries:', err)
+      console.error('Failed to load history:', err)
     }
   }
-  
-  // Load entries on mount
+
   useEffect(() => {
-    loadEntries()
-  }, [])
-  
-  // ============================================================================
-  // ENERGY LEVEL HELPERS
-  // ============================================================================
-  
-  const getBatteryIcon = (level: number) => {
-    if (level <= 1) return <BatteryLow className="h-5 w-5" />
-    return <Battery className="h-5 w-5" />
-  }
-  
-  const getBatteryColor = (level: number) => {
-    if (level <= 1) return "text-red-500"
-    if (level <= 2) return "text-orange-500"
-    if (level <= 3) return "text-yellow-500"
-    if (level <= 4) return "text-green-500"
-    return "text-green-600"
-  }
-  
-  const getEnergyLabel = (level: number) => {
-    if (goblinMode) {
-      // Goblin mode labels
-      switch (level) {
-        case 0: return "Potato Mode"
-        case 1: return "Barely Alive"
-        case 2: return "Low Power"
-        case 3: return "Functional Chaos"
-        case 4: return "Feeling Spicy"
-        case 5: return "Maximum Chaos"
-        default: return "Mysterious"
-      }
-    } else {
-      // Professional mode labels
-      switch (level) {
-        case 0: return "Exhausted"
-        case 1: return "Very Low"
-        case 2: return "Low"
-        case 3: return "Moderate"
-        case 4: return "Good"
-        case 5: return "Excellent"
-        default: return "Unknown"
-      }
+    loadDailyRecord()
+  }, [selectedDate])
+
+  useEffect(() => {
+    if (activeTab === 'history') {
+      loadHistory()
     }
-  }
-  
-  const getEnergyDescription = (level: number) => {
-    if (goblinMode) {
-      // Goblin mode descriptions
-      switch (level) {
-        case 0: return "Potato mode activated. Existence is questionable. Send help (and caffeine)."
-        case 1: return "Functioning human simulation failing. Basic tasks feel like climbing Everest in flip-flops."
-        case 2: return "Low-power mode engaged. Can handle essentials but don't ask for miracles."
-        case 3: return "Moderately functional chaos gremlin. Normal tasks are achievable with mild grumbling."
-        case 4: return "Feeling spicy! Productivity levels rising. The chaos is organized today."
-        case 5: return "MAXIMUM CHAOS ENERGY! Ready to conquer worlds and reorganize entire universes!"
-        default: return "Energy level: mysterious and unknowable"
-      }
-    } else {
-      // Professional mode descriptions
-      switch (level) {
-        case 0: return "Can barely keep eyes open. Need immediate rest."
-        case 1: return "Struggling to function. Basic tasks feel overwhelming."
-        case 2: return "Low energy but can manage essential activities."
-        case 3: return "Moderate energy. Can handle normal daily tasks."
-        case 4: return "Good energy levels. Feeling productive and alert."
-        case 5: return "Peak energy! Ready to conquer the world!"
-        default: return "Energy level unknown"
-      }
-    }
-  }
-  
+  }, [activeTab])
+
   // ============================================================================
-  // FORM HANDLERS
+  // SAVE HANDLERS
   // ============================================================================
-  
-  const handleSubmit = async () => {
+
+  const saveRecord = async (record: DailyEnergyRecord) => {
     try {
       setError(null)
-
-      const today = new Date().toISOString().split('T')[0]
-      const now = new Date().toISOString()
-
-      let updatedEntries: EnergyEntry[]
-
-      if (isEditing && editingEntry) {
-        // Update existing entry
-        const updatedEntry: EnergyEntry = {
-          ...editingEntry,
-          energyLevel,
-          notes: notes.trim() || undefined,
-          activities: activities.length > 0 ? activities : undefined,
-          tags: tags.length > 0 ? tags : undefined,
-          updatedAt: now,
-        }
-
-        // Update entries array
-        updatedEntries = entries.map(entry =>
-          entry.id === editingEntry.id ? updatedEntry : entry
-        )
-
-        // Reset editing state
-        setIsEditing(false)
-        setEditingEntry(null)
-
-        console.log('⚡ Energy entry updated successfully')
-      } else {
-        // Create new entry
-        const newEntry: EnergyEntry = {
-          id: `energy-${Date.now()}`,
-          date: today,
-          energyLevel,
-          notes: notes.trim() || undefined,
-          activities: activities.length > 0 ? activities : undefined,
-          tags: tags.length > 0 ? tags : undefined,
-          createdAt: now,
-          updatedAt: now,
-        }
-
-        // Add to entries array
-        updatedEntries = [newEntry, ...entries]
-
-        console.log('⚡ Energy entry created successfully')
-      }
-
-      // Save all entries to database using new pattern
-      await saveData(
-        today,
-        CATEGORIES.TRACKER,
-        'energy',
-        { entries: updatedEntries },
-        tags
-      )
-
-      // Update local state
-      setEntries(updatedEntries)
-
-      // Reset form
-      setEnergyLevel(3)
-      setNotes("")
-      setActivities([])
-      setTags([])
-
+      await saveData(record.date, CATEGORIES.TRACKER, 'energy', record, record.tags)
+      setDailyRecord(record)
+      setRefreshTrigger(prev => prev + 1) // Trigger analytics refresh
+      console.log('⚡ Energy record saved')
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Failed to save energy entry'
-      setError(errorMsg)
-      console.error('Failed to save energy entry:', err)
+      console.error('Failed to save energy record:', err)
+      setError(err instanceof Error ? err.message : 'Failed to save energy data')
     }
   }
 
-  const handleEdit = (entry: EnergyEntry) => {
-    setEditingEntry(entry)
-    setIsEditing(true)
-    setEnergyLevel(entry.energyLevel)
-    setNotes(entry.notes || "")
-    setActivities(entry.activities || [])
-    setTags(entry.tags || [])
-
-    // Scroll to form
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+  const setMorningSpoons = async (spoons: number) => {
+    const updated = {
+      ...dailyRecord,
+      morningSpoons: spoons,
+    }
+    await saveRecord(updated)
   }
 
-  const handleDelete = async (entry: EnergyEntry) => {
-    if (!confirm('Are you sure you want to delete this energy entry?')) {
-      return
+  const logActivity = async (activityId: string, activityName: string, cost: number, notes?: string) => {
+    const newActivity: ActivityLog = {
+      id: `activity-${Date.now()}`,
+      activityId,
+      activityName,
+      timestamp: new Date().toISOString(),
+      spoonCost: cost,
+      notes,
     }
 
-    try {
-      setError(null)
-
-      // Remove from entries array
-      const updatedEntries = entries.filter(e => e.id !== entry.id)
-
-      // Save updated entries to database
-      await saveData(
-        entry.date,
-        CATEGORIES.TRACKER,
-        'energy',
-        { entries: updatedEntries }
-      )
-
-      // Update local state
-      setEntries(updatedEntries)
-
-      console.log('⚡ Energy entry deleted successfully')
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Failed to delete energy entry'
-      setError(errorMsg)
-      console.error('Failed to delete energy entry:', err)
+    const isRest = cost < 0
+    const updated = {
+      ...dailyRecord,
+      activities: [...dailyRecord.activities, newActivity],
+      totalSpent: isRest ? dailyRecord.totalSpent : dailyRecord.totalSpent + cost,
+      totalRestored: isRest ? dailyRecord.totalRestored + Math.abs(cost) : dailyRecord.totalRestored,
     }
+
+    await saveRecord(updated)
+    setShowActivityDialog(false)
+    setActivityNotes("")
+    setCustomActivityName("")
+    setCustomActivityCost(2)
   }
 
-  const handleCancelEdit = () => {
-    setIsEditing(false)
-    setEditingEntry(null)
-    setEnergyLevel(3)
-    setNotes("")
-    setActivities([])
-    setTags([])
-  }
-  
-  const addActivity = () => {
-    const trimmed = newActivity.trim()
-    if (trimmed && !activities.includes(trimmed)) {
-      setActivities([...activities, trimmed])
-      setNewActivity("")
+  const deleteActivity = async (activityId: string) => {
+    const activity = dailyRecord.activities.find(a => a.id === activityId)
+    if (!activity) return
+
+    const isRest = activity.spoonCost < 0
+    const updated = {
+      ...dailyRecord,
+      activities: dailyRecord.activities.filter(a => a.id !== activityId),
+      totalSpent: isRest ? dailyRecord.totalSpent : dailyRecord.totalSpent - activity.spoonCost,
+      totalRestored: isRest ? dailyRecord.totalRestored - Math.abs(activity.spoonCost) : dailyRecord.totalRestored,
     }
+
+    await saveRecord(updated)
   }
-  
-  const removeActivity = (activity: string) => {
-    setActivities(activities.filter(a => a !== activity))
+
+  // ============================================================================
+  // UI HELPERS
+  // ============================================================================
+
+  const getBatteryIcon = (remaining: number, budget: number) => {
+    if (budget === 0) return <Battery className="h-6 w-6" />
+    const ratio = remaining / budget
+    if (ratio <= 0.25) return <BatteryLow className="h-6 w-6" />
+    if (ratio <= 0.5) return <BatteryMedium className="h-6 w-6" />
+    return <BatteryFull className="h-6 w-6" />
   }
-  
-  const increaseEnergy = () => {
-    if (energyLevel < 5) {
-      setEnergyLevel(energyLevel + 1)
-    }
+
+  const getRandomEncouragement = (type: keyof typeof PACING_ENCOURAGEMENTS) => {
+    const messages = PACING_ENCOURAGEMENTS[type]
+    return messages[Math.floor(Math.random() * messages.length)]
   }
-  
-  const decreaseEnergy = () => {
-    if (energyLevel > 0) {
-      setEnergyLevel(energyLevel - 1)
-    }
-  }
-  
+
   // ============================================================================
   // RENDER
   // ============================================================================
-  
+
   return (
     <AppCanvas currentPage="energy">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <header className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              asChild
-              className="flex items-center gap-2"
-            >
-              <a href="/physical-health">
-                <ArrowLeft className="h-4 w-4" />
-                Physical Health
-              </a>
-            </Button>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm">
-              <Settings className="h-4 w-4" />
-            </Button>
-          </div>
-        </header>
-
-        <div className="text-center mb-8">
+        <div className="text-center mb-6">
           <h1 className="text-3xl font-bold text-foreground mb-2 flex items-center justify-center gap-2">
             <Activity className="h-8 w-8 text-primary" />
-            Energy
+            {goblinMode ? 'Chaos Energy Pacing' : 'Energy & Pacing'}
           </h1>
           <p className="text-lg text-muted-foreground">
-            Track your energy levels using spoon theory concepts
+            {goblinMode
+              ? 'Track your chaos units and avoid the crash zone'
+              : 'Spoon theory pacing for chronic illness management'}
           </p>
         </div>
 
         {/* Date Selection */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              📅 Select Date
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="max-w-xs"
-            />
+        <Card className="mb-4">
+          <CardContent className="pt-4 pb-4">
+            <div className="flex items-center gap-4">
+              <Calendar className="h-5 w-5 text-muted-foreground" />
+              <Input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="max-w-xs"
+              />
+              {selectedDate === new Date().toISOString().split('T')[0] && (
+                <Badge variant="outline" className="bg-green-50">Today</Badge>
+              )}
+            </div>
           </CardContent>
         </Card>
 
         {error && (
-          <Card className="mb-6 border-destructive">
-            <CardContent className="pt-6">
+          <Card className="mb-4 border-destructive">
+            <CardContent className="pt-4">
               <p className="text-destructive">{error}</p>
             </CardContent>
           </Card>
         )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3" style={{ backgroundColor: 'var(--surface-1)', borderColor: 'var(--border-soft)' }}>
-            <TabsTrigger value="entry" style={{ color: 'var(--text-main)' }}>Energy Entry</TabsTrigger>
-            <TabsTrigger value="history" style={{ color: 'var(--text-main)' }}>Energy History</TabsTrigger>
-            <TabsTrigger value="analytics" style={{ color: 'var(--text-main)' }}>Analytics</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="entry">Pacing</TabsTrigger>
+            <TabsTrigger value="history">History</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="entry" className="space-y-6">
-            {/* Energy Entry Form */}
-            <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>
-                  {isEditing ? 'Edit Energy Entry' : "Today's Energy"}
-                </CardTitle>
-                <CardDescription>
-                  {isEditing
-                    ? `Editing entry from ${new Date(editingEntry!.date).toLocaleDateString()}`
-                    : 'Rate your current energy level and track what\'s affecting it'
-                  }
-                </CardDescription>
-              </div>
-              {isEditing && (
-                <Button variant="outline" onClick={handleCancelEdit}>
-                  Cancel Edit
-                </Button>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Energy Level Slider */}
-            <div className="space-y-4">
-              <Label className="text-lg font-semibold">⚡ Energy Level</Label>
-              
-              <div className="flex items-center justify-center space-y-4 flex-col">
-                <div className={`flex items-center gap-3 ${getBatteryColor(energyLevel)}`}>
-                  {getBatteryIcon(energyLevel)}
-                  <span className="text-2xl font-bold">{energyLevel}/5</span>
-                  <span className="text-lg">{getEnergyLabel(energyLevel)}</span>
-                </div>
-                
-                <p className="text-sm text-muted-foreground text-center max-w-md">
-                  {getEnergyDescription(energyLevel)}
-                </p>
-                
-                <div className="flex items-center gap-4">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={decreaseEnergy}
-                    disabled={energyLevel === 0}
-                  >
-                    <Minus className="h-4 w-4" />
-                  </Button>
-                  
-                  <div className="flex gap-1">
-                    {[0, 1, 2, 3, 4, 5].map((level) => (
-                      <button
-                        key={level}
-                        onClick={() => setEnergyLevel(level)}
-                        className={`w-8 h-8 rounded-full border-2 transition-colors ${
-                          energyLevel === level
-                            ? 'bg-primary border-primary text-primary-foreground'
-                            : 'border-muted hover:border-primary'
-                        }`}
+          {/* ================================================================ */}
+          {/* PACING TAB */}
+          {/* ================================================================ */}
+          <TabsContent value="entry" className="space-y-4">
+
+            {/* Morning Budget Section */}
+            {dailyRecord.morningSpoons === 0 ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5" />
+                    {goblinMode ? "How Much Chaos Today?" : "Set Your Daily Budget"}
+                  </CardTitle>
+                  <CardDescription>
+                    {goblinMode
+                      ? "How many chaos units does your flesh suit have to work with?"
+                      : "How many spoons are you starting with today?"}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-5 gap-2">
+                    {SPOON_PRESETS.map((preset) => (
+                      <Button
+                        key={preset.value}
+                        variant="outline"
+                        onClick={() => setMorningSpoons(preset.value)}
+                        className="flex flex-col h-auto py-3 hover:bg-primary/10"
                       >
-                        {level}
-                      </button>
+                        <span className="text-2xl mb-1">{preset.emoji}</span>
+                        <span className="font-bold">{preset.value}</span>
+                        <span className="text-xs text-muted-foreground">{preset.label}</span>
+                      </Button>
                     ))}
                   </div>
-                  
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={increaseEnergy}
-                    disabled={energyLevel === 5}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </div>
 
-            <Separator />
-
-            {/* Activities */}
-            <div className="space-y-4">
-              <Label>Activities (what's affecting your energy?)</Label>
-
-              {/* Quick-add common activities */}
-              <div className="flex flex-wrap gap-2">
-                {["Work", "Exercise", "Sleep", "Eating", "Socializing", "Commuting", "Household chores", "Screen time", "Reading", "Cooking", "Medical appointments", "Relaxing"].map((commonActivity) => (
-                  <Button
-                    key={commonActivity}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      if (!activities.includes(commonActivity)) {
-                        setActivities([...activities, commonActivity])
-                      }
-                    }}
-                    disabled={activities.includes(commonActivity)}
-                    className="text-xs"
-                  >
-                    {commonActivity}
-                  </Button>
-                ))}
-              </div>
-
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Add custom activity..."
-                  value={newActivity}
-                  onChange={(e) => setNewActivity(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && addActivity()}
-                />
-                <Button onClick={addActivity} disabled={!newActivity.trim()}>
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-
-              {activities.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {activities.map((activity, index) => (
-                    <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                      {activity}
-                      <button
-                        onClick={() => removeActivity(activity)}
-                        className="ml-1 hover:text-destructive"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </button>
-                    </Badge>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <Separator />
-
-            {/* Notes */}
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
-              <Textarea
-                id="notes"
-                placeholder="How are you feeling? What's helping or draining your energy?"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                rows={3}
-              />
-            </div>
-
-            <Button onClick={handleSubmit} className="w-full">
-              {isEditing ? 'Update Energy Entry' : 'Save Energy Entry'}
-            </Button>
-          </CardContent>
-        </Card>
-          </TabsContent>
-
-          <TabsContent value="history" className="space-y-4">
-            {/* Energy History */}
-            <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
-                  Energy History
-                </CardTitle>
-                <CardDescription>
-                  Your energy tracking history and patterns
-                </CardDescription>
-              </div>
-              {entries.length > 0 && (
-                <div className="flex items-center gap-2">
-                  <Search className="h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search entries..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-48"
-                  />
-                </div>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Activity className="h-5 w-5 animate-pulse" />
-                  <span>Loading energy history...</span>
-                </div>
-              </div>
-            ) : entries.length === 0 ? (
-              <div className="text-center py-8">
-                <Activity className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No energy entries yet</h3>
-                <p className="text-muted-foreground mb-4">
-                  Start tracking your energy levels to see patterns and trends over time.
-                </p>
-              </div>
+                  <p className="text-sm text-muted-foreground text-center">
+                    Not sure? Start with 6 and adjust as you learn your patterns.
+                  </p>
+                </CardContent>
+              </Card>
             ) : (
-              <div className="space-y-4">
-                {entries
-                  .filter(entry => {
-                    if (!searchQuery) return true
-                    const query = searchQuery.toLowerCase()
-                    return (
-                      entry.notes?.toLowerCase().includes(query) ||
-                      entry.activities?.some(activity => activity.toLowerCase().includes(query)) ||
-                      entry.tags?.some(tag => tag.toLowerCase().includes(query))
-                    )
-                  })
-                  .map((entry) => (
-                    <Card key={entry.id} className="border-l-4" style={{
-                      borderLeftColor: entry.energyLevel <= 1 ? '#ef4444' :
-                                     entry.energyLevel <= 2 ? '#f97316' :
-                                     entry.energyLevel <= 3 ? '#eab308' :
-                                     entry.energyLevel <= 4 ? '#22c55e' : '#16a34a'
-                    }}>
-                      <CardContent className="pt-4">
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex items-center gap-3">
-                            <div className={`flex items-center gap-2 ${getBatteryColor(entry.energyLevel)}`}>
-                              {getBatteryIcon(entry.energyLevel)}
-                              <span className="font-semibold text-lg">{entry.energyLevel}/5</span>
-                              <Badge variant="outline" className="text-xs">
-                                {getEnergyLabel(entry.energyLevel)}
-                              </Badge>
-                            </div>
-                          </div>
+              <>
+                {/* Spoon Status Display */}
+                <Card className={`border-2 ${PEM_RISK_INFO[pemRiskLevel].color}`}>
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        {getBatteryIcon(spoonsRemaining, dailyRecord.morningSpoons)}
+                        <div>
                           <div className="flex items-center gap-2">
-                            <div className="text-right">
-                              <p className="text-sm font-medium">
-                                {new Date(entry.date).toLocaleDateString('en-US', {
-                                  weekday: 'long',
-                                  year: 'numeric',
-                                  month: 'long',
-                                  day: 'numeric'
-                                })}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                {new Date(entry.createdAt).toLocaleTimeString('en-US', {
-                                  hour: 'numeric',
-                                  minute: '2-digit'
-                                })}
-                              </p>
-                            </div>
-                            <div className="flex items-center gap-1">
+                            <span className="text-3xl font-bold">{spoonsRemaining}</span>
+                            <span className="text-muted-foreground">/ {dailyRecord.morningSpoons}</span>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            {labels.remaining}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="text-right">
+                        <Badge className={PEM_RISK_INFO[pemRiskLevel].color}>
+                          {PEM_RISK_INFO[pemRiskLevel].emoji} {PEM_RISK_INFO[pemRiskLevel].label}
+                        </Badge>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Spent: {dailyRecord.totalSpent} | Restored: {dailyRecord.totalRestored}
+                        </p>
+                      </div>
+                    </div>
+
+                    <Progress value={progressPercent} className="h-3 mb-2" />
+
+                    <p className="text-sm text-center">
+                      {PEM_RISK_INFO[pemRiskLevel].message}
+                    </p>
+
+                    <div className="flex justify-center mt-4">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setMorningSpoons(0)}
+                      >
+                        Change Budget
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Log Activity Button */}
+                <div className="flex gap-2">
+                  <Button
+                    className="flex-1"
+                    onClick={() => setShowActivityDialog(true)}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Log Activity
+                  </Button>
+                </div>
+
+                {/* Today's Activities */}
+                {dailyRecord.activities.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <Clock className="h-5 w-5" />
+                        Today's Activities
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        {dailyRecord.activities.map((activity) => {
+                          const isRest = activity.spoonCost < 0
+                          return (
+                            <div
+                              key={activity.id}
+                              className={`flex items-center justify-between p-3 rounded-lg border ${
+                                isRest ? 'bg-teal-50 border-teal-200' : 'bg-background'
+                              }`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <Badge variant={isRest ? "default" : "secondary"}>
+                                  {isRest ? '+' : '-'}{Math.abs(activity.spoonCost)}
+                                </Badge>
+                                <div>
+                                  <p className="font-medium">{activity.activityName}</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {new Date(activity.timestamp).toLocaleTimeString('en-US', {
+                                      hour: 'numeric',
+                                      minute: '2-digit'
+                                    })}
+                                  </p>
+                                </div>
+                              </div>
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => handleEdit(entry)}
-                                className="h-8 w-8 p-0"
-                                title="Edit entry"
-                              >
-                                <Edit2 className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDelete(entry)}
-                                className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                                title="Delete entry"
+                                onClick={() => deleteActivity(activity.id)}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>
-                          </div>
-                        </div>
-
-                        {entry.activities && entry.activities.length > 0 && (
-                          <div className="mb-3">
-                            <p className="text-sm font-medium text-muted-foreground mb-2">Activities:</p>
-                            <div className="flex flex-wrap gap-1">
-                              {entry.activities.map((activity, index) => (
-                                <Badge key={index} variant="secondary" className="text-xs">
-                                  {activity}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {entry.notes && (
-                          <div className="mb-3">
-                            <p className="text-sm font-medium text-muted-foreground mb-1">Notes:</p>
-                            <p className="text-sm">{entry.notes}</p>
-                          </div>
-                        )}
-
-                        {entry.tags && entry.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-1">
-                            {entry.tags.map((tag, index) => (
-                              <Badge key={index} variant="outline" className="text-xs">
-                                #{tag}
-                              </Badge>
-                            ))}
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  ))}
-
-                {entries.filter(entry => {
-                  if (!searchQuery) return true
-                  const query = searchQuery.toLowerCase()
-                  return (
-                    entry.notes?.toLowerCase().includes(query) ||
-                    entry.activities?.some(activity => activity.toLowerCase().includes(query)) ||
-                    entry.tags?.some(tag => tag.toLowerCase().includes(query))
-                  )
-                }).length === 0 && searchQuery && (
-                  <div className="text-center py-8">
-                    <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No matching entries</h3>
-                    <p className="text-muted-foreground">
-                      Try adjusting your search terms or clear the search to see all entries.
-                    </p>
-                  </div>
+                          )
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
                 )}
-              </div>
+
+                {/* Quick Rest Buttons */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Heart className="h-5 w-5 text-teal-500" />
+                      Quick Rest
+                    </CardTitle>
+                    <CardDescription>
+                      Log rest to restore some spoons
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap gap-2">
+                      {ACTIVITIES_BY_CATEGORY.rest.map((activity) => (
+                        <Button
+                          key={activity.id}
+                          variant="outline"
+                          size="sm"
+                          onClick={() => logActivity(activity.id, activity.name, activity.defaultCost)}
+                          className="bg-teal-50 hover:bg-teal-100 border-teal-200"
+                        >
+                          {activity.emoji} {activity.name} (+{Math.abs(activity.defaultCost)})
+                        </Button>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </>
             )}
-          </CardContent>
-        </Card>
           </TabsContent>
 
-          {/* Analytics Tab */}
-          <TabsContent value="analytics">
+          {/* ================================================================ */}
+          {/* HISTORY TAB */}
+          {/* ================================================================ */}
+          <TabsContent value="history" className="space-y-4">
             <Card>
-              <CardContent className="text-center py-12">
-                <Activity className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Flask Analytics Coming Soon</h3>
-                <p className="text-muted-foreground">
-                  Advanced energy pattern analysis with mathematical insights will be available here.
-                </p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  🧮 Mathematical engines for energy correlation analysis in development
-                </p>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Energy History</CardTitle>
+                    <CardDescription>Your pacing patterns over time</CardDescription>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Search className="h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-48"
+                    />
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <div className="text-center py-8">
+                    <Activity className="h-8 w-8 mx-auto animate-pulse text-muted-foreground" />
+                    <p className="text-muted-foreground mt-2">Loading history...</p>
+                  </div>
+                ) : historyRecords.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">No history yet</h3>
+                    <p className="text-muted-foreground">
+                      Start tracking your daily energy to see patterns over time.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {historyRecords.map((record) => {
+                      const risk = getPEMRiskLevel(record.totalSpent, record.morningSpoons)
+                      const remaining = record.morningSpoons - record.totalSpent + record.totalRestored
+
+                      return (
+                        <Card key={record.date} className={`border-l-4 ${
+                          risk === 'danger' ? 'border-l-red-500' :
+                          risk === 'warning' ? 'border-l-orange-500' :
+                          risk === 'caution' ? 'border-l-yellow-500' : 'border-l-green-500'
+                        }`}>
+                          <CardContent className="pt-4">
+                            <div className="flex items-start justify-between mb-3">
+                              <div>
+                                <p className="font-semibold">
+                                  {new Date(record.date).toLocaleDateString('en-US', {
+                                    weekday: 'long',
+                                    month: 'short',
+                                    day: 'numeric'
+                                  })}
+                                </p>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <Badge variant="outline">
+                                    Budget: {record.morningSpoons}
+                                  </Badge>
+                                  <Badge variant="outline">
+                                    Spent: {record.totalSpent}
+                                  </Badge>
+                                  {record.totalRestored > 0 && (
+                                    <Badge variant="outline" className="bg-teal-50">
+                                      Restored: +{record.totalRestored}
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                              <Badge className={PEM_RISK_INFO[risk].color}>
+                                {PEM_RISK_INFO[risk].emoji} {remaining} left
+                              </Badge>
+                            </div>
+
+                            {record.activities.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-2">
+                                {record.activities.slice(0, 5).map((activity, i) => (
+                                  <Badge key={i} variant="secondary" className="text-xs">
+                                    {activity.activityName}
+                                  </Badge>
+                                ))}
+                                {record.activities.length > 5 && (
+                                  <Badge variant="secondary" className="text-xs">
+                                    +{record.activities.length - 5} more
+                                  </Badge>
+                                )}
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      )
+                    })}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* ================================================================ */}
+          {/* ANALYTICS TAB */}
+          {/* ================================================================ */}
+          <TabsContent value="analytics">
+            <EnergyPacingAnalytics refreshTrigger={refreshTrigger} />
+          </TabsContent>
         </Tabs>
+
+        {/* Back Button */}
+        <div className="text-center mt-6">
+          <Button variant="outline" asChild>
+            <a href="/choice">
+              Back to Choice
+            </a>
+          </Button>
+        </div>
+
+        {/* Activity Selection Dialog */}
+        <Dialog open={showActivityDialog} onOpenChange={setShowActivityDialog}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Log Activity</DialogTitle>
+              <DialogDescription>
+                Select an activity or create a custom one. {labels.spoons} costs are estimates - adjust based on your experience.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              {/* Category Accordions */}
+              {Object.entries(ACTIVITIES_BY_CATEGORY).filter(([cat]) => cat !== 'rest').map(([category, activities]) => {
+                const info = CATEGORY_INFO[category]
+                const isExpanded = expandedCategory === category
+
+                return (
+                  <div key={category} className="border rounded-lg">
+                    <button
+                      onClick={() => setExpandedCategory(isExpanded ? null : category)}
+                      className={`w-full flex items-center justify-between p-3 hover:bg-muted/50 ${info.color} rounded-t-lg ${!isExpanded ? 'rounded-b-lg' : ''}`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span>{info.emoji}</span>
+                        <span className="font-medium">{info.label}</span>
+                        <Badge variant="outline" className="ml-2">{activities.length}</Badge>
+                      </div>
+                      {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    </button>
+
+                    {isExpanded && (
+                      <div className="p-3 grid grid-cols-2 gap-2">
+                        {activities.map((activity) => (
+                          <Button
+                            key={activity.id}
+                            variant="outline"
+                            className="justify-start h-auto py-2"
+                            onClick={() => logActivity(activity.id, activity.name, activity.defaultCost, activityNotes)}
+                          >
+                            <span className="mr-2">{activity.emoji}</span>
+                            <span className="flex-1 text-left">{activity.name}</span>
+                            <Badge variant="secondary" className="ml-2">
+                              {activity.defaultCost > 0 ? `-${activity.defaultCost}` : `+${Math.abs(activity.defaultCost)}`}
+                            </Badge>
+                          </Button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+
+              <Separator />
+
+              {/* Custom Activity */}
+              <div className="space-y-3">
+                <Label>Custom Activity</Label>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Activity name..."
+                    value={customActivityName}
+                    onChange={(e) => setCustomActivityName(e.target.value)}
+                    className="flex-1"
+                  />
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCustomActivityCost(Math.max(1, customActivityCost - 1))}
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                    <span className="w-8 text-center font-bold">{customActivityCost}</span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCustomActivityCost(Math.min(5, customActivityCost + 1))}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <Button
+                    onClick={() => logActivity('custom', customActivityName, customActivityCost, activityNotes)}
+                    disabled={!customActivityName.trim()}
+                  >
+                    Add
+                  </Button>
+                </div>
+              </div>
+
+              {/* Notes */}
+              <div className="space-y-2">
+                <Label>Notes (optional)</Label>
+                <Textarea
+                  placeholder="Any notes about this activity..."
+                  value={activityNotes}
+                  onChange={(e) => setActivityNotes(e.target.value)}
+                  rows={2}
+                />
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowActivityDialog(false)}>
+                Cancel
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </AppCanvas>
   )

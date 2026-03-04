@@ -32,6 +32,7 @@ import {
   SLEEP_AIDS
 } from './sleep-constants'
 import { format } from 'date-fns'
+import { filterForAnalytics } from '@/lib/utils/analytics-filters'
 
 interface SleepAnalyticsProps {
   refreshTrigger: number
@@ -84,7 +85,11 @@ export function SleepAnalytics({ refreshTrigger }: SleepAnalyticsProps) {
           return dateB - dateA
         })
 
-        setEntries(allEntries)
+        // Filter out NOPE and I KNOW tagged entries
+        const filteredEntries = filterForAnalytics(allEntries)
+        console.log('🌙 Sleep analytics - after tag filtering:', filteredEntries.length, '(excluded:', allEntries.length - filteredEntries.length, ')')
+
+        setEntries(filteredEntries)
       } catch (error) {
         console.error('Error loading sleep entries:', error)
         setEntries([])

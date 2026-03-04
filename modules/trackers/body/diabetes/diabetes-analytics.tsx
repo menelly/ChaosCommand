@@ -34,6 +34,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Calendar, TrendingUp, AlertTriangle, Clock, Target, Download, Activity, Loader2 } from 'lucide-react'
 import { DiabetesEntry, DiabetesAnalyticsProps } from './diabetes-types'
 import { BG_RANGES, KETONE_RANGES, getBGRangeInfo, getKetoneRangeInfo } from './diabetes-constants'
+import { filterForAnalytics } from '@/lib/utils/analytics-filters'
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8']
 
@@ -43,8 +44,11 @@ export function DiabetesAnalytics({ entries, currentDate }: DiabetesAnalyticsPro
   const [error, setError] = useState<string | null>(null)
   const [timeRange, setTimeRange] = useState('30')
 
+  // Filter out NOPE and I KNOW tagged entries for analytics
+  const filteredEntries = filterForAnalytics(entries)
+
   const loadAnalyticsData = async () => {
-    if (entries.length === 0) {
+    if (filteredEntries.length === 0) {
       setAnalyticsData(null)
       return
     }
@@ -53,13 +57,15 @@ export function DiabetesAnalytics({ entries, currentDate }: DiabetesAnalyticsPro
     setError(null)
 
     try {
-      const response = await fetch('http://localhost:5000/api/analytics/diabetes', {
+      console.log('🩸 Diabetes analytics - after tag filtering:', filteredEntries.length, '(excluded:', entries.length - filteredEntries.length, ')')
+      const { backendFetch, FLASK_URL } = await import('@/lib/utils/tauri-fetch');
+      const response = await backendFetch(`${FLASK_URL}/api/analytics/diabetes`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          entries: entries,
+          entries: filteredEntries,
           dateRange: parseInt(timeRange)
         })
       })
@@ -80,7 +86,7 @@ export function DiabetesAnalytics({ entries, currentDate }: DiabetesAnalyticsPro
 
   useEffect(() => {
     loadAnalyticsData()
-  }, [entries, timeRange])
+  }, [filteredEntries.length, timeRange])
 
   const exportAnalyticsData = () => {
     if (!analyticsData) return

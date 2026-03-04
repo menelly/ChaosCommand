@@ -81,7 +81,8 @@ export default function HeadPainAnalyticsDesktop({ className }: AnalyticsProps) 
       }
 
       // Send to Flask for analytics processing
-      const response = await fetch('http://localhost:5000/api/analytics/head-pain', {
+      const { backendFetch, FLASK_URL } = await import('@/lib/utils/tauri-fetch');
+      const response = await backendFetch(`${FLASK_URL}/api/analytics/head-pain`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

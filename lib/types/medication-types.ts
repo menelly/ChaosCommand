@@ -50,7 +50,8 @@ export interface Medication {
   
   // Timeline info (all optional)
   dateStarted?: string;                 // "2025-06-17" - YYYY-MM-DD format
-  refillDate?: string;                  // "2025-07-15" - YYYY-MM-DD format
+  lastFillDate?: string;                // "2025-06-17" - When prescription was last filled
+  refillDate?: string;                  // "2025-07-15" - YYYY-MM-DD format (can be auto-calculated)
   
   // Medical context (all optional)
   conditionTreating?: string;           // "Pain", "Anxiety", "Diabetes"
@@ -98,6 +99,7 @@ export interface MedicationFormData {
   pharmacy: string;
   pharmacyPhone: string;
   dateStarted: string;
+  lastFillDate: string;
   refillDate: string;
   conditionTreating: string;
   sideEffectsOnStarting: string;
@@ -251,6 +253,7 @@ export const DEFAULT_MEDICATION_FORM: MedicationFormData = {
   pharmacy: '',
   pharmacyPhone: '',
   dateStarted: '',
+  lastFillDate: '',
   refillDate: '',
   conditionTreating: '',
   sideEffectsOnStarting: '',

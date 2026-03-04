@@ -98,6 +98,7 @@ export default function MedicalTimeline({ events, onEditEvent, onViewProvider }:
       case 'treatment': return <Stethoscope className="h-4 w-4" />;
       case 'test': return <FileText className="h-4 w-4" />;
       case 'medication': return <Pill className="h-4 w-4" />;
+      case 'dismissed_findings': return <FileText className="h-4 w-4" />;
       default: return <Calendar className="h-4 w-4" />;
     }
   };
@@ -111,6 +112,7 @@ export default function MedicalTimeline({ events, onEditEvent, onViewProvider }:
       case 'treatment': return 'bg-blue-100 text-blue-700 border-blue-200';
       case 'test': return 'bg-green-100 text-green-700 border-green-200';
       case 'medication': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+      case 'dismissed_findings': return 'bg-slate-100 text-slate-700 border-slate-200';
       default: return 'bg-gray-100 text-gray-700 border-gray-200';
     }
   };
@@ -122,6 +124,7 @@ export default function MedicalTimeline({ events, onEditEvent, onViewProvider }:
       case 'resolved': return 'bg-green-100 text-green-800';
       case 'ongoing': return 'bg-blue-100 text-blue-800';
       case 'scheduled': return 'bg-yellow-100 text-yellow-800';
+      case 'needs_review': return 'bg-orange-100 text-orange-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -131,9 +134,10 @@ export default function MedicalTimeline({ events, onEditEvent, onViewProvider }:
       <Card>
         <CardContent className="text-center py-12">
           <Calendar className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-xl font-medium mb-2">No Medical Events</h3>
-          <p className="text-muted-foreground">
-            Add medical events to see your timeline visualization here.
+          <h3 className="text-xl font-medium mb-2">Your Medical Story Starts Here</h3>
+          <p className="text-muted-foreground max-w-md mx-auto">
+            Track diagnoses, surgeries, treatments, and yes - even the times doctors dismissed
+            your concerns. Your medical history is valid, and documenting it matters.
           </p>
         </CardContent>
       </Card>
@@ -186,16 +190,34 @@ export default function MedicalTimeline({ events, onEditEvent, onViewProvider }:
                         </div>
 
                         {/* Event Card */}
-                        <Card className="flex-1 hover:shadow-md transition-shadow">
+                        <Card className={`flex-1 hover:shadow-md transition-shadow ${
+                          event.type === 'dismissed_findings' ? 'border-l-4 border-l-slate-400 bg-slate-50/50' : ''
+                        }`}>
                           <CardContent className="p-4">
+                            {/* Dismissed findings special header */}
+                            {event.type === 'dismissed_findings' && (
+                              <div className="text-xs text-slate-500 mb-2 font-medium uppercase tracking-wide">
+                                Dismissed Finding - Track for Later Review
+                              </div>
+                            )}
                             <div className="flex items-start justify-between mb-2">
-                              <div className="flex items-center gap-2">
-                                <h4 className="font-semibold">{event.title}</h4>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h4 className={`font-semibold ${
+                                  event.type === 'dismissed_findings' ? 'text-slate-600' : ''
+                                }`}>{event.title}</h4>
                                 <Badge className={getStatusColor(event.status)} variant="secondary">
-                                  {event.status}
+                                  {event.status.replace('_', ' ')}
                                 </Badge>
                                 {event.severity && event.type === 'diagnosis' && (
-                                  <Badge variant="outline" className="text-xs">
+                                  <Badge
+                                    variant="outline"
+                                    className={`text-xs ${
+                                      event.severity === 'critical' ? 'border-red-500 text-red-700 bg-red-50' :
+                                      event.severity === 'severe' ? 'border-orange-500 text-orange-700 bg-orange-50' :
+                                      event.severity === 'moderate' ? 'border-yellow-500 text-yellow-700 bg-yellow-50' :
+                                      'border-green-500 text-green-700 bg-green-50'
+                                    }`}
+                                  >
                                     {event.severity}
                                   </Badge>
                                 )}

@@ -28,6 +28,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend } from 'recharts'
 import { Calendar, TrendingUp, AlertTriangle, Clock, Target, Download, Activity } from 'lucide-react'
 import { useDailyData, CATEGORIES } from '@/lib/database'
+import { filterForAnalytics } from '@/lib/utils/analytics-filters'
 import { format, subDays, parseISO, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns'
 
 interface BathroomEntry {
@@ -120,7 +121,10 @@ export default function BathroomAnalyticsDesktop({ className }: AnalyticsProps) 
         }
       }
 
-      setEntries(allEntries)
+      // Filter out NOPE and I KNOW tagged entries for analytics
+      const filteredEntries = filterForAnalytics(allEntries)
+      console.log('🚽 After tag filtering:', filteredEntries.length, '(excluded:', allEntries.length - filteredEntries.length, ')')
+      setEntries(filteredEntries)
     } catch (error) {
       console.error('Failed to load analytics data:', error)
     } finally {

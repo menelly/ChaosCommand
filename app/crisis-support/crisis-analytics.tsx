@@ -38,6 +38,7 @@ import {
 import { CrisisEntry } from './crisis-types'
 import { useDailyData, CATEGORIES } from '@/lib/database'
 import { format, parseISO, subDays, isAfter } from 'date-fns'
+import { filterForAnalytics } from '@/lib/utils/analytics-filters'
 
 interface CrisisAnalyticsProps {
   refreshTrigger: number
@@ -70,11 +71,15 @@ export function CrisisAnalytics({ refreshTrigger }: CrisisAnalyticsProps) {
           })
           .filter((entry): entry is CrisisEntry => entry !== null)
 
-        setEntries(crisisEntries)
+        // Filter out NOPE and I KNOW tagged entries
+        const filteredEntries = filterForAnalytics(crisisEntries)
+        console.log('🆘 Crisis analytics - after tag filtering:', filteredEntries.length, '(excluded:', crisisEntries.length - filteredEntries.length, ')')
+
+        setEntries(filteredEntries)
 
         // Generate analytics
-        if (crisisEntries.length > 0) {
-          const analytics = generateAnalytics(crisisEntries)
+        if (filteredEntries.length > 0) {
+          const analytics = generateAnalytics(filteredEntries)
           setAnalytics(analytics)
         }
       } catch (error) {

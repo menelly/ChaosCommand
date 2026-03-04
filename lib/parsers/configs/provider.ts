@@ -27,11 +27,20 @@
 
 import { ParserConfig, ParserPattern } from '../types';
 
+// Common medical credentials for matching
+const CREDENTIALS = 'MD|DO|NP|PA|PA-C|FNP|FNP-C|FNP-BC|RN|BSN|MSN|DNP|DDS|DMD|OD|PharmD|PhD|PsyD|LCSW|LPC|LMFT|APRN|CNP|CRNP|DPT|PT|OT|OTR|DC|DPM|AuD|CCC-SLP';
+
 // Helper functions for transformations
 const cleanName = (name: string): string => {
   return name
-    .replace(/,?\s*(MD|DO|NP|PA|FNP-C|RN|DDS|DMD|OD|PharmD|PhD|APRN|CNP|CRNP)\s*$/i, '')
-    .replace(/Dr\.?\s*/i, '')
+    // Remove credentials at end
+    .replace(new RegExp(`,?\\s*(${CREDENTIALS})(?:\\s*,\\s*(${CREDENTIALS}))*\\s*$`, 'gi'), '')
+    // Remove Dr. prefix
+    .replace(/^Dr\.?\s*/i, '')
+    // Remove Jr/Sr/III etc
+    .replace(/,?\s*(Jr\.?|Sr\.?|III|IV|II)\s*$/i, '')
+    // Clean up any double spaces
+    .replace(/\s+/g, ' ')
     .trim();
 };
 
@@ -41,7 +50,18 @@ const cleanPhone = (phone: string): string => {
   if (digits.length === 10) {
     return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
   }
+  if (digits.length === 11 && digits.startsWith('1')) {
+    return `(${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7)}`;
+  }
   return phone;
+};
+
+const cleanWebsite = (url: string): string => {
+  // Ensure URL has protocol
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    return 'https://' + url;
+  }
+  return url;
 };
 
 const cleanAddress = (address: string): string => {
@@ -53,36 +73,90 @@ const cleanAddress = (address: string): string => {
 
 // Provider parsing patterns
 const providerPatterns: ParserPattern[] = [
-  // Names - look for credentials after names
+  // ============================================================================
+  // NAME PATTERNS - Multiple formats people use
+  // ============================================================================
+
+  // Names - "LastName, FirstName MiddleName, MD" format (common in directories)
+  {
+    name: 'name_lastname_first_with_credentials',
+    regex: new RegExp(`([A-Z][a-z'-]+),\\s+([A-Z][a-z'-]+(?:\\s+[A-Z][a-z'-]+)?),?\\s*(?:${CREDENTIALS})`, 'i'),
+    field: 'name',
+    confidence: 0.85,
+    transform: (match: string) => {
+      // Convert "Smith, John Robert" to "John Robert Smith"
+      const parts = match.split(',').map(s => s.trim());
+      if (parts.length >= 2) {
+        const lastName = parts[0];
+        const firstName = cleanName(parts.slice(1).join(' '));
+        return `${firstName} ${lastName}`;
+      }
+      return cleanName(match);
+    },
+    priority: 12
+  },
+
+  // Names - "FirstName LastName, MD, PhD" with multiple credentials
+  {
+    name: 'name_with_multiple_credentials',
+    regex: new RegExp(`([A-Z][a-z'-]+(?:\\s+[A-Z][a-z'-]+)+),?\\s*(?:${CREDENTIALS})(?:\\s*,\\s*(?:${CREDENTIALS}))*`, 'i'),
+    field: 'name',
+    confidence: 0.8,
+    transform: cleanName,
+    priority: 11
+  },
+
+  // Names - simple "FirstName LastName, MD"
   {
     name: 'name_with_credentials',
-    regex: /([A-Z][a-z]+ (?:[A-Z][a-z]+ )*[A-Z][a-z]+),?\s*(?:MD|DO|NP|PA|FNP-C|RN|DDS|DMD|OD|PharmD|PhD|APRN|CNP|CRNP)/i,
+    regex: new RegExp(`([A-Z][a-z'-]+\\s+(?:[A-Z][a-z'-]+\\s+)*[A-Z][a-z'-]+),?\\s*(?:${CREDENTIALS})`, 'i'),
     field: 'name',
     confidence: 0.7,
     transform: cleanName,
     priority: 10
   },
-  
-  // Names - Dr. prefix
+
+  // Names - Dr. prefix (Dr. Mary O'Brien-Smith)
   {
     name: 'name_with_dr_prefix',
-    regex: /Dr\.?\s+([A-Z][a-z]+ (?:[A-Z][a-z]+ )*[A-Z][a-z]+)/i,
+    regex: /Dr\.?\s+([A-Z][a-z'-]+(?:\s+[A-Z][a-z'-]+)+)/i,
     field: 'name',
     confidence: 0.65,
     transform: cleanName,
     priority: 9
   },
 
-  // Phone numbers
+  // ============================================================================
+  // PHONE PATTERNS - Various formats and extensions
+  // ============================================================================
+
+  // Phone with extension
   {
-    name: 'phone_standard',
-    regex: /(?:Call|Phone|Tel|Contact).*?(\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4})/i,
+    name: 'phone_with_extension',
+    regex: /(?:Call|Phone|Tel|Contact|Office)?[:\s]*(\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4})\s*(?:ext\.?|x|extension)\s*([0-9]+)/i,
+    field: 'phone',
+    confidence: 0.95,
+    transform: (match: string) => {
+      const parts = match.match(/(\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4})\s*(?:ext\.?|x|extension)\s*([0-9]+)/i);
+      if (parts) {
+        return `${cleanPhone(parts[1])} ext. ${parts[2]}`;
+      }
+      return cleanPhone(match);
+    },
+    priority: 9
+  },
+
+  // Phone with label (Office:, Main:, etc)
+  {
+    name: 'phone_labeled',
+    regex: /(?:Call|Phone|Tel|Contact|Office|Main|Direct)[:\s]+(\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4})/i,
     field: 'phone',
     confidence: 0.95,
     transform: cleanPhone,
     priority: 8
   },
-  
+
+  // Phone standalone
   {
     name: 'phone_standalone',
     regex: /(\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4})/,
@@ -92,10 +166,45 @@ const providerPatterns: ParserPattern[] = [
     priority: 7
   },
 
-  // Specialties
+  // Fax number (separate field)
+  {
+    name: 'fax_number',
+    regex: /(?:Fax|F)[:\s]+(\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4})/i,
+    field: 'fax',
+    confidence: 0.9,
+    transform: cleanPhone,
+    priority: 6
+  },
+
+  // ============================================================================
+  // WEBSITE PATTERNS
+  // ============================================================================
+
+  {
+    name: 'website_full_url',
+    regex: /(https?:\/\/[^\s<>"{}|\\^`\[\]]+)/i,
+    field: 'website',
+    confidence: 0.95,
+    transform: cleanWebsite,
+    priority: 8
+  },
+
+  {
+    name: 'website_www',
+    regex: /(www\.[^\s<>"{}|\\^`\[\]]+\.[a-z]{2,}[^\s<>"{}|\\^`\[\]]*)/i,
+    field: 'website',
+    confidence: 0.9,
+    transform: cleanWebsite,
+    priority: 7
+  },
+
+  // ============================================================================
+  // SPECIALTY PATTERNS - Expanded list
+  // ============================================================================
+
   {
     name: 'specialty_common',
-    regex: /(Family Medicine|Internal Medicine|Pediatrics|Cardiology|Dermatology|Orthopedics|Neurology|Psychiatry|Radiology|Emergency Medicine|Anesthesiology|Pathology|Surgery|Oncology|Endocrinology|Gastroenterology|Pulmonology|Nephrology|Rheumatology|Urology|Ophthalmology|Otolaryngology|Obstetrics|Gynecology|Plastic Surgery)/i,
+    regex: /(Family Medicine|Family Practice|Internal Medicine|Primary Care|General Practice|Pediatrics|Pediatric Medicine|Cardiology|Cardiovascular|Dermatology|Orthopedics|Orthopedic Surgery|Neurology|Neurological|Psychiatry|Psychology|Radiology|Emergency Medicine|Anesthesiology|Pathology|General Surgery|Oncology|Medical Oncology|Surgical Oncology|Hematology|Hematology[\/-]Oncology|Endocrinology|Gastroenterology|GI|Pulmonology|Pulmonary Medicine|Nephrology|Rheumatology|Urology|Ophthalmology|Optometry|Otolaryngology|ENT|Ear Nose (?:and|&) Throat|Obstetrics|OB[\/-]GYN|Gynecology|Women's Health|Plastic Surgery|Cosmetic Surgery|Pain Management|Pain Medicine|Physical Therapy|Physical Medicine|PM&R|Rehabilitation|Occupational Therapy|Sports Medicine|Allergy|Allergy (?:and|&) Immunology|Immunology|Infectious Disease|Geriatrics|Geriatric Medicine|Palliative Care|Hospice|Podiatry|Foot (?:and|&) Ankle|Chiropractor|Chiropractic|Audiology|Speech Therapy|Speech-Language Pathology|Nutrition|Dietetics|Social Work|Counseling|Mental Health|Behavioral Health|Wound Care|Vascular|Vascular Surgery|Thoracic Surgery|Cardiac Surgery|Colorectal|Bariatric|Weight Management|Sleep Medicine|Urgent Care)/i,
     field: 'specialty',
     confidence: 0.9,
     priority: 6

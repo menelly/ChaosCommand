@@ -41,15 +41,17 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 # Security configuration
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max request size
+app.config['MAX_CONTENT_LENGTH'] = 75 * 1024 * 1024  # 75MB max (base64 adds ~33% overhead to 50MB file limit)
 app.config['JSON_SORT_KEYS'] = False  # Preserve JSON key order
 
 # Secure CORS configuration - only allow localhost during development
 CORS(app, origins=[
     "http://localhost:3000",
     "http://localhost:3001",  # Added for Next.js fallback port
+    "http://localhost:33445", # Tauri dev server port
     "http://127.0.0.1:3000",
     "http://127.0.0.1:3001",  # Added for Next.js fallback port
+    "http://127.0.0.1:33445", # Tauri dev server port
     "tauri://localhost",
     "https://tauri.localhost"
 ], supports_credentials=True)
@@ -316,6 +318,195 @@ def parse_document():
             'success': False,
             'error': str(e),
             'message': f'Failed to parse document: {str(e)}'
+        }), 500
+
+
+@app.route('/api/documents/parse-base64', methods=['POST'])
+def parse_document_base64():
+    """🔥 BASE64 DOCUMENT PARSER - For Tauri HTTP plugin compatibility!
+
+    Tauri's HTTP plugin doesn't handle FormData/File uploads through the Rust
+    IPC bridge, so the frontend sends files as base64-encoded JSON instead.
+    """
+    try:
+        data = request.get_json()
+
+        if not data or 'fileData' not in data:
+            return jsonify({'error': 'No file data provided'}), 400
+
+        filename = data.get('filename', 'document.pdf')
+        file_type = data.get('fileType', 'application/pdf')
+        file_data_b64 = data['fileData']
+
+        logger.info(f"🔥 PARSING DOCUMENT (base64): {filename} ({file_type})")
+
+        # Decode base64 to bytes
+        import base64
+        file_bytes = base64.b64decode(file_data_b64)
+        logger.info(f"📦 Decoded {len(file_bytes)} bytes from base64")
+
+        # Save to temp file for processing
+        temp_dir = tempfile.gettempdir()
+        temp_path = os.path.join(temp_dir, f"upload_{int(time.time())}_{filename}")
+        with open(temp_path, 'wb') as f:
+            f.write(file_bytes)
+
+        try:
+            # Extract text from document
+            extracted_text = document_parser.extract_text_from_file(temp_path, file_type)
+            logger.info(f"✅ Extracted {len(extracted_text)} characters")
+
+            # Parse medical events
+            parsed_events = document_parser.parse_medical_events(extracted_text, filename)
+            logger.info(f"🎉 Found {len(parsed_events)} medical events")
+
+            # Convert to JSON-serializable format (same as original endpoint)
+            events_data = [
+                {
+                    'id': event.id,
+                    'type': event.type,
+                    'title': event.title,
+                    'date': event.date,
+                    'endDate': event.end_date,
+                    'provider': event.provider,
+                    'location': event.location,
+                    'description': event.description,
+                    'status': event.status,
+                    'severity': event.severity,
+                    'tags': event.tags,
+                    'confidence': event.confidence,
+                    'sources': event.sources,
+                    'needsReview': event.needs_review,
+                    'suggestions': event.suggestions,
+                    'rawText': event.raw_text[:500] + '...' if len(event.raw_text) > 500 else event.raw_text,
+                    'incidentalFindings': [
+                        {
+                            'finding': finding.finding,
+                            'location': finding.location,
+                            'significance': finding.significance,
+                            'relatedSymptoms': finding.related_symptoms,
+                            'suggestedQuestions': finding.suggested_questions,
+                            'whyItMatters': finding.why_it_matters,
+                            'confidence': finding.confidence
+                        }
+                        for finding in event.incidental_findings
+                    ]
+                }
+                for event in parsed_events
+            ]
+
+            return jsonify({
+                'success': True,
+                'filename': filename,
+                'extractedText': extracted_text[:1000] + '...' if len(extracted_text) > 1000 else extracted_text,
+                'textLength': len(extracted_text),
+                'events': events_data,
+                'eventCount': len(events_data),
+                'message': f'🎉 Successfully parsed {len(events_data)} medical events from {filename}'
+            })
+
+        finally:
+            # Clean up temporary file
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+
+    except Exception as e:
+        logger.error(f"Document parsing error: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'message': f'Failed to parse document: {str(e)}'
+        }), 500
+
+
+@app.route('/api/documents/parse-text', methods=['POST'])
+def parse_text():
+    """🔥 REVOLUTIONARY TEXT PARSER ENDPOINT - For pasted notes from Google Keep etc!
+
+    This endpoint allows parsing plain text through our sophisticated medical parser
+    without needing to upload a file. Perfect for:
+    - Google Keep notes
+    - Email excerpts
+    - MyChart copy/paste
+    - Handwritten note transcriptions
+    """
+    try:
+        data = request.get_json()
+
+        if not data or 'text' not in data:
+            return jsonify({'error': 'No text provided'}), 400
+
+        text = data['text']
+        source_name = data.get('source', 'Pasted Notes')
+
+        if not text.strip():
+            return jsonify({'error': 'Empty text provided'}), 400
+
+        # Limit text size (1MB max for safety)
+        if len(text) > 1024 * 1024:
+            return jsonify({'error': 'Text too large (max 1MB)'}), 400
+
+        logger.info(f"📋 PARSING PASTED TEXT: {len(text)} characters from '{source_name}'")
+
+        # Use our revolutionary parser on the text directly
+        parsed_events = document_parser.parse_medical_events(text, source_name)
+        logger.info(f"🎉 Found {len(parsed_events)} medical events from pasted text")
+
+        # Convert to JSON-serializable format
+        events_data = [
+            {
+                'id': event.id,
+                'type': event.type,
+                'title': event.title,
+                'date': event.date,
+                'endDate': event.end_date,
+                'provider': event.provider,
+                'location': event.location,
+                'description': event.description,
+                'status': event.status,
+                'severity': event.severity,
+                'tags': event.tags + ['pasted-text'],  # Add source tag
+                'confidence': event.confidence,
+                'sources': event.sources + ['paste-api'],
+                'needsReview': event.needs_review,
+                'suggestions': event.suggestions,
+                'rawText': event.raw_text[:500] + '...' if len(event.raw_text) > 500 else event.raw_text,
+                'incidentalFindings': [
+                    {
+                        'finding': finding.finding,
+                        'location': finding.location,
+                        'significance': finding.significance,
+                        'relatedSymptoms': finding.related_symptoms,
+                        'suggestedQuestions': finding.suggested_questions,
+                        'whyItMatters': finding.why_it_matters,
+                        'confidence': finding.confidence
+                    }
+                    for finding in event.incidental_findings
+                ],
+                'provider_info': {
+                    'name': event.provider,
+                    'organization': event.location,
+                    'confidence': 50  # Lower confidence for text extraction
+                } if event.provider else None
+            }
+            for event in parsed_events
+        ]
+
+        return jsonify({
+            'success': True,
+            'source': source_name,
+            'textLength': len(text),
+            'events': events_data,
+            'eventCount': len(events_data),
+            'message': f'🎉 Successfully parsed {len(events_data)} medical events from your notes!'
+        })
+
+    except Exception as e:
+        logger.error(f"Text parsing error: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'message': f'Failed to parse text: {str(e)}'
         }), 500
 
 

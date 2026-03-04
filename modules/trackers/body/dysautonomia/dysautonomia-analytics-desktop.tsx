@@ -47,6 +47,7 @@ import {
 } from 'lucide-react'
 import { DysautonomiaEntry } from './dysautonomia-types'
 import { getEpisodeTypeInfo, getSeverityColor, getSeverityLabel } from './dysautonomia-constants'
+import { filterForAnalytics } from '@/lib/utils/analytics-filters'
 
 interface DysautonomiaAnalyticsProps {
   entries: DysautonomiaEntry[]
@@ -133,20 +134,25 @@ export function DysautonomiaAnalyticsDesktop({ entries }: DysautonomiaAnalyticsP
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Filter out NOPE and I KNOW tagged entries for analytics
+  const filteredEntries = filterForAnalytics(entries || [])
+
   const fetchAnalytics = async () => {
-    if (!entries || entries.length === 0) return
+    if (!filteredEntries || filteredEntries.length === 0) return
 
     setLoading(true)
     setError(null)
 
     try {
-      const response = await fetch('http://localhost:5000/api/analytics/dysautonomia', {
+      console.log('🩺 Dysautonomia analytics - after tag filtering:', filteredEntries.length, '(excluded:', (entries?.length || 0) - filteredEntries.length, ')')
+      const { backendFetch, FLASK_URL } = await import('@/lib/utils/tauri-fetch');
+      const response = await backendFetch(`${FLASK_URL}/api/analytics/dysautonomia`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          entries: entries,
+          entries: filteredEntries,
           dateRange: 30
         })
       })
@@ -166,12 +172,12 @@ export function DysautonomiaAnalyticsDesktop({ entries }: DysautonomiaAnalyticsP
   }
 
   useEffect(() => {
-    if (entries) {
+    if (filteredEntries.length > 0) {
       fetchAnalytics()
     }
-  }, [entries])
+  }, [filteredEntries.length])
 
-  if (!entries || entries.length === 0) {
+  if (!filteredEntries || filteredEntries.length === 0) {
     return (
       <Card>
         <CardContent className="p-6">

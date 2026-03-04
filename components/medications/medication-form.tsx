@@ -28,7 +28,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Plus, Trash2, Clock } from 'lucide-react';
+import { X, Plus, Trash2, Clock, Calculator } from 'lucide-react';
+import { addDays, format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -179,6 +180,10 @@ export function MedicationForm({
     // Validate dates if provided
     if (formData.dateStarted && !MEDICATION_VALIDATION.isValidDate(formData.dateStarted)) {
       newErrors.dateStarted = 'Please enter a valid date (YYYY-MM-DD)';
+    }
+
+    if (formData.lastFillDate && !MEDICATION_VALIDATION.isValidDate(formData.lastFillDate)) {
+      newErrors.lastFillDate = 'Please enter a valid date (YYYY-MM-DD)';
     }
 
     if (formData.refillDate && !MEDICATION_VALIDATION.isValidDate(formData.refillDate)) {
@@ -417,7 +422,7 @@ export function MedicationForm({
             <CardHeader>
               <CardTitle className="text-lg">Timeline</CardTitle>
               <CardDescription>
-                Track when you started and when you need refills
+                Track when you started, last filled, and when you need refills
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -437,20 +442,60 @@ export function MedicationForm({
                     <p className="text-sm text-destructive">{errors.dateStarted}</p>
                   )}
                 </div>
-                
+
+                <div className="space-y-2">
+                  <Label htmlFor="lastFillDate">
+                    Last Fill Date <span className="text-muted-foreground">(optional)</span>
+                  </Label>
+                  <Input
+                    id="lastFillDate"
+                    type="date"
+                    value={formData.lastFillDate}
+                    onChange={(e) => handleInputChange('lastFillDate', e.target.value)}
+                    className={errors.lastFillDate ? 'border-destructive' : ''}
+                  />
+                  {errors.lastFillDate && (
+                    <p className="text-sm text-destructive">{errors.lastFillDate}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="refillDate">
                     Next Refill Date <span className="text-muted-foreground">(optional)</span>
                   </Label>
-                  <Input
-                    id="refillDate"
-                    type="date"
-                    value={formData.refillDate}
-                    onChange={(e) => handleInputChange('refillDate', e.target.value)}
-                    className={errors.refillDate ? 'border-destructive' : ''}
-                  />
+                  <div className="flex gap-2">
+                    <Input
+                      id="refillDate"
+                      type="date"
+                      value={formData.refillDate}
+                      onChange={(e) => handleInputChange('refillDate', e.target.value)}
+                      className={errors.refillDate ? 'border-destructive flex-1' : 'flex-1'}
+                    />
+                    {formData.lastFillDate && formData.refillIntervalDays > 0 && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const lastFill = new Date(formData.lastFillDate + 'T12:00:00');
+                          const nextRefill = addDays(lastFill, formData.refillIntervalDays);
+                          handleInputChange('refillDate', format(nextRefill, 'yyyy-MM-dd'));
+                        }}
+                        title="Calculate from last fill date + refill interval"
+                      >
+                        <Calculator className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
                   {errors.refillDate && (
                     <p className="text-sm text-destructive">{errors.refillDate}</p>
+                  )}
+                  {formData.lastFillDate && formData.refillIntervalDays > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      Click calculator to auto-fill: {formData.lastFillDate} + {formData.refillIntervalDays} days
+                    </p>
                   )}
                 </div>
               </div>

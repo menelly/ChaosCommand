@@ -46,6 +46,7 @@ import {
   Droplets
 } from 'lucide-react'
 import type { WeatherData, AllergenData } from './weather-types'
+import { filterForAnalytics } from '@/lib/utils/analytics-filters'
 
 interface WeatherAnalyticsProps {
   weatherEntries?: WeatherData[]
@@ -105,13 +106,19 @@ export function WeatherAnalyticsDesktop({
         allAllergenEntries = await loadAllAllergenEntries(parseInt(dateRange))
       }
 
-      if (allWeatherEntries.length === 0 && allAllergenEntries.length === 0) {
+      // Filter out NOPE and I KNOW tagged entries
+      const filteredWeatherEntries = filterForAnalytics(allWeatherEntries)
+      const filteredAllergenEntries = filterForAnalytics(allAllergenEntries)
+      console.log('☁️ Weather after tag filtering:', filteredWeatherEntries.length, '(excluded:', allWeatherEntries.length - filteredWeatherEntries.length, ')')
+      console.log('🌿 Allergens after tag filtering:', filteredAllergenEntries.length, '(excluded:', allAllergenEntries.length - filteredAllergenEntries.length, ')')
+
+      if (filteredWeatherEntries.length === 0 && filteredAllergenEntries.length === 0) {
         setAnalyticsData(null)
         setLoading(false)
         return
       }
 
-      console.log('☁️🌿 Analyzing weather/environment data locally:', allWeatherEntries.length, 'weather,', allAllergenEntries.length, 'allergen entries')
+      console.log('☁️🌿 Analyzing weather/environment data locally:', filteredWeatherEntries.length, 'weather,', filteredAllergenEntries.length, 'allergen entries')
 
       const days = parseInt(dateRange)
       const weeks = days / 7
@@ -120,7 +127,7 @@ export function WeatherAnalyticsDesktop({
 
       // Weather type frequency (accounting for multi-select)
       const weatherTypeCounts: Record<string, number> = {}
-      allWeatherEntries.forEach(e => {
+      filteredWeatherEntries.forEach(e => {
         const types = e.weatherTypes || (e.weatherType ? [e.weatherType] : [])
         types.forEach(type => {
           weatherTypeCounts[type] = (weatherTypeCounts[type] || 0) + 1
@@ -132,7 +139,7 @@ export function WeatherAnalyticsDesktop({
 
       // Impact breakdown
       const impactCounts: Record<string, number> = {}
-      allWeatherEntries.forEach(e => {
+      filteredWeatherEntries.forEach(e => {
         if (e.impact) {
           impactCounts[e.impact] = (impactCounts[e.impact] || 0) + 1
         }
@@ -146,13 +153,13 @@ export function WeatherAnalyticsDesktop({
         })
 
       // High impact days count
-      const highImpactDays = allWeatherEntries.filter(e => e.impact === 'Yes' || e.impact === 'A LOT').length
+      const highImpactDays = filteredWeatherEntries.filter(e => e.impact === 'Yes' || e.impact === 'A LOT').length
 
       // === ALLERGEN ANALYTICS ===
 
       // Allergen type frequency
       const allergenTypeCounts: Record<string, number> = {}
-      allAllergenEntries.forEach(e => {
+      filteredAllergenEntries.forEach(e => {
         if (e.allergenType) {
           allergenTypeCounts[e.allergenType] = (allergenTypeCounts[e.allergenType] || 0) + 1
         }
@@ -163,7 +170,7 @@ export function WeatherAnalyticsDesktop({
 
       // Severity breakdown
       const severityCounts: Record<string, number> = {}
-      allAllergenEntries.forEach(e => {
+      filteredAllergenEntries.forEach(e => {
         if (e.severity) {
           severityCounts[e.severity] = (severityCounts[e.severity] || 0) + 1
         }
@@ -177,7 +184,7 @@ export function WeatherAnalyticsDesktop({
 
       // Symptom frequency
       const symptomCounts: Record<string, number> = {}
-      allAllergenEntries.forEach(e => {
+      filteredAllergenEntries.forEach(e => {
         (e.symptoms || []).forEach(symptom => {
           symptomCounts[symptom] = (symptomCounts[symptom] || 0) + 1
         })
@@ -189,7 +196,7 @@ export function WeatherAnalyticsDesktop({
 
       // Location frequency
       const locationCounts: Record<string, number> = {}
-      allAllergenEntries.forEach(e => {
+      filteredAllergenEntries.forEach(e => {
         const loc = e.location || 'Not specified'
         locationCounts[loc] = (locationCounts[loc] || 0) + 1
       })
@@ -208,7 +215,7 @@ export function WeatherAnalyticsDesktop({
         allergenDayCounts[day] = 0
       })
 
-      allWeatherEntries.forEach(e => {
+      filteredWeatherEntries.forEach(e => {
         if (e.timestamp) {
           const date = new Date(e.timestamp)
           const dayName = dayNames[date.getDay()]
@@ -216,7 +223,7 @@ export function WeatherAnalyticsDesktop({
         }
       })
 
-      allAllergenEntries.forEach(e => {
+      filteredAllergenEntries.forEach(e => {
         if (e.timestamp) {
           const date = new Date(e.timestamp)
           const dayName = dayNames[date.getDay()]
@@ -230,10 +237,10 @@ export function WeatherAnalyticsDesktop({
       // === GENERATE INSIGHTS ===
       const insights: string[] = []
 
-      if (allWeatherEntries.length > 0) {
-        insights.push(`📊 You logged ${allWeatherEntries.length} weather entries in the last ${days} days.`)
+      if (filteredWeatherEntries.length > 0) {
+        insights.push(`📊 You logged ${filteredWeatherEntries.length} weather entries in the last ${days} days.`)
 
-        const weatherAvg = weeks > 0 ? parseFloat((allWeatherEntries.length / weeks).toFixed(1)) : 0
+        const weatherAvg = weeks > 0 ? parseFloat((filteredWeatherEntries.length / weeks).toFixed(1)) : 0
         if (weatherAvg > 0) {
           insights.push(`☁️ Average of ${weatherAvg} weather logs per week.`)
         }
@@ -243,13 +250,13 @@ export function WeatherAnalyticsDesktop({
         }
 
         if (highImpactDays > 0) {
-          const pct = ((highImpactDays / allWeatherEntries.length) * 100).toFixed(0)
+          const pct = ((highImpactDays / filteredWeatherEntries.length) * 100).toFixed(0)
           insights.push(`⚠️ Weather significantly impacted you ${highImpactDays} times (${pct}% of entries).`)
         }
 
         // Find most impactful weather type
         const highImpactByType: Record<string, number> = {}
-        allWeatherEntries.filter(e => e.impact === 'Yes' || e.impact === 'A LOT').forEach(e => {
+        filteredWeatherEntries.filter(e => e.impact === 'Yes' || e.impact === 'A LOT').forEach(e => {
           const types = e.weatherTypes || (e.weatherType ? [e.weatherType] : [])
           types.forEach(type => {
             highImpactByType[type] = (highImpactByType[type] || 0) + 1
@@ -261,14 +268,14 @@ export function WeatherAnalyticsDesktop({
         }
       }
 
-      if (allAllergenEntries.length > 0) {
-        insights.push(`🌿 You logged ${allAllergenEntries.length} environmental allergen entries.`)
+      if (filteredAllergenEntries.length > 0) {
+        insights.push(`🌿 You logged ${filteredAllergenEntries.length} environmental allergen entries.`)
 
         if (allergenTypeFrequency.length > 0) {
           insights.push(`🌸 Most common allergen: ${allergenTypeFrequency[0].name} (${allergenTypeFrequency[0].count} times)`)
         }
 
-        const severeCount = allAllergenEntries.filter(e => e.severity === 'Severe' || e.severity === 'Extreme').length
+        const severeCount = filteredAllergenEntries.filter(e => e.severity === 'Severe' || e.severity === 'Extreme').length
         if (severeCount > 0) {
           insights.push(`🚨 ${severeCount} severe/extreme allergen reactions recorded.`)
         }
@@ -289,19 +296,19 @@ export function WeatherAnalyticsDesktop({
 
       const data: AnalyticsData = {
         weather: {
-          total_entries: allWeatherEntries.length,
+          total_entries: filteredWeatherEntries.length,
           weather_type_frequency: weatherTypeFrequency,
           impact_breakdown: impactBreakdown,
-          avg_entries_per_week: weeks > 0 ? parseFloat((allWeatherEntries.length / weeks).toFixed(1)) : 0,
+          avg_entries_per_week: weeks > 0 ? parseFloat((filteredWeatherEntries.length / weeks).toFixed(1)) : 0,
           high_impact_days: highImpactDays
         },
         allergens: {
-          total_entries: allAllergenEntries.length,
+          total_entries: filteredAllergenEntries.length,
           allergen_type_frequency: allergenTypeFrequency,
           severity_breakdown: severityBreakdown,
           symptom_frequency: symptomFrequency,
           location_frequency: locationFrequency,
-          avg_entries_per_week: weeks > 0 ? parseFloat((allAllergenEntries.length / weeks).toFixed(1)) : 0
+          avg_entries_per_week: weeks > 0 ? parseFloat((filteredAllergenEntries.length / weeks).toFixed(1)) : 0
         },
         day_of_week_weather: dayOfWeekWeather,
         day_of_week_allergens: dayOfWeekAllergens,

@@ -30,12 +30,21 @@ from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass, asdict
 import tempfile
 
+# Configure logging FIRST (before using logger!)
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 # Import our modular components
 from text_extractor import extract_text_from_file
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# 🧠 spaCy-based medical NLP (fast, accurate, offline!)
+try:
+    from spacy_medical_parser import extract_medical_events, spacy_events_to_parsed_events
+    SPACY_AVAILABLE = True
+    logger.info("✅ spaCy medical parser available")
+except ImportError as e:
+    SPACY_AVAILABLE = False
+    logger.warning(f"⚠️ spaCy medical parser not available: {e}")
 
 @dataclass
 class IncidentalFinding:
@@ -89,10 +98,13 @@ class RevolutionaryDocumentParser:
                 'catheterization', 'endoscopy', 'laparoscopy', 'arthroscopy'
             ],
             'tests': [
-                'MRI', 'CT', 'X-ray', 'ultrasound', 'echocardiogram', 'EKG', 'ECG',
-                'blood test', 'lab', 'laboratory', 'culture', 'pathology',
-                'mammogram', 'colonoscopy', 'endoscopy', 'PET scan'
+                'MRI scan', 'CT scan', 'CAT scan', 'X-ray', 'ultrasound', 'echocardiogram', 'EKG', 'ECG',
+                'blood test', 'lab results', 'laboratory', 'culture', 'pathology report',
+                'mammogram', 'colonoscopy', 'endoscopy', 'PET scan', 'bone scan',
+                'imaging study', 'radiology', 'diagnostic imaging'
             ],
+            # Short test abbreviations that need context (must appear with "scan", "results", etc)
+            'test_abbreviations': ['MRI', 'CT', 'PET', 'CBC', 'CMP', 'BMP', 'TSH', 'A1C', 'HbA1c'],
             'medications': [
                 'medication', 'drug', 'prescription', 'tablet', 'capsule',
                 'injection', 'infusion', 'therapy', 'treatment', 'dose'
@@ -159,38 +171,92 @@ class RevolutionaryDocumentParser:
     def parse_medical_events(self, text: str, filename: str) -> List[ParsedMedicalEvent]:
         """
         🔥 REVOLUTIONARY MULTI-LAYERED MEDICAL EVENT PARSING
-        
+
+        NOW WITH spaCy NLP! (Fast, accurate, works on Grandma Anne's potato!)
+
+        Layer 0: spaCy NLP parsing (PRIMARY - fast and accurate)
         Layer 1: Structure Recognition (dates, patterns)
         Layer 2: Medical Term Detection
         Layer 3: Context Analysis
         Layer 4: Incidental Finding Detection
         Layer 5: Confidence Scoring
+        Layer 6: Quality Filtering
         """
         events = []
-        
-        # Layer 1: Find all dates in the document
+
+        # 🧠 LAYER 0: spaCy-based parsing (FAST AND ACCURATE!)
+        if SPACY_AVAILABLE:
+            try:
+                logger.info("🧠 Running spaCy medical NLP parser...")
+                spacy_events = extract_medical_events(text, filename)
+                spacy_parsed = spacy_events_to_parsed_events(spacy_events)
+
+                # Convert to ParsedMedicalEvent objects
+                for event_dict in spacy_parsed:
+                    event = ParsedMedicalEvent(
+                        id=event_dict['id'],
+                        type=event_dict['type'],
+                        title=event_dict['title'],
+                        date=event_dict['date'],
+                        end_date=event_dict['end_date'],
+                        provider=event_dict['provider'],
+                        location=event_dict['location'],
+                        description=event_dict['description'],
+                        status=event_dict['status'],
+                        severity=event_dict['severity'],
+                        tags=event_dict['tags'],
+                        confidence=event_dict['confidence'],
+                        sources=event_dict['sources'],
+                        needs_review=event_dict['needs_review'],
+                        suggestions=event_dict['suggestions'],
+                        raw_text=event_dict['raw_text'],
+                        incidental_findings=[]
+                    )
+                    events.append(event)
+
+                logger.info(f"🧠 spaCy found {len(events)} medical events")
+            except Exception as e:
+                logger.error(f"❌ spaCy parsing failed: {e}, falling back to regex")
+
+        # Layer 1: Find all dates in the document (regex fallback)
         dates = self._extract_dates(text)
         logger.info(f"🔍 Found {len(dates)} dates in document")
-        
+
         # Layer 2: For each date, analyze surrounding context
         for date_info in dates:
             date_str, date_pos = date_info
-            
-            # Extract context around the date (500 chars before/after)
+
+            # 🛡️ SKIP BOILERPLATE - Don't extract from headers/footers/metadata
             context_start = max(0, date_pos - 500)
             context_end = min(len(text), date_pos + 500)
             context = text[context_start:context_end]
-            
+
+            # Skip if this looks like boilerplate text
+            if self._is_boilerplate_context(context, date_str):
+                logger.debug(f"⏭️ Skipping boilerplate date: {date_str}")
+                continue
+
             # Layer 3: Analyze medical content in context
             medical_analysis = self._analyze_medical_context(context, date_str)
-            
+
             if medical_analysis['has_medical_content']:
                 # Layer 4: Check for incidental findings
                 incidental_findings = self._detect_incidental_findings(context)
-                
+
                 # Layer 5: Calculate confidence score
                 confidence = self._calculate_confidence(medical_analysis, incidental_findings)
-                
+
+                # 🛡️ Layer 6: QUALITY FILTER - Skip low-quality extractions
+                if confidence < 25:
+                    logger.debug(f"⏭️ Skipping low-confidence event: {medical_analysis['title']} ({confidence}%)")
+                    continue
+
+                # 🛡️ Skip if title is just a single short word (like "CT" alone)
+                title = medical_analysis['title']
+                if len(title.replace('Test: ', '').replace('Diagnosis: ', '').strip()) < 4:
+                    logger.debug(f"⏭️ Skipping short title: {title}")
+                    continue
+
                 # Create medical event
                 event = ParsedMedicalEvent(
                     id=f"parsed-{datetime.now().timestamp()}-{len(events)}",
@@ -211,9 +277,14 @@ class RevolutionaryDocumentParser:
                     raw_text=context,
                     incidental_findings=incidental_findings
                 )
-                
+
                 events.append(event)
         
+        # 🩺 SECTION-BASED PARSING: Extract from structured sections like "PAST MEDICAL HISTORY:"
+        section_events = self._parse_structured_sections(text)
+        events.extend(section_events)
+        logger.info(f"📋 Found {len(section_events)} events from structured sections")
+
         # 🚨 BONUS LAYER: Hunt for dismissed findings across entire document
         global_dismissed_findings = self._detect_incidental_findings(text)
         if global_dismissed_findings:
@@ -243,8 +314,18 @@ class RevolutionaryDocumentParser:
             )
             events.append(dismissed_event)
 
-        logger.info(f"🎉 Extracted {len(events)} medical events from {filename}")
-        return events
+        # 🔄 DEDUPLICATION: Remove duplicate events (same title, same date)
+        seen = set()
+        unique_events = []
+        for event in events:
+            # Create dedup key from normalized title + date
+            key = (event.title.lower().strip()[:50], event.date)
+            if key not in seen:
+                seen.add(key)
+                unique_events.append(event)
+
+        logger.info(f"🎉 Extracted {len(unique_events)} unique medical events from {filename} (before dedup: {len(events)})")
+        return unique_events
 
     def _extract_dates(self, text: str) -> List[Tuple[str, int]]:
         """Extract all dates and their positions in the text"""
@@ -252,9 +333,76 @@ class RevolutionaryDocumentParser:
         for pattern in self.date_patterns:
             for match in re.finditer(pattern, text, re.IGNORECASE):
                 dates.append((match.group(), match.start()))
-        
+
         # Sort by position in document
         return sorted(dates, key=lambda x: x[1])
+
+    def _is_boilerplate_context(self, context: str, date_str: str) -> bool:
+        """
+        🛡️ DETECT BOILERPLATE TEXT - Skip headers, footers, metadata, page markers
+
+        Returns True if this context is likely boilerplate, not actual medical content.
+        BUT: If there's strong medical content, DON'T skip even if boilerplate markers present!
+        """
+        context_lower = context.lower()
+
+        # 🩺 FIRST: Check for STRONG medical content that should NEVER be skipped
+        strong_medical_indicators = [
+            # Section headers with real content
+            'past medical history', 'past surgical history', 'medications:',
+            'active problem', 'diagnosis:', 'assessment:',
+            # Real diagnoses/conditions
+            'migraine', 'diabetes', 'hypertension', 'fibromyalgia', 'lupus',
+            'raynaud', 'schizoaffective', 'bipolar', 'depression', 'anxiety',
+            'hypoglycemia', 'embolus', 'pulmonary', 'connective tissue',
+            # Surgeries
+            'bypass', 'cholecystectomy', 'appendectomy', 'hysterectomy',
+            'ligation', 'laparoscop', '-ectomy',
+            # Physical exam findings
+            'reflexes:', 'sensory:', 'motor:', 'strength:', 'romberg',
+            'babinski', 'hoffman', 'proprioception', 'extremities'
+        ]
+
+        medical_content_count = sum(1 for indicator in strong_medical_indicators if indicator in context_lower)
+        if medical_content_count >= 2:
+            # Strong medical content - DON'T skip even if boilerplate present!
+            return False
+
+        # Boilerplate patterns to skip (only if NO strong medical content)
+        boilerplate_indicators = [
+            # Document generation metadata (NOT just "confidential" alone)
+            'produced by', 'generated by', 'printed by', 'report generated',
+            'personal information report', 'my healthe vet', 'blue button',
+
+            # Pure metadata sections (demographics, not medical history)
+            'date of birth', 'dob:', 'birth date', 'patient id', 'mrn:',
+            'account number',
+
+            # Boilerplate disclaimers
+            'this information is confidential', 'for medical records',
+            'may include:', '***note', 'disclaimer',
+            'self reported', 'entered by patient',
+
+            # Navigation/UI text
+            'click here', 'see page', 'continued on',
+
+            # Date-only contexts (no actual medical content)
+            'report date', 'date printed', 'date generated', 'as of date'
+        ]
+
+        # Check for boilerplate indicators - require MORE indicators (3+) to skip
+        boilerplate_count = sum(1 for indicator in boilerplate_indicators if indicator in context_lower)
+        if boilerplate_count >= 3:
+            return True
+
+        # Skip if date is followed by "@" (report timestamp like "22 Jul 2021 @ 1:00")
+        if '@' in context and date_str in context:
+            date_pos = context.find(date_str)
+            nearby_text = context[date_pos:min(len(context), date_pos + 30)]
+            if '@' in nearby_text:
+                return True
+
+        return False
 
     def _analyze_medical_context(self, context: str, date_str: str) -> Dict[str, Any]:
         """🎨 ENHANCED MEDICAL CONTEXT ANALYSIS WITH PROVIDER EXTRACTION"""
@@ -282,10 +430,25 @@ class RevolutionaryDocumentParser:
         # Check for medical terms
         found_terms = []
         for category, terms in self.medical_terms.items():
+            # Skip abbreviations category - handled specially below
+            if category == 'test_abbreviations':
+                continue
             for term in terms:
                 if term.lower() in context_lower:
                     found_terms.append(term)
                     analysis['tags'].append(term)
+
+        # 🛡️ SPECIAL HANDLING: Short abbreviations need context
+        # "CT" alone shouldn't trigger, but "CT scan" or "CT of the spine" should
+        test_context_words = ['scan', 'result', 'showed', 'revealed', 'demonstrated', 'findings', 'report', 'study', 'of the', 'imaging']
+        for abbrev in self.medical_terms.get('test_abbreviations', []):
+            if abbrev.lower() in context_lower:
+                # Check if there's relevant context nearby
+                abbrev_pos = context_lower.find(abbrev.lower())
+                nearby = context_lower[max(0, abbrev_pos-30):min(len(context_lower), abbrev_pos+50)]
+                if any(ctx_word in nearby for ctx_word in test_context_words):
+                    found_terms.append(f"{abbrev} scan")
+                    analysis['tags'].append(abbrev)
         
         if found_terms:
             analysis['has_medical_content'] = True
@@ -492,6 +655,104 @@ class RevolutionaryDocumentParser:
         if provider_info['name']:
             return provider_info
         return None
+
+    def _parse_structured_sections(self, text: str) -> List[ParsedMedicalEvent]:
+        """
+        🩺 PARSE STRUCTURED MEDICAL SECTIONS
+
+        Extracts events from common section headers like:
+        - PAST MEDICAL HISTORY:
+        - PAST SURGICAL HISTORY:
+        - MEDICATIONS:
+        - ACTIVE PROBLEMS:
+        """
+        events = []
+        logger.info(f"🩺 Starting section-based parsing on {len(text)} chars")
+
+        # SIMPLER APPROACH: Split by section headers, then parse each section
+        # This avoids catastrophic regex backtracking!
+        section_markers = [
+            ('PAST MEDICAL HISTORY', 'diagnosis', 'active'),
+            ('MEDICAL HISTORY', 'diagnosis', 'active'),
+            ('ACTIVE PROBLEM', 'diagnosis', 'active'),
+            ('PROBLEM LIST', 'diagnosis', 'active'),
+            ('PAST SURGICAL HISTORY', 'surgery', 'resolved'),
+            ('SURGICAL HISTORY', 'surgery', 'resolved'),
+            ('CURRENT MEDICATIONS', 'medication', 'active'),
+            ('MEDICATIONS:', 'medication', 'active'),
+        ]
+
+        for marker, event_type, default_status in section_markers:
+            # Find the marker position
+            marker_pos = text.upper().find(marker.upper())
+            if marker_pos == -1:
+                continue
+
+            logger.info(f"📋 Found section: {marker}")
+
+            # Extract content after the marker until the next major section or 2000 chars
+            start_pos = marker_pos + len(marker)
+            # Skip any colons or whitespace after the marker
+            while start_pos < len(text) and text[start_pos] in ':\n \t':
+                start_pos += 1
+
+            # Find the end - look for next section header or cap at 2000 chars
+            end_markers = ['PAST ', 'ALLERGIES', 'FAMILY', 'SOCIAL', 'REVIEW OF', 'PHYSICAL', 'ASSESSMENT', 'PLAN:', 'IMPRESSION']
+            end_pos = start_pos + 2000  # Default max
+            for end_marker in end_markers:
+                pos = text.upper().find(end_marker, start_pos)
+                if pos != -1 and pos < end_pos:
+                    end_pos = pos
+
+            section_content = text[start_pos:end_pos]
+
+            # Parse individual lines from the section
+            lines = section_content.strip().split('\n')
+            logger.info(f"📋 Section has {len(lines)} lines")
+
+            for line in lines[:50]:  # Cap at 50 items per section
+                line = line.strip()
+
+                # Skip empty lines, headers, and boilerplate
+                if not line or len(line) < 3:
+                    continue
+                if line.upper() == line and len(line) > 30:
+                    continue  # Skip all-caps headers
+                if any(skip in line.lower() for skip in ['page', 'confidential', 'martin,', '---']):
+                    continue
+
+                # Clean up common prefixes
+                title = line
+                title = re.sub(r'^(?:Active Problem\(s\)|Problem|Dx|H/O|History of)[:\s]*', '', title, flags=re.IGNORECASE)
+                title = title.strip()
+
+                if not title or len(title) < 3:
+                    continue
+
+                # Create event
+                event = ParsedMedicalEvent(
+                    id=f"section-{datetime.now().timestamp()}-{len(events)}",
+                    type=event_type,
+                    title=title[:100],  # Cap title length
+                    date=datetime.now().strftime('%Y-%m-%d'),  # Default to today (unknown date)
+                    end_date=None,
+                    provider=None,
+                    location=None,
+                    description=f"Extracted from {event_type.upper()} section",
+                    status=default_status,
+                    severity=None,
+                    tags=[event_type, 'imported', 'needs-date'],
+                    confidence=65,  # Medium confidence - we're pretty sure this is real
+                    sources=['section-parser'],
+                    needs_review=True,  # User should verify and add correct dates
+                    suggestions=['Add the correct date for this event', 'Verify the details are accurate'],
+                    raw_text=line,
+                    incidental_findings=[]
+                )
+                events.append(event)
+
+        logger.info(f"🩺 Section parsing complete: {len(events)} events")
+        return events
 
     def _standardize_date(self, date_str: str) -> str:
         """Convert various date formats to YYYY-MM-DD"""

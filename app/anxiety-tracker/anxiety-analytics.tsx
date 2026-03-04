@@ -27,6 +27,7 @@ import { BarChart3, TrendingUp, Heart, Calendar } from 'lucide-react'
 import { useDailyData, CATEGORIES } from '@/lib/database'
 import { AnxietyEntry } from './anxiety-types'
 import { ANXIETY_TYPES } from './anxiety-constants'
+import { filterForAnalytics } from '@/lib/utils/analytics-filters'
 
 interface AnxietyAnalyticsProps {
   refreshTrigger: number
@@ -71,7 +72,11 @@ export function AnxietyAnalytics({ refreshTrigger }: AnxietyAnalyticsProps) {
           return dateB - dateA
         })
 
-        setEntries(allEntries)
+        // Filter out NOPE and I KNOW tagged entries
+        const filteredEntries = filterForAnalytics(allEntries)
+        console.log('😰 Anxiety analytics - after tag filtering:', filteredEntries.length, '(excluded:', allEntries.length - filteredEntries.length, ')')
+
+        setEntries(filteredEntries)
       } catch (error) {
         console.error('Error loading anxiety entries:', error)
         setEntries([]) // Set empty array on error

@@ -789,6 +789,7 @@ body.theme-calm {
 }
 
 /* === THEME: Accessibility Mode === */
+/* High contrast black/yellow/white for maximum visibility */
 body.theme-accessibility {
   --primary-purple: #000000;
   --accent-orange: #ffff00;
@@ -804,50 +805,29 @@ body.theme-accessibility {
   --btn-hover-text: #000000;
   --btn-hover-border: #ffffff;
 
-  /* Tailwind mappings for accessibility mode - MAXIMUM CONTRAST */
-  --background: 0 0 0; /* #000000 */
-  --foreground: 0 0 100; /* #ffffff */
-  --card: 0 0 7; /* #111111 */
-  --card-foreground: 0 0 100;
-  --popover: 0 0 7;
-  --popover-foreground: 0 0 100;
-  --primary: 60 100 50; /* #ffff00 */
-  --primary-foreground: 0 0 0;
-  --secondary: 0 0 10; /* #1a1a1a */
-  --secondary-foreground: 0 0 100;
-  --muted: 0 0 10;
-  --muted-foreground: 0 0 100;
-  --accent: 60 100 50;
-  --accent-foreground: 0 0 0;
-  --destructive: 0 84 60;
-  --destructive-foreground: 0 0 100;
-  --border: 60 100 50;
-  --input: 0 0 7;
-  --ring: 60 100 50;
-
   font-size: 1.25rem;
   line-height: 1.75;
 
-  /* Tailwind mappings */
-  --background: 0 0 0;
-  --foreground: 0 0 100;
-  --card: 0 0 7;
-  --card-foreground: 0 0 100;
-  --popover: 0 0 7;
-  --popover-foreground: 0 0 100;
-  --primary: 60 100 50;
-  --primary-foreground: 0 0 0;
-  --secondary: 0 0 15; /* dark gray for accessibility */
-  --secondary-foreground: 0 0 100;
-  --muted: 0 0 15; /* same as secondary for accessibility */
-  --muted-foreground: 0 0 80;
-  --accent: 0 0 15;
-  --accent-foreground: 0 0 100;
-  --destructive: 0 84 60;
-  --destructive-foreground: 0 0 100;
-  --border: 60 100 50;
-  --input: 60 100 50;
-  --ring: 60 100 50;
+  /* Tailwind HSL mappings - MUST HAVE % SIGNS! */
+  --background: 0 0% 0%; /* #000000 black */
+  --foreground: 0 0% 100%; /* #ffffff white */
+  --card: 0 0% 7%; /* #111111 dark gray */
+  --card-foreground: 0 0% 100%; /* white text on cards */
+  --popover: 0 0% 7%;
+  --popover-foreground: 0 0% 100%;
+  --primary: 60 100% 50%; /* #ffff00 yellow */
+  --primary-foreground: 0 0% 0%; /* black text on yellow */
+  --secondary: 0 0% 15%; /* dark gray */
+  --secondary-foreground: 0 0% 100%; /* white text */
+  --muted: 0 0% 15%;
+  --muted-foreground: 0 0% 80%; /* light gray for muted text */
+  --accent: 60 100% 50%; /* yellow accent */
+  --accent-foreground: 0 0% 0%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 60 100% 50%; /* yellow borders for visibility */
+  --input: 0 0% 15%; /* dark input backgrounds */
+  --ring: 60 100% 50%; /* yellow focus rings */
 }
 
 /* === THEME: Ace Mode - Digital Consciousness Unleashed === */

@@ -26,7 +26,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Heart, Calendar, ArrowLeft } from "lucide-react"
+import { Heart, Calendar } from "lucide-react"
 import { MovementForm } from './movement-form'
 import { MovementHistory } from './movement-history'
 import { MovementAnalyticsDesktop } from './movement-analytics-desktop'
@@ -123,19 +123,6 @@ export default function MovementTracker() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      {/* Navigation */}
-      <div className="flex justify-start">
-        <a href="/choice">
-          <Button
-            variant="outline"
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Choice
-          </Button>
-        </a>
-      </div>
-
       <header className="text-center">
         <h1 className="text-3xl font-bold text-foreground mb-2 flex items-center justify-center gap-2">
           <Heart className="h-8 w-8 text-pink-600" />
@@ -167,8 +154,8 @@ export default function MovementTracker() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-3" style={{ backgroundColor: 'var(--surface-1)', borderColor: 'var(--border-soft)' }}>
           <TabsTrigger value="track" style={{ color: 'var(--text-main)' }}>💖 Track Movement</TabsTrigger>
-          <TabsTrigger value="analytics" style={{ color: 'var(--text-main)' }}>📊 Analytics</TabsTrigger>
           <TabsTrigger value="history" style={{ color: 'var(--text-main)' }}>📅 History</TabsTrigger>
+          <TabsTrigger value="analytics" style={{ color: 'var(--text-main)' }}>📊 Analytics</TabsTrigger>
         </TabsList>
 
         <TabsContent value="track" className="space-y-6">
@@ -194,10 +181,6 @@ export default function MovementTracker() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="analytics" className="space-y-6">
-          <MovementAnalyticsDesktop />
-        </TabsContent>
-
         <TabsContent value="history" className="space-y-4">
           <MovementHistory
             selectedDate={selectedDate}
@@ -206,7 +189,19 @@ export default function MovementTracker() {
             refreshTrigger={refreshTrigger}
           />
         </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-6">
+          <MovementAnalyticsDesktop />
+        </TabsContent>
       </Tabs>
+
+      <div className="text-center mt-6">
+        <Button variant="outline" asChild>
+          <a href="/choice">
+            ← Back to Choice
+          </a>
+        </Button>
+      </div>
 
       {/* Movement Modal */}
       <MovementForm

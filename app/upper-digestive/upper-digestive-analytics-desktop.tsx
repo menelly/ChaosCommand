@@ -28,6 +28,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend } from 'recharts'
 import { Calendar, TrendingUp, AlertTriangle, Clock, Target, Download, Loader2 } from 'lucide-react'
 import { useDailyData, CATEGORIES } from '@/lib/database'
+import { filterForAnalytics } from '@/lib/utils/analytics-filters'
 import { format, subDays, parseISO, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns'
 import { UPPER_DIGESTIVE_SYMPTOMS, UPPER_DIGESTIVE_TRIGGERS, UPPER_DIGESTIVE_TREATMENTS, SEVERITY_LABELS } from './upper-digestive-constants'
 
@@ -96,14 +97,19 @@ export default function UpperDigestiveAnalyticsDesktop({ className }: AnalyticsP
         }
       }
 
+      // Filter out NOPE and I KNOW tagged entries for analytics
+      const filteredEntries = filterForAnalytics(allEntries)
+      console.log('🫃 Upper digestive analytics - after tag filtering:', filteredEntries.length, '(excluded:', allEntries.length - filteredEntries.length, ')')
+
       // Send to Flask for analytics processing
-      const response = await fetch('http://localhost:5000/api/analytics/upper-digestive', {
+      const { backendFetch, FLASK_URL } = await import('@/lib/utils/tauri-fetch');
+      const response = await backendFetch(`${FLASK_URL}/api/analytics/upper-digestive`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          entries: allEntries,
+          entries: filteredEntries,
           dateRange: days
         })
       })

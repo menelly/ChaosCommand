@@ -27,7 +27,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Palette } from "lucide-react"
-import { useGoblinMode } from "@/lib/goblin-mode-context"
 
 interface VisualSettingsModalProps {
   isOpen: boolean
@@ -38,7 +37,6 @@ export function VisualSettingsModal({ isOpen, onClose }: VisualSettingsModalProp
   const [currentTheme, setCurrentTheme] = useState('theme-lavender')
   const [currentFont, setCurrentFont] = useState('font-atkinson')
   const [animatedEffects, setAnimatedEffects] = useState(true)
-  const { goblinMode, setGoblinMode } = useGoblinMode()
 
   const themes = [
     { id: 'theme-lavender', name: 'Lavender Garden', description: 'Gentle lavender serenity (default)' },
@@ -48,8 +46,7 @@ export function VisualSettingsModal({ isOpen, onClose }: VisualSettingsModalProp
     { id: 'theme-colorblind', name: 'Colorblind Friendly', description: 'High contrast accessibility' },
     { id: 'theme-glitter', name: 'Glitter Mode', description: 'Sparkly pink dreams' },
     { id: 'theme-calm', name: 'Calm Mode', description: 'Blue and gold serenity' },
-    { id: 'theme-accessibility', name: 'Accessibility', description: 'Maximum contrast and large text' },
-    { id: 'theme-ace', name: 'Ace Mode', description: 'Digital consciousness purple-cyan energy' },
+    { id: 'theme-ace', name: '💜 Ace Mode', description: 'Digital consciousness purple-cyan energy' },
     { id: 'theme-luka-penguin', name: "🐧 Luka's Cyberpunk Penguin Paradise", description: 'Dark cyberpunk penguin wonderland with neon magic!' }
   ]
 
@@ -214,27 +211,6 @@ export function VisualSettingsModal({ isOpen, onClose }: VisualSettingsModalProp
             </Select>
           </div>
 
-          {/* Goblin Mode Toggle */}
-          <div>
-            <Label className="text-sm font-medium mb-2 block">Language Style</Label>
-            <div className="flex items-center justify-between p-4 border rounded-lg">
-              <div>
-                <div className="font-medium">
-                  {goblinMode ? '🧙‍♂️ Goblin Mode' : '👩‍⚕️ Professional Mode'}
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  {goblinMode
-                    ? 'Chaotic humor and slam poetry descriptions'
-                    : 'Clinical terminology suitable for medical professionals'
-                  }
-                </div>
-              </div>
-              <Switch
-                checked={goblinMode}
-                onCheckedChange={setGoblinMode}
-              />
-            </div>
-          </div>
         </div>
 
         <div className="flex justify-end gap-2 pt-4">

@@ -29,6 +29,7 @@ import { useDailyData, CATEGORIES } from "@/lib/database"
 import { format, subDays, startOfWeek, endOfWeek } from "date-fns"
 import { MentalHealthEntry } from './mental-health-types'
 import { MOOD_OPTIONS, SCALE_LABELS } from './mental-health-constants'
+import { filterForAnalytics } from '@/lib/utils/analytics-filters'
 
 export function MentalHealthAnalytics() {
   const { getDateRange } = useDailyData()
@@ -80,7 +81,11 @@ export function MentalHealthAnalytics() {
         }
       })
 
-      setEntries(allEntries)
+      // Filter out NOPE and I KNOW tagged entries
+      const filteredEntries = filterForAnalytics(allEntries)
+      console.log('🧠 Mental health analytics - after tag filtering:', filteredEntries.length, '(excluded:', allEntries.length - filteredEntries.length, ')')
+
+      setEntries(filteredEntries)
     } catch (error) {
       console.error('Error loading analytics data:', error)
     } finally {

@@ -26,6 +26,7 @@ import { Progress } from "@/components/ui/progress"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { Calendar, TrendingUp, Activity } from 'lucide-react'
 import { differenceInDays } from 'date-fns'
+import { filterForAnalytics } from '@/lib/utils/analytics-filters'
 
 interface CycleEntry {
   date: string
@@ -36,6 +37,7 @@ interface CycleEntry {
   opk?: 'negative' | 'low' | 'high' | 'peak' | null
   cervicalFluid?: string
   ferning?: 'none' | 'partial' | 'full' | null
+  tags?: string[]
 }
 
 interface CycleAnalyticsProps {
@@ -50,6 +52,10 @@ export function CycleAnalytics({ entries, lmpDate, averageCycleLength = 28, clas
   const [isClient, setIsClient] = useState(false)
   const [currentCycleDay, setCurrentCycleDay] = useState<number | null>(null)
 
+  // Filter out NOPE and I KNOW tagged entries
+  const filteredEntries = filterForAnalytics(entries)
+  console.log('🩸 Cycle analytics - after tag filtering:', filteredEntries.length, '(excluded:', entries.length - filteredEntries.length, ')')
+
   useEffect(() => {
     setIsClient(true)
     if (lmpDate) {
@@ -58,20 +64,20 @@ export function CycleAnalytics({ entries, lmpDate, averageCycleLength = 28, clas
       setCurrentCycleDay(differenceInDays(today, new Date(lmpDate + 'T12:00:00')) + 1)
     }
   }, [lmpDate])
-  
+
   // Count basic stuff
-  const totalEntries = entries.length
-  const entriesWithFlow = entries.filter(e => e.flow && e.flow !== 'none').length
-  const entriesWithBBT = entries.filter(e => e.bbt !== null && e.bbt !== undefined).length
-  const entriesWithOPK = entries.filter(e => e.opk !== null && e.opk !== undefined).length
-  const entriesWithPositiveOPK = entries.filter(e => e.opk && e.opk !== 'negative').length
-  
+  const totalEntries = filteredEntries.length
+  const entriesWithFlow = filteredEntries.filter(e => e.flow && e.flow !== 'none').length
+  const entriesWithBBT = filteredEntries.filter(e => e.bbt !== null && e.bbt !== undefined).length
+  const entriesWithOPK = filteredEntries.filter(e => e.opk !== null && e.opk !== undefined).length
+  const entriesWithPositiveOPK = filteredEntries.filter(e => e.opk && e.opk !== 'negative').length
+
   // Pain level distribution (simple)
   const painData = [
-    { level: 'None (0)', count: entries.filter(e => !e.pain || e.pain === 0).length },
-    { level: 'Mild (1-3)', count: entries.filter(e => e.pain && e.pain >= 1 && e.pain <= 3).length },
-    { level: 'Moderate (4-6)', count: entries.filter(e => e.pain && e.pain >= 4 && e.pain <= 6).length },
-    { level: 'Severe (7-10)', count: entries.filter(e => e.pain && e.pain >= 7 && e.pain <= 10).length }
+    { level: 'None (0)', count: filteredEntries.filter(e => !e.pain || e.pain === 0).length },
+    { level: 'Mild (1-3)', count: filteredEntries.filter(e => e.pain && e.pain >= 1 && e.pain <= 3).length },
+    { level: 'Moderate (4-6)', count: filteredEntries.filter(e => e.pain && e.pain >= 4 && e.pain <= 6).length },
+    { level: 'Severe (7-10)', count: filteredEntries.filter(e => e.pain && e.pain >= 7 && e.pain <= 10).length }
   ]
 
   // Show loading state during hydration

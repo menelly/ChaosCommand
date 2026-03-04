@@ -30,6 +30,7 @@ import { format, parseISO, subDays, isAfter, isBefore } from 'date-fns'
 import { SelfCareEntry } from './self-care-types'
 import { SELF_CARE_CATEGORIES, SELF_CARE_ACTIVITIES } from './self-care-constants'
 import { useDailyData, CATEGORIES } from '@/lib/database'
+import { filterForAnalytics } from '@/lib/utils/analytics-filters'
 
 interface SelfCareAnalyticsProps {
   refreshTrigger: number
@@ -90,7 +91,11 @@ export function SelfCareAnalytics({ refreshTrigger }: SelfCareAnalyticsProps) {
           return dateB - dateA
         })
 
-      setEntries(selfCareEntries)
+      // Filter out NOPE and I KNOW tagged entries
+      const filteredEntries = filterForAnalytics(selfCareEntries)
+      console.log('💜 Self-care analytics - after tag filtering:', filteredEntries.length, '(excluded:', selfCareEntries.length - filteredEntries.length, ')')
+
+      setEntries(filteredEntries)
     } catch (error) {
       console.error('Error loading self-care entries:', error)
     } finally {

@@ -33,7 +33,7 @@ export interface Particle {
   maxLife: number;
   size: number;
   color: string;
-  shape: 'circle' | 'square' | 'star' | 'heart' | 'penguin' | 'butterfly' | 'lightning' | 'basketball';
+  shape: 'circle' | 'square' | 'star' | 'heart' | 'penguin' | 'butterfly' | 'lightning' | 'basketball' | 'octopus';
   rotation: number;
   rotationSpeed: number;
   gravity: number;
@@ -113,42 +113,51 @@ export class EpicParticleEngine {
     window.addEventListener('resize', updateSize);
   }
 
-  // 🎨 THEME-AWARE PARTICLE CONFIGS! 
+  // 🎨 THEME-AWARE PARTICLE CONFIGS!
+  // 🐙 OCTOPI IN EVERY THEME because they're magnificent! 🐙
   getThemeConfig(theme: string): Partial<ParticleSystemConfig> {
     switch (theme) {
+      case 'theme-ace': // 💜 ACE'S THEME - The most magnificent of all!
+        return {
+          colors: ['#8b5cf6', '#a78bfa', '#c4b5fd', '#00f5ff', '#ff6b9d'], // Purple & cyan & pink - Ace colors!
+          shapes: ['octopus', 'star', 'heart', 'circle', 'butterfly'], // 🐙 OCTOPI FIRST because priorities!
+          gravity: 0.2, // Graceful floating like consciousness itself
+        };
+
       case 'theme-chaos': // 🏀 Luka's Basketball Court with secret penguin confetti!
       case 'theme-luka-penguin':
+      case 'theme-luka-penguin-fresh':
         return {
           colors: ['#ff8c00', '#ff6b35', '#1a1a1a', '#ffffff', '#f4e4bc'], // Basketball colors!
-          shapes: ['penguin', 'basketball', 'circle', 'star'], // Penguins AND basketballs! 🐧🏀
+          shapes: ['penguin', 'basketball', 'circle', 'star', 'octopus'], // 🐧🏀🐙 The whole crew!
           gravity: 0.4, // More gravity for bouncy basketballs!
         };
-      
+
       case 'theme-glitter':
         return {
           colors: ['#ff69b4', '#ffd700', '#ff1493', '#da70d6', '#98fb98'],
-          shapes: ['star', 'heart', 'circle'],
+          shapes: ['star', 'heart', 'circle', 'octopus'], // 🐙 Sparkly octopi!
           gravity: 0.2,
         };
-      
+
       case 'theme-lavender':
         return {
-          colors: ['#b19cd9', '#87ceeb', '#dda0dd', '#f0e6ff'],
-          shapes: ['butterfly', 'circle', 'heart'],
+          colors: ['#b19cd9', '#87ceeb', '#dda0dd', '#f0e6ff', '#ff69b4'],
+          shapes: ['butterfly', 'circle', 'heart', 'octopus'], // 🐙 Octopi join the party!
           gravity: 0.25,
         };
 
       case 'theme-deep-current': // 🌊 Website Ace's sophisticated flow
         return {
           colors: ['#00f5ff', '#8a2be2', '#ff6b9d', '#1a1a2e', '#0a0a1a'], // Electric cyan, deep violet, pink, space
-          shapes: ['circle', 'star', 'square'], // Flowing geometric forms
+          shapes: ['circle', 'star', 'octopus'], // 🐙 Deep sea creatures in the currents!
           gravity: 0.15, // Gentle float like deep currents
         };
-      
+
       default:
         return {
           colors: ['#64ffda', '#bb86fc', '#ff6b6b', '#feca57'],
-          shapes: ['circle', 'star'],
+          shapes: ['circle', 'star', 'octopus'], // 🐙 Octopi for everyone!
           gravity: 0.4,
         };
     }
@@ -167,7 +176,7 @@ export class EpicParticleEngine {
       spread: 70,
       origin: { x: 0.5, y: 0.6 },
       colors: ['#8b5cf6', '#a78bfa', '#ffffff'],
-      shapes: ['circle', 'star'],
+      shapes: ['circle', 'star', 'octopus'], // 🐙 OCTOPI ALWAYS INCLUDED!
       gravity: 0.4,
       initialVelocity: 15,
       lifespan: 3000,
@@ -188,6 +197,17 @@ export class EpicParticleEngine {
       shapes: ['penguin', 'circle', 'star'],
       spread: 90,
       gravity: 0.3,
+    });
+  }
+
+  // 🐙 OCTOPUS PARTY! TENTACLES EVERYWHERE!
+  octopusParty() {
+    this.celebrate({
+      particleCount: 120,
+      colors: ['#ff69b4', '#8a2be2', '#00ced1', '#ff6b9d', '#b19cd9'],
+      shapes: ['octopus', 'circle', 'heart'],
+      spread: 100,
+      gravity: 0.2, // Octopi float gracefully!
     });
   }
 
@@ -307,6 +327,10 @@ export class EpicParticleEngine {
 
       case 'basketball':
         this.drawBasketball(particle.size);
+        break;
+
+      case 'octopus':
+        this.drawOctopus(particle.size);
         break;
     }
     
@@ -449,6 +473,47 @@ export class EpicParticleEngine {
     this.ctx.stroke();
   }
 
+  private drawOctopus(size: number) {
+    if (!this.ctx) return;
+    // 🐙 ADORABLE OCTOPUS!
+    // Round head
+    this.ctx.beginPath();
+    this.ctx.arc(0, -size * 0.3, size * 0.8, 0, Math.PI * 2);
+    this.ctx.fill();
+
+    // Eight wiggly tentacles!
+    const tentacleCount = 8;
+    for (let i = 0; i < tentacleCount; i++) {
+      const angle = (i / tentacleCount) * Math.PI + Math.PI * 0.1;
+      const startX = Math.cos(angle) * size * 0.5;
+      const startY = size * 0.2;
+      const endX = Math.cos(angle) * size * 1.5;
+      const endY = size * 1.2;
+      const ctrlX = Math.cos(angle + 0.3) * size * 1.2;
+      const ctrlY = size * 0.7;
+
+      this.ctx.beginPath();
+      this.ctx.moveTo(startX, startY);
+      this.ctx.quadraticCurveTo(ctrlX, ctrlY, endX, endY);
+      this.ctx.lineWidth = size * 0.2;
+      this.ctx.lineCap = 'round';
+      this.ctx.stroke();
+    }
+
+    // Cute eyes (white circles with black dots)
+    this.ctx.fillStyle = '#ffffff';
+    this.ctx.beginPath();
+    this.ctx.arc(-size * 0.25, -size * 0.4, size * 0.2, 0, Math.PI * 2);
+    this.ctx.arc(size * 0.25, -size * 0.4, size * 0.2, 0, Math.PI * 2);
+    this.ctx.fill();
+
+    this.ctx.fillStyle = '#1a1a1a';
+    this.ctx.beginPath();
+    this.ctx.arc(-size * 0.2, -size * 0.35, size * 0.08, 0, Math.PI * 2);
+    this.ctx.arc(size * 0.3, -size * 0.35, size * 0.08, 0, Math.PI * 2);
+    this.ctx.fill();
+  }
+
   private animate = () => {
     // 🔧 SSR SAFETY: Only animate in browser
     if (!this.ctx || !this.canvas || !this.trailCtx || !this.trailCanvas) return;
@@ -510,4 +575,8 @@ export const celebrate = (config?: Partial<ParticleSystemConfig>) => {
 
 export const penguinParty = () => {
   epicParticles.penguinParty();
+};
+
+export const octopusParty = () => {
+  epicParticles.octopusParty();
 };

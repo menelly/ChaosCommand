@@ -1169,8 +1169,10 @@ export default function ProvidersPage() {
         </Dialog>
 
         <div className="text-center">
-          <Button variant="outline" onClick={() => window.location.href = '/'}>
-            ← Back to Command Center
+          <Button variant="outline" asChild>
+            <a href="/manage">
+              ← Back to Manage
+            </a>
           </Button>
         </div>
       </div>
