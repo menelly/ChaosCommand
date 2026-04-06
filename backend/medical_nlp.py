@@ -156,6 +156,22 @@ class MedicalEvent:
     is_speculative: bool = False
 
 
+@dataclass
+class LabResult:
+    """A single lab test result extracted from a document."""
+    test_name: str
+    value: Optional[float] = None
+    value_text: str = ""         # Raw text of value (handles ">10", "<0.5", etc.)
+    unit: str = ""
+    reference_low: Optional[float] = None
+    reference_high: Optional[float] = None
+    reference_text: str = ""     # Raw ref range text
+    flag: str = ""               # H, L, Critical, etc.
+    is_abnormal: bool = False
+    context: str = ""
+    confidence: float = 0.90
+
+
 # ============================================================================
 # SECTION DETECTION
 # ============================================================================
@@ -274,6 +290,177 @@ def get_excluded_dates(demographics: Optional[Dict] = None) -> Set[str]:
         except Exception:
             pass
     return excluded
+
+
+# ============================================================================
+# LAB RESULT EXTRACTION
+# ============================================================================
+
+# Common units — used by regex to anchor lab value patterns.
+# NOT a hardcoded test list — the MODELS find test names, regex finds structure.
+LAB_UNITS = r'(?:mg/dL|mEq/L|g/dL|g/L|%|K/uL|M/uL|mIU/L|mmol/L|IU/mL|' \
+            r'µIU/mL|uIU/mL|U/L|ng/mL|ng/dL|pg/mL|mcg/dL|µg/dL|' \
+            r'cells/uL|cells/mcL|x10\^[0-9]+/uL|fL|pg|g/dL|mL/min|' \
+            r'mm/hr|sec|seconds|ratio|copies/mL|MEq/L|mmHg)'
+
+LAB_FLAGS = r'(?:\b(?:H|L|HH|LL|HIGH|LOW|CRITICAL|ABNORMAL|ABN|CRIT)\b|\*)'
+
+
+def extract_lab_results_from_text(text: str, demographics: Optional[Dict] = None) -> List[LabResult]:
+    """
+    Extract lab results using d4data NER for test identification + regex for
+    structured value/unit/range extraction. No hardcoded test names.
+
+    The model finds WHAT (test names). Regex finds HOW MUCH (values, units, ranges).
+    """
+    results = []
+    seen_tests = set()
+
+    name_exclusions = build_exclusion_set(demographics)
+
+    # --- Use d4data to find test names and lab values ---
+    nlp_proc = _load_procedures()
+    if nlp_proc:
+        doc = nlp_proc(text[:100000])
+        test_entities = []
+        value_entities = []
+
+        for ent in doc.ents:
+            if ent.label_ == "Diagnostic_procedure":
+                test_entities.append({
+                    "text": ent.text, "start": ent.start_char, "end": ent.end_char
+                })
+            elif ent.label_ == "Lab_value":
+                value_entities.append({
+                    "text": ent.text, "start": ent.start_char, "end": ent.end_char
+                })
+
+        logger.info(f"🧪 d4data found {len(test_entities)} test names, {len(value_entities)} lab values")
+
+    # --- Regex pass: find structured lab patterns ---
+    # Pattern: anything followed by a number and a unit
+    # This catches "Glucose 95 mg/dL (70-100)" style entries
+    value_unit_pattern = re.compile(
+        r'(\b[\w\s\-\(\)]+?)\s+'           # Test name (captured loosely)
+        r'([<>]?\s*\d+(?:\.\d+)?)\s*'       # Value (with optional < >)
+        r'(' + LAB_UNITS + r')\s*'           # Unit
+        r'(?:'                               # Optional reference range group
+          r'[\(\[]?\s*'                       # Opening bracket
+          r'(\d+(?:\.\d+)?)\s*'              # Low bound
+          r'[-–]\s*'                          # Dash
+          r'(\d+(?:\.\d+)?)\s*'              # High bound
+          r'[\)\]]?'                          # Closing bracket
+        r')?\s*'
+        r'(' + LAB_FLAGS + r')?',            # Optional flag
+        re.IGNORECASE
+    )
+
+    for match in value_unit_pattern.finditer(text):
+        test_name_raw = match.group(1).strip()
+        value_text = match.group(2).strip()
+        unit = match.group(3).strip()
+        ref_low_text = match.group(4)
+        ref_high_text = match.group(5)
+        flag = (match.group(6) or "").strip()
+
+        # Clean up test name — remove leading junk
+        test_name = re.sub(r'^[\s\-:,]+', '', test_name_raw)
+        test_name = re.sub(r'\s+', ' ', test_name).strip()
+
+        # Skip if too short, too long, or looks like a name
+        if len(test_name) < 2 or len(test_name) > 60:
+            continue
+        if test_name.lower() in name_exclusions:
+            continue
+        # Skip if it's just numbers or common non-test words
+        if re.match(r'^[\d\s\.]+$', test_name):
+            continue
+
+        key = test_name.lower()
+        if key in seen_tests:
+            continue
+        seen_tests.add(key)
+
+        # Parse numeric value
+        value_clean = re.sub(r'[<>]', '', value_text).strip()
+        try:
+            value = float(value_clean)
+        except ValueError:
+            value = None
+
+        # Parse reference range
+        ref_low = float(ref_low_text) if ref_low_text else None
+        ref_high = float(ref_high_text) if ref_high_text else None
+
+        # Determine if abnormal
+        is_abnormal = bool(flag)
+        if not is_abnormal and value is not None:
+            if ref_low is not None and value < ref_low:
+                is_abnormal = True
+                flag = "L"
+            elif ref_high is not None and value > ref_high:
+                is_abnormal = True
+                flag = "H"
+
+        context = get_context(text, match.start(), match.end(), window=100)
+
+        results.append(LabResult(
+            test_name=test_name,
+            value=value,
+            value_text=value_text,
+            unit=unit,
+            reference_low=ref_low,
+            reference_high=ref_high,
+            reference_text=f"{ref_low}-{ref_high}" if ref_low and ref_high else "",
+            flag=flag,
+            is_abnormal=is_abnormal,
+            context=context[:200],
+            confidence=0.92 if ref_low and ref_high else 0.80,
+        ))
+
+    # Sort: abnormal results first, then alphabetically
+    results.sort(key=lambda r: (not r.is_abnormal, r.test_name.lower()))
+
+    logger.info(f"🧪 Extracted {len(results)} lab results "
+                f"({sum(1 for r in results if r.is_abnormal)} abnormal)")
+
+    return results
+
+
+def lab_results_to_events(labs: List[LabResult], doc_date: Optional[str] = None) -> List[MedicalEvent]:
+    """Convert lab results to MedicalEvent objects for the timeline."""
+    events = []
+    for lab in labs:
+        flag_prefix = "🔴 " if lab.flag in ("H", "HH", "HIGH", "CRITICAL", "CRIT") else \
+                      "🔵 " if lab.flag in ("L", "LL", "LOW") else ""
+
+        title = f"{flag_prefix}{lab.test_name}: {lab.value_text} {lab.unit}"
+        if lab.reference_text:
+            title += f" (ref: {lab.reference_text})"
+
+        events.append(MedicalEvent(
+            title=title,
+            event_type="lab",
+            date=doc_date,
+            confidence=lab.confidence,
+            context=lab.context,
+            entities=[{
+                "text": lab.test_name,
+                "label": "LAB_RESULT",
+                "value": str(lab.value) if lab.value else lab.value_text,
+                "unit": lab.unit,
+                "ref_low": str(lab.reference_low) if lab.reference_low else "",
+                "ref_high": str(lab.reference_high) if lab.reference_high else "",
+                "flag": lab.flag,
+                "is_abnormal": str(lab.is_abnormal),
+            }],
+            source="lab-parser",
+            section="unknown",
+            is_negated=False,
+            is_speculative=False,
+        ))
+
+    return events
 
 
 # ============================================================================
@@ -575,7 +762,14 @@ def extract_medical_events(text: str, filename: str = "document",
             ))
             impression_entities_lower.add(key)
 
-    # --- LAYER 4: DISMISSED FINDINGS (Findings NOT in Impression) ---
+    # --- LAYER 4: LAB RESULTS ---
+    lab_results = extract_lab_results_from_text(chunk, demographics)
+    if lab_results:
+        lab_events = lab_results_to_events(lab_results, doc_date)
+        events.extend(lab_events)
+        logger.info(f"🧪 Added {len(lab_events)} lab result events")
+
+    # --- LAYER 5: DISMISSED FINDINGS (Findings NOT in Impression) ---
     if findings_section and impression_section and impression_entities_lower:
         for event in [e for e in events if e.section == "findings"]:
             el = event.title.lower().strip()
@@ -596,8 +790,9 @@ def extract_medical_events(text: str, filename: str = "document",
     bc5 = sum(1 for e in events if e.source == "bc5cdr")
     d4 = sum(1 for e in events if e.source == "d4data")
     imp = sum(1 for e in events if e.source == "impression-parser")
+    labs = sum(1 for e in events if e.source == "lab-parser")
     logger.info(f"🧠 TOTAL: {len(events)} events from {filename} "
-                f"(bc5cdr={bc5}, d4data={d4}, impression={imp})")
+                f"(bc5cdr={bc5}, d4data={d4}, impression={imp}, labs={labs})")
 
     return events
 

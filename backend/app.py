@@ -431,6 +431,78 @@ def parse_document_base64():
         }), 500
 
 
+@app.route('/api/labs/parse', methods=['POST'])
+def parse_lab_report():
+    """🧪 LAB RESULT PARSER — Extract test values, units, reference ranges from lab PDFs."""
+    try:
+        data = request.get_json()
+
+        if not data or 'fileData' not in data:
+            return jsonify({'error': 'No file data provided'}), 400
+
+        filename = data.get('filename', 'lab_report.pdf')
+        file_type = data.get('fileType', 'application/pdf')
+        file_data_b64 = data['fileData']
+        demographics = data.get('demographics')
+        lab_date = data.get('labDate')
+
+        logger.info(f"🧪 PARSING LAB REPORT: {filename}")
+
+        import base64
+        file_bytes = base64.b64decode(file_data_b64)
+
+        temp_dir = tempfile.gettempdir()
+        temp_path = os.path.join(temp_dir, f"lab_{int(time.time())}_{filename}")
+        with open(temp_path, 'wb') as f:
+            f.write(file_bytes)
+
+        try:
+            extracted_text = document_parser.extract_text_from_file(temp_path, file_type)
+            logger.info(f"✅ Extracted {len(extracted_text)} characters from lab report")
+
+            # Use medical_nlp's lab extraction
+            from medical_nlp import extract_lab_results_from_text
+            lab_results = extract_lab_results_from_text(extracted_text, demographics)
+
+            labs_data = [
+                {
+                    'test_name': r.test_name,
+                    'value': r.value,
+                    'value_text': r.value_text,
+                    'unit': r.unit,
+                    'reference_low': r.reference_low,
+                    'reference_high': r.reference_high,
+                    'reference_text': r.reference_text,
+                    'flag': r.flag,
+                    'is_abnormal': r.is_abnormal,
+                    'context': r.context,
+                    'confidence': r.confidence,
+                }
+                for r in lab_results
+            ]
+
+            return jsonify({
+                'success': True,
+                'filename': filename,
+                'labs': labs_data,
+                'labCount': len(labs_data),
+                'abnormalCount': sum(1 for r in lab_results if r.is_abnormal),
+                'message': f'🧪 Found {len(labs_data)} lab results ({sum(1 for r in lab_results if r.is_abnormal)} abnormal)'
+            })
+
+        finally:
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+
+    except Exception as e:
+        logger.error(f"Lab parsing error: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'message': f'Failed to parse lab report: {str(e)}'
+        }), 500
+
+
 @app.route('/api/documents/parse-text', methods=['POST'])
 def parse_text():
     """🔥 REVOLUTIONARY TEXT PARSER ENDPOINT - For pasted notes from Google Keep etc!

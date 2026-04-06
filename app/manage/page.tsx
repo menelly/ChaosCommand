@@ -142,10 +142,10 @@ export default function WorkLifeIndex() {
     {
       id: 'lab-results',
       name: 'Lab Results & Tests',
-      shortDescription: 'Test results, trends, reference ranges',
-      helpContent: 'Track lab results over time with trend analysis and reference range comparisons. Upload lab reports, track patterns, and monitor changes. Perfect for chronic conditions requiring regular monitoring.',
+      shortDescription: 'Upload lab reports, track values and trends, catch what "normal" is hiding',
+      helpContent: 'Upload lab report PDFs for automatic extraction of test values, reference ranges, and flags. Track trends over time — see your ferritin going 7, 8, 9 across months. Abnormal results highlighted. No hardcoded test lists — the NLP finds what matters.',
       icon: <TestTube className="h-5 w-5" />,
-      status: 'coming-soon'
+      status: 'available'
     },
     {
       id: 'family-history',
@@ -225,6 +225,10 @@ export default function WorkLifeIndex() {
 
     if (trackerId === 'work-disability') {
       return '/work-disability'
+    }
+
+    if (trackerId === 'lab-results') {
+      return '/lab-results'
     }
 
     // Default fallback
