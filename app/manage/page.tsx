@@ -174,29 +174,21 @@ export default function WorkLifeIndex() {
 
     // WORK & DISABILITY
     {
-      id: 'missed-work',
+      id: 'work-disability',
       name: 'Missed Work & Disability',
-      shortDescription: 'FMLA, accommodations, disability applications',
-      helpContent: 'Comprehensive work and disability tracking including missed work days, FMLA usage, accommodation requests, and disability application progress. Essential for chronic illness and disability management.',
+      shortDescription: 'Missed work tracking, employment history, SSDI applications, accommodations',
+      helpContent: 'Track missed work days with impact levels and total limitation flags. Employment history with accommodation tracking (requested vs received). SSDI/disability application management with deadline tracking. Built-in SSDI education guide. Weaponize your paperwork.',
       icon: <Briefcase className="h-5 w-5" />,
-      status: 'coming-soon',
+      status: 'available',
       subTrackers: [
         { id: 'missed-days', name: 'Missed Work Days', icon: '📅' },
-        { id: 'fmla-tracking', name: 'FMLA Tracking', icon: '📋' },
-        { id: 'accommodations', name: 'Accommodations', icon: '♿' },
-        { id: 'disability-apps', name: 'Disability Applications', icon: '📝' }
+        { id: 'employment', name: 'Employment History', icon: '🏢' },
+        { id: 'disability-apps', name: 'SSDI / Applications', icon: '📝' },
+        { id: 'ssdi-guide', name: 'SSDI Guide', icon: '📚' }
       ]
     },
 
-    // EMPLOYMENT & CAREER
-    {
-      id: 'employment-history',
-      name: 'Employment History',
-      shortDescription: 'Job history, references, resume building',
-      helpContent: 'Track employment history, maintain reference contacts, and build/update resumes. Useful for job applications and keeping career information organized.',
-      icon: <Briefcase className="h-5 w-5" />,
-      status: 'planned'
-    },
+    // EMPLOYMENT HISTORY — absorbed into Work & Disability tab
 
     // GASLIGHT GARAGE — evidence locker for medical gaslighting receipts
     {
@@ -205,7 +197,7 @@ export default function WorkLifeIndex() {
       shortDescription: '"No REALLY, and I have proof" — your medical evidence locker',
       helpContent: 'Store photos, screenshots, and documents that prove what happened. Rashes that got dismissed, patient portal messages, before/after images, lab results that contradict what you were told. Your receipts, organized and ready to deploy.',
       icon: <FileImage className="h-5 w-5" />,
-      status: 'planned'
+      status: 'available'
     }
   ]
 
@@ -229,6 +221,10 @@ export default function WorkLifeIndex() {
 
     if (trackerId === 'gaslight-garage') {
       return '/gaslight-garage'
+    }
+
+    if (trackerId === 'work-disability') {
+      return '/work-disability'
     }
 
     // Default fallback

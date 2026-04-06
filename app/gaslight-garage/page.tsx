@@ -269,8 +269,7 @@ export default function GaslightGaragePage() {
           <div className="flex justify-center mb-6">
             <Button
               onClick={() => setShowForm(true)}
-              className="bg-[var(--accent-primary)] text-white hover:opacity-90"
-              style={{ textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}
+              className="bg-[var(--accent-primary)] text-[var(--text-main)] hover:opacity-90 font-medium border-2 border-[var(--accent-primary)]"
             >
               <Upload className="h-4 w-4 mr-2" />
               File New Evidence
@@ -334,7 +333,7 @@ export default function GaslightGaragePage() {
                       onClick={() => setCategory(cat.value)}
                       className={`px-3 py-1.5 rounded-full text-sm border transition-all ${
                         category === cat.value
-                          ? 'bg-[var(--accent-primary)] text-white border-[var(--accent-primary)]'
+                          ? 'bg-[var(--accent-primary)] text-[var(--text-main)] border-[var(--accent-primary)] font-medium'
                           : 'bg-[var(--bg-card)] text-[var(--text-muted)] border-[var(--border-soft)] hover:border-[var(--accent-primary)]'
                       }`}
                       style={category === cat.value ? { textShadow: '0 1px 2px rgba(0,0,0,0.2)' } : {}}
@@ -435,7 +434,7 @@ export default function GaslightGaragePage() {
                 <Button
                   onClick={handleSubmit}
                   disabled={!title.trim() || isSubmitting}
-                  className="bg-[var(--accent-primary)] text-white hover:opacity-90 flex-1"
+                  className="bg-[var(--accent-primary)] text-[var(--text-main)] hover:opacity-90 flex-1 font-medium border-2 border-[var(--accent-primary)]"
                   style={{ textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}
                 >
                   <CheckCircle className="h-4 w-4 mr-2" />
@@ -481,7 +480,7 @@ export default function GaslightGaragePage() {
                     onClick={() => setFilterTag(filterTag === tag ? null : tag)}
                     className={`px-2 py-1 rounded-full text-xs border transition-all ${
                       filterTag === tag
-                        ? 'bg-[var(--accent-primary)] text-white border-[var(--accent-primary)]'
+                        ? 'bg-[var(--accent-primary)] text-[var(--text-main)] border-[var(--accent-primary)] font-medium'
                         : 'bg-[var(--bg-card)] text-[var(--text-muted)] border-[var(--border-soft)]'
                     }`}
                   >
