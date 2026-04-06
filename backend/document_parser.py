@@ -37,14 +37,14 @@ logger = logging.getLogger(__name__)
 # Import our modular components
 from text_extractor import extract_text_from_file
 
-# 🧠 spaCy-based medical NLP (fast, accurate, offline!)
+# 🧠 Medical NLP (section-aware, negation-aware, demographics-filtered!)
 try:
-    from spacy_medical_parser import extract_medical_events, spacy_events_to_parsed_events
+    from medical_nlp import extract_medical_events, events_to_parsed_format as spacy_events_to_parsed_events
     SPACY_AVAILABLE = True
-    logger.info("✅ spaCy medical parser available")
+    logger.info("✅ medical_nlp parser loaded (NEW!)")
 except ImportError as e:
     SPACY_AVAILABLE = False
-    logger.warning(f"⚠️ spaCy medical parser not available: {e}")
+    logger.warning(f"⚠️ medical_nlp parser not available: {e}")
 
 @dataclass
 class IncidentalFinding:
@@ -168,7 +168,8 @@ class RevolutionaryDocumentParser:
         """
         return extract_text_from_file(file_path, file_type)
 
-    def parse_medical_events(self, text: str, filename: str) -> List[ParsedMedicalEvent]:
+    def parse_medical_events(self, text: str, filename: str,
+                            demographics: Optional[Dict] = None) -> List[ParsedMedicalEvent]:
         """
         🔥 REVOLUTIONARY MULTI-LAYERED MEDICAL EVENT PARSING
 
@@ -188,7 +189,7 @@ class RevolutionaryDocumentParser:
         if SPACY_AVAILABLE:
             try:
                 logger.info("🧠 Running spaCy medical NLP parser...")
-                spacy_events = extract_medical_events(text, filename)
+                spacy_events = extract_medical_events(text, filename, demographics=demographics)
                 spacy_parsed = spacy_events_to_parsed_events(spacy_events)
 
                 # Convert to ParsedMedicalEvent objects

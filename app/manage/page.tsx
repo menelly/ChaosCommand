@@ -112,12 +112,12 @@ export default function WorkLifeIndex() {
       status: 'available'
     },
 
-    // DIAGNOSES & TIMELINE
+    // MEDICAL HISTORY & TIMELINE
     {
       id: 'timeline',
-      name: '🏆 Diagnoses & Timeline',
-      shortDescription: 'Interactive medical timeline with provider linking',
-      helpContent: 'Revolutionary interconnected medical timeline! Track diagnoses, surgeries, hospitalizations, and treatments with visual timeline view. Links directly to your healthcare providers for complete medical journey visualization.',
+      name: '🏆 Medical History & Timeline',
+      shortDescription: 'Diagnoses, procedures, document uploads, interactive timeline',
+      helpContent: 'Your complete medical history in one place! Upload documents for AI-powered parsing, track diagnoses, surgeries, hospitalizations, and treatments. Visual timeline view with provider linking and dismissed finding detection.',
       icon: <FileText className="h-5 w-5" />,
       status: 'available'
     },
@@ -138,21 +138,7 @@ export default function WorkLifeIndex() {
       ]
     },
 
-    // MEDICAL HISTORY & RECORDS
-    {
-      id: 'medical-history',
-      name: 'Medical History',
-      shortDescription: 'Past procedures, surgeries, major events with document uploads',
-      helpContent: 'Comprehensive medical history tracking with timeline integration. Upload and store record scans, insurance cards, and important documents. Links to timeline for historical data - not just major events, but all medical interactions you want to remember.',
-      icon: <FileText className="h-5 w-5" />,
-      status: 'coming-soon',
-      subTrackers: [
-        { id: 'procedures', name: 'Procedures & Surgeries', icon: '🏥' },
-        { id: 'document-uploads', name: 'Document Uploads', icon: '📄' },
-        { id: 'insurance-cards', name: 'Insurance Cards', icon: '💳' },
-        { id: 'timeline-integration', name: 'Timeline Integration', icon: '📅' }
-      ]
-    },
+    // MEDICAL HISTORY — ABSORBED INTO TIMELINE (removed from visible list)
     {
       id: 'lab-results',
       name: 'Lab Results & Tests',
@@ -170,21 +156,21 @@ export default function WorkLifeIndex() {
       status: 'planned'
     },
 
-    // HOUSEHOLD MANAGEMENT
-    {
-      id: 'chore-chart',
-      name: 'Chore Chart & Adulting',
-      shortDescription: 'Household tasks with "normal people" guidance and reminders',
-      helpContent: 'Household task management with built-in guidance for neurodivergent folks who weren\'t taught basic adulting skills. Includes default schedules like "most people change sheets weekly" and optional reminders. Perfect for learning and maintaining household routines.',
-      icon: <Home className="h-5 w-5" />,
-      status: 'coming-soon',
-      subTrackers: [
-        { id: 'task-tracking', name: 'Task Tracking', icon: '✅' },
-        { id: 'adulting-guidance', name: 'Adulting Guidance', icon: '📚' },
-        { id: 'reminder-system', name: 'Gentle Reminders', icon: '🔔' },
-        { id: 'routine-building', name: 'Routine Building', icon: '🔄' }
-      ]
-    },
+    // HOUSEHOLD MANAGEMENT — hidden until post-ship, hot-add later
+    // {
+    //   id: 'chore-chart',
+    //   name: 'Chore Chart & Adulting',
+    //   shortDescription: 'Household tasks with "normal people" guidance and reminders',
+    //   helpContent: 'Household task management with built-in guidance for neurodivergent folks.',
+    //   icon: <Home className="h-5 w-5" />,
+    //   status: 'planned',
+    //   subTrackers: [
+    //     { id: 'task-tracking', name: 'Task Tracking', icon: '✅' },
+    //     { id: 'adulting-guidance', name: 'Adulting Guidance', icon: '📚' },
+    //     { id: 'reminder-system', name: 'Gentle Reminders', icon: '🔔' },
+    //     { id: 'routine-building', name: 'Routine Building', icon: '🔄' }
+    //   ]
+    // },
 
     // WORK & DISABILITY
     {
@@ -212,12 +198,12 @@ export default function WorkLifeIndex() {
       status: 'planned'
     },
 
-    // DOCUMENT MANAGEMENT
+    // GASLIGHT GARAGE — evidence locker for medical gaslighting receipts
     {
-      id: 'document-vault',
-      name: 'Document Vault',
-      shortDescription: 'Important document storage and organization',
-      helpContent: 'Secure storage for important documents like birth certificates, passports, insurance papers, and other critical life documents. Organized and searchable.',
+      id: 'gaslight-garage',
+      name: 'Gaslight Garage',
+      shortDescription: '"No REALLY, and I have proof" — your medical evidence locker',
+      helpContent: 'Store photos, screenshots, and documents that prove what happened. Rashes that got dismissed, patient portal messages, before/after images, lab results that contradict what you were told. Your receipts, organized and ready to deploy.',
       icon: <FileImage className="h-5 w-5" />,
       status: 'planned'
     }

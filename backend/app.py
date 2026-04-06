@@ -258,8 +258,16 @@ def parse_document():
             extracted_text = document_parser.extract_text_from_file(temp_path, file_type)
             logger.info(f"✅ Extracted {len(extracted_text)} characters")
 
+            # Get demographics for filtering (if provided)
+            demographics = None
+            if request.content_type and 'json' in request.content_type:
+                demographics = request.get_json(silent=True)
+                if demographics:
+                    demographics = demographics.get('demographics')
+
             # Parse medical events
-            parsed_events = document_parser.parse_medical_events(extracted_text, filename)
+            parsed_events = document_parser.parse_medical_events(extracted_text, filename,
+                                                                  demographics=demographics)
             logger.info(f"🎉 Found {len(parsed_events)} medical events")
 
             # Convert to JSON-serializable format
@@ -327,6 +335,7 @@ def parse_document_base64():
 
     Tauri's HTTP plugin doesn't handle FormData/File uploads through the Rust
     IPC bridge, so the frontend sends files as base64-encoded JSON instead.
+    Accepts optional 'demographics' field for filtering out personal info.
     """
     try:
         data = request.get_json()
@@ -337,8 +346,10 @@ def parse_document_base64():
         filename = data.get('filename', 'document.pdf')
         file_type = data.get('fileType', 'application/pdf')
         file_data_b64 = data['fileData']
+        demographics = data.get('demographics')  # Optional: user's personal info to exclude
 
-        logger.info(f"🔥 PARSING DOCUMENT (base64): {filename} ({file_type})")
+        logger.info(f"🔥 PARSING DOCUMENT (base64): {filename} ({file_type})"
+                     f"{' [demographics filter active]' if demographics else ''}")
 
         # Decode base64 to bytes
         import base64
@@ -356,8 +367,9 @@ def parse_document_base64():
             extracted_text = document_parser.extract_text_from_file(temp_path, file_type)
             logger.info(f"✅ Extracted {len(extracted_text)} characters")
 
-            # Parse medical events
-            parsed_events = document_parser.parse_medical_events(extracted_text, filename)
+            # Parse medical events (with demographics filtering if provided)
+            parsed_events = document_parser.parse_medical_events(extracted_text, filename,
+                                                                  demographics=demographics)
             logger.info(f"🎉 Found {len(parsed_events)} medical events")
 
             # Convert to JSON-serializable format (same as original endpoint)
@@ -783,10 +795,40 @@ def rate_limit_exceeded(error):
 def internal_error(error):
     return jsonify({'error': 'Internal server error'}), 500
 
+def _kill_zombie_on_port(port: int):
+    """Kill any existing process on our port before starting.
+    Concurrently doesn't always clean up Flask on Windows."""
+    import socket
+    import subprocess
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        sock.settimeout(1)
+        sock.connect(('127.0.0.1', port))
+        sock.close()
+        # Something is already on this port — kill it
+        logger.warning(f"⚠️ Port {port} already in use! Killing zombie process...")
+        result = subprocess.run(
+            ['powershell', '-Command',
+             f'Get-NetTCPConnection -LocalPort {port} -State Listen -ErrorAction SilentlyContinue '
+             f'| ForEach-Object {{ Stop-Process -Id $_.OwningProcess -Force }}'],
+            capture_output=True, text=True, timeout=5
+        )
+        import time
+        time.sleep(0.5)  # Brief pause for port to free up
+        logger.info(f"🔥 Zombie killed! Port {port} cleared.")
+    except (ConnectionRefusedError, socket.timeout, OSError):
+        pass  # Port is free, nothing to kill
+    except Exception as e:
+        logger.warning(f"⚠️ Could not clear port {port}: {e}")
+
+
 if __name__ == '__main__':
     # Development server
     port = int(os.environ.get('FLASK_PORT', 5000))
-    debug = os.environ.get('FLASK_DEBUG', 'True').lower() == 'true'
-    
+    debug = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
+
+    # Kill any zombie Flask from previous concurrently run
+    _kill_zombie_on_port(port)
+
     logger.info(f"Starting Chaos Command Center Backend on port {port}")
     app.run(host='0.0.0.0', port=port, debug=debug)

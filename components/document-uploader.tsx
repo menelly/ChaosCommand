@@ -96,7 +96,7 @@ export default function DocumentUploader({ onEventsExtracted, className = "" }: 
   // 🚀 REVOLUTIONARY HYBRID DATABASE INTEGRATION
   // TEMPORARILY COMMENTED OUT FOR DEBUGGING
   // const hybridDB = useHybridDatabase();
-  const { saveData } = useDailyData();
+  const { saveData, getSpecificData, getAllCategoryData } = useDailyData();
 
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -250,6 +250,26 @@ export default function DocumentUploader({ onEventsExtracted, className = "" }: 
 
       console.log(`📤 Sending ${file.name} (${(bytes.length / 1024).toFixed(1)} KB) to Flask as base64 JSON...`);
 
+      // 🛡️ Fetch demographics for personal info filtering (name, DOB, etc.)
+      // So the parser doesn't tag your NAME as a diagnosis
+      let demographics = null;
+      try {
+        // Demographics may have been saved on any date — find the most recent one
+        const allDemoRecords = await getAllCategoryData(CATEGORIES.USER);
+        const demoRecord = allDemoRecords
+          ?.filter((r: any) => r.subcategory === SUBCATEGORIES.DEMOGRAPHICS)
+          ?.sort((a: any, b: any) => (b.date || '').localeCompare(a.date || ''))
+          ?.[0];
+        if (demoRecord?.content) {
+          demographics = typeof demoRecord.content === 'string'
+            ? JSON.parse(demoRecord.content)
+            : demoRecord.content;
+          console.log('🛡️ Demographics loaded for parser filtering');
+        }
+      } catch (e) {
+        console.log('ℹ️ No demographics data found — parsing without personal info filter');
+      }
+
       const response = await backendFetch(`${FLASK_URL}/api/documents/parse-base64`, {
         method: 'POST',
         headers: {
@@ -259,6 +279,7 @@ export default function DocumentUploader({ onEventsExtracted, className = "" }: 
           filename: file.name,
           fileType: file.type,
           fileData: base64Data,
+          demographics: demographics, // Personal info to exclude from results
         }),
         timeout: 60000, // PDFs can take a moment with spaCy
       });
@@ -373,6 +394,16 @@ export default function DocumentUploader({ onEventsExtracted, className = "" }: 
       console.log(`🎉 Successfully processed ${allParsedEvents.length} events and auto-created ${providersToCreate.size} providers!`);
     } catch (error) {
       console.error('❌ Error processing events and providers:', error);
+    }
+  };
+
+  // ✅ ADD SINGLE EVENT TO TIMELINE
+  const handleConfirmSingleEvent = async (event: ParsedMedicalEvent) => {
+    try {
+      onEventsExtracted([event]);
+      console.log(`✅ Added single event: ${event.title}`);
+    } catch (error) {
+      console.error('❌ Error adding event:', error);
     }
   };
 
@@ -1234,6 +1265,33 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
                     <span>💡 Click any field or the edit button to customize this event!</span>
                   )}
                 </div>
+
+                {/* ✅ INDIVIDUAL ACCEPT/DISMISS BUTTONS */}
+                <div className="flex gap-2 mt-2">
+                  <Button
+                    size="sm"
+                    className="bg-[var(--accent-primary)] text-[var(--accent-text,white)] hover:opacity-90 flex-1 font-medium"
+                    style={{ color: 'white', textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}
+                    onClick={() => {
+                      handleConfirmSingleEvent(event);
+                      setAllParsedEvents(prev => prev.filter(e => e.id !== event.id));
+                    }}
+                  >
+                    <CheckCircle className="h-3 w-3 mr-1" />
+                    Add to Timeline
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-[var(--border-soft)] text-[var(--text-muted)] hover:text-red-600 hover:border-red-300"
+                    onClick={() => {
+                      setAllParsedEvents(prev => prev.filter(e => e.id !== event.id));
+                    }}
+                  >
+                    <X className="h-3 w-3 mr-1" />
+                    Skip
+                  </Button>
+                </div>
               </div>
             ))}
 
@@ -1241,7 +1299,7 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
             <div className="flex gap-3 justify-center pt-4 border-t border-[var(--border-soft)]">
               <Button
                 onClick={handleConfirmEvents}
-                className="bg-green-600 text-white hover:bg-green-700"
+                className="bg-[var(--accent-primary)] text-white hover:opacity-90"
               >
                 <CheckCircle className="h-4 w-4 mr-2" />
                 Add {allParsedEvents.length} Events to Timeline
