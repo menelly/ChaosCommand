@@ -227,6 +227,10 @@ export default function WorkLifeIndex() {
       return '/demographics'
     }
 
+    if (trackerId === 'gaslight-garage') {
+      return '/gaslight-garage'
+    }
+
     // Default fallback
     return '#'
   }
