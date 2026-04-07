@@ -1,247 +1,84 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { 
-  Network, 
-  Zap, 
-  TrendingUp, 
-  Calendar, 
-  Clock, 
+import {
+  Network,
+  Zap,
+  TrendingUp,
+  TrendingDown,
+  Clock,
   Target,
   Sparkles,
   RefreshCw,
   Brain,
   Activity,
   ArrowRight,
-  Loader2
+  ArrowUpRight,
+  ArrowDownRight,
+  Loader2,
+  Calendar,
+  BarChart3,
+  AlertTriangle
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import AppCanvas from '@/components/app-canvas'
 import { useDailyData } from '@/lib/database'
+import { analyzeAllPatterns, PatternInsight } from '@/lib/pattern-engine'
 
-interface PatternInsight {
-  id: string
-  type: 'correlation' | 'temporal' | 'trigger' | 'treatment'
-  title: string
-  description: string
-  confidence: number
-  impact: 'high' | 'medium' | 'low'
-  data: any
-}
-
-interface GraphData {
-  nodes: Array<{
-    id: string
-    label: string
-    type: 'symptom' | 'trigger' | 'treatment' | 'tracker'
-    frequency: number
-    severity?: number
-  }>
-  edges: Array<{
-    source: string
-    target: string
-    weight: number
-    type: 'causes' | 'helps' | 'correlates'
-  }>
-}
-
-// Real pattern analysis function
-const analyzeRealPatterns = (trackerData: any): PatternInsight[] => {
-  const insights: PatternInsight[] = []
-
-  // Count total entries across all trackers
-  const totalEntries = Object.values(trackerData).reduce((sum: number, data: any) => sum + (data?.length || 0), 0)
-
-  if (totalEntries === 0) {
-    return []
-  }
-
-  // Find most active trackers
-  const trackerActivity = Object.entries(trackerData)
-    .map(([name, data]: [string, any]) => ({ name, count: data?.length || 0 }))
-    .filter(t => t.count > 0)
-    .sort((a, b) => b.count - a.count)
-
-  if (trackerActivity.length > 0) {
-    const topTracker = trackerActivity[0]
-    insights.push({
-      id: 'activity-1',
-      type: 'temporal',
-      title: `${topTracker.name.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())} Most Active`,
-      description: `You've tracked ${topTracker.count} entries in ${topTracker.name}, making it your most monitored health area`,
-      confidence: 100,
-      impact: 'medium',
-      data: { tracker: topTracker.name, count: topTracker.count }
-    })
-  }
-
-  // Look for patterns in upper digestive data
-  if (trackerData.upperDigestive?.length > 0) {
-    const symptoms = trackerData.upperDigestive.flatMap((entry: any) => entry.symptoms || [])
-    const triggers = trackerData.upperDigestive.flatMap((entry: any) => entry.triggers || [])
-
-    if (symptoms.length > 0) {
-      const symptomCounts = symptoms.reduce((acc: any, symptom: string) => {
-        acc[symptom] = (acc[symptom] || 0) + 1
-        return acc
-      }, {})
-
-      const topSymptom = Object.entries(symptomCounts).sort(([,a]: any, [,b]: any) => b - a)[0]
-      if (topSymptom) {
-        insights.push({
-          id: 'digestive-1',
-          type: 'correlation',
-          title: `${topSymptom[0]} Pattern Detected`,
-          description: `${topSymptom[0]} appears in ${topSymptom[1]} of your digestive entries (${Math.round((topSymptom[1] as number / trackerData.upperDigestive.length) * 100)}%)`,
-          confidence: Math.min(95, Math.round((topSymptom[1] as number / trackerData.upperDigestive.length) * 100)),
-          impact: (topSymptom[1] as number) > trackerData.upperDigestive.length * 0.5 ? 'high' : 'medium',
-          data: { symptom: topSymptom[0], frequency: topSymptom[1], total: trackerData.upperDigestive.length }
-        })
-      }
-    }
-
-    if (triggers.length > 0) {
-      const triggerCounts = triggers.reduce((acc: any, trigger: string) => {
-        acc[trigger] = (acc[trigger] || 0) + 1
-        return acc
-      }, {})
-
-      const topTrigger = Object.entries(triggerCounts).sort(([,a]: any, [,b]: any) => b - a)[0]
-      if (topTrigger) {
-        insights.push({
-          id: 'trigger-1',
-          type: 'trigger',
-          title: `${topTrigger[0]} Trigger Identified`,
-          description: `${topTrigger[0]} appears as a trigger in ${topTrigger[1]} digestive episodes`,
-          confidence: Math.min(90, Math.round((topTrigger[1] as number / trackerData.upperDigestive.length) * 100)),
-          impact: (topTrigger[1] as number) > 2 ? 'high' : 'medium',
-          data: { trigger: topTrigger[0], frequency: topTrigger[1] }
-        })
-      }
-    }
-  }
-
-  // Look for cross-tracker patterns
-  const trackersWithData = trackerActivity.filter(t => t.count >= 3) // Need at least 3 entries
-  if (trackersWithData.length >= 2) {
-    insights.push({
-      id: 'cross-1',
-      type: 'correlation',
-      title: 'Multi-System Tracking',
-      description: `You're actively monitoring ${trackersWithData.length} different health areas, enabling comprehensive pattern analysis`,
-      confidence: 85,
-      impact: 'high',
-      data: { trackers: trackersWithData.map(t => t.name), count: trackersWithData.length }
-    })
-  }
-
-  return insights
-}
+const TRACKER_SUBCATEGORIES = [
+  'upper-digestive', 'pain', 'sleep', 'mental-health', 'brain-fog',
+  'movement', 'hydration', 'energy', 'anxiety', 'sensory', 'self-care',
+  'weather', 'food-choice', 'dysautonomia', 'seizure', 'reproductive',
+  'food-allergens', 'bathroom', 'head-pain', 'crisis', 'coping', 'other'
+] as const
 
 export default function PatternsPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [lastSync, setLastSync] = useState<Date | null>(null)
-  const [insights, setInsights] = useState<PatternInsight[]>([])
-  const [graphData, setGraphData] = useState<GraphData | null>(null)
+  const [results, setResults] = useState<ReturnType<typeof analyzeAllPatterns> | null>(null)
   const [activeTab, setActiveTab] = useState('overview')
   const { toast } = useToast()
   const { getDateRange } = useDailyData()
 
-  const syncToGraph = async () => {
+  const syncAndAnalyze = async () => {
     setIsLoading(true)
     try {
       toast({
-        title: "🧠 Syncing to Graph",
-        description: "Analyzing patterns across all your trackers...",
+        title: "🧠 Analyzing Patterns",
+        description: "Finding the methods to the madness...",
       })
 
-      // Calculate date range for last 90 days
-      const endDate = new Date().toISOString().split('T')[0] // Today
-      const startDate = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // 90 days ago
+      const endDate = new Date().toISOString().split('T')[0]
+      const startDate = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
 
-      // Get data from all trackers
-      const allData = await Promise.all([
-        getDateRange(startDate, endDate, 'upper-digestive'), // Last 90 days
-        getDateRange(startDate, endDate, 'pain'),
-        getDateRange(startDate, endDate, 'sleep'),
-        getDateRange(startDate, endDate, 'mental-health'),
-        getDateRange(startDate, endDate, 'brain-fog'),
-        getDateRange(startDate, endDate, 'movement'),
-        getDateRange(startDate, endDate, 'hydration'),
-        getDateRange(startDate, endDate, 'energy'),
-        getDateRange(startDate, endDate, 'anxiety'),
-        getDateRange(startDate, endDate, 'sensory'),
-        getDateRange(startDate, endDate, 'self-care'),
-        getDateRange(startDate, endDate, 'weather'),
-        getDateRange(startDate, endDate, 'food-choice'),
-        getDateRange(startDate, endDate, 'dysautonomia'),
-        getDateRange(startDate, endDate, 'seizure'),
-        getDateRange(startDate, endDate, 'reproductive'),
-        getDateRange(startDate, endDate, 'food-allergens'),
-        getDateRange(startDate, endDate, 'bathroom'),
-        getDateRange(startDate, endDate, 'head-pain'),
-        getDateRange(startDate, endDate, 'crisis'),
-        getDateRange(startDate, endDate, 'coping'),
-        getDateRange(startDate, endDate, 'other')
-      ])
+      // Fetch all tracker data in parallel
+      const allData = await Promise.all(
+        TRACKER_SUBCATEGORIES.map(sub => getDateRange(startDate, endDate, sub))
+      )
 
-      const [
-        upperDigestive, pain, sleep, mentalHealth, brainFog, movement,
-        hydration, energy, anxiety, sensory, selfCare, weather,
-        foodChoice, dysautonomia, seizure, reproductive, foodAllergens,
-        bathroom, headPain, crisis, coping, other
-      ] = allData
-
-      console.log('🔍 Analyzing data from all trackers:', {
-        upperDigestive: upperDigestive.length,
-        pain: pain.length,
-        sleep: sleep.length,
-        mentalHealth: mentalHealth.length,
-        brainFog: brainFog.length,
-        movement: movement.length,
-        hydration: hydration.length,
-        energy: energy.length,
-        anxiety: anxiety.length,
-        sensory: sensory.length,
-        selfCare: selfCare.length,
-        weather: weather.length,
-        foodChoice: foodChoice.length,
-        dysautonomia: dysautonomia.length,
-        seizure: seizure.length,
-        reproductive: reproductive.length,
-        foodAllergens: foodAllergens.length,
-        bathroom: bathroom.length,
-        headPain: headPain.length,
-        crisis: crisis.length,
-        coping: coping.length,
-        other: other.length
+      // Build tracker data object
+      const trackerData: Record<string, any[]> = {}
+      TRACKER_SUBCATEGORIES.forEach((sub, i) => {
+        trackerData[sub] = allData[i]
       })
 
-      // Analyze patterns in the real data
-      const realInsights = analyzeRealPatterns({
-        upperDigestive, pain, sleep, mentalHealth, brainFog, movement,
-        hydration, energy, anxiety, sensory, selfCare, weather,
-        foodChoice, dysautonomia, seizure, reproductive, foodAllergens,
-        bathroom, headPain, crisis, coping, other
-      })
-
-      setInsights(realInsights)
+      const analysisResults = analyzeAllPatterns(trackerData)
+      setResults(analysisResults)
       setLastSync(new Date())
 
       toast({
-        title: "✨ Sync Complete!",
-        description: `Found ${realInsights.length} patterns in your real data!`,
+        title: "✨ Analysis Complete!",
+        description: `Found ${analysisResults.summary.insightCount} patterns across ${analysisResults.summary.activeTrackers} trackers!`,
       })
-
     } catch (error) {
       console.error('Pattern analysis error:', error)
       toast({
-        title: "Sync Failed",
+        title: "Analysis Failed",
         description: "Unable to analyze patterns. Please try again.",
         variant: "destructive"
       })
@@ -265,9 +102,44 @@ export default function PatternsPage() {
       case 'temporal': return <Clock className="h-4 w-4" />
       case 'trigger': return <Zap className="h-4 w-4" />
       case 'treatment': return <Target className="h-4 w-4" />
+      case 'trend': return <TrendingUp className="h-4 w-4" />
       default: return <Activity className="h-4 w-4" />
     }
   }
+
+  const renderInsightCard = (insight: PatternInsight) => (
+    <Card key={insight.id} className="hover:shadow-md transition-shadow">
+      <CardContent className="p-6">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-2">
+              {getTypeIcon(insight.type)}
+              <h4 className="font-semibold">{insight.title}</h4>
+              <Badge className={getImpactColor(insight.impact)}>
+                {insight.impact} impact
+              </Badge>
+            </div>
+            <p className="text-muted-foreground mb-3">{insight.description}</p>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Confidence:</span>
+                <Progress value={insight.confidence} className="w-20" />
+                <span className="text-sm font-medium">{insight.confidence}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+
+  const renderEmptyState = (message: string) => (
+    <Card>
+      <CardContent className="p-8 text-center">
+        <p className="text-muted-foreground">{message}</p>
+      </CardContent>
+    </Card>
+  )
 
   return (
     <AppCanvas currentPage="patterns">
@@ -280,7 +152,7 @@ export default function PatternsPage() {
             <Sparkles className="h-8 w-8 text-primary" />
           </div>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Discover hidden connections and patterns across all your health data using advanced graph analysis
+            Your body has patterns. You're too busy surviving to find them manually. Let's fix that.
           </p>
         </div>
 
@@ -291,17 +163,17 @@ export default function PatternsPage() {
               <div className="space-y-1">
                 <h3 className="font-semibold flex items-center gap-2">
                   <Network className="h-5 w-5 text-primary" />
-                  Graph Database Sync
+                  Pattern Analysis Engine
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  {lastSync 
-                    ? `Last synced: ${lastSync.toLocaleString()}`
-                    : 'Sync your tracker data to discover patterns'
+                  {lastSync
+                    ? `Last analyzed: ${lastSync.toLocaleString()} • ${results?.summary.insightCount || 0} patterns found`
+                    : 'Analyze your tracker data to discover hidden connections'
                   }
                 </p>
               </div>
-              <Button 
-                onClick={syncToGraph} 
+              <Button
+                onClick={syncAndAnalyze}
                 disabled={isLoading}
                 className="flex items-center gap-2"
               >
@@ -310,7 +182,7 @@ export default function PatternsPage() {
                 ) : (
                   <RefreshCw className="h-4 w-4" />
                 )}
-                {isLoading ? 'Analyzing...' : 'Sync to Graph'}
+                {isLoading ? 'Analyzing...' : 'Find Patterns'}
               </Button>
             </div>
           </CardContent>
@@ -318,7 +190,7 @@ export default function PatternsPage() {
 
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4" />
               Overview
@@ -335,18 +207,23 @@ export default function PatternsPage() {
               <Target className="h-4 w-4" />
               Treatments
             </TabsTrigger>
+            <TabsTrigger value="trends" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Trends
+            </TabsTrigger>
           </TabsList>
 
+          {/* OVERVIEW TAB */}
           <TabsContent value="overview" className="space-y-6">
-            {insights.length === 0 ? (
+            {!results ? (
               <Card>
                 <CardContent className="p-12 text-center">
                   <Brain className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-xl font-semibold mb-2">No Patterns Yet</h3>
                   <p className="text-muted-foreground mb-6">
-                    Sync your tracker data to start discovering patterns and connections
+                    Hit "Find Patterns" to analyze your last 90 days of tracking data
                   </p>
-                  <Button onClick={syncToGraph} disabled={isLoading}>
+                  <Button onClick={syncAndAnalyze} disabled={isLoading}>
                     <Sparkles className="h-4 w-4 mr-2" />
                     Start Analysis
                   </Button>
@@ -354,85 +231,81 @@ export default function PatternsPage() {
               </Card>
             ) : (
               <div className="grid gap-6">
-                {/* Stats Overview */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Summary Stats */}
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                   <Card>
-                    <CardContent className="p-6">
+                    <CardContent className="p-4">
                       <div className="flex items-center gap-3">
-                        <Network className="h-8 w-8 text-blue-500" />
+                        <Brain className="h-8 w-8 text-purple-500" />
                         <div>
-                          <p className="text-2xl font-bold">{insights.length}</p>
-                          <p className="text-sm text-muted-foreground">Patterns Found</p>
+                          <p className="text-2xl font-bold">{results.summary.insightCount}</p>
+                          <p className="text-xs text-muted-foreground">Patterns Found</p>
                         </div>
                       </div>
                     </CardContent>
                   </Card>
-                  
                   <Card>
-                    <CardContent className="p-6">
+                    <CardContent className="p-4">
                       <div className="flex items-center gap-3">
-                        <TrendingUp className="h-8 w-8 text-green-500" />
+                        <Activity className="h-8 w-8 text-blue-500" />
                         <div>
-                          <p className="text-2xl font-bold">
-                            {insights.filter(i => i.impact === 'high').length}
-                          </p>
-                          <p className="text-sm text-muted-foreground">High Impact</p>
+                          <p className="text-2xl font-bold">{results.summary.activeTrackers}</p>
+                          <p className="text-xs text-muted-foreground">Active Trackers</p>
                         </div>
                       </div>
                     </CardContent>
                   </Card>
-                  
                   <Card>
-                    <CardContent className="p-6">
+                    <CardContent className="p-4">
                       <div className="flex items-center gap-3">
-                        <Activity className="h-8 w-8 text-purple-500" />
+                        <Calendar className="h-8 w-8 text-green-500" />
+                        <div>
+                          <p className="text-2xl font-bold">{results.summary.daysTracked}</p>
+                          <p className="text-xs text-muted-foreground">Days Tracked</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-3">
+                        <BarChart3 className="h-8 w-8 text-orange-500" />
+                        <div>
+                          <p className="text-2xl font-bold">{results.summary.totalEntries}</p>
+                          <p className="text-xs text-muted-foreground">Total Entries</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-3">
+                        <AlertTriangle className="h-8 w-8 text-red-500" />
                         <div>
                           <p className="text-2xl font-bold">
-                            {Math.round(insights.reduce((acc, i) => acc + i.confidence, 0) / insights.length)}%
+                            {results.all.filter(i => i.impact === 'high').length}
                           </p>
-                          <p className="text-sm text-muted-foreground">Avg Confidence</p>
+                          <p className="text-xs text-muted-foreground">High Impact</p>
                         </div>
                       </div>
                     </CardContent>
                   </Card>
                 </div>
 
-                {/* Insights List */}
+                {/* Top Insights */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Key Insights</h3>
-                  {insights.map((insight) => (
-                    <Card key={insight.id} className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-6">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              {getTypeIcon(insight.type)}
-                              <h4 className="font-semibold">{insight.title}</h4>
-                              <Badge className={getImpactColor(insight.impact)}>
-                                {insight.impact} impact
-                              </Badge>
-                            </div>
-                            <p className="text-muted-foreground mb-3">{insight.description}</p>
-                            <div className="flex items-center gap-4">
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm text-muted-foreground">Confidence:</span>
-                                <Progress value={insight.confidence} className="w-20" />
-                                <span className="text-sm font-medium">{insight.confidence}%</span>
-                              </div>
-                            </div>
-                          </div>
-                          <Button variant="ghost" size="sm">
-                            <ArrowRight className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                  <h3 className="text-lg font-semibold">Top Insights</h3>
+                  {results.all.length === 0 ? (
+                    renderEmptyState("Not enough data yet to find patterns. Keep tracking — the connections will emerge.")
+                  ) : (
+                    results.all.slice(0, 8).map(renderInsightCard)
+                  )}
                 </div>
               </div>
             )}
           </TabsContent>
 
+          {/* CORRELATIONS TAB */}
           <TabsContent value="correlations" className="space-y-6">
             <Card>
               <CardHeader>
@@ -442,13 +315,23 @@ export default function PatternsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">
-                  Correlation analysis will appear here after syncing your data.
+                <p className="text-sm text-muted-foreground mb-4">
+                  When one thing gets worse, what else changes? These patterns look at severity and co-occurrence across your trackers on the same days.
                 </p>
               </CardContent>
             </Card>
+            {!results ? (
+              renderEmptyState("Run analysis to discover cross-tracker correlations.")
+            ) : results.correlations.length === 0 ? (
+              renderEmptyState("No significant correlations found yet. This needs multiple trackers with severity data on overlapping days — keep tracking!")
+            ) : (
+              <div className="space-y-4">
+                {results.correlations.map(renderInsightCard)}
+              </div>
+            )}
           </TabsContent>
 
+          {/* TRIGGERS TAB */}
           <TabsContent value="triggers" className="space-y-6">
             <Card>
               <CardHeader>
@@ -458,13 +341,23 @@ export default function PatternsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">
-                  Trigger analysis will appear here after syncing your data.
+                <p className="text-sm text-muted-foreground mb-4">
+                  What sets things off? Triggers that appear across multiple body systems are especially important — they suggest a systemic pattern, not just a one-off.
                 </p>
               </CardContent>
             </Card>
+            {!results ? (
+              renderEmptyState("Run analysis to discover trigger patterns.")
+            ) : results.triggers.length === 0 ? (
+              renderEmptyState("No trigger patterns found yet. Log triggers when you track episodes — the patterns will emerge.")
+            ) : (
+              <div className="space-y-4">
+                {results.triggers.map(renderInsightCard)}
+              </div>
+            )}
           </TabsContent>
 
+          {/* TREATMENTS TAB */}
           <TabsContent value="treatments" className="space-y-6">
             <Card>
               <CardHeader>
@@ -474,11 +367,46 @@ export default function PatternsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">
-                  Treatment analysis will appear here after syncing your data.
+                <p className="text-sm text-muted-foreground mb-4">
+                  Which interventions actually help? This analyzes your tracked treatments and effectiveness ratings to find what's working (and what isn't).
                 </p>
               </CardContent>
             </Card>
+            {!results ? (
+              renderEmptyState("Run analysis to evaluate treatment effectiveness.")
+            ) : results.treatments.length === 0 ? (
+              renderEmptyState("No treatment data found yet. When you log episodes, include what interventions you tried — this page will show you what's actually working.")
+            ) : (
+              <div className="space-y-4">
+                {results.treatments.map(renderInsightCard)}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* TRENDS TAB */}
+          <TabsContent value="trends" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5" />
+                  Trends & Timing
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Are things getting better or worse? Do your symptoms cluster on certain days? Trends need at least 2 weeks of data to be meaningful.
+                </p>
+              </CardContent>
+            </Card>
+            {!results ? (
+              renderEmptyState("Run analysis to discover trends and temporal patterns.")
+            ) : (results.trends.length === 0 && results.temporal.length === 0) ? (
+              renderEmptyState("Not enough data for trend detection yet. Keep tracking — trends need at least 2 weeks of entries to emerge.")
+            ) : (
+              <div className="space-y-4">
+                {[...results.trends, ...results.temporal].map(renderInsightCard)}
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </div>

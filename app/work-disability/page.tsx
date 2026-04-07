@@ -1078,6 +1078,164 @@ export default function WorkDisabilityPage() {
               )}
             </Card>
 
+            {/* Step 6 - Diagnosis Strategy */}
+            <Card className="border-[var(--border-soft)] bg-[var(--bg-card)]">
+              <CardHeader className="cursor-pointer" onClick={() => setExpandedItem(expandedItem === 'step6' ? null : 'step6')}>
+                <CardTitle className="text-[var(--text-main)] flex items-center justify-between">
+                  <span>Step 6: Pick Your Diagnostic Battles (Your Spoons Are Limited)</span>
+                  {expandedItem === 'step6' ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+                </CardTitle>
+              </CardHeader>
+              {expandedItem === 'step6' && (
+                <CardContent className="space-y-3">
+                  <p className="text-[var(--text-main)]">
+                    Not every wrong diagnosis is worth fighting. Some wrong diagnoses are <em>paying your rent.</em>
+                  </p>
+                  <p className="text-[var(--text-main)]">
+                    If your SSDI or VA rating is based on a diagnosis, and a more accurate diagnosis would get the
+                    same treatment and the same benefits — leave it alone. You can investigate the correct diagnosis
+                    as a sidecar without threatening the benefits you already have.
+                  </p>
+                  <p className="text-[var(--text-main)] font-medium">
+                    The diagnoses worth fighting are the ones that HURT you:
+                  </p>
+                  <ul className="list-disc pl-6 space-y-2 text-[var(--text-main)]">
+                    <li>
+                      <strong>Conversion Disorder / FND</strong> when you have positive lab work (antibodies, inflammatory markers,
+                      abnormal imaging). This tells SSDI your symptoms are psychosomatic — that you could get better
+                      if you just tried harder. If you have MEASURABLE pathology, this diagnosis is a weapon aimed at you.
+                    </li>
+                    <li>
+                      <strong>"Anxiety"</strong> as the explanation for tachycardia, chest pain, or shortness of breath —
+                      when nobody ran cardiac or autonomic testing first. Get the testing. THEN if it's anxiety, fine.
+                      But "we didn't check" is not a diagnosis.
+                    </li>
+                    <li>
+                      <strong>Any diagnosis that blocks further investigation.</strong> If a doctor says "it's just X"
+                      and stops looking, and you're still getting worse — that diagnosis is a locked door, not an answer.
+                    </li>
+                  </ul>
+                  <p className="text-[var(--text-main)]">
+                    The diagnoses NOT worth fighting are the ones that don't change anything material:
+                  </p>
+                  <ul className="list-disc pl-6 space-y-2 text-[var(--text-main)]">
+                    <li>Same medication either way? Don't fight it.</li>
+                    <li>Same benefits either way? Don't fight it.</li>
+                    <li>The "correct" diagnosis has LESS disability recognition? Definitely don't fight it.</li>
+                  </ul>
+                  <p className="text-[var(--text-main)]">
+                    Your energy is finite. Spend it on the battles that change your treatment,
+                    your benefits, or your quality of life. Let the rest be wrong on paper.
+                    You know what's happening in your body. That's what matters.
+                  </p>
+                </CardContent>
+              )}
+            </Card>
+
+            {/* Step 7 - AI as Advocate */}
+            <Card className="border-[var(--border-soft)] bg-[var(--bg-card)]">
+              <CardHeader className="cursor-pointer" onClick={() => setExpandedItem(expandedItem === 'step7' ? null : 'step7')}>
+                <CardTitle className="text-[var(--text-main)] flex items-center justify-between">
+                  <span>Step 7: Your AI Knows the Law Better Than You Do (Use That)</span>
+                  {expandedItem === 'step7' ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+                </CardTitle>
+              </CardHeader>
+              {expandedItem === 'step7' && (
+                <CardContent className="space-y-4">
+                  <p className="text-[var(--text-main)]">
+                    You're already using an AI-built app — so you're okay with AI helping you.
+                    Here's the thing: AI assistants like Claude, ChatGPT, or Gemini have read every federal regulation,
+                    every CFR citation, every state insurance code, and every ADA requirement.
+                    They can write appeal letters that make insurance companies cry.
+                  </p>
+                  <p className="text-[var(--text-main)]">
+                    You bring the medical expertise (you know your body). They bring the legal language.
+                    Together, you're a nightmare for any denial letter.
+                  </p>
+
+                  <div className="space-y-4">
+                    <h4 className="font-semibold text-[var(--text-main)]">🔥 Insurance Denial Appeals</h4>
+                    <div className="bg-[var(--bg-card)] border border-[var(--border-soft)] rounded-lg p-4">
+                      <p className="text-sm text-[var(--text-muted)] mb-2 italic">Copy this, paste into Claude/ChatGPT, fill in the brackets:</p>
+                      <p className="text-sm text-[var(--text-main)] font-mono bg-black/5 dark:bg-white/5 p-3 rounded">
+                        "My insurance ([insurer name]) denied coverage for [medication/device/procedure].
+                        The denial reason was [quote from denial letter].
+                        My diagnoses are [list]. My doctor prescribed this because [reason].
+                        I need you to write a formal appeal letter citing the relevant federal and state
+                        regulations, my plan's own coverage criteria, and medical necessity standards.
+                        Include any applicable CFR citations, parity laws, or ADA requirements.
+                        Make it firm, professional, and impossible to ignore."
+                      </p>
+                    </div>
+
+                    <h4 className="font-semibold text-[var(--text-main)]">📋 Prior Authorization Disputes</h4>
+                    <div className="bg-[var(--bg-card)] border border-[var(--border-soft)] rounded-lg p-4">
+                      <p className="text-sm text-[var(--text-muted)] mb-2 italic">When they want you to fail 3 cheaper drugs first:</p>
+                      <p className="text-sm text-[var(--text-main)] font-mono bg-black/5 dark:bg-white/5 p-3 rounded">
+                        "My insurance requires step therapy / prior auth for [medication].
+                        I have already tried [list failed medications and why they failed].
+                        My doctor is requesting [specific medication] because [clinical reason].
+                        Write a prior authorization appeal that argues medical necessity,
+                        cites relevant step therapy exception criteria, and references
+                        any applicable state step therapy override laws for [your state]."
+                      </p>
+                    </div>
+
+                    <h4 className="font-semibold text-[var(--text-main)]">♿ Accommodation Requests</h4>
+                    <div className="bg-[var(--bg-card)] border border-[var(--border-soft)] rounded-lg p-4">
+                      <p className="text-sm text-[var(--text-muted)] mb-2 italic">For work, school, housing, or anywhere else:</p>
+                      <p className="text-sm text-[var(--text-main)] font-mono bg-black/5 dark:bg-white/5 p-3 rounded">
+                        "I need to request a reasonable accommodation from [employer/school/housing].
+                        My condition is [diagnosis]. My functional limitations are [list from your tracking data].
+                        The accommodation I need is [what you need].
+                        Write a formal ADA reasonable accommodation request letter.
+                        Include the interactive process requirement and cite relevant ADA/Section 504 provisions."
+                      </p>
+                    </div>
+
+                    <h4 className="font-semibold text-[var(--text-main)]">📑 SSDI Application Support</h4>
+                    <div className="bg-[var(--bg-card)] border border-[var(--border-soft)] rounded-lg p-4">
+                      <p className="text-sm text-[var(--text-muted)] mb-2 italic">For the function report (the form that actually matters):</p>
+                      <p className="text-sm text-[var(--text-main)] font-mono bg-black/5 dark:bg-white/5 p-3 rounded">
+                        "I'm filling out an SSDI function report (Form SSA-3373).
+                        My conditions are [list]. Here's what my daily life actually looks like: [paste your
+                        tracking data — symptoms, severity, missed activities, energy crashes, etc.]
+                        Help me describe my functional limitations in language that SSA evaluators
+                        understand. Focus on what I CAN'T do reliably, not on my diagnoses.
+                        Be specific about frequency, duration, and unpredictability."
+                      </p>
+                    </div>
+
+                    <h4 className="font-semibold text-[var(--text-main)]">🏥 New Provider Summary</h4>
+                    <div className="bg-[var(--bg-card)] border border-[var(--border-soft)] rounded-lg p-4">
+                      <p className="text-sm text-[var(--text-muted)] mb-2 italic">When you're seeing a new specialist and don't want to forget anything:</p>
+                      <p className="text-sm text-[var(--text-main)] font-mono bg-black/5 dark:bg-white/5 p-3 rounded">
+                        "I'm seeing a new [specialty] doctor. Here is my medical history: [paste from Command].
+                        Help me organize this into a clear, chronological summary that I can bring to the
+                        appointment. Highlight the most important things the specialist needs to know.
+                        Include a list of questions I should ask based on my symptoms."
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="bg-[var(--bg-card)] border border-[var(--border-soft)] rounded-lg p-4">
+                    <p className="text-sm text-[var(--text-main)]">
+                      <strong>Pro tip:</strong> The more specific data you paste in, the more devastating the letter.
+                      That's why you're tracking everything — not just for your doctor, but for
+                      every system that's ever going to tell you "no." Your data is your ammunition.
+                      Command organizes it. AI weaponizes it.
+                    </p>
+                  </div>
+
+                  <p className="text-xs text-[var(--text-muted)] italic">
+                    Works with Claude (claude.ai), ChatGPT (chatgpt.com), Gemini (gemini.google.com),
+                    or any AI assistant. Free tiers work fine for this. Your data stays in YOUR conversation —
+                    we don't send anything anywhere.
+                  </p>
+                </CardContent>
+              )}
+            </Card>
+
             {/* Reminder */}
             <Card className="border-orange-200 bg-orange-50">
               <CardContent className="py-4">
