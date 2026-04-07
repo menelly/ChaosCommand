@@ -21,6 +21,7 @@
 'use client'
 
 import React, { createContext, useContext, useState, useEffect } from 'react'
+import { closeDB, initializeDatabase } from '@/lib/database/dexie-db'
 
 interface UserContextType {
   userPin: string | null
@@ -58,10 +59,16 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('chaos-user-pin', pin) // Database key
     localStorage.setItem('isLoggedIn', 'true')
 
+    // Force initialize the new user's database
+    initializeDatabase(pin).catch(console.error)
+
     console.log(`🔐 Database isolated for PIN: ${pin.replace(/./g, '*')}`)
   }
 
   const logout = () => {
+    // Close the current DB connection BEFORE clearing the PIN
+    closeDB()
+
     setUserPin(null)
     setIsLoggedIn(false)
 
@@ -70,7 +77,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem('chaos-user-pin') // Database key
     localStorage.removeItem('isLoggedIn')
 
-    console.log('🚪 Logged out - database remains isolated')
+    console.log('🚪 Logged out - database connection closed, data preserved')
   }
 
   const switchUser = () => {

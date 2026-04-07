@@ -27,9 +27,11 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
-import { Plus, Package, Clock, Moon, ChevronRight, ChevronDown, Backpack, Heart, Pencil, Trash2 } from 'lucide-react'
+import { Plus, Package, Clock, Sparkles, ChevronRight, ChevronDown, Backpack, Heart, Pencil, Trash2, ExternalLink, Settings2 } from 'lucide-react'
 import SurvivalButton from '@/components/survival-button'
 import DailyPrompts from '@/components/daily-prompts'
+import { useDailyData } from '@/lib/database/hooks/use-daily-data'
+import { CATEGORIES } from '@/lib/database/dexie-db'
 import confetti from 'canvas-confetti'
 
 interface DailyTask {
@@ -47,6 +49,23 @@ interface GearItem {
   essential: boolean
 }
 
+interface SelfCareItem {
+  id: string
+  label: string
+  checked: boolean
+  link?: string  // hot link to another tracker page
+}
+
+const DEFAULT_SELF_CARE: Omit<SelfCareItem, 'checked'>[] = [
+  { id: 'wash', label: 'Washed the important bits', link: undefined },
+  { id: 'teeth', label: 'Brushed teeth', link: undefined },
+  { id: 'hair', label: 'Took care of hair', link: undefined },
+  { id: 'meds', label: 'Took medications', link: '/medications' },
+  { id: 'water', label: 'Drank water', link: '/hydration' },
+  { id: 'food', label: 'Fed the flesh suit', link: '/food-choice' },
+  { id: 'moved', label: 'Moved your body (any amount)', link: '/movement' },
+]
+
 interface ScheduleBlock {
   id: string
   name: string
@@ -55,10 +74,28 @@ interface ScheduleBlock {
   color: string
 }
 
+/** Convert 24h time string to 12h format */
+function to12h(time: string): string {
+  const [h, m] = time.split(':').map(Number)
+  const period = h >= 12 ? 'PM' : 'AM'
+  const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h
+  return `${hour12}:${m.toString().padStart(2, '0')} ${period}`
+}
+
 export default function CommandZone() {
   const [dailyTasks, setDailyTasks] = useState<DailyTask[]>([])
   const [newTask, setNewTask] = useState('')
   const [newGearItem, setNewGearItem] = useState('')
+  const [use24h, setUse24h] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('chaos-time-format') !== '12h'
+    }
+    return true
+  })
+  const [selfCare, setSelfCare] = useState<SelfCareItem[]>([])
+  const [selfCareEditing, setSelfCareEditing] = useState(false)
+  const [newSelfCareLabel, setNewSelfCareLabel] = useState('')
+  const { saveData: saveDailyData, getSpecificData: getDailySpecific } = useDailyData()
   const [celebrationEmojis, setCelebrationEmojis] = useState<Array<{id: number, emoji: string, x: number, y: number}>>([])
 
   // Luka's epic task celebration function! 🎉
@@ -127,14 +164,14 @@ export default function CommandZone() {
   ]
 
 
-  // Load data from localStorage
+  // Load data from localStorage (all keys include userPin for multi-user isolation)
   useEffect(() => {
     const today = new Date().toDateString()
     const userPin = localStorage.getItem('chaos-user-pin') || 'default'
-    const savedTasks = localStorage.getItem(`daily-tasks-${today}`)
-    const savedGearState = localStorage.getItem(`gear-check-${today}`)
-    const savedGearItems = localStorage.getItem(`gear-items-${userPin}`) // Persistent items list per user
-    const savedSchedule = localStorage.getItem(`schedule-${userPin}`) // Persistent schedule per user
+    const savedTasks = localStorage.getItem(`daily-tasks-${userPin}-${today}`)
+    const savedGearState = localStorage.getItem(`gear-check-${userPin}-${today}`)
+    const savedGearItems = localStorage.getItem(`gear-items-${userPin}`)
+    const savedSchedule = localStorage.getItem(`schedule-${userPin}`)
 
     if (savedTasks) setDailyTasks(JSON.parse(savedTasks))
 
@@ -166,11 +203,21 @@ export default function CommandZone() {
     }
 
     setGearCheck(gearItems)
+
+    // Load self-care checklist (items are persistent, checks reset daily)
+    const savedSelfCareItems = localStorage.getItem(`selfcare-items-${userPin}`)
+    const savedSelfCareState = localStorage.getItem(`selfcare-state-${userPin}-${today}`)
+    const items: Omit<SelfCareItem, 'checked'>[] = savedSelfCareItems
+      ? JSON.parse(savedSelfCareItems)
+      : DEFAULT_SELF_CARE
+    const stateMap: Record<string, boolean> = savedSelfCareState ? JSON.parse(savedSelfCareState) : {}
+    setSelfCare(items.map(item => ({ ...item, checked: stateMap[item.id] || false })))
   }, [])
 
   const saveTasks = (tasks: DailyTask[]) => {
     const today = new Date().toDateString()
-    localStorage.setItem(`daily-tasks-${today}`, JSON.stringify(tasks))
+    const userPin = localStorage.getItem('chaos-user-pin') || 'default'
+    localStorage.setItem(`daily-tasks-${userPin}-${today}`, JSON.stringify(tasks))
   }
 
   const saveGear = (gear: GearItem[]) => {
@@ -182,7 +229,7 @@ export default function CommandZone() {
       id: item.id,
       name: item.name,
       essential: item.essential,
-      completed: false // Always reset completed state in persistent storage
+      completed: false
     }))
     localStorage.setItem(`gear-items-${userPin}`, JSON.stringify(gearItems))
 
@@ -191,8 +238,51 @@ export default function CommandZone() {
     gear.forEach(item => {
       gearState[item.id] = item.completed
     })
-    localStorage.setItem(`gear-check-${today}`, JSON.stringify(gearState))
+    localStorage.setItem(`gear-check-${userPin}-${today}`, JSON.stringify(gearState))
   }
+
+  // Self-care persistence
+  const saveSelfCare = (items: SelfCareItem[]) => {
+    const today = new Date().toDateString()
+    const userPin = localStorage.getItem('chaos-user-pin') || 'default'
+    // Save persistent item definitions
+    const defs = items.map(({ id, label, link }) => ({ id, label, link }))
+    localStorage.setItem(`selfcare-items-${userPin}`, JSON.stringify(defs))
+    // Save daily check state
+    const stateMap: Record<string, boolean> = {}
+    items.forEach(i => { stateMap[i.id] = i.checked })
+    localStorage.setItem(`selfcare-state-${userPin}-${today}`, JSON.stringify(stateMap))
+    // Also save to Dexie for pattern engine / history
+    const dateKey = new Date().toISOString().split('T')[0]
+    saveDailyData(dateKey, CATEGORIES.TRACKER, 'self-care', {
+      items: items.map(i => ({ id: i.id, label: i.label, checked: i.checked })),
+      completedCount: items.filter(i => i.checked).length,
+      totalCount: items.length,
+    }).catch(() => {}) // best effort
+  }
+
+  const toggleSelfCare = (itemId: string) => {
+    const updated = selfCare.map(i => i.id === itemId ? { ...i, checked: !i.checked } : i)
+    setSelfCare(updated)
+    saveSelfCare(updated)
+  }
+
+  const addSelfCareItem = () => {
+    if (!newSelfCareLabel.trim()) return
+    const item: SelfCareItem = { id: Date.now().toString(), label: newSelfCareLabel.trim(), checked: false }
+    const updated = [...selfCare, item]
+    setSelfCare(updated)
+    saveSelfCare(updated)
+    setNewSelfCareLabel('')
+  }
+
+  const removeSelfCareItem = (itemId: string) => {
+    const updated = selfCare.filter(i => i.id !== itemId)
+    setSelfCare(updated)
+    saveSelfCare(updated)
+  }
+
+  const selfCareCompleted = selfCare.filter(i => i.checked).length
 
   const saveSchedule = (blocks: ScheduleBlock[]) => {
     const userPin = localStorage.getItem('chaos-user-pin') || 'default'
@@ -361,10 +451,24 @@ export default function CommandZone() {
                 <Clock className="h-5 w-5 text-[var(--accent-orange)]" />
                 Today's Schedule
               </div>
-              <Button onClick={openAddBlock} size="sm" variant="outline">
-                <Plus className="h-4 w-4 mr-1" />
-                Add
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-xs text-muted-foreground"
+                  onClick={() => {
+                    const next = !use24h
+                    setUse24h(next)
+                    localStorage.setItem('chaos-time-format', next ? '24h' : '12h')
+                  }}
+                >
+                  {use24h ? '24h' : '12h'}
+                </Button>
+                <Button onClick={openAddBlock} size="sm" variant="outline">
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add
+                </Button>
+              </div>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
@@ -372,7 +476,7 @@ export default function CommandZone() {
               <div key={block.id} className={`p-3 rounded-lg ${block.color} flex justify-between items-center`}>
                 <div>
                   <div className="font-medium">{block.name}</div>
-                  <div className="text-sm text-muted-foreground">{block.startTime} - {block.endTime}</div>
+                  <div className="text-sm text-muted-foreground">{use24h ? block.startTime : to12h(block.startTime)} - {use24h ? block.endTime : to12h(block.endTime)}</div>
                 </div>
                 <div className="flex gap-1">
                   <Button
@@ -493,19 +597,87 @@ export default function CommandZone() {
           </CardContent>
         </Card>
 
-        {/* Tuck-in Tracker Placeholder */}
-        <Card className="opacity-60">
+        {/* Self-Care Tracker — did you take care of your meat suit today? */}
+        <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Moon className="h-5 w-5 text-[var(--hover-glow)]" />
-              Tuck-in Tracker
-              <span className="text-sm bg-[var(--surface-1)] text-[var(--text-main)] px-2 py-1 rounded">Coming Soon</span>
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-[var(--hover-glow)]" />
+                Did You Take Care of You?
+                <span className="text-xs font-normal text-muted-foreground ml-1">(links open trackers)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">
+                  {selfCareCompleted}/{selfCare.length}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelfCareEditing(!selfCareEditing)}
+                  className="h-7 w-7 p-0 text-muted-foreground"
+                >
+                  <Settings2 className="h-4 w-4" />
+                </Button>
+              </div>
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground text-center py-8">
-              End-of-day reflection and wind-down flow will be here soon! 🌙
-            </p>
+          <CardContent className="space-y-2">
+            {selfCare.map(item => (
+              <div key={item.id} className="flex items-center justify-between group">
+                <label className="flex items-center gap-3 cursor-pointer flex-1 py-1">
+                  <Checkbox
+                    checked={item.checked}
+                    onCheckedChange={() => toggleSelfCare(item.id)}
+                  />
+                  <span className={`text-sm ${item.checked ? 'line-through text-muted-foreground' : ''}`}>
+                    {item.label}
+                  </span>
+                </label>
+                <div className="flex items-center gap-1">
+                  {item.link && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => window.location.href = item.link!}
+                    >
+                      <ExternalLink className="h-3 w-3" />
+                    </Button>
+                  )}
+                  {selfCareEditing && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0 text-muted-foreground hover:text-[var(--crisis-accent)]"
+                      onClick={() => removeSelfCareItem(item.id)}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
+
+            {selfCareEditing && (
+              <div className="flex gap-2 pt-2">
+                <Input
+                  placeholder="Add self-care item..."
+                  value={newSelfCareLabel}
+                  onChange={(e) => setNewSelfCareLabel(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && addSelfCareItem()}
+                  className="text-sm h-8"
+                />
+                <Button size="sm" variant="outline" className="h-8" onClick={addSelfCareItem}>
+                  <Plus className="h-3 w-3" />
+                </Button>
+              </div>
+            )}
+
+            {selfCareCompleted === selfCare.length && selfCare.length > 0 && (
+              <p className="text-xs text-center text-purple-500 pt-1">
+                ✨ You took care of your whole meat suit today!
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>

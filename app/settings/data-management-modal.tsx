@@ -31,6 +31,7 @@ import { useDailyData } from "@/lib/database/hooks/use-daily-data"
 import { GSpot4BoringFileExporter, BoringFileType } from "@/lib/database/g-spot-4.0-boring-file-steganography"
 import { exportAllData } from "@/lib/database/migration-helper"
 import TestPinManagerComponent from "@/components/test-pin-manager"
+import { generateStarterData, STARTER_DATA_TRACKERS } from "@/lib/database/starter-data"
 
 interface DataManagementModalProps {
   isOpen: boolean
@@ -58,27 +59,26 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
     setHasPin(!!savedPin)
   }, [])
 
-  // G-Spot Protocol Execution
+  // G-Spot Protocol v5 — Starter Data Overwrite
   const executeGSpotProtocol = async () => {
     try {
       setIsExecutingGSpot(true)
 
-      // Generate bland data (30 days worth)
-      console.log('🔥 G-SPOT: Generating bland data...')
-      const blandData = await generateBlandData(30)
+      // Generate deterministic starter data (90 days, all trackers)
+      console.log('🔥 G-SPOT v5: Generating starter data...')
+      const starterData = generateStarterData()
 
-      // Execute secure overwrite
-      console.log('🔥 G-SPOT: Executing secure overwrite...')
-      await secureOverwriteAllData(blandData)
+      // Execute secure overwrite with starter data
+      console.log(`🔥 G-SPOT v5: Overwriting with ${starterData.length} starter records across ${STARTER_DATA_TRACKERS.length} trackers...`)
+      await secureOverwriteAllData(starterData as any)
 
-      alert(`✅ G-Spot Protocol Complete!\n\n${blandData.length} bland records have been securely written.\n\nYour health data has been replaced with generic, unremarkable patterns.`)
+      alert(`✅ Data Reset to Starter Content\n\n${starterData.length} records across ${STARTER_DATA_TRACKERS.length} trackers.\n\nYour data now looks like default demo content that came with the app.`)
 
-      // Close the modal
       onClose()
 
     } catch (error) {
       console.error('G-Spot Protocol failed:', error)
-      alert(`❌ G-Spot Protocol Failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      alert(`❌ Data Reset Failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       setIsExecutingGSpot(false)
     }

@@ -25,7 +25,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
-import { Heart, Sparkles, X, Edit3, Save, RotateCcw } from 'lucide-react'
+import { Heart, Sparkles, X, Edit3, Save, RotateCcw, ChevronDown, ChevronUp, History } from 'lucide-react'
 import { useDailyData } from '@/lib/database/hooks/use-daily-data'
 import { CATEGORIES, SUBCATEGORIES } from '@/lib/database/dexie-db'
 
@@ -94,14 +94,27 @@ const DAILY_PROMPTS: DailyPrompt[] = [
   }
 ]
 
+// Lookup map for prompt text by ID
+const PROMPT_MAP = Object.fromEntries(DAILY_PROMPTS.map(p => [p.id, p]))
+
+interface HistoryEntry {
+  date: string
+  promptId: string
+  response: string
+  respondedAt?: string
+}
+
 export default function DailyPrompts() {
-  const { getSpecificData, saveData } = useDailyData()
+  const { getSpecificData, saveData, getDateRange } = useDailyData()
   const [currentPrompt, setCurrentPrompt] = useState<DailyPrompt | null>(null)
   const [response, setResponse] = useState('')
   const [isEditing, setIsEditing] = useState(false)
   const [isDismissed, setIsDismissed] = useState(false)
   const [savedResponse, setSavedResponse] = useState('')
   const [isLoading, setIsLoading] = useState(true)
+  const [showHistory, setShowHistory] = useState(false)
+  const [history, setHistory] = useState<HistoryEntry[]>([])
+  const [historyLoaded, setHistoryLoaded] = useState(false)
 
   // Get today's prompt and load saved data
   useEffect(() => {
@@ -195,6 +208,37 @@ export default function DailyPrompts() {
     } catch (error) {
       console.error('Failed to undismiss daily prompt:', error)
     }
+  }
+
+  const loadHistory = async () => {
+    if (historyLoaded) return
+    try {
+      const endDate = new Date().toISOString().split('T')[0]
+      const startDate = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+      const records = await getDateRange(startDate, endDate, SUBCATEGORIES.DAILY_PROMPTS)
+
+      const entries: HistoryEntry[] = records
+        .filter((r: any) => r.content?.response && !r.content?.isDismissed)
+        .map((r: any) => ({
+          date: r.date,
+          promptId: r.content.promptId,
+          response: r.content.response,
+          respondedAt: r.content.respondedAt,
+        }))
+        .sort((a: HistoryEntry, b: HistoryEntry) => b.date.localeCompare(a.date))
+
+      // Exclude today
+      const today = new Date().toISOString().split('T')[0]
+      setHistory(entries.filter(e => e.date !== today))
+      setHistoryLoaded(true)
+    } catch (error) {
+      console.warn('Failed to load reflection history:', error)
+    }
+  }
+
+  const toggleHistory = () => {
+    if (!showHistory) loadHistory()
+    setShowHistory(!showHistory)
   }
 
   if (isLoading || !currentPrompt) return null
@@ -306,10 +350,53 @@ export default function DailyPrompts() {
           </div>
         )}
 
-        <p className="text-xs text-muted-foreground text-center">
-          <Sparkles className="h-3 w-3 inline mr-1" />
-          A new prompt appears each day
-        </p>
+        <div className="space-y-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggleHistory}
+            className="w-full text-purple-600 hover:text-purple-700 text-xs"
+          >
+            <History className="h-3 w-3 mr-1" />
+            Past reflections
+            {showHistory ? <ChevronUp className="h-3 w-3 ml-1" /> : <ChevronDown className="h-3 w-3 ml-1" />}
+          </Button>
+
+          {showHistory && (
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              {history.length === 0 ? (
+                <p className="text-xs text-muted-foreground text-center py-2">
+                  No past reflections yet. They'll show up here as you write them.
+                </p>
+              ) : (
+                history.map((entry) => {
+                  const prompt = PROMPT_MAP[entry.promptId]
+                  return (
+                    <div key={entry.date} className="p-3 bg-white/30 dark:bg-black/10 rounded-lg border border-purple-100 dark:border-purple-800/50">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-medium text-purple-600">
+                          {new Date(entry.date + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
+                        </span>
+                        {prompt && (
+                          <span className="text-xs text-muted-foreground">{prompt.icon} {prompt.category}</span>
+                        )}
+                      </div>
+                      {prompt && (
+                        <p className="text-xs text-purple-500 dark:text-purple-400 mb-1 italic">{prompt.text}</p>
+                      )}
+                      <p className="text-sm text-foreground whitespace-pre-wrap">{entry.response}</p>
+                    </div>
+                  )
+                })
+              )}
+            </div>
+          )}
+
+          <p className="text-xs text-muted-foreground text-center">
+            <Sparkles className="h-3 w-3 inline mr-1" />
+            A new prompt appears each day
+          </p>
+        </div>
       </CardContent>
     </Card>
   )

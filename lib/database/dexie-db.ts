@@ -118,16 +118,27 @@ export const getDB = (userPin?: string): ChaosCommandCenterDB => {
     throw new Error('Database can only be accessed on the client side');
   }
 
-  // If PIN changed, create new database instance
-  if (userPin && userPin !== _currentPin) {
-    _db = new ChaosCommandCenterDB(userPin);
-    _currentPin = userPin;
-  } else if (!_db) {
-    // Fallback to default database if no PIN provided
-    _db = new ChaosCommandCenterDB();
+  const effectivePin = userPin || null;
+
+  // If PIN changed (including to/from null), close old DB and create new instance
+  if (effectivePin !== _currentPin || !_db || !_db.isOpen()) {
+    if (_db && _db.isOpen()) {
+      _db.close();
+    }
+    _db = new ChaosCommandCenterDB(effectivePin || undefined);
+    _currentPin = effectivePin;
   }
 
   return _db;
+};
+
+/** Force-close the current DB instance (call on logout) */
+export const closeDB = (): void => {
+  if (_db) {
+    _db.close();
+    _db = null as any;
+    _currentPin = null;
+  }
 };
 
 // For backward compatibility - will use current PIN from localStorage
