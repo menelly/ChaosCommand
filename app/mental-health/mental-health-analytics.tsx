@@ -121,23 +121,23 @@ export function MentalHealthAnalytics() {
     
     // Most common triggers
     triggerCounts: entries.reduce((acc, entry) => {
-      entry.triggers.forEach(trigger => {
+      (entry.triggers || []).forEach((trigger: string) => {
         acc[trigger] = (acc[trigger] || 0) + 1
       })
       return acc
     }, {} as Record<string, number>),
-    
+
     // Most common coping strategies
     copingCounts: entries.reduce((acc, entry) => {
-      entry.copingStrategies.forEach(strategy => {
+      (entry.copingStrategies || entry.managementStrategies || []).forEach((strategy: string) => {
         acc[strategy] = (acc[strategy] || 0) + 1
       })
       return acc
     }, {} as Record<string, number>),
     
     // Therapy sessions
-    therapySessions: entries.filter(e => e.therapyNotes.trim() !== '').length,
-    
+    therapySessions: entries.filter(e => e.therapyNotes && e.therapyNotes.trim() !== '').length,
+
     // Medication adherence
     medicationDays: entries.filter(e => e.medicationTaken).length
   }

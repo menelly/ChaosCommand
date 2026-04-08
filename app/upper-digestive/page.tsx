@@ -38,7 +38,7 @@ import { useGoblinMode } from "@/lib/goblin-mode-context"
 import { useToast } from "@/hooks/use-toast"
 import { format } from "date-fns"
 import DigestiveFlaskAnalytics from '../../modules/trackers/body/upper-digestive/digestive-flask-analytics'
-import { GraphAnalytics } from '../../components/graph-analytics'
+// GraphAnalytics moved to Patterns page
 
 interface UpperDigestiveEntry {
   id: string
@@ -572,20 +572,7 @@ export default function UpperDigestiveTracker() {
             />
 
             {/* Separator */}
-            <div className="border-t border-dashed border-border my-8"></div>
-
-            {/* Nova's Graph-Based Correlation Analytics */}
-            <div className="space-y-4">
-              <div className="text-center">
-                <h3 className="text-lg font-semibold text-purple-900 dark:text-purple-100">
-                  🔗 Advanced Correlation Analytics
-                </h3>
-                <p className="text-sm text-purple-700 dark:text-purple-300">
-                  Powered by Nova's SQLite Graph Overlay - discover hidden patterns across all your trackers
-                </p>
-              </div>
-              <GraphAnalytics />
-            </div>
+            {/* Pattern detection moved to dedicated Patterns page */}
           </TabsContent>
         </Tabs>
 

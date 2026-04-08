@@ -56,15 +56,15 @@ export default function PatternsPage() {
       const endDate = new Date().toISOString().split('T')[0]
       const startDate = '2000-01-01'  // All time
 
-      // Fetch all tracker data in parallel
-      const allData = await Promise.all(
-        TRACKER_SUBCATEGORIES.map(sub => getDateRange(startDate, endDate, sub))
-      )
+      // Fetch ALL tracker data in one query, then split by subcategory
+      const allRecords = await getDateRange(startDate, endDate, 'tracker')
 
-      // Build tracker data object
+      // Build tracker data object grouped by subcategory
       const trackerData: Record<string, any[]> = {}
-      TRACKER_SUBCATEGORIES.forEach((sub, i) => {
-        trackerData[sub] = allData[i]
+      TRACKER_SUBCATEGORIES.forEach(sub => {
+        trackerData[sub] = allRecords.filter(r =>
+          r.subcategory === sub || r.subcategory.startsWith(sub + '-')
+        )
       })
 
       const analysisResults = analyzeAllPatterns(trackerData)
