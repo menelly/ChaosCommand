@@ -127,8 +127,8 @@ export default function FoodChoiceTracker() {
     <AppCanvas>
       <div className="max-w-4xl mx-auto p-6 space-y-6">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Food Choice 🍽️</h1>
-          <p className="text-gray-600">Feed your flesh suit with kindness</p>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Food Choice 🍽️</h1>
+          <p className="text-muted-foreground">Feed your flesh suit with kindness</p>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -217,17 +217,17 @@ export default function FoodChoiceTracker() {
                                     'Meal'
                                   }
                                 </span>
-                                <span className="text-sm text-gray-500">
+                                <span className="text-sm text-muted-foreground">
                                   {format(new Date(simpleEntry.timestamp), 'h:mm a')}
                                 </span>
                               </div>
                               {simpleEntry.mood && (
-                                <p className="text-sm text-gray-600 mt-1">
+                                <p className="text-sm text-muted-foreground mt-1">
                                   Felt: {simpleEntry.mood}
                                 </p>
                               )}
                               {simpleEntry.notes && (
-                                <p className="text-sm text-gray-600 mt-1">{simpleEntry.notes}</p>
+                                <p className="text-sm text-muted-foreground mt-1">{simpleEntry.notes}</p>
                               )}
                             </div>
                             <div className="text-2xl">✨</div>

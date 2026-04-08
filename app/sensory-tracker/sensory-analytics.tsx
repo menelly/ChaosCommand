@@ -35,36 +35,29 @@ interface SensoryAnalyticsProps {
 }
 
 export function SensoryAnalytics({ refreshTrigger }: SensoryAnalyticsProps) {
-  const { getCategoryData, isLoading } = useDailyData()
+  const { getCategoryData, getDateRange, isLoading } = useDailyData()
   const [entries, setEntries] = useState<SensoryEntry[]>([])
 
-  // Load sensory entries from multiple days
+  // Load sensory entries (all time)
   useEffect(() => {
     const loadEntries = async () => {
       try {
         const allEntries: SensoryEntry[] = []
-        const today = new Date()
+        const today = format(new Date(), 'yyyy-MM-dd')
 
-        // Load entries from the last 90 days
-        for (let i = 0; i < 90; i++) {
-          const currentDate = new Date(today)
-          currentDate.setDate(today.getDate() - i)
-          const dateStr = format(currentDate, 'yyyy-MM-dd')
+        const records = await getDateRange('2000-01-01', today, CATEGORIES.TRACKER)
+        const sensoryRecords = records.filter(record =>
+          record.subcategory && record.subcategory.startsWith('sensory-')
+        )
 
-          const records = await getCategoryData(dateStr, CATEGORIES.TRACKER)
-          const sensoryRecords = records.filter(record =>
-            record.subcategory && record.subcategory.startsWith('sensory-')
-          )
-
-          for (const record of sensoryRecords) {
-            try {
-              const content = typeof record.content === 'string'
-                ? JSON.parse(record.content)
-                : record.content
-              allEntries.push(content as SensoryEntry)
-            } catch (parseError) {
-              console.error('Error parsing sensory entry:', parseError, record)
-            }
+        for (const record of sensoryRecords) {
+          try {
+            const content = typeof record.content === 'string'
+              ? JSON.parse(record.content)
+              : record.content
+            allEntries.push(content as SensoryEntry)
+          } catch (parseError) {
+            console.error('Error parsing sensory entry:', parseError, record)
           }
         }
 

@@ -81,10 +81,7 @@ export function SeizureTracker() {
         }
       }
 
-        setEntries(allEntries
-      } else {
-        setEntries([])
-      }
+      setEntries(allEntries)
     } catch (error) {
       console.error('Error loading seizure entries:', error)
       toast({
@@ -95,18 +92,17 @@ export function SeizureTracker() {
     }
   }
 
-  // Load all entries for analytics (across multiple days)
-  const loadAllEntries = async (days: number): Promise<SeizureEntry[]> => {
+  // Load all entries for analytics (all time)
+  const loadAllEntries = async (_days?: number): Promise<SeizureEntry[]> => {
     const allEntries: SeizureEntry[] = []
-    const today = new Date()
+    const today = formatDateForStorage(new Date())
 
-    for (let i = 0; i < days; i++) {
-      const date = new Date(today)
-      date.setDate(date.getDate() - i)
-      const dateStr = formatDateForStorage(date)
+    try {
+      const allRecords = await getDateRange('2000-01-01', today, CATEGORIES.TRACKER)
+      const seizureRecords = allRecords.filter(r => r.subcategory === 'seizure')
 
-      try {
-        const data = await getSpecificData(dateStr, CATEGORIES.TRACKER, 'seizure')
+      for (const record of seizureRecords) {
+        const data = record
         if (data?.content?.entries) {
           let entries = data.content.entries
           if (typeof entries === 'string') {
@@ -115,9 +111,9 @@ export function SeizureTracker() {
           if (!Array.isArray(entries)) entries = [entries]
           allEntries.push(...entries.filter((entry: any) => entry && typeof entry === 'object'))
         }
-      } catch (error) {
-        console.error(`Error loading seizures for ${dateStr}:`, error)
       }
+    } catch (error) {
+      console.error('Error loading seizure entries:', error)
     }
 
     return allEntries

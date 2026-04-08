@@ -69,9 +69,9 @@ export function ReproductiveHistory({ entries, onDelete, onEdit }: ReproductiveH
   }
 
   const getOPKColor = (opk: string | null) => {
-    if (!opk) return 'bg-gray-100'
+    if (!opk) return 'bg-muted'
     const opkLevel = OPK_LEVELS.find(level => level.value === opk)
-    return opkLevel ? opkLevel.color : 'bg-gray-100'
+    return opkLevel ? opkLevel.color : 'bg-muted'
   }
 
   return (

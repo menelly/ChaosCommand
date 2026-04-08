@@ -54,7 +54,7 @@ import { useDailyData, CATEGORIES } from '@/lib/database'
 import { format, addDays, subDays } from 'date-fns'
 
 export default function DysautonomiaTracker() {
-  const { saveData, getCategoryData, deleteData, isLoading } = useDailyData()
+  const { saveData, getCategoryData, getDateRange, deleteData, isLoading } = useDailyData()
   const { toast } = useToast()
   // const { episodeAlert } = useNotifications() // TODO: Add episode alerts
   const router = useRouter()
@@ -106,18 +106,17 @@ export default function DysautonomiaTracker() {
     }
   }
 
-  // Load ALL entries across date range for analytics
-  const loadAllEntriesForAnalytics = async (days: number = 90): Promise<DysautonomiaEntry[]> => {
+  // Load ALL entries across date range for analytics (all time)
+  const loadAllEntriesForAnalytics = async (_days?: number): Promise<DysautonomiaEntry[]> => {
     try {
       const allEntries: DysautonomiaEntry[] = []
-      const today = new Date()
+      const today = format(new Date(), 'yyyy-MM-dd')
 
-      // Load entries from the last X days
-      for (let i = 0; i < days; i++) {
-        const date = format(subDays(today, i), 'yyyy-MM-dd')
-        const records = await getCategoryData(date, CATEGORIES.TRACKER)
-        const record = records.find(record => record.subcategory === 'dysautonomia')
+      // Load all entries via single range query
+      const records = await getDateRange('2000-01-01', today, CATEGORIES.TRACKER)
+      const dysRecords = records.filter(record => record.subcategory === 'dysautonomia')
 
+      for (const record of dysRecords) {
         if (record && record.content && record.content.entries) {
           let entries = record.content.entries
 
@@ -126,7 +125,7 @@ export default function DysautonomiaTracker() {
             try {
               entries = JSON.parse(entries)
             } catch (e) {
-              console.error('Failed to parse JSON for date:', date, e)
+              console.error('Failed to parse JSON for date:', record.date, e)
               continue
             }
           }

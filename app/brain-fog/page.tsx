@@ -99,7 +99,7 @@ function BrainFogAnalytics({
   loadAllEntries: (days: number) => Promise<BrainFogEntry[]>
   getSymptomInfo: (value: string) => { value: string; emoji: string; description: string } | undefined
 }) {
-  const [timeRange, setTimeRange] = useState(90)
+  const [timeRange, setTimeRange] = useState(99999)
   const [analyticsData, setAnalyticsData] = useState<BrainFogEntry[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
@@ -190,6 +190,13 @@ function BrainFogAnalytics({
             {days} Days
           </Button>
         ))}
+        <Button
+          variant={timeRange === 99999 ? "default" : "outline"}
+          size="sm"
+          onClick={() => setTimeRange(99999)}
+        >
+          All Time
+        </Button>
       </div>
 
       {/* Summary Stats */}
@@ -337,13 +344,13 @@ export default function BrainFogTracker() {
   const loadEntries = async () => {
     try {
       const allEntries: BrainFogEntry[] = []
-      
-      // Load entries from the last 7 days for better history view
-      for (let i = 0; i < 7; i++) {
-        const date = format(new Date(Date.now() - i * 24 * 60 * 60 * 1000), 'yyyy-MM-dd')
-        const records = await getCategoryData(date, CATEGORIES.TRACKER)
-        const brainFogRecord = records.find(record => record.subcategory === 'brain-fog')
 
+      // Load all entries (all time)
+      const today = format(new Date(), 'yyyy-MM-dd')
+      const records = await getDateRange('2000-01-01', today, CATEGORIES.TRACKER)
+      const brainFogRecords = records.filter(record => record.subcategory === 'brain-fog')
+
+      for (const brainFogRecord of brainFogRecords) {
         if (brainFogRecord?.content?.entries) {
           // Parse entries with JSON parsing fix
           let entries = brainFogRecord.content.entries
@@ -351,7 +358,7 @@ export default function BrainFogTracker() {
             try {
               entries = JSON.parse(entries)
             } catch (e) {
-              console.error('Error parsing brain fog entries for date:', date, e)
+              console.error('Error parsing brain fog entries:', e)
               continue
             }
           }
@@ -375,20 +382,16 @@ export default function BrainFogTracker() {
     }
   }
 
-  // Load all entries for analytics (across multiple days)
-  const loadAllEntries = async (days: number): Promise<BrainFogEntry[]> => {
+  // Load all entries for analytics (all time)
+  const loadAllEntries = async (_days?: number): Promise<BrainFogEntry[]> => {
     const allEntries: BrainFogEntry[] = []
-    const today = new Date()
+    const today = format(new Date(), 'yyyy-MM-dd')
 
-    for (let i = 0; i < days; i++) {
-      const date = new Date(today)
-      date.setDate(date.getDate() - i)
-      const dateStr = format(date, 'yyyy-MM-dd')
+    try {
+      const records = await getDateRange('2000-01-01', today, CATEGORIES.TRACKER)
+      const brainFogRecords = records.filter(record => record.subcategory === 'brain-fog')
 
-      try {
-        const records = await getCategoryData(dateStr, CATEGORIES.TRACKER)
-        const brainFogRecord = records.find(record => record.subcategory === 'brain-fog')
-
+      for (const brainFogRecord of brainFogRecords) {
         if (brainFogRecord?.content?.entries) {
           let entries = brainFogRecord.content.entries
           if (typeof entries === 'string') {
@@ -398,9 +401,9 @@ export default function BrainFogTracker() {
             allEntries.push(...entries.filter((entry: any) => entry && typeof entry === 'object'))
           }
         }
-      } catch (error) {
-        console.error(`Error loading brain fog for ${dateStr}:`, error)
       }
+    } catch (error) {
+      console.error('Error loading brain fog entries:', error)
     }
 
     return allEntries

@@ -34,34 +34,27 @@ interface AnxietyAnalyticsProps {
 }
 
 export function AnxietyAnalytics({ refreshTrigger }: AnxietyAnalyticsProps) {
-  const { getCategoryData, isLoading } = useDailyData()
+  const { getCategoryData, getDateRange, isLoading } = useDailyData()
   const [entries, setEntries] = useState<AnxietyEntry[]>([])
 
-  // Load anxiety entries from multiple days
+  // Load anxiety entries (all time)
   useEffect(() => {
     const loadEntries = async () => {
       try {
         const allEntries: AnxietyEntry[] = []
-        const today = new Date()
+        const today = new Date().toISOString().split('T')[0]
 
-        // Load entries from the last 90 days (like other trackers do)
-        for (let i = 0; i < 90; i++) {
-          const currentDate = new Date(today)
-          currentDate.setDate(today.getDate() - i)
-          const dateStr = currentDate.toISOString().split('T')[0] // YYYY-MM-DD format
+        const records = await getDateRange('2000-01-01', today, CATEGORIES.TRACKER)
+        const anxietyRecords = records.filter(record =>
+          record.subcategory && record.subcategory.startsWith('anxiety-')
+        )
 
-          const records = await getCategoryData(dateStr, CATEGORIES.TRACKER)
-          const anxietyRecords = records.filter(record =>
-            record.subcategory && record.subcategory.startsWith('anxiety-')
-          )
-
-          for (const record of anxietyRecords) {
-            try {
-              const entry = JSON.parse(record.content) as AnxietyEntry
-              allEntries.push(entry)
-            } catch (parseError) {
-              console.error('Error parsing anxiety entry:', parseError, record)
-            }
+        for (const record of anxietyRecords) {
+          try {
+            const entry = JSON.parse(record.content) as AnxietyEntry
+            allEntries.push(entry)
+          } catch (parseError) {
+            console.error('Error parsing anxiety entry:', parseError, record)
           }
         }
 

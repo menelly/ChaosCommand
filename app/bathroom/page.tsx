@@ -171,21 +171,17 @@ export default function BathroomTracker() {
     }
   }
 
-  // Load entries across multiple dates for analytics
-  const loadAllEntries = async (days: number): Promise<BathroomEntry[]> => {
+  // Load entries across multiple dates for analytics (all time)
+  const loadAllEntries = async (_days?: number): Promise<BathroomEntry[]> => {
     try {
-      const endDate = new Date()
-      const startDate = new Date()
-      startDate.setDate(endDate.getDate() - days + 1)
-
+      const endDate = format(new Date(), 'yyyy-MM-dd')
       const allEntries: BathroomEntry[] = []
 
-      // Load entries for each day in the range
-      for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-        const dateKey = format(d, 'yyyy-MM-dd')
-        const records = await getCategoryData(dateKey, CATEGORIES.TRACKER)
-        const bathroomRecord = records.find(record => record.subcategory === 'bathroom')
+      // Load all entries via single range query
+      const records = await getDateRange('2000-01-01', endDate, CATEGORIES.TRACKER)
+      const bathroomRecords = records.filter(record => record.subcategory === 'bathroom')
 
+      for (const bathroomRecord of bathroomRecords) {
         if (bathroomRecord?.content?.entries) {
           let entries: any = bathroomRecord.content.entries
           if (typeof entries === 'string') {
@@ -202,7 +198,7 @@ export default function BathroomTracker() {
         }
       }
 
-      console.log(`💩 Loaded ${allEntries.length} bathroom entries across ${days} days`)
+      console.log(`💩 Loaded ${allEntries.length} bathroom entries (all time)`)
       return allEntries
     } catch (error) {
       console.error('Failed to load all bathroom entries:', error)
@@ -210,10 +206,10 @@ export default function BathroomTracker() {
     }
   }
 
-  // Load history entries (last 90 days for history tab)
+  // Load history entries (all time for history tab)
   const loadHistoryEntries = async () => {
     try {
-      const historyData = await loadAllEntries(90) // Load last 90 days
+      const historyData = await loadAllEntries() // Load all time
       // Sort by date and time, most recent first
       const sortedEntries = historyData.sort((a, b) => {
         const dateCompare = b.date.localeCompare(a.date)
@@ -599,7 +595,7 @@ export default function BathroomTracker() {
                   Potty History
                 </CardTitle>
                 <CardDescription>
-                  Your documented digestive adventures over the last 90 days
+                  Your documented digestive adventures
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -607,7 +603,7 @@ export default function BathroomTracker() {
                   <div className="text-center py-8">
                     <Utensils className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                     <p className="text-muted-foreground">
-                      No potty adventures logged in the last 90 days
+                      No potty adventures logged yet
                     </p>
                     <p className="text-sm text-muted-foreground mt-2">
                       Your digestive goblins are being mysterious. Tap "Log Bathroom Visit" to document their shenanigans! 🧙‍♂️

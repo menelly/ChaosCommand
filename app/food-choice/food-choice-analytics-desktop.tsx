@@ -292,11 +292,11 @@ export default function FoodChoiceAnalyticsDesktop({ refreshTrigger }: FoodChoic
   }
 
   const getMoodInfo = (value: string) => {
-    return EATING_MOODS.find(m => m.value === value) || { value, label: value, color: 'bg-gray-100 text-gray-800' }
+    return EATING_MOODS.find(m => m.value === value) || { value, label: value, color: 'bg-muted text-muted-foreground' }
   }
 
   const getFoodGroupInfo = (value: string) => {
-    return FOOD_GROUPS.find(g => g.value === value) || { value, label: value, color: 'bg-gray-100 text-gray-800' }
+    return FOOD_GROUPS.find(g => g.value === value) || { value, label: value, color: 'bg-muted text-muted-foreground' }
   }
 
   if (isLoading) {

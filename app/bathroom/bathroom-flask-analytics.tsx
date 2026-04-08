@@ -104,7 +104,7 @@ export default function BathroomFlaskAnalytics({ entries, currentDate, loadAllEn
   const [analyticsData, setAnalyticsData] = useState<FlaskAnalyticsData | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [dateRange, setDateRange] = useState('30')
+  const [dateRange, setDateRange] = useState('all')
 
   // Load Flask analytics when entries change
   useEffect(() => {
@@ -273,6 +273,7 @@ export default function BathroomFlaskAnalytics({ entries, currentDate, loadAllEn
             <SelectItem value="7">7 days</SelectItem>
             <SelectItem value="30">30 days</SelectItem>
             <SelectItem value="90">90 days</SelectItem>
+            <SelectItem value="all">All Time</SelectItem>
           </SelectContent>
         </Select>
       </div>

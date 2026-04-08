@@ -33,7 +33,7 @@ import { FoodChoiceEntry } from "./food-choice-types"
 import { EATING_MOODS, FOOD_GROUPS } from "./food-choice-constants"
 
 export default function FoodChoiceHistory() {
-  const { getCategoryData, deleteData } = useDailyData()
+  const { getCategoryData, getDateRange, deleteData } = useDailyData()
   const { toast } = useToast()
   
   const [historyEntries, setHistoryEntries] = useState<Array<{date: string, entry: FoodChoiceEntry}>>([])
@@ -46,21 +46,13 @@ export default function FoodChoiceHistory() {
   const loadHistory = async () => {
     setIsLoading(true)
     try {
-      // Get last 90 days of data
-      const endDate = new Date()
-      const startDate = new Date()
-      startDate.setDate(startDate.getDate() - 90)
-
-      const dateRange = []
-      for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-        dateRange.push(format(new Date(d), 'yyyy-MM-dd'))
-      }
+      // Get all time data using range query (not day-by-day loop!)
+      const today = format(new Date(), 'yyyy-MM-dd')
+      const records = await getDateRange('2000-01-01', today, CATEGORIES.TRACKER)
+      const foodRecords = records.filter(r => r.subcategory === 'food-choice')
 
       const entries = []
-      for (const date of dateRange) {
-        const records = await getCategoryData(date, CATEGORIES.TRACKER)
-        const foodRecord = records.find(record => record.subcategory === 'food-choice')
-
+      for (const foodRecord of foodRecords) {
         if (foodRecord?.content) {
           let content = foodRecord.content
           if (typeof content === 'string') {
@@ -73,7 +65,7 @@ export default function FoodChoiceHistory() {
           }
 
           if (content.simpleEntries?.length > 0 || content.detailedEntries?.length > 0 || content.generalNotes?.trim()) {
-            entries.push({ date, entry: content })
+            entries.push({ date: foodRecord.date, entry: content })
           }
         }
       }
@@ -113,19 +105,19 @@ export default function FoodChoiceHistory() {
 
   const getMoodColor = (mood: string) => {
     const moodOption = EATING_MOODS.find(m => m.value === mood)
-    return moodOption?.color || 'bg-gray-100 text-gray-800'
+    return moodOption?.color || 'bg-muted text-muted-foreground'
   }
 
   const getFoodGroupColor = (group: string) => {
     const groupOption = FOOD_GROUPS.find(g => g.value === group)
-    return groupOption?.color || 'bg-gray-100 text-gray-800'
+    return groupOption?.color || 'bg-muted text-muted-foreground'
   }
 
   if (isLoading) {
     return (
       <Card>
         <CardContent className="p-6">
-          <p className="text-center text-gray-500">Loading food history...</p>
+          <p className="text-center text-muted-foreground">Loading food history...</p>
         </CardContent>
       </Card>
     )
@@ -141,8 +133,8 @@ export default function FoodChoiceHistory() {
         <CardContent>
           <div className="text-center py-8">
             <Utensils className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <p className="text-gray-500">
-              No food entries found in the last 90 days.<br/>
+            <p className="text-muted-foreground">
+              No food entries found.<br/>
               Start tracking to see your nourishment journey!
             </p>
           </div>
@@ -154,7 +146,7 @@ export default function FoodChoiceHistory() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Food Choice History - Last 90 Days</CardTitle>
+        <CardTitle>Food Choice History - All Time</CardTitle>
         <CardDescription>Your nourishment journey</CardDescription>
       </CardHeader>
       <CardContent>
@@ -192,7 +184,7 @@ export default function FoodChoiceHistory() {
                                 'Meal'
                               }
                             </span>
-                            <span className="text-sm text-gray-500 ml-2">
+                            <span className="text-sm text-muted-foreground ml-2">
                               {format(new Date(simpleEntry.timestamp), 'h:mm a')}
                             </span>
                           </div>
@@ -204,7 +196,7 @@ export default function FoodChoiceHistory() {
                           </Badge>
                         )}
                         {simpleEntry.notes && (
-                          <p className="text-sm text-gray-600 mt-2">{simpleEntry.notes}</p>
+                          <p className="text-sm text-muted-foreground mt-2">{simpleEntry.notes}</p>
                         )}
                         {simpleEntry.tags.length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-2">
@@ -235,7 +227,7 @@ export default function FoodChoiceHistory() {
                           <span className="font-medium">
                             {detailedEntry.mealType.charAt(0).toUpperCase() + detailedEntry.mealType.slice(1)}
                           </span>
-                          <span className="text-sm text-gray-500">
+                          <span className="text-sm text-muted-foreground">
                             {format(new Date(detailedEntry.timestamp), 'h:mm a')}
                           </span>
                         </div>
@@ -243,7 +235,7 @@ export default function FoodChoiceHistory() {
                         {/* Foods */}
                         {detailedEntry.foods.length > 0 && (
                           <div className="mb-2">
-                            <p className="text-sm font-medium text-gray-700">Foods:</p>
+                            <p className="text-sm font-medium text-muted-foreground">Foods:</p>
                             <div className="flex flex-wrap gap-1">
                               {detailedEntry.foods.map((food) => (
                                 <Badge key={food} variant="secondary" className="text-xs">
@@ -257,7 +249,7 @@ export default function FoodChoiceHistory() {
                         {/* Macros */}
                         {(detailedEntry.calories || detailedEntry.protein || detailedEntry.carbs || detailedEntry.fat) && (
                           <div className="mb-2">
-                            <p className="text-sm font-medium text-gray-700">Nutrition:</p>
+                            <p className="text-sm font-medium text-muted-foreground">Nutrition:</p>
                             <div className="flex flex-wrap gap-2 text-xs">
                               {detailedEntry.calories && <span>🔥 {detailedEntry.calories} cal</span>}
                               {detailedEntry.protein && <span>💪 {detailedEntry.protein}g protein</span>}
@@ -271,7 +263,7 @@ export default function FoodChoiceHistory() {
                         {/* Food Groups */}
                         {detailedEntry.foodGroups.length > 0 && (
                           <div className="mb-2">
-                            <p className="text-sm font-medium text-gray-700">Food Groups:</p>
+                            <p className="text-sm font-medium text-muted-foreground">Food Groups:</p>
                             <div className="flex flex-wrap gap-1">
                               {detailedEntry.foodGroups.map((group) => (
                                 <Badge key={group} className={`${getFoodGroupColor(group)} text-xs`}>
@@ -283,7 +275,7 @@ export default function FoodChoiceHistory() {
                         )}
 
                         {detailedEntry.notes && (
-                          <p className="text-sm text-gray-600 mt-2">{detailedEntry.notes}</p>
+                          <p className="text-sm text-muted-foreground mt-2">{detailedEntry.notes}</p>
                         )}
 
                         {detailedEntry.tags.length > 0 && (
@@ -305,7 +297,7 @@ export default function FoodChoiceHistory() {
               {entry.generalNotes && (
                 <div>
                   <h4 className="font-medium mb-1">General Notes:</h4>
-                  <p className="text-gray-700 bg-gray-50 p-2 rounded">{entry.generalNotes}</p>
+                  <p className="text-foreground bg-muted/50 p-2 rounded">{entry.generalNotes}</p>
                 </div>
               )}
             </div>

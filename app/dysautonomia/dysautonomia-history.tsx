@@ -30,7 +30,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Heart, Edit, Trash2, Calendar } from 'lucide-react'
-import { format, subDays } from 'date-fns'
+import { format } from 'date-fns'
 
 // Local imports
 import { DysautonomiaEntry } from './dysautonomia-types'
@@ -46,7 +46,7 @@ interface DysautonomiaHistoryProps {
 }
 
 export function DysautonomiaHistory({ onEdit, onDelete, refreshTrigger }: DysautonomiaHistoryProps) {
-  const { getCategoryData } = useDailyData()
+  const { getCategoryData, getDateRange } = useDailyData()
   const [historyEntries, setHistoryEntries] = useState<DysautonomiaEntry[]>([])
   const [historyLoading, setHistoryLoading] = useState(false)
 
@@ -58,14 +58,13 @@ export function DysautonomiaHistory({ onEdit, onDelete, refreshTrigger }: Dysaut
     setHistoryLoading(true)
     try {
       const allEntries: DysautonomiaEntry[] = []
-      const today = new Date()
-      
-      // Load last 90 days of data
-      for (let i = 0; i < 90; i++) {
-        const date = format(subDays(today, i), 'yyyy-MM-dd')
-        const records = await getCategoryData(date, CATEGORIES.TRACKER)
-        const record = records.find(record => record.subcategory === 'dysautonomia')
-        
+      const today = format(new Date(), 'yyyy-MM-dd')
+
+      // Load all time data
+      const records = await getDateRange('2000-01-01', today, CATEGORIES.TRACKER)
+      const dysRecords = records.filter(record => record.subcategory === 'dysautonomia')
+
+      for (const record of dysRecords) {
         if (record && record.content && record.content.entries) {
           let dayEntries = record.content.entries
           if (typeof dayEntries === 'string') {
@@ -181,7 +180,7 @@ export function DysautonomiaHistory({ onEdit, onDelete, refreshTrigger }: Dysaut
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
-            Episode History (90 Days)
+            Episode History (All Time)
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">

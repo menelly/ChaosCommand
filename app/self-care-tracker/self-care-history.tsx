@@ -148,14 +148,14 @@ export function SelfCareHistory({ refreshTrigger, onEdit, onDelete }: SelfCareHi
     const change = after - before
     if (change > 0) return { text: `+${change}`, color: 'text-green-600' }
     if (change < 0) return { text: `${change}`, color: 'text-red-600' }
-    return { text: '0', color: 'text-gray-600' }
+    return { text: '0', color: 'text-muted-foreground' }
   }
 
   const getStressChange = (before: number, after: number) => {
     const change = before - after // Positive change means stress decreased (good)
     if (change > 0) return { text: `-${change}`, color: 'text-green-600' }
     if (change < 0) return { text: `+${Math.abs(change)}`, color: 'text-red-600' }
-    return { text: '0', color: 'text-gray-600' }
+    return { text: '0', color: 'text-muted-foreground' }
   }
 
   if (isLoading) {

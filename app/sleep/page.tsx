@@ -52,7 +52,7 @@ export default function SleepTracker() {
       setIsLoading(true)
       const data = await getCategoryData(selectedDate, 'tracker')
       const sleepEntries = data
-        .filter(record => record.subcategory.startsWith('sleep-'))
+        .filter(record => record.subcategory === 'sleep' || record.subcategory.startsWith('sleep-'))
         .map(record => {
           try {
             let parsed = typeof record.content === 'string'

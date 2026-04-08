@@ -208,13 +208,13 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
   
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg max-w-2xl max-h-[80vh] overflow-y-auto p-6">
+      <div className="bg-card rounded-lg max-w-2xl max-h-[80vh] overflow-y-auto p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold flex items-center gap-2">
             <Database className="h-5 w-5" />
             Data Management
           </h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-2xl">×</button>
         </div>
 
         <Tabs defaultValue="data-management" className="py-4">
@@ -321,7 +321,7 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
                     Import G-Spot Data
                   </Button>
                 ) : (
-                  <div className="space-y-3 p-3 border rounded bg-gray-50">
+                  <div className="space-y-3 p-3 border rounded bg-muted/50">
                     <div>
                       <Label htmlFor="import-file">G-Spot File</Label>
                       <Input

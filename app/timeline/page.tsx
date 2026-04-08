@@ -309,7 +309,7 @@ export default function TimelinePage() {
       case 'ongoing': return 'bg-blue-100 text-blue-800';
       case 'scheduled': return 'bg-yellow-100 text-yellow-800';
       case 'needs_review': return 'bg-orange-100 text-orange-800';
-      default: return 'bg-gray-100 text-gray-800';
+      default: return 'bg-muted text-muted-foreground';
     }
   };
 
@@ -850,12 +850,12 @@ export default function TimelinePage() {
             ) : (
               filteredEvents.map(event => (
                 <Card key={event.id} className={`hover:shadow-md transition-shadow ${
-                  event.type === 'dismissed_findings' ? 'border-l-4 border-l-slate-400 bg-slate-50/50' : ''
+                  event.type === 'dismissed_findings' ? 'border-l-4 border-l-muted-foreground bg-muted/50' : ''
                 }`}>
                   <CardContent className="p-6">
                     {/* Dismissed findings label */}
                     {event.type === 'dismissed_findings' && (
-                      <div className="text-xs text-slate-500 mb-2 font-medium uppercase tracking-wide">
+                      <div className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wide">
                         Dismissed Finding - Important to Track
                       </div>
                     )}
@@ -863,7 +863,7 @@ export default function TimelinePage() {
                       <div className="flex items-start gap-3 flex-1">
                         <div className={`p-2 rounded-lg ${
                           event.type === 'dismissed_findings'
-                            ? 'bg-slate-100 text-slate-600'
+                            ? 'bg-muted text-muted-foreground'
                             : 'bg-blue-100 text-blue-600'
                         }`}>
                           {getEventIcon(event.type)}

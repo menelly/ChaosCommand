@@ -348,7 +348,7 @@ export function SeizureAnalyticsDesktop({
       case 'Medium': return 'bg-yellow-500'
       case 'High': return 'bg-orange-500'
       case 'Critical': return 'bg-red-500'
-      default: return 'bg-gray-500'
+      default: return 'bg-muted-foreground'
     }
   }
 

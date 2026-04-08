@@ -857,7 +857,7 @@ export default function WorkDisabilityPage() {
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge className={STATUS_COLORS[app.status] || 'bg-gray-100 text-gray-800'}>
+                        <Badge className={STATUS_COLORS[app.status] || 'bg-muted text-muted-foreground'}>
                           {app.status}
                         </Badge>
                         {app.appealDeadline && (

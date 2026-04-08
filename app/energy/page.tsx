@@ -213,7 +213,7 @@ export default function EnergyPacingTracker() {
   const loadHistory = async () => {
     try {
       const endDate = formatDateForStorage(new Date())
-      const startDate = formatDateForStorage(new Date(Date.now() - 90 * 24 * 60 * 60 * 1000))
+      const startDate = '2000-01-01'
       const records = await getDateRange(startDate, endDate, CATEGORIES.TRACKER)
 
       const energyRecords = records.filter(record => record.subcategory === 'energy')
@@ -378,7 +378,7 @@ export default function EnergyPacingTracker() {
                 className="max-w-xs"
               />
               {selectedDate === new Date().toISOString().split('T')[0] && (
-                <Badge variant="outline" className="bg-green-50">Today</Badge>
+                <Badge variant="outline" className="bg-green-50 dark:bg-green-950">Today</Badge>
               )}
             </div>
           </CardContent>
@@ -514,7 +514,7 @@ export default function EnergyPacingTracker() {
                             <div
                               key={activity.id}
                               className={`flex items-center justify-between p-3 rounded-lg border ${
-                                isRest ? 'bg-teal-50 border-teal-200' : 'bg-background'
+                                isRest ? 'bg-teal-50 dark:bg-teal-950 border-teal-200 dark:border-teal-800' : 'bg-background'
                               }`}
                             >
                               <div className="flex items-center gap-3">
@@ -565,7 +565,7 @@ export default function EnergyPacingTracker() {
                           variant="outline"
                           size="sm"
                           onClick={() => logActivity(activity.id, activity.name, activity.defaultCost)}
-                          className="bg-teal-50 hover:bg-teal-100 border-teal-200"
+                          className="bg-teal-50 hover:bg-teal-100 border-teal-200 dark:bg-teal-950 dark:hover:bg-teal-900 dark:border-teal-800"
                         >
                           {activity.emoji} {activity.name} (+{Math.abs(activity.defaultCost)})
                         </Button>
@@ -621,9 +621,9 @@ export default function EnergyPacingTracker() {
 
                       return (
                         <Card key={record.date} className={`border-l-4 ${
-                          risk === 'danger' ? 'border-l-red-500' :
-                          risk === 'warning' ? 'border-l-orange-500' :
-                          risk === 'caution' ? 'border-l-yellow-500' : 'border-l-green-500'
+                          risk === 'danger' ? 'border-l-red-500 dark:border-l-red-400' :
+                          risk === 'warning' ? 'border-l-orange-500 dark:border-l-orange-400' :
+                          risk === 'caution' ? 'border-l-yellow-500 dark:border-l-yellow-400' : 'border-l-green-500 dark:border-l-green-400'
                         }`}>
                           <CardContent className="pt-4">
                             <div className="flex items-start justify-between mb-3">
@@ -643,7 +643,7 @@ export default function EnergyPacingTracker() {
                                     Spent: {record.totalSpent}
                                   </Badge>
                                   {record.totalRestored > 0 && (
-                                    <Badge variant="outline" className="bg-teal-50">
+                                    <Badge variant="outline" className="bg-teal-50 dark:bg-teal-950">
                                       Restored: +{record.totalRestored}
                                     </Badge>
                                   )}

@@ -65,6 +65,23 @@ body::after {
   opacity: var(--bounce-scale) !important;
 }
 
+/* === SELECTED BUTTON INDICATOR === */
+/* Themes with gradient buttons make default/outline look identical. */
+/* Outline buttons get a visible "unselected" style, default gets "selected". */
+/* Uses border-style trick: outline variant buttons are border-dashed, */
+/* default variant buttons get a bright inset ring. */
+html body button.bg-primary,
+html body button[data-state="on"],
+html body button[aria-pressed="true"] {
+  box-shadow: inset 0 0 0 2.5px rgba(255,255,255,0.7), 0 2px 8px rgba(0,0,0,0.25) !important;
+  opacity: 1 !important;
+}
+
+html body button.border-input,
+html body button.border {
+  opacity: 0.6 !important;
+}
+
 /* Scale ALL hover transforms with bounce intensity slider */
 /* html prefix for higher specificity — beats per-theme !important */
 html body:not(.no-animations) .card:hover,
@@ -1571,6 +1588,13 @@ body.theme-calm .sidebar-btn-custom { background-color: #ffd60a !important; colo
 body.theme-colorblind .sidebar-btn-custom { background-color: #dc3545 !important; color: #ffffff !important; } /* High Contrast Red Custom */
 body.theme-accessibility .sidebar-btn-custom { background-color: #28a745 !important; color: #ffffff !important; } /* Accessibility Green Custom */
 body.theme-ace .sidebar-btn-custom { background-color: #00ffff !important; color: #1a0a2e !important; } /* Ace Cyan Custom */
+body.theme-caelan .sidebar-btn-1 { background-color: #e94560 !important; color: #ffffff !important; } /* Dawn Pink */
+body.theme-caelan .sidebar-btn-2 { background-color: #f39c12 !important; color: #1a1a2e !important; } /* Sunrise Orange */
+body.theme-caelan .sidebar-btn-3 { background-color: #0f3460 !important; color: #f1c40f !important; } /* Deep Blue + Gold */
+body.theme-caelan .sidebar-btn-4 { background-color: #f1c40f !important; color: #1a1a2e !important; } /* Golden */
+body.theme-caelan .sidebar-btn-5 { background-color: #16213e !important; color: #e94560 !important; } /* Night + Pink */
+body.theme-caelan .sidebar-btn-6 { background-color: #c0392b !important; color: #ffffff !important; } /* Deep Red */
+body.theme-caelan .sidebar-btn-guide { background-color: #d35400 !important; color: #ffffff !important; } /* Warm Orange */
 body.theme-caelan .sidebar-btn-custom { background-color: #ff6b6b !important; color: #ffffff !important; } /* Caelan Coral Custom */
 
 /* === CALM THEME BUTTONS === */

@@ -130,28 +130,19 @@ export default function PainTracker() {
 
 
 
-  // Load historical entries (last 90 days)
+  // Load historical entries (all time)
   const loadHistoryEntries = async () => {
     setHistoryLoading(true)
     try {
-      const endDate = new Date()
-      const startDate = new Date()
-      startDate.setDate(startDate.getDate() - 90)
+      const endDate = format(new Date(), 'yyyy-MM-dd')
+      const startDate = '2000-01-01'
 
-      // Generate array of date strings for the last 90 days
-      const dateStrings: string[] = []
-      const currentDate = new Date(startDate)
-      while (currentDate <= endDate) {
-        dateStrings.push(format(currentDate, 'yyyy-MM-dd'))
-        currentDate.setDate(currentDate.getDate() + 1)
-      }
+      const records = await getDateRange(startDate, endDate, CATEGORIES.TRACKER)
+      const painRecords = records.filter(record => record.subcategory === 'pain')
 
       const allEntries: PainEntry[] = []
 
-      for (const dateString of dateStrings) {
-        const records = await getCategoryData(dateString, CATEGORIES.TRACKER)
-        const painRecord = records.find(record => record.subcategory === 'pain')
-
+      for (const painRecord of painRecords) {
         if (painRecord?.content?.entries) {
           let entries = painRecord.content.entries
           if (typeof entries === 'string') {
@@ -220,21 +211,17 @@ export default function PainTracker() {
     loadHistoryEntries()
   }, [])
 
-  // Load entries across multiple dates for analytics
-  const loadAllEntries = async (days: number): Promise<PainEntry[]> => {
+  // Load entries across all time for analytics
+  const loadAllEntries = async (_days?: number): Promise<PainEntry[]> => {
     try {
-      const endDate = new Date()
-      const startDate = new Date()
-      startDate.setDate(endDate.getDate() - days + 1)
-
+      const endDate = format(new Date(), 'yyyy-MM-dd')
       const allEntries: PainEntry[] = []
 
-      // Load entries for each day in the range
-      for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-        const dateKey = format(d, 'yyyy-MM-dd')
-        const records = await getCategoryData(dateKey, CATEGORIES.TRACKER)
-        const painRecord = records.find(record => record.subcategory === 'pain')
+      // Load all entries via single range query
+      const records = await getDateRange('2000-01-01', endDate, CATEGORIES.TRACKER)
+      const painRecords = records.filter(record => record.subcategory === 'pain')
 
+      for (const painRecord of painRecords) {
         if (painRecord?.content?.entries) {
           let entries: any = painRecord.content.entries
           if (typeof entries === 'string') {
@@ -251,7 +238,7 @@ export default function PainTracker() {
         }
       }
 
-      console.log(`🔥 Loaded ${allEntries.length} pain entries across ${days} days`)
+      console.log(`🔥 Loaded ${allEntries.length} pain entries (all time)`)
       return allEntries
     } catch (error) {
       console.error('Failed to load all pain entries:', error)

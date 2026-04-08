@@ -60,19 +60,18 @@ export default function HeadPainTracker() {
   const [historyEntries, setHistoryEntries] = useState<HeadPainEntry[]>([])
   const [historyLoading, setHistoryLoading] = useState(false)
 
-  // Load historical entries (last 90 days)
+  // Load historical entries (all time)
   const loadHistoryEntries = async () => {
     setHistoryLoading(true)
     try {
       const allEntries: HeadPainEntry[] = []
-      const today = new Date()
+      const today = format(new Date(), 'yyyy-MM-dd')
 
-      // Load last 90 days of data
-      for (let i = 0; i < 90; i++) {
-        const date = format(subDays(today, i), 'yyyy-MM-dd')
-        const records = await getCategoryData(date, CATEGORIES.TRACKER)
-        const record = records.find(record => record.subcategory === 'head-pain')
+      // Load all time data via single range query
+      const records = await getDateRange('2000-01-01', today, CATEGORIES.TRACKER)
+      const headPainRecords = records.filter(record => record.subcategory === 'head-pain')
 
+      for (const record of headPainRecords) {
         if (record && record.content && record.content.entries) {
           try {
             let dayEntries = record.content.entries
@@ -82,7 +81,7 @@ export default function HeadPainTracker() {
             }
             allEntries.push(...dayEntries)
           } catch (error) {
-            console.error('Error parsing head pain data for', date, error)
+            console.error('Error parsing head pain data for', record.date, error)
           }
         }
       }
@@ -169,21 +168,17 @@ export default function HeadPainTracker() {
     }
   }, [activeTab])
 
-  // Load entries across multiple dates for analytics
-  const loadAllEntries = async (days: number): Promise<HeadPainEntry[]> => {
+  // Load entries across all time for analytics
+  const loadAllEntries = async (_days?: number): Promise<HeadPainEntry[]> => {
     try {
-      const endDate = new Date()
-      const startDate = new Date()
-      startDate.setDate(endDate.getDate() - days + 1)
-
+      const endDate = format(new Date(), 'yyyy-MM-dd')
       const allEntries: HeadPainEntry[] = []
 
-      // Load entries for each day in the range
-      for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-        const dateKey = format(d, 'yyyy-MM-dd')
-        const records = await getCategoryData(dateKey, CATEGORIES.TRACKER)
-        const headPainRecord = records.find(record => record.subcategory === 'head-pain')
+      // Load all entries via single range query
+      const records = await getDateRange('2000-01-01', endDate, CATEGORIES.TRACKER)
+      const headPainRecords = records.filter(record => record.subcategory === 'head-pain')
 
+      for (const headPainRecord of headPainRecords) {
         if (headPainRecord?.content?.entries) {
           let entries: any = headPainRecord.content.entries
           if (typeof entries === 'string') {
@@ -200,7 +195,7 @@ export default function HeadPainTracker() {
         }
       }
 
-      console.log(`🧠 Loaded ${allEntries.length} head pain entries across ${days} days`)
+      console.log(`🧠 Loaded ${allEntries.length} head pain entries (all time)`)
       return allEntries
     } catch (error) {
       console.error('Failed to load all head pain entries:', error)
@@ -411,7 +406,7 @@ export default function HeadPainTracker() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Activity className="h-5 w-5" />
-                  Head Pain History (Last 90 Days)
+                  Head Pain History (All Time)
                 </CardTitle>
                 <CardDescription>
                   {historyEntries.length} episodes recorded
@@ -428,7 +423,7 @@ export default function HeadPainTracker() {
                     <Brain className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                     <h3 className="text-lg font-semibold mb-2">No Head Pain Episodes</h3>
                     <p className="text-muted-foreground">
-                      No head pain episodes recorded in the last 90 days.
+                      No head pain episodes recorded yet.
                     </p>
                   </div>
                 ) : (

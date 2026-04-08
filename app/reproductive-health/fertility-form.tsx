@@ -42,7 +42,7 @@ export const CERVICAL_FLUID_OPTIONS = [
 ]
 
 export const FERNING_OPTIONS = [
-  { value: 'none', label: 'No Ferning', color: 'bg-gray-100 text-gray-800' },
+  { value: 'none', label: 'No Ferning', color: 'bg-muted text-muted-foreground' },
   { value: 'partial', label: 'Partial Ferning', color: 'bg-yellow-100 text-yellow-800' },
   { value: 'full', label: 'Full Ferning', color: 'bg-green-100 text-green-800' }
 ]
@@ -271,7 +271,7 @@ export function FertilityForm({ formData, updateFormData, onSave, isLoading }: F
                   id="spermEggExposure"
                   checked={formData.spermEggExposure || false}
                   onChange={(e) => updateFormData('spermEggExposure', e.target.checked)}
-                  className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                  className="h-4 w-4 text-primary focus:ring-primary border-border rounded"
                 />
                 <Label htmlFor="spermEggExposure" className="text-sm font-semibold cursor-pointer">
                   Conception opportunity

@@ -53,7 +53,7 @@ export function SleepAnalytics({ refreshTrigger }: SleepAnalyticsProps) {
         console.log('🔍 SLEEP DEBUG: getDateRange returned', records.length, 'tracker records')
         console.log('🔍 SLEEP DEBUG: subcategories:', records.map(r => r.subcategory).slice(0, 10))
         const sleepRecords = records.filter(record =>
-          record.subcategory && record.subcategory.startsWith('sleep-')
+          record.subcategory && (record.subcategory === 'sleep' || record.subcategory.startsWith('sleep-'))
         )
         console.log('🔍 SLEEP DEBUG: after filter:', sleepRecords.length, 'sleep records')
 

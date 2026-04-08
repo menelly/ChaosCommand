@@ -457,7 +457,7 @@ export default function UpperDigestiveTracker() {
               </CardHeader>
               <CardContent>
                 {entries.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
+                  <div className="text-center py-8 text-muted-foreground">
                     <AlertCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
                     <p>No entries found for {selectedDate}</p>
                     <p className="text-sm">Start tracking your upper digestive symptoms!</p>
@@ -572,7 +572,7 @@ export default function UpperDigestiveTracker() {
             />
 
             {/* Separator */}
-            <div className="border-t border-dashed border-gray-300 my-8"></div>
+            <div className="border-t border-dashed border-border my-8"></div>
 
             {/* Nova's Graph-Based Correlation Analytics */}
             <div className="space-y-4">

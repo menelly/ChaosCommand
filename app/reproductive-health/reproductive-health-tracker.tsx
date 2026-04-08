@@ -85,7 +85,7 @@ export interface ReproductiveHealthEntry {
 }
 
 export const FLOW_LEVELS = [
-  { value: 'none', label: 'None', emoji: '⚪', color: 'bg-gray-100' },
+  { value: 'none', label: 'None', emoji: '⚪', color: 'bg-muted' },
   { value: 'spotting', label: 'Spotting', emoji: '🔴', color: 'bg-pink-100' },
   { value: 'light', label: 'Light', emoji: '🩸', color: 'bg-red-100' },
   { value: 'medium', label: 'Medium', emoji: '🔴', color: 'bg-red-200' },
@@ -93,7 +93,7 @@ export const FLOW_LEVELS = [
 ] as const
 
 export const OPK_LEVELS = [
-  { value: 'negative', label: 'Negative', color: 'bg-gray-100' },
+  { value: 'negative', label: 'Negative', color: 'bg-muted' },
   { value: 'low', label: 'Low', color: 'bg-yellow-100' },
   { value: 'high', label: 'High', color: 'bg-orange-100' },
   { value: 'peak', label: 'Peak', color: 'bg-green-100' }
@@ -113,7 +113,7 @@ export const FERTILITY_SYMPTOM_OPTIONS = [
 
 export default function ReproductiveHealthTracker() {
   const router = useRouter()
-  const { saveData, getSpecificData, deleteData, isLoading } = useDailyData()
+  const { saveData, getSpecificData, getDateRange, deleteData, isLoading } = useDailyData()
   const [currentDate, setCurrentDate] = useState(() => {
     const today = new Date()
     console.log('🗓️ Calendar Debug: Today is', today.toISOString(), 'Display:', format(today, 'PPP'))
@@ -181,29 +181,25 @@ export default function ReproductiveHealthTracker() {
   }, [getSpecificData])
 
   const loadAllEntries = useCallback(async () => {
-    // Load recent entries for history view - get last 90 days
-    const promises = []
-    for (let i = 0; i < 90; i++) {
-      const date = subDays(new Date(), i)
-      const dateKey = formatDateForStorage(date)
-      promises.push(getSpecificData(dateKey, CATEGORIES.TRACKER, 'reproductive-health'))
-    }
+    // Load all entries for history view - all time via single range query
+    const today = formatDateForStorage(new Date())
+    const records = await getDateRange('2000-01-01', today, CATEGORIES.TRACKER)
+    const reproRecords = records.filter(record => record.subcategory === 'reproductive-health')
 
-    const records = await Promise.all(promises)
-    const reproductiveEntries = records
+    const reproductiveEntries = reproRecords
       .filter(record => record?.content)
       .map(record => {
         // Check if content is already an object or needs parsing
         let parsed: Partial<ReproductiveHealthEntry>
-        if (typeof record!.content === 'string') {
-          parsed = JSON.parse(record!.content)
+        if (typeof record.content === 'string') {
+          parsed = JSON.parse(record.content)
         } else {
-          parsed = record!.content as Partial<ReproductiveHealthEntry>
+          parsed = record.content as Partial<ReproductiveHealthEntry>
         }
 
         return {
-          id: record!.id?.toString() || '',
-          date: record!.date,
+          id: record.id?.toString() || '',
+          date: record.date,
           flow: 'none',
           pain: 0,
           mood: [],
@@ -220,14 +216,14 @@ export default function ReproductiveHealthTracker() {
           notes: '',
           tags: [],
           ...parsed,
-          created_at: record!.metadata?.created_at || '',
-          updated_at: record!.metadata?.updated_at || ''
+          created_at: record.metadata?.created_at || '',
+          updated_at: record.metadata?.updated_at || ''
         } as ReproductiveHealthEntry
       })
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
     setEntries(reproductiveEntries)
-  }, [getSpecificData])
+  }, [getDateRange])
 
   useEffect(() => {
     // Check the body page's hide fertility setting (inverted - if hide=true, enabled=false)
@@ -387,8 +383,8 @@ export default function ReproductiveHealthTracker() {
       {/* Main content */}
       <Tabs defaultValue="menstrual" className="w-full">
         <div className="space-y-2">
-          {/* Row 1: Basic cycle tracking - always visible */}
-          <TabsList className="grid w-full grid-cols-3 bg-card">
+          {/* Row 1: Basic cycle tracking + analytics - always visible */}
+          <TabsList className="grid w-full grid-cols-4 bg-card">
             <TabsTrigger value="menstrual" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs sm:text-sm">
               <Droplets className="h-4 w-4 flex-shrink-0" />
               <span className="text-center leading-tight">Menstrual</span>
@@ -401,11 +397,15 @@ export default function ReproductiveHealthTracker() {
               <History className="h-4 w-4 flex-shrink-0" />
               <span className="text-center leading-tight">History</span>
             </TabsTrigger>
+            <TabsTrigger value="analytics" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs sm:text-sm">
+              <TrendingUp className="h-4 w-4 flex-shrink-0" />
+              <span className="text-center leading-tight">Analytics</span>
+            </TabsTrigger>
           </TabsList>
 
           {/* Row 2: Fertility tracking - can be hidden */}
           {fertilityTrackingEnabled && (
-            <TabsList className="grid w-full grid-cols-3 bg-card">
+            <TabsList className="grid w-full grid-cols-2 bg-card">
               <TabsTrigger value="fertility" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs sm:text-sm">
                 <Moon className="h-4 w-4 flex-shrink-0" />
                 <span className="text-center leading-tight">Ovulation</span>
@@ -413,10 +413,6 @@ export default function ReproductiveHealthTracker() {
               <TabsTrigger value="chart" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs sm:text-sm">
                 <Thermometer className="h-4 w-4 flex-shrink-0" />
                 <span className="text-center leading-tight">BBT Chart</span>
-              </TabsTrigger>
-              <TabsTrigger value="analytics" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs sm:text-sm">
-                <TrendingUp className="h-4 w-4 flex-shrink-0" />
-                <span className="text-center leading-tight">Analytics</span>
               </TabsTrigger>
             </TabsList>
           )}

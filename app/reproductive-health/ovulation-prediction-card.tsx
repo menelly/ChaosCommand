@@ -111,7 +111,7 @@ export function OvulationPredictionCard({
       case 'ovulation-likely': return 'bg-green-500'
       case 'pre-ovulation': return 'bg-yellow-500'
       case 'post-ovulation': return 'bg-blue-500'
-      default: return 'bg-gray-500'
+      default: return 'bg-muted-foreground'
     }
   }
 
@@ -120,7 +120,7 @@ export function OvulationPredictionCard({
       case 'high': return 'bg-green-100 text-green-800'
       case 'medium': return 'bg-yellow-100 text-yellow-800'
       case 'low': return 'bg-red-100 text-red-800'
-      default: return 'bg-gray-100 text-gray-800'
+      default: return 'bg-muted text-muted-foreground'
     }
   }
 
