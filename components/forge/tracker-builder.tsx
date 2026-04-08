@@ -81,7 +81,7 @@ export default function TrackerBuilder() {
   const [tracker, setTracker] = useState<Partial<CustomTracker>>({
     name: '',
     description: '',
-    category: 'body',
+    category: 'custom',
     fields: []
   });
   const [isDeploying, setIsDeploying] = useState(false);
@@ -177,7 +177,7 @@ export default function TrackerBuilder() {
 
       toast({
         title: "🚀 Tracker Deployed!",
-        description: `${tracker.name} has been added to your ${tracker.category?.toUpperCase()} section!`,
+        description: `${tracker.name} has been added to your CUSTOM section!`,
       });
 
       // Reset form after successful deploy
@@ -185,7 +185,7 @@ export default function TrackerBuilder() {
         setTracker({
           name: '',
           description: '',
-          category: 'body',
+          category: 'custom',
           fields: []
         });
         setDeploySuccess(false);
@@ -284,26 +284,8 @@ export default function TrackerBuilder() {
                   />
                 </div>
 
-                <div>
-                  <Label>Category</Label>
-                  <div className="flex gap-2 mt-2">
-                    {(['body', 'mind', 'custom'] as const).map((category) => (
-                      <Button
-                        key={category}
-                        variant={tracker.category === category ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => updateTracker({ category })}
-                        className="flex items-center gap-2"
-                      >
-                        {getCategoryIcon(category)}
-                        {category.charAt(0).toUpperCase() + category.slice(1)}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-
-                <Badge className={getCategoryStyle(tracker.category || 'custom')}>
-                  Will appear in: {tracker.category?.toUpperCase()} section
+                <Badge className={getCategoryStyle('custom')}>
+                  {getCategoryIcon('custom')} Will appear in: CUSTOM section
                 </Badge>
               </CardContent>
             </Card>
@@ -525,7 +507,7 @@ export default function TrackerBuilder() {
                   <CheckCircle className="h-16 w-16 mx-auto text-green-500" />
                   <h2 className="text-2xl font-bold text-green-800">Tracker Deployed! 🎉</h2>
                   <p className="text-green-700">
-                    <strong>{tracker.name}</strong> has been successfully added to your <strong>{tracker.category?.toUpperCase()}</strong> section!
+                    <strong>{tracker.name}</strong> has been successfully added to your <strong>CUSTOM</strong> section!
                   </p>
                   <div className="bg-white p-4 rounded-lg border border-green-200">
                     <p className="text-sm text-green-600">
@@ -556,7 +538,7 @@ export default function TrackerBuilder() {
                   Deploy Your Custom Tracker
                 </CardTitle>
                 <CardDescription>
-                  Your tracker will be added to the {tracker.category?.toUpperCase()} section and ready to use immediately
+                  Your tracker will be added to the CUSTOM section and ready to use immediately
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -567,7 +549,7 @@ export default function TrackerBuilder() {
                   </h3>
                   <div className="space-y-1 text-sm">
                     <p><strong>Name:</strong> {tracker.name || 'Unnamed Tracker'}</p>
-                    <p><strong>Category:</strong> {tracker.category?.toUpperCase()}</p>
+                    <p><strong>Category:</strong> CUSTOM</p>
                     <p><strong>Fields:</strong> {tracker.fields?.length || 0}</p>
                     <p><strong>Description:</strong> {tracker.description || 'No description'}</p>
                   </div>
@@ -607,7 +589,7 @@ export default function TrackerBuilder() {
                 </Button>
 
                 <p className="text-xs text-muted-foreground text-center">
-                  Your tracker will appear in the {tracker.category?.toUpperCase()} section immediately after deployment
+                  Your tracker will appear in the CUSTOM section immediately after deployment
                 </p>
               </CardContent>
             </Card>
