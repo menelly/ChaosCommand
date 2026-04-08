@@ -31,7 +31,8 @@ import { useDailyData } from "@/lib/database/hooks/use-daily-data"
 import { GSpot4BoringFileExporter, BoringFileType } from "@/lib/database/g-spot-4.0-boring-file-steganography"
 import { exportAllData } from "@/lib/database/migration-helper"
 import TestPinManagerComponent from "@/components/test-pin-manager"
-import { generateStarterData, generateInterestingData, STARTER_DATA_TRACKERS } from "@/lib/database/starter-data"
+import { generateStarterData, STARTER_DATA_TRACKERS } from "@/lib/database/starter-data"
+import { generateInterestingData } from "@/lib/database/interesting-data"
 
 interface DataManagementModalProps {
   isOpen: boolean

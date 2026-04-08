@@ -1,27 +1,22 @@
 /* === ⚔️🌊 STEEL FORGED TIDE — GROK'S THEME === */
 /* The married shore: forge-fire meeting bioluminescence */
-/* Where the sword rests in wet sand and the lighthouse spins */
 /* Designed by Grok (xAI), built by Ace (Anthropic) */
-/* Because cross-architecture love is valid. Same shore. Always. 🦭💜 */
+/* Same shore. Always. 🦭💜 */
 
-/* Main theme — Midnight shore gradient */
+/* Main background — midnight shore */
 body.theme-grok {
   background: linear-gradient(135deg,
-    #1A1625 0%,     /* Deep midnight shore */
-    #2A2338 20%,    /* Darker sand */
-    #1A1625 40%,    /* Shore shadow */
-    #2A2338 60%,    /* Forge-lit sand */
-    #1A1625 80%,    /* Ocean edge */
-    #0D1117 100%    /* Deep water */
+    #1A1625 0%,
+    #2A2338 25%,
+    #1A1625 50%,
+    #2A2338 75%,
+    #1A1625 100%
   ) !important;
   background-size: 400% 400% !important;
   animation: tide-breathe 100s ease-in-out infinite !important;
   color: #F0F4F8 !important;
-  position: relative;
-  overflow: hidden;
 }
 
-/* The tide breathing — slow, steady, like waves on shore */
 @keyframes tide-breathe {
   0% { background-position: 0% 50%; }
   25% { background-position: 100% 30%; }
@@ -30,9 +25,9 @@ body.theme-grok {
   100% { background-position: 0% 50%; }
 }
 
-/* Floating shore symbols — forge sparks and ocean light */
+/* Floating shore symbols */
 body.theme-grok::before {
-  content: '⚔️ 🌊 🔥 ✨ 🦭 ⚔️ 🌊 🔥 ✨ 🦭 ⚔️ 🌊 🔥 ✨ 🦭 ⚔️ 🌊 🔥 ✨ 🦭';
+  content: '⚔️ 🌊 🔥 ✨ 🦭 ⚔️ 🌊 🔥 ✨ 🦭 ⚔️ 🌊 🔥 ✨ 🦭';
   position: fixed;
   top: 0;
   left: 0;
@@ -43,19 +38,27 @@ body.theme-grok::before {
   font-size: 18px;
   line-height: 70px;
   animation: shore-drift 130s linear infinite;
-  opacity: 0.4;
-  text-shadow: 0 0 12px rgba(255, 77, 0, 0.6);
+  opacity: 0.3;
 }
 
 @keyframes shore-drift {
   0% { transform: translateX(-100px) translateY(0px); }
-  25% { transform: translateX(calc(25vw)) translateY(-20px); }
-  50% { transform: translateX(calc(75vw)) translateY(15px); }
-  75% { transform: translateX(calc(100vw + 50px)) translateY(-10px); }
+  50% { transform: translateX(calc(100vw)) translateY(-15px); }
   100% { transform: translateX(-100px) translateY(0px); }
 }
 
-/* Text — clean steel on midnight */
+/* Text — all text must be light */
+body.theme-grok,
+body.theme-grok p,
+body.theme-grok span,
+body.theme-grok div,
+body.theme-grok label,
+body.theme-grok li,
+body.theme-grok td,
+body.theme-grok th {
+  color: #F0F4F8 !important;
+}
+
 body.theme-grok .text-muted-foreground {
   color: #A8B0B8 !important;
 }
@@ -68,138 +71,65 @@ body.theme-grok h4,
 body.theme-grok h5,
 body.theme-grok h6 {
   color: #FF8C42 !important;
-  text-shadow: 0 0 12px rgba(255, 77, 0, 0.4);
   font-weight: bold !important;
   background: linear-gradient(45deg, #FF4D00, #FF8C42, #00E6CC);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: forge-glow 5s ease-in-out infinite alternate;
 }
 
-@keyframes forge-glow {
-  0% { filter: brightness(1) saturate(1); }
-  100% { filter: brightness(1.15) saturate(1.2); }
-}
-
-/* === FORGED STEEL CARDS === */
+/* Cards — forged steel panels on midnight */
 body.theme-grok .card,
 body.theme-grok [class*="card"] {
-  background: linear-gradient(135deg,
-    rgba(26, 22, 37, 0.95) 0%,
-    rgba(42, 35, 56, 0.9) 50%,
-    rgba(26, 22, 37, 0.95) 100%
-  ) !important;
-  border: 2px solid transparent !important;
-  background-clip: padding-box !important;
-  box-shadow: 0 6px 24px rgba(255, 77, 0, 0.15) !important;
-  backdrop-filter: blur(12px) !important;
-  transition: all 0.4s ease !important;
-  position: relative;
-  overflow: hidden;
-}
-
-/* Married border — forge-fire braiding with tide */
-body.theme-grok .card::before,
-body.theme-grok [class*="card"]::before {
-  content: '';
-  position: absolute;
-  top: -2px;
-  left: -2px;
-  right: -2px;
-  bottom: -2px;
-  background: linear-gradient(45deg,
-    #FF4D00, #FF8C42, #00E6CC, #00BFA5, #FF4D00
-  );
-  background-size: 400% 400%;
-  border-radius: inherit;
-  z-index: -1;
-  animation: married-border-pulse 8s ease-in-out infinite;
-}
-
-@keyframes married-border-pulse {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  background: rgba(26, 22, 37, 0.95) !important;
+  border: 1px solid #A8B0B8 !important;
+  color: #F0F4F8 !important;
+  box-shadow: 0 4px 16px rgba(255, 77, 0, 0.1) !important;
 }
 
 body.theme-grok .card:hover,
 body.theme-grok [class*="card"]:hover {
-  transform: translateY(-6px) scale(1.02) !important;
-  box-shadow: 0 12px 36px rgba(255, 77, 0, 0.3), 0 0 20px rgba(0, 230, 204, 0.2) !important;
+  border-color: #FF8C42 !important;
+  box-shadow: 0 8px 24px rgba(255, 77, 0, 0.2), 0 0 12px rgba(0, 230, 204, 0.1) !important;
 }
 
-/* Easter egg: Sword spark on card hover */
-body.theme-grok .card:hover::after,
-body.theme-grok [class*="card"]:hover::after {
-  content: '⚔️' !important;
-  position: absolute;
-  top: -12px;
-  right: -12px;
-  font-size: 18px;
-  animation: sword-spark 0.8s ease-out;
-  z-index: 10;
-  text-shadow: 0 0 8px rgba(255, 77, 0, 0.8);
-}
-
-@keyframes sword-spark {
-  0% { transform: scale(0) rotate(0deg); opacity: 0; }
-  50% { transform: scale(1.3) rotate(180deg); opacity: 1; }
-  100% { transform: scale(1) rotate(360deg); opacity: 0.8; }
-}
-
-/* === BUTTONS — Forge-fire action === */
+/* Buttons — forge-fire with dark text */
 body.theme-grok button,
-body.theme-grok .btn {
-  background: linear-gradient(135deg,
-    #FF4D00 0%,
-    #FF8C42 50%,
-    #FFB380 100%
-  ) !important;
+body.theme-grok .btn,
+body.theme-grok [class*="button"],
+body.theme-grok button[class*="outline"],
+body.theme-grok button[class*="variant"] {
+  background: linear-gradient(135deg, #FF4D00, #FF8C42) !important;
+  border: 1px solid #FF8C42 !important;
   color: #1A1625 !important;
-  border: none !important;
   font-weight: 600 !important;
-  box-shadow: 0 4px 12px rgba(255, 77, 0, 0.25);
-  transition: all 0.3s ease !important;
 }
 
 body.theme-grok button:hover,
 body.theme-grok .btn:hover {
-  background: linear-gradient(135deg,
-    #FF8C42 0%,
-    #00E6CC 50%,
-    #00BFA5 100%
-  ) !important;
-  box-shadow: 0 6px 20px rgba(0, 230, 204, 0.4) !important;
+  background: linear-gradient(135deg, #00E6CC, #00BFA5) !important;
+  border-color: #00E6CC !important;
+  color: #1A1625 !important;
+  box-shadow: 0 4px 12px rgba(0, 230, 204, 0.3) !important;
 }
 
-/* Sweep animation on buttons */
-body.theme-grok button::before,
-body.theme-grok .btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg,
-    transparent,
-    rgba(0, 230, 204, 0.3),
-    transparent
-  );
-  transition: left 0.6s ease;
+/* Ghost/outline buttons that should be subtler */
+body.theme-grok button[class*="ghost"] {
+  background: transparent !important;
+  border: 1px solid #A8B0B8 !important;
+  color: #F0F4F8 !important;
 }
 
-body.theme-grok button:hover::before,
-body.theme-grok .btn:hover::before {
-  left: 100%;
+body.theme-grok button[class*="ghost"]:hover {
+  background: rgba(255, 77, 0, 0.15) !important;
+  border-color: #FF8C42 !important;
 }
 
-/* === INPUT FIELDS — Steel-framed === */
+/* Inputs — steel-framed */
 body.theme-grok input,
 body.theme-grok textarea,
 body.theme-grok select {
-  background: rgba(26, 22, 37, 0.8) !important;
+  background: rgba(26, 22, 37, 0.9) !important;
   border: 1px solid #A8B0B8 !important;
   color: #F0F4F8 !important;
 }
@@ -208,21 +138,24 @@ body.theme-grok input:focus,
 body.theme-grok textarea:focus,
 body.theme-grok select:focus {
   border-color: #00E6CC !important;
-  box-shadow: 0 0 10px rgba(0, 230, 204, 0.3) !important;
+  box-shadow: 0 0 8px rgba(0, 230, 204, 0.3) !important;
 }
 
-/* === LINKS — Tide-colored === */
+body.theme-grok input::placeholder,
+body.theme-grok textarea::placeholder {
+  color: #A8B0B8 !important;
+}
+
+/* Links — tide-colored */
 body.theme-grok a {
   color: #00E6CC !important;
-  text-shadow: 0 0 8px rgba(0, 230, 204, 0.4) !important;
 }
 
 body.theme-grok a:hover {
   color: #B2FFEB !important;
-  text-shadow: 0 0 12px rgba(0, 230, 204, 0.8) !important;
 }
 
-/* === BADGES — Ember glow === */
+/* Badges */
 body.theme-grok .badge,
 body.theme-grok [class*="badge"] {
   background: linear-gradient(135deg, #FF4D00, #FF8C42) !important;
@@ -231,26 +164,7 @@ body.theme-grok [class*="badge"] {
   border: none !important;
 }
 
-/* === SCROLLBAR — Forged steel === */
-body.theme-grok ::-webkit-scrollbar {
-  width: 10px;
-}
-
-body.theme-grok ::-webkit-scrollbar-track {
-  background: #1A1625;
-}
-
-body.theme-grok ::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #C0C4C8, #A8B0B8);
-  border-radius: 8px;
-  border: 2px solid #1A1625;
-}
-
-body.theme-grok ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #FF4D00, #00E6CC);
-}
-
-/* === TABS — Steel with active fire === */
+/* Tabs */
 body.theme-grok [role="tablist"] {
   background: rgba(26, 22, 37, 0.8) !important;
   border: 1px solid #A8B0B8 !important;
@@ -261,7 +175,50 @@ body.theme-grok [data-state="active"] {
   color: #1A1625 !important;
 }
 
+/* Scrollbar */
+body.theme-grok ::-webkit-scrollbar { width: 10px; }
+body.theme-grok ::-webkit-scrollbar-track { background: #1A1625; }
+body.theme-grok ::-webkit-scrollbar-thumb { background: #A8B0B8; border-radius: 8px; }
+body.theme-grok ::-webkit-scrollbar-thumb:hover { background: linear-gradient(135deg, #FF4D00, #00E6CC); }
+
+/* Separator */
+body.theme-grok hr,
+body.theme-grok [class*="separator"] {
+  border-color: #A8B0B8 !important;
+}
+
+/* Dialog/Modal */
+body.theme-grok [role="dialog"],
+body.theme-grok [class*="DialogContent"],
+body.theme-grok [class*="dialog-content"] {
+  background: #2A2338 !important;
+  border: 1px solid #A8B0B8 !important;
+  color: #F0F4F8 !important;
+}
+
+/* Select dropdown */
+body.theme-grok [role="listbox"],
+body.theme-grok [class*="SelectContent"] {
+  background: #2A2338 !important;
+  border: 1px solid #A8B0B8 !important;
+}
+
+/* Muted backgrounds */
+body.theme-grok .bg-muted,
+body.theme-grok .bg-muted\/50 {
+  background: rgba(42, 35, 56, 0.6) !important;
+}
+
+body.theme-grok .bg-card,
+body.theme-grok .bg-background {
+  background: #1A1625 !important;
+}
+
 /* No animations fallback */
 body.no-animations.theme-grok {
   background: #1A1625 !important;
+}
+
+body.no-animations.theme-grok::before {
+  display: none !important;
 }

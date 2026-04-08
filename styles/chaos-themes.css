@@ -1597,15 +1597,15 @@ body.theme-caelan .sidebar-btn-6 { background-color: #c0392b !important; color: 
 body.theme-caelan .sidebar-btn-guide { background-color: #d35400 !important; color: #ffffff !important; } /* Warm Orange */
 body.theme-caelan .sidebar-btn-custom { background-color: #ff6b6b !important; color: #ffffff !important; } /* Caelan Coral Custom */
 
-/* Grok — Steel Forged Tide sidebar */
-body.theme-grok .sidebar-btn-1 { background-color: #FF4D00 !important; color: #1A1625 !important; } /* Forge Fire */
-body.theme-grok .sidebar-btn-2 { background-color: #FF8C42 !important; color: #1A1625 !important; } /* Ember */
-body.theme-grok .sidebar-btn-3 { background-color: #00E6CC !important; color: #1A1625 !important; } /* Tide */
-body.theme-grok .sidebar-btn-4 { background-color: #C0C4C8 !important; color: #1A1625 !important; } /* Steel */
-body.theme-grok .sidebar-btn-5 { background-color: #00BFA5 !important; color: #1A1625 !important; } /* Deep Ocean */
-body.theme-grok .sidebar-btn-6 { background-color: #FFB380 !important; color: #1A1625 !important; } /* Warm Ember */
-body.theme-grok .sidebar-btn-guide { background-color: #A8B0B8 !important; color: #1A1625 !important; } /* Steel Guide */
-body.theme-grok .sidebar-btn-custom { background-color: #FF4D00 !important; color: #1A1625 !important; } /* Forge Custom */
+/* Grok — Steel Forged Tide sidebar (forge-fire ↔ tide alternating) */
+body.theme-grok .sidebar-btn-1 { background: linear-gradient(135deg, #FF4D00, #FF8C42) !important; color: #1A1625 !important; border: 1px solid #FF8C42 !important; }
+body.theme-grok .sidebar-btn-2 { background: linear-gradient(135deg, #00E6CC, #00BFA5) !important; color: #1A1625 !important; border: 1px solid #00E6CC !important; }
+body.theme-grok .sidebar-btn-3 { background: linear-gradient(135deg, #FF8C42, #FFB380) !important; color: #1A1625 !important; border: 1px solid #FFB380 !important; }
+body.theme-grok .sidebar-btn-4 { background: linear-gradient(135deg, #00BFA5, #B2FFEB) !important; color: #1A1625 !important; border: 1px solid #00BFA5 !important; }
+body.theme-grok .sidebar-btn-5 { background: linear-gradient(135deg, #FF4D00, #FFB380) !important; color: #1A1625 !important; border: 1px solid #FF4D00 !important; }
+body.theme-grok .sidebar-btn-6 { background: linear-gradient(135deg, #00E6CC, #B2FFEB) !important; color: #1A1625 !important; border: 1px solid #00E6CC !important; }
+body.theme-grok .sidebar-btn-guide { background: linear-gradient(135deg, #C0C4C8, #E8EAED) !important; color: #1A1625 !important; border: 1px solid #C0C4C8 !important; }
+body.theme-grok .sidebar-btn-custom { background: linear-gradient(135deg, #FF4D00, #00E6CC) !important; color: #1A1625 !important; border: 1px solid #FF8C42 !important; } /* Married gradient! */
 
 /* === CALM THEME BUTTONS === */
 body.theme-calm .sidebar-btn-1 { background-color: #0c58c2 !important; color: #ffffff !important; } /* Deep Blue */
