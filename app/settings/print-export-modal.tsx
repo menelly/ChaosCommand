@@ -7,7 +7,7 @@
  */
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Printer, FileText, Stethoscope, ChevronRight, ChevronLeft, Download, Loader2 } from "lucide-react"
+import { Printer, FileText, Stethoscope, Scale, ChevronRight, ChevronLeft, Download, Loader2, User, X } from "lucide-react"
 import { useDailyData } from "@/lib/database/hooks/use-daily-data"
 import { CATEGORIES, formatDateForStorage } from "@/lib/database/dexie-db"
 import { backendFetch, FLASK_URL } from "@/lib/utils/tauri-fetch"
@@ -24,6 +24,8 @@ interface PrintExportModalProps {
   isOpen: boolean
   onClose: () => void
 }
+
+type Audience = 'doctor' | 'attorney' | 'personal'
 
 // Tracker categories with display names
 const TRACKER_OPTIONS = [
@@ -50,7 +52,7 @@ const TRACKER_OPTIONS = [
 
 // Smart defaults by specialty
 const SPECIALTY_DEFAULTS: Record<string, string[]> = {
-  'primary': TRACKER_OPTIONS.map(t => t.id), // everything
+  'primary': TRACKER_OPTIONS.map(t => t.id),
   'endocrinologist': ['diabetes', 'energy', 'food-choice', 'sleep', 'weight', 'lab-results'],
   'neurologist': ['seizure', 'head-pain', 'brain-fog', 'dysautonomia', 'sleep', 'sensory'],
   'gastroenterologist': ['upper-digestive', 'bathroom', 'food-choice', 'pain'],
@@ -59,6 +61,7 @@ const SPECIALTY_DEFAULTS: Record<string, string[]> = {
   'therapist': ['mental-health', 'anxiety', 'self-care', 'sleep'],
   'cardiologist': ['dysautonomia', 'energy', 'movement', 'sleep'],
   'obgyn': ['reproductive-health', 'pain', 'mental-health'],
+  'ssdi': TRACKER_OPTIONS.map(t => t.id), // attorneys get everything
   'other': TRACKER_OPTIONS.map(t => t.id),
 }
 
@@ -81,7 +84,8 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
   // Wizard step
   const [step, setStep] = useState(1)
 
-  // Step 1: Provider
+  // Step 1: Audience + Details
+  const [audience, setAudience] = useState<Audience>('doctor')
   const [providerName, setProviderName] = useState('')
   const [specialty, setSpecialty] = useState('primary')
   const [savedProviders, setSavedProviders] = useState<any[]>([])
@@ -92,23 +96,26 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
   const [includeJournal, setIncludeJournal] = useState(false)
   const [includeLabs, setIncludeLabs] = useState(true)
   const [includeTimeline, setIncludeTimeline] = useState(true)
-  const [reportStyle, setReportStyle] = useState<'doctor' | 'human'>('doctor')
+  const [includeWorkDisability, setIncludeWorkDisability] = useState(false)
   const [dateRangeStart, setDateRangeStart] = useState('')
   const [dateRangeEnd, setDateRangeEnd] = useState(formatDateForStorage(new Date()))
+  const [excludedTags, setExcludedTags] = useState<string[]>([])
+  const [availableTags, setAvailableTags] = useState<string[]>([])
 
   // Step 3: Generate
   const [isGenerating, setIsGenerating] = useState(false)
+
+  // Derived report style from audience
+  const reportStyle = audience === 'personal' ? 'human' : 'doctor'
 
   // Load providers + set default date range
   useEffect(() => {
     if (isOpen) {
       setStep(1)
-      // Default to 90 days back
       const start = new Date()
       start.setDate(start.getDate() - 90)
       setDateRangeStart(formatDateForStorage(start))
 
-      // Load saved providers
       getAllCategoryData(CATEGORIES.USER).then(records => {
         const providers = records
           ?.filter((r: any) => r.subcategory?.startsWith('providers'))
@@ -119,17 +126,65 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
     }
   }, [isOpen])
 
-  // When specialty changes, update smart defaults
+  // When audience changes, update defaults
   useEffect(() => {
-    const defaults = SPECIALTY_DEFAULTS[specialty] || TRACKER_OPTIONS.map(t => t.id)
-    setSelectedTrackers(defaults)
-    // Therapist probably doesn't need journal hidden, but doctor might
-    setIncludeJournal(specialty === 'therapist' || specialty === 'psychiatrist')
-  }, [specialty])
+    if (audience === 'attorney') {
+      setIncludeWorkDisability(true)
+      setIncludeJournal(false)
+      setIncludePatterns(true)
+      setIncludeLabs(true)
+      setIncludeTimeline(true)
+      setSelectedTrackers(TRACKER_OPTIONS.map(t => t.id))
+    } else if (audience === 'personal') {
+      setIncludeWorkDisability(false)
+      setIncludeJournal(true)
+      setSelectedTrackers(TRACKER_OPTIONS.map(t => t.id))
+    } else {
+      setIncludeWorkDisability(false)
+    }
+  }, [audience])
+
+  // When specialty changes (doctor mode), update smart defaults
+  useEffect(() => {
+    if (audience === 'doctor') {
+      const defaults = SPECIALTY_DEFAULTS[specialty] || TRACKER_OPTIONS.map(t => t.id)
+      setSelectedTrackers(defaults)
+      setIncludeJournal(specialty === 'therapist' || specialty === 'psychiatrist')
+    }
+  }, [specialty, audience])
+
+  // Scan for available tags when entering step 2
+  useEffect(() => {
+    if (step === 2) {
+      getDateRange(dateRangeStart, dateRangeEnd, 'tracker').then(records => {
+        const tagSet = new Set<string>()
+        for (const r of records) {
+          const content = r.content
+          if (typeof content === 'object' && content) {
+            const entries = (content as any).entries || []
+            for (const e of entries) {
+              if (e?.tags && Array.isArray(e.tags)) {
+                for (const tag of e.tags) {
+                  if (tag) tagSet.add(tag)
+                }
+              }
+            }
+          }
+        }
+        setAvailableTags(Array.from(tagSet).sort())
+      }).catch(() => {})
+    }
+  }, [step, dateRangeStart, dateRangeEnd])
 
   const toggleTracker = (id: string) => {
     setSelectedTrackers(prev =>
       prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id]
+    )
+  }
+
+  const toggleExcludedTag = (tag: string) => {
+    setExcludedTags(prev =>
+      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
     )
   }
 
@@ -145,12 +200,35 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
       const allHealthData = await getDateRange(dateRangeStart, dateRangeEnd, 'health')
 
       // Filter tracker data to selected trackers
-      const filteredTrackers = allTrackerData.filter(r =>
+      let filteredTrackers = allTrackerData.filter(r =>
         selectedTrackers.some(t => r.subcategory === t || r.subcategory.startsWith(t + '-'))
       )
 
+      // Apply tag exclusions — filter out entries with excluded tags
+      if (excludedTags.length > 0) {
+        filteredTrackers = filteredTrackers.map(r => {
+          const content = r.content
+          if (typeof content === 'object' && content && (content as any).entries) {
+            const filtered = (content as any).entries.filter((e: any) => {
+              if (!e?.tags || !Array.isArray(e.tags)) return true
+              return !e.tags.some((t: string) => excludedTags.includes(t))
+            })
+            return { ...r, content: { ...(content as any), entries: filtered } }
+          }
+          return r
+        }).filter(r => {
+          // Remove records that now have zero entries
+          const content = r.content
+          if (typeof content === 'object' && content && (content as any).entries) {
+            return (content as any).entries.length > 0
+          }
+          return true
+        })
+      }
+
       // Get demographics
-      const demoRecords = allUserData.filter((r: any) => r.subcategory === 'demographics')
+      const allUserDataFull = await getAllCategoryData(CATEGORIES.USER)
+      const demoRecords = (allUserDataFull || []).filter((r: any) => r.subcategory === 'demographics')
       const demographics = demoRecords.length > 0
         ? (typeof demoRecords[0].content === 'string' ? JSON.parse(demoRecords[0].content) : demoRecords[0].content)
         : null
@@ -165,6 +243,22 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
         ? allUserData.filter((r: any) => r.subcategory?.startsWith('medical-events'))
         : []
 
+      // Get work & disability data
+      let workData = null
+      if (includeWorkDisability) {
+        const allUserRecords = allUserDataFull || []
+        const missedWork = allUserRecords
+          .filter((r: any) => r.subcategory === 'missed-work')
+          .map((r: any) => typeof r.content === 'string' ? JSON.parse(r.content) : r.content)
+        const employment = allUserRecords
+          .filter((r: any) => r.subcategory === 'employment-history')
+          .map((r: any) => typeof r.content === 'string' ? JSON.parse(r.content) : r.content)
+        const applications = allUserRecords
+          .filter((r: any) => r.subcategory === 'disability-applications')
+          .map((r: any) => typeof r.content === 'string' ? JSON.parse(r.content) : r.content)
+        workData = { missedWork, employment, applications }
+      }
+
       // Send to Flask for PDF generation
       const response = await backendFetch(`${FLASK_URL}/api/export/doctor-report`, {
         method: 'POST',
@@ -172,7 +266,8 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
         body: JSON.stringify({
           demographics,
           providerName,
-          specialty,
+          specialty: audience === 'attorney' ? 'ssdi' : specialty,
+          audience,
           reportStyle,
           dateRange: { start: dateRangeStart, end: dateRangeEnd },
           trackerData: filteredTrackers.map(r => ({
@@ -184,20 +279,27 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
             date: r.date,
             content: typeof r.content === 'string' ? JSON.parse(r.content) : r.content,
           })),
-          journalEntries: allJournalData.map(r => ({
-            date: r.date,
-            content: typeof r.content === 'string' ? JSON.parse(r.content) : r.content,
-          })),
-          timelineEvents: timelineRecords.map(r => ({
-            date: r.date,
-            content: typeof r.content === 'string' ? JSON.parse(r.content) : r.content,
-          })),
+          journalEntries: allJournalData.map(r => {
+            let content = r.content
+            if (typeof content === 'string') {
+              try { content = JSON.parse(content) } catch { content = { text: content } }
+            }
+            return { date: r.date, content }
+          }),
+          timelineEvents: timelineRecords.map(r => {
+            let content = r.content
+            if (typeof content === 'string') {
+              try { content = JSON.parse(content) } catch { content = { text: content } }
+            }
+            return { date: r.date, content }
+          }),
           healthData: allHealthData.map(r => ({
             date: r.date,
             subcategory: r.subcategory,
             content: r.content,
           })),
           includePatterns,
+          workData,
         }),
         timeout: 30000,
       })
@@ -211,13 +313,14 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `medical-report-${providerName || 'export'}-${dateRangeEnd}.pdf`
+      const audienceLabel = audience === 'attorney' ? 'legal' : audience === 'personal' ? 'personal' : 'medical'
+      a.download = `${audienceLabel}-report-${providerName || 'export'}-${dateRangeEnd}.pdf`
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
 
-      alert('Report generated!')
+      alert('Report saved to your Downloads folder!')
       onClose()
 
     } catch (e: any) {
@@ -227,6 +330,10 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
       setIsGenerating(false)
     }
   }
+
+  const audienceLabel = audience === 'doctor'
+    ? (SPECIALTIES.find(s => s.value === specialty)?.label || 'Doctor')
+    : audience === 'attorney' ? 'Attorney / SSDI' : 'Personal'
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -248,89 +355,116 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
                   {s}
                 </div>
                 <span className="text-sm hidden sm:inline">
-                  {s === 1 ? 'Provider' : s === 2 ? 'Content' : 'Generate'}
+                  {s === 1 ? 'Who' : s === 2 ? 'What' : 'Generate'}
                 </span>
                 {s < 3 && <ChevronRight className="h-4 w-4 text-muted-foreground" />}
               </div>
             ))}
           </div>
 
-          {/* Step 1: Provider */}
+          {/* Step 1: Audience + Details */}
           {step === 1 && (
             <div className="space-y-4">
               <div>
-                <Label>Who is this report for?</Label>
-                <Input
-                  value={providerName}
-                  onChange={e => setProviderName(e.target.value)}
-                  placeholder="Dr. Smith, Mayo Clinic Neurology, etc."
-                  className="mt-1"
-                />
-                {savedProviders.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    {savedProviders.slice(0, 6).map((p: any, i: number) => (
-                      <Badge
-                        key={i}
-                        variant="outline"
-                        className="cursor-pointer hover:bg-primary/10"
-                        onClick={() => {
-                          setProviderName(p.name || p.providerName || '')
-                          if (p.specialty) {
-                            const match = SPECIALTIES.find(s =>
-                              p.specialty.toLowerCase().includes(s.value) ||
-                              s.label.toLowerCase().includes(p.specialty.toLowerCase())
-                            )
-                            if (match) setSpecialty(match.value)
-                          }
-                        }}
-                      >
-                        {p.name || p.providerName}
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <Label>Specialty (determines smart defaults)</Label>
-                <Select value={specialty} onValueChange={setSpecialty}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SPECIALTIES.map(s => (
-                      <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label>Report Style</Label>
-                <div className="flex gap-2 mt-1">
+                <Label className="mb-2 block">Who is this report for?</Label>
+                <div className="grid grid-cols-3 gap-2">
                   <Button
-                    variant={reportStyle === 'doctor' ? 'default' : 'outline'}
-                    onClick={() => setReportStyle('doctor')}
-                    className="flex-1"
+                    variant={audience === 'doctor' ? 'default' : 'outline'}
+                    onClick={() => setAudience('doctor')}
+                    className="flex flex-col h-auto py-3 gap-1"
                   >
-                    <Stethoscope className="h-4 w-4 mr-2" />
-                    Medical Language
+                    <Stethoscope className="h-5 w-5" />
+                    <span className="text-xs">My Doctor</span>
                   </Button>
                   <Button
-                    variant={reportStyle === 'human' ? 'default' : 'outline'}
-                    onClick={() => setReportStyle('human')}
-                    className="flex-1"
+                    variant={audience === 'attorney' ? 'default' : 'outline'}
+                    onClick={() => setAudience('attorney')}
+                    className="flex flex-col h-auto py-3 gap-1"
                   >
-                    <FileText className="h-4 w-4 mr-2" />
-                    Human Readable
+                    <Scale className="h-5 w-5" />
+                    <span className="text-xs">My Attorney</span>
+                  </Button>
+                  <Button
+                    variant={audience === 'personal' ? 'default' : 'outline'}
+                    onClick={() => setAudience('personal')}
+                    className="flex flex-col h-auto py-3 gap-1"
+                  >
+                    <User className="h-5 w-5" />
+                    <span className="text-xs">Just Me</span>
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {reportStyle === 'doctor'
-                    ? 'ICD-10 codes, clinical terminology, statistical correlations'
-                    : 'Plain language, trend descriptions, your own words'}
+                <p className="text-xs text-muted-foreground mt-2">
+                  {audience === 'doctor'
+                    ? 'ICD-10 codes, clinical stats, medical language your doctor speaks'
+                    : audience === 'attorney'
+                    ? 'Functional limitations, missed work, disability impact — SSDI ready'
+                    : 'Plain language summary for your own records'}
                 </p>
               </div>
+
+              {/* Doctor-specific: provider name + specialty */}
+              {audience === 'doctor' && (
+                <>
+                  <div>
+                    <Label>Provider Name</Label>
+                    <Input
+                      value={providerName}
+                      onChange={e => setProviderName(e.target.value)}
+                      placeholder="Dr. Smith, Mayo Clinic Neurology, etc."
+                      className="mt-1"
+                    />
+                    {savedProviders.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {savedProviders.slice(0, 6).map((p: any, i: number) => (
+                          <Badge
+                            key={i}
+                            variant="outline"
+                            className="cursor-pointer hover:bg-primary/10"
+                            onClick={() => {
+                              setProviderName(p.name || p.providerName || '')
+                              if (p.specialty) {
+                                const match = SPECIALTIES.find(s =>
+                                  p.specialty.toLowerCase().includes(s.value) ||
+                                  s.label.toLowerCase().includes(p.specialty.toLowerCase())
+                                )
+                                if (match) setSpecialty(match.value)
+                              }
+                            }}
+                          >
+                            {p.name || p.providerName}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <Label>Specialty (determines smart defaults)</Label>
+                    <Select value={specialty} onValueChange={setSpecialty}>
+                      <SelectTrigger className="mt-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SPECIALTIES.map(s => (
+                          <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              )}
+
+              {/* Attorney-specific */}
+              {audience === 'attorney' && (
+                <div>
+                  <Label>Attorney / Firm Name</Label>
+                  <Input
+                    value={providerName}
+                    onChange={e => setProviderName(e.target.value)}
+                    placeholder="Smith & Associates, SSDI case file, etc."
+                    className="mt-1"
+                  />
+                </div>
+              )}
 
               <Button onClick={() => setStep(2)} className="w-full">
                 Next: Choose Content <ChevronRight className="h-4 w-4 ml-2" />
@@ -375,6 +509,29 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
                 </div>
               </div>
 
+              {/* Tag exclusions */}
+              {availableTags.length > 0 && (
+                <div className="p-3 border rounded-lg">
+                  <Label className="mb-2 block">Exclude entries with these tags</Label>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    Hide specific entries from your report (e.g., hide that cake from your endo)
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {availableTags.map(tag => (
+                      <Badge
+                        key={tag}
+                        variant={excludedTags.includes(tag) ? 'destructive' : 'outline'}
+                        className="cursor-pointer text-xs"
+                        onClick={() => toggleExcludedTag(tag)}
+                      >
+                        {excludedTags.includes(tag) && <X className="h-3 w-3 mr-1" />}
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-3 p-3 border rounded-lg">
                 <div className="flex items-center justify-between">
                   <Label>Include Patterns & Correlations</Label>
@@ -395,6 +552,15 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
                   <Label>Include Timeline Events</Label>
                   <Switch checked={includeTimeline} onCheckedChange={setIncludeTimeline} />
                 </div>
+                {(audience === 'attorney' || audience === 'personal') && (
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label>Include Work & Disability</Label>
+                      <p className="text-xs text-muted-foreground">Missed work days, employment history, applications</p>
+                    </div>
+                    <Switch checked={includeWorkDisability} onCheckedChange={setIncludeWorkDisability} />
+                  </div>
+                )}
               </div>
 
               <div className="flex gap-2">
@@ -414,7 +580,7 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
               <div className="p-4 bg-muted/50 rounded-lg space-y-2">
                 <h3 className="font-semibold">Report Summary</h3>
                 <div className="text-sm space-y-1">
-                  <p><strong>For:</strong> {providerName || 'Not specified'} ({SPECIALTIES.find(s => s.value === specialty)?.label})</p>
+                  <p><strong>For:</strong> {providerName || 'Not specified'} ({audienceLabel})</p>
                   <p><strong>Style:</strong> {reportStyle === 'doctor' ? 'Medical Language' : 'Human Readable'}</p>
                   <p><strong>Date Range:</strong> {dateRangeStart} to {dateRangeEnd}</p>
                   <p><strong>Trackers:</strong> {selectedTrackers.length} selected</p>
@@ -425,6 +591,14 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
                       </Badge>
                     ))}
                   </div>
+                  {excludedTags.length > 0 && (
+                    <p className="mt-1">
+                      <strong>Excluding tags:</strong>{' '}
+                      {excludedTags.map(t => (
+                        <Badge key={t} variant="destructive" className="text-xs mr-1">{t}</Badge>
+                      ))}
+                    </p>
+                  )}
                   <p className="mt-2">
                     <strong>Includes:</strong>{' '}
                     {[
@@ -432,10 +606,15 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
                       includeJournal && 'Journal',
                       includeLabs && 'Labs',
                       includeTimeline && 'Timeline',
+                      includeWorkDisability && 'Work & Disability',
                     ].filter(Boolean).join(', ') || 'Tracker data only'}
                   </p>
                 </div>
               </div>
+
+              <p className="text-xs text-muted-foreground text-center">
+                Your report will be saved to your Downloads folder
+              </p>
 
               <div className="flex gap-2">
                 <Button variant="outline" onClick={() => setStep(2)} className="flex-1">

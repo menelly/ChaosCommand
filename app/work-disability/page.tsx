@@ -117,7 +117,7 @@ const STATUS_COLORS: Record<string, string> = {
 // ============================================================================
 
 export default function WorkDisabilityPage() {
-  const { saveData, getAllCategoryData } = useDailyData()
+  const { saveData, deleteData, getAllCategoryData } = useDailyData()
   const [activeTab, setActiveTab] = useState("missed-work")
 
   // --- MISSED WORK STATE ---
@@ -254,6 +254,30 @@ export default function WorkDisabilityPage() {
       contactPerson: "", contactPhone: "", documents: "",
       notes: "", nextSteps: "", nextAppointment: "", appealDeadline: "",
     })
+    await loadAllData()
+  }
+
+  // ============================================================================
+  // DELETE FUNCTIONS
+  // ============================================================================
+
+  const deleteMissedDay = async (day: MissedWorkDay) => {
+    if (!confirm(`Delete missed work entry for ${day.date}?`)) return
+    await deleteData(day.date, CATEGORIES.USER, 'missed-work')
+    await loadAllData()
+  }
+
+  const deleteEmployment = async (emp: Employment) => {
+    if (!confirm(`Delete employment record for ${emp.employer}?`)) return
+    const date = emp.dateStarted || formatDateForStorage(new Date())
+    await deleteData(date, CATEGORIES.USER, 'employment-history')
+    await loadAllData()
+  }
+
+  const deleteApplication = async (app: DisabilityApplication) => {
+    if (!confirm(`Delete ${app.applicationType} application?`)) return
+    const date = app.dateSubmitted || formatDateForStorage(new Date())
+    await deleteData(date, CATEGORIES.USER, 'disability-applications')
     await loadAllData()
   }
 
@@ -549,6 +573,14 @@ export default function WorkDisabilityPage() {
                             <span className="text-xs text-[var(--text-muted)]">{day.hoursMissed}h</span>
                           )}
                         </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 w-7 p-0 text-[var(--text-muted)] hover:text-red-500"
+                          onClick={() => deleteMissedDay(day)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
                       </div>
                       <p className="text-sm text-[var(--text-muted)] mt-1">{day.reason}</p>
                       {day.notes && (
@@ -687,9 +719,19 @@ export default function WorkDisabilityPage() {
                           {emp.employer} — {emp.dateStarted} to {emp.dateEnded || "Present"}
                         </p>
                       </div>
-                      <Badge variant={emp.active ? "default" : "secondary"}>
-                        {emp.active ? "Current" : "Past"}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={emp.active ? "default" : "secondary"}>
+                          {emp.active ? "Current" : "Past"}
+                        </Badge>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 w-7 p-0 text-[var(--text-muted)] hover:text-red-500"
+                          onClick={() => deleteEmployment(emp)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                     </div>
                     {emp.jobDuties && <p className="text-sm text-[var(--text-muted)] mt-2">{emp.jobDuties}</p>}
                     {emp.accommodationsRequested.details && (
@@ -866,6 +908,14 @@ export default function WorkDisabilityPage() {
                             Deadline: {app.appealDeadline}
                           </Badge>
                         )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 w-7 p-0 text-[var(--text-muted)] hover:text-red-500"
+                          onClick={() => deleteApplication(app)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
                       </div>
                     </div>
                     {app.nextSteps && (

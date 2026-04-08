@@ -136,11 +136,9 @@ export default function SettingsPage() {
               </Card>
             )
           })}
-        </div>
 
-        {/* Bottom row: QR Sync + Restart Onboarding */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-        <Card className="opacity-60">
+          {/* QR Sync + Restart Onboarding — same grid */}
+          <Card className="opacity-60">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <HelpCircle className="h-5 w-5" />

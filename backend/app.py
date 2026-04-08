@@ -951,6 +951,8 @@ def export_doctor_report():
             'timelineEvents': data.get('timelineEvents', []),
             'healthData': data.get('healthData', []),
             'includePatterns': data.get('includePatterns', True),
+            'audience': data.get('audience', 'doctor'),
+            'workData': data.get('workData'),
         }
 
         # Generate PDF

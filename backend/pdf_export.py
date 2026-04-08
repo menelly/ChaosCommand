@@ -20,6 +20,7 @@ from reportlab.platypus import (
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+from xml.sax.saxutils import escape as xml_escape
 
 logger = logging.getLogger(__name__)
 
@@ -97,11 +98,16 @@ def generate_medical_report(data: dict) -> str:
         is_doctor = data.get('reportStyle') == 'doctor'
         story = []
 
+        # Reusable table cell styles
+        cell_style = ParagraphStyle('CellText', parent=styles['Normal'], fontSize=8, leading=10)
+        header_cell = ParagraphStyle('HeaderCell', parent=cell_style, textColor=colors.white, fontName='Helvetica-Bold')
+
         # === HEADER ===
         story.append(Paragraph("Patient Health Report", styles['ReportTitle']))
 
         demo = data.get('demographics') or {}
-        patient_name = f"{demo.get('firstName', '')} {demo.get('lastName', '')}".strip() or demo.get('preferredName', 'Patient')
+        # Use legal name for medical documents, not nickname
+        patient_name = demo.get('legalName') or demo.get('preferredName', 'Patient')
         dob = demo.get('dateOfBirth', '')
         date_range = data.get('dateRange', {})
 
@@ -141,7 +147,12 @@ def generate_medical_report(data: dict) -> str:
         # === TRACKED CONDITIONS (with ICD-10 if doctor mode) ===
         if is_doctor:
             story.append(Paragraph("Tracked Conditions (ICD-10)", styles['SectionHead']))
-            condition_data = [['Condition', 'ICD-10 Code', 'Days Tracked', 'Entries']]
+            condition_data = [[
+                Paragraph('Condition', header_cell),
+                Paragraph('ICD-10 Code', header_cell),
+                Paragraph('Days Tracked', header_cell),
+                Paragraph('Entries', header_cell),
+            ]]
             tracker_counts = Counter()
             tracker_day_counts = defaultdict(set)
 
@@ -156,22 +167,29 @@ def generate_medical_report(data: dict) -> str:
                 icd = ICD10_MAP.get(tracker_id, '—')
                 label = tracker_id.replace('-', ' ').title()
                 days = len(tracker_day_counts[tracker_id])
-                condition_data.append([label, icd, str(days), str(count)])
+                condition_data.append([
+                    Paragraph(xml_escape(label), cell_style),
+                    Paragraph(xml_escape(icd), cell_style),
+                    Paragraph(str(days), cell_style),
+                    Paragraph(str(count), cell_style),
+                ])
 
             if len(condition_data) > 1:
-                t = Table(condition_data, colWidths=[150, 200, 70, 50])
+                t = Table(condition_data, colWidths=[100, 250, 70, 50])
                 t.setStyle(TableStyle([
                     ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2c3e50')),
-                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-                    ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                    ('FONTSIZE', (0, 0), (-1, -1), 8),
                     ('ALIGN', (2, 0), (-1, -1), 'CENTER'),
+                    ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
                     ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#cccccc')),
                     ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8f9fa')]),
                     ('TOPPADDING', (0, 0), (-1, -1), 4),
                     ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
                 ]))
                 story.append(t)
+                story.append(Paragraph(
+                    "ICD-10 codes shown are suggestions based on tracked symptoms and may not match official diagnoses.",
+                    styles['SmallNote']
+                ))
                 story.append(Spacer(1, 10))
         else:
             # Human readable
@@ -341,13 +359,119 @@ def generate_medical_report(data: dict) -> str:
                         styles['SubSection']
                     ))
                     for r in abnormals:
-                        flag = r.get('flag', '')
+                        flag = xml_escape(str(r.get('flag', '')))
                         flag_text = f" [{flag}]" if flag else ""
                         story.append(Paragraph(
-                            f"  {r.get('test_name')}: {r.get('value_text')} {r.get('unit', '')} "
-                            f"(ref: {r.get('reference_text', '—')}){flag_text}",
+                            f"  {xml_escape(str(r.get('test_name', '')))}: "
+                            f"{xml_escape(str(r.get('value_text', '')))} {xml_escape(str(r.get('unit', '')))} "
+                            f"(ref: {xml_escape(str(r.get('reference_text', '—')))}){flag_text}",
                             styles['Finding']
                         ))
+
+        # === PATTERNS & CORRELATIONS ===
+        if data.get('includePatterns') and tracker_data:
+            # Build per-day severity scores for each tracker type
+            day_scores = defaultdict(lambda: defaultdict(list))
+            for r in tracker_data:
+                date = r.get('date', '')
+                sub = r.get('subcategory', '')
+                base = sub.split('-')[0] if '-' in sub else sub
+                content = r.get('content', {})
+                if isinstance(content, dict):
+                    entries = content.get('entries', [])
+                    for e in entries if isinstance(entries, list) else []:
+                        if isinstance(e, dict):
+                            # Try to extract a severity value
+                            for key in ['painLevel', 'severity', 'intensity', 'level', 'rating',
+                                        'fogLevel', 'anxietyLevel', 'nausea', 'bloating']:
+                                val = e.get(key)
+                                if val is not None:
+                                    try:
+                                        day_scores[date][base].append(float(val))
+                                    except (ValueError, TypeError):
+                                        pass
+
+            # Compute co-occurrence correlations between tracker pairs
+            if len(day_scores) >= 5:  # Need enough days for meaningful correlations
+                tracker_bases = sorted(set(b for d in day_scores.values() for b in d.keys()))
+                correlations = []
+
+                for i, t1 in enumerate(tracker_bases):
+                    for t2 in tracker_bases[i+1:]:
+                        # Get days where both trackers have scores
+                        paired = []
+                        for date in day_scores:
+                            if t1 in day_scores[date] and t2 in day_scores[date] \
+                                and day_scores[date][t1] and day_scores[date][t2]:
+                                avg1 = sum(day_scores[date][t1]) / len(day_scores[date][t1])
+                                avg2 = sum(day_scores[date][t2]) / len(day_scores[date][t2])
+                                paired.append((avg1, avg2))
+
+                        if len(paired) >= 5:
+                            # Pearson correlation
+                            n = len(paired)
+                            x = [p[0] for p in paired]
+                            y = [p[1] for p in paired]
+                            mean_x = sum(x) / n
+                            mean_y = sum(y) / n
+                            num = sum((xi - mean_x) * (yi - mean_y) for xi, yi in paired)
+                            den_x = sum((xi - mean_x)**2 for xi in x) ** 0.5
+                            den_y = sum((yi - mean_y)**2 for yi in y) ** 0.5
+                            if den_x > 0 and den_y > 0:
+                                r_val = num / (den_x * den_y)
+                                if abs(r_val) >= 0.3:  # Only show meaningful correlations
+                                    correlations.append((t1, t2, r_val, n))
+
+                if correlations:
+                    correlations.sort(key=lambda x: -abs(x[2]))
+                    story.append(Paragraph(
+                        "Symptom Correlations" if is_doctor else "Patterns Found",
+                        styles['SectionHead']
+                    ))
+                    if is_doctor:
+                        story.append(Paragraph(
+                            "Pearson correlations between daily symptom severity scores (|r| ≥ 0.3):",
+                            styles['SmallNote']
+                        ))
+
+                    corr_data = [[
+                        Paragraph('Symptom A', header_cell),
+                        Paragraph('Symptom B', header_cell),
+                        Paragraph('Correlation', header_cell),
+                        Paragraph('Days', header_cell),
+                    ]]
+                    for t1, t2, r_val, n in correlations[:10]:  # Top 10
+                        label1 = t1.replace('-', ' ').title()
+                        label2 = t2.replace('-', ' ').title()
+                        strength = "strong" if abs(r_val) >= 0.7 else "moderate"
+                        direction = "positive" if r_val > 0 else "inverse"
+                        if is_doctor:
+                            r_text = f"r={r_val:.2f}"
+                        else:
+                            r_text = f"{strength} {direction}"
+                        corr_data.append([
+                            Paragraph(xml_escape(label1), cell_style),
+                            Paragraph(xml_escape(label2), cell_style),
+                            Paragraph(r_text, cell_style),
+                            Paragraph(str(n), cell_style),
+                        ])
+
+                    ct = Table(corr_data, colWidths=[120, 120, 120, 50])
+                    ct.setStyle(TableStyle([
+                        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#8e44ad')),
+                        ('ALIGN', (2, 0), (-1, -1), 'CENTER'),
+                        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#cccccc')),
+                        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8f9fa')]),
+                        ('TOPPADDING', (0, 0), (-1, -1), 4),
+                        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+                    ]))
+                    story.append(ct)
+                    story.append(Paragraph(
+                        "Correlations reflect co-occurrence patterns in patient-reported data and do not imply causation.",
+                        styles['SmallNote']
+                    ))
+                    story.append(Spacer(1, 10))
 
         # === JOURNAL ENTRIES ===
         journal = data.get('journalEntries', [])
@@ -360,10 +484,205 @@ def generate_medical_report(data: dict) -> str:
                 content = entry.get('content', {})
                 text = content.get('text', '') if isinstance(content, dict) else str(content)
                 if text:
+                    safe_text = xml_escape(text)
+                    safe_date = xml_escape(str(entry.get('date', '')))
                     story.append(Paragraph(
-                        f"<b>{entry.get('date', '')}:</b> {text}",
+                        f"<b>{safe_date}:</b> {safe_text}",
                         styles['ReportBody']
                     ))
+
+        # === WORK & DISABILITY ===
+        work_data = data.get('workData')
+        if work_data:
+            story.append(Paragraph(
+                "Functional Impact & Work Capacity" if is_doctor else "Work & Disability",
+                styles['SectionHead']
+            ))
+
+            missed = work_data.get('missedWork', [])
+            if missed:
+                total = len(missed)
+                severe = sum(1 for m in missed
+                             if m.get('impactLevel') == 'severe'
+                             or m.get('couldNotDoAnythingElse'))
+                full_days = sum(1 for m in missed if m.get('duration') == 'full')
+
+                story.append(Paragraph(
+                    "Occupational Impact Assessment" if is_doctor else "Missed Work Days",
+                    styles['SubSection']
+                ))
+
+                if is_doctor:
+                    story.append(Paragraph(
+                        f"Total documented missed work days: {total}. "
+                        f"Full days missed: {full_days}. "
+                        f"Days with severe functional limitation: {severe} "
+                        f"({severe/total*100:.0f}% of missed days)." if total > 0 else
+                        f"Total documented missed work days: {total}.",
+                        styles['ReportBody']
+                    ))
+                else:
+                    story.append(Paragraph(
+                        f"Missed {total} work days total ({full_days} full days), "
+                        f"{severe} of which were severe.",
+                        styles['ReportBody']
+                    ))
+
+                # Missed work table with all details
+                work_table_data = [[
+                    Paragraph('Date', header_cell),
+                    Paragraph('Impact', header_cell),
+                    Paragraph('Type', header_cell),
+                    Paragraph('Duration', header_cell),
+                    Paragraph('Reason / Notes', header_cell),
+                ]]
+                for m in missed[:30]:
+                    impact = m.get('impactLevel', m.get('severity', ''))
+                    unable = " (completely unable)" if m.get('couldNotDoAnythingElse') else ""
+                    duration = m.get('duration', '')
+                    hours = m.get('hoursMissed')
+                    dur_text = f"{duration}" + (f" ({hours}h)" if hours else "")
+                    reason = m.get('reason', '')
+                    notes = m.get('notes', '')
+                    reason_text = reason
+                    if notes and notes != reason:
+                        reason_text += f" — {notes}" if reason_text else notes
+
+                    work_table_data.append([
+                        Paragraph(xml_escape(str(m.get('date', ''))), cell_style),
+                        Paragraph(xml_escape(f"{impact}{unable}"), cell_style),
+                        Paragraph(xml_escape(str(m.get('workType', m.get('type', '')))), cell_style),
+                        Paragraph(xml_escape(dur_text), cell_style),
+                        Paragraph(xml_escape(reason_text), cell_style),
+                    ])
+
+                if len(work_table_data) > 1:
+                    wt = Table(work_table_data, colWidths=[65, 80, 65, 60, 200])
+                    wt.setStyle(TableStyle([
+                        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#c0392b')),
+                        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#cccccc')),
+                        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8f9fa')]),
+                        ('TOPPADDING', (0, 0), (-1, -1), 4),
+                        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+                    ]))
+                    story.append(wt)
+                    story.append(Spacer(1, 8))
+
+            employment = work_data.get('employment', [])
+            if employment:
+                story.append(Paragraph("Employment History", styles['SubSection']))
+                for emp in employment:
+                    employer = xml_escape(str(emp.get('employer', emp.get('company', ''))))
+                    title = xml_escape(str(emp.get('jobTitle', emp.get('title', emp.get('position', '')))))
+                    start = xml_escape(str(emp.get('dateStarted', emp.get('startDate', ''))))
+                    end_date = emp.get('dateEnded', emp.get('endDate', ''))
+                    end = xml_escape(end_date) if end_date else 'Present'
+                    active = emp.get('active', False)
+                    if active:
+                        end = 'Present'
+
+                    story.append(Paragraph(
+                        f"<b>{employer}</b> — {title} ({start} to {end})",
+                        styles['ReportBody']
+                    ))
+
+                    # Job duties
+                    duties = emp.get('jobDuties', '')
+                    if duties:
+                        story.append(Paragraph(
+                            f"  Job duties: {xml_escape(str(duties))}",
+                            styles['ReportBody']
+                        ))
+
+                    # Accommodations requested
+                    acc_req = emp.get('accommodationsRequested', {})
+                    if isinstance(acc_req, dict) and acc_req.get('details'):
+                        req_date = acc_req.get('date', '')
+                        date_note = f" ({xml_escape(req_date)})" if req_date else ""
+                        story.append(Paragraph(
+                            f"  <b>Accommodations requested{date_note}:</b> {xml_escape(str(acc_req['details']))}",
+                            styles['ReportBody']
+                        ))
+
+                    # Accommodations received
+                    acc_rec = emp.get('accommodationsReceived', {})
+                    if isinstance(acc_rec, dict) and acc_rec.get('details'):
+                        rec_date = acc_rec.get('date', '')
+                        date_note = f" ({xml_escape(rec_date)})" if rec_date else ""
+                        story.append(Paragraph(
+                            f"  <b>Accommodations received{date_note}:</b> {xml_escape(str(acc_rec['details']))}",
+                            styles['ReportBody']
+                        ))
+                    elif isinstance(acc_req, dict) and acc_req.get('details'):
+                        # Requested but nothing received — flag it
+                        story.append(Paragraph(
+                            "  <b>Accommodations received:</b> None documented",
+                            styles['Finding']
+                        ))
+
+                    # Symptoms exacerbated by work
+                    symptoms = emp.get('symptomsExacerbated', '')
+                    if symptoms:
+                        story.append(Paragraph(
+                            f"  Symptoms exacerbated by role: {xml_escape(str(symptoms))}",
+                            styles['Finding']
+                        ))
+
+                    # Reflections / notes
+                    reflections = emp.get('reflections', '')
+                    if reflections:
+                        story.append(Paragraph(
+                            f"  Notes: {xml_escape(str(reflections))}",
+                            styles['ReportBody']
+                        ))
+
+                    story.append(Spacer(1, 4))
+
+            applications = work_data.get('applications', [])
+            if applications:
+                story.append(Paragraph(
+                    "Disability Application History" if is_doctor else "Disability Applications",
+                    styles['SubSection']
+                ))
+                for app in applications:
+                    app_type = xml_escape(str(app.get('applicationType', app.get('type', ''))))
+                    status = xml_escape(str(app.get('status', '')))
+                    agency = xml_escape(str(app.get('agency', '')))
+                    filed = xml_escape(str(app.get('dateSubmitted', app.get('dateFiled', ''))))
+                    case_num = app.get('caseNumber', '')
+
+                    line = f"<b>{app_type}</b>"
+                    if agency:
+                        line += f" ({agency})"
+                    line += f": {status}"
+                    if filed:
+                        line += f" — filed {filed}"
+                    if case_num:
+                        line += f" — Case #{xml_escape(str(case_num))}"
+                    story.append(Paragraph(line, styles['ReportBody']))
+
+                    # Notes, next steps, appeal deadline
+                    app_notes = app.get('notes', '')
+                    if app_notes:
+                        story.append(Paragraph(
+                            f"  Notes: {xml_escape(str(app_notes))}",
+                            styles['ReportBody']
+                        ))
+                    next_steps = app.get('nextSteps', '')
+                    if next_steps:
+                        story.append(Paragraph(
+                            f"  Next steps: {xml_escape(str(next_steps))}",
+                            styles['ReportBody']
+                        ))
+                    appeal = app.get('appealDeadline', '')
+                    if appeal:
+                        story.append(Paragraph(
+                            f"  <b>Appeal deadline: {xml_escape(str(appeal))}</b>",
+                            styles['Finding']
+                        ))
+
+            story.append(Spacer(1, 10))
 
         # === FOOTER ===
         story.append(Spacer(1, 20))
