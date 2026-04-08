@@ -46,10 +46,10 @@ export default function FoodChoiceHistory() {
   const loadHistory = async () => {
     setIsLoading(true)
     try {
-      // Get last 30 days of data
+      // Get last 90 days of data
       const endDate = new Date()
       const startDate = new Date()
-      startDate.setDate(startDate.getDate() - 30)
+      startDate.setDate(startDate.getDate() - 90)
 
       const dateRange = []
       for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
@@ -142,7 +142,7 @@ export default function FoodChoiceHistory() {
           <div className="text-center py-8">
             <Utensils className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
             <p className="text-gray-500">
-              No food entries found in the last 30 days.<br/>
+              No food entries found in the last 90 days.<br/>
               Start tracking to see your nourishment journey!
             </p>
           </div>
@@ -154,7 +154,7 @@ export default function FoodChoiceHistory() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Food Choice History - Last 30 Days</CardTitle>
+        <CardTitle>Food Choice History - Last 90 Days</CardTitle>
         <CardDescription>Your nourishment journey</CardDescription>
       </CardHeader>
       <CardContent>

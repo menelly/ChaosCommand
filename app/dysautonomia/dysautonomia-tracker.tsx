@@ -107,7 +107,7 @@ export default function DysautonomiaTracker() {
   }
 
   // Load ALL entries across date range for analytics
-  const loadAllEntriesForAnalytics = async (days: number = 30): Promise<DysautonomiaEntry[]> => {
+  const loadAllEntriesForAnalytics = async (days: number = 90): Promise<DysautonomiaEntry[]> => {
     try {
       const allEntries: DysautonomiaEntry[] = []
       const today = new Date()

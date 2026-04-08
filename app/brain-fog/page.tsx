@@ -99,7 +99,7 @@ function BrainFogAnalytics({
   loadAllEntries: (days: number) => Promise<BrainFogEntry[]>
   getSymptomInfo: (value: string) => { value: string; emoji: string; description: string } | undefined
 }) {
-  const [timeRange, setTimeRange] = useState(30)
+  const [timeRange, setTimeRange] = useState(90)
   const [analyticsData, setAnalyticsData] = useState<BrainFogEntry[]>([])
   const [isLoading, setIsLoading] = useState(true)
 

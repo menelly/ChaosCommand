@@ -213,7 +213,7 @@ export default function EnergyPacingTracker() {
   const loadHistory = async () => {
     try {
       const endDate = formatDateForStorage(new Date())
-      const startDate = formatDateForStorage(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000))
+      const startDate = formatDateForStorage(new Date(Date.now() - 90 * 24 * 60 * 60 * 1000))
       const records = await getDateRange(startDate, endDate, CATEGORIES.TRACKER)
 
       const energyRecords = records.filter(record => record.subcategory === 'energy')

@@ -20,7 +20,7 @@
  */
 /**
  * DYSAUTONOMIA HISTORY COMPONENT
- * Display 30-day history of dysautonomia episodes
+ * Display 90-day history of dysautonomia episodes
  */
 
 'use client'
@@ -60,8 +60,8 @@ export function DysautonomiaHistory({ onEdit, onDelete, refreshTrigger }: Dysaut
       const allEntries: DysautonomiaEntry[] = []
       const today = new Date()
       
-      // Load last 30 days of data
-      for (let i = 0; i < 30; i++) {
+      // Load last 90 days of data
+      for (let i = 0; i < 90; i++) {
         const date = format(subDays(today, i), 'yyyy-MM-dd')
         const records = await getCategoryData(date, CATEGORIES.TRACKER)
         const record = records.find(record => record.subcategory === 'dysautonomia')
@@ -181,7 +181,7 @@ export function DysautonomiaHistory({ onEdit, onDelete, refreshTrigger }: Dysaut
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
-            Episode History (30 Days)
+            Episode History (90 Days)
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">

@@ -47,8 +47,8 @@ export function SensoryHistory({ refreshTrigger, onEdit, onDelete }: SensoryHist
         const allEntries: SensoryEntry[] = []
         const today = new Date()
 
-        // Load entries from the last 30 days
-        for (let i = 0; i < 30; i++) {
+        // Load entries from the last 90 days
+        for (let i = 0; i < 90; i++) {
           const currentDate = new Date(today)
           currentDate.setDate(today.getDate() - i)
           const dateStr = format(currentDate, 'yyyy-MM-dd')

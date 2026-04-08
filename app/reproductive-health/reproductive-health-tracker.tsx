@@ -181,9 +181,9 @@ export default function ReproductiveHealthTracker() {
   }, [getSpecificData])
 
   const loadAllEntries = useCallback(async () => {
-    // Load recent entries for history view - get last 30 days
+    // Load recent entries for history view - get last 90 days
     const promises = []
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < 90; i++) {
       const date = subDays(new Date(), i)
       const dateKey = formatDateForStorage(date)
       promises.push(getSpecificData(dateKey, CATEGORIES.TRACKER, 'reproductive-health'))

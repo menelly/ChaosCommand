@@ -130,15 +130,15 @@ export default function PainTracker() {
 
 
 
-  // Load historical entries (last 30 days)
+  // Load historical entries (last 90 days)
   const loadHistoryEntries = async () => {
     setHistoryLoading(true)
     try {
       const endDate = new Date()
       const startDate = new Date()
-      startDate.setDate(startDate.getDate() - 30)
+      startDate.setDate(startDate.getDate() - 90)
 
-      // Generate array of date strings for the last 30 days
+      // Generate array of date strings for the last 90 days
       const dateStrings: string[] = []
       const currentDate = new Date(startDate)
       while (currentDate <= endDate) {

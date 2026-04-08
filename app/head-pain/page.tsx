@@ -60,15 +60,15 @@ export default function HeadPainTracker() {
   const [historyEntries, setHistoryEntries] = useState<HeadPainEntry[]>([])
   const [historyLoading, setHistoryLoading] = useState(false)
 
-  // Load historical entries (last 30 days)
+  // Load historical entries (last 90 days)
   const loadHistoryEntries = async () => {
     setHistoryLoading(true)
     try {
       const allEntries: HeadPainEntry[] = []
       const today = new Date()
 
-      // Load last 30 days of data
-      for (let i = 0; i < 30; i++) {
+      // Load last 90 days of data
+      for (let i = 0; i < 90; i++) {
         const date = format(subDays(today, i), 'yyyy-MM-dd')
         const records = await getCategoryData(date, CATEGORIES.TRACKER)
         const record = records.find(record => record.subcategory === 'head-pain')
@@ -411,7 +411,7 @@ export default function HeadPainTracker() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Activity className="h-5 w-5" />
-                  Head Pain History (Last 30 Days)
+                  Head Pain History (Last 90 Days)
                 </CardTitle>
                 <CardDescription>
                   {historyEntries.length} episodes recorded
@@ -428,7 +428,7 @@ export default function HeadPainTracker() {
                     <Brain className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                     <h3 className="text-lg font-semibold mb-2">No Head Pain Episodes</h3>
                     <p className="text-muted-foreground">
-                      No head pain episodes recorded in the last 30 days.
+                      No head pain episodes recorded in the last 90 days.
                     </p>
                   </div>
                 ) : (

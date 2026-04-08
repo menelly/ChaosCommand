@@ -31,7 +31,7 @@ import { useDailyData } from "@/lib/database/hooks/use-daily-data"
 import { GSpot4BoringFileExporter, BoringFileType } from "@/lib/database/g-spot-4.0-boring-file-steganography"
 import { exportAllData } from "@/lib/database/migration-helper"
 import TestPinManagerComponent from "@/components/test-pin-manager"
-import { generateStarterData, STARTER_DATA_TRACKERS } from "@/lib/database/starter-data"
+import { generateStarterData, generateInterestingData, STARTER_DATA_TRACKERS } from "@/lib/database/starter-data"
 
 interface DataManagementModalProps {
   isOpen: boolean
@@ -414,14 +414,37 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
                   </div>
                 )}
                 
-                <Button 
+                <Button
                   onClick={hasPin ? handleGSpotWithPin : executeGSpotProtocol}
-                  variant="destructive" 
+                  variant="destructive"
                   className="w-full"
                   disabled={isExecutingGSpot}
                 >
                   <Zap className="h-4 w-4 mr-2" />
-                  {isExecutingGSpot ? 'Executing...' : 'Execute G-Spot Protocol'}
+                  {isExecutingGSpot ? 'Executing...' : 'Execute G-Spot Protocol (Bland)'}
+                </Button>
+
+                <Button
+                  onClick={async () => {
+                    if (!confirm('Load 90 days of realistic chronic illness demo data?\n\nIncludes: flare patterns, medication change, symptom correlations, dysautonomia episodes, journal entries.\n\nThis REPLACES current data.')) return
+                    try {
+                      setIsExecutingGSpot(true)
+                      const data = generateInterestingData()
+                      await secureOverwriteAllData(data as any)
+                      alert(`Loaded ${data.length} records of interesting demo data!\n\nIncludes a medication change, a full flare, recovery, and clear improvement trends.`)
+                      onClose()
+                    } catch (e) {
+                      alert(`Failed: ${e instanceof Error ? e.message : 'Unknown error'}`)
+                    } finally {
+                      setIsExecutingGSpot(false)
+                    }
+                  }}
+                  variant="outline"
+                  className="w-full"
+                  disabled={isExecutingGSpot}
+                >
+                  <Beaker className="h-4 w-4 mr-2" />
+                  Load Interesting Demo Data (For Testing)
                 </Button>
               </div>
             </div>

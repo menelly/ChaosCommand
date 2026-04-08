@@ -349,3 +349,353 @@ export const STARTER_DATA_TRACKERS = [
   'seizure', 'reproductive', 'food-allergens', 'coping',
   'main', 'daily-prompts'
 ] as const
+
+/**
+ * INTERESTING DATA — For testing PDF export, analytics, and pattern detection.
+ *
+ * Tells the story of a chronic illness patient over 90 days:
+ * - Week 1-3: Baseline. Managing, not great. Sleep ~6hrs, pain 4-5, low energy.
+ * - Week 4: Medication change (started new med). Adjustment period — worse sleep, GI issues.
+ * - Week 5-6: Medication settling. Sleep improving. Pain dropping.
+ * - Week 7: FLARE. Pain spikes to 8-9, fatigue crashes, brain fog severe, missed work.
+ * - Week 8: Flare recovery. Gradual improvement. Doctor visit.
+ * - Week 9-10: New baseline. Better than before med change. Pain 2-3, energy 6-7.
+ * - Week 11-13: Stable with occasional bad days. Clear improvement trend.
+ *
+ * Includes: dysautonomia episodes with HR data, dismissed findings,
+ * correlated symptom clusters, medication tracking, and journal entries
+ * that tell the human story behind the numbers.
+ */
+export function generateInterestingData(endDate: Date = new Date()): Omit<DailyDataRecord, 'id'>[] {
+  const records: Omit<DailyDataRecord, 'id'>[] = []
+
+  // Story phases (days back from end)
+  const isBaseline = (d: number) => d >= 70     // weeks 1-3
+  const isMedChange = (d: number) => d >= 56 && d < 70  // week 4-5
+  const isSettling = (d: number) => d >= 42 && d < 56   // week 6-7
+  const isFlare = (d: number) => d >= 35 && d < 42      // week 8
+  const isRecovery = (d: number) => d >= 21 && d < 35   // week 9-10
+  const isNewBaseline = (d: number) => d < 21            // week 11-13
+
+  // Deterministic "random" based on day
+  const pick = (day: number, arr: any[]) => arr[day % arr.length]
+  const vary = (day: number, base: number, range: number) => {
+    const offset = ((day * 7 + 13) % (range * 2 + 1)) - range
+    return Math.max(0, Math.min(10, base + offset))
+  }
+
+  for (let daysBack = 0; daysBack < 90; daysBack++) {
+    const d = new Date(endDate)
+    d.setDate(d.getDate() - daysBack)
+    const date = d.toISOString().split('T')[0]
+    const dow = d.getDay()
+    const weekNum = Math.floor(daysBack / 7)
+    const ts = d.toISOString()
+    const meta = { created_at: ts, updated_at: ts }
+
+    // === PAIN LEVELS BY PHASE ===
+    let painBase = 4
+    if (isMedChange(daysBack)) painBase = 5
+    if (isSettling(daysBack)) painBase = 3
+    if (isFlare(daysBack)) painBase = 8
+    if (isRecovery(daysBack)) painBase = 5
+    if (isNewBaseline(daysBack)) painBase = 2
+
+    const painLevel = vary(daysBack, painBase, isFlare(daysBack) ? 1 : 2)
+    const painLocations = isFlare(daysBack)
+      ? ['joints', 'back', 'hands', 'everywhere']
+      : isBaseline(daysBack)
+        ? ['joints', 'back']
+        : ['joints']
+
+    // Pain — most days
+    if (dow % 7 !== 0 || isFlare(daysBack)) {
+      records.push({
+        date, category: CAT.TRACKER, subcategory: 'pain',
+        content: {
+          painLevel,
+          location: pick(daysBack, painLocations),
+          notes: isFlare(daysBack) && painLevel >= 8
+            ? pick(daysBack, ['Can barely move today', 'Everything hurts', 'Called in sick', 'Heating pad all day'])
+            : ''
+        },
+        metadata: meta
+      })
+    }
+
+    // === SLEEP BY PHASE ===
+    let sleepBase = 6
+    if (isMedChange(daysBack)) sleepBase = 5  // Med adjustment wrecks sleep
+    if (isSettling(daysBack)) sleepBase = 6.5
+    if (isFlare(daysBack)) sleepBase = 4.5     // Pain keeps you up
+    if (isRecovery(daysBack)) sleepBase = 7
+    if (isNewBaseline(daysBack)) sleepBase = 7.5
+
+    const hoursSlept = Math.max(3, Math.min(10, sleepBase + ((daysBack * 3 + 7) % 5 - 2) * 0.5))
+    if (daysBack % 10 !== 7) {
+      records.push({
+        date, category: CAT.TRACKER, subcategory: 'sleep',
+        content: {
+          hoursSlept,
+          quality: hoursSlept >= 7 ? 'good' : hoursSlept >= 5.5 ? 'fair' : 'poor',
+          wokeUp: hoursSlept < 5 ? '4:30 AM' : '7:00 AM',
+          wentToBed: isFlare(daysBack) ? '9:00 PM' : '11:00 PM',
+          notes: hoursSlept < 5 ? 'Woke up from pain multiple times' : ''
+        },
+        metadata: meta
+      })
+    }
+
+    // === ENERGY BY PHASE ===
+    let energyBase = 4
+    if (isMedChange(daysBack)) energyBase = 3
+    if (isSettling(daysBack)) energyBase = 5
+    if (isFlare(daysBack)) energyBase = 2
+    if (isRecovery(daysBack)) energyBase = 5
+    if (isNewBaseline(daysBack)) energyBase = 7
+
+    if (daysBack % 8 !== 5) {
+      records.push({
+        date, category: CAT.TRACKER, subcategory: 'energy',
+        content: { energyLevel: vary(daysBack, energyBase, 2), notes: '' },
+        metadata: meta
+      })
+    }
+
+    // === DYSAUTONOMIA — worse during flare ===
+    if (dow === 2 || dow === 5 || isFlare(daysBack)) {
+      const restHR = isFlare(daysBack) ? 95 : isMedChange(daysBack) ? 82 : 72
+      const standHR = isFlare(daysBack) ? 140 : isMedChange(daysBack) ? 115 : 98
+      records.push({
+        date, category: CAT.TRACKER, subcategory: 'dysautonomia',
+        content: {
+          episodeType: standHR - restHR >= 30 ? 'POTS' : 'general',
+          symptoms: isFlare(daysBack)
+            ? ['lightheadedness', 'near-syncope', 'tachycardia', 'coat-hanger pain']
+            : ['lightheadedness'],
+          severity: isFlare(daysBack) ? 8 : vary(daysBack, 3, 1),
+          triggers: ['standing', ...(isFlare(daysBack) ? ['heat', 'showering'] : [])],
+          restingHeartRate: restHR,
+          standingHeartRate: standHR,
+          notes: standHR >= 130 ? 'HR delta >30 — POTS criteria met' : ''
+        },
+        metadata: meta
+      })
+    }
+
+    // === BRAIN FOG — correlates with flare ===
+    if (dow === 2 || dow === 6 || isFlare(daysBack)) {
+      const fogBase = isFlare(daysBack) ? 8 : isBaseline(daysBack) ? 4 : isNewBaseline(daysBack) ? 2 : 3
+      records.push({
+        date, category: CAT.TRACKER, subcategory: 'brain-fog',
+        content: {
+          severity: vary(daysBack, fogBase, 1),
+          notes: isFlare(daysBack)
+            ? pick(daysBack, ['Forgot my own phone number', 'Put keys in the fridge', 'Could not form sentences', 'Lost mid-sentence 3 times'])
+            : ''
+        },
+        metadata: meta
+      })
+    }
+
+    // === UPPER DIGESTIVE — worse during med change ===
+    if (isMedChange(daysBack) || dow === 1 || dow === 4) {
+      const severity = isMedChange(daysBack) ? vary(daysBack, 6, 2) : vary(daysBack, 2, 1)
+      records.push({
+        date, category: CAT.TRACKER, subcategory: 'upper-digestive',
+        content: {
+          episodeType: isMedChange(daysBack) ? 'medication-related' : 'general',
+          symptoms: isMedChange(daysBack)
+            ? ['nausea', 'loss of appetite', 'stomach pain']
+            : ['mild nausea'],
+          severity,
+          triggers: isMedChange(daysBack) ? ['medication'] : ['food'],
+          notes: isMedChange(daysBack) && severity >= 6 ? 'New med is rough on stomach' : ''
+        },
+        metadata: meta
+      })
+    }
+
+    // === MENTAL HEALTH — anxiety spikes during flare ===
+    if (dow === 0 || dow === 3 || dow === 5) {
+      const moodBase = isFlare(daysBack) ? 3 : isNewBaseline(daysBack) ? 7 : 5
+      const anxBase = isFlare(daysBack) ? 7 : isNewBaseline(daysBack) ? 2 : 4
+      records.push({
+        date, category: CAT.TRACKER, subcategory: 'mental-health',
+        content: {
+          mood: vary(daysBack, moodBase, 1),
+          anxiety: vary(daysBack, anxBase, 1),
+          notes: isFlare(daysBack) ? 'Hard to tell pain anxiety from regular anxiety' : ''
+        },
+        metadata: meta
+      })
+    }
+
+    // === HEAD PAIN — migraine cluster during flare ===
+    if ((dow === 3 && weekNum % 2 === 0) || (isFlare(daysBack) && dow % 2 === 0)) {
+      records.push({
+        date, category: CAT.TRACKER, subcategory: 'head-pain',
+        content: {
+          severity: isFlare(daysBack) ? vary(daysBack, 7, 1) : vary(daysBack, 3, 1),
+          type: isFlare(daysBack) ? 'migraine' : 'tension',
+          notes: isFlare(daysBack) ? 'Light and sound sensitivity, had to lie in dark room' : ''
+        },
+        metadata: meta
+      })
+    }
+
+    // === HYDRATION ===
+    if (daysBack % 2 === 0) {
+      const glasses = isFlare(daysBack) ? 3 : isNewBaseline(daysBack) ? 8 : 5
+      records.push({
+        date, category: CAT.TRACKER, subcategory: 'hydration',
+        content: { glasses: vary(daysBack, glasses, 2), goal: 8, notes: '' },
+        metadata: meta
+      })
+    }
+
+    // === SELF-CARE — drops during flare ===
+    if (daysBack % 6 !== 4) {
+      const done = isFlare(daysBack) ? 2 : isNewBaseline(daysBack) ? 6 : 4
+      records.push({
+        date, category: CAT.TRACKER, subcategory: 'self-care',
+        content: {
+          items: [
+            { id: 'wash', label: 'Washed the important bits', checked: done >= 1 },
+            { id: 'teeth', label: 'Brushed teeth', checked: done >= 2 },
+            { id: 'hair', label: 'Took care of hair', checked: done >= 3 },
+            { id: 'meds', label: 'Took medications', checked: done >= 4 },
+            { id: 'water', label: 'Drank water', checked: done >= 5 },
+            { id: 'food', label: 'Fed the flesh suit', checked: done >= 6 },
+            { id: 'moved', label: 'Moved your body', checked: done >= 7 },
+          ],
+          completedCount: done,
+          totalCount: 7,
+        },
+        metadata: meta
+      })
+    }
+
+    // === MOVEMENT — stops during flare ===
+    if (!isFlare(daysBack) && dow !== 0 && daysBack % 5 !== 3) {
+      records.push({
+        date, category: CAT.TRACKER, subcategory: 'movement',
+        content: {
+          type: isNewBaseline(daysBack) ? pick(daysBack, ['walk', 'yoga', 'swimming', 'stretching']) : 'walk',
+          duration: isNewBaseline(daysBack) ? 30 : 15,
+          intensity: 'light',
+          energyBefore: vary(daysBack, 5, 1),
+          energyAfter: vary(daysBack, 6, 1),
+          notes: ''
+        },
+        metadata: meta
+      })
+    }
+
+    // === JOURNAL — the human story ===
+    if (dow === 0 || dow === 3 || dow === 5 || isFlare(daysBack)) {
+      let entry = ''
+      if (isBaseline(daysBack)) {
+        entry = pick(daysBack, [
+          'Same old. Pain is background noise at this point.',
+          'Doctor said labs are "fine." They always say that.',
+          'Managed to get groceries. Paid for it later.',
+          'Why does everyone assume tired means lazy?',
+          'Good day by my standards. Only cancelled one thing.',
+          'The fatigue is the worst part. Pain I can push through.',
+        ])
+      } else if (isMedChange(daysBack)) {
+        entry = pick(daysBack, [
+          'Started the new medication. Stomach is NOT happy.',
+          'Day 3 of new med. Nauseous but trying to give it time.',
+          'Doctor said side effects should settle in 2 weeks. Cool, cool.',
+          'Cannot eat anything without wanting to die. This better be worth it.',
+          'Slightly less nauseous today? Maybe? Placebo?',
+        ])
+      } else if (isFlare(daysBack)) {
+        entry = pick(daysBack, [
+          'Full flare. Everything hurts. Called in sick.',
+          'Day 3 of flare. Starting to wonder if this is my life now.',
+          'Cannot think. Cannot move. Heating pad is my best friend.',
+          'HR went to 140 just standing up. This is not fine.',
+          'Had to cancel everything. Again. The guilt is almost worse than the pain.',
+          'If one more person tells me to try yoga I will commit a crime.',
+          'Cried in the shower. The hot water is the only thing that helps.',
+        ])
+      } else if (isRecovery(daysBack)) {
+        entry = pick(daysBack, [
+          'Flare is easing. Not gone but I can think again.',
+          'Made it to the couch today. Progress.',
+          'Doctor appointment tomorrow. Bringing 3 months of data this time.',
+          'Starting to feel like the new med might actually be helping.',
+          'First full meal in a week. My body remembered how food works.',
+        ])
+      } else if (isNewBaseline(daysBack)) {
+        entry = pick(daysBack, [
+          'This is... better? Pain is actually lower than before the med change.',
+          'Went for a walk AND made dinner. Who am I??',
+          'Energy levels I haven not seen in months. Still not "normal" but better.',
+          'Showed my doctor the pain trend chart. She actually looked surprised.',
+          'Good day. Real good day. Not just "not terrible" but actually good.',
+          'Three days in a row under pain 3. New record.',
+          'Starting to trust the improvement. Scared to jinx it.',
+        ])
+      }
+
+      records.push({
+        date, category: CAT.JOURNAL, subcategory: 'main',
+        content: { text: entry },
+        metadata: meta
+      })
+    }
+
+    // === WEATHER — correlates with flare ===
+    if (daysBack % 2 === 1) {
+      const weather = isFlare(daysBack)
+        ? 'Stormy'
+        : pick(daysBack, ['Sunny', 'Cloudy', 'Rainy', 'Sunny', 'Cloudy'])
+      records.push({
+        date, category: CAT.TRACKER, subcategory: 'weather',
+        content: {
+          weatherTypes: [weather],
+          impact: isFlare(daysBack) ? 'significant' : 'none',
+          notes: isFlare(daysBack) ? 'Barometric pressure drop — joints are screaming' : ''
+        },
+        metadata: meta
+      })
+    }
+
+    // === SEIZURE — rare ===
+    if (daysBack % 14 === 0 && daysBack > 0) {
+      records.push({
+        date, category: CAT.TRACKER, subcategory: 'seizure',
+        content: { seizureType: 'absence', duration: 'brief', severity: 2, notes: '' },
+        metadata: meta
+      })
+    }
+
+    // === BATHROOM ===
+    if (daysBack % 5 !== 2) {
+      records.push({
+        date, category: CAT.TRACKER, subcategory: 'bathroom',
+        content: { type: isMedChange(daysBack) ? 'loose' : 'normal', notes: '' },
+        metadata: meta
+      })
+    }
+
+    // === SENSORY ===
+    if (dow === 6 || isFlare(daysBack)) {
+      records.push({
+        date, category: CAT.TRACKER, subcategory: 'sensory',
+        content: {
+          level: isFlare(daysBack) ? 8 : vary(daysBack, 3, 1),
+          triggers: isFlare(daysBack) ? ['light', 'sound', 'touch'] : ['noise'],
+          notes: ''
+        },
+        metadata: meta
+      })
+    }
+  }
+
+  return records
+}

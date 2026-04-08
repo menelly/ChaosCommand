@@ -49,8 +49,8 @@ export function SleepAnalytics({ refreshTrigger }: SleepAnalyticsProps) {
         const allEntries: SleepEntry[] = []
         const today = new Date()
 
-        // Load entries from the last 30 days
-        for (let i = 0; i < 30; i++) {
+        // Load entries from the last 90 days
+        for (let i = 0; i < 90; i++) {
           const currentDate = new Date(today)
           currentDate.setDate(today.getDate() - i)
           const dateStr = format(currentDate, 'yyyy-MM-dd')
@@ -293,7 +293,7 @@ export function SleepAnalytics({ refreshTrigger }: SleepAnalyticsProps) {
           Your Sleep Patterns
         </h2>
         <p className="text-muted-foreground">
-          Insights from your last 30 days of sleep data
+          Insights from your last 90 days of sleep data
         </p>
       </div>
 

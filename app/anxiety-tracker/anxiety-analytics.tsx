@@ -44,8 +44,8 @@ export function AnxietyAnalytics({ refreshTrigger }: AnxietyAnalyticsProps) {
         const allEntries: AnxietyEntry[] = []
         const today = new Date()
 
-        // Load entries from the last 30 days (like other trackers do)
-        for (let i = 0; i < 30; i++) {
+        // Load entries from the last 90 days (like other trackers do)
+        for (let i = 0; i < 90; i++) {
           const currentDate = new Date(today)
           currentDate.setDate(today.getDate() - i)
           const dateStr = currentDate.toISOString().split('T')[0] // YYYY-MM-DD format

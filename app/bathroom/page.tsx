@@ -210,10 +210,10 @@ export default function BathroomTracker() {
     }
   }
 
-  // Load history entries (last 30 days for history tab)
+  // Load history entries (last 90 days for history tab)
   const loadHistoryEntries = async () => {
     try {
-      const historyData = await loadAllEntries(30) // Load last 30 days
+      const historyData = await loadAllEntries(90) // Load last 90 days
       // Sort by date and time, most recent first
       const sortedEntries = historyData.sort((a, b) => {
         const dateCompare = b.date.localeCompare(a.date)
@@ -599,7 +599,7 @@ export default function BathroomTracker() {
                   Potty History
                 </CardTitle>
                 <CardDescription>
-                  Your documented digestive adventures over the last 30 days
+                  Your documented digestive adventures over the last 90 days
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -607,7 +607,7 @@ export default function BathroomTracker() {
                   <div className="text-center py-8">
                     <Utensils className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                     <p className="text-muted-foreground">
-                      No potty adventures logged in the last 30 days
+                      No potty adventures logged in the last 90 days
                     </p>
                     <p className="text-sm text-muted-foreground mt-2">
                       Your digestive goblins are being mysterious. Tap "Log Bathroom Visit" to document their shenanigans! 🧙‍♂️
