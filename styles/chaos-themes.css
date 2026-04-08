@@ -11,8 +11,15 @@
 
 /* === CHAOS COMMAND CENTER THEMES === */
 
-/* === ACCESSIBILITY: DISABLE ANIMATIONS === */
-/* When no-animations class is present, disable all moving effects */
+/* === ANIMATION INTENSITY SYSTEM === */
+/* --bounce-scale: 0 (static) to 1 (full bounce). Set via JS slider. */
+/* --anim-speed: scales animation duration (higher = slower at low intensity) */
+:root {
+  --bounce-scale: 1;
+  --anim-speed: 1;
+}
+
+/* At zero intensity, disable all animations */
 body.no-animations *,
 body.no-animations *::before,
 body.no-animations *::after {
@@ -20,15 +27,18 @@ body.no-animations *::after {
   transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease !important;
 }
 
-/* Only disable decorative transforms, not positioning ones */
-body.no-animations .card:hover,
-body.no-animations [class*="card"]:hover,
-body.no-animations button:hover,
-body.no-animations .btn:hover {
+/* Double specificity with html to beat per-theme !important overrides */
+html body.no-animations .card:hover,
+html body.no-animations [class*="card"]:hover,
+html body.no-animations button:hover,
+html body.no-animations .btn:hover,
+html body.no-animations select:hover,
+html body.no-animations input:hover,
+html body.no-animations a:hover {
   transform: none !important;
+  box-shadow: none !important;
 }
 
-/* Keep static gradients but remove flowing ones */
 body.no-animations {
   background: var(--deep-space) !important;
 }
@@ -42,8 +52,35 @@ body.no-animations.theme-glitter {
   background: #fff0fb !important;
 }
 
-/* Remove floating particles */
+/* Remove floating particles at zero intensity */
 body.no-animations::before {
+  display: none !important;
+}
+
+/* Scale decorative effects with bounce intensity */
+body::before {
+  opacity: calc(0.6 * var(--bounce-scale)) !important;
+}
+body::after {
+  opacity: var(--bounce-scale) !important;
+}
+
+/* Scale ALL hover transforms with bounce intensity slider */
+/* html prefix for higher specificity — beats per-theme !important */
+html body:not(.no-animations) .card:hover,
+html body:not(.no-animations) [class*="card"]:hover {
+  transform: translateY(calc(-8px * var(--bounce-scale))) scale(calc(1 + 0.03 * var(--bounce-scale))) !important;
+}
+
+html body:not(.no-animations) button:hover,
+html body:not(.no-animations) .btn:hover,
+html body:not(.no-animations) select:hover,
+html body:not(.no-animations) input:hover {
+  transform: scale(calc(1 + 0.02 * var(--bounce-scale))) !important;
+}
+
+/* At low intensity (<=25%), hide particles but keep background animations */
+body.bounce-low::before {
   display: none !important;
 }
 

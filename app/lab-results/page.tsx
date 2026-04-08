@@ -15,11 +15,12 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useDailyData } from "@/lib/database/hooks/use-daily-data"
-import { CATEGORIES, formatDateForStorage } from "@/lib/database/dexie-db"
+import { CATEGORIES, SUBCATEGORIES, formatDateForStorage } from "@/lib/database/dexie-db"
 import { backendFetch, FLASK_URL } from "@/lib/utils/tauri-fetch"
 import {
   Upload, FileText, Search, TestTube, TrendingUp, TrendingDown,
-  AlertTriangle, CheckCircle, ChevronDown, ChevronUp, Calendar, Minus
+  AlertTriangle, CheckCircle, ChevronDown, ChevronUp, Calendar, Minus, Trash2,
+  ClipboardList, Edit3, Save, X
 } from "lucide-react"
 
 interface LabResult {
@@ -34,6 +35,7 @@ interface LabResult {
   is_abnormal: boolean
   context: string
   confidence: number
+  date?: string  // Per-test date override (for multi-date reports)
 }
 
 interface LabReport {
@@ -45,7 +47,7 @@ interface LabReport {
 }
 
 export default function LabResultsPage() {
-  const { saveData, getAllCategoryData } = useDailyData()
+  const { saveData, getAllCategoryData, deleteData } = useDailyData()
 
   const [reports, setReports] = useState<LabReport[]>([])
   const [isUploading, setIsUploading] = useState(false)
@@ -53,14 +55,20 @@ export default function LabResultsPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [expandedReport, setExpandedReport] = useState<string | null>(null)
   const [filterAbnormal, setFilterAbnormal] = useState(false)
+  const [editingTest, setEditingTest] = useState<{ reportId: string; idx: number } | null>(null)
+  const [editValues, setEditValues] = useState<Partial<LabResult>>({})
 
   // Load existing reports
   const loadReports = useCallback(async () => {
     try {
       const records = await getAllCategoryData(CATEGORIES.USER)
       const labRecords = records
-        ?.filter((r: any) => r.subcategory === 'lab-results')
-        ?.map((r: any) => typeof r.content === 'string' ? JSON.parse(r.content) : r.content)
+        ?.filter((r: any) => r.subcategory === 'lab-results' || r.subcategory.startsWith('lab-results-'))
+        ?.map((r: any) => {
+          const report = typeof r.content === 'string' ? JSON.parse(r.content) : r.content
+          report._subcategory = r.subcategory  // Preserve for delete
+          return report
+        })
         ?.sort((a: LabReport, b: LabReport) => b.date.localeCompare(a.date)) || []
       setReports(labRecords)
     } catch (e) {
@@ -115,25 +123,31 @@ export default function LabResultsPage() {
       })
 
       if (!response.ok) {
-        throw new Error('Lab parsing failed')
+        const errData = await response.json().catch(() => ({}))
+        throw new Error(errData.error || `Server error ${response.status}`)
       }
 
       const result = await response.json()
 
       if (result.success && result.labs && result.labs.length > 0) {
-        // Save the lab report
+        // Use detected lab draw date if available, otherwise use selected date
+        const labDate = result.suggestedDate || uploadDate
+        if (result.suggestedDate && result.suggestedDate !== uploadDate) {
+          console.log(`📅 Using detected lab date: ${result.suggestedDate} (instead of ${uploadDate})`)
+        }
+
         const report: LabReport = {
           id: `lab-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          date: uploadDate,
+          date: labDate,
           filename: file.name,
           results: result.labs,
           addedDate: formatDateForStorage(new Date()),
         }
 
         await saveData(
-          uploadDate,
+          labDate,
           CATEGORIES.USER,
-          'lab-results',
+          `lab-results-${report.id}`,
           JSON.stringify(report)
         )
 
@@ -142,11 +156,147 @@ export default function LabResultsPage() {
       } else {
         alert(`No lab results found in ${file.name}. Try a different document?`)
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error("Lab upload failed:", e)
-      alert('Failed to parse lab report. Is Flask running?')
+      const msg = e?.message || String(e)
+      if (msg.includes('Failed to fetch')) {
+        alert(`Could not reach Flask backend. Is it running?\n\nIf the file is very large, it may exceed the request size limit.`)
+      } else {
+        alert(`Lab parsing failed: ${msg}`)
+      }
     } finally {
       setIsUploading(false)
+    }
+  }
+
+  // Delete a lab report
+  const handleDeleteReport = async (report: LabReport) => {
+    if (!confirm(`Delete lab report "${report.filename}" from ${report.date}? This cannot be undone.`)) return
+    try {
+      await deleteData(report.date, CATEGORIES.USER, (report as any)._subcategory || `lab-results-${report.id}`)
+      await loadReports()
+    } catch (e) {
+      console.error("Failed to delete lab report:", e)
+      alert('Failed to delete report')
+    }
+  }
+
+  // Add lab report to medical timeline
+  const handleAddToTimeline = async (report: LabReport) => {
+    try {
+      const abnormal = report.results.filter(r => r.is_abnormal)
+      const abnormalSummary = abnormal.length > 0
+        ? abnormal.map(r => `${r.test_name}: ${r.value_text} ${r.unit} (${r.flag})`).join(', ')
+        : 'All results within normal range'
+
+      const now = new Date().toISOString()
+      const eventId = `lab-timeline-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+
+      const timelineEvent = {
+        id: eventId,
+        type: 'test',
+        title: `Lab Results: ${report.filename}`,
+        date: report.date,
+        description: `${report.results.length} tests. ${abnormal.length > 0 ? `Abnormal: ${abnormalSummary}` : abnormalSummary}`,
+        status: abnormal.length > 0 ? 'needs_review' : 'resolved',
+        severity: abnormal.some(r => r.flag === 'LL' || r.flag === 'CRITICAL') ? 'severe'
+          : abnormal.length > 0 ? 'moderate' : 'mild',
+        tags: ['lab-results', 'auto-added'],
+        createdAt: now,
+        updatedAt: now,
+      }
+
+      const subcategory = `${SUBCATEGORIES.MEDICAL_EVENTS}-${eventId}`
+      await saveData(
+        report.date,
+        CATEGORIES.USER,
+        subcategory,
+        JSON.stringify(timelineEvent)
+      )
+
+      console.log(`📋 Added lab report to timeline: ${report.filename}`)
+      alert('Added to timeline!')
+    } catch (e) {
+      console.error('Failed to add to timeline:', e)
+      alert('Failed to add to timeline')
+    }
+  }
+
+  // Start editing a test result
+  const startEdit = (reportId: string, idx: number, result: LabResult) => {
+    setEditingTest({ reportId, idx })
+    setEditValues({ ...result })
+  }
+
+  // Save edited test result back to Dexie
+  const saveEdit = async (report: LabReport) => {
+    if (!editingTest) return
+    const { idx } = editingTest
+    const updatedResults = [...report.results]
+
+    // Recompute abnormal flag from value vs range
+    const val = editValues.value ?? null
+    const refLow = editValues.reference_low ?? null
+    const refHigh = editValues.reference_high ?? null
+    let flag = editValues.flag || ''
+    let isAbnormal = !!flag
+
+    if (!isAbnormal && val !== null) {
+      if (refLow !== null && val < refLow) { isAbnormal = true; flag = flag || 'L' }
+      else if (refHigh !== null && val > refHigh) { isAbnormal = true; flag = flag || 'H' }
+    }
+
+    updatedResults[idx] = {
+      ...updatedResults[idx],
+      test_name: editValues.test_name || updatedResults[idx].test_name,
+      value: val,
+      value_text: val !== null ? `${val} ${editValues.unit || updatedResults[idx].unit}` : editValues.value_text || '',
+      unit: editValues.unit || updatedResults[idx].unit,
+      reference_low: refLow,
+      reference_high: refHigh,
+      reference_text: refLow !== null && refHigh !== null
+        ? `${refLow} ${editValues.unit || updatedResults[idx].unit}-${refHigh} ${editValues.unit || updatedResults[idx].unit}`
+        : updatedResults[idx].reference_text,
+      flag,
+      is_abnormal: isAbnormal,
+      date: editValues.date,
+    }
+
+    const updatedReport = { ...report, results: updatedResults }
+    try {
+      await saveData(
+        report.date,
+        CATEGORIES.USER,
+        (report as any)._subcategory || `lab-results-${report.id}`,
+        JSON.stringify(updatedReport)
+      )
+      setEditingTest(null)
+      setEditValues({})
+      await loadReports()
+    } catch (e) {
+      console.error('Failed to save edit:', e)
+    }
+  }
+
+  // Delete a single test from a report
+  const deleteTest = async (report: LabReport, idx: number) => {
+    const updatedResults = report.results.filter((_, i) => i !== idx)
+    if (updatedResults.length === 0) {
+      // If no tests left, delete the whole report
+      await handleDeleteReport(report)
+      return
+    }
+    const updatedReport = { ...report, results: updatedResults }
+    try {
+      await saveData(
+        report.date,
+        CATEGORIES.USER,
+        (report as any)._subcategory || `lab-results-${report.id}`,
+        JSON.stringify(updatedReport)
+      )
+      await loadReports()
+    } catch (e) {
+      console.error('Failed to delete test:', e)
     }
   }
 
@@ -312,6 +462,30 @@ export default function LabResultsPage() {
                             All normal
                           </Badge>
                         )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/20 h-8 w-8 p-0"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleAddToTimeline(report)
+                          }}
+                          title="Add to medical timeline"
+                        >
+                          <ClipboardList className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 h-8 w-8 p-0"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleDeleteReport(report)
+                          }}
+                          title="Delete this lab report"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                         {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
                       </div>
                     </div>
@@ -322,12 +496,14 @@ export default function LabResultsPage() {
                           <table className="w-full text-sm">
                             <thead>
                               <tr className="text-left text-[var(--text-muted)]">
-                                <th className="py-2 pr-4">Test</th>
-                                <th className="py-2 pr-4">Result</th>
-                                <th className="py-2 pr-4">Unit</th>
-                                <th className="py-2 pr-4">Reference</th>
-                                <th className="py-2 pr-4">Flag</th>
-                                <th className="py-2">Trend</th>
+                                <th className="py-2 pr-2">Test</th>
+                                <th className="py-2 pr-2">Result</th>
+                                <th className="py-2 pr-2">Unit</th>
+                                <th className="py-2 pr-2">Reference</th>
+                                <th className="py-2 pr-2">Date</th>
+                                <th className="py-2 pr-2">Flag</th>
+                                <th className="py-2 pr-2">Trend</th>
+                                <th className="py-2 w-16"></th>
                               </tr>
                             </thead>
                             <tbody>
@@ -335,6 +511,87 @@ export default function LabResultsPage() {
                                 .filter(r => !filterAbnormal || r.is_abnormal)
                                 .map((result, idx) => {
                                   const trend = getTrend(result.test_name)
+                                  const isEditing = editingTest?.reportId === report.id && editingTest?.idx === idx
+
+                                  if (isEditing) {
+                                    return (
+                                      <tr key={idx} className="border-t border-[var(--border-soft)] bg-blue-50/50 dark:bg-blue-950/20">
+                                        <td className="py-1 pr-1">
+                                          <Input
+                                            value={editValues.test_name || ''}
+                                            onChange={e => setEditValues(v => ({ ...v, test_name: e.target.value }))}
+                                            className="h-7 text-xs"
+                                          />
+                                        </td>
+                                        <td className="py-1 pr-1">
+                                          <Input
+                                            type="number"
+                                            step="any"
+                                            value={editValues.value ?? ''}
+                                            onChange={e => setEditValues(v => ({ ...v, value: e.target.value ? parseFloat(e.target.value) : null }))}
+                                            className="h-7 text-xs w-20"
+                                          />
+                                        </td>
+                                        <td className="py-1 pr-1">
+                                          <Input
+                                            value={editValues.unit || ''}
+                                            onChange={e => setEditValues(v => ({ ...v, unit: e.target.value }))}
+                                            className="h-7 text-xs w-20"
+                                          />
+                                        </td>
+                                        <td className="py-1 pr-1">
+                                          <div className="flex gap-1">
+                                            <Input
+                                              type="number"
+                                              step="any"
+                                              placeholder="Low"
+                                              value={editValues.reference_low ?? ''}
+                                              onChange={e => setEditValues(v => ({ ...v, reference_low: e.target.value ? parseFloat(e.target.value) : null }))}
+                                              className="h-7 text-xs w-16"
+                                            />
+                                            <Input
+                                              type="number"
+                                              step="any"
+                                              placeholder="High"
+                                              value={editValues.reference_high ?? ''}
+                                              onChange={e => setEditValues(v => ({ ...v, reference_high: e.target.value ? parseFloat(e.target.value) : null }))}
+                                              className="h-7 text-xs w-16"
+                                            />
+                                          </div>
+                                        </td>
+                                        <td className="py-1 pr-1">
+                                          <Input
+                                            type="date"
+                                            value={editValues.date || report.date}
+                                            onChange={e => setEditValues(v => ({ ...v, date: e.target.value }))}
+                                            className="h-7 text-xs w-28"
+                                          />
+                                        </td>
+                                        <td className="py-1 pr-1">
+                                          <Input
+                                            value={editValues.flag || ''}
+                                            onChange={e => setEditValues(v => ({ ...v, flag: e.target.value }))}
+                                            placeholder="L/H/LL"
+                                            className="h-7 text-xs w-14"
+                                          />
+                                        </td>
+                                        <td className="py-1"></td>
+                                        <td className="py-1">
+                                          <div className="flex gap-1">
+                                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-green-600"
+                                              onClick={() => saveEdit(report)} title="Save">
+                                              <Save className="h-3 w-3" />
+                                            </Button>
+                                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-gray-500"
+                                              onClick={() => { setEditingTest(null); setEditValues({}) }} title="Cancel">
+                                              <X className="h-3 w-3" />
+                                            </Button>
+                                          </div>
+                                        </td>
+                                      </tr>
+                                    )
+                                  }
+
                                   return (
                                     <tr
                                       key={idx}
@@ -342,21 +599,24 @@ export default function LabResultsPage() {
                                         result.is_abnormal ? 'bg-red-50/50' : ''
                                       }`}
                                     >
-                                      <td className="py-2 pr-4 font-medium text-[var(--text-main)]">
+                                      <td className="py-2 pr-2 font-medium text-[var(--text-main)]">
                                         {result.test_name}
                                       </td>
-                                      <td className={`py-2 pr-4 ${
+                                      <td className={`py-2 pr-2 ${
                                         result.is_abnormal ? 'font-bold text-red-700' : 'text-[var(--text-main)]'
                                       }`}>
-                                        {result.value_text}
+                                        {result.value_text || '—'}
                                       </td>
-                                      <td className="py-2 pr-4 text-[var(--text-muted)]">
+                                      <td className="py-2 pr-2 text-[var(--text-muted)]">
                                         {result.unit}
                                       </td>
-                                      <td className="py-2 pr-4 text-[var(--text-muted)]">
+                                      <td className="py-2 pr-2 text-[var(--text-muted)]">
                                         {result.reference_text || '—'}
                                       </td>
-                                      <td className="py-2 pr-4">
+                                      <td className="py-2 pr-2 text-[var(--text-muted)] text-xs">
+                                        {result.date || report.date}
+                                      </td>
+                                      <td className="py-2 pr-2">
                                         {result.flag && (
                                           <Badge className={
                                             result.flag.includes('H') || result.flag === 'HIGH' || result.flag === 'CRITICAL'
@@ -369,7 +629,7 @@ export default function LabResultsPage() {
                                           </Badge>
                                         )}
                                       </td>
-                                      <td className="py-2">
+                                      <td className="py-2 pr-2">
                                         {trend.values.length >= 2 && (
                                           <div className="flex items-center gap-1 text-xs">
                                             {trend.direction === "up" && <TrendingUp className="h-3 w-3 text-red-500" />}
@@ -380,6 +640,18 @@ export default function LabResultsPage() {
                                             </span>
                                           </div>
                                         )}
+                                      </td>
+                                      <td className="py-2">
+                                        <div className="flex gap-1">
+                                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-blue-500"
+                                            onClick={() => startEdit(report.id, idx, result)} title="Edit">
+                                            <Edit3 className="h-3 w-3" />
+                                          </Button>
+                                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-red-400"
+                                            onClick={() => deleteTest(report, idx)} title="Delete test">
+                                            <X className="h-3 w-3" />
+                                          </Button>
+                                        </div>
                                       </td>
                                     </tr>
                                   )

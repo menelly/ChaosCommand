@@ -126,6 +126,10 @@ export default function SurvivalButton() {
 
   const triggerConfetti = useCallback(() => {
     // 🎆 EPIC PARTICLE PHYSICS CELEBRATION!
+    // Scale intensity with bounce slider
+    const bounceLevel = parseInt(localStorage.getItem('chaos-bounce-intensity') || '100')
+    const scale = bounceLevel / 100
+    const particles = Math.round(100 * scale)
     const currentTheme = document.body.className.match(/theme-[\w-]+/)?.[0];
 
     if (currentTheme === 'theme-chaos' || currentTheme === 'theme-luka-penguin') {
@@ -134,8 +138,8 @@ export default function SurvivalButton() {
     } else {
       // 🎨 THEME-AWARE CELEBRATION FOR EVERYONE!
       celebrate({
-        particleCount: 100,
-        spread: 70,
+        particleCount: particles,
+        spread: 40 + (30 * scale),
         origin: { x: 0.5, y: 0.6 }
       });
     }
@@ -184,16 +188,19 @@ export default function SurvivalButton() {
         localStorage.setItem(getStorageKey("lastCheckedDate"), today)
       }
 
-      // Trigger confetti celebration!
-      triggerConfetti()
+      // Trigger confetti + familiar (respects bounce intensity slider)
+      const bounceLevel = parseInt(localStorage.getItem('chaos-bounce-intensity') || '100')
+      if (bounceLevel > 0) {
+        triggerConfetti()
 
-      // Show the cheerleading familiar! (deterministic selection)
-      const familiarIndex = currentCount % familiars.length
-      setCurrentFamiliar(familiars[familiarIndex])
-      setShowGremlin(true)
-      setTimeout(() => {
-        setShowGremlin(false)
-      }, 2500)
+        // Show the cheerleading familiar!
+        const familiarIndex = currentCount % familiars.length
+        setCurrentFamiliar(familiars[familiarIndex])
+        setShowGremlin(true)
+        setTimeout(() => {
+          setShowGremlin(false)
+        }, 2500)
+      }
 
       // Set initial checked phrase
       const phraseIndex = currentCount % goblinPhrases.length
@@ -272,8 +279,17 @@ export default function SurvivalButton() {
                 </p>
               </div>
             ) : (
-              <div className="p-4 bg-primary/10 rounded-lg border border-primary/30">
-                <p className="text-foreground font-medium">
+              <div className="p-4 bg-primary/10 rounded-lg border border-primary/30 flex items-center gap-4">
+                <div className={`drop-shadow-lg flex-shrink-0 ${showGremlin ? 'animate-bounce' : ''}`}>
+                  <Image
+                    src={currentFamiliar}
+                    alt="Cheerleading familiar"
+                    width={64}
+                    height={64}
+                    className="w-16 h-16 object-contain"
+                  />
+                </div>
+                <p className="text-foreground font-medium cursor-pointer" onClick={cyclePhrase}>
                   🎉 {currentPhrase}
                 </p>
               </div>
@@ -287,30 +303,8 @@ export default function SurvivalButton() {
           </div>
         </div>
 
-        {checked && (
-          <div className="mt-4 p-3 bg-primary/10 rounded-lg border border-primary/30">
-            <p className="text-sm text-foreground font-medium">
-              🎉 {currentPhrase}
-            </p>
-          </div>
-        )}
       </CardContent>
     </Card>
-
-    {/* CHEERLEADING FAMILIAR! */}
-    {showGremlin && (
-      <div className="absolute top-16 right-4 z-10">
-        <div className="drop-shadow-lg animate-bounce">
-          <Image
-            src={currentFamiliar}
-            alt="Cheerleading familiar"
-            width={96}
-            height={96}
-            className="w-24 h-24 object-contain"
-          />
-        </div>
-      </div>
-    )}
   </div>
   )
 }

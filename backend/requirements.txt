@@ -11,7 +11,7 @@ pillow==10.1.0
 # 🔥 REVOLUTIONARY DOCUMENT PARSING
 PyPDF2==3.0.1
 pdfplumber==0.10.3
-pytesseract==0.3.10
+pytesseract==0.3.10  # Requires Tesseract binary: choco install tesseract
 opencv-python==4.8.1.78
 python-dateutil==2.8.2
 

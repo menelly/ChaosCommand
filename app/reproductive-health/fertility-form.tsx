@@ -282,8 +282,8 @@ export function FertilityForm({ formData, updateFormData, onSave, isLoading }: F
               <Button
                 onClick={onSave}
                 disabled={isLoading}
-                className="w-full text-base py-4"
-                size="default"
+                className="w-full text-lg py-6"
+                size="lg"
               >
                 {isLoading ? (
                   <>

@@ -25,6 +25,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
+import { Slider } from "@/components/ui/slider"
 import { Label } from "@/components/ui/label"
 import { Palette } from "lucide-react"
 
@@ -37,6 +38,7 @@ export function VisualSettingsModal({ isOpen, onClose }: VisualSettingsModalProp
   const [currentTheme, setCurrentTheme] = useState('theme-lavender')
   const [currentFont, setCurrentFont] = useState('font-atkinson')
   const [animatedEffects, setAnimatedEffects] = useState(true)
+  const [bounceIntensity, setBounceIntensity] = useState(100) // 0-100%
 
   const themes = [
     { id: 'theme-lavender', name: 'Lavender Garden', description: 'Gentle lavender serenity (default)' },
@@ -108,11 +110,39 @@ export function VisualSettingsModal({ isOpen, onClose }: VisualSettingsModalProp
   const toggleAnimatedEffects = (enabled: boolean) => {
     if (enabled) {
       document.body.classList.remove('no-animations')
+      // Restore saved intensity
+      const saved = parseInt(localStorage.getItem('chaos-bounce-intensity') || '100')
+      applyBounceIntensity(saved)
     } else {
       document.body.classList.add('no-animations')
     }
     setAnimatedEffects(enabled)
     localStorage.setItem('chaos-animations', enabled.toString())
+  }
+
+  const applyBounceIntensity = (percent: number) => {
+    const scale = percent / 100
+    document.documentElement.style.setProperty('--bounce-scale', scale.toString())
+    setBounceIntensity(percent)
+    localStorage.setItem('chaos-bounce-intensity', percent.toString())
+
+    // At low intensity, hide particles but keep background effects
+    if (percent <= 25 && percent > 0) {
+      document.body.classList.add('bounce-low')
+    } else {
+      document.body.classList.remove('bounce-low')
+    }
+
+    // If slider goes to 0, act like static mode
+    if (percent === 0 && !document.body.classList.contains('no-animations')) {
+      document.body.classList.add('no-animations')
+      setAnimatedEffects(false)
+      localStorage.setItem('chaos-animations', 'false')
+    } else if (percent > 0 && document.body.classList.contains('no-animations')) {
+      document.body.classList.remove('no-animations')
+      setAnimatedEffects(true)
+      localStorage.setItem('chaos-animations', 'true')
+    }
   }
 
   // Load saved theme, font, and animations on component mount
@@ -133,8 +163,13 @@ export function VisualSettingsModal({ isOpen, onClose }: VisualSettingsModalProp
     document.body.classList.add(savedFont)
 
     // Apply saved animation preference
+    const savedIntensity = parseInt(localStorage.getItem('chaos-bounce-intensity') || '100')
+    setBounceIntensity(savedIntensity)
+
     if (!savedAnimations) {
       document.body.classList.add('no-animations')
+    } else {
+      applyBounceIntensity(savedIntensity)
     }
   }, [])
 
@@ -169,25 +204,50 @@ export function VisualSettingsModal({ isOpen, onClose }: VisualSettingsModalProp
             </Select>
           </div>
 
-          {/* Animated Effects Toggle */}
+          {/* Animation Intensity */}
           <div>
             <Label className="text-sm font-medium mb-2 block">Visual Effects</Label>
-            <div className="flex items-center justify-between p-4 border rounded-lg">
-              <div>
-                <div className="font-medium">
-                  {animatedEffects ? '✨ Animated Effects' : '🎯 Static Mode'}
+            <div className="p-4 border rounded-lg space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-medium">
+                    {bounceIntensity === 0 ? '🎯 Static Mode'
+                      : bounceIntensity <= 25 ? '🌿 Subtle'
+                      : bounceIntensity <= 50 ? '✨ Gentle'
+                      : bounceIntensity <= 75 ? '💫 Lively'
+                      : '🎆 Full Bounce'}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {bounceIntensity === 0
+                      ? 'Beautiful colors, no movement (accessibility)'
+                      : `Animation intensity: ${bounceIntensity}%`
+                    }
+                  </div>
                 </div>
-                <div className="text-xs text-muted-foreground">
-                  {animatedEffects
-                    ? 'Floating particles, gentle animations, and flowing effects'
-                    : 'Keep beautiful colors but disable moving elements for focus/accessibility'
-                  }
-                </div>
+                <Switch
+                  checked={animatedEffects}
+                  onCheckedChange={toggleAnimatedEffects}
+                />
               </div>
-              <Switch
-                checked={animatedEffects}
-                onCheckedChange={toggleAnimatedEffects}
-              />
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-muted-foreground">🎯</span>
+                <Slider
+                  value={[bounceIntensity]}
+                  onValueChange={([val]) => applyBounceIntensity(val)}
+                  min={0}
+                  max={100}
+                  step={5}
+                  className="flex-1"
+                />
+                <span className="text-xs text-muted-foreground">🎆</span>
+              </div>
+              <div className="flex justify-between text-[10px] text-muted-foreground px-1">
+                <span>Static</span>
+                <span>Subtle</span>
+                <span>Gentle</span>
+                <span>Lively</span>
+                <span>Full</span>
+              </div>
             </div>
           </div>
 

@@ -457,8 +457,41 @@ def parse_lab_report():
             f.write(file_bytes)
 
         try:
-            extracted_text = document_parser.extract_text_from_file(temp_path, file_type)
-            logger.info(f"✅ Extracted {len(extracted_text)} characters from lab report")
+            # Use RAW text extraction for labs — the text cleaner destroys
+            # structured lab data by inserting spaces into decimals and units
+            from text_extractor import extract_text_from_file as extract_raw
+            extracted_text = extract_raw(temp_path, file_type, raw=True)
+            logger.info(f"✅ Extracted {len(extracted_text)} characters from lab report (raw)")
+
+            # Debug dump: show first 3000 chars so we can see what pdfplumber gives us
+            logger.info(f"🔬 RAW TEXT DUMP (first 3000 chars):\n{extracted_text[:3000]}")
+
+            # Try to extract the actual lab draw date from the text
+            # Look for common patterns, exclude today's date and DOB
+            import re as _re
+            from datetime import datetime as _dt
+            today_str = _dt.now().strftime('%Y-%m-%d')
+            dob = (demographics.get('dateOfBirth') or demographics.get('dob') or '') if demographics else ''
+
+            suggested_date = None
+            # "Collected on Jan 13, 2026" / "Collection Date\n09/24/2017" / "Collection date: Mar 11, 2026"
+            date_patterns = [
+                (_re.search(r'Collected?\s+(?:on\s+)?(\w+\s+\d{1,2},?\s+\d{4})', extracted_text, _re.IGNORECASE), '%b %d, %Y'),
+                (_re.search(r'Collected?\s+(?:on\s+)?(\w+\s+\d{1,2}\s+\d{4})', extracted_text, _re.IGNORECASE), '%b %d %Y'),
+                (_re.search(r'Collection\s+Date\s*[:\n]\s*(\d{1,2}/\d{1,2}/\d{4})', extracted_text, _re.IGNORECASE), '%m/%d/%Y'),
+                (_re.search(r'(?:Specimen|Draw)\s+Date\s*[:\n]\s*(\d{1,2}/\d{1,2}/\d{4})', extracted_text, _re.IGNORECASE), '%m/%d/%Y'),
+            ]
+            for match, fmt in date_patterns:
+                if match:
+                    try:
+                        parsed = _dt.strptime(match.group(1).strip().replace(',', ','), fmt)
+                        candidate = parsed.strftime('%Y-%m-%d')
+                        if candidate != today_str and candidate != dob:
+                            suggested_date = candidate
+                            logger.info(f"📅 Detected lab draw date: {suggested_date}")
+                            break
+                    except ValueError:
+                        continue
 
             # Use medical_nlp's lab extraction
             from medical_nlp import extract_lab_results_from_text
@@ -487,6 +520,7 @@ def parse_lab_report():
                 'labs': labs_data,
                 'labCount': len(labs_data),
                 'abnormalCount': sum(1 for r in lab_results if r.is_abnormal),
+                'suggestedDate': suggested_date,
                 'message': f'🧪 Found {len(labs_data)} lab results ({sum(1 for r in lab_results if r.is_abnormal)} abnormal)'
             })
 

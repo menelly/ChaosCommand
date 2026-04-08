@@ -13,9 +13,14 @@ export const SYSTEM_TAGS = {
   I_KNOW: ['i-know', 'I KNOW', 'i know', 'I-KNOW'],  // Intentional choices, no nagging
 } as const;
 
-// Combined list of all tags that should be excluded from analytics by default
+// Tags that should be completely excluded from analytics (bad data, outliers)
 export const ANALYTICS_EXCLUDED_TAGS = [
   ...SYSTEM_TAGS.NOPE,
+];
+
+// Tags where data is INCLUDED in analytics but alerts/nags are suppressed
+// "I ate cake at a party, log it, don't lecture me"
+export const ALERT_SUPPRESSED_TAGS = [
   ...SYSTEM_TAGS.I_KNOW,
 ];
 
@@ -64,12 +69,30 @@ export function excludeIKnowEntries<T extends { tags?: string[] }>(entries: T[])
 }
 
 /**
- * Filter out ALL entries that should be excluded from analytics
- * This removes both NOPE and I KNOW tagged entries
+ * Filter out entries that should be excluded from analytics (NOPE only)
+ * I KNOW entries are INCLUDED — they're real data, just no nagging.
  *
  * This is the main function most analytics should use!
  */
 export function filterForAnalytics<T extends { tags?: string[] }>(entries: T[]): T[] {
+  return entries.filter(entry => !hasAnyTag(entry, ANALYTICS_EXCLUDED_TAGS));
+}
+
+/**
+ * Check if an entry has alert suppression (I KNOW tag)
+ * Use this to decide whether to show warnings/nags for outlier values.
+ * The data is real and should be in analytics — just don't lecture the user about it.
+ */
+export function isAlertSuppressed<T extends { tags?: string[] }>(entry: T): boolean {
+  return hasAnyTag(entry, ALERT_SUPPRESSED_TAGS);
+}
+
+/**
+ * Filter for report/PDF export — excludes NOPE entries
+ * I KNOW entries ARE included in reports (they're real medical data)
+ * but can be annotated as "patient-acknowledged outlier" if needed
+ */
+export function filterForExport<T extends { tags?: string[] }>(entries: T[]): T[] {
   return entries.filter(entry => !hasAnyTag(entry, ANALYTICS_EXCLUDED_TAGS));
 }
 

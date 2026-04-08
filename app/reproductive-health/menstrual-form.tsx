@@ -233,7 +233,7 @@ export function MenstrualForm({ formData, updateFormData, onSave, isLoading }: M
             value={formData.notes || ''}
             onChange={(e) => updateFormData('notes', e.target.value)}
             placeholder="How are you feeling today? Any patterns you've noticed? The cycle goblins want to know! 🧚‍♀️"
-            className="min-h-[100px]"
+            className="min-h-[120px]"
           />
         </CardContent>
       </Card>

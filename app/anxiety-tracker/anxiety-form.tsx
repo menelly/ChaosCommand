@@ -258,7 +258,7 @@ export function AnxietyForm({ initialData, onSave, onCancel }: AnxietyFormProps)
 
         {/* Anxiety Type */}
         <div>
-          <Label>Type of Anxiety Experience</Label>
+          <Label className="text-sm font-medium">Type of Anxiety Experience</Label>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2">
             {ANXIETY_TYPES.map((type) => (
               <Button
@@ -278,7 +278,7 @@ export function AnxietyForm({ initialData, onSave, onCancel }: AnxietyFormProps)
         {/* Anxiety & Panic Levels */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <Label>Anxiety Level: {anxietyLevel[0]}/10</Label>
+            <Label className="text-sm font-medium">Anxiety Level: {anxietyLevel[0]}/10</Label>
             <Slider
               value={anxietyLevel}
               onValueChange={setAnxietyLevel}
@@ -293,7 +293,7 @@ export function AnxietyForm({ initialData, onSave, onCancel }: AnxietyFormProps)
             </div>
           </div>
           <div>
-            <Label>Panic Level: {panicLevel[0]}/10</Label>
+            <Label className="text-sm font-medium">Panic Level: {panicLevel[0]}/10</Label>
             <Slider
               value={panicLevel}
               onValueChange={setPanicLevel}
@@ -667,7 +667,7 @@ export function AnxietyForm({ initialData, onSave, onCancel }: AnxietyFormProps)
 
         {/* Tags */}
         <div>
-          <Label>Tags (optional)</Label>
+          <Label className="text-sm font-medium">Tags (optional)</Label>
           <div className="flex gap-2 mt-2">
             <Input
               value={tagInput}

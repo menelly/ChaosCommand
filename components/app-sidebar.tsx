@@ -277,15 +277,15 @@ export default function AppSidebar() {
           {/* Home button */}
           <Link
             href={getHomeHref()}
-            className="mb-3 rounded text-center transition-all p-3 w-full hover:opacity-80 block bg-card border-2 border-orange-400"
+            className="mb-3 rounded-lg text-center transition-all p-1 w-full hover:opacity-80 block"
             title="Home - Command Center"
           >
             <Image
               src="/Home.png"
               alt="Home"
-              width={80}
-              height={80}
-              className="mx-auto drop-shadow-lg"
+              width={120}
+              height={120}
+              className="mx-auto drop-shadow-lg rounded-lg"
             />
           </Link>
 

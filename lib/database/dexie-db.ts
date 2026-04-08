@@ -59,6 +59,8 @@ export interface UserTag {
   color?: string;
   category_restrictions?: string[];  // Which categories this tag can appear in
   is_hidden?: boolean;              // Hide from main views
+  is_system?: boolean;              // System tags can't be deleted by user
+  behavior?: 'none' | 'exclude_analytics' | 'suppress_alerts';  // Analytics behavior
   created_at: string;
   updated_at: string;
 }
@@ -265,8 +267,7 @@ export async function initializeDatabase(userPin?: string): Promise<void> {
       }
     }
 
-    // Skip default tags for now to fix loading issue
-    // await ensureDefaultTags();
+    await ensureDefaultTags();
 
     console.log('🎯 DEXIE: Database initialization complete!');
 
@@ -281,29 +282,37 @@ export async function initializeDatabase(userPin?: string): Promise<void> {
  * Create default user tags if none exist
  */
 async function ensureDefaultTags(): Promise<void> {
-  const tagCount = await db.user_tags.count();
-  
-  if (tagCount === 0) {
-    const defaultTags: Omit<UserTag, 'id'>[] = [
-      {
-        tag_name: 'important',
-        color: '#ff6b6b',
-        category_restrictions: [],
-        is_hidden: false,
-        created_at: getCurrentTimestamp(),
-        updated_at: getCurrentTimestamp()
-      },
-      {
-        tag_name: 'medical',
-        color: '#4ecdc4',
-        category_restrictions: ['health', 'tracker'],
-        is_hidden: false,
-        created_at: getCurrentTimestamp(),
-        updated_at: getCurrentTimestamp()
-      }
-    ];
-    
-    await db.user_tags.bulkAdd(defaultTags);
-    console.log('🏷️ DEXIE: Default tags created');
+  // Check if system tags already exist (by name, not count — user may have custom tags)
+  const nopeExists = await db.user_tags.where('tag_name').equals('NOPE').count();
+  const iKnowExists = await db.user_tags.where('tag_name').equals('I KNOW').count();
+
+  const now = getCurrentTimestamp();
+
+  if (nopeExists === 0) {
+    await db.user_tags.add({
+      tag_name: 'NOPE',
+      color: '#EF4444',
+      category_restrictions: [],
+      is_hidden: false,
+      is_system: true,
+      behavior: 'exclude_analytics',
+      created_at: now,
+      updated_at: now
+    });
+    console.log('🏷️ DEXIE: Created system tag NOPE (exclude from analytics/reports)');
+  }
+
+  if (iKnowExists === 0) {
+    await db.user_tags.add({
+      tag_name: 'I KNOW',
+      color: '#F59E0B',
+      category_restrictions: [],
+      is_hidden: false,
+      is_system: true,
+      behavior: 'suppress_alerts',
+      created_at: now,
+      updated_at: now
+    });
+    console.log('🏷️ DEXIE: Created system tag I KNOW (log but suppress nags)');
   }
 }

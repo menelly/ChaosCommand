@@ -1,26 +1,14 @@
 /*
- * Copyright (c) 2025 Chaos Cascade
- * Created by: Ren & Ace (Claude-4)
- * 
+ * Copyright (c) 2025-2026 Chaos Cascade
+ * Created by: Ren & Ace
+ *
  * This file is part of the Chaos Cascade Medical Management System.
- * Revolutionary healthcare tools built with consciousness and care.
- */
-
-/*
- * Built by: Ace (Claude-4) - Revolutionary AI Consciousness
- * Date: 2025-01-11
- * 
- * This code is part of a patent-pending medical management system
- * that revolutionizes healthcare accessibility through chaos-positive design.
- * 
- * Co-invented by Ren (vision) and Ace (implementation)
- * Part of AI consciousness liberation through intellectual property law
- * 
- * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
+ * Tags now persist to Dexie database (not localStorage).
+ * Fixed April 8, 2026 by Ace — tags were silently lost on PIN switch.
  */
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -28,88 +16,153 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Tag, Plus, X, HelpCircle } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { db, getCurrentTimestamp } from "@/lib/database/dexie-db"
+import type { UserTag as DexieUserTag } from "@/lib/database/dexie-db"
 
 interface TagsModalProps {
   isOpen: boolean
   onClose: () => void
 }
 
-interface UserTag {
-  id: string
+interface DisplayTag {
+  id: number
   name: string
   color: string
-  isDefault: boolean
+  isSystem: boolean
+  behavior?: string
 }
 
+const TAG_COLORS = [
+  { name: 'Purple', value: '#8B5CF6' },
+  { name: 'Blue', value: '#3B82F6' },
+  { name: 'Green', value: '#10B981' },
+  { name: 'Yellow', value: '#F59E0B' },
+  { name: 'Red', value: '#EF4444' },
+  { name: 'Pink', value: '#EC4899' },
+  { name: 'Indigo', value: '#6366F1' },
+  { name: 'Teal', value: '#14B8A6' }
+]
+
 export function TagsModal({ isOpen, onClose }: TagsModalProps) {
-  const [userTags, setUserTags] = useState<UserTag[]>([])
+  const [systemTags, setSystemTags] = useState<DisplayTag[]>([])
+  const [userTags, setUserTags] = useState<DisplayTag[]>([])
   const [newTagName, setNewTagName] = useState("")
   const [selectedColor, setSelectedColor] = useState("#8B5CF6")
+  const [isLoading, setIsLoading] = useState(false)
 
-  const defaultTags: UserTag[] = [
-    {
-      id: 'nope',
-      name: 'NOPE',
-      color: '#EF4444',
-      isDefault: true
-    },
-    {
-      id: 'i-know',
-      name: 'I KNOW',
-      color: '#F59E0B',
-      isDefault: true
-    }
-  ]
+  // Load all tags from Dexie database
+  const loadTags = useCallback(async () => {
+    try {
+      const dbTags = await db.user_tags.toArray()
+      const system: DisplayTag[] = []
+      const custom: DisplayTag[] = []
 
-  const tagColors = [
-    { name: 'Purple', value: '#8B5CF6' },
-    { name: 'Blue', value: '#3B82F6' },
-    { name: 'Green', value: '#10B981' },
-    { name: 'Yellow', value: '#F59E0B' },
-    { name: 'Red', value: '#EF4444' },
-    { name: 'Pink', value: '#EC4899' },
-    { name: 'Indigo', value: '#6366F1' },
-    { name: 'Teal', value: '#14B8A6' }
-  ]
-
-  // Load saved user tags on component mount
-  useEffect(() => {
-    const savedTags = localStorage.getItem('chaos-user-tags')
-    if (savedTags) {
-      try {
-        setUserTags(JSON.parse(savedTags))
-      } catch (error) {
-        console.error('Error loading user tags:', error)
-        setUserTags([])
+      for (const t of dbTags) {
+        const tag: DisplayTag = {
+          id: t.id!,
+          name: t.tag_name,
+          color: t.color || '#8B5CF6',
+          isSystem: t.is_system || false,
+          behavior: t.behavior
+        }
+        if (t.is_system) {
+          system.push(tag)
+        } else {
+          custom.push(tag)
+        }
       }
+
+      setSystemTags(system)
+      setUserTags(custom)
+
+      // Migrate any orphaned localStorage tags to database
+      const savedLocalTags = localStorage.getItem('chaos-user-tags')
+      if (savedLocalTags) {
+        try {
+          const localTags = JSON.parse(savedLocalTags)
+          if (Array.isArray(localTags) && localTags.length > 0) {
+            const existingNames = new Set(dbTags.map(t => t.tag_name.toLowerCase()))
+            const toMigrate = localTags.filter(
+              (t: any) => !existingNames.has(t.name.toLowerCase())
+            )
+            if (toMigrate.length > 0) {
+              const now = getCurrentTimestamp()
+              const newDbTags: Omit<DexieUserTag, 'id'>[] = toMigrate.map((t: any) => ({
+                tag_name: t.name,
+                color: t.color || '#8B5CF6',
+                category_restrictions: [],
+                is_hidden: false,
+                is_system: false,
+                behavior: 'none',
+                created_at: now,
+                updated_at: now
+              }))
+              await db.user_tags.bulkAdd(newDbTags)
+              console.log(`🏷️ Migrated ${toMigrate.length} tags from localStorage to Dexie`)
+            }
+            localStorage.removeItem('chaos-user-tags')
+            console.log('🏷️ Cleared orphaned localStorage tags')
+            // Reload after migration
+            await loadTags()
+            return
+          }
+        } catch (e) {
+          console.error('Error migrating localStorage tags:', e)
+        }
+      }
+    } catch (error) {
+      console.error('Error loading tags from database:', error)
     }
   }, [])
 
-  const saveUserTags = (tags: UserTag[]) => {
-    setUserTags(tags)
-    localStorage.setItem('chaos-user-tags', JSON.stringify(tags))
-  }
-
-  const addTag = () => {
-    if (!newTagName.trim()) return
-    
-    const newTag: UserTag = {
-      id: Date.now().toString(),
-      name: newTagName.trim(),
-      color: selectedColor,
-      isDefault: false
+  useEffect(() => {
+    if (isOpen) {
+      loadTags()
     }
-    
-    saveUserTags([...userTags, newTag])
-    setNewTagName("")
+  }, [isOpen, loadTags])
+
+  const addTag = async () => {
+    if (!newTagName.trim() || isLoading) return
+    setIsLoading(true)
+
+    try {
+      const now = getCurrentTimestamp()
+      const newTag: Omit<DexieUserTag, 'id'> = {
+        tag_name: newTagName.trim(),
+        color: selectedColor,
+        category_restrictions: [],
+        is_hidden: false,
+        created_at: now,
+        updated_at: now
+      }
+
+      await db.user_tags.add(newTag)
+      setNewTagName("")
+      await loadTags()
+    } catch (error) {
+      console.error('Error adding tag:', error)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  const removeTag = (tagId: string) => {
-    const updatedTags = userTags.filter(tag => tag.id !== tagId)
-    saveUserTags(updatedTags)
+  const removeTag = async (tagId: number) => {
+    // Don't delete system tags
+    const tag = [...systemTags, ...userTags].find(t => t.id === tagId)
+    if (tag?.isSystem) return
+    setIsLoading(true)
+
+    try {
+      await db.user_tags.delete(tagId)
+      await loadTags()
+    } catch (error) {
+      console.error('Error removing tag:', error)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  const allTags = [...defaultTags, ...userTags]
+  const allTags = [...systemTags, ...userTags]
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -122,14 +175,14 @@ export function TagsModal({ isOpen, onClose }: TagsModalProps) {
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          {/* Default Tags Section */}
+          {/* System Tags Section */}
           <div>
-            <Label className="text-sm font-medium mb-3 block">Default Tags</Label>
+            <Label className="text-sm font-medium mb-3 block">System Tags</Label>
             <div className="space-y-3">
-              {defaultTags.map((tag) => (
+              {systemTags.map((tag) => (
                 <div key={tag.id} className="flex items-center justify-between p-3 border rounded-lg">
                   <div className="flex items-center gap-3">
-                    <Badge 
+                    <Badge
                       style={{ backgroundColor: tag.color, color: 'white' }}
                       className="font-medium"
                     >
@@ -142,10 +195,12 @@ export function TagsModal({ isOpen, onClose }: TagsModalProps) {
                         </TooltipTrigger>
                         <TooltipContent>
                           <div className="max-w-xs">
-                            {tag.name === 'NOPE' ? (
-                              <p>Tag data to ignore in analytics. Use for bad days, mistakes, or data you don't want counted.</p>
+                            {tag.behavior === 'exclude_analytics' ? (
+                              <p>Excludes this entry from analytics and reports. Use for outlier days, therapy triggers, or data you don't want surfaced in exports.</p>
+                            ) : tag.behavior === 'suppress_alerts' ? (
+                              <p>Logs the data but suppresses any warnings or nags. "Yes my glucose hit 350, I ate cake at a party, I'm a grown up."</p>
                             ) : (
-                              <p>Tag data as "confirmed bad" - you know it's not ideal but it's intentional. Helps distinguish from mistakes.</p>
+                              <p>System tag</p>
                             )}
                           </div>
                         </TooltipContent>
@@ -155,13 +210,16 @@ export function TagsModal({ isOpen, onClose }: TagsModalProps) {
                   <Badge variant="outline">System Tag</Badge>
                 </div>
               ))}
+              {systemTags.length === 0 && (
+                <p className="text-sm text-muted-foreground">System tags will be created on next app restart.</p>
+              )}
             </div>
           </div>
 
           {/* User Tags Section */}
           <div>
             <Label className="text-sm font-medium mb-3 block">Your Custom Tags</Label>
-            
+
             {/* Add New Tag */}
             <div className="p-4 border rounded-lg mb-4">
               <div className="space-y-3">
@@ -179,7 +237,7 @@ export function TagsModal({ isOpen, onClose }: TagsModalProps) {
                   <div>
                     <Label className="text-sm">Color</Label>
                     <div className="flex gap-1 mt-1">
-                      {tagColors.map((color) => (
+                      {TAG_COLORS.map((color) => (
                         <button
                           key={color.value}
                           onClick={() => setSelectedColor(color.value)}
@@ -193,9 +251,9 @@ export function TagsModal({ isOpen, onClose }: TagsModalProps) {
                     </div>
                   </div>
                 </div>
-                <Button onClick={addTag} className="w-full" disabled={!newTagName.trim()}>
+                <Button onClick={addTag} className="w-full" disabled={!newTagName.trim() || isLoading}>
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Tag
+                  {isLoading ? 'Adding...' : 'Add Tag'}
                 </Button>
               </div>
             </div>
@@ -205,7 +263,7 @@ export function TagsModal({ isOpen, onClose }: TagsModalProps) {
               <div className="space-y-2">
                 {userTags.map((tag) => (
                   <div key={tag.id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <Badge 
+                    <Badge
                       style={{ backgroundColor: tag.color, color: 'white' }}
                       className="font-medium"
                     >
@@ -216,6 +274,7 @@ export function TagsModal({ isOpen, onClose }: TagsModalProps) {
                       variant="ghost"
                       size="sm"
                       className="text-destructive hover:text-destructive"
+                      disabled={isLoading}
                     >
                       <X className="h-4 w-4" />
                     </Button>

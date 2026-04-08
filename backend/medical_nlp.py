@@ -418,6 +418,309 @@ def extract_lab_results_from_text(text: str, demographics: Optional[Dict] = None
             confidence=0.92 if ref_low and ref_high else 0.80,
         ))
 
+    # --- Vertical format pass (MyChart, Epic, Intermountain patient portals) ---
+    # These portals export lab results in a vertical card layout:
+    #   TEST NAME
+    #   Test Date
+    #   MM/DD/YYYY
+    #   Test Location
+    #   [optional location]
+    #   Range (Normal)
+    #   LOW UNIT-HIGH UNIT
+    #   Value
+    #   ACTUAL_VALUE UNIT
+    #   Interpretation
+    #   [FLAG or empty]
+    #
+    # Page breaks ("MM/DD/YYYY Test Results\nCopyright...Page X of Y") appear mid-entry.
+    # Strip them first, then parse the clean vertical structure.
+
+    # Detect vertical format: if "Test Date" and "Range (Normal)" appear, this is a portal export
+    is_vertical_format = bool(re.search(r'Test Date\s*\n.*\nTest Location', text, re.DOTALL))
+
+    if is_vertical_format:  # Portal format detected — vertical parser takes priority
+        results.clear()
+        seen_tests.clear()
+
+        # === COMPREHENSIVE PAGE BREAK STRIPPING ===
+        # Page breaks can split entries mid-field (e.g. Value on one page,
+        # the actual number on the next). Strip ALL artifacts to reassemble.
+        clean_text = text
+
+        # 1. Strip copyright/page footers (© may be garbled as � in PDF extraction)
+        clean_text = re.sub(
+            r'Copyright\s+.?\d{4}.*?Page\s+\d+\s+of\s+\d+\s*',
+            '', clean_text, flags=re.DOTALL
+        )
+        # 2. Strip pdfplumber page markers ("--- Page X ---")
+        clean_text = re.sub(r'\n*---\s*Page\s+\d+\s*---\n*', '\n', clean_text)
+        # 3. Strip repeated date+header lines per page ("07/25/2025 Test Results")
+        clean_text = re.sub(r'^\d{2}/\d{2}/\d{4}\s+Test Results\s*$', '', clean_text, flags=re.MULTILINE)
+        # 4. Strip "Health Record" header lines
+        clean_text = re.sub(r'^Health Record\s*$', '', clean_text, flags=re.MULTILINE)
+        # 5. Strip standalone "Notes" lines (section dividers between entries, NOT test names)
+        clean_text = re.sub(r'^Notes\s*$', '', clean_text, flags=re.MULTILINE)
+        # 6. Collapse multiple blank lines into one (after all the stripping)
+        clean_text = re.sub(r'\n{3,}', '\n\n', clean_text)
+
+        logger.info(f"🧹 Cleaned vertical text ({len(text)} → {len(clean_text)} chars)")
+        logger.info(f"🔬 CLEANED TEXT DUMP (first 2000 chars):\n{clean_text[:2000]}")
+
+        # Pattern: "Test Name" followed by structured fields
+        # CRITICAL: test_name uses [ \w\-\(\)/] NOT [\s\w...] — \s matches
+        # newlines which causes "Notes\nPotassium Level" to merge into one name
+        vertical_pattern = re.compile(
+            r'(?P<test_name>[A-Za-z][\w \-\(\)/]+?)\s*\n'     # Test name (NO newlines in name!)
+            r'Test Date\s*\n'                                   # "Test Date" header
+            r'(?P<date>\d{2}/\d{2}/\d{4})\s*\n'               # Date
+            r'Test Location\s*\n'                               # "Test Location" header
+            r'(?:(?!Range).*?\n)*?'                             # Optional location text (skip)
+            r'Range \(Normal\)\s*\n'                            # "Range (Normal)" header
+            r'(?P<range_line>.*?)\s*\n'                         # Range values line
+            r'Value\s*\n'                                       # "Value" header
+            r'(?P<value_line>.*?)\s*\n'                         # Actual value line
+            r'Interpretation\s*\n'                              # "Interpretation" header
+            r'(?P<interp>(?:LLOW|LOW|HI|HIGH|H|L|LL|HH|CRITICAL|CRIT|ABNORMAL|ABN)?\s*)\n', # Flag + newline
+            re.MULTILINE
+        )
+
+        vertical_count = 0
+        logger.info(f"🔍 Searching for vertical pattern matches...")
+        for match in vertical_pattern.finditer(clean_text):
+            test_name = match.group('test_name').strip()
+            range_line = match.group('range_line').strip()
+            value_line = match.group('value_line').strip()
+            interp = (match.group('interp') or '').strip()
+            logger.info(f"  📋 Found: {test_name} = {value_line} (range: {range_line}, flag: {interp or 'normal'})")
+
+            # Skip if test name looks like junk
+            if len(test_name) < 2 or len(test_name) > 80:
+                continue
+            if test_name.lower() in name_exclusions:
+                continue
+            if re.match(r'^[\d\s\.]+$', test_name):
+                continue
+            # Skip structural words that aren't test names
+            if test_name.strip().lower() in ('notes', 'note', 'comments', 'comment', 'see note'):
+                continue
+
+            key = test_name.lower()
+            if key in seen_tests:
+                continue
+            seen_tests.add(key)
+
+            # Parse value: "145 mmol/L" or "See Note:" or ">60 mL/min/1.73 m2"
+            value = None
+            value_text = value_line
+            unit = ""
+            value_match = re.match(
+                r'([<>]?\s*\d+(?:\.\d+)?)\s*(.+)', value_line
+            )
+            if value_match:
+                val_str = re.sub(r'[<>]', '', value_match.group(1)).strip()
+                try:
+                    value = float(val_str)
+                except ValueError:
+                    pass
+                unit = value_match.group(2).strip()
+
+            # Parse range: "137 mmol/L-146 mmol/L" or "65 mg/dL-99 mg/dL" or ">60 mL/min"
+            ref_low = None
+            ref_high = None
+            range_match = re.match(
+                r'([<>]?\s*\d+(?:\.\d+)?)\s*\S+\s*[-–]\s*(\d+(?:\.\d+)?)',
+                range_line
+            )
+            if range_match:
+                try:
+                    ref_low = float(range_match.group(1).strip().lstrip('<>'))
+                    ref_high = float(range_match.group(2).strip())
+                except ValueError:
+                    pass
+
+            # Parse flag from interpretation
+            flag = ""
+            is_abnormal = False
+            interp_upper = interp.upper()
+            if 'LLOW' in interp_upper or interp_upper == 'LL':
+                flag = "LL"
+                is_abnormal = True
+            elif interp_upper in ('LOW', 'L'):
+                flag = "L"
+                is_abnormal = True
+            elif interp_upper in ('HI', 'HIGH', 'H', 'HH'):
+                flag = "H"
+                is_abnormal = True
+            elif interp_upper in ('CRITICAL', 'CRIT'):
+                flag = "CRITICAL"
+                is_abnormal = True
+
+            # Also check value against range if no flag
+            if not is_abnormal and value is not None:
+                if ref_low is not None and value < ref_low:
+                    is_abnormal = True
+                    flag = flag or "L"
+                elif ref_high is not None and value > ref_high:
+                    is_abnormal = True
+                    flag = flag or "H"
+
+            results.append(LabResult(
+                test_name=test_name,
+                value=value,
+                value_text=value_text,
+                unit=unit,
+                reference_low=ref_low,
+                reference_high=ref_high,
+                reference_text=range_line if ref_low or ref_high else "",
+                flag=flag,
+                is_abnormal=is_abnormal,
+                context=f"Vertical format: {test_name} = {value_line}",
+                confidence=0.90 if ref_low and ref_high else 0.75,
+            ))
+            vertical_count += 1
+
+        if vertical_count > 0:
+            logger.info(f"🧪 Vertical format parser found {vertical_count} results")
+
+    # --- Mayo/graphical format (two-column "Normal range:" layout) ---
+    # Mayo, Advent, and similar portals use a visual bar-chart layout that
+    # pdfplumber linearizes into a two-column text format:
+    #   TestName1 TestName2
+    #   Normal range: LOW1 - HIGH1 UNIT1 Normal range: LOW2 - HIGH2 UNIT2
+    #   VALUE1 [Low|High] VALUE2 [Low|High]
+    #   (garbage: doubled bar chart axis labels)
+    is_mayo_format = (
+        not is_vertical_format
+        and text.count('Normal range:') >= 2
+    )
+
+    if is_mayo_format:
+        results.clear()
+        seen_tests.clear()
+        logger.info("🏥 Mayo/graphical format detected — using Normal range parser")
+
+        # Clean the text
+        clean_text = text
+        clean_text = re.sub(r'\n*---\s*Page\s+\d+\s*---\n*', '\n', clean_text)
+        # Strip date/time headers (e.g. "2/12/26, 12:57 AM Patient Online Services...")
+        clean_text = re.sub(r'^\d+/\d+/\d+,.*$', '', clean_text, flags=re.MULTILINE)
+        # Strip URL footers
+        clean_text = re.sub(r'^https?://\S+.*$', '', clean_text, flags=re.MULTILINE)
+        # Strip bar chart axis garbage (doubled digits like "33..44 99..66" from axis labels)
+        # These always contain ".." (double dot) — real values never do
+        clean_text = re.sub(r'^.*\d\.\.\d.*$', '', clean_text, flags=re.MULTILINE)
+        # Strip garbled text from bar overlays (e.g. "d77 a.. t44")
+        clean_text = re.sub(r'^[a-z]\d\d\s+[a-z]\.\..*$', '', clean_text, flags=re.MULTILINE)
+        # Collapse blank lines
+        clean_text = re.sub(r'\n{3,}', '\n\n', clean_text)
+
+        lines = [l for l in clean_text.split('\n') if l.strip()]
+        mayo_count = 0
+
+        for i, line in enumerate(lines):
+            if 'Normal range:' not in line:
+                continue
+
+            # Extract all range segments from this line
+            range_matches = list(re.finditer(
+                r'Normal range:\s*([\d.]+)\s*-\s*([\d.]+)\s*(\S+(?:\(\d+\))?(?:/\S+)*)',
+                line
+            ))
+            if not range_matches:
+                continue
+
+            # Get name line (above) and value line (below)
+            name_line = lines[i - 1].strip() if i > 0 else ''
+            value_line = lines[i + 1].strip() if i + 1 < len(lines) else ''
+
+            # Skip if name looks like a header/garbage
+            if not name_line or re.match(r'^(Results|Name:|Collected|Ordering|Specimens)', name_line):
+                continue
+
+            # Extract values with optional Low/High flags
+            val_matches = re.findall(r'([\d.]+)\s*(Low|High)?', value_line, re.IGNORECASE)
+
+            if len(range_matches) == 2:
+                # TWO-COLUMN: split names at midpoint of word list
+                words = name_line.split()
+                mid = len(words) // 2
+                name1 = ' '.join(words[:max(mid, 1)])
+                name2 = ' '.join(words[max(mid, 1):])
+                tests = [
+                    (name1, range_matches[0], val_matches[0] if len(val_matches) > 0 else None),
+                    (name2, range_matches[1], val_matches[1] if len(val_matches) > 1 else None),
+                ]
+            elif len(range_matches) == 1:
+                # SINGLE-COLUMN
+                tests = [
+                    (name_line, range_matches[0], val_matches[0] if len(val_matches) > 0 else None),
+                ]
+            else:
+                continue
+
+            for test_name, rmatch, vmatch in tests:
+                test_name = test_name.strip()
+                if not test_name or len(test_name) < 2:
+                    continue
+                if test_name.lower() in name_exclusions:
+                    continue
+
+                key = test_name.lower()
+                if key in seen_tests:
+                    continue
+                seen_tests.add(key)
+
+                ref_low = float(rmatch.group(1))
+                ref_high = float(rmatch.group(2))
+                unit = rmatch.group(3)
+
+                value = None
+                value_text = ""
+                flag = ""
+                is_abnormal = False
+
+                if vmatch:
+                    val_str, flag_str = vmatch
+                    try:
+                        value = float(val_str)
+                    except ValueError:
+                        pass
+                    value_text = f"{val_str} {unit}"
+
+                    if flag_str:
+                        flag = "L" if flag_str.lower() == "low" else "H"
+                        is_abnormal = True
+
+                # Double-check value against range if no flag
+                if not is_abnormal and value is not None:
+                    if value < ref_low:
+                        is_abnormal = True
+                        flag = flag or "L"
+                    elif value > ref_high:
+                        is_abnormal = True
+                        flag = flag or "H"
+
+                logger.info(f"  📋 Mayo: {test_name} = {value} {unit} "
+                            f"(range: {ref_low}-{ref_high}, flag: {flag or 'normal'})")
+
+                results.append(LabResult(
+                    test_name=test_name,
+                    value=value,
+                    value_text=value_text,
+                    unit=unit,
+                    reference_low=ref_low,
+                    reference_high=ref_high,
+                    reference_text=f"{ref_low} {unit}-{ref_high} {unit}",
+                    flag=flag,
+                    is_abnormal=is_abnormal,
+                    context=f"Mayo format: {test_name} = {value} {unit}",
+                    confidence=0.90,
+                ))
+                mayo_count += 1
+
+        if mayo_count > 0:
+            logger.info(f"🧪 Mayo format parser found {mayo_count} results")
+
     # Sort: abnormal results first, then alphabetically
     results.sort(key=lambda r: (not r.is_abnormal, r.test_name.lower()))
 
