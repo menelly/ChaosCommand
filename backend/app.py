@@ -928,6 +928,50 @@ def _kill_zombie_on_port(port: int):
         logger.warning(f"⚠️ Could not clear port {port}: {e}")
 
 
+@app.route('/api/export/doctor-report', methods=['POST'])
+def export_doctor_report():
+    """📄 Generate a filtered medical report PDF for a specific provider."""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+
+        logger.info(f"📄 Generating doctor report for {data.get('providerName', 'unknown')}")
+
+        # Build report data structure
+        report_data = {
+            'demographics': data.get('demographics'),
+            'providerName': data.get('providerName', ''),
+            'specialty': data.get('specialty', 'primary'),
+            'reportStyle': data.get('reportStyle', 'doctor'),
+            'dateRange': data.get('dateRange', {}),
+            'trackerData': data.get('trackerData', []),
+            'labResults': data.get('labResults', []),
+            'journalEntries': data.get('journalEntries', []),
+            'timelineEvents': data.get('timelineEvents', []),
+            'healthData': data.get('healthData', []),
+            'includePatterns': data.get('includePatterns', True),
+        }
+
+        # Generate PDF
+        from pdf_export import generate_medical_report
+        filepath = generate_medical_report(report_data)
+
+        if not filepath:
+            return jsonify({'error': 'PDF generation failed'}), 500
+
+        return send_file(
+            filepath,
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=f"medical-report-{data.get('providerName', 'export')}-{data.get('dateRange', {}).get('end', 'report')}.pdf"
+        )
+
+    except Exception as e:
+        logger.error(f"Export error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+
 if __name__ == '__main__':
     # Development server
     port = int(os.environ.get('FLASK_PORT', 5000))

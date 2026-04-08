@@ -1,0 +1,462 @@
+/*
+ * Copyright (c) 2025-2026 Chaos Cascade
+ * Created by: Ren & Ace
+ *
+ * Print / Export — Generate filtered medical reports for doctors, lawyers, or yourself.
+ * "My endo does not need my panic attacks but maybe mood and maybe not poop pictures."
+ */
+"use client"
+
+import { useState, useEffect } from "react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Badge } from "@/components/ui/badge"
+import { Switch } from "@/components/ui/switch"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Printer, FileText, Stethoscope, ChevronRight, ChevronLeft, Download, Loader2 } from "lucide-react"
+import { useDailyData } from "@/lib/database/hooks/use-daily-data"
+import { CATEGORIES, formatDateForStorage } from "@/lib/database/dexie-db"
+import { backendFetch, FLASK_URL } from "@/lib/utils/tauri-fetch"
+
+interface PrintExportModalProps {
+  isOpen: boolean
+  onClose: () => void
+}
+
+// Tracker categories with display names
+const TRACKER_OPTIONS = [
+  { id: 'pain', label: 'Pain', category: 'body' },
+  { id: 'sleep', label: 'Sleep', category: 'body' },
+  { id: 'energy', label: 'Energy / Spoons', category: 'body' },
+  { id: 'dysautonomia', label: 'Dysautonomia', category: 'body' },
+  { id: 'head-pain', label: 'Head Pain / Migraine', category: 'body' },
+  { id: 'seizure', label: 'Seizure', category: 'body' },
+  { id: 'upper-digestive', label: 'Upper Digestive', category: 'body' },
+  { id: 'bathroom', label: 'Lower Digestive', category: 'body' },
+  { id: 'reproductive-health', label: 'Reproductive Health', category: 'body' },
+  { id: 'brain-fog', label: 'Brain Fog', category: 'mind' },
+  { id: 'mental-health', label: 'Mental Health', category: 'mind' },
+  { id: 'anxiety', label: 'Anxiety', category: 'mind' },
+  { id: 'sensory', label: 'Sensory', category: 'mind' },
+  { id: 'food-choice', label: 'Food / Nutrition', category: 'choice' },
+  { id: 'hydration', label: 'Hydration', category: 'choice' },
+  { id: 'movement', label: 'Movement', category: 'choice' },
+  { id: 'self-care', label: 'Self-Care', category: 'choice' },
+  { id: 'weather', label: 'Weather Impact', category: 'other' },
+  { id: 'diabetes', label: 'Diabetes', category: 'body' },
+]
+
+// Smart defaults by specialty
+const SPECIALTY_DEFAULTS: Record<string, string[]> = {
+  'primary': TRACKER_OPTIONS.map(t => t.id), // everything
+  'endocrinologist': ['diabetes', 'energy', 'food-choice', 'sleep', 'weight', 'lab-results'],
+  'neurologist': ['seizure', 'head-pain', 'brain-fog', 'dysautonomia', 'sleep', 'sensory'],
+  'gastroenterologist': ['upper-digestive', 'bathroom', 'food-choice', 'pain'],
+  'rheumatologist': ['pain', 'energy', 'sleep', 'brain-fog', 'movement', 'weather'],
+  'psychiatrist': ['mental-health', 'anxiety', 'sleep', 'brain-fog', 'self-care'],
+  'therapist': ['mental-health', 'anxiety', 'self-care', 'sleep'],
+  'cardiologist': ['dysautonomia', 'energy', 'movement', 'sleep'],
+  'obgyn': ['reproductive-health', 'pain', 'mental-health'],
+  'other': TRACKER_OPTIONS.map(t => t.id),
+}
+
+const SPECIALTIES = [
+  { value: 'primary', label: 'Primary Care (everything)' },
+  { value: 'endocrinologist', label: 'Endocrinologist' },
+  { value: 'neurologist', label: 'Neurologist' },
+  { value: 'gastroenterologist', label: 'Gastroenterologist' },
+  { value: 'rheumatologist', label: 'Rheumatologist' },
+  { value: 'psychiatrist', label: 'Psychiatrist' },
+  { value: 'therapist', label: 'Therapist / Counselor' },
+  { value: 'cardiologist', label: 'Cardiologist' },
+  { value: 'obgyn', label: 'OB/GYN' },
+  { value: 'other', label: 'Other (select all)' },
+]
+
+export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
+  const { getDateRange, getAllCategoryData } = useDailyData()
+
+  // Wizard step
+  const [step, setStep] = useState(1)
+
+  // Step 1: Provider
+  const [providerName, setProviderName] = useState('')
+  const [specialty, setSpecialty] = useState('primary')
+  const [savedProviders, setSavedProviders] = useState<any[]>([])
+
+  // Step 2: Content selection
+  const [selectedTrackers, setSelectedTrackers] = useState<string[]>(TRACKER_OPTIONS.map(t => t.id))
+  const [includePatterns, setIncludePatterns] = useState(true)
+  const [includeJournal, setIncludeJournal] = useState(false)
+  const [includeLabs, setIncludeLabs] = useState(true)
+  const [includeTimeline, setIncludeTimeline] = useState(true)
+  const [reportStyle, setReportStyle] = useState<'doctor' | 'human'>('doctor')
+  const [dateRangeStart, setDateRangeStart] = useState('')
+  const [dateRangeEnd, setDateRangeEnd] = useState(formatDateForStorage(new Date()))
+
+  // Step 3: Generate
+  const [isGenerating, setIsGenerating] = useState(false)
+
+  // Load providers + set default date range
+  useEffect(() => {
+    if (isOpen) {
+      setStep(1)
+      // Default to 90 days back
+      const start = new Date()
+      start.setDate(start.getDate() - 90)
+      setDateRangeStart(formatDateForStorage(start))
+
+      // Load saved providers
+      getAllCategoryData(CATEGORIES.USER).then(records => {
+        const providers = records
+          ?.filter((r: any) => r.subcategory?.startsWith('providers'))
+          ?.map((r: any) => typeof r.content === 'string' ? JSON.parse(r.content) : r.content)
+          || []
+        setSavedProviders(providers)
+      }).catch(() => {})
+    }
+  }, [isOpen])
+
+  // When specialty changes, update smart defaults
+  useEffect(() => {
+    const defaults = SPECIALTY_DEFAULTS[specialty] || TRACKER_OPTIONS.map(t => t.id)
+    setSelectedTrackers(defaults)
+    // Therapist probably doesn't need journal hidden, but doctor might
+    setIncludeJournal(specialty === 'therapist' || specialty === 'psychiatrist')
+  }, [specialty])
+
+  const toggleTracker = (id: string) => {
+    setSelectedTrackers(prev =>
+      prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id]
+    )
+  }
+
+  const handleGenerate = async () => {
+    setIsGenerating(true)
+    try {
+      // Gather all selected data
+      const allTrackerData = await getDateRange(dateRangeStart, dateRangeEnd, 'tracker')
+      const allUserData = await getDateRange(dateRangeStart, dateRangeEnd, 'user')
+      const allJournalData = includeJournal
+        ? await getDateRange(dateRangeStart, dateRangeEnd, 'journal')
+        : []
+      const allHealthData = await getDateRange(dateRangeStart, dateRangeEnd, 'health')
+
+      // Filter tracker data to selected trackers
+      const filteredTrackers = allTrackerData.filter(r =>
+        selectedTrackers.some(t => r.subcategory === t || r.subcategory.startsWith(t + '-'))
+      )
+
+      // Get demographics
+      const demoRecords = allUserData.filter((r: any) => r.subcategory === 'demographics')
+      const demographics = demoRecords.length > 0
+        ? (typeof demoRecords[0].content === 'string' ? JSON.parse(demoRecords[0].content) : demoRecords[0].content)
+        : null
+
+      // Get lab results
+      const labRecords = includeLabs
+        ? allUserData.filter((r: any) => r.subcategory?.startsWith('lab-results'))
+        : []
+
+      // Get timeline events
+      const timelineRecords = includeTimeline
+        ? allUserData.filter((r: any) => r.subcategory?.startsWith('medical-events'))
+        : []
+
+      // Send to Flask for PDF generation
+      const response = await backendFetch(`${FLASK_URL}/api/export/doctor-report`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          demographics,
+          providerName,
+          specialty,
+          reportStyle,
+          dateRange: { start: dateRangeStart, end: dateRangeEnd },
+          trackerData: filteredTrackers.map(r => ({
+            date: r.date,
+            subcategory: r.subcategory,
+            content: r.content,
+          })),
+          labResults: labRecords.map(r => ({
+            date: r.date,
+            content: typeof r.content === 'string' ? JSON.parse(r.content) : r.content,
+          })),
+          journalEntries: allJournalData.map(r => ({
+            date: r.date,
+            content: typeof r.content === 'string' ? JSON.parse(r.content) : r.content,
+          })),
+          timelineEvents: timelineRecords.map(r => ({
+            date: r.date,
+            content: typeof r.content === 'string' ? JSON.parse(r.content) : r.content,
+          })),
+          healthData: allHealthData.map(r => ({
+            date: r.date,
+            subcategory: r.subcategory,
+            content: r.content,
+          })),
+          includePatterns,
+        }),
+        timeout: 30000,
+      })
+
+      if (!response.ok) {
+        throw new Error('PDF generation failed')
+      }
+
+      // Download the PDF
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `medical-report-${providerName || 'export'}-${dateRangeEnd}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+
+      alert('Report generated!')
+      onClose()
+
+    } catch (e: any) {
+      console.error('Export failed:', e)
+      alert(`Export failed: ${e.message}`)
+    } finally {
+      setIsGenerating(false)
+    }
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Printer className="h-5 w-5" />
+            Print / Export Report
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="py-4">
+          {/* Progress indicator */}
+          <div className="flex items-center justify-center gap-2 mb-6">
+            {[1, 2, 3].map(s => (
+              <div key={s} className={`flex items-center gap-2 ${s <= step ? 'text-primary' : 'text-muted-foreground'}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold
+                  ${s === step ? 'bg-primary text-primary-foreground' : s < step ? 'bg-primary/30 text-primary' : 'bg-muted text-muted-foreground'}`}>
+                  {s}
+                </div>
+                <span className="text-sm hidden sm:inline">
+                  {s === 1 ? 'Provider' : s === 2 ? 'Content' : 'Generate'}
+                </span>
+                {s < 3 && <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+              </div>
+            ))}
+          </div>
+
+          {/* Step 1: Provider */}
+          {step === 1 && (
+            <div className="space-y-4">
+              <div>
+                <Label>Who is this report for?</Label>
+                <Input
+                  value={providerName}
+                  onChange={e => setProviderName(e.target.value)}
+                  placeholder="Dr. Smith, Mayo Clinic Neurology, etc."
+                  className="mt-1"
+                />
+                {savedProviders.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {savedProviders.slice(0, 6).map((p: any, i: number) => (
+                      <Badge
+                        key={i}
+                        variant="outline"
+                        className="cursor-pointer hover:bg-primary/10"
+                        onClick={() => {
+                          setProviderName(p.name || p.providerName || '')
+                          if (p.specialty) {
+                            const match = SPECIALTIES.find(s =>
+                              p.specialty.toLowerCase().includes(s.value) ||
+                              s.label.toLowerCase().includes(p.specialty.toLowerCase())
+                            )
+                            if (match) setSpecialty(match.value)
+                          }
+                        }}
+                      >
+                        {p.name || p.providerName}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <Label>Specialty (determines smart defaults)</Label>
+                <Select value={specialty} onValueChange={setSpecialty}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SPECIALTIES.map(s => (
+                      <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label>Report Style</Label>
+                <div className="flex gap-2 mt-1">
+                  <Button
+                    variant={reportStyle === 'doctor' ? 'default' : 'outline'}
+                    onClick={() => setReportStyle('doctor')}
+                    className="flex-1"
+                  >
+                    <Stethoscope className="h-4 w-4 mr-2" />
+                    Medical Language
+                  </Button>
+                  <Button
+                    variant={reportStyle === 'human' ? 'default' : 'outline'}
+                    onClick={() => setReportStyle('human')}
+                    className="flex-1"
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    Human Readable
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {reportStyle === 'doctor'
+                    ? 'ICD-10 codes, clinical terminology, statistical correlations'
+                    : 'Plain language, trend descriptions, your own words'}
+                </p>
+              </div>
+
+              <Button onClick={() => setStep(2)} className="w-full">
+                Next: Choose Content <ChevronRight className="h-4 w-4 ml-2" />
+              </Button>
+            </div>
+          )}
+
+          {/* Step 2: Content Selection */}
+          {step === 2 && (
+            <div className="space-y-4">
+              <div>
+                <Label>Date Range</Label>
+                <div className="flex gap-2 mt-1">
+                  <Input type="date" value={dateRangeStart} onChange={e => setDateRangeStart(e.target.value)} />
+                  <span className="self-center text-muted-foreground">to</span>
+                  <Input type="date" value={dateRangeEnd} onChange={e => setDateRangeEnd(e.target.value)} />
+                </div>
+              </div>
+
+              <div>
+                <Label className="mb-2 block">Include Trackers</Label>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {TRACKER_OPTIONS.map(tracker => (
+                    <Button
+                      key={tracker.id}
+                      variant={selectedTrackers.includes(tracker.id) ? 'default' : 'outline'}
+                      size="sm"
+                      className="justify-start h-auto py-1.5 text-xs"
+                      onClick={() => toggleTracker(tracker.id)}
+                    >
+                      {tracker.label}
+                    </Button>
+                  ))}
+                </div>
+                <div className="flex gap-2 mt-2">
+                  <Button variant="outline" size="sm" onClick={() => setSelectedTrackers(TRACKER_OPTIONS.map(t => t.id))}>
+                    Select All
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setSelectedTrackers([])}>
+                    Clear All
+                  </Button>
+                </div>
+              </div>
+
+              <div className="space-y-3 p-3 border rounded-lg">
+                <div className="flex items-center justify-between">
+                  <Label>Include Patterns & Correlations</Label>
+                  <Switch checked={includePatterns} onCheckedChange={setIncludePatterns} />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Include Journal Entries</Label>
+                    <p className="text-xs text-muted-foreground">Contains personal thoughts — review carefully</p>
+                  </div>
+                  <Switch checked={includeJournal} onCheckedChange={setIncludeJournal} />
+                </div>
+                <div className="flex items-center justify-between">
+                  <Label>Include Lab Results</Label>
+                  <Switch checked={includeLabs} onCheckedChange={setIncludeLabs} />
+                </div>
+                <div className="flex items-center justify-between">
+                  <Label>Include Timeline Events</Label>
+                  <Switch checked={includeTimeline} onCheckedChange={setIncludeTimeline} />
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setStep(1)} className="flex-1">
+                  <ChevronLeft className="h-4 w-4 mr-2" /> Back
+                </Button>
+                <Button onClick={() => setStep(3)} className="flex-1" disabled={selectedTrackers.length === 0}>
+                  Next: Generate <ChevronRight className="h-4 w-4 ml-2" />
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Step 3: Generate */}
+          {step === 3 && (
+            <div className="space-y-4">
+              <div className="p-4 bg-muted/50 rounded-lg space-y-2">
+                <h3 className="font-semibold">Report Summary</h3>
+                <div className="text-sm space-y-1">
+                  <p><strong>For:</strong> {providerName || 'Not specified'} ({SPECIALTIES.find(s => s.value === specialty)?.label})</p>
+                  <p><strong>Style:</strong> {reportStyle === 'doctor' ? 'Medical Language' : 'Human Readable'}</p>
+                  <p><strong>Date Range:</strong> {dateRangeStart} to {dateRangeEnd}</p>
+                  <p><strong>Trackers:</strong> {selectedTrackers.length} selected</p>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {selectedTrackers.map(t => (
+                      <Badge key={t} variant="outline" className="text-xs">
+                        {TRACKER_OPTIONS.find(o => o.id === t)?.label || t}
+                      </Badge>
+                    ))}
+                  </div>
+                  <p className="mt-2">
+                    <strong>Includes:</strong>{' '}
+                    {[
+                      includePatterns && 'Patterns',
+                      includeJournal && 'Journal',
+                      includeLabs && 'Labs',
+                      includeTimeline && 'Timeline',
+                    ].filter(Boolean).join(', ') || 'Tracker data only'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setStep(2)} className="flex-1">
+                  <ChevronLeft className="h-4 w-4 mr-2" /> Back
+                </Button>
+                <Button
+                  onClick={handleGenerate}
+                  className="flex-1"
+                  disabled={isGenerating}
+                >
+                  {isGenerating ? (
+                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Generating...</>
+                  ) : (
+                    <><Download className="h-4 w-4 mr-2" /> Generate PDF</>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
