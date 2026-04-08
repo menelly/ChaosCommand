@@ -80,7 +80,7 @@ def generate_medical_report(data: dict) -> str:
             textColor=colors.HexColor('#34495e')
         ))
         styles.add(ParagraphStyle(
-            name='BodyText', parent=styles['Normal'],
+            name='ReportBody', parent=styles['Normal'],
             fontSize=9, spaceAfter=4, leading=12
         ))
         styles.add(ParagraphStyle(
@@ -135,7 +135,7 @@ def generate_medical_report(data: dict) -> str:
         if lab_results:
             summary_text += f"{len(lab_results)} laboratory result set(s) included. "
 
-        story.append(Paragraph(summary_text, styles['BodyText']))
+        story.append(Paragraph(summary_text, styles['ReportBody']))
         story.append(Spacer(1, 8))
 
         # === TRACKED CONDITIONS (with ICD-10 if doctor mode) ===
@@ -183,7 +183,7 @@ def generate_medical_report(data: dict) -> str:
                 tracker_counts[base] += 1
             for tracker_id, count in sorted(tracker_counts.items(), key=lambda x: -x[1]):
                 label = tracker_id.replace('-', ' ').title()
-                story.append(Paragraph(f"  {label}: {count} entries", styles['BodyText']))
+                story.append(Paragraph(f"  {label}: {count} entries", styles['ReportBody']))
 
         # === PAIN SUMMARY ===
         pain_entries = [r for r in tracker_data if r.get('subcategory') == 'pain']
@@ -218,12 +218,12 @@ def generate_medical_report(data: dict) -> str:
                 if is_doctor:
                     story.append(Paragraph(
                         f"Mean pain severity: {avg:.1f}/10 (range {min_p}-{max_p}, n={len(pain_levels)})",
-                        styles['BodyText']
+                        styles['ReportBody']
                     ))
                 else:
                     story.append(Paragraph(
                         f"Average pain level: {avg:.1f} out of 10 (worst: {max_p}, best: {min_p}, over {len(pain_levels)} entries)",
-                        styles['BodyText']
+                        styles['ReportBody']
                     ))
 
                 # Show weekly trend
@@ -273,13 +273,13 @@ def generate_medical_report(data: dict) -> str:
                         f"Orthostatic HR increase: mean {avg_delta:.0f} bpm (max {max_delta} bpm, n={len(hr_deltas)}). "
                         f"POTS criteria (delta >= 30 bpm) met on {pots_days}/{len(hr_deltas)} assessments "
                         f"({pots_days/len(hr_deltas)*100:.0f}%).",
-                        styles['BodyText']
+                        styles['ReportBody']
                     ))
                 else:
                     story.append(Paragraph(
                         f"Heart rate jumped an average of {avg_delta:.0f} bpm when standing (worst: {max_delta} bpm). "
                         f"Out of {len(hr_deltas)} checks, {pots_days} met POTS criteria (30+ bpm increase).",
-                        styles['BodyText']
+                        styles['ReportBody']
                     ))
 
         # === SLEEP ===
@@ -308,13 +308,13 @@ def generate_medical_report(data: dict) -> str:
                     story.append(Paragraph(
                         f"Mean sleep duration: {avg_hrs:.1f} hours/night (n={len(hours_list)}). "
                         f"Range: {min(hours_list):.1f}-{max(hours_list):.1f} hours.",
-                        styles['BodyText']
+                        styles['ReportBody']
                     ))
                 else:
                     story.append(Paragraph(
                         f"Averaging {avg_hrs:.1f} hours of sleep per night over {len(hours_list)} nights "
                         f"(worst: {min(hours_list):.1f}h, best: {max(hours_list):.1f}h).",
-                        styles['BodyText']
+                        styles['ReportBody']
                     ))
 
         # === LAB RESULTS ===
@@ -362,7 +362,7 @@ def generate_medical_report(data: dict) -> str:
                 if text:
                     story.append(Paragraph(
                         f"<b>{entry.get('date', '')}:</b> {text}",
-                        styles['BodyText']
+                        styles['ReportBody']
                     ))
 
         # === FOOTER ===

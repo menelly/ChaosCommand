@@ -138,8 +138,9 @@ export default function SettingsPage() {
           })}
         </div>
 
-        {/* QR Sync Coming Soon Card */}
-        <Card className="mt-6 opacity-60">
+        {/* Bottom row: QR Sync + Restart Onboarding */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+        <Card className="opacity-60">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <HelpCircle className="h-5 w-5" />
@@ -156,8 +157,7 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        {/* Restart Onboarding */}
-        <Card className="mt-6">
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <RotateCcw className="h-5 w-5" />
@@ -182,6 +182,7 @@ export default function SettingsPage() {
             </Button>
           </CardContent>
         </Card>
+        </div>
 
         {/* Render active modal */}
         {settingsCategories.map((category) => {
