@@ -54,7 +54,7 @@ export default function PatternsPage() {
       })
 
       const endDate = new Date().toISOString().split('T')[0]
-      const startDate = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+      const startDate = '2000-01-01'  // All time
 
       // Fetch all tracker data in parallel
       const allData = await Promise.all(
