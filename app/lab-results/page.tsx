@@ -182,12 +182,20 @@ export default function LabResultsPage() {
   }
 
   // Add lab report to medical timeline
-  const handleAddToTimeline = async (report: LabReport) => {
+  const handleAddToTimeline = async (report: LabReport, abnormalOnly: boolean = false) => {
     try {
-      const abnormal = report.results.filter(r => r.is_abnormal)
-      const abnormalSummary = abnormal.length > 0
-        ? abnormal.map(r => `${r.test_name}: ${r.value_text} ${r.unit} (${r.flag})`).join(', ')
-        : 'All results within normal range'
+      const results = abnormalOnly
+        ? report.results.filter(r => r.is_abnormal)
+        : report.results
+
+      if (results.length === 0) {
+        alert('No abnormal results to add!')
+        return
+      }
+
+      const summary = results
+        .map(r => `${r.test_name}: ${r.value_text} ${r.unit}${r.flag ? ` (${r.flag})` : ''}`)
+        .join(', ')
 
       const now = new Date().toISOString()
       const eventId = `lab-timeline-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
@@ -195,13 +203,13 @@ export default function LabResultsPage() {
       const timelineEvent = {
         id: eventId,
         type: 'test',
-        title: `Lab Results: ${report.filename}`,
+        title: `Lab Results${abnormalOnly ? ' (Abnormal)' : ''}: ${report.filename}`,
         date: report.date,
-        description: `${report.results.length} tests. ${abnormal.length > 0 ? `Abnormal: ${abnormalSummary}` : abnormalSummary}`,
-        status: abnormal.length > 0 ? 'needs_review' : 'resolved',
-        severity: abnormal.some(r => r.flag === 'LL' || r.flag === 'CRITICAL') ? 'severe'
-          : abnormal.length > 0 ? 'moderate' : 'mild',
-        tags: ['lab-results', 'auto-added'],
+        description: `${results.length} tests. ${summary}`,
+        status: results.some(r => r.is_abnormal) ? 'needs_review' : 'resolved',
+        severity: results.some(r => r.flag === 'LL' || r.flag === 'CRITICAL') ? 'severe'
+          : results.some(r => r.is_abnormal) ? 'moderate' : 'mild',
+        tags: ['lab-results', 'auto-added', ...(abnormalOnly ? ['abnormal-only'] : [])],
         createdAt: now,
         updatedAt: now,
       }
@@ -214,8 +222,8 @@ export default function LabResultsPage() {
         JSON.stringify(timelineEvent)
       )
 
-      console.log(`📋 Added lab report to timeline: ${report.filename}`)
-      alert('Added to timeline!')
+      console.log(`📋 Added ${results.length} lab results to timeline: ${report.filename}`)
+      alert(`Added ${results.length} results to timeline!`)
     } catch (e) {
       console.error('Failed to add to timeline:', e)
       alert('Failed to add to timeline')
@@ -465,15 +473,29 @@ export default function LabResultsPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/20 h-8 w-8 p-0"
+                          className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/20 h-8 p-0 px-1 text-xs"
                           onClick={(e) => {
                             e.stopPropagation()
-                            handleAddToTimeline(report)
+                            handleAddToTimeline(report, false)
                           }}
-                          title="Add to medical timeline"
+                          title="Add all results to timeline"
                         >
-                          <ClipboardList className="h-4 w-4" />
+                          <ClipboardList className="h-3.5 w-3.5 mr-0.5" />All
                         </Button>
+                        {report.results.some(r => r.is_abnormal) && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 h-8 p-0 px-1 text-xs"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleAddToTimeline(report, true)
+                            }}
+                            title="Add only abnormal results to timeline"
+                          >
+                            <AlertTriangle className="h-3.5 w-3.5 mr-0.5" />Abnormal
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           size="sm"

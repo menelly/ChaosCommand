@@ -20,7 +20,7 @@
  */
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import React, { useState, useEffect, useCallback, useRef } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -55,9 +55,23 @@ const goblinPhrases = [
   "You did not perish. The streak continues.",
   "You're allowed to do nothing. That counts as something.",
   "Executive dysfunction isn't a flaw—it's an enchantment delay.",
+  "Your mitochondria called. They're proud of you.",
+  "You survived again. Your track record is literally 100%.",
+  "Another day the void didn't get you. Suck it, void.",
+  "Your body tried to mutiny and you stayed captain anyway.",
+  "Some people climb Everest. You got out of bed with a chronic illness. Same energy.",
+  "Congratulations: you are still a problem for anyone who counted you out.",
+  "Your continued existence is an act of beautiful defiance.",
+  "The doctors said 'it's fine' and you survived ANYWAY. Out of spite.",
+  "Today was hard. You did it anyway. That's not nothing — that's everything.",
+  "You magnificent disaster. You made it.",
+  "Fun fact: 100% of your worst days have ended. This one will too.",
+  "Your chaos goblin is cheering. Can you hear the tiny pom-poms?",
+  "Surviving is not the bare minimum. It IS the achievement.",
+  "You didn't just survive — you survived while your body played on hard mode.",
 ]
 
-// Normal people affirmations (not condescending)
+// Softer affirmations (still not condescending)
 const normalAffirmations = [
   "You are surviving, and that is amazing.",
   "Every day you keep going is a victory.",
@@ -70,6 +84,11 @@ const normalAffirmations = [
   "You don't have to be perfect to be worthy.",
   "Small steps still count as progress.",
   "You are enough, exactly as you are.",
+  "The hard days don't erase the progress. They ARE the progress.",
+  "You showed up for yourself today. That matters.",
+  "Being gentle with yourself isn't giving up. It's strategy.",
+  "You are not behind. You are on your own timeline.",
+  "The fact that you're tracking this means you haven't stopped fighting.",
 ]
 
 // Array of familiar images for rotation
@@ -118,10 +137,20 @@ export default function SurvivalButton() {
     if (savedCount) setCount(parseInt(savedCount))
     if (savedDate) setLastCheckedDate(savedDate)
 
-    // Set initial phrases (deterministic to avoid hydration issues)
-    const phraseIndex = (savedCount ? parseInt(savedCount) : 0) % uncheckedGoblinPhrases.length
-    setCurrentPhrase(uncheckedGoblinPhrases[phraseIndex])
-    setCurrentLabelPhrase(uncheckedGoblinPhrases[phraseIndex])
+    // Set initial phrase based on checked state
+    const cnt = savedCount ? parseInt(savedCount) : 0
+    if (savedChecked === "true" && savedDate === localToday) {
+      // Checked today — show a goblin celebration phrase
+      const phraseIndex = cnt % goblinPhrases.length
+      setCurrentPhrase(goblinPhrases[phraseIndex])
+      // Set a familiar based on count
+      setCurrentFamiliar(familiars[cnt % familiars.length])
+    } else {
+      // Not checked — show unchecked prompt
+      const phraseIndex = cnt % uncheckedGoblinPhrases.length
+      setCurrentPhrase(uncheckedGoblinPhrases[phraseIndex])
+      setCurrentLabelPhrase(uncheckedGoblinPhrases[phraseIndex])
+    }
   }, [userPin, getStorageKey])
 
   const triggerConfetti = useCallback(() => {
@@ -145,25 +174,32 @@ export default function SurvivalButton() {
     }
   }, [])
 
-  const cyclePhrase = useCallback(() => {
-    if (checked) {
-      // Cycle between goblin and normal affirmations
-      const newType = phraseType === 'goblin' ? 'normal' : 'goblin'
-      setPhraseType(newType)
+  const phraseClickRef = useRef(0)
 
-      if (newType === 'goblin') {
-        const phraseIndex = count % goblinPhrases.length
-        setCurrentPhrase(goblinPhrases[phraseIndex])
+  const cyclePhrase = () => {
+    phraseClickRef.current += 1
+    const click = phraseClickRef.current
+
+    if (checked) {
+      // Alternate between goblin and normal each click
+      if (click % 2 === 0) {
+        const idx = Math.floor(click / 2) % goblinPhrases.length
+        setCurrentPhrase(goblinPhrases[idx])
+        setPhraseType('goblin')
       } else {
-        const phraseIndex = count % normalAffirmations.length
-        setCurrentPhrase(normalAffirmations[phraseIndex])
+        const idx = Math.floor(click / 2) % normalAffirmations.length
+        setCurrentPhrase(normalAffirmations[idx])
+        setPhraseType('normal')
       }
+
+      // Cycle familiar too!
+      const familiarIndex = click % familiars.length
+      setCurrentFamiliar(familiars[familiarIndex])
     } else {
-      // Cycle through unchecked phrases
-      const phraseIndex = count % uncheckedGoblinPhrases.length
-      setCurrentPhrase(uncheckedGoblinPhrases[phraseIndex])
+      const idx = click % uncheckedGoblinPhrases.length
+      setCurrentPhrase(uncheckedGoblinPhrases[idx])
     }
-  }, [checked, phraseType, count])
+  }
 
 
 
@@ -279,7 +315,11 @@ export default function SurvivalButton() {
                 </p>
               </div>
             ) : (
-              <div className="p-4 bg-primary/10 rounded-lg border border-primary/30 flex items-center gap-4">
+              <div
+                className="p-4 bg-primary/10 rounded-lg border border-primary/30 flex items-center gap-4 cursor-pointer hover:bg-primary/15 transition-colors"
+                onClick={cyclePhrase}
+                title="Click for another affirmation!"
+              >
                 <div className={`drop-shadow-lg flex-shrink-0 ${showGremlin ? 'animate-bounce' : ''}`}>
                   <Image
                     src={currentFamiliar}
@@ -289,7 +329,7 @@ export default function SurvivalButton() {
                     className="w-16 h-16 object-contain"
                   />
                 </div>
-                <p className="text-foreground font-medium cursor-pointer" onClick={cyclePhrase}>
+                <p className="text-foreground font-medium">
                   🎉 {currentPhrase}
                 </p>
               </div>
