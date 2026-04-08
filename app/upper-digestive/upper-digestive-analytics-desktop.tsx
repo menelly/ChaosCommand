@@ -55,7 +55,7 @@ const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3
 export default function UpperDigestiveAnalyticsDesktop({ className }: AnalyticsProps) {
   const { getCategoryData, getDateRange } = useDailyData()
   const [analyticsData, setAnalyticsData] = useState<any>(null)
-  const [timeRange, setTimeRange] = useState('30') // days
+  const [timeRange, setTimeRange] = useState('365') // days — default to all time
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 

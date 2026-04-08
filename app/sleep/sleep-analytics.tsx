@@ -39,42 +39,38 @@ interface SleepAnalyticsProps {
 }
 
 export function SleepAnalytics({ refreshTrigger }: SleepAnalyticsProps) {
-  const { getCategoryData, isLoading } = useDailyData()
+  const { getCategoryData, getDateRange, isLoading } = useDailyData()
   const [entries, setEntries] = useState<SleepEntry[]>([])
 
-  // Load sleep entries from multiple days
+  // Load sleep entries (all time)
   useEffect(() => {
     const loadEntries = async () => {
       try {
         const allEntries: SleepEntry[] = []
-        const today = new Date()
+        const today = format(new Date(), 'yyyy-MM-dd')
 
-        // Load entries from the last 90 days
-        for (let i = 0; i < 90; i++) {
-          const currentDate = new Date(today)
-          currentDate.setDate(today.getDate() - i)
-          const dateStr = format(currentDate, 'yyyy-MM-dd')
+        const records = await getDateRange('2000-01-01', today, CATEGORIES.TRACKER)
+        console.log('🔍 SLEEP DEBUG: getDateRange returned', records.length, 'tracker records')
+        console.log('🔍 SLEEP DEBUG: subcategories:', records.map(r => r.subcategory).slice(0, 10))
+        const sleepRecords = records.filter(record =>
+          record.subcategory && record.subcategory.startsWith('sleep-')
+        )
+        console.log('🔍 SLEEP DEBUG: after filter:', sleepRecords.length, 'sleep records')
 
-          const records = await getCategoryData(dateStr, CATEGORIES.TRACKER)
-          const sleepRecords = records.filter(record =>
-            record.subcategory && record.subcategory.startsWith('sleep-')
-          )
+        for (const record of sleepRecords) {
+          try {
+            const content = typeof record.content === 'string'
+              ? JSON.parse(record.content)
+              : record.content
 
-          for (const record of sleepRecords) {
-            try {
-              const content = typeof record.content === 'string'
-                ? JSON.parse(record.content)
-                : record.content
-
-              // Handle legacy entries
-              if (isLegacyEntry(content)) {
-                allEntries.push(migrateLegacyEntry(content))
-              } else {
-                allEntries.push(content as SleepEntry)
-              }
-            } catch (parseError) {
-              console.error('Error parsing sleep entry:', parseError, record)
+            // Handle legacy entries
+            if (isLegacyEntry(content)) {
+              allEntries.push(migrateLegacyEntry(content))
+            } else {
+              allEntries.push(content as SleepEntry)
             }
+          } catch (parseError) {
+            console.error('Error parsing sleep entry:', parseError, record)
           }
         }
 
@@ -293,7 +289,7 @@ export function SleepAnalytics({ refreshTrigger }: SleepAnalyticsProps) {
           Your Sleep Patterns
         </h2>
         <p className="text-muted-foreground">
-          Insights from your last 90 days of sleep data
+          Insights from all your sleep data
         </p>
       </div>
 

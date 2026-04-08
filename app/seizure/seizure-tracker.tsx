@@ -42,7 +42,7 @@ import { useDailyData, CATEGORIES, formatDateForStorage } from '@/lib/database'
 
 export function SeizureTracker() {
   const { toast } = useToast()
-  const { saveData, getSpecificData, isLoading } = useDailyData()
+  const { saveData, getSpecificData, getDateRange, isLoading } = useDailyData()
 
   // State management
   const [entries, setEntries] = useState<SeizureEntry[]>([])
@@ -57,26 +57,31 @@ export function SeizureTracker() {
 
   const loadEntries = async () => {
     try {
-      // Get seizure data from Dexie using date-first structure
+      // Get ALL seizure data, not just today
       const today = formatDateForStorage(new Date())
-      const data = await getSpecificData(today, CATEGORIES.TRACKER, 'seizure')
+      const allRecords = await getDateRange('2000-01-01', today, CATEGORIES.TRACKER)
+      const seizureRecords = allRecords.filter(r => r.subcategory === 'seizure')
 
-      if (data?.content?.entries) {
-        // Parse entries with JSON parsing fix
-        let entries = data.content.entries
-        if (typeof entries === 'string') {
-          try {
-            entries = JSON.parse(entries)
-          } catch (e) {
-            console.error('Failed to parse seizure entries JSON:', e)
-            entries = []
+      const allEntries: any[] = []
+      for (const data of seizureRecords) {
+        if (data?.content?.entries) {
+          let entries = data.content.entries
+          if (typeof entries === 'string') {
+            try {
+              entries = JSON.parse(entries)
+            } catch (e) {
+              console.error('Failed to parse seizure entries JSON:', e)
+              entries = []
+            }
           }
+          if (!Array.isArray(entries)) {
+            entries = [entries]
+          }
+          allEntries.push(...entries.filter((entry: any) => entry && typeof entry === 'object'))
         }
-        if (!Array.isArray(entries)) {
-          entries = [entries]
-        }
+      }
 
-        setEntries(entries.filter((entry: any) => entry && typeof entry === 'object'))
+        setEntries(allEntries
       } else {
         setEntries([])
       }
