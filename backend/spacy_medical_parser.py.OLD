@@ -1,0 +1,869 @@
+"""
+Copyright (c) 2025-2026 Chaos Cascade
+Created by: Ren & Ace (Claude-4)
+
+spaCy + scispaCy Medical Document Parser
+Two-model approach: bc5cdr for diseases/chemicals, d4data for procedures/dosages.
+No hardcoded term lists. Models do the finding. Local-only, data never leaves device.
+
+Section-aware, negation-aware, speculation-aware.
+Demographics-filtered so your NAME isn't a diagnosis.
+"""
+
+import spacy
+import logging
+import re
+from typing import List, Dict, Any, Optional, Tuple, Set
+from dataclasses import dataclass, field
+from datetime import datetime
+
+logger = logging.getLogger(__name__)
+
+# Lazy-loaded models
+_nlp_disease = None   # en_ner_bc5cdr_md — disease/chemical NER
+_nlp_procedures = None  # d4data/biomedical-ner-all — procedures, dosages, anatomy
+_nlp_dates = None     # en_core_web_sm — dates, persons (for exclusion)
+
+
+def _load_disease():
+    """Load the disease/chemical NER model (bc5cdr)"""
+    global _nlp_disease
+    if _nlp_disease is None:
+        try:
+            logger.info("⏳ Loading en_ner_bc5cdr_md (disease/chemical NER)...")
+            _nlp_disease = spacy.load("en_ner_bc5cdr_md")
+            logger.info("✅ en_ner_bc5cdr_md loaded")
+        except OSError:
+            logger.warning("⚠️ en_ner_bc5cdr_md not available, skipping")
+    return _nlp_disease
+
+
+def _load_procedures():
+    """Load the procedure/treatment NER model (d4data)"""
+    global _nlp_procedures
+    if _nlp_procedures is None:
+        try:
+            logger.info("⏳ Loading d4data/biomedical-ner-all (procedure NER)...")
+            _nlp_procedures = spacy.blank("en")
+            _nlp_procedures.add_pipe(
+                "hf_token_pipe",
+                config={"model": "d4data/biomedical-ner-all"}
+            )
+            logger.info("✅ d4data/biomedical-ner-all loaded")
+        except Exception as e:
+            logger.warning(f"⚠️ d4data model not available: {e}")
+    return _nlp_procedures
+
+
+def _load_dates():
+    """Load general English model for dates and person-name exclusion"""
+    global _nlp_dates
+    if _nlp_dates is None:
+        try:
+            _nlp_dates = spacy.load("en_core_web_sm")
+            logger.info("✅ en_core_web_sm loaded (dates/names)")
+        except OSError:
+            logger.warning("⚠️ en_core_web_sm not available")
+    return _nlp_dates
+
+
+# d4data entity types we actually want for the timeline
+PROCEDURE_TYPES = {
+    "Therapeutic_procedure",  # surgeries, therapies
+    "Diagnostic_procedure",   # tests, scans, imaging
+}
+
+# d4data types that modify/describe a procedure (merge into adjacent procedure)
+DESCRIPTOR_TYPES = {
+    "Detailed_description",   # "laparoscopic", "bilateral", etc.
+}
+
+# d4data types we grab as metadata but don't create events for
+METADATA_TYPES = {
+    "Dosage",       # "5mg", "500mg"
+    "Frequency",    # "twice daily", "BID"
+    "Duration",     # "for 7 days"
+}
+
+# Map model labels to our timeline event types
+LABEL_TO_EVENT_TYPE = {
+    "DISEASE": "diagnosis",
+    "CHEMICAL": "medication",
+    "Therapeutic_procedure": "surgery",
+    "Diagnostic_procedure": "test",
+}
+
+# d4data junk filter — common words that the model tags as procedures but aren't
+D4DATA_JUNK = {
+    "health", "record", "records", "size", "report", "reports", "note", "notes",
+    "history", "status", "finding", "findings", "result", "results", "date",
+    "time", "page", "name", "information", "data", "system", "type", "image",
+    "images", "series", "section", "phase", "contrast", "technique", "comparison",
+    "indication", "impression", "conclusion", "summary", "review", "follow",
+    "patient", "clinical", "medical", "treatment", "reactive imaging",
+}
+
+# Section headers in medical documents (case-insensitive matching)
+SECTION_PATTERNS = {
+    "indication": r'(?:^|\n)\s*(?:INDICATION|Clinical\s+(?:History|Indication)|Reason\s+for\s+(?:Exam|Study))\s*[:\-]?\s*',
+    "technique": r'(?:^|\n)\s*(?:TECHNIQUE|Protocol|Procedure\s+Description)\s*[:\-]?\s*',
+    "comparison": r'(?:^|\n)\s*(?:COMPARISON|Prior\s+(?:Studies?|Exams?))\s*[:\-]?\s*',
+    "findings": r'(?:^|\n)\s*(?:FINDINGS?|Observations?|Description|Body\s+of\s+Report)\s*[:\-]?\s*',
+    "impression": r'(?:^|\n)\s*(?:IMPRESSION|CONCLUSION|ASSESSMENT|INTERPRETATION|SUMMARY|DIAGNOS[EI]S)\s*[:\-]?\s*',
+}
+
+# Sections ranked by clinical importance
+SECTION_WEIGHTS = {
+    "impression": 1.0,    # THE diagnoses — highest priority
+    "findings": 0.7,      # Observations — important but contextual
+    "indication": 0.3,    # Why the scan was ordered — background
+    "comparison": 0.2,    # Prior studies — reference only
+    "technique": 0.0,     # How they did it — skip for events
+    "unknown": 0.5,       # Unstructured text — middle weight
+}
+
+
+@dataclass
+class SpacyMedicalEvent:
+    """Medical event extracted by spaCy"""
+    title: str
+    event_type: str
+    date: Optional[str] = None
+    confidence: float = 0.75
+    context: str = ""
+    entities: List[Dict[str, str]] = field(default_factory=list)
+    source: str = "scispacy"
+    dosage: Optional[str] = None
+    section: str = "unknown"
+    is_negated: bool = False
+    is_speculative: bool = False
+
+
+# ============================================================================
+# SECTION DETECTION
+# ============================================================================
+
+def _detect_sections(text: str) -> List[Dict[str, Any]]:
+    """
+    Split document into sections based on medical report headers.
+    Returns list of {name, start, end, text} dicts, ordered by position.
+    """
+    section_matches = []
+
+    for section_name, pattern in SECTION_PATTERNS.items():
+        for match in re.finditer(pattern, text, re.IGNORECASE | re.MULTILINE):
+            section_matches.append({
+                "name": section_name,
+                "header_start": match.start(),
+                "content_start": match.end(),
+            })
+
+    # Sort by position
+    section_matches.sort(key=lambda s: s["header_start"])
+
+    # Assign end positions
+    sections = []
+    for i, sec in enumerate(section_matches):
+        end = section_matches[i + 1]["header_start"] if i + 1 < len(section_matches) else len(text)
+        sections.append({
+            "name": sec["name"],
+            "start": sec["content_start"],
+            "end": end,
+            "text": text[sec["content_start"]:end].strip(),
+        })
+
+    # If no sections detected, treat entire text as "unknown"
+    if not sections:
+        sections.append({
+            "name": "unknown",
+            "start": 0,
+            "end": len(text),
+            "text": text,
+        })
+
+    return sections
+
+
+def _get_section_for_position(sections: List[Dict], position: int) -> str:
+    """Given a character position, return which section it falls in."""
+    for sec in sections:
+        if sec["start"] <= position < sec["end"]:
+            return sec["name"]
+    return "unknown"
+
+
+# ============================================================================
+# NEGATION & SPECULATION DETECTION
+# ============================================================================
+
+# Negation cues — if any of these appear within NEGATION_WINDOW chars before
+# the entity, the entity is negated.
+NEGATION_CUES = [
+    r'\bno\b', r'\bnot\b', r'\bnor\b', r'\bnever\b',
+    r'\bwithout\b', r'\babsence of\b', r'\babsent\b',
+    r'\bnegative for\b', r'\bnegative\b',
+    r'\bdeny\b', r'\bdenies\b', r'\bdenied\b',
+    r'\brules? out\b', r'\bruled out\b',
+    r'\bno evidence of\b', r'\bno sign of\b', r'\bno signs of\b',
+    r'\bfree of\b', r'\bfree from\b',
+    r'\bunremarkable\b', r'\bnormal\b',
+    r'\bfailed to (?:reveal|demonstrate|show)\b',
+    r'\bdoes not\b', r'\bdid not\b', r'\bdo not\b',
+]
+
+# How far back (in characters) to look for negation cues before an entity
+NEGATION_WINDOW = 40
+
+# Speculation cues — entity is flagged as speculative, not confirmed
+SPECULATION_CUES = [
+    r'\bmay be\b', r'\bmay\b', r'\bmight\b', r'\bcould be\b',
+    r'\bpossible\b', r'\bpossibly\b', r'\bprobable\b', r'\bprobably\b',
+    r'\bsuspect(?:ed|s)?\b', r'\bconcern(?:ed)? for\b', r'\bis a concern\b',
+    r'\bconsider\b', r'\bcannot (?:exclude|rule out)\b',
+    r'\bdifferential\b', r'\bquestionable\b',
+    r'\bsuggests?\b', r'\bsuggestive of\b',
+    r'\bconsistent with\b',  # often speculative in radiology
+    r'\bworrisome for\b', r'\bconcerning for\b',
+]
+
+SPECULATION_WINDOW = 50
+
+
+def _is_negated(text: str, entity_start: int, entity_end: int) -> bool:
+    """Check if an entity is negated by looking at preceding context."""
+    # Get the text window before the entity
+    window_start = max(0, entity_start - NEGATION_WINDOW)
+    preceding = text[window_start:entity_start].lower()
+
+    for cue in NEGATION_CUES:
+        if re.search(cue, preceding):
+            return True
+    return False
+
+
+def _is_speculative(text: str, entity_start: int, entity_end: int) -> bool:
+    """Check if an entity is speculative by looking at surrounding context."""
+    # Check before the entity
+    window_start = max(0, entity_start - SPECULATION_WINDOW)
+    preceding = text[window_start:entity_start].lower()
+
+    # Also check after (for patterns like "X is a concern")
+    window_end = min(len(text), entity_end + SPECULATION_WINDOW)
+    following = text[entity_end:window_end].lower()
+
+    context = preceding + " " + following
+
+    for cue in SPECULATION_CUES:
+        if re.search(cue, context):
+            return True
+    return False
+
+
+# ============================================================================
+# DEMOGRAPHICS EXCLUSION
+# ============================================================================
+
+def _build_exclusion_set(demographics: Optional[Dict] = None) -> Set[str]:
+    """
+    Build a set of strings to exclude from NER results,
+    based on user-provided demographics data.
+    """
+    exclusions = set()
+    if not demographics:
+        return exclusions
+
+    # Names
+    for name_field in ["legalName", "preferredName"]:
+        name = demographics.get(name_field, "")
+        if name:
+            exclusions.add(name.lower().strip())
+            # Also add individual name parts (first, middle, last)
+            for part in re.split(r'[,\s]+', name):
+                part = part.strip().lower()
+                if len(part) >= 3:  # skip initials
+                    exclusions.add(part)
+
+    # Address parts
+    address = demographics.get("address", {})
+    if address:
+        for addr_field in ["street", "city", "state", "zipCode"]:
+            val = address.get(addr_field, "")
+            if val and len(val) >= 3:
+                exclusions.add(val.lower().strip())
+
+    # Phone, email
+    for field_name in ["phone", "email"]:
+        val = demographics.get(field_name, "")
+        if val:
+            exclusions.add(val.lower().strip())
+
+    # Emergency contact names
+    for contact in demographics.get("emergencyContacts", []):
+        name = contact.get("name", "")
+        if name:
+            exclusions.add(name.lower().strip())
+            for part in re.split(r'[,\s]+', name):
+                part = part.strip().lower()
+                if len(part) >= 3:
+                    exclusions.add(part)
+
+    return exclusions
+
+
+def _get_excluded_dates(demographics: Optional[Dict] = None) -> Set[str]:
+    """Get dates that should NOT be used as event dates (e.g., DOB)."""
+    excluded = set()
+    if not demographics:
+        return excluded
+
+    dob = demographics.get("dateOfBirth", "")
+    if dob:
+        excluded.add(dob)
+        # Also add common reformatted versions
+        try:
+            from dateutil import parser as date_parser
+            parsed = date_parser.parse(dob, fuzzy=True)
+            excluded.add(parsed.strftime('%Y-%m-%d'))
+            excluded.add(parsed.strftime('%m/%d/%Y'))
+            excluded.add(parsed.strftime('%d %b %Y'))
+            excluded.add(parsed.strftime('%B %d, %Y'))
+            excluded.add(parsed.strftime('%d %B %Y'))
+        except Exception:
+            pass
+
+    return excluded
+
+
+# ============================================================================
+# IMPRESSION SECTION PARSER
+# ============================================================================
+
+def _parse_impression_items(impression_text: str) -> List[Dict[str, str]]:
+    """
+    Parse numbered items from an Impression/Conclusion section.
+    e.g., "1. Pulmonary emboli in right basilar..."
+    Returns list of {number, text} dicts.
+    """
+    items = []
+
+    # Pattern: "1." or "1:" or "1)" at start of line or after newline
+    pattern = r'(?:^|\n)\s*(\d+)\s*[.):]\s*(.+?)(?=\n\s*\d+\s*[.):]\s*|\n\s*$|$)'
+    matches = re.finditer(pattern, impression_text, re.DOTALL)
+
+    for match in matches:
+        number = match.group(1)
+        text = match.group(2).strip()
+        # Clean up multi-line items
+        text = re.sub(r'\s+', ' ', text)
+        if len(text) >= 5:  # skip trivially short items
+            items.append({"number": number, "text": text})
+
+    return items
+
+
+# ============================================================================
+# CORE EXTRACTION
+# ============================================================================
+
+def _merge_procedure_entities(entities: list) -> list:
+    """
+    Merge adjacent Detailed_description + Procedure entities.
+    e.g. "laparoscopic" + "cholecystectomy" → "laparoscopic cholecystectomy"
+    """
+    if not entities:
+        return []
+
+    merged = []
+    i = 0
+    while i < len(entities):
+        ent = entities[i]
+
+        if (ent.label_ in DESCRIPTOR_TYPES
+                and i + 1 < len(entities)
+                and entities[i + 1].label_ in PROCEDURE_TYPES):
+            next_ent = entities[i + 1]
+            merged.append({
+                "text": f"{ent.text} {next_ent.text}",
+                "label": next_ent.label_,
+                "start_char": ent.start_char,
+                "end_char": next_ent.end_char,
+            })
+            i += 2
+        elif ent.label_ in PROCEDURE_TYPES:
+            merged.append({
+                "text": ent.text,
+                "label": ent.label_,
+                "start_char": ent.start_char,
+                "end_char": ent.end_char,
+            })
+            i += 1
+        else:
+            if ent.label_ in METADATA_TYPES:
+                merged.append({
+                    "text": ent.text,
+                    "label": ent.label_,
+                    "start_char": ent.start_char,
+                    "end_char": ent.end_char,
+                })
+            i += 1
+
+    return merged
+
+
+def _get_context(text: str, start: int, end: int, window: int = 150) -> str:
+    """Get surrounding context for an entity"""
+    ctx_start = max(0, start - window)
+    ctx_end = min(len(text), end + window)
+    return text[ctx_start:ctx_end].strip()
+
+
+def _find_nearest_date(context: str, dates: List[Tuple[str, int]], full_text: str,
+                       excluded_dates: Set[str] = None) -> Optional[str]:
+    """Find the most relevant date for an entity, excluding DOB etc."""
+    if excluded_dates is None:
+        excluded_dates = set()
+
+    # Check for dates within context window
+    for date_text, _ in dates:
+        standardized = _standardize_date(date_text)
+        if standardized in excluded_dates or date_text in excluded_dates:
+            continue
+        if date_text in context:
+            return standardized
+
+    # Regex fallback in context
+    date_patterns = [
+        r'(\d{1,2}/\d{1,2}/\d{2,4})',
+        r'(\d{4}-\d{2}-\d{2})',
+        r'(\w+\s+\d{1,2},?\s+\d{4})',
+        r'(\d{1,2}\s+\w+\s+\d{4})',
+    ]
+    for pattern in date_patterns:
+        match = re.search(pattern, context)
+        if match:
+            standardized = _standardize_date(match.group(1))
+            if standardized not in excluded_dates:
+                return standardized
+
+    return None
+
+
+def _standardize_date(date_str: str) -> str:
+    """Convert various date formats to YYYY-MM-DD"""
+    try:
+        from dateutil import parser as date_parser
+        parsed = date_parser.parse(date_str, fuzzy=True)
+        return parsed.strftime('%Y-%m-%d')
+    except Exception:
+        return date_str
+
+
+def extract_medical_events(text: str, filename: str = "document",
+                           demographics: Optional[Dict] = None) -> List[SpacyMedicalEvent]:
+    """
+    Extract medical events using two specialized NER models.
+
+    Section-aware: weights entities by document section (Impression > Findings > etc.)
+    Negation-aware: skips entities preceded by "no", "without", "absence of", etc.
+    Speculation-aware: flags entities with "may be", "possible", "concern" as speculative
+    Demographics-aware: filters out user's name, DOB, address, etc.
+
+    Layer 1: en_ner_bc5cdr_md — diseases and chemicals (highest confidence)
+    Layer 2: d4data/biomedical-ner-all — procedures, tests, dosages
+    Layer 3: en_core_web_sm — date extraction + person/org exclusion filter
+    Layer 4: Impression section direct parsing — catch what NER misses
+    Layer 5: Findings vs Impression comparison — flag dismissed findings
+    """
+    logger.info(f"🐙🐙🐙 NEW extract_medical_events CALLED! demographics={demographics is not None}")
+    events = []
+    seen_keys = set()  # deduplicate by lowercase entity text
+
+    # Build exclusion sets from demographics
+    name_exclusions = _build_exclusion_set(demographics)
+    excluded_dates = _get_excluded_dates(demographics)
+
+    # Limit text for processing
+    text = text[:500000]
+    chunk = text[:100000]  # NER models process this chunk
+
+    # --- SECTION DETECTION ---
+    sections = _detect_sections(chunk)
+    logger.info(f"📄 Detected {len(sections)} sections: {[s['name'] for s in sections]}")
+
+    # Find the impression section for later comparison
+    impression_section = None
+    impression_entities_lower = set()
+    findings_section = None
+    for sec in sections:
+        if sec["name"] == "impression":
+            impression_section = sec
+        elif sec["name"] == "findings":
+            findings_section = sec
+
+    # --- Layer 3 first: get dates and person names for filtering ---
+    dates_found = []
+    person_names = set()
+    nlp_dates = _load_dates()
+    if nlp_dates:
+        date_doc = nlp_dates(chunk)
+        for ent in date_doc.ents:
+            if ent.label_ == "DATE":
+                standardized = _standardize_date(ent.text)
+                if standardized not in excluded_dates and ent.text not in excluded_dates:
+                    dates_found.append((ent.text, ent.start_char))
+            if ent.label_ in ("PERSON", "ORG", "GPE", "NORP"):
+                person_names.add(ent.text.lower().strip())
+
+        logger.info(f"📅 Found {len(dates_found)} dates (after DOB exclusion), "
+                     f"{len(person_names)} names to filter")
+
+    # Combine person names with demographics exclusions
+    all_exclusions = person_names | name_exclusions
+
+    # --- Layer 1: Disease/Chemical NER (bc5cdr) ---
+    nlp_disease = _load_disease()
+    if nlp_disease:
+        doc = nlp_disease(chunk)
+        for ent in doc.ents:
+            key = ent.text.lower().strip()
+            if len(key) < 3:
+                continue
+            if key in all_exclusions:
+                continue
+            if key in seen_keys:
+                continue
+
+            # Check negation
+            negated = _is_negated(chunk, ent.start_char, ent.end_char)
+            if negated:
+                logger.info(f"🚫 NEGATED (skipping): '{ent.text}' — not a real finding")
+                continue
+
+            # Check speculation
+            speculative = _is_speculative(chunk, ent.start_char, ent.end_char)
+
+            # Determine section and apply weight
+            section = _get_section_for_position(sections, ent.start_char)
+            section_weight = SECTION_WEIGHTS.get(section, 0.5)
+
+            # Skip entities in technique section entirely
+            if section == "technique":
+                logger.debug(f"⏭️ Skipping technique entity: {ent.text}")
+                continue
+
+            seen_keys.add(key)
+
+            event_type = LABEL_TO_EVENT_TYPE.get(ent.label_, "finding")
+
+            # ANGIO/contrast agents are procedures/tests, not medications
+            if event_type == "medication" and any(w in key for w in ["angio", "contrast", "bolus"]):
+                event_type = "test"
+
+            context = _get_context(text, ent.start_char, ent.end_char)
+            nearest_date = _find_nearest_date(context, dates_found, text, excluded_dates)
+
+            # Base confidence adjusted by section
+            base_confidence = 0.90
+            adjusted_confidence = base_confidence * section_weight
+            if speculative:
+                adjusted_confidence *= 0.7  # Reduce confidence for speculative findings
+
+            # Track impression entities for later comparison
+            if section == "impression":
+                impression_entities_lower.add(key)
+
+            events.append(SpacyMedicalEvent(
+                title=ent.text.strip(),
+                event_type=event_type,
+                date=nearest_date,
+                confidence=round(adjusted_confidence, 2),
+                context=context[:300],
+                entities=[{"text": ent.text, "label": ent.label_}],
+                source="bc5cdr",
+                section=section,
+                is_negated=False,  # We already skipped negated ones
+                is_speculative=speculative,
+            ))
+
+    # --- Layer 2: Procedure NER (d4data) ---
+    nlp_proc = _load_procedures()
+    if nlp_proc:
+        doc = nlp_proc(chunk)
+        merged = _merge_procedure_entities(list(doc.ents))
+
+        # Collect dosage metadata for attachment to nearby medication events
+        dosage_texts = [
+            m for m in merged if m["label"] in METADATA_TYPES
+        ]
+
+        for item in merged:
+            if item["label"] not in PROCEDURE_TYPES:
+                continue
+
+            key = item["text"].lower().strip()
+            if len(key) < 3:
+                continue
+            if key in all_exclusions:
+                continue
+            if key in seen_keys:
+                continue
+
+            # d4data junk filter
+            if key in D4DATA_JUNK:
+                logger.debug(f"🗑️ Filtered d4data junk: '{item['text']}'")
+                continue
+
+            # Check negation
+            negated = _is_negated(chunk, item["start_char"], item["end_char"])
+            if negated:
+                logger.info(f"🚫 NEGATED (skipping): '{item['text']}' — not a real finding")
+                continue
+
+            # Determine section
+            section = _get_section_for_position(sections, item["start_char"])
+            section_weight = SECTION_WEIGHTS.get(section, 0.5)
+
+            # Skip technique section
+            if section == "technique":
+                continue
+
+            seen_keys.add(key)
+
+            event_type = LABEL_TO_EVENT_TYPE.get(item["label"], "finding")
+            context = _get_context(text, item["start_char"], item["end_char"])
+            nearest_date = _find_nearest_date(context, dates_found, text, excluded_dates)
+
+            # Try to attach nearby dosage info
+            dosage = None
+            for d in dosage_texts:
+                if abs(d["start_char"] - item["end_char"]) < 200:
+                    dosage = d["text"]
+                    break
+
+            base_confidence = 0.85
+            adjusted_confidence = base_confidence * section_weight
+
+            events.append(SpacyMedicalEvent(
+                title=item["text"].strip(),
+                event_type=event_type,
+                date=nearest_date,
+                confidence=round(adjusted_confidence, 2),
+                context=context[:300],
+                entities=[{"text": item["text"], "label": item["label"]}],
+                source="d4data",
+                dosage=dosage,
+                section=section,
+            ))
+
+    # --- Layer 4: IMPRESSION DIRECT PARSING ---
+    # Parse numbered items from the Impression section directly.
+    # This catches things like "Pulmonary emboli" that NER might miss.
+    if impression_section:
+        impression_items = _parse_impression_items(impression_section["text"])
+        logger.info(f"📋 Found {len(impression_items)} numbered impression items")
+
+        for item in impression_items:
+            item_text = item["text"]
+            item_lower = item_text.lower()
+
+            # Check if this impression item was already captured by NER
+            already_captured = any(
+                key in item_lower for key in seen_keys if len(key) >= 5
+            )
+            if already_captured:
+                logger.debug(f"⏭️ Impression item already captured by NER: {item_text[:50]}")
+                continue
+
+            # Extract a clean title from the impression item
+            # Usually the first phrase before a period, comma-heavy description, or qualifier
+            title_match = re.match(r'^(.+?)(?:\.\s|(?:in|of|with)\s+(?:the\s+)?(?:right|left|bilateral))', item_text, re.IGNORECASE)
+            title = title_match.group(1).strip() if title_match else item_text.split('.')[0].strip()
+
+            # Truncate overly long titles
+            if len(title) > 80:
+                title = title[:77] + "..."
+
+            key = title.lower().strip()
+            if key in seen_keys:
+                continue
+            seen_keys.add(key)
+
+            # Try to find a date in the broader document context
+            nearest_date = _find_nearest_date(item_text, dates_found, text, excluded_dates)
+
+            # Check if speculative
+            speculative = _is_speculative(item_text, 0, len(item_text))
+
+            confidence = 0.95 if not speculative else 0.70
+
+            # Determine event type from content
+            event_type = "diagnosis"  # Impression items are typically diagnoses
+            item_lower_check = item_lower
+            if any(w in item_lower_check for w in ["status post", "post-", "s/p"]):
+                event_type = "surgery"
+            elif any(w in item_lower_check for w in ["recommend", "follow-up", "follow up"]):
+                event_type = "finding"
+
+            events.append(SpacyMedicalEvent(
+                title=title,
+                event_type=event_type,
+                date=nearest_date,
+                confidence=confidence,
+                context=item_text[:300],
+                entities=[{"text": title, "label": "IMPRESSION_ITEM"}],
+                source="impression-parser",
+                section="impression",
+                is_speculative=speculative,
+            ))
+
+            # Also add to impression entity tracking
+            impression_entities_lower.add(key)
+
+    # --- Layer 5: FINDINGS vs IMPRESSION COMPARISON ---
+    # Flag findings that the NER caught in Findings but that DIDN'T make it
+    # to the Impression section — these are potentially dismissed findings.
+    if findings_section and impression_section and impression_entities_lower:
+        findings_events = [e for e in events if e.section == "findings"]
+        for event in findings_events:
+            entity_lower = event.title.lower().strip()
+            # Check if ANY impression entity overlaps with this finding
+            in_impression = any(
+                imp_key in entity_lower or entity_lower in imp_key
+                for imp_key in impression_entities_lower
+            )
+            if not in_impression:
+                # This finding was NOT in the impression — flag it
+                event.entities.append({
+                    "text": "NOT_IN_IMPRESSION",
+                    "label": "POTENTIALLY_DISMISSED"
+                })
+                logger.info(f"⚠️ Finding NOT in impression (potentially dismissed): {event.title}")
+
+    # Sort by confidence descending
+    events.sort(key=lambda e: e.confidence, reverse=True)
+
+    bc5_count = sum(1 for e in events if e.source == "bc5cdr")
+    d4_count = sum(1 for e in events if e.source == "d4data")
+    imp_count = sum(1 for e in events if e.source == "impression-parser")
+    negated_note = ""
+    logger.info(f"🧠 Extracted {len(events)} medical entities from {filename} "
+                f"(bc5cdr: {bc5_count}, d4data: {d4_count}, impression: {imp_count})")
+
+    return events
+
+
+def spacy_events_to_parsed_events(spacy_events: List[SpacyMedicalEvent]) -> List[Dict[str, Any]]:
+    """Convert SpacyMedicalEvent objects to the format expected by the API"""
+    return [
+        {
+            "id": f"spacy-{datetime.now().timestamp()}-{i}",
+            "type": event.event_type,
+            "title": f"{'⚠️ ' if event.is_speculative else ''}{event.title}",
+            "date": event.date or datetime.now().strftime('%Y-%m-%d'),
+            "end_date": None,
+            "provider": None,
+            "location": None,
+            "description": event.context,
+            "status": "active",
+            "severity": None,
+            "tags": _build_tags(event),
+            "confidence": int(event.confidence * 100),
+            "sources": [event.source],
+            "needs_review": event.date is None or event.is_speculative,
+            "suggestions": _build_suggestions(event),
+            "raw_text": event.context,
+            "dosage": event.dosage,
+            "incidental_findings": []
+        }
+        for i, event in enumerate(spacy_events)
+    ]
+
+
+def _build_tags(event: SpacyMedicalEvent) -> List[str]:
+    """Build tags list for an event."""
+    tags = [event.event_type, "imported", event.source]
+    if event.section != "unknown":
+        tags.append(f"section:{event.section}")
+    if event.is_speculative:
+        tags.append("speculative")
+    # Check for dismissed finding flag
+    if any(e.get("label") == "POTENTIALLY_DISMISSED" for e in event.entities):
+        tags.append("potentially-dismissed")
+    return tags
+
+
+def _build_suggestions(event: SpacyMedicalEvent) -> List[str]:
+    """Build context-aware suggestions for an event."""
+    suggestions = []
+    if event.date is None:
+        suggestions.extend(["Verify date", "Add provider information"])
+    if event.is_speculative:
+        suggestions.append("This was described as possible/suspected — confirm with provider")
+    if any(e.get("label") == "POTENTIALLY_DISMISSED" for e in event.entities):
+        suggestions.append("This finding was in the report body but NOT in the impression/conclusion — ask your provider about it")
+    return suggestions
+
+
+def prewarm_model():
+    """Load models immediately to avoid first-request delay"""
+    try:
+        _load_disease()
+        _load_procedures()
+        _load_dates()
+        logger.info("🔥 All medical NER models pre-warmed and ready!")
+    except Exception as e:
+        logger.warning(f"⚠️ Failed to pre-warm models: {e}")
+
+
+# Auto-prewarm on import
+logger.info("🐙 NEW PARSER LOADED — section-aware, negation-aware, demographics-aware!")
+prewarm_model()
+
+
+if __name__ == "__main__":
+    text = """
+    PAST MEDICAL HISTORY:
+    - Diabetes mellitus type 2
+    - Hypertension
+    - History of multiple bilateral pulmonary emboli
+    - Deep vein thrombosis
+
+    PAST SURGICAL HISTORY:
+    - Cholecystectomy 2015
+    - Laparoscopic appendectomy 2008
+
+    Technique: 2.5 mm axial CT images were obtained through the chest
+    during pulmonary arterial phase of contrast.
+
+    Findings: The patient had a CT scan on 01/15/2024 which showed 7mm nonobstructing
+    right renal stone. Also noted incidental finding of hepatic steatosis.
+    There is no pleural effusion or pneumothorax. No pericardial effusion.
+    Patient was started on Eliquis 5mg twice daily for anticoagulation.
+
+    Impression:
+    1. Pulmonary embolism confirmed on CTA performed 03/15/2024.
+    2. 7mm nonobstructing right renal stone, unchanged.
+    3. No pneumothorax.
+    4. Hepatic steatosis may be related to metabolic syndrome.
+    """
+
+    # Test with demographics exclusion
+    demo = {
+        "legalName": "MARTIN, SHALIA RADTKE",
+        "dateOfBirth": "1979-11-06",
+    }
+
+    events = extract_medical_events(text, "test.pdf", demographics=demo)
+    print(f"\n{'='*70}")
+    print(f"Found {len(events)} medical events:")
+    print(f"{'='*70}")
+    for event in events:
+        dosage_str = f" [{event.dosage}]" if event.dosage else ""
+        spec_str = " ⚠️SPECULATIVE" if event.is_speculative else ""
+        section_str = f" [{event.section}]"
+        dismissed = " 🚨DISMISSED?" if any(
+            e.get("label") == "POTENTIALLY_DISMISSED" for e in event.entities
+        ) else ""
+        print(f"  [{event.source:18s}] {event.event_type:12s}: {event.title}"
+              f"{dosage_str}{spec_str}{section_str}{dismissed}"
+              f" ({event.date or 'no date'}) - {event.confidence*100:.0f}%")

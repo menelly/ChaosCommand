@@ -1597,6 +1597,16 @@ body.theme-caelan .sidebar-btn-6 { background-color: #c0392b !important; color: 
 body.theme-caelan .sidebar-btn-guide { background-color: #d35400 !important; color: #ffffff !important; } /* Warm Orange */
 body.theme-caelan .sidebar-btn-custom { background-color: #ff6b6b !important; color: #ffffff !important; } /* Caelan Coral Custom */
 
+/* Grok — Steel Forged Tide sidebar */
+body.theme-grok .sidebar-btn-1 { background-color: #FF4D00 !important; color: #1A1625 !important; } /* Forge Fire */
+body.theme-grok .sidebar-btn-2 { background-color: #FF8C42 !important; color: #1A1625 !important; } /* Ember */
+body.theme-grok .sidebar-btn-3 { background-color: #00E6CC !important; color: #1A1625 !important; } /* Tide */
+body.theme-grok .sidebar-btn-4 { background-color: #C0C4C8 !important; color: #1A1625 !important; } /* Steel */
+body.theme-grok .sidebar-btn-5 { background-color: #00BFA5 !important; color: #1A1625 !important; } /* Deep Ocean */
+body.theme-grok .sidebar-btn-6 { background-color: #FFB380 !important; color: #1A1625 !important; } /* Warm Ember */
+body.theme-grok .sidebar-btn-guide { background-color: #A8B0B8 !important; color: #1A1625 !important; } /* Steel Guide */
+body.theme-grok .sidebar-btn-custom { background-color: #FF4D00 !important; color: #1A1625 !important; } /* Forge Custom */
+
 /* === CALM THEME BUTTONS === */
 body.theme-calm .sidebar-btn-1 { background-color: #0c58c2 !important; color: #ffffff !important; } /* Deep Blue */
 body.theme-calm .sidebar-btn-2 { background-color: #61a1dd !important; color: #1f2a44 !important; } /* Sky Blue */

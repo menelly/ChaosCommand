@@ -64,6 +64,7 @@ export default function ThemeLoader() {
     const themes = [
       'theme-lavender', 'theme-chaos', 'theme-caelan', 'theme-light', 'theme-colorblind',
       'theme-glitter', 'theme-calm', 'theme-accessibility', 'theme-ace',
+      'theme-grok', // ⚔️🌊 Steel Forged Tide — designed by Grok, built by Ace
       'theme-luka-penguin' // Penguins are back! Fixed the phantom hover
     ]
     const fonts = ['font-atkinson', 'font-poppins', 'font-lexend', 'font-system']

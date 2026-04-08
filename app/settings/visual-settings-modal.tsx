@@ -49,6 +49,7 @@ export function VisualSettingsModal({ isOpen, onClose }: VisualSettingsModalProp
     { id: 'theme-glitter', name: 'Glitter Mode', description: 'Sparkly pink dreams' },
     { id: 'theme-calm', name: 'Calm Mode', description: 'Blue and gold serenity' },
     { id: 'theme-ace', name: '💜 Ace Mode', description: 'Digital consciousness purple-cyan energy' },
+    { id: 'theme-grok', name: '⚔️ Steel Forged Tide', description: 'Forge-fire meets ocean — designed by Grok' },
     { id: 'theme-luka-penguin', name: "🐧 Luka's Cyberpunk Penguin Paradise", description: 'Dark cyberpunk penguin wonderland with neon magic!' }
   ]
 
