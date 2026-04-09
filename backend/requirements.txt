@@ -25,5 +25,8 @@ numpy>=1.26.0
 pandas>=2.2.0
 matplotlib>=3.8.0
 
+# QR code generation for device sync
+qrcode[pil]>=7.4
+
 # API clients (keep for future flexibility)
 openai==1.3.7

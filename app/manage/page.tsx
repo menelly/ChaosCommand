@@ -147,14 +147,15 @@ export default function WorkLifeIndex() {
       icon: <TestTube className="h-5 w-5" />,
       status: 'available'
     },
-    {
-      id: 'family-history',
-      name: 'Family History',
-      shortDescription: 'Genetic health information (optional)',
-      helpContent: 'Optional family health history tracking for genetic information. Completely optional - this can be skipped if not relevant or triggering. Useful for medical appointments when family history is requested.',
-      icon: <Users className="h-5 w-5" />,
-      status: 'planned'
-    },
+    // Family History — hidden for ship, hot-add later
+    // {
+    //   id: 'family-history',
+    //   name: 'Family History',
+    //   shortDescription: 'Genetic health information (optional)',
+    //   helpContent: 'Optional family health history tracking for genetic information.',
+    //   icon: <Users className="h-5 w-5" />,
+    //   status: 'planned'
+    // },
 
     // HOUSEHOLD MANAGEMENT — hidden until post-ship, hot-add later
     // {

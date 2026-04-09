@@ -124,6 +124,70 @@ body.theme-colorblind ::-webkit-scrollbar-thumb:hover {
   background: #495057;
 }
 
+/* Colorblind-safe sidebar buttons — grayscale gradient with border patterns
+   No red/green/blue differentiation. Uses value (light/dark) and border
+   weight to distinguish buttons instead of hue. */
+body.theme-colorblind .sidebar-btn-1 {
+  background-color: #868e96 !important;
+  color: #ffffff !important;
+  border-left: 4px solid #495057 !important;
+}
+
+body.theme-colorblind .sidebar-btn-2 {
+  background-color: #6c757d !important;
+  color: #ffffff !important;
+  border-left: 4px solid #495057 !important;
+}
+
+body.theme-colorblind .sidebar-btn-3 {
+  background-color: #5a6268 !important;
+  color: #ffffff !important;
+  border-left: 4px solid #343a40 !important;
+}
+
+body.theme-colorblind .sidebar-btn-4 {
+  background-color: #495057 !important;
+  color: #ffffff !important;
+  border-left: 5px solid #343a40 !important;
+}
+
+body.theme-colorblind .sidebar-btn-5 {
+  background-color: #3d4349 !important;
+  color: #ffffff !important;
+  border-left: 5px solid #212529 !important;
+}
+
+body.theme-colorblind .sidebar-btn-6 {
+  background-color: #343a40 !important;
+  color: #ffffff !important;
+  border-left: 6px solid #212529 !important;
+}
+
+body.theme-colorblind .sidebar-btn-guide {
+  background-color: #495057 !important;
+  color: #ffffff !important;
+  border-left: 6px double #212529 !important;
+}
+
+body.theme-colorblind .sidebar-btn-custom {
+  background-color: #5a6268 !important;
+  color: #ffffff !important;
+  border-left: 6px dashed #212529 !important;
+}
+
+/* Hover states with clear visual feedback */
+body.theme-colorblind .sidebar-btn-1:hover,
+body.theme-colorblind .sidebar-btn-2:hover,
+body.theme-colorblind .sidebar-btn-3:hover,
+body.theme-colorblind .sidebar-btn-4:hover,
+body.theme-colorblind .sidebar-btn-5:hover,
+body.theme-colorblind .sidebar-btn-6:hover,
+body.theme-colorblind .sidebar-btn-guide:hover,
+body.theme-colorblind .sidebar-btn-custom:hover {
+  transform: translateX(4px) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+}
+
 /* Focus indicators for all interactive elements */
 body.theme-colorblind button:focus,
 body.theme-colorblind .btn:focus,

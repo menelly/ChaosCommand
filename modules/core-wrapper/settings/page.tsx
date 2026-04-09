@@ -130,20 +130,20 @@ export default function SettingsPage() {
           })}
         </div>
 
-        {/* QR Sync Coming Soon Card */}
-        <Card className="mt-6 opacity-60">
+        {/* QR Sync — implemented in app/settings, this is the module mirror */}
+        <Card className="mt-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <HelpCircle className="h-5 w-5" />
-              QR Sync & Device Settings
+              Device Sync
             </CardTitle>
             <CardDescription>
-              Multi-device sync and navigation customization
+              Sync data between desktop and phone over WiFi
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button disabled className="w-full" variant="outline">
-              Coming Soon
+            <Button className="w-full" variant="outline" onClick={() => window.location.href = '/settings'}>
+              Open Settings
             </Button>
           </CardContent>
         </Card>

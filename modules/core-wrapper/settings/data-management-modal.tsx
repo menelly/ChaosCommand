@@ -183,56 +183,24 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
 
           {/* Export Options */}
           <div className="space-y-3">
-            <Label className="text-sm font-medium">Export Data</Label>
-            
-            <Button 
-              onClick={handleExportByTag} 
-              variant="outline" 
+            <Label className="text-sm font-medium">Export & Sync</Label>
+
+            <Button
+              onClick={() => window.location.href = '/settings'}
+              variant="outline"
               className="w-full justify-start"
-              disabled={!hasPin}
             >
               <Download className="h-4 w-4 mr-2" />
-              Export by Tag
-            </Button>
-            
-            <Button 
-              onClick={handlePdfExport} 
-              variant="outline" 
-              className="w-full justify-start"
-              disabled={!hasPin}
-            >
-              <Download className="h-4 w-4 mr-2" />
-              PDF for Doctors
-            </Button>
-            
-            <Button 
-              onClick={handleEncryptedJsonExport} 
-              variant="outline" 
-              className="w-full justify-start"
-              disabled={!hasPin}
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Encrypted JSON Backup
+              PDF Reports (Print / Export settings)
             </Button>
 
-            {!hasPin && (
-              <p className="text-xs text-muted-foreground">
-                Set a PIN above to enable data export features
-              </p>
-            )}
-          </div>
-
-          {/* Import Options */}
-          <div className="space-y-3">
-            <Label className="text-sm font-medium">Import Data</Label>
-            
-            <Button 
-              variant="outline" 
+            <Button
+              onClick={() => window.location.href = '/settings'}
+              variant="outline"
               className="w-full justify-start"
-              disabled={!hasPin}
             >
               <Upload className="h-4 w-4 mr-2" />
-              Import Encrypted Backup
+              Device Sync (QR code pairing)
             </Button>
 
             {!hasPin && (

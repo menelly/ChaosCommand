@@ -881,6 +881,291 @@ def validate_pin():
         logger.error(f"PIN validation error: {str(e)}")
         return jsonify({'error': 'Internal validation error'}), 500
 
+# ============================================================================
+# QR SYNC - Device Pairing & Data Bridge
+# ============================================================================
+
+@app.route('/api/sync/qr-code', methods=['POST'])
+def generate_qr_code():
+    """Generate a QR code containing connection info for phone pairing.
+
+    The QR encodes a JSON payload with the desktop's LAN IP, port, and
+    a one-time pairing token. The phone scans this, connects over LAN,
+    and syncs data bidirectionally.
+    """
+    try:
+        import qrcode
+        import io
+        import socket
+        import secrets
+
+        data = request.get_json() or {}
+        pin = data.get('pin', '')
+
+        if not pin or not validate_pin_format(pin):
+            return jsonify({'error': 'Valid PIN required'}), 400
+
+        # Get the machine's LAN IP
+        lan_ip = _get_lan_ip()
+        port = 5000
+
+        # Generate a short-lived pairing token
+        pairing_token = secrets.token_urlsafe(16)
+
+        # Store token for validation (expires in 5 minutes)
+        _active_pairing_tokens[pairing_token] = {
+            'pin_hash': hash_pin(pin),
+            'created_at': time.time(),
+            'expires_at': time.time() + 300
+        }
+
+        # QR payload — everything the phone needs to connect
+        qr_payload = json.dumps({
+            'app': 'chaos-command',
+            'version': '1.0',
+            'host': f'http://{lan_ip}:{port}',
+            'token': pairing_token,
+            'pin_hash': hash_pin(pin)[:8]
+        })
+
+        # Generate QR code as PNG
+        qr = qrcode.QRCode(version=1, box_size=10, border=4,
+                           error_correction=qrcode.constants.ERROR_CORRECT_M)
+        qr.add_data(qr_payload)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color='#1c1730', back_color='#e8e4f0')
+
+        buf = io.BytesIO()
+        img.save(buf, format='PNG')
+        buf.seek(0)
+
+        logger.info(f"📱 QR code generated for pairing on {lan_ip}:{port}")
+        return send_file(buf, mimetype='image/png',
+                        download_name='chaos-command-pair.png')
+
+    except ImportError:
+        # qrcode not installed — return the payload as JSON so frontend
+        # can render it with a JS QR library instead
+        return jsonify({
+            'fallback': True,
+            'payload': qr_payload if 'qr_payload' in dir() else None,
+            'error': 'qrcode package not installed, use frontend QR rendering'
+        }), 200
+    except Exception as e:
+        logger.error(f"QR generation error: {str(e)}")
+        return jsonify({'error': 'Failed to generate QR code'}), 500
+
+
+@app.route('/api/sync/pair', methods=['POST'])
+def pair_device():
+    """Phone calls this after scanning QR to establish pairing."""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'JSON body required'}), 400
+
+        token = data.get('token', '')
+        pin = data.get('pin', '')
+        device_name = sanitize_string(data.get('device_name', 'Phone'), 50)
+
+        if not token or not pin:
+            return jsonify({'error': 'Token and PIN required'}), 400
+
+        # Validate pairing token
+        token_data = _active_pairing_tokens.get(token)
+        if not token_data:
+            return jsonify({'error': 'Invalid or expired pairing token'}), 401
+
+        if time.time() > token_data['expires_at']:
+            del _active_pairing_tokens[token]
+            return jsonify({'error': 'Pairing token expired'}), 401
+
+        if hash_pin(pin) != token_data['pin_hash']:
+            return jsonify({'error': 'PIN mismatch'}), 401
+
+        # Pairing successful — clean up token
+        del _active_pairing_tokens[token]
+
+        # Generate a persistent device token for future syncs
+        device_token = secrets.token_urlsafe(32)
+        _paired_devices[device_token] = {
+            'pin_hash': hash_pin(pin),
+            'device_name': device_name,
+            'paired_at': datetime.now().isoformat(),
+            'last_sync': None
+        }
+
+        logger.info(f"📱✅ Device '{device_name}' paired successfully")
+        return jsonify({
+            'status': 'paired',
+            'device_token': device_token,
+            'server_timestamp': datetime.now().isoformat()
+        })
+
+    except Exception as e:
+        logger.error(f"Pairing error: {str(e)}")
+        return jsonify({'error': 'Pairing failed'}), 500
+
+
+@app.route('/api/sync/push', methods=['POST'])
+def sync_push():
+    """Phone pushes its data to desktop. Merge by timestamp."""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'JSON body required'}), 400
+
+        device_token = data.get('device_token', '')
+        device = _paired_devices.get(device_token)
+        if not device:
+            return jsonify({'error': 'Device not paired'}), 401
+
+        sync_data = data.get('data', {})
+        if not validate_sync_data(sync_data):
+            return jsonify({'error': 'Invalid sync data'}), 400
+
+        # Store incoming data for the frontend to pick up
+        _pending_sync_data[device_token] = {
+            'data': sync_data,
+            'received_at': datetime.now().isoformat(),
+            'device_name': device['device_name']
+        }
+        device['last_sync'] = datetime.now().isoformat()
+
+        logger.info(f"📱⬆️ Received sync data from '{device['device_name']}'")
+        return jsonify({
+            'status': 'received',
+            'server_timestamp': datetime.now().isoformat()
+        })
+
+    except Exception as e:
+        logger.error(f"Sync push error: {str(e)}")
+        return jsonify({'error': 'Sync push failed'}), 500
+
+
+@app.route('/api/sync/pull', methods=['POST'])
+def sync_pull():
+    """Phone pulls desktop data. Frontend posts the export here first."""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'JSON body required'}), 400
+
+        device_token = data.get('device_token', '')
+        device = _paired_devices.get(device_token)
+        if not device:
+            return jsonify({'error': 'Device not paired'}), 401
+
+        # If frontend has staged data for pull, return it
+        staged = _staged_for_pull.get(device['pin_hash'])
+        if staged:
+            return jsonify({
+                'status': 'data',
+                'data': staged['data'],
+                'server_timestamp': datetime.now().isoformat()
+            })
+
+        return jsonify({
+            'status': 'empty',
+            'message': 'No data staged for sync',
+            'server_timestamp': datetime.now().isoformat()
+        })
+
+    except Exception as e:
+        logger.error(f"Sync pull error: {str(e)}")
+        return jsonify({'error': 'Sync pull failed'}), 500
+
+
+@app.route('/api/sync/stage-for-pull', methods=['POST'])
+def stage_for_pull():
+    """Frontend stages its Dexie export so phone can pull it."""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'JSON body required'}), 400
+
+        pin = data.get('pin', '')
+        export_data = data.get('data', {})
+
+        if not pin or not validate_pin_format(pin):
+            return jsonify({'error': 'Valid PIN required'}), 400
+
+        if not validate_sync_data(export_data):
+            return jsonify({'error': 'Invalid export data'}), 400
+
+        _staged_for_pull[hash_pin(pin)] = {
+            'data': export_data,
+            'staged_at': datetime.now().isoformat()
+        }
+
+        logger.info("📱⬇️ Data staged for phone pull")
+        return jsonify({'status': 'staged'})
+
+    except Exception as e:
+        logger.error(f"Stage error: {str(e)}")
+        return jsonify({'error': 'Staging failed'}), 500
+
+
+@app.route('/api/sync/pending', methods=['POST'])
+def get_pending_sync():
+    """Frontend checks if phone has pushed data waiting to be imported."""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'JSON body required'}), 400
+
+        pin = data.get('pin', '')
+        if not pin:
+            return jsonify({'error': 'PIN required'}), 400
+
+        # Find pending data for any device paired with this PIN
+        pin_hash = hash_pin(pin)
+        pending = {}
+        for token, sync_info in _pending_sync_data.items():
+            device = _paired_devices.get(token, {})
+            if device.get('pin_hash') == pin_hash:
+                pending[token] = sync_info
+
+        if pending:
+            # Clear after retrieval
+            for token in pending:
+                del _pending_sync_data[token]
+
+            return jsonify({
+                'status': 'pending',
+                'data': pending,
+                'server_timestamp': datetime.now().isoformat()
+            })
+
+        return jsonify({'status': 'empty'})
+
+    except Exception as e:
+        logger.error(f"Pending sync check error: {str(e)}")
+        return jsonify({'error': 'Check failed'}), 500
+
+
+def _get_lan_ip():
+    """Get this machine's LAN IP address."""
+    import socket
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(('8.8.8.8', 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception:
+        return '127.0.0.1'
+
+
+# In-memory stores for sync state (persists while backend is running)
+_active_pairing_tokens = {}  # token -> {pin_hash, created_at, expires_at}
+_paired_devices = {}         # device_token -> {pin_hash, device_name, paired_at, last_sync}
+_pending_sync_data = {}      # device_token -> {data, received_at, device_name}
+_staged_for_pull = {}        # pin_hash -> {data, staged_at}
+
+import secrets  # for token generation
+
+
 @app.errorhandler(400)
 def bad_request(error):
     return jsonify({'error': 'Bad request'}), 400

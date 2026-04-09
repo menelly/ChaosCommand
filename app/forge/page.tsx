@@ -27,6 +27,11 @@ export default function ForgePage() {
   return (
     <AppCanvas currentPage="forge">
       <TrackerBuilder />
+      <div className="mt-8 text-center">
+        <a href="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+          ← Back to Command Center
+        </a>
+      </div>
     </AppCanvas>
   )
 }

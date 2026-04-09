@@ -219,15 +219,17 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
         </div>
 
         <Tabs defaultValue="data-management" className="py-4">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-1">
             <TabsTrigger value="data-management" className="flex items-center gap-2">
               <Database className="h-4 w-4" />
               Data Management
             </TabsTrigger>
+            {/* Test PINs tab hidden for ship — uncomment for dev
             <TabsTrigger value="test-pins" className="flex items-center gap-2">
               <Beaker className="h-4 w-4" />
               Test PINs
             </TabsTrigger>
+            */}
           </TabsList>
 
           <TabsContent value="data-management" className="space-y-6 mt-6">
@@ -425,14 +427,15 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
                   {isExecutingGSpot ? 'Executing...' : 'Execute G-Spot Protocol (Bland)'}
                 </Button>
 
+                {/* Demo data loader hidden for ship — uncomment for dev/testing
                 <Button
                   onClick={async () => {
-                    if (!confirm('Load 90 days of realistic chronic illness demo data?\n\nIncludes: flare patterns, medication change, symptom correlations, dysautonomia episodes, journal entries.\n\nThis REPLACES current data.')) return
+                    if (!confirm('Load 90 days of realistic chronic illness demo data?')) return
                     try {
                       setIsExecutingGSpot(true)
                       const data = generateInterestingData()
                       await secureOverwriteAllData(data as any)
-                      alert(`Loaded ${data.length} records of interesting demo data!\n\nIncludes a medication change, a full flare, recovery, and clear improvement trends.`)
+                      alert(`Loaded ${data.length} records of interesting demo data!`)
                       onClose()
                     } catch (e) {
                       alert(`Failed: ${e instanceof Error ? e.message : 'Unknown error'}`)
@@ -447,13 +450,16 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
                   <Beaker className="h-4 w-4 mr-2" />
                   Load Interesting Demo Data (For Testing)
                 </Button>
+                */}
               </div>
             </div>
           </TabsContent>
 
+          {/* Test PINs tab hidden for ship — uncomment for dev
           <TabsContent value="test-pins" className="mt-6">
             <TestPinManagerComponent onClose={onClose} />
           </TabsContent>
+          */}
         </Tabs>
       </div>
     </div>

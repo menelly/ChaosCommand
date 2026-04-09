@@ -24,7 +24,7 @@ import { useState } from "react"
 import AppCanvas from "@/components/app-canvas"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Settings, Database, Palette, Bell, MessageSquare, Globe, HelpCircle, Tag, RotateCcw, Bot, Printer } from "lucide-react"
+import { Settings, Database, Palette, Bell, MessageSquare, Globe, HelpCircle, Tag, RotateCcw, Bot, Printer, Smartphone } from "lucide-react"
 
 // Modal components (to be created)
 import { VisualSettingsModal } from "./visual-settings-modal"
@@ -34,7 +34,7 @@ import { NotificationsModal } from "./notifications-modal"
 import { TagsModal } from "./tags-modal"
 import { SupportModal } from "./support-modal"
 import { PrintExportModal } from "./print-export-modal"
-// AI settings temporarily disabled
+import { QRSyncModal } from "./qr-sync-modal"
 
 export default function SettingsPage() {
   // Modal state management
@@ -138,19 +138,19 @@ export default function SettingsPage() {
           })}
 
           {/* QR Sync + Restart Onboarding — same grid */}
-          <Card className="opacity-60">
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <HelpCircle className="h-5 w-5" />
-              QR Sync & Device Settings
+              <Smartphone className="h-5 w-5" />
+              Device Sync
             </CardTitle>
             <CardDescription>
-              Multi-device sync and navigation customization
+              Sync data between desktop and phone over WiFi
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button disabled className="w-full" variant="outline">
-              Coming Soon
+            <Button onClick={() => openModal('qrsync')} className="w-full" variant="outline">
+              Configure
             </Button>
           </CardContent>
         </Card>
@@ -195,6 +195,9 @@ export default function SettingsPage() {
             />
           )
         })}
+
+        {/* QR Sync modal (not in the category array) */}
+        <QRSyncModal isOpen={activeModal === 'qrsync'} onClose={closeModal} />
 
         <div className="mt-8 text-center">
           <Button variant="outline" onClick={() => window.history.back()}>

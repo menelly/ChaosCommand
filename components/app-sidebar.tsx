@@ -257,7 +257,7 @@ export default function AppSidebar() {
           className={`flex flex-col p-2 bg-card border-l-2 border-orange-400 flex-shrink-0 overflow-y-auto overflow-x-hidden ${
             isMobile
               ? 'fixed top-0 right-0 h-full z-50 shadow-2xl w-[180px]'
-              : 'w-[8vw] min-w-[130px] max-w-[180px]'
+              : 'w-[10vw] min-w-[150px] max-w-[200px]'
           }`}
         >
           {/* Mobile close button */}

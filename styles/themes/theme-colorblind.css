@@ -124,53 +124,55 @@ body.theme-colorblind ::-webkit-scrollbar-thumb:hover {
   background: #495057;
 }
 
-/* Colorblind-safe sidebar buttons with distinct patterns */
-body.theme-colorblind .sidebar-btn-1 { 
-  background-color: #6c757d !important; 
+/* Colorblind-safe sidebar buttons — grayscale gradient with border patterns
+   No red/green/blue differentiation. Uses value (light/dark) and border
+   weight to distinguish buttons instead of hue. */
+body.theme-colorblind .sidebar-btn-1 {
+  background-color: #868e96 !important;
   color: #ffffff !important;
   border-left: 4px solid #495057 !important;
 }
 
-body.theme-colorblind .sidebar-btn-2 { 
-  background-color: #495057 !important; 
+body.theme-colorblind .sidebar-btn-2 {
+  background-color: #6c757d !important;
+  color: #ffffff !important;
+  border-left: 4px solid #495057 !important;
+}
+
+body.theme-colorblind .sidebar-btn-3 {
+  background-color: #5a6268 !important;
   color: #ffffff !important;
   border-left: 4px solid #343a40 !important;
 }
 
-body.theme-colorblind .sidebar-btn-3 { 
-  background-color: #343a40 !important; 
+body.theme-colorblind .sidebar-btn-4 {
+  background-color: #495057 !important;
   color: #ffffff !important;
-  border-left: 4px solid #212529 !important;
+  border-left: 5px solid #343a40 !important;
 }
 
-body.theme-colorblind .sidebar-btn-4 { 
-  background-color: #007bff !important; 
+body.theme-colorblind .sidebar-btn-5 {
+  background-color: #3d4349 !important;
   color: #ffffff !important;
-  border-left: 4px solid #0056b3 !important;
+  border-left: 5px solid #212529 !important;
 }
 
-body.theme-colorblind .sidebar-btn-5 { 
-  background-color: #0056b3 !important; 
+body.theme-colorblind .sidebar-btn-6 {
+  background-color: #343a40 !important;
   color: #ffffff !important;
-  border-left: 4px solid #004085 !important;
+  border-left: 6px solid #212529 !important;
 }
 
-body.theme-colorblind .sidebar-btn-6 { 
-  background-color: #004085 !important; 
+body.theme-colorblind .sidebar-btn-guide {
+  background-color: #495057 !important;
   color: #ffffff !important;
-  border-left: 4px solid #002752 !important;
+  border-left: 6px double #212529 !important;
 }
 
-body.theme-colorblind .sidebar-btn-guide { 
-  background-color: #28a745 !important; 
+body.theme-colorblind .sidebar-btn-custom {
+  background-color: #5a6268 !important;
   color: #ffffff !important;
-  border-left: 4px solid #1e7e34 !important;
-}
-
-body.theme-colorblind .sidebar-btn-custom { 
-  background-color: #dc3545 !important; 
-  color: #ffffff !important;
-  border-left: 4px solid #c82333 !important;
+  border-left: 6px dashed #212529 !important;
 }
 
 /* Hover states with clear visual feedback */
