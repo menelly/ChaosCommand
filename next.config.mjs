@@ -11,8 +11,7 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  // Temporarily disable static export to get dynamic routes working
-  // output: 'export',
+  output: 'export',
   trailingSlash: true,
   distDir: 'out',
 

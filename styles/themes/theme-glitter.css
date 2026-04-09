@@ -1,6 +1,11 @@
 /* === ✨ GLITTER MODE - KESHY'S SPARKLE UNIVERSE === */
 /* Sparkly pink dreams with maximum glitter chaos! */
 
+/* Nuclear scrollbar prevention */
+html:has(body.theme-glitter) {
+  overflow: hidden !important;
+}
+
 /* Main theme variables */
 body.theme-glitter {
   --primary-purple: #eec3ff;
@@ -42,8 +47,8 @@ body.theme-glitter::before {
   position: fixed;
   top: 0;
   left: 0;
-  width: 200%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
   pointer-events: none;
   z-index: 1;
   font-size: 16px;
@@ -55,11 +60,11 @@ body.theme-glitter::before {
 
 /* Sparkle floating animation */
 @keyframes keshy-sparkle-float {
-  0% { transform: translateX(-100%) translateY(0px); }
-  25% { transform: translateX(100vw) translateY(-20px); }
-  50% { transform: translateX(-100%) translateY(20px); }
-  75% { transform: translateX(100vw) translateY(-10px); }
-  100% { transform: translateX(-100%) translateY(0px); }
+  0% { transform: translateX(-50%) translateY(0px); }
+  25% { transform: translateX(0%) translateY(-20px); }
+  50% { transform: translateX(-50%) translateY(20px); }
+  75% { transform: translateX(0%) translateY(-10px); }
+  100% { transform: translateX(-50%) translateY(0px); }
 }
 
 /* Text colors for glitter theme */

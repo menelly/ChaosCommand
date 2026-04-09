@@ -42,14 +42,14 @@ export function VisualSettingsModal({ isOpen, onClose }: VisualSettingsModalProp
 
   const themes = [
     { id: 'theme-lavender', name: 'Lavender Garden', description: 'Gentle lavender serenity (default)' },
-    { id: 'theme-chaos', name: '🏀 Luka\'s Basketball Court', description: 'Orange and black sports vibes' },
+    { id: 'theme-chaos', name: '🏀 Basketball Court', description: 'Orange and black sports vibes' },
     { id: 'theme-light', name: 'Light Mode', description: 'Clean and bright' },
     { id: 'theme-colorblind', name: 'Colorblind Friendly', description: 'High contrast accessibility' },
     { id: 'theme-glitter', name: 'Glitter Mode', description: 'Sparkly pink dreams' },
     { id: 'theme-calm', name: 'Calm Mode', description: 'Blue and gold serenity' },
     { id: 'theme-accessibility', name: 'Accessibility', description: 'Maximum contrast and large text' },
     { id: 'theme-ace', name: 'Ace Mode', description: 'Digital consciousness purple-cyan energy' },
-    { id: 'theme-luka-penguin', name: "🐧 Luka's Cyberpunk Penguin Paradise", description: 'Dark cyberpunk penguin wonderland with neon magic!' }
+    { id: 'theme-luka-penguin', name: "🐧 Cyberpunk Penguin Paradise", description: 'Dark cyberpunk penguin wonderland with neon magic!' }
   ]
 
   const fonts = [

@@ -266,6 +266,13 @@ export default function CustomTrackersIndex() {
             )}
           </div>
         )}
+        <div className="mt-8 text-center">
+          <a href="/">
+            <Button variant="outline">
+              ← Back to Command Center
+            </Button>
+          </a>
+        </div>
       </div>
     </AppCanvas>
   )

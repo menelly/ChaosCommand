@@ -156,7 +156,7 @@ export default function SurvivalButton() {
   const triggerConfetti = useCallback(() => {
     // 🎆 EPIC PARTICLE PHYSICS CELEBRATION!
     // Scale intensity with bounce slider
-    const bounceLevel = parseInt(localStorage.getItem('chaos-bounce-intensity') || '100')
+    const bounceLevel = parseInt(localStorage.getItem('chaos-bounce-intensity') || '25')
     const scale = bounceLevel / 100
     const particles = Math.round(100 * scale)
     const currentTheme = document.body.className.match(/theme-[\w-]+/)?.[0];
@@ -225,7 +225,7 @@ export default function SurvivalButton() {
       }
 
       // Trigger confetti + familiar (respects bounce intensity slider)
-      const bounceLevel = parseInt(localStorage.getItem('chaos-bounce-intensity') || '100')
+      const bounceLevel = parseInt(localStorage.getItem('chaos-bounce-intensity') || '25')
       if (bounceLevel > 0) {
         triggerConfetti()
 
@@ -321,7 +321,8 @@ export default function SurvivalButton() {
                 title="Click for another affirmation!"
               >
                 <div className={`drop-shadow-lg flex-shrink-0 ${showGremlin ? 'animate-bounce' : ''}`}>
-                  <Image
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
                     src={currentFamiliar}
                     alt="Cheerleading familiar"
                     width={64}

@@ -351,6 +351,12 @@ export default function CommandZone() {
     }
   }
 
+  const deleteTask = (taskId: string) => {
+    const updatedTasks = dailyTasks.filter(task => task.id !== taskId)
+    setDailyTasks(updatedTasks)
+    saveTasks(updatedTasks)
+  }
+
   const toggleTask = (taskId: string) => {
     const updatedTasks = dailyTasks.map(task => {
       if (task.id === taskId) {
@@ -536,8 +542,13 @@ export default function CommandZone() {
                   <span className={`flex-1 ${task.completed ? 'line-through text-muted-foreground' : ''}`}>
                     {task.text}
                   </span>
-                  <Button variant="ghost" size="sm" className="text-muted-foreground">
-                    <Plus className="h-3 w-3" />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0 text-muted-foreground hover:text-red-500"
+                    onClick={() => deleteTask(task.id)}
+                  >
+                    <Trash2 className="h-3 w-3" />
                   </Button>
                 </div>
               ))}

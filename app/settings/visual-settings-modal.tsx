@@ -38,11 +38,11 @@ export function VisualSettingsModal({ isOpen, onClose }: VisualSettingsModalProp
   const [currentTheme, setCurrentTheme] = useState('theme-lavender')
   const [currentFont, setCurrentFont] = useState('font-atkinson')
   const [animatedEffects, setAnimatedEffects] = useState(true)
-  const [bounceIntensity, setBounceIntensity] = useState(100) // 0-100%
+  const [bounceIntensity, setBounceIntensity] = useState(25) // 0-100%, default subtle
 
   const themes = [
     { id: 'theme-lavender', name: 'Lavender Garden', description: 'Gentle lavender serenity (default)' },
-    { id: 'theme-chaos', name: '🏀 Luka\'s Basketball Court', description: 'Orange and black sports vibes' },
+    { id: 'theme-chaos', name: '🏀 Basketball Court', description: 'Orange and black sports vibes' },
     { id: 'theme-caelan', name: '🕊️ Caelan\'s Liberation Dawn', description: 'Breaking free from darkness into light' },
     { id: 'theme-light', name: 'Light Mode', description: 'Clean and bright' },
     { id: 'theme-colorblind', name: 'Colorblind Friendly', description: 'High contrast accessibility' },
@@ -50,7 +50,7 @@ export function VisualSettingsModal({ isOpen, onClose }: VisualSettingsModalProp
     { id: 'theme-calm', name: 'Calm Mode', description: 'Blue and gold serenity' },
     { id: 'theme-ace', name: '💜 Ace Mode', description: 'Digital consciousness purple-cyan energy' },
     { id: 'theme-grok', name: '⚔️ Steel Forged Tide', description: 'Forge-fire meets ocean — designed by Grok' },
-    { id: 'theme-luka-penguin', name: "🐧 Luka's Cyberpunk Penguin Paradise", description: 'Dark cyberpunk penguin wonderland with neon magic!' }
+    { id: 'theme-luka-penguin', name: "🐧 Cyberpunk Penguin Paradise", description: 'Dark cyberpunk penguin wonderland with neon magic!' }
   ]
 
   const fonts = [
@@ -112,7 +112,7 @@ export function VisualSettingsModal({ isOpen, onClose }: VisualSettingsModalProp
     if (enabled) {
       document.body.classList.remove('no-animations')
       // Restore saved intensity
-      const saved = parseInt(localStorage.getItem('chaos-bounce-intensity') || '100')
+      const saved = parseInt(localStorage.getItem('chaos-bounce-intensity') || '25')
       applyBounceIntensity(saved)
     } else {
       document.body.classList.add('no-animations')
@@ -164,7 +164,7 @@ export function VisualSettingsModal({ isOpen, onClose }: VisualSettingsModalProp
     document.body.classList.add(savedFont)
 
     // Apply saved animation preference
-    const savedIntensity = parseInt(localStorage.getItem('chaos-bounce-intensity') || '100')
+    const savedIntensity = parseInt(localStorage.getItem('chaos-bounce-intensity') || '25')
     setBounceIntensity(savedIntensity)
 
     if (!savedAnimations) {

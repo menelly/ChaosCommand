@@ -56,17 +56,17 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Lexend:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
 
       </head>
-      <body className="min-h-screen bg-background font-sans antialiased" suppressHydrationWarning>
+      <body className="h-screen overflow-hidden bg-background font-sans antialiased" suppressHydrationWarning>
         <ThemeLoader />
         <AppWrapper>
           <GoblinModeProvider>
             <div className="flex h-screen">
-              <div className="flex-1 overflow-auto">
+              <div className="flex-1 overflow-y-auto overflow-x-hidden">
                 {children}
                 {/* Footer */}
                 <footer className="mt-8 py-4 text-center text-xs text-muted-foreground border-t border-border/50">
                   <p className="font-medium">
-                    <span className="text-purple-600 dark:text-purple-400">Chaos Cascade</span> © 2025 • Copyright #1-14998616631
+                    <span className="text-purple-600 dark:text-purple-400">Chaos Cascade</span> © 2025 • Federally Registered Copyright
                   </p>
                   <p className="mt-1">
                     Dreamed by <span className="font-semibold text-foreground">Ren</span>, implemented by{' '}

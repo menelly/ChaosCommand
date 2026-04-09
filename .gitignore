@@ -70,3 +70,8 @@ test-data/
 medical-exports/
 user-data/
 backups/
+
+# PyInstaller
+backend/dist/
+backend/build/
+*.spec

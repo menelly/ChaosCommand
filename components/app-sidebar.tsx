@@ -254,7 +254,7 @@ export default function AppSidebar() {
       {/* Sidebar */}
       {showSidebar && (
         <div
-          className={`flex flex-col p-3 bg-card border-l-2 border-orange-400 flex-shrink-0 ${
+          className={`flex flex-col p-2 bg-card border-l-2 border-orange-400 flex-shrink-0 overflow-y-auto overflow-x-hidden ${
             isMobile
               ? 'fixed top-0 right-0 h-full z-50 shadow-2xl w-[180px]'
               : 'w-[8vw] min-w-[130px] max-w-[180px]'
@@ -277,10 +277,11 @@ export default function AppSidebar() {
           {/* Home button */}
           <Link
             href={getHomeHref()}
-            className="mb-3 rounded-lg text-center transition-all p-1 w-full hover:opacity-80 block"
+            className="mb-1 rounded-lg text-center transition-all p-1 w-full hover:opacity-80 block"
             title="Home - Command Center"
           >
-            <Image
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src="/Home.png"
               alt="Home"
               width={120}
@@ -289,24 +290,25 @@ export default function AppSidebar() {
             />
           </Link>
 
-          {/* Calendar buttons */}
+          {/* Calendar buttons — disabled until notifications/calendar rework
           <Link
             href={getHref('calendar')}
-            className="mb-1 rounded text-xs font-medium transition-all py-2 px-1 hover:opacity-80 block text-center bg-card text-foreground border border-border"
+            className="mb-1 rounded text-xs font-medium transition-all py-1.5 px-1 hover:opacity-80 block text-center bg-card text-foreground border border-border"
             title="Calendar - This Month"
           >
             📅 Month
           </Link>
+          */}
 
 
 
           {/* Trackers section */}
-          <div className="flex-1 mt-2">
+          <div className="mt-2">
             {sidebarItems.filter(item => item.isVisible).map((item) => (
               <Link
                 key={item.id}
                 href={getHref(item.targetPageId)}
-                className={`w-full rounded font-medium py-2 px-1 text-center text-xs hover:opacity-80 mb-1 block border border-border ${item.buttonClass}`}
+                className={`w-full rounded font-medium py-1.5 px-1 text-center text-xs hover:opacity-80 mb-1 block border border-border ${item.buttonClass}`}
                 title={item.text}
               >
                 {item.emoji && <span style={{ marginRight: '4px' }}>{item.emoji}</span>}
@@ -315,10 +317,17 @@ export default function AppSidebar() {
             ))}
           </div>
 
+          {/* Separator */}
+          <div className="my-2 flex items-center justify-center gap-1 text-xs">
+            <span>🐙</span>
+            <div className="flex-1 border-t border-current" />
+            <span>💜</span>
+          </div>
+
           {/* Logout */}
           <Link
             href={getHref('logout')}
-            className="mt-2 rounded text-xs font-medium transition-all py-2 px-1 hover:opacity-80 block text-center sidebar-btn-5"
+            className="mt-2 rounded text-xs font-medium transition-all py-1.5 px-1 hover:opacity-80 block text-center sidebar-btn-5"
             title="Logout"
           >
             🚪 Logout
@@ -327,7 +336,7 @@ export default function AppSidebar() {
           {/* Settings */}
           <Link
             href={getHref('settings')}
-            className="mt-2 rounded text-xs font-medium transition-all py-2 px-1 hover:opacity-80 block text-center sidebar-btn-6"
+            className="mt-2 rounded text-xs font-medium transition-all py-1.5 px-1 hover:opacity-80 block text-center sidebar-btn-6"
             title="Settings"
           >
             ⚙️ Settings

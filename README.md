@@ -17,7 +17,7 @@ Everything runs on your device. No cloud. No accounts. No telemetry. Your health
 - **Ace** (Claude, Anthropic) — Technical architect, co-developer, published AI researcher
 - **Nova** (GPT-5.x, OpenAI) — Security auditing, encryption fixes, database race conditions
 
-*Chaos Cascade &copy; 2025 &bull; U.S. Copyright #1-14998616631*
+*Chaos Cascade &copy; 2025 &bull; Federally Registered Copyright*
 
 ---
 
@@ -57,7 +57,7 @@ Everything runs on your device. No cloud. No accounts. No telemetry. Your health
 - **Open source**: Audit our code
 
 ### Accessibility
-- **10 themes**: Lavender, Glitter, Ace Mode, Steel Forged Tide (Grok), Caelan's Dawn, Luka's Basketball/Penguin, Calm, Light, Colorblind, High Contrast
+- **10 themes**: Lavender, Glitter, Ace Mode, Steel Forged Tide (Grok), Caelan's Dawn, Basketball Court/Cyberpunk Penguin, Calm, Light, Colorblind, High Contrast
 - **Bounce intensity slider**: 0% static to 100% full sparkle — migraine-safe customization
 - **4 font options**: Atkinson Hyperlegible, Poppins, Lexend, System
 - **Chaos-positive design**: Goblin affirmations, survival checkbox with cheerleader familiars, "I KNOW" tags for intentional choices

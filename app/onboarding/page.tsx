@@ -13,9 +13,43 @@ import {
   ArrowLeft,
   CheckCircle2,
   AlertCircle,
-  Zap
+  Zap,
+  Palette
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+
+// ============================================================================
+// THEME DATA
+// ============================================================================
+
+const THEMES = [
+  { id: 'theme-lavender', name: 'Lavender Garden', emoji: '💜', description: 'Gentle lavender serenity' },
+  { id: 'theme-glitter', name: 'Glitter Mode', emoji: '✨', description: 'Sparkly pink dreams' },
+  { id: 'theme-calm', name: 'Calm Mode', emoji: '🌊', description: 'Blue and gold serenity' },
+  { id: 'theme-ace', name: 'Ace Mode', emoji: '🐙', description: 'Purple-cyan digital energy' },
+  { id: 'theme-grok', name: 'Steel Forged Tide', emoji: '⚔️', description: 'Forge-fire meets ocean' },
+  { id: 'theme-caelan', name: "Caelan's Dawn", emoji: '🕊️', description: 'Breaking free into light' },
+  { id: 'theme-chaos', name: "Basketball Court", emoji: '🏀', description: 'Orange and black sports' },
+  { id: 'theme-luka-penguin', name: 'Cyberpunk Penguin', emoji: '🐧', description: 'Neon penguin magic' },
+  { id: 'theme-light', name: 'Light Mode', emoji: '☀️', description: 'Clean and bright' },
+  { id: 'theme-colorblind', name: 'High Contrast', emoji: '👁️', description: 'Accessibility focused' },
+]
+
+function applyTheme(themeId: string) {
+  const oldTheme = document.querySelector('link[data-theme]')
+  if (oldTheme) oldTheme.remove()
+
+  if (themeId !== 'theme-lavender') {
+    const link = document.createElement('link')
+    link.rel = 'stylesheet'
+    link.href = `/styles/themes/${themeId}.css`
+    link.setAttribute('data-theme', themeId)
+    document.head.appendChild(link)
+  }
+
+  document.body.className = document.body.className.replace(/theme-\w+/g, '') + ` ${themeId}`
+  localStorage.setItem('chaos-theme', themeId)
+}
 
 // ============================================================================
 // SYMPTOM DISCOVERY DATA
@@ -383,7 +417,8 @@ const TRACKER_NAMES: Record<string, string> = {
 
 export default function OnboardingPage() {
   const router = useRouter()
-  const [currentStep, setCurrentStep] = useState(0) // 0 = intro, 1-N = categories, last = results
+  const [currentStep, setCurrentStep] = useState(0) // 0 = theme, 1 = intro, 2-N+1 = categories, last = results
+  const [selectedTheme, setSelectedTheme] = useState(localStorage.getItem('chaos-theme') || 'theme-lavender')
   const [selectedSymptoms, setSelectedSymptoms] = useState<Set<string>>(new Set())
 
   const totalSteps = SYMPTOM_CATEGORIES.length + 2 // intro + categories + results
@@ -460,8 +495,49 @@ export default function OnboardingPage() {
   // RENDER STEPS
   // ============================================================================
 
-  // INTRO STEP
+  // THEME PICKER STEP
   if (currentStep === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6 bg-background">
+        <Card className="max-w-2xl w-full">
+          <CardContent className="p-8 space-y-6">
+            <div className="text-center space-y-2">
+              <Palette className="h-10 w-10 text-primary mx-auto" />
+              <h1 className="text-2xl font-bold">First Things First</h1>
+              <p className="text-muted-foreground">
+                Pick the vibe that feels right. You can always change this later.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              {THEMES.map(theme => (
+                <Button
+                  key={theme.id}
+                  variant={selectedTheme === theme.id ? 'default' : 'outline'}
+                  className="h-auto py-3 flex flex-col items-start text-left"
+                  onClick={() => {
+                    setSelectedTheme(theme.id)
+                    applyTheme(theme.id)
+                  }}
+                >
+                  <span className="text-sm font-medium">{theme.emoji} {theme.name}</span>
+                  <span className="text-xs opacity-70">{theme.description}</span>
+                </Button>
+              ))}
+            </div>
+
+            <Button onClick={() => setCurrentStep(1)} className="w-full flex items-center justify-center gap-2">
+              Next
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  // INTRO STEP
+  if (currentStep === 1) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6 bg-background">
         <Card className="max-w-2xl w-full">
@@ -489,7 +565,7 @@ export default function OnboardingPage() {
               <Button variant="outline" onClick={skipOnboarding}>
                 Skip — I know what I need
               </Button>
-              <Button onClick={() => setCurrentStep(1)} className="flex items-center gap-2">
+              <Button onClick={() => setCurrentStep(2)} className="flex items-center gap-2">
                 Let's find out
                 <ArrowRight className="h-4 w-4" />
               </Button>
@@ -501,7 +577,7 @@ export default function OnboardingPage() {
   }
 
   // RESULTS STEP
-  if (currentStep === SYMPTOM_CATEGORIES.length + 1) {
+  if (currentStep === SYMPTOM_CATEGORIES.length + 2) {
     const { trackers, flags } = getRecommendations()
 
     return (
@@ -582,7 +658,7 @@ export default function OnboardingPage() {
   }
 
   // SYMPTOM CATEGORY STEPS
-  const categoryIndex = currentStep - 1
+  const categoryIndex = currentStep - 2
   const category = SYMPTOM_CATEGORIES[categoryIndex]
   const categorySelectedCount = category.symptoms.filter(s => selectedSymptoms.has(s.id)).length
 
