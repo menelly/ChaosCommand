@@ -286,7 +286,7 @@ export default function AppSidebar() {
             }}
           >
             <Image
-              src="/Home.png"
+              src="/home.png"
               alt="Home"
               width={80}
               height={80}

@@ -282,7 +282,7 @@ export default function AppSidebar() {
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/Home.png"
+              src="/home.png"
               alt="Home"
               width={120}
               height={120}

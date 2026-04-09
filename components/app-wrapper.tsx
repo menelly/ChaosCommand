@@ -93,6 +93,20 @@ function AppContent({ children }: AppWrapperProps) {
   const [isNewUser, setIsNewUser] = useState<boolean | null>(null)
   const [checkingNewUser, setCheckingNewUser] = useState(false)
 
+  // Restore bounce intensity from localStorage on mount — CSS default is 1 (full bounce)
+  // so without this, navigating between pages resets to SUPER BOUNCY
+  useEffect(() => {
+    const savedIntensity = parseInt(localStorage.getItem('chaos-bounce-intensity') || '10')
+    const scale = savedIntensity / 100
+    document.documentElement.style.setProperty('--bounce-scale', scale.toString())
+    if (savedIntensity <= 25 && savedIntensity > 0) {
+      document.body.classList.add('bounce-low')
+    }
+    if (savedIntensity === 0 || localStorage.getItem('chaos-animations') === 'false') {
+      document.body.classList.add('no-animations')
+    }
+  }, [])
+
   // Check if this PIN is new (no data in their database)
   useEffect(() => {
     if (!isLoggedIn || !userPin || !isInitialized) {

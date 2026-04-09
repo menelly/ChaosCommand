@@ -38,7 +38,7 @@ export function VisualSettingsModal({ isOpen, onClose }: VisualSettingsModalProp
   const [currentTheme, setCurrentTheme] = useState('theme-lavender')
   const [currentFont, setCurrentFont] = useState('font-atkinson')
   const [animatedEffects, setAnimatedEffects] = useState(true)
-  const [bounceIntensity, setBounceIntensity] = useState(25) // 0-100%, default subtle
+  const [bounceIntensity, setBounceIntensity] = useState(10) // 0-100%, default gentle sparkle
 
   const themes = [
     { id: 'theme-lavender', name: 'Lavender Garden', description: 'Gentle lavender serenity (default)' },
@@ -112,7 +112,7 @@ export function VisualSettingsModal({ isOpen, onClose }: VisualSettingsModalProp
     if (enabled) {
       document.body.classList.remove('no-animations')
       // Restore saved intensity
-      const saved = parseInt(localStorage.getItem('chaos-bounce-intensity') || '25')
+      const saved = parseInt(localStorage.getItem('chaos-bounce-intensity') || '10')
       applyBounceIntensity(saved)
     } else {
       document.body.classList.add('no-animations')
@@ -164,7 +164,7 @@ export function VisualSettingsModal({ isOpen, onClose }: VisualSettingsModalProp
     document.body.classList.add(savedFont)
 
     // Apply saved animation preference
-    const savedIntensity = parseInt(localStorage.getItem('chaos-bounce-intensity') || '25')
+    const savedIntensity = parseInt(localStorage.getItem('chaos-bounce-intensity') || '10')
     setBounceIntensity(savedIntensity)
 
     if (!savedAnimations) {

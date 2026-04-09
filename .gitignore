@@ -74,4 +74,7 @@ backups/
 # PyInstaller
 backend/dist/
 backend/build/
-*.spec
+backend/build_venv/
+
+# Tauri sidecar binaries (too large for git, built from backend/)
+src-tauri/binaries/

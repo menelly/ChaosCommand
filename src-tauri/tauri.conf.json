@@ -39,6 +39,9 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
+    "externalBin": [
+      "binaries/chaos-command-backend"
+    ],
     "resources": []
   }
 }

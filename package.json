@@ -36,6 +36,7 @@
     "@radix-ui/react-tooltip": "^1.2.7",
     "@tauri-apps/api": "^2.8.0",
     "@tauri-apps/plugin-http": "^2.5.7",
+    "@tauri-apps/plugin-shell": "^2.3.5",
     "@tauri-apps/plugin-sql": "^2.3.0",
     "@types/canvas-confetti": "^1.9.0",
     "canvas-confetti": "^1.9.3",
