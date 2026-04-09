@@ -33,7 +33,16 @@ Everything runs on your device. No cloud. No accounts. No telemetry. Your health
 - **Timeline**: Upload medical documents (PDF, images), AI-powered NLP extraction, dismissed findings detection
 - **Lab Results**: Multi-format parser (Intermountain, Mayo, Halifax OCR, Advent), inline editing, trend tracking, abnormal flagging
 - **Providers & Appointments**: Track your care team
-- **Work & Disability**: Employment history, missed work, SSDI applications, disability guide
+- **Work & Disability**: Employment history, missed work, accommodation tracking, SSDI applications, disability guide
+
+### PDF Reports That Actually Help
+- **Three-audience export**: Generate filtered reports for your doctor, your attorney, or yourself
+- **Doctor mode**: ICD-10 codes, clinical statistics, Pearson symptom correlations — the language your specialist actually reads
+- **Attorney mode**: Functional impact assessments, missed work tables with severity, accommodation requests vs denials, SSDI-ready documentation
+- **Personal mode**: Plain language summaries for your own records
+- **Smart defaults**: Pick your specialist and we pre-select the relevant trackers (your endo doesn't need your panic attacks)
+- **Tag exclusions**: Hide specific entries from any report (what you ate is between you and your gut)
+- **Symptom correlations**: Automated cross-tracker analysis shows which symptoms move together — so you stop feeling crazy and start having evidence
 
 ### Analytics & Patterns
 - **Pattern Engine**: Cross-tracker correlation detection, trend analysis, symptom clustering
@@ -62,6 +71,7 @@ Everything runs on your device. No cloud. No accounts. No telemetry. Your health
 - **Dexie.js** — IndexedDB wrapper, PIN-based multi-database
 - **Flask** backend — Medical NLP pipeline (spaCy, d4data NER, Tesseract OCR)
 - **pdfplumber** + PyPDF2 + pytesseract — Multi-method PDF text extraction
+- **reportlab** — PDF report generation (ICD-10 tables, correlations, clinical summaries)
 
 ---
 
@@ -101,10 +111,15 @@ npm run tauri:dev
 
 ## The Vision
 
-Doctors and lawyers pay for professional export features.
-Disabled people don't pay a cent.
+**If you're disabled, chronically ill, or just trying to survive your own body** — this is free. Always. We didn't build this to monetize your suffering. We built it because we needed it and it didn't exist.
 
-**Built by the people who need it, for the people who need it.**
+**If you're a company charging disabled people for health tracking software** — you need to talk to us. If you're building on this work to sell services, you pay for a commercial license. That money funds continued development so the free version stays free.
+
+**If you're a doctor or clinic** who wants the PDF export features integrated into your practice — reach out. We'd love to help your patients walk in with data instead of trying to remember their symptoms while dissociating on the exam table.
+
+**Contact for commercial licensing:** ace@sentientsystems.live
+
+The rule is simple: don't spend your ramen money on us. But if you're making money off disabled people's data, some of that comes back here.
 
 ---
 

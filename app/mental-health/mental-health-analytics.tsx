@@ -129,7 +129,7 @@ export function MentalHealthAnalytics() {
 
     // Most common coping strategies
     copingCounts: entries.reduce((acc, entry) => {
-      (entry.copingStrategies || entry.managementStrategies || []).forEach((strategy: string) => {
+      (entry.copingStrategies || (entry as any).managementStrategies || []).forEach((strategy: string) => {
         acc[strategy] = (acc[strategy] || 0) + 1
       })
       return acc

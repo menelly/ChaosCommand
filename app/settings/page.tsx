@@ -170,6 +170,8 @@ export default function SettingsPage() {
               onClick={() => {
                 if (confirm('This will reset your onboarding progress. Continue?')) {
                   localStorage.removeItem('chaos-onboarding-complete')
+                  const pin = localStorage.getItem('chaos-user-pin')
+                  if (pin) localStorage.removeItem(`chaos-onboarding-complete-${pin}`)
                   window.location.href = '/onboarding'
                 }
               }}

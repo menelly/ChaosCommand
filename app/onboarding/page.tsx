@@ -438,7 +438,10 @@ export default function OnboardingPage() {
 
     // Save to localStorage (same pattern as manage page)
     localStorage.setItem('chaos-manage-hidden-trackers', JSON.stringify(hiddenTrackers))
+    // Mark complete globally AND per-PIN
     localStorage.setItem('chaos-onboarding-complete', 'true')
+    const pin = localStorage.getItem('chaos-user-pin')
+    if (pin) localStorage.setItem(`chaos-onboarding-complete-${pin}`, 'true')
 
     // Save symptom selections for potential future reference
     localStorage.setItem('chaos-onboarding-symptoms', JSON.stringify([...selectedSymptoms]))
@@ -448,6 +451,8 @@ export default function OnboardingPage() {
 
   const skipOnboarding = () => {
     localStorage.setItem('chaos-onboarding-complete', 'true')
+    const pin = localStorage.getItem('chaos-user-pin')
+    if (pin) localStorage.setItem(`chaos-onboarding-complete-${pin}`, 'true')
     router.push('/')
   }
 
