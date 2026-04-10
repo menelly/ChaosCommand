@@ -16,7 +16,7 @@ const nextConfig = {
   distDir: 'out',
 
   // Handle ES modules properly
-  transpilePackages: ['canvas-confetti'],
+  transpilePackages: ['canvas-confetti', '@huggingface/transformers'],
 
   // Fix rapid reload issue on Linux - use webpack watchOptions instead
   experimental: {
@@ -90,6 +90,15 @@ const nextConfig = {
         'sharp': 'sharp',
         'onnxruntime-node': 'onnxruntime-node',
       });
+
+      // Handle WASM files for ONNX Runtime (used by Transformers.js)
+      config.module.rules.push({
+        test: /\.wasm$/,
+        type: 'asset/resource',
+      });
+
+      // Note: Transformers.js web bundle is imported directly via path in medical-ner.ts
+      // to avoid Next.js package.json exports resolving to the Node.js bundle.
     }
 
     // Handle ES module extensions

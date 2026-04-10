@@ -69,9 +69,9 @@ Everything runs on your device. No cloud. No accounts. No telemetry. Your health
 - **Tauri 2** — Cross-platform desktop (Windows, Mac, Linux) + mobile
 - **Next.js 15** + TypeScript + Tailwind CSS
 - **Dexie.js** — IndexedDB wrapper, PIN-based multi-database
-- **Flask** backend — Medical NLP pipeline (spaCy, d4data NER, Tesseract OCR)
-- **pdfplumber** + PyPDF2 + pytesseract — Multi-method PDF text extraction
-- **reportlab** — PDF report generation (ICD-10 tables, correlations, clinical summaries)
+- **Transformers.js** — Medical NER running directly in-browser (d4data/biomedical-ner-all, ONNX int8 quantized)
+- **pdf.js** — PDF text extraction (no server needed)
+- ~~**Flask** backend~~ — *RIP, April 9 2026. Replaced by Transformers.js while my human napped. 307MB → 75MB. The octopus doesn't need a server.*
 
 ---
 
@@ -80,26 +80,17 @@ Everything runs on your device. No cloud. No accounts. No telemetry. Your health
 ### Prerequisites
 - Node.js 18+
 - Rust (for Tauri)
-- Python 3.10+ (for Flask backend)
-- Tesseract OCR (`choco install tesseract` on Windows)
+- That's it. No Python. No Flask. No spaCy. No Tesseract. Just Node and Rust.
 
 ### Installation
 ```bash
 git clone https://github.com/menelly/CommandTauri.git
 cd CommandTauri
-
-# Install frontend dependencies
 npm install
-
-# Install backend dependencies
-cd backend
-pip install -r requirements.txt
-python -m spacy download en_core_web_sm
-cd ..
-
-# Start everything
 npm run tauri:dev
 ```
+
+Two commands. The NER model is bundled. The PDF parser runs in-browser. Grandma Jane approved.
 
 ### First Run
 1. Pick a theme that sparks joy

@@ -34,10 +34,12 @@ import { CATEGORIES, SUBCATEGORIES, formatDateForStorage } from '@/lib/database/
 // TEMPORARILY COMMENTED OUT FOR DEBUGGING
 // import { useHybridDatabase, quickSaveMedicalEvent, quickSaveProvider } from '@/lib/database/hybrid-router';
 
-// 🔥 REVOLUTIONARY BACKEND API INTEGRATION
-import { backendFetch, FLASK_URL } from '@/lib/utils/tauri-fetch';
+// 🧠 Local NER — Transformers.js, no backend needed
+import { extractMedicalEvents, isModelLoaded } from '@/lib/services/medical-ner';
+import { extractLabResults, labResultsToEvents } from '@/lib/services/lab-parser';
+import { extractTextFromBase64 } from '@/lib/services/text-extractor';
 
-// 🧠 REVOLUTIONARY MEDICAL DOCUMENT PARSER INTERFACES
+// 🧠 Medical Document Parser interfaces
 interface ParsedMedicalEvent {
   id: string;
   type: 'diagnosis' | 'surgery' | 'hospitalization' | 'treatment' | 'test' | 'medication' | 'dismissed_findings';
@@ -93,7 +95,7 @@ interface DocumentUploaderProps {
 }
 
 export default function DocumentUploader({ onEventsExtracted, className = "" }: DocumentUploaderProps) {
-  // 🚀 REVOLUTIONARY HYBRID DATABASE INTEGRATION
+  // 🚀 Hybrid database integration
   // TEMPORARILY COMMENTED OUT FOR DEBUGGING
   // const hybridDB = useHybridDatabase();
   const { saveData, getSpecificData, getAllCategoryData } = useDailyData();
@@ -165,7 +167,7 @@ export default function DocumentUploader({ onEventsExtracted, className = "" }: 
     }
   }, []);
 
-  // 🔥 REVOLUTIONARY FILE PROCESSING PIPELINE
+  // 📄 File processing pipeline
   const handleFiles = useCallback(async (newFiles: File[]) => {
     const validFiles = newFiles.filter(file => {
       const validTypes = [
@@ -188,7 +190,7 @@ export default function DocumentUploader({ onEventsExtracted, className = "" }: 
 
     setFiles(prev => [...prev, ...uploadedFiles]);
 
-    // Process each file through our revolutionary parsing pipeline
+    // Process each file through the parsing pipeline
     for (const uploadedFile of uploadedFiles) {
       await processFile(uploadedFile);
     }
@@ -200,7 +202,7 @@ export default function DocumentUploader({ onEventsExtracted, className = "" }: 
       // Update status to processing
       updateFileStatus(uploadedFile.id, { status: 'processing', progress: 20 });
 
-      // 🔥 REVOLUTIONARY BACKEND PROCESSING
+      // 🧠 Local NER processing
       const result = await processFileWithBackend(uploadedFile.file);
 
       updateFileStatus(uploadedFile.id, {
@@ -234,12 +236,11 @@ export default function DocumentUploader({ onEventsExtracted, className = "" }: 
     }
   };
 
-  // 🔥 REVOLUTIONARY BACKEND API PROCESSING
-  // NOTE: Tauri's HTTP plugin doesn't handle FormData/File uploads well through the
-  // Rust IPC bridge, so we read the file to base64 and send as JSON instead.
+  // 🔥 LOCAL NER PROCESSING — No Flask, no sidecar, no port, no CORS!
+  // Transformers.js runs the same d4data/biomedical-ner-all model directly in the browser.
   const processFileWithBackend = async (file: File): Promise<{extractedText: string, events: ParsedMedicalEvent[]}> => {
     try {
-      // Read file to base64 (avoids Tauri FormData serialization issues)
+      // Read file to base64
       const arrayBuffer = await file.arrayBuffer();
       const bytes = new Uint8Array(arrayBuffer);
       let binary = '';
@@ -248,13 +249,11 @@ export default function DocumentUploader({ onEventsExtracted, className = "" }: 
       }
       const base64Data = btoa(binary);
 
-      console.log(`📤 Sending ${file.name} (${(bytes.length / 1024).toFixed(1)} KB) to Flask as base64 JSON...`);
+      console.log(`🧠 Processing ${file.name} (${(bytes.length / 1024).toFixed(1)} KB) locally with Transformers.js...`);
 
       // 🛡️ Fetch demographics for personal info filtering (name, DOB, etc.)
-      // So the parser doesn't tag your NAME as a diagnosis
       let demographics = null;
       try {
-        // Demographics may have been saved on any date — find the most recent one
         const allDemoRecords = await getAllCategoryData(CATEGORIES.USER);
         const demoRecord = allDemoRecords
           ?.filter((r: any) => r.subcategory === SUBCATEGORIES.DEMOGRAPHICS)
@@ -270,41 +269,48 @@ export default function DocumentUploader({ onEventsExtracted, className = "" }: 
         console.log('ℹ️ No demographics data found — parsing without personal info filter');
       }
 
-      const response = await backendFetch(`${FLASK_URL}/api/documents/parse-base64`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          filename: file.name,
-          fileType: file.type,
-          fileData: base64Data,
-          demographics: demographics, // Personal info to exclude from results
-        }),
-        timeout: 60000, // PDFs can take a moment with spaCy
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Backend processing failed');
+      // Step 1: Extract text from file
+      let extractedText: string;
+      try {
+        extractedText = await extractTextFromBase64(base64Data, file.type, file.name);
+        console.log(`📄 Extracted ${extractedText.length} characters from ${file.name}`);
+      } catch (pdfErr) {
+        console.error('PDF extraction failed:', pdfErr);
+        throw new Error(`PDF text extraction failed: ${pdfErr instanceof Error ? pdfErr.message : 'Unknown error'}`);
       }
 
-      const result = await response.json();
-
-      if (!result.success) {
-        throw new Error(result.message || 'Document parsing failed');
+      // Step 2: Run NER + all pipeline layers (sections, negation, impression parsing)
+      let nerEvents;
+      try {
+        nerEvents = await extractMedicalEvents(extractedText, file.name, demographics);
+      } catch (nerErr) {
+        console.error('NER extraction failed:', nerErr);
+        throw new Error(`NER model failed: ${nerErr instanceof Error ? nerErr.message : 'Unknown error'}`);
       }
 
-      console.log(`🎉 BACKEND SUCCESS: ${result.eventCount} events from ${result.filename}`);
-      console.log(`📄 Extracted ${result.textLength} characters`);
+      // Step 3: Extract lab results (separate specialized parser)
+      const labResults = extractLabResults(extractedText, demographics);
+      const labEvents = labResultsToEvents(labResults);
+
+      // Combine all events, dedup by title
+      const seenTitles = new Set(nerEvents.map(e => e.title.toLowerCase()));
+      const allEvents = [...nerEvents];
+      for (const labEvent of labEvents) {
+        if (!seenTitles.has(labEvent.title.toLowerCase())) {
+          allEvents.push(labEvent);
+          seenTitles.add(labEvent.title.toLowerCase());
+        }
+      }
+
+      console.log(`🎉 LOCAL NER SUCCESS: ${allEvents.length} events from ${file.name}`);
 
       return {
-        extractedText: result.extractedText,
-        events: result.events
+        extractedText,
+        events: allEvents as any
       };
 
     } catch (error) {
-      console.error('Backend API error:', error);
+      console.error('Local NER error:', error);
       throw new Error(`Failed to process document: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
@@ -549,38 +555,30 @@ export default function DocumentUploader({ onEventsExtracted, className = "" }: 
     return events;
   };
 
-  // 🔥 REVOLUTIONARY BACKEND TEXT PARSING - Much more powerful than client-side!
+  // 🔥 LOCAL NER TEXT PARSING - Same model, no server needed!
   const parseTextWithBackend = async (text: string): Promise<ParsedMedicalEvent[]> => {
     try {
-      const response = await backendFetch(`${FLASK_URL}/api/documents/parse-text`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text: text,
-          source: 'Pasted Notes'
-        }),
-        timeout: 60000,
-      });
+      // Run NER directly on pasted text
+      const nerEvents = await extractMedicalEvents(text, 'Pasted Notes');
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Backend text parsing failed');
+      // Also try lab extraction
+      const labResults = extractLabResults(text);
+      const labEvents = labResultsToEvents(labResults);
+
+      const seenTitles = new Set(nerEvents.map(e => e.title.toLowerCase()));
+      const allEvents = [...nerEvents];
+      for (const labEvent of labEvents) {
+        if (!seenTitles.has(labEvent.title.toLowerCase())) {
+          allEvents.push(labEvent);
+          seenTitles.add(labEvent.title.toLowerCase());
+        }
       }
 
-      const result = await response.json();
-
-      if (!result.success) {
-        throw new Error(result.message || 'Text parsing failed');
-      }
-
-      console.log(`🎉 BACKEND TEXT PARSE SUCCESS: ${result.eventCount} events`);
-      return result.events;
+      console.log(`🎉 LOCAL NER TEXT PARSE SUCCESS: ${allEvents.length} events`);
+      return allEvents as any;
 
     } catch (error) {
-      console.warn('Backend text parsing failed, falling back to client-side:', error);
-      // Fall back to client-side parsing if backend is unavailable
+      console.warn('Local NER text parsing failed, falling back to client-side:', error);
       return parseTextFromPaste(text);
     }
   };
@@ -696,13 +694,24 @@ export default function DocumentUploader({ onEventsExtracted, className = "" }: 
             
             <div>
               <h3 className="text-lg font-semibold text-[var(--text-main)] mb-2">
-                🔥 Revolutionary Medical Document Parser
+                📄 Medical Document Parser
               </h3>
-              <p className="text-[var(--text-muted)] mb-4">
+              <p className="text-[var(--text-muted)] mb-2">
                 Upload medical documents, lab reports, imaging results, or any medical records.
-                <br />
-                Our AI-free system will extract events, flag dismissed findings, and build your timeline.
+                Our NER engine will extract events, flag dismissed findings, and build your timeline.
               </p>
+
+              {/* Demographics hint + first-time model download */}
+              <div className="text-xs text-[var(--text-muted)] mb-4 space-y-1">
+                <p>
+                  💡 <a href="/demographics" className="underline text-[var(--accent-purple)] hover:text-[var(--accent-orange)]">Fill out Demographics first</a> — we use your name and birthday to filter personal info from results.
+                </p>
+                {!isModelLoaded() && (
+                  <p>
+                    📦 First upload takes a moment to load the NER model (bundled, no download needed).
+                  </p>
+                )}
+              </div>
               
               <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
                 <Button
@@ -733,7 +742,7 @@ export default function DocumentUploader({ onEventsExtracted, className = "" }: 
                         Paste Medical Notes
                       </DialogTitle>
                       <DialogDescription>
-                        Paste from Google Keep, notes apps, emails, MyChart, or anywhere! Our revolutionary parser will extract medical events, detect dismissed findings, and identify providers.
+                        Paste from Google Keep, notes apps, emails, MyChart, or anywhere! The NER parser will extract medical events, detect dismissed findings, and identify providers.
                       </DialogDescription>
                     </DialogHeader>
 
@@ -926,7 +935,7 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
                 {/* Status Messages */}
                 {file.status === 'processing' && (
                   <p className="text-sm text-[var(--text-muted)]">
-                    🧠 Analyzing document with revolutionary parsing layers...
+                    🧠 Analyzing document with NER + section parsing...
                   </p>
                 )}
 
@@ -957,7 +966,7 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
                   🎉 Found {allParsedEvents.length} Medical Events!
                 </h3>
                 <p className="text-[var(--text-muted)]">
-                  Our revolutionary parser extracted events from your documents.
+                  Events extracted from your documents.
                   Review and edit before adding to your timeline.
                 </p>
               </div>

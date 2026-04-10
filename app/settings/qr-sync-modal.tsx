@@ -12,7 +12,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button'
 import { Smartphone, Wifi, CheckCircle2, AlertCircle, RefreshCw, Upload, Download } from 'lucide-react'
 import { useUser } from '@/lib/contexts/user-context'
-import { FLASK_URL, backendFetch } from '@/lib/utils/tauri-fetch'
 import { exportAllData, importData } from '@/shared/database/migration-helper'
 
 interface QRSyncModalProps {
@@ -37,75 +36,20 @@ export function QRSyncModal({ isOpen, onClose }: QRSyncModalProps) {
   }, [qrImageUrl])
 
   const generateQR = async () => {
-    if (!userPin) {
-      setError('No PIN set. Please log in first.')
-      return
-    }
-
-    setSyncState('generating')
-    setError(null)
-
-    try {
-      const response = await backendFetch(`${FLASK_URL}/api/sync/qr-code`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pin: userPin })
-      })
-
-      if (!response.ok) {
-        const err = await response.json()
-        throw new Error(err.error || 'Failed to generate QR code')
-      }
-
-      const contentType = response.headers.get('content-type')
-      if (contentType?.includes('image/png')) {
-        const blob = await response.blob()
-        const url = URL.createObjectURL(blob)
-        if (qrImageUrl) URL.revokeObjectURL(qrImageUrl)
-        setQrImageUrl(url)
-        setSyncState('waiting')
-        setStatusMessage('Scan this QR code with the Chaos Command phone app')
-
-        // Stage our data for pull while waiting
-        stageDataForPull()
-
-        // Start polling for incoming sync
-        pollForSync()
-      } else {
-        // Fallback: server returned JSON (qrcode not installed)
-        const data = await response.json()
-        setError('QR generation needs the qrcode Python package. Install it: pip install qrcode[pil]')
-        setSyncState('error')
-      }
-    } catch (e: any) {
-      setError(e.message || 'Failed to connect to backend')
-      setSyncState('error')
-    }
+    // QR sync is being rebuilt without Flask — coming soon!
+    setError('QR sync is being upgraded. For now, use Export/Import in Settings to move data between devices.')
+    setSyncState('error')
   }
 
   const stageDataForPull = async () => {
-    try {
-      const exportJson = await exportAllData()
-      const exportData = JSON.parse(exportJson)
-
-      await backendFetch(`${FLASK_URL}/api/sync/stage-for-pull`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pin: userPin, data: exportData })
-      })
-    } catch (e) {
-      console.error('Failed to stage data for pull:', e)
-    }
+    // Placeholder — will be rebuilt with Tauri HTTP server
   }
 
   const pollForSync = () => {
     const interval = setInterval(async () => {
       try {
-        const response = await backendFetch(`${FLASK_URL}/api/sync/pending`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ pin: userPin })
-        })
+        // Placeholder — will be rebuilt with Tauri HTTP server
+        const response: any = null
 
         if (response.ok) {
           const result = await response.json()

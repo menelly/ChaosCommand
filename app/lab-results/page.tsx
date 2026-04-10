@@ -16,7 +16,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useDailyData } from "@/lib/database/hooks/use-daily-data"
 import { CATEGORIES, SUBCATEGORIES, formatDateForStorage } from "@/lib/database/dexie-db"
-import { backendFetch, FLASK_URL } from "@/lib/utils/tauri-fetch"
+import { extractLabResults } from "@/lib/services/lab-parser"
+import { extractTextFromBase64 } from "@/lib/services/text-extractor"
 import {
   Upload, FileText, Search, TestTube, TrendingUp, TrendingDown,
   AlertTriangle, CheckCircle, ChevronDown, ChevronUp, Calendar, Minus, Trash2,
@@ -108,51 +109,45 @@ export default function LabResultsPage() {
         console.log('No demographics data found')
       }
 
-      // Send to Flask for lab parsing
-      const response = await backendFetch(`${FLASK_URL}/api/labs/parse`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          filename: file.name,
-          fileType: file.type,
-          fileData: base64Data,
-          demographics,
-          labDate: uploadDate,
-        }),
-        timeout: 60000,
-      })
+      // Extract text from file locally
+      const extractedText = await extractTextFromBase64(base64Data, file.type, file.name)
 
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}))
-        throw new Error(errData.error || `Server error ${response.status}`)
-      }
+      // Run lab parser locally
+      const labs = extractLabResults(extractedText, demographics)
 
-      const result = await response.json()
-
-      if (result.success && result.labs && result.labs.length > 0) {
-        // Use detected lab draw date if available, otherwise use selected date
-        const labDate = result.suggestedDate || uploadDate
-        if (result.suggestedDate && result.suggestedDate !== uploadDate) {
-          console.log(`📅 Using detected lab date: ${result.suggestedDate} (instead of ${uploadDate})`)
-        }
+      if (labs.length > 0) {
+        // Map to expected format
+        const mappedLabs = labs.map(l => ({
+          test_name: l.testName,
+          value: l.value,
+          value_text: l.valueText,
+          unit: l.unit,
+          reference_low: l.referenceLow,
+          reference_high: l.referenceHigh,
+          reference_text: l.referenceText,
+          flag: l.flag,
+          is_abnormal: l.isAbnormal,
+          context: l.context,
+          confidence: l.confidence,
+        }))
 
         const report: LabReport = {
           id: `lab-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          date: labDate,
+          date: uploadDate,
           filename: file.name,
-          results: result.labs,
+          results: mappedLabs,
           addedDate: formatDateForStorage(new Date()),
         }
 
         await saveData(
-          labDate,
+          uploadDate,
           CATEGORIES.USER,
           `lab-results-${report.id}`,
           JSON.stringify(report)
         )
 
         await loadReports()
-        console.log(`🧪 Saved ${result.labs.length} lab results from ${file.name}`)
+        console.log(`🧪 Saved ${labs.length} lab results from ${file.name}`)
       } else {
         alert(`No lab results found in ${file.name}. Try a different document?`)
       }
@@ -395,6 +390,9 @@ export default function LabResultsPage() {
                 Parsing lab results...
               </p>
             )}
+            <p className="text-xs text-[var(--text-muted)] mt-2">
+              💡 <a href="/demographics" className="underline text-[var(--accent-purple)] hover:text-[var(--accent-orange)]">Fill out Demographics first</a> — we filter your name and personal info from results.
+            </p>
           </CardContent>
         </Card>
 
