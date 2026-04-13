@@ -7,14 +7,7 @@
   ],
   "permissions": [
     "core:default",
-    {
-      "identifier": "http:default",
-      "allow": [
-        { "url": "http://localhost:5000/**" },
-        { "url": "http://127.0.0.1:5000/**" }
-      ]
-    },
-    "shell:allow-spawn",
-    "shell:allow-execute"
+    "sql:default",
+    "opener:default"
   ]
 }

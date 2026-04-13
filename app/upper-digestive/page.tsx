@@ -32,7 +32,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Utensils, Plus, Edit, Trash2, Calendar, AlertCircle, Info } from "lucide-react"
+import { Utensils, Plus, Edit, Trash2, Calendar, AlertCircle, Info, ArrowLeft } from "lucide-react"
 import { useDailyData, CATEGORIES, formatDateForStorage } from "@/lib/database"
 import { useGoblinMode } from "@/lib/goblin-mode-context"
 import { useToast } from "@/hooks/use-toast"
@@ -656,7 +656,7 @@ export default function UpperDigestiveTracker() {
               {/* Triggers */}
               <div>
                 <Label>Possible Triggers</Label>
-                <div className="grid grid-cols-3 gap-2 mt-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
                   {COMMON_TRIGGERS.map((trigger) => (
                     <Button
                       key={trigger}
@@ -674,7 +674,7 @@ export default function UpperDigestiveTracker() {
               {/* Treatments */}
               <div>
                 <Label>Treatments Used</Label>
-                <div className="grid grid-cols-3 gap-2 mt-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
                   {COMMON_TREATMENTS.map((treatment) => (
                     <Button
                       key={treatment}
@@ -735,6 +735,16 @@ export default function UpperDigestiveTracker() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Back to Body Button */}
+        <div className="flex justify-center pt-4">
+          <Button variant="outline" asChild>
+            <a href="/body">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Body
+            </a>
+          </Button>
+        </div>
       </div>
     </AppCanvas>
   )

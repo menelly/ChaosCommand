@@ -267,7 +267,7 @@ export function SeizureForm({ isOpen, onClose, onSave, editEntry }: SeizureFormP
           {/* Aura Symptoms */}
           <div>
             <Label>Aura Symptoms (warning signs before seizure)</Label>
-            <div className="grid grid-cols-3 gap-2 mt-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
               {AURA_SYMPTOMS.map((symptom) => (
                 <div key={symptom} className="flex items-center space-x-2">
                   <Checkbox
@@ -296,7 +296,7 @@ export function SeizureForm({ isOpen, onClose, onSave, editEntry }: SeizureFormP
           {/* Seizure Symptoms */}
           <div>
             <Label>Seizure Symptoms (during seizure)</Label>
-            <div className="grid grid-cols-3 gap-2 mt-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
               {SEIZURE_SYMPTOMS.map((symptom) => (
                 <div key={symptom} className="flex items-center space-x-2">
                   <Checkbox
@@ -361,7 +361,7 @@ export function SeizureForm({ isOpen, onClose, onSave, editEntry }: SeizureFormP
           {/* Post-Seizure Symptoms */}
           <div>
             <Label>Post-Seizure Symptoms</Label>
-            <div className="grid grid-cols-3 gap-2 mt-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
               {POST_SEIZURE_SYMPTOMS.map((symptom) => (
                 <div key={symptom} className="flex items-center space-x-2">
                   <Checkbox
@@ -378,7 +378,7 @@ export function SeizureForm({ isOpen, onClose, onSave, editEntry }: SeizureFormP
           {/* Triggers */}
           <div>
             <Label>Possible Triggers</Label>
-            <div className="grid grid-cols-3 gap-2 mt-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
               {COMMON_TRIGGERS.map((trigger) => (
                 <div key={trigger} className="flex items-center space-x-2">
                   <Checkbox

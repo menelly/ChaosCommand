@@ -18,8 +18,24 @@
  * 
  * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
  */
+import AppCanvas from "@/components/app-canvas"
 import WeatherEnvironmentTracker from './weather-environment-tracker'
+import { Button } from "@/components/ui/button"
+import { ArrowLeft } from "lucide-react"
 
 export default function WeatherEnvironmentPage() {
-  return <WeatherEnvironmentTracker />
+  return (
+    <AppCanvas>
+      <WeatherEnvironmentTracker />
+      {/* Back to Body Button */}
+      <div className="flex justify-center pt-4">
+        <Button variant="outline" asChild>
+          <a href="/body">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Body
+          </a>
+        </Button>
+      </div>
+    </AppCanvas>
+  )
 }

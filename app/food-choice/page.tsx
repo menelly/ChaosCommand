@@ -18,8 +18,24 @@
  * 
  * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
  */
+import AppCanvas from "@/components/app-canvas"
 import FoodChoiceTracker from './food-choice-tracker'
+import { Button } from "@/components/ui/button"
+import { ArrowLeft } from "lucide-react"
 
 export default function FoodChoicePage() {
-  return <FoodChoiceTracker />
+  return (
+    <AppCanvas>
+      <FoodChoiceTracker />
+      {/* Back to Choice Button */}
+      <div className="flex justify-center pt-4">
+        <Button variant="outline" asChild>
+          <a href="/choice">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Choice
+          </a>
+        </Button>
+      </div>
+    </AppCanvas>
+  )
 }

@@ -310,13 +310,6 @@ export default function FoodChoiceTracker() {
           </TabsContent>
         </Tabs>
 
-        <div className="text-center mt-6">
-          <Button variant="outline" asChild>
-            <a href="/choice">
-              ← Back to Choice
-            </a>
-          </Button>
-        </div>
       </div>
 
       {/* Form Dialog */}

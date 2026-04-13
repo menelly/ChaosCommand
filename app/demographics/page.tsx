@@ -39,6 +39,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { openExternal } from '@/lib/open-external';
 import AppCanvas from '@/components/app-canvas';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -563,7 +564,7 @@ export default function DemographicsPage() {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => window.open(`tel:${formData.insuranceInfo?.medical?.phone}`)}
+                      onClick={() => openExternal(`tel:${formData.insuranceInfo?.medical?.phone}`)}
                     >
                       <Phone className="h-4 w-4" />
                     </Button>
@@ -621,7 +622,7 @@ export default function DemographicsPage() {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => window.open(`tel:${formData.insuranceInfo?.dental?.phone}`)}
+                      onClick={() => openExternal(`tel:${formData.insuranceInfo?.dental?.phone}`)}
                     >
                       <Phone className="h-4 w-4" />
                     </Button>
@@ -679,7 +680,7 @@ export default function DemographicsPage() {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => window.open(`tel:${formData.insuranceInfo?.vision?.phone}`)}
+                      onClick={() => openExternal(`tel:${formData.insuranceInfo?.vision?.phone}`)}
                     >
                       <Phone className="h-4 w-4" />
                     </Button>

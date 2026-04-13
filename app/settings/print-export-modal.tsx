@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Printer, FileText, Stethoscope, Scale, ChevronRight, ChevronLeft, Download, Loader2, User, X } from "lucide-react"
 import { useDailyData } from "@/lib/database/hooks/use-daily-data"
 import { CATEGORIES, formatDateForStorage } from "@/lib/database/dexie-db"
-import { backendFetch, FLASK_URL } from "@/lib/utils/tauri-fetch"
+import { generateMedicalReport } from "@/lib/pdf-report-generator"
 
 interface PrintExportModalProps {
   isOpen: boolean
@@ -259,68 +259,53 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
         workData = { missedWork, employment, applications }
       }
 
-      // Send to Flask for PDF generation
-      const response = await backendFetch(`${FLASK_URL}/api/export/doctor-report`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          demographics,
-          providerName,
-          specialty: audience === 'attorney' ? 'ssdi' : specialty,
-          audience,
-          reportStyle,
-          dateRange: { start: dateRangeStart, end: dateRangeEnd },
-          trackerData: filteredTrackers.map(r => ({
-            date: r.date,
-            subcategory: r.subcategory,
-            content: r.content,
-          })),
-          labResults: labRecords.map(r => ({
-            date: r.date,
-            content: typeof r.content === 'string' ? JSON.parse(r.content) : r.content,
-          })),
-          journalEntries: allJournalData.map(r => {
-            let content = r.content
-            if (typeof content === 'string') {
-              try { content = JSON.parse(content) } catch { content = { text: content } }
-            }
-            return { date: r.date, content }
-          }),
-          timelineEvents: timelineRecords.map(r => {
-            let content = r.content
-            if (typeof content === 'string') {
-              try { content = JSON.parse(content) } catch { content = { text: content } }
-            }
-            return { date: r.date, content }
-          }),
-          healthData: allHealthData.map(r => ({
-            date: r.date,
-            subcategory: r.subcategory,
-            content: r.content,
-          })),
-          includePatterns,
-          workData,
+      // Generate PDF client-side (no Flask needed!)
+      const blob = generateMedicalReport({
+        demographics,
+        providerName,
+        specialty: audience === 'attorney' ? 'ssdi' : specialty,
+        audience,
+        reportStyle,
+        dateRange: { start: dateRangeStart, end: dateRangeEnd },
+        trackerData: filteredTrackers.map(r => ({
+          date: r.date,
+          subcategory: r.subcategory,
+          content: r.content,
+        })),
+        labResults: labRecords.map(r => ({
+          date: r.date,
+          content: typeof r.content === 'string' ? JSON.parse(r.content) : r.content,
+        })),
+        journalEntries: allJournalData.map(r => {
+          let content = r.content
+          if (typeof content === 'string') {
+            try { content = JSON.parse(content) } catch { content = { text: content } }
+          }
+          return { date: r.date, content }
         }),
-        timeout: 30000,
+        includePatterns,
+        workData,
       })
 
-      if (!response.ok) {
-        throw new Error('PDF generation failed')
+      // Download or share the PDF
+      const audienceLabel = audience === 'attorney' ? 'legal' : audience === 'personal' ? 'personal' : 'medical'
+      const filename = `${audienceLabel}-report-${providerName || 'export'}-${dateRangeEnd}.pdf`
+      const file = new File([blob], filename, { type: 'application/pdf' })
+
+      if (navigator.share && navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ title: 'Medical Report', files: [file] })
+      } else {
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = filename
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
       }
 
-      // Download the PDF
-      const blob = await response.blob()
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      const audienceLabel = audience === 'attorney' ? 'legal' : audience === 'personal' ? 'personal' : 'medical'
-      a.download = `${audienceLabel}-report-${providerName || 'export'}-${dateRangeEnd}.pdf`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
-
-      alert('Report saved to your Downloads folder!')
+      alert('Report generated!')
       onClose()
 
     } catch (e: any) {
@@ -367,7 +352,7 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
             <div className="space-y-4">
               <div>
                 <Label className="mb-2 block">Who is this report for?</Label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   <Button
                     variant={audience === 'doctor' ? 'default' : 'outline'}
                     onClick={() => setAudience('doctor')}

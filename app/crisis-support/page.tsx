@@ -21,6 +21,7 @@
 "use client"
 
 import React, { useState, useEffect } from 'react'
+import { openExternal } from '@/lib/open-external'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -134,9 +135,7 @@ export default function CrisisSupport() {
 
   // Emergency call function
   const handleEmergencyCall = (number: string) => {
-    if (typeof window !== 'undefined') {
-      window.open(`tel:${number}`, '_self')
-    }
+    openExternal(`tel:${number}`)
   }
 
   return (

@@ -92,7 +92,7 @@ export default function CustomTrackersIndex() {
           icon: getCategoryIcon(tracker.category),
           category: tracker.category,
           isCustom: true,
-          href: `/custom-tracker/${tracker.id}`
+          href: `/custom-tracker?id=${tracker.id}`
         }))
 
         setCustomTrackers(customTrackerButtons)
@@ -109,7 +109,7 @@ export default function CustomTrackersIndex() {
           icon: getCategoryIcon(tracker.category),
           category: tracker.category,
           isCustom: true,
-          href: `/custom-tracker/${tracker.id}`
+          href: `/custom-tracker?id=${tracker.id}`
         }
 
         setCustomTrackers([customTrackerButton])

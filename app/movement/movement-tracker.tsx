@@ -195,14 +195,6 @@ export default function MovementTracker() {
         </TabsContent>
       </Tabs>
 
-      <div className="text-center mt-6">
-        <Button variant="outline" asChild>
-          <a href="/choice">
-            ← Back to Choice
-          </a>
-        </Button>
-      </div>
-
       {/* Movement Modal */}
       <MovementForm
         selectedDate={selectedDate}

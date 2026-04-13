@@ -104,7 +104,7 @@ export default function PhysicalHealthIndex() {
           icon: <Wrench className="h-5 w-5" />,
           edition: 'command', // Custom trackers are command edition
           isCustom: true,
-          href: `/custom-tracker/${tracker.id}`
+          href: `/custom-tracker?id=${tracker.id}`
         }))
 
         setCustomTrackers(customTrackerButtons)
@@ -123,7 +123,7 @@ export default function PhysicalHealthIndex() {
             icon: <Wrench className="h-5 w-5" />,
             edition: 'command',
             isCustom: true,
-            href: `/custom-tracker/${tracker.id}`
+            href: `/custom-tracker?id=${tracker.id}`
           }
 
           setCustomTrackers([customTrackerButton])

@@ -29,7 +29,7 @@ import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Plus, Zap, ArrowLeft, BarChart3, History } from 'lucide-react'
+import { Plus, Zap, BarChart3, History } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { SeizureForm } from './seizure-form'
 import { SeizureHistory } from './seizure-history'
@@ -277,15 +277,6 @@ export function SeizureTracker() {
         editEntry={editEntry}
       />
 
-      {/* Back to Body Button - Bottom Center */}
-      <div className="flex justify-center pt-4">
-        <Button variant="outline" asChild>
-          <a href="/body">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Body
-          </a>
-        </Button>
-      </div>
     </div>
   )
 }

@@ -28,6 +28,7 @@
 'use client';
 
 import { useState } from 'react';
+import { openExternal } from '@/lib/open-external';
 import { 
   Edit2, 
   Trash2, 
@@ -99,7 +100,7 @@ export function MedicationCard({
 
   const handlePhoneCall = (phoneNumber: string) => {
     const cleanNumber = phoneNumber.replace(/\D/g, '');
-    window.open(`tel:${cleanNumber}`, '_self');
+    openExternal(`tel:${cleanNumber}`);
   };
 
   const handleReminderToggle = async (enabled: boolean) => {

@@ -111,7 +111,7 @@ export function WeatherForm({ isOpen, onClose, onSave, initialData, isEditing = 
           {/* Weather Type */}
           <div className="space-y-3">
             <Label className="text-base font-medium">Today's Weather (select all that apply)</Label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {WEATHER_TYPES.map((type) => {
                 const WeatherIcon = WEATHER_ICONS[type] || Cloud
                 const isSelected = weatherTypes.includes(type)

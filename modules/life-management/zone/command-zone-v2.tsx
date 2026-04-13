@@ -25,9 +25,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
-import { Plus, Package, Clock, Sparkles, ChevronRight, ChevronDown, Backpack, Heart, Pencil, Trash2, ExternalLink, Settings2 } from 'lucide-react'
+import { Switch } from '@/components/ui/switch'
+import { Plus, Package, Clock, Sparkles, ChevronRight, ChevronDown, Backpack, Heart, Pencil, Trash2, ExternalLink, Settings2, Eye } from 'lucide-react'
 import SurvivalButton from '@/components/survival-button'
 import DailyPrompts from '@/components/daily-prompts'
 import { useDailyData } from '@/lib/database/hooks/use-daily-data'
@@ -82,7 +83,74 @@ function to12h(time: string): string {
   return `${hour12}:${m.toString().padStart(2, '0')} ${period}`
 }
 
+const COLLAPSED_SECTIONS_KEY = 'chaos-command-collapsed'
+const HIDDEN_SECTIONS_KEY = 'chaos-command-hidden-sections'
+
+const COMMAND_SECTIONS = [
+  { id: 'survival', name: 'Survival Button & Daily Prompts', icon: '🆘', description: 'Quick survival check-in and daily reflection prompts' },
+  { id: 'stats', name: 'Quick Stats', icon: '📊', description: 'Tasks done and gear readiness at a glance' },
+  { id: 'schedule', name: "Today's Schedule", icon: '🕐', description: 'Time blocks for your day' },
+  { id: 'tasks', name: "Today's Tasks", icon: '📦', description: 'Your daily to-do list' },
+  { id: 'gear', name: 'Gear Check', icon: '🎒', description: 'Make sure you have everything before leaving' },
+  { id: 'selfcare', name: 'Self-Care Tracker', icon: '✨', description: 'Did you take care of your meat suit today?' },
+]
+
+function useCollapsibleSections() {
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(COLLAPSED_SECTIONS_KEY)
+      if (saved) setCollapsed(JSON.parse(saved))
+    } catch {}
+  }, [])
+
+  const toggle = (section: string) => {
+    setCollapsed(prev => {
+      const next = { ...prev, [section]: !prev[section] }
+      localStorage.setItem(COLLAPSED_SECTIONS_KEY, JSON.stringify(next))
+      return next
+    })
+  }
+
+  const isCollapsed = (section: string) => !!collapsed[section]
+  return { toggle, isCollapsed }
+}
+
+function CollapsibleSection({ id, title, icon, sections, children }: {
+  id: string
+  title: string
+  icon: React.ReactNode
+  sections: ReturnType<typeof useCollapsibleSections>
+  children: React.ReactNode
+}) {
+  const isOpen = !sections.isCollapsed(id)
+  return (
+    <Card>
+      <CardHeader
+        className="cursor-pointer select-none active:bg-accent/50 transition-colors"
+        onClick={() => sections.toggle(id)}
+        onTouchEnd={(e) => { e.preventDefault(); sections.toggle(id) }}
+        role="button"
+        tabIndex={0}
+      >
+        <CardTitle className="flex items-center justify-between pointer-events-none">
+          <div className="flex items-center gap-2">
+            {icon}
+            {title}
+          </div>
+          {isOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+        </CardTitle>
+      </CardHeader>
+      {isOpen && <CardContent className="pt-0">{children}</CardContent>}
+    </Card>
+  )
+}
+
 export default function CommandZone() {
+  const sections = useCollapsibleSections()
+  const [hiddenSections, setHiddenSections] = useState<string[]>([])
+  const [isCustomizeOpen, setIsCustomizeOpen] = useState(false)
   const [dailyTasks, setDailyTasks] = useState<DailyTask[]>([])
   const [newTask, setNewTask] = useState('')
   const [newGearItem, setNewGearItem] = useState('')
@@ -163,6 +231,31 @@ export default function CommandZone() {
     { id: '5', name: 'Evening Wind Down', startTime: '17:00', endTime: '21:00', color: 'bg-[var(--surface-2)]' },
   ]
 
+
+  // Load hidden sections preference
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(HIDDEN_SECTIONS_KEY)
+      if (saved) setHiddenSections(JSON.parse(saved))
+    } catch {}
+  }, [])
+
+  const updateHiddenSections = (newHidden: string[]) => {
+    setHiddenSections(newHidden)
+    try {
+      localStorage.setItem(HIDDEN_SECTIONS_KEY, JSON.stringify(newHidden))
+    } catch {}
+  }
+
+  const toggleSectionVisibility = (sectionId: string) => {
+    if (hiddenSections.includes(sectionId)) {
+      updateHiddenSections(hiddenSections.filter(id => id !== sectionId))
+    } else {
+      updateHiddenSections([...hiddenSections, sectionId])
+    }
+  }
+
+  const isSectionVisible = (sectionId: string) => !hiddenSections.includes(sectionId)
 
   // Load data from localStorage (all keys include userPin for multi-user isolation)
   useEffect(() => {
@@ -421,6 +514,7 @@ export default function CommandZone() {
       </div>
 
       {/* SURVIVAL BOX & DAILY PROMPTS - The heart of it all! */}
+      {isSectionVisible('survival') && (
       <div className="mb-8 max-w-6xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div>
@@ -431,8 +525,10 @@ export default function CommandZone() {
           </div>
         </div>
       </div>
+      )}
 
       {/* Quick Stats */}
+      {isSectionVisible('stats') && (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <Card className="bg-gradient-to-r from-[var(--surface-1)] to-[var(--surface-2)]">
           <CardContent className="p-4 text-center">
@@ -447,37 +543,32 @@ export default function CommandZone() {
           </CardContent>
         </Card>
       </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Daily Schedule */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Clock className="h-5 w-5 text-[var(--accent-orange)]" />
-                Today's Schedule
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="text-xs text-muted-foreground"
-                  onClick={() => {
-                    const next = !use24h
-                    setUse24h(next)
-                    localStorage.setItem('chaos-time-format', next ? '24h' : '12h')
-                  }}
-                >
-                  {use24h ? '24h' : '12h'}
-                </Button>
-                <Button onClick={openAddBlock} size="sm" variant="outline">
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add
-                </Button>
-              </div>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
+        {isSectionVisible('schedule') && (
+        <CollapsibleSection id="schedule" title="Today's Schedule" icon={<Clock className="h-5 w-5 text-[var(--accent-orange)]" />} sections={sections}>
+          <div className="flex justify-end gap-2 mb-2">
+            <Button
+              size="sm"
+              variant="ghost"
+              className="text-xs text-muted-foreground"
+              onClick={(e) => {
+                e.stopPropagation()
+                const next = !use24h
+                setUse24h(next)
+                localStorage.setItem('chaos-time-format', next ? '24h' : '12h')
+              }}
+            >
+              {use24h ? '24h' : '12h'}
+            </Button>
+            <Button onClick={(e) => { e.stopPropagation(); openAddBlock() }} size="sm" variant="outline">
+              <Plus className="h-4 w-4 mr-1" />
+              Add
+            </Button>
+          </div>
+          <div className="space-y-2">
             {schedule.map(block => (
               <div key={block.id} className={`p-3 rounded-lg ${block.color} flex justify-between items-center`}>
                 <div>
@@ -507,18 +598,14 @@ export default function CommandZone() {
             {schedule.length === 0 && (
               <p className="text-muted-foreground text-center py-4">No schedule blocks yet - add one above!</p>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </CollapsibleSection>
+        )}
 
         {/* Task List */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5 text-[var(--hover-glow)]" />
-              Today's Tasks
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        {isSectionVisible('tasks') && (
+        <CollapsibleSection id="tasks" title="Today's Tasks" icon={<Package className="h-5 w-5 text-[var(--hover-glow)]" />} sections={sections}>
+          <div className="space-y-4">
             <div className="flex gap-2">
               <Input
                 placeholder="Add a task for today..."
@@ -556,18 +643,14 @@ export default function CommandZone() {
                 <p className="text-muted-foreground text-center py-4">No tasks yet - add one above!</p>
               )}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </CollapsibleSection>
+        )}
 
         {/* Gear Check */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Backpack className="h-5 w-5 text-[var(--accent-orange)]" />
-              Gear Check (Leaving House)
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        {isSectionVisible('gear') && (
+        <CollapsibleSection id="gear" title="Gear Check (Leaving House)" icon={<Backpack className="h-5 w-5 text-[var(--accent-orange)]" />} sections={sections}>
+          <div className="space-y-4">
             <div className="flex gap-2">
               <Input
                 placeholder="Add gear item (meds, kid stuff, etc.)"
@@ -605,37 +688,27 @@ export default function CommandZone() {
                 <p className="text-muted-foreground text-center py-4">No gear items yet - add some above!</p>
               )}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </CollapsibleSection>
+        )}
 
         {/* Self-Care Tracker — did you take care of your meat suit today? */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-[var(--hover-glow)]" />
-                Did You Take Care of You?
-                <span className="text-xs font-normal text-muted-foreground ml-1">(links open trackers)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">
-                  {selfCareCompleted}/{selfCare.length}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSelfCareEditing(!selfCareEditing)}
-                  className="h-7 w-7 p-0 text-muted-foreground"
-                >
-                  <Settings2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
+        {isSectionVisible('selfcare') && (
+        <CollapsibleSection id="selfcare" title={`Did You Take Care of You? (${selfCareCompleted}/${selfCare.length})`} icon={<Sparkles className="h-5 w-5 text-[var(--hover-glow)]" />} sections={sections}>
+          <div className="flex justify-end mb-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => { e.stopPropagation(); setSelfCareEditing(!selfCareEditing) }}
+              className="h-7 w-7 p-0 text-muted-foreground"
+            >
+              <Settings2 className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="space-y-2">
             {selfCare.map(item => (
               <div key={item.id} className="flex items-center justify-between group">
-                <label className="flex items-center gap-3 cursor-pointer flex-1 py-1">
+                <label className="flex items-center gap-2 sm:gap-3 cursor-pointer flex-1 py-1">
                   <Checkbox
                     checked={item.checked}
                     onCheckedChange={() => toggleSelfCare(item.id)}
@@ -689,9 +762,87 @@ export default function CommandZone() {
                 ✨ You took care of your whole meat suit today!
               </p>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </CollapsibleSection>
+        )}
       </div>
+
+      {/* CUSTOMIZE SECTIONS */}
+      <Card className="mt-8">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Settings2 className="h-5 w-5" />
+            Customize Your Command Zone
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Show only the sections you actually use. Hidden sections can always be shown again.
+            {hiddenSections.length > 0 && (
+              <span className="block mt-1 text-primary">
+                {hiddenSections.length} section{hiddenSections.length !== 1 ? 's' : ''} hidden
+              </span>
+            )}
+          </p>
+        </CardHeader>
+        <CardContent>
+          <Dialog open={isCustomizeOpen} onOpenChange={setIsCustomizeOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="w-full">
+                <Settings2 className="h-4 w-4 mr-2" />
+                Customize Visible Sections
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Settings2 className="h-5 w-5" />
+                  Customize Command Zone
+                </DialogTitle>
+                <DialogDescription>
+                  Toggle off sections you don&apos;t need. They won&apos;t appear on the Command Zone, but you can always turn them back on.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 mt-4">
+                {COMMAND_SECTIONS.map((section) => (
+                  <div key={section.id} className="flex items-center justify-between gap-4 py-2 border-b border-border/50">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="text-lg shrink-0">{section.icon}</div>
+                      <div className="min-w-0">
+                        <Label htmlFor={`toggle-${section.id}`} className="font-medium cursor-pointer">
+                          {section.name}
+                        </Label>
+                        <p className="text-xs text-muted-foreground">{section.description}</p>
+                      </div>
+                    </div>
+                    <Switch
+                      id={`toggle-${section.id}`}
+                      checked={!hiddenSections.includes(section.id)}
+                      onCheckedChange={() => toggleSectionVisibility(section.id)}
+                    />
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-2 mt-4 pt-4 border-t">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => updateHiddenSections([])}
+                  disabled={hiddenSections.length === 0}
+                >
+                  Show All
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsCustomizeOpen(false)}
+                  className="ml-auto"
+                >
+                  Done
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </CardContent>
+      </Card>
 
       {/* Schedule Edit Modal */}
       <Dialog open={isScheduleModalOpen} onOpenChange={setIsScheduleModalOpen}>

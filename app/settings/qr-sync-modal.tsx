@@ -91,16 +91,36 @@ export function QRSyncModal({ isOpen, onClose }: QRSyncModalProps) {
       setSyncState('syncing')
       setStatusMessage('Exporting data...')
       const data = await exportAllData()
+      const filename = `chaos-command-backup-${new Date().toISOString().split('T')[0]}.json`
       const blob = new Blob([data], { type: 'application/json' })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `chaos-command-backup-${new Date().toISOString().split('T')[0]}.json`
-      a.click()
-      URL.revokeObjectURL(url)
-      setSyncState('done')
-      setStatusMessage('Backup exported! Transfer the file to your other device and import it there.')
+      const file = new File([blob], filename, { type: 'application/json' })
+
+      // Use native share sheet on mobile (Android/iOS)
+      if (navigator.share && navigator.canShare?.({ files: [file] })) {
+        await navigator.share({
+          title: 'Chaos Command Backup',
+          text: 'Medical data backup',
+          files: [file]
+        })
+        setSyncState('done')
+        setStatusMessage('Backup shared! Import it on your other device.')
+      } else {
+        // Fallback: download file (desktop)
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = filename
+        a.click()
+        URL.revokeObjectURL(url)
+        setSyncState('done')
+        setStatusMessage('Backup exported! Transfer the file to your other device and import it there.')
+      }
     } catch (e: any) {
+      if (e.name === 'AbortError') {
+        // User cancelled share sheet
+        setSyncState('idle')
+        return
+      }
       setError(e.message)
       setSyncState('error')
     }
@@ -140,18 +160,14 @@ export function QRSyncModal({ isOpen, onClose }: QRSyncModalProps) {
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* QR Pairing Section */}
+          {/* Sync Section */}
           <div className="text-center space-y-3">
             {syncState === 'idle' && (
               <>
                 <p className="text-sm text-muted-foreground">
-                  Sync your data between desktop and phone over your local network.
-                  No cloud. No accounts. Just WiFi.
+                  Move your data between devices. Export on one, import on the other.
+                  No cloud. No accounts. Your data stays yours.
                 </p>
-                <Button onClick={generateQR} className="w-full" size="lg">
-                  <Wifi className="h-4 w-4 mr-2" />
-                  Generate QR Code
-                </Button>
               </>
             )}
 
@@ -203,33 +219,28 @@ export function QRSyncModal({ isOpen, onClose }: QRSyncModalProps) {
             )}
           </div>
 
-          {/* Divider */}
-          <div className="relative py-2">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border" />
-            </div>
-            <div className="relative flex justify-center text-xs">
-              <span className="bg-background px-2 text-muted-foreground">or sync manually</span>
-            </div>
-          </div>
-
-          {/* Manual Export/Import */}
-          <div className="grid grid-cols-2 gap-3">
-            <Button onClick={manualExport} variant="outline" size="sm" disabled={syncState === 'syncing'}>
-              <Upload className="h-4 w-4 mr-1" />
-              Export Backup
-            </Button>
-            <Button onClick={manualImport} variant="outline" size="sm" disabled={syncState === 'syncing'}>
-              <Download className="h-4 w-4 mr-1" />
-              Import Backup
-            </Button>
-          </div>
-          <p className="text-xs text-muted-foreground text-center">
-            Export a JSON backup and transfer it manually (USB, email, carrier pigeon)
-          </p>
-          <p className="text-xs text-destructive/70 text-center">
-            Note: Manual backups are NOT encrypted. For encrypted export, use Data Management &rarr; G-Spot Export.
-          </p>
+          {/* Export/Import — the actual sync */}
+          {syncState === 'idle' && (
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                <Button onClick={manualExport} className="w-full">
+                  <Upload className="h-4 w-4 mr-2" />
+                  Export Data
+                </Button>
+                <Button onClick={manualImport} variant="outline" className="w-full">
+                  <Download className="h-4 w-4 mr-2" />
+                  Import Data
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground text-center">
+                On mobile, Export opens your share sheet (email, drive, bluetooth).
+                On desktop, it downloads a JSON file.
+              </p>
+              <p className="text-xs text-destructive/70 text-center">
+                Note: Backups are NOT encrypted. For encrypted export, use Data Management &rarr; G-Spot Export.
+              </p>
+            </>
+          )}
         </div>
       </DialogContent>
     </Dialog>

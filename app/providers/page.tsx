@@ -28,6 +28,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useDailyData, CATEGORIES, SUBCATEGORIES, formatDateForStorage } from '@/lib/database';
+import { openExternal } from '@/lib/open-external';
 import AppCanvas from '@/components/app-canvas';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -725,7 +726,7 @@ export default function ProvidersPage() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => window.open(`tel:${formData.phone}`)}
+                          onClick={() => openExternal(`tel:${formData.phone}`)}
                         >
                           <Phone className="h-4 w-4" />
                         </Button>
@@ -919,7 +920,7 @@ export default function ProvidersPage() {
                         variant="link"
                         size="sm"
                         className="p-0 h-auto text-sm"
-                        onClick={() => window.open(`tel:${provider.phone}`)}
+                        onClick={() => openExternal(`tel:${provider.phone}`)}
                       >
                         {provider.phone}
                       </Button>
@@ -934,7 +935,7 @@ export default function ProvidersPage() {
                         size="sm"
                         className="p-0 h-auto text-sm text-left justify-start break-words whitespace-normal leading-relaxed"
                         onClick={() => {
-                          window.open(`https://maps.google.com/maps?q=${encodeURIComponent(provider.address)}`, '_blank');
+                          openExternal(`https://maps.google.com/maps?q=${encodeURIComponent(provider.address)}`);
                         }}
                       >
                         <div className="text-left break-words">
@@ -951,7 +952,7 @@ export default function ProvidersPage() {
                         variant="link"
                         size="sm"
                         className="p-0 h-auto text-sm"
-                        onClick={() => window.open(provider.website, '_blank')}
+                        onClick={() => provider.website && openExternal(provider.website)}
                       >
                         Visit Website
                       </Button>

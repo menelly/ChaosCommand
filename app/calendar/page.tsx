@@ -21,7 +21,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronLeft, ChevronRight, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { getTodayLocalDate, formatDateForUrl } from "@/lib/utils/dateUtils"
 import { useDailyData, formatDateForStorage, CATEGORIES, SUBCATEGORIES } from "@/lib/database"
@@ -380,6 +380,16 @@ export default function MonthlyCalendar() {
                   className="w-full min-h-[100px] p-2 text-sm bg-background border rounded resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
                 />
               </div>
+            </div>
+
+            {/* Back to Home Button */}
+            <div className="flex justify-center pt-4">
+              <Button variant="outline" asChild>
+                <a href="/">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Home
+                </a>
+              </Button>
             </div>
       </div>
     </AppCanvas>

@@ -34,8 +34,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { toast } from "@/hooks/use-toast"
 import { useDailyData, formatDateForStorage, CATEGORIES } from '@/lib/database'
 import { format, addDays, subDays } from 'date-fns'
-import { useRouter } from 'next/navigation'
-import { ArrowLeft } from 'lucide-react'
 import {
   Calendar as CalendarIcon,
   ChevronLeft,
@@ -146,7 +144,6 @@ export const EXPOSURE_SOURCES = [
 ]
 
 export function FoodAllergensTracker() {
-  const router = useRouter()
   const { goblinMode } = useGoblinMode()
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [activeTab, setActiveTab] = useState("allergens")
@@ -549,14 +546,6 @@ export function FoodAllergensTracker() {
           />
         </TabsContent>
       </Tabs>
-
-      {/* Back to Body Button */}
-      <div className="mt-6 flex justify-center">
-        <Button variant="outline" onClick={() => router.push('/body')}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Body
-        </Button>
-      </div>
 
       {/* Add Entry Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>

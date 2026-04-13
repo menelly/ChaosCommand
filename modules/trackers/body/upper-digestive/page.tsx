@@ -734,7 +734,7 @@ export default function UpperDigestiveTracker() {
               {/* Triggers */}
               <div>
                 <Label>Possible Triggers</Label>
-                <div className="grid grid-cols-3 gap-2 mt-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
                   {COMMON_TRIGGERS.map((trigger) => (
                     <Button
                       key={trigger}
@@ -752,7 +752,7 @@ export default function UpperDigestiveTracker() {
               {/* Treatments */}
               <div>
                 <Label>Treatments Used</Label>
-                <div className="grid grid-cols-3 gap-2 mt-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
                   {COMMON_TREATMENTS.map((treatment) => (
                     <Button
                       key={treatment}

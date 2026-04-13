@@ -35,7 +35,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { toast } from "@/hooks/use-toast"
 import { useDailyData, formatDateForStorage, CATEGORIES } from '@/lib/database'
 import { format, addDays, subDays } from 'date-fns'
-import { useRouter } from 'next/navigation'
 import {
   Calendar as CalendarIcon,
   ChevronLeft,
@@ -46,7 +45,6 @@ import {
   Sparkles,
   History,
   TrendingUp,
-  ArrowLeft
 } from 'lucide-react'
 import { cn } from "@/lib/utils"
 
@@ -112,7 +110,6 @@ export const FERTILITY_SYMPTOM_OPTIONS = [
 ]
 
 export default function ReproductiveHealthTracker() {
-  const router = useRouter()
   const { saveData, getSpecificData, getDateRange, deleteData, isLoading } = useDailyData()
   const [currentDate, setCurrentDate] = useState(() => {
     const today = new Date()
@@ -548,13 +545,6 @@ export default function ReproductiveHealthTracker() {
         </TabsContent>
       </Tabs>
 
-      {/* Back to Body Button */}
-      <div className="mt-6 flex justify-center">
-        <Button variant="outline" onClick={() => router.push('/body')}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Body
-        </Button>
-      </div>
     </div>
   )
 }

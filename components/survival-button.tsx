@@ -275,7 +275,7 @@ export default function SurvivalButton() {
 
 
 
-        <div className="flex items-start gap-6">
+        <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6">
           <div className="flex flex-col items-center gap-2">
             <Button
               onClick={handleCheckboxChange}

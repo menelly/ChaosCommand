@@ -40,9 +40,7 @@ import {
   BarChart3,
   Edit,
   Trash2,
-  ArrowLeft
 } from 'lucide-react'
-import { useRouter } from 'next/navigation'
 import { cn } from "@/lib/utils"
 // DailyDashboardToggle removed - feature deprecated
 
@@ -55,7 +53,6 @@ import { AllergenForm } from './allergen-form'
 import { getSeverityColor } from './weather-constants'
 
 export default function WeatherEnvironmentTracker({ selectedDate = new Date() }: WeatherEnvironmentTrackerProps) {
-  const router = useRouter()
   // State management
   const [currentDate, setCurrentDate] = useState<Date>(selectedDate)
   const [activeTab, setActiveTab] = useState("weather")
@@ -593,17 +590,17 @@ export default function WeatherEnvironmentTracker({ selectedDate = new Date() }:
       {/* Date Navigation */}
       <Card>
         <CardContent className="pt-6">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-1">
             <Button variant="outline" size="sm" onClick={goToPreviousDay}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            
-            <div className="flex items-center gap-4">
+
+            <div className="flex items-center gap-2">
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-[240px] justify-start text-left font-normal">
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {format(currentDate, "PPP")}
+                  <Button variant="outline" className="justify-start text-left font-normal text-xs sm:text-sm">
+                    <CalendarIcon className="mr-1 sm:mr-2 h-4 w-4 flex-shrink-0" />
+                    {format(currentDate, "MMM d, yyyy")}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -904,13 +901,6 @@ export default function WeatherEnvironmentTracker({ selectedDate = new Date() }:
         isEditing={true}
       />
 
-      {/* Back to Body Button */}
-      <div className="flex justify-center pt-4">
-        <Button variant="outline" onClick={() => router.push('/body')}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Body
-        </Button>
-      </div>
     </div>
   )
 }

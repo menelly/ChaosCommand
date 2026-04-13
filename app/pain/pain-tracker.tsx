@@ -438,8 +438,8 @@ export default function PainTracker() {
 
         <TabsContent value="track" className="space-y-6">
           {/* Date Navigation */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-1 sm:gap-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -454,9 +454,9 @@ export default function PainTracker() {
 
               <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="min-w-[200px]">
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {selectedDate ? format(new Date(selectedDate), 'EEEE, MMMM d, yyyy') : 'Invalid Date'}
+                  <Button variant="outline" className="text-xs sm:text-sm">
+                    <CalendarIcon className="mr-1 sm:mr-2 h-4 w-4" />
+                    {selectedDate ? format(new Date(selectedDate), 'MMM d, yyyy') : 'Invalid Date'}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -590,12 +590,6 @@ export default function PainTracker() {
           />
         </TabsContent>
       </Tabs>
-
-      <div className="text-center mt-6">
-        <Button variant="outline" onClick={() => window.location.href = '/body'}>
-          ← Back to Body
-        </Button>
-      </div>
 
       {/* Add Pain Entry Modal */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>

@@ -20,11 +20,22 @@
  */
 import AppCanvas from "@/components/app-canvas"
 import MovementTracker from './movement-tracker'
+import { Button } from "@/components/ui/button"
+import { ArrowLeft } from "lucide-react"
 
 export default function MovementPage() {
   return (
     <AppCanvas>
       <MovementTracker />
+      {/* Back to Choice Button */}
+      <div className="flex justify-center pt-4">
+        <Button variant="outline" asChild>
+          <a href="/choice">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Choice
+          </a>
+        </Button>
+      </div>
     </AppCanvas>
   )
 }

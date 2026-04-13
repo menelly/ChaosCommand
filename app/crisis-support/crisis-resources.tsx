@@ -21,6 +21,7 @@
 "use client"
 
 import React, { useState } from 'react'
+import { openExternal } from '@/lib/open-external'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -90,11 +91,11 @@ export function CrisisResources() {
   }
 
   const openPhone = (phone: string) => {
-    window.open(`tel:${phone}`, '_self')
+    openExternal(`tel:${phone}`)
   }
 
   const openWebsite = (url: string) => {
-    window.open(url, '_blank', 'noopener,noreferrer')
+    openExternal(url)
   }
 
   return (

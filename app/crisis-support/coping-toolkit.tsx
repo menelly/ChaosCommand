@@ -21,6 +21,7 @@
 "use client"
 
 import React, { useState } from 'react'
+import { openExternal } from '@/lib/open-external'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -297,7 +298,7 @@ export function CopingToolkit() {
               
               {selectedStrategyData.category === 'immediate' && (
                 <Button
-                  onClick={() => window.open('tel:988', '_self')}
+                  onClick={() => openExternal('tel:988')}
                   variant="destructive"
                 >
                   <Phone className="h-4 w-4 mr-2" />

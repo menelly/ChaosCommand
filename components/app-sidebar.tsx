@@ -22,8 +22,8 @@
 
 import { useState, useEffect } from "react"
 import { X, Menu } from "lucide-react"
-import Image from "next/image"
 import Link from "next/link"
+import { homeImageData } from "@/lib/home-image"
 
 
 export default function AppSidebar() {
@@ -279,10 +279,11 @@ export default function AppSidebar() {
             href={getHomeHref()}
             className="mb-1 rounded-lg text-center transition-all p-1 w-full hover:opacity-80 block"
             title="Home - Command Center"
+            onClick={() => isMobile && setShowSidebar(false)}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/home.png"
+              src={homeImageData}
               alt="Home"
               width={120}
               height={120}
@@ -310,6 +311,7 @@ export default function AppSidebar() {
                 href={getHref(item.targetPageId)}
                 className={`w-full rounded font-medium py-1.5 px-1 text-center text-xs hover:opacity-80 mb-1 block border border-border ${item.buttonClass}`}
                 title={item.text}
+                onClick={() => isMobile && setShowSidebar(false)}
               >
                 {item.emoji && <span style={{ marginRight: '4px' }}>{item.emoji}</span>}
                 {item.text}
@@ -329,6 +331,7 @@ export default function AppSidebar() {
             href={getHref('logout')}
             className="mt-2 rounded text-xs font-medium transition-all py-1.5 px-1 hover:opacity-80 block text-center sidebar-btn-5"
             title="Logout"
+            onClick={() => isMobile && setShowSidebar(false)}
           >
             🚪 Logout
           </Link>
@@ -338,6 +341,7 @@ export default function AppSidebar() {
             href={getHref('settings')}
             className="mt-2 rounded text-xs font-medium transition-all py-1.5 px-1 hover:opacity-80 block text-center sidebar-btn-6"
             title="Settings"
+            onClick={() => isMobile && setShowSidebar(false)}
           >
             ⚙️ Settings
           </Link>

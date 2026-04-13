@@ -248,7 +248,7 @@ export default function CustomTrackerAnalytics({ tracker, entries }: CustomTrack
                 {/* Numeric Fields */}
                 {(field.type === 'scale' || field.type === 'number') && fieldStats.average && (
                   <div className="space-y-3">
-                    <div className="grid grid-cols-3 gap-4 text-center">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-center">
                       <div>
                         <div className="text-xl font-bold">{fieldStats.average}</div>
                         <div className="text-xs text-muted-foreground">Average</div>

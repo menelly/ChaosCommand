@@ -203,6 +203,7 @@ export default function SettingsPage() {
           <Button variant="outline" onClick={() => window.history.back()}>
             ← Back to Command Center
           </Button>
+          <p className="text-xs text-muted-foreground mt-4">Build: 2026-04-12-21:00</p>
         </div>
       </AppCanvas>
     </div>

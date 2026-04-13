@@ -30,7 +30,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
-import { Heart, ArrowLeft, BarChart3, History, Plus, ExternalLink } from 'lucide-react'
+import { Heart, BarChart3, History, Plus, ExternalLink } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { useNotifications } from '@/hooks/use-notifications'
 import { useRouter } from 'next/navigation'
@@ -409,14 +409,6 @@ export default function DysautonomiaTracker() {
           />
         </TabsContent>
       </Tabs>
-
-      {/* Back to Body Button */}
-      <div className="mt-6 flex justify-center">
-        <Button variant="outline" onClick={() => router.push('/body')}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Body
-        </Button>
-      </div>
 
       {/* Episode Modals */}
       <PotsEpisodeModal

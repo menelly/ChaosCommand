@@ -96,7 +96,7 @@ export default function MentalHealthIndex() {
           icon: <Wrench className="h-5 w-5" />,
           status: 'available',
           isCustom: true,
-          href: `/custom-tracker/${tracker.id}`
+          href: `/custom-tracker?id=${tracker.id}`
         }))
 
         setCustomTrackers(customTrackerButtons)
@@ -115,7 +115,7 @@ export default function MentalHealthIndex() {
             icon: <Wrench className="h-5 w-5" />,
             status: 'available',
             isCustom: true,
-            href: `/custom-tracker/${tracker.id}`
+            href: `/custom-tracker?id=${tracker.id}`
           }
 
           setCustomTrackers([customTrackerButton])

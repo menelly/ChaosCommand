@@ -631,7 +631,7 @@ export default function WorkDisabilityPage() {
                         placeholder="Your role" className="mt-1" />
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                     <div>
                       <Label className="text-[var(--text-main)]">Start Date</Label>
                       <Input type="date" value={employmentForm.dateStarted}
@@ -808,7 +808,7 @@ export default function WorkDisabilityPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                     <div>
                       <Label className="text-[var(--text-main)]">Date Submitted</Label>
                       <Input type="date" value={appForm.dateSubmitted}
@@ -828,7 +828,7 @@ export default function WorkDisabilityPage() {
                         className="mt-1 border-red-200" />
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                     <div>
                       <Label className="text-[var(--text-main)]">Agency</Label>
                       <Input value={appForm.agency}
