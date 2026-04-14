@@ -82,16 +82,16 @@ export async function getNerPipeline(
 
     const { pipeline: pipelineFn } = await getTransformers();
 
-    // Configure Transformers.js to look for models in our bundled public/ directory.
-    // The model files are in public/models/ner/ which Tauri serves at /models/ner/.
-    // By setting localModelPath, Transformers.js will check there first before HuggingFace.
+    // Model loads directly from HuggingFace CDN on first use, then cached by the browser.
+    // We don't bundle the ~64MB ONNX model — it would bloat the APK/IPA and the CDN
+    // handles caching better than we can. Works on Android, iOS, and desktop.
+    // NOTE: local models were disabled because Tauri's WebView returns 404 HTML pages
+    // instead of proper 404 responses, which Transformers.js tries to parse as JSON.
     const { env: tfEnv } = await getTransformers();
-    const origin = typeof window !== 'undefined' ? window.location.origin : '';
-    tfEnv.localModelPath = `${origin}/models/`;
-    tfEnv.allowLocalModels = true;
-    tfEnv.allowRemoteModels = true;  // Fallback to HuggingFace if local fails
+    tfEnv.allowLocalModels = false;
+    tfEnv.allowRemoteModels = true;
 
-    console.log(`📦 Model search paths: local=${tfEnv.localModelPath}, remote=HuggingFace`);
+    console.log(`📦 Model source: HuggingFace CDN (cached by browser after first load)`);
 
     const pipe = await pipelineFn('token-classification', MODEL_ID, {
       ...MODEL_OPTIONS,

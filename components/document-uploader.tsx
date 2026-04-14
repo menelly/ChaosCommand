@@ -236,7 +236,7 @@ export default function DocumentUploader({ onEventsExtracted, className = "" }: 
     }
   };
 
-  // 🔥 LOCAL NER PROCESSING — No Flask, no sidecar, no port, no CORS!
+  // 🔥 LOCAL NER PROCESSING — Browser-side, no sidecar, no port, no CORS!
   // Transformers.js runs the same d4data/biomedical-ner-all model directly in the browser.
   const processFileWithBackend = async (file: File): Promise<{extractedText: string, events: ParsedMedicalEvent[]}> => {
     try {

@@ -21,7 +21,7 @@
 /**
  * DYSAUTONOMIA ANALYTICS DESKTOP COMPONENT 🩺
  * Medical-grade analytics for dysautonomia episode tracking
- * Uses Flask backend for advanced statistical analysis and chart generation
+ * Uses browser-side processing for advanced statistical analysis and chart generation
  */
 
 'use client'

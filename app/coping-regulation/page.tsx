@@ -552,7 +552,7 @@ export default function CopingRegulationPage() {
                   )}
 
                   {/* Controls */}
-                  <div className="flex justify-center gap-2 mb-4">
+                  <div className="flex flex-wrap justify-center gap-2 mb-4">
                     {!isActive ? (
                       <Button onClick={resumeSession} size="lg">
                         <Play className="h-5 w-5 mr-2" />
@@ -688,7 +688,7 @@ export default function CopingRegulationPage() {
                 {/* Completion */}
                 <div className="border-t pt-6">
                   <h3 className="font-semibold text-center mb-4">How are you feeling?</h3>
-                  <div className="flex flex-wrap justify-center gap-3">
+                  <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-3">
                     <Button onClick={() => completeSession(true)} className="bg-green-500 hover:bg-green-600">
                       <ThumbsUp className="h-5 w-5 mr-2" />
                       This helped!

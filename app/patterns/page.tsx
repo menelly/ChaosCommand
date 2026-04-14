@@ -190,25 +190,28 @@ export default function PatternsPage() {
 
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="overview" className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" />
-              Overview
+          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 h-auto gap-1 p-1">
+            <TabsTrigger value="overview" className="flex items-center gap-1 text-xs sm:text-sm">
+              <TrendingUp className="h-4 w-4 shrink-0" />
+              <span className="hidden sm:inline">Overview</span>
+              <span className="sm:hidden">Overview</span>
             </TabsTrigger>
-            <TabsTrigger value="correlations" className="flex items-center gap-2">
-              <Network className="h-4 w-4" />
-              Correlations
+            <TabsTrigger value="correlations" className="flex items-center gap-1 text-xs sm:text-sm">
+              <Network className="h-4 w-4 shrink-0" />
+              <span className="hidden sm:inline">Correlations</span>
+              <span className="sm:hidden">Corr.</span>
             </TabsTrigger>
-            <TabsTrigger value="triggers" className="flex items-center gap-2">
-              <Zap className="h-4 w-4" />
+            <TabsTrigger value="triggers" className="flex items-center gap-1 text-xs sm:text-sm">
+              <Zap className="h-4 w-4 shrink-0" />
               Triggers
             </TabsTrigger>
-            <TabsTrigger value="treatments" className="flex items-center gap-2">
-              <Target className="h-4 w-4" />
-              Treatments
+            <TabsTrigger value="treatments" className="flex items-center gap-1 text-xs sm:text-sm">
+              <Target className="h-4 w-4 shrink-0" />
+              <span className="hidden sm:inline">Treatments</span>
+              <span className="sm:hidden">Treat.</span>
             </TabsTrigger>
-            <TabsTrigger value="trends" className="flex items-center gap-2">
-              <BarChart3 className="h-4 w-4" />
+            <TabsTrigger value="trends" className="flex items-center gap-1 text-xs sm:text-sm">
+              <BarChart3 className="h-4 w-4 shrink-0" />
               Trends
             </TabsTrigger>
           </TabsList>

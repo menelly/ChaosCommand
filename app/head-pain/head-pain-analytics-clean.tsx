@@ -80,7 +80,7 @@ export default function HeadPainAnalyticsDesktop({ className }: AnalyticsProps) 
         }
       }
 
-      // Send to Flask for analytics processing
+      // Send for analytics processing
       const { backendFetch, FLASK_URL } = await import('@/lib/utils/tauri-fetch');
       const response = await backendFetch(`${FLASK_URL}/api/analytics/head-pain`, {
         method: 'POST',
@@ -160,7 +160,7 @@ export default function HeadPainAnalyticsDesktop({ className }: AnalyticsProps) 
     )
   }
 
-  // Extract data from Flask analytics response
+  // Extract data from analytics response
   const totalEpisodes = analyticsData?.total_episodes || 0
   const avgPainIntensity = analyticsData?.pain_intensity?.average || 0
   const avgTreatmentEffectiveness = analyticsData?.treatments?.average_effectiveness || 0
@@ -169,7 +169,7 @@ export default function HeadPainAnalyticsDesktop({ className }: AnalyticsProps) 
   const insights = analyticsData?.insights || []
   const auraRate = analyticsData?.aura?.aura_rate || 0
 
-  // Export Flask analytics data
+  // Export analytics data
   const exportAnalyticsData = () => {
     if (!analyticsData) {
       console.error('No analytics data to export')

@@ -625,7 +625,7 @@ export default function BrainFogTracker() {
               <CardContent>
                 <Button
                   onClick={() => setIsAddDialogOpen(true)}
-                  className="w-full h-12 text-lg"
+                  className="w-full min-h-12 text-lg"
                   size="lg"
                 >
                   <Plus className="h-5 w-5 mr-2" />
@@ -814,7 +814,7 @@ export default function BrainFogTracker() {
                     <Button
                       key={level.value}
                       variant={severity === level.value ? "default" : "outline"}
-                      className={`h-12 flex flex-col items-center justify-center text-xs ${
+                      className={`min-h-12 flex flex-col items-center justify-center text-xs ${
                         severity === level.value ? "ring-2 ring-primary" : ""
                       }`}
                       onClick={() => setSeverity(level.value)}

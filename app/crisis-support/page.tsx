@@ -247,31 +247,31 @@ export default function CrisisSupport() {
         {/* Main Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-4 lg:grid-cols-7 gap-1 h-auto p-1">
-            <TabsTrigger value="immediate" className="flex flex-col items-center gap-1 h-16 px-2">
+            <TabsTrigger value="immediate" className="flex flex-col items-center gap-1 min-h-16 px-2">
               <AlertTriangle className="h-4 w-4" />
               <span className="text-xs font-medium">Help</span>
             </TabsTrigger>
-            <TabsTrigger value="resources" className="flex flex-col items-center gap-1 h-16 px-2">
+            <TabsTrigger value="resources" className="flex flex-col items-center gap-1 min-h-16 px-2">
               <Phone className="h-4 w-4" />
               <span className="text-xs font-medium">Resources</span>
             </TabsTrigger>
-            <TabsTrigger value="coping" className="flex flex-col items-center gap-1 h-16 px-2">
+            <TabsTrigger value="coping" className="flex flex-col items-center gap-1 min-h-16 px-2">
               <Lightbulb className="h-4 w-4" />
               <span className="text-xs font-medium">Coping</span>
             </TabsTrigger>
-            <TabsTrigger value="safety" className="flex flex-col items-center gap-1 h-16 px-2">
+            <TabsTrigger value="safety" className="flex flex-col items-center gap-1 min-h-16 px-2">
               <Shield className="h-4 w-4" />
               <span className="text-xs font-medium">Safety</span>
             </TabsTrigger>
-            <TabsTrigger value="hope" className="flex flex-col items-center gap-1 h-16 px-2">
+            <TabsTrigger value="hope" className="flex flex-col items-center gap-1 min-h-16 px-2">
               <Star className="h-4 w-4" />
               <span className="text-xs font-medium">Hope</span>
             </TabsTrigger>
-            <TabsTrigger value="track" className="flex flex-col items-center gap-1 h-16 px-2">
+            <TabsTrigger value="track" className="flex flex-col items-center gap-1 min-h-16 px-2">
               <FileText className="h-4 w-4" />
               <span className="text-xs font-medium">Track</span>
             </TabsTrigger>
-            <TabsTrigger value="insights" className="flex flex-col items-center gap-1 h-16 px-2">
+            <TabsTrigger value="insights" className="flex flex-col items-center gap-1 min-h-16 px-2">
               <BarChart3 className="h-4 w-4" />
               <span className="text-xs font-medium">Insights</span>
             </TabsTrigger>
@@ -320,7 +320,7 @@ export default function CrisisSupport() {
                     <Button
                       onClick={() => setActiveTab("coping")}
                       variant="outline"
-                      className="h-16"
+                      className="min-h-16"
                     >
                       <div className="text-center">
                         <Lightbulb className="h-6 w-6 mx-auto mb-1" />
@@ -331,7 +331,7 @@ export default function CrisisSupport() {
                     <Button
                       onClick={() => setActiveTab("safety")}
                       variant="outline"
-                      className="h-16"
+                      className="min-h-16"
                     >
                       <div className="text-center">
                         <Shield className="h-6 w-6 mx-auto mb-1" />
@@ -342,7 +342,7 @@ export default function CrisisSupport() {
                     <Button
                       onClick={() => setActiveTab("hope")}
                       variant="outline"
-                      className="h-16"
+                      className="min-h-16"
                     >
                       <div className="text-center">
                         <Star className="h-6 w-6 mx-auto mb-1" />
@@ -353,7 +353,7 @@ export default function CrisisSupport() {
                     <Button
                       onClick={() => setActiveTab("resources")}
                       variant="outline"
-                      className="h-16"
+                      className="min-h-16"
                     >
                       <div className="text-center">
                         <Users className="h-6 w-6 mx-auto mb-1" />

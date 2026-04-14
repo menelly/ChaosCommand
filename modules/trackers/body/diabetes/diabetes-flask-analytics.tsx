@@ -19,10 +19,10 @@
  * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
  */
 /**
- * DIABETES FLASK ANALYTICS COMPONENT 🩸
- * Flask-powered analytics with medical insights and encouraging data
- * 
- * Calls the Flask backend for advanced analytics instead of local processing
+ * DIABETES ANALYTICS COMPONENT 🩸
+ * Built-in analytics with medical insights and encouraging data
+ *
+ * Browser-side analytics processing
  */
 
 'use client'

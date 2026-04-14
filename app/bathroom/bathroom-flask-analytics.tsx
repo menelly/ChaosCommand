@@ -19,8 +19,8 @@
  * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
  */
 /**
- * BATHROOM FLASK ANALYTICS COMPONENT 💩
- * Flask-powered lower digestive analytics, Bristol Scale analysis, and bowel movement pattern detection
+ * BATHROOM ANALYTICS COMPONENT 💩
+ * Built-in lower digestive analytics, Bristol Scale analysis, and bowel movement pattern detection
  * 
  * Because digestive health data deserves proper analysis! 🚽✨
  */
@@ -106,7 +106,7 @@ export default function BathroomFlaskAnalytics({ entries, currentDate, loadAllEn
   const [error, setError] = useState<string | null>(null)
   const [dateRange, setDateRange] = useState('all')
 
-  // Load Flask analytics when entries change
+  // Load analytics when entries change
   useEffect(() => {
     loadFlaskAnalytics()
   }, [dateRange])
@@ -127,7 +127,7 @@ export default function BathroomFlaskAnalytics({ entries, currentDate, loadAllEn
         return
       }
 
-      // 🚨 CRITICAL: Map actual data structure to Flask format
+      // 🚨 CRITICAL: Map actual data structure to analytics format
       const flaskEntries = allEntries.map(entry => ({
         date: entry.date,
         time: entry.time,
@@ -209,7 +209,7 @@ export default function BathroomFlaskAnalytics({ entries, currentDate, loadAllEn
 
       setAnalyticsData(data)
     } catch (err) {
-      console.error('Flask bathroom analytics error:', err)
+      console.error('Bathroom analytics error:', err)
       setError(err instanceof Error ? err.message : 'Failed to load analytics')
     } finally {
       setLoading(false)
@@ -221,7 +221,7 @@ export default function BathroomFlaskAnalytics({ entries, currentDate, loadAllEn
       <Card>
         <CardContent className="p-8 text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading Flask-powered bathroom analytics...</p>
+          <p className="text-muted-foreground">Loading bathroom analytics...</p>
         </CardContent>
       </Card>
     )
@@ -248,7 +248,7 @@ export default function BathroomFlaskAnalytics({ entries, currentDate, loadAllEn
           <Activity className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
           <h3 className="text-lg font-semibold mb-2">No Bathroom Data</h3>
           <p className="text-muted-foreground">
-            Record bathroom visits to see Flask-powered digestive health analytics!
+            Record bathroom visits to see digestive health analytics!
           </p>
         </CardContent>
       </Card>
@@ -263,7 +263,7 @@ export default function BathroomFlaskAnalytics({ entries, currentDate, loadAllEn
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold flex items-center gap-2">
           <Activity className="h-6 w-6 text-brown-500" />
-          Flask-Powered Bathroom Analytics 💩
+          Built-In Bathroom Analytics 💩
         </h2>
         <Select value={dateRange} onValueChange={setDateRange}>
           <SelectTrigger className="w-32">

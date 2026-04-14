@@ -19,8 +19,8 @@
  * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
  */
 /**
- * HEAD PAIN FLASK ANALYTICS COMPONENT 🧠
- * Flask-powered migraine tracking, trigger analysis, and pain pattern detection
+ * HEAD PAIN ANALYTICS COMPONENT 🧠
+ * Built-in migraine tracking, trigger analysis, and pain pattern detection
  * 
  * Because head pain patterns are CRUCIAL for management! 💊
  */
@@ -123,7 +123,7 @@ export default function HeadPainFlaskAnalytics({ entries, currentDate, loadAllEn
   const [error, setError] = useState<string | null>(null)
   const [dateRange, setDateRange] = useState('all')
 
-  // Load Flask analytics when date range changes
+  // Load analytics when date range changes
   useEffect(() => {
     loadFlaskAnalytics()
   }, [dateRange])
@@ -286,7 +286,7 @@ export default function HeadPainFlaskAnalytics({ entries, currentDate, loadAllEn
 
       setAnalyticsData(data)
     } catch (err) {
-      console.error('Flask head pain analytics error:', err)
+      console.error('Head pain analytics error:', err)
       setError(err instanceof Error ? err.message : 'Failed to load analytics')
     } finally {
       setLoading(false)
@@ -298,7 +298,7 @@ export default function HeadPainFlaskAnalytics({ entries, currentDate, loadAllEn
       <Card>
         <CardContent className="p-8 text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading Flask-powered head pain analytics...</p>
+          <p className="text-muted-foreground">Loading head pain analytics...</p>
         </CardContent>
       </Card>
     )
@@ -348,7 +348,7 @@ export default function HeadPainFlaskAnalytics({ entries, currentDate, loadAllEn
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold flex items-center gap-2">
           <Brain className="h-6 w-6 text-purple-500" />
-          Flask-Powered Head Pain Analytics 🧠
+          Built-In Head Pain Analytics 🧠
         </h2>
         <Select value={dateRange} onValueChange={setDateRange}>
           <SelectTrigger className="w-32">

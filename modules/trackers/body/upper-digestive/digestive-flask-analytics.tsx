@@ -19,8 +19,8 @@
  * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
  */
 /**
- * DIGESTIVE FLASK ANALYTICS COMPONENT 🍽️
- * Flask-powered digestive tracking, symptom analysis, and food correlation detection
+ * DIGESTIVE ANALYTICS COMPONENT 🍽️
+ * Built-in digestive tracking, symptom analysis, and food correlation detection
  * 
  * Because digestive patterns matter for gut health! 🦠
  */

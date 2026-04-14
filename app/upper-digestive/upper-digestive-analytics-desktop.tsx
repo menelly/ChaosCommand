@@ -101,7 +101,7 @@ export default function UpperDigestiveAnalyticsDesktop({ className }: AnalyticsP
       const filteredEntries = filterForAnalytics(allEntries)
       console.log('🫃 Upper digestive analytics - after tag filtering:', filteredEntries.length, '(excluded:', allEntries.length - filteredEntries.length, ')')
 
-      // Send to Flask for analytics processing
+      // Send for analytics processing
       const { backendFetch, FLASK_URL } = await import('@/lib/utils/tauri-fetch');
       const response = await backendFetch(`${FLASK_URL}/api/analytics/upper-digestive`, {
         method: 'POST',
@@ -129,7 +129,7 @@ export default function UpperDigestiveAnalyticsDesktop({ className }: AnalyticsP
     }
   }
 
-  // Extract data from Flask analytics response
+  // Extract data from analytics response
   const totalEntries = analyticsData?.total_episodes || 0
   const avgSeverity = analyticsData?.severity?.average || 0
 
@@ -161,9 +161,9 @@ export default function UpperDigestiveAnalyticsDesktop({ className }: AnalyticsP
   // For trend chart - we'll use a simple daily count for now
   const trendData = [{ date: 'No trend data', count: 0 }] // Placeholder
 
-  // No more client-side calculations needed - all handled by Flask!
+  // No more manual calculations needed - handled by analytics service!
 
-  // Export Flask analytics data
+  // Export analytics data
   const exportAnalyticsData = () => {
     if (!analyticsData) {
       console.error('No analytics data to export')

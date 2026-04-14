@@ -259,7 +259,7 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
         workData = { missedWork, employment, applications }
       }
 
-      // Generate PDF client-side (no Flask needed!)
+      // Generate PDF client-side
       const blob = generateMedicalReport({
         demographics,
         providerName,

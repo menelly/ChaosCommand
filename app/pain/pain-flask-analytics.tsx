@@ -19,8 +19,8 @@
  * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
  */
 /**
- * GENERAL PAIN FLASK ANALYTICS COMPONENT 🔥
- * Flask-powered general pain analytics, pain level analysis, location patterns, and treatment effectiveness
+ * GENERAL PAIN ANALYTICS COMPONENT 🔥
+ * Built-in general pain analytics, pain level analysis, location patterns, and treatment effectiveness
  * 
  * Because pain tracking deserves proper analysis! ⚡💪
  */
@@ -111,7 +111,7 @@ export default function PainFlaskAnalytics({ entries, currentDate, loadAllEntrie
   const [error, setError] = useState<string | null>(null)
   const [dateRange, setDateRange] = useState('all')
 
-  // Load Flask analytics when entries change
+  // Load analytics when entries change
   useEffect(() => {
     loadFlaskAnalytics()
   }, [dateRange])
@@ -132,7 +132,7 @@ export default function PainFlaskAnalytics({ entries, currentDate, loadAllEntrie
         return
       }
 
-      // 🚨 CRITICAL: Map actual data structure to Flask format
+      // 🚨 CRITICAL: Map actual data structure to analytics format
       const flaskEntries = allEntries.map(entry => ({
         date: entry.date,
         painLevel: entry.painLevel,
@@ -235,7 +235,7 @@ export default function PainFlaskAnalytics({ entries, currentDate, loadAllEntrie
 
       setAnalyticsData(data)
     } catch (err) {
-      console.error('Flask pain analytics error:', err)
+      console.error('Pain analytics error:', err)
       setError(err instanceof Error ? err.message : 'Failed to load analytics')
     } finally {
       setLoading(false)
@@ -247,7 +247,7 @@ export default function PainFlaskAnalytics({ entries, currentDate, loadAllEntrie
       <Card>
         <CardContent className="p-8 text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading Flask-powered pain analytics...</p>
+          <p className="text-muted-foreground">Loading pain analytics...</p>
         </CardContent>
       </Card>
     )
@@ -274,7 +274,7 @@ export default function PainFlaskAnalytics({ entries, currentDate, loadAllEntrie
           <Zap className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
           <h3 className="text-lg font-semibold mb-2">No Pain Data</h3>
           <p className="text-muted-foreground">
-            Record pain episodes to see Flask-powered pain analytics!
+            Record pain episodes to see pain analytics!
           </p>
         </CardContent>
       </Card>
@@ -289,7 +289,7 @@ export default function PainFlaskAnalytics({ entries, currentDate, loadAllEntrie
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold flex items-center gap-2">
           <Zap className="h-6 w-6 text-red-500" />
-          Flask-Powered Pain Analytics 🔥
+          Built-In Pain Analytics 🔥
         </h2>
         <Select value={dateRange} onValueChange={setDateRange}>
           <SelectTrigger className="w-32">

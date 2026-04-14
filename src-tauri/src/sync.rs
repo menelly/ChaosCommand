@@ -7,9 +7,9 @@
  */
 
 use serde::{Deserialize, Serialize};
-use std::net::{IpAddr, TcpListener};
+use std::net::TcpListener;
 use std::sync::Mutex;
-use tauri::{command, Manager, State};
+use tauri::{command, State};
 
 /// Sync session state managed by Tauri
 pub struct SyncState {

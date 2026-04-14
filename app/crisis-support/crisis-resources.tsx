@@ -103,18 +103,18 @@ export function CrisisResources() {
       {/* Emergency Banner */}
       <Card className="border-red-200 bg-red-50">
         <CardContent className="p-4">
-          <div className="flex items-center gap-3">
-            <Shield className="h-6 w-6 text-red-600" />
-            <div>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+            <Shield className="h-6 w-6 text-red-600 shrink-0" />
+            <div className="flex-1">
               <div className="font-bold text-red-800">In Immediate Danger?</div>
               <div className="text-sm text-red-700">
                 Call 911 (US), 999 (UK), 112 (EU), or your local emergency number immediately.
               </div>
             </div>
-            <Button 
-              variant="destructive" 
+            <Button
+              variant="destructive"
               onClick={() => openPhone('911')}
-              className="ml-auto"
+              className="sm:ml-auto w-full sm:w-auto"
             >
               <Phone className="h-4 w-4 mr-2" />
               Call 911
@@ -126,18 +126,18 @@ export function CrisisResources() {
       {/* Quick Access - 988 */}
       <Card className="border-blue-200 bg-blue-50">
         <CardContent className="p-4">
-          <div className="flex items-center gap-3">
-            <Heart className="h-6 w-6 text-blue-600" />
-            <div>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+            <Heart className="h-6 w-6 text-blue-600 shrink-0" />
+            <div className="flex-1">
               <div className="font-bold text-blue-800">988 Suicide & Crisis Lifeline</div>
               <div className="text-sm text-blue-700">
                 Free, confidential support 24/7 for people in distress
               </div>
             </div>
-            <Button 
-              variant="default" 
+            <Button
+              variant="default"
               onClick={() => openPhone('988')}
-              className="ml-auto bg-blue-600 hover:bg-blue-700"
+              className="sm:ml-auto w-full sm:w-auto bg-blue-600 hover:bg-blue-700"
             >
               <Phone className="h-4 w-4 mr-2" />
               Call 988
@@ -254,7 +254,7 @@ export function CrisisResources() {
                     </div>
                     <p className="text-muted-foreground">{resource.description}</p>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2 shrink-0">
                     {resource.phone && (
                       <Button
                         variant="default"

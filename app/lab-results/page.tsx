@@ -155,7 +155,7 @@ export default function LabResultsPage() {
       console.error("Lab upload failed:", e)
       const msg = e?.message || String(e)
       if (msg.includes('Failed to fetch')) {
-        alert(`Could not reach Flask backend. Is it running?\n\nIf the file is very large, it may exceed the request size limit.`)
+        alert(`Could not process lab results. The file may be too large or in an unsupported format.`)
       } else {
         alert(`Lab parsing failed: ${msg}`)
       }
@@ -471,7 +471,7 @@ export default function LabResultsPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/20 h-8 p-0 px-1 text-xs"
+                          className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/20 min-h-[44px] p-0 px-1 text-xs"
                           onClick={(e) => {
                             e.stopPropagation()
                             handleAddToTimeline(report, false)
@@ -484,7 +484,7 @@ export default function LabResultsPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 h-8 p-0 px-1 text-xs"
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 min-h-[44px] p-0 px-1 text-xs"
                             onClick={(e) => {
                               e.stopPropagation()
                               handleAddToTimeline(report, true)
@@ -497,7 +497,7 @@ export default function LabResultsPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 h-8 w-8 p-0"
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 min-h-[44px] min-w-[44px] p-0"
                           onClick={(e) => {
                             e.stopPropagation()
                             handleDeleteReport(report)
@@ -598,11 +598,11 @@ export default function LabResultsPage() {
                                         <td className="py-1"></td>
                                         <td className="py-1">
                                           <div className="flex gap-1">
-                                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-green-600"
+                                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0 min-h-[44px] min-w-[44px] text-green-600"
                                               onClick={() => saveEdit(report)} title="Save">
                                               <Save className="h-3 w-3" />
                                             </Button>
-                                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-gray-500"
+                                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0 min-h-[44px] min-w-[44px] text-gray-500"
                                               onClick={() => { setEditingTest(null); setEditValues({}) }} title="Cancel">
                                               <X className="h-3 w-3" />
                                             </Button>
@@ -663,11 +663,11 @@ export default function LabResultsPage() {
                                       </td>
                                       <td className="py-2">
                                         <div className="flex gap-1">
-                                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-blue-500"
+                                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 min-h-[44px] min-w-[44px] text-blue-500"
                                             onClick={() => startEdit(report.id, idx, result)} title="Edit">
                                             <Edit3 className="h-3 w-3" />
                                           </Button>
-                                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-red-400"
+                                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 min-h-[44px] min-w-[44px] text-red-400"
                                             onClick={() => deleteTest(report, idx)} title="Delete test">
                                             <X className="h-3 w-3" />
                                           </Button>

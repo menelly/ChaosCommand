@@ -36,7 +36,7 @@ export function QRSyncModal({ isOpen, onClose }: QRSyncModalProps) {
   }, [qrImageUrl])
 
   const generateQR = async () => {
-    // QR sync is being rebuilt without Flask — coming soon!
+    // QR sync is being rebuilt — coming soon!
     setError('QR sync is being upgraded. For now, use Export/Import in Settings to move data between devices.')
     setSyncState('error')
   }

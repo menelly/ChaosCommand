@@ -381,7 +381,7 @@ export default function ReproductiveHealthTracker() {
       <Tabs defaultValue="menstrual" className="w-full">
         <div className="space-y-2">
           {/* Row 1: Basic cycle tracking + analytics - always visible */}
-          <TabsList className="grid w-full grid-cols-4 bg-card">
+          <TabsList className="grid w-full grid-cols-4 bg-card h-auto p-1">
             <TabsTrigger value="menstrual" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs sm:text-sm">
               <Droplets className="h-4 w-4 flex-shrink-0" />
               <span className="text-center leading-tight">Menstrual</span>
@@ -402,7 +402,7 @@ export default function ReproductiveHealthTracker() {
 
           {/* Row 2: Fertility tracking - can be hidden */}
           {fertilityTrackingEnabled && (
-            <TabsList className="grid w-full grid-cols-2 bg-card">
+            <TabsList className="grid w-full grid-cols-2 bg-card h-auto p-1">
               <TabsTrigger value="fertility" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs sm:text-sm">
                 <Moon className="h-4 w-4 flex-shrink-0" />
                 <span className="text-center leading-tight">Ovulation</span>

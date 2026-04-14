@@ -565,7 +565,7 @@ export default function UpperDigestiveTracker() {
           </TabsContent>
 
           <TabsContent value="analytics" className="space-y-6">
-            {/* Flask-Powered Traditional Analytics */}
+            {/* Built-In Traditional Analytics */}
             <DigestiveFlaskAnalytics
               entries={[]}
               currentDate={selectedDate}

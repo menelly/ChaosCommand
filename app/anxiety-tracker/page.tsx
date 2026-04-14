@@ -163,7 +163,7 @@ export default function AnxietyTracker() {
                 <CardContent>
                   <Button
                     onClick={() => setIsFormOpen(true)}
-                    className="w-full h-12 text-lg"
+                    className="w-full min-h-12 text-lg"
                     size="lg"
                   >
                     <Plus className="h-5 w-5 mr-2" />

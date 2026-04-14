@@ -498,9 +498,9 @@ export default function OnboardingPage() {
   // THEME PICKER STEP
   if (currentStep === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6 bg-background">
+      <div className="min-h-screen flex items-center justify-center p-3 sm:p-6 bg-background">
         <Card className="max-w-2xl w-full">
-          <CardContent className="p-8 space-y-6">
+          <CardContent className="p-4 sm:p-8 space-y-6">
             <div className="text-center space-y-2">
               <Palette className="h-10 w-10 text-primary mx-auto" />
               <h1 className="text-2xl font-bold">First Things First</h1>
@@ -539,9 +539,9 @@ export default function OnboardingPage() {
   // INTRO STEP
   if (currentStep === 1) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6 bg-background">
+      <div className="min-h-screen flex items-center justify-center p-3 sm:p-6 bg-background">
         <Card className="max-w-2xl w-full">
-          <CardContent className="p-8 space-y-6 text-center">
+          <CardContent className="p-4 sm:p-8 space-y-6 text-center">
             <div className="flex items-center justify-center gap-3">
               <Sparkles className="h-10 w-10 text-primary" />
               <h1 className="text-3xl font-bold">Welcome to Chaos Command</h1>
@@ -581,9 +581,9 @@ export default function OnboardingPage() {
     const { trackers, flags } = getRecommendations()
 
     return (
-      <div className="min-h-screen flex items-center justify-center p-6 bg-background">
+      <div className="min-h-screen flex items-center justify-center p-3 sm:p-6 bg-background">
         <Card className="max-w-2xl w-full">
-          <CardContent className="p-8 space-y-6">
+          <CardContent className="p-4 sm:p-8 space-y-6">
             <div className="text-center space-y-2">
               <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto" />
               <h1 className="text-2xl font-bold">Here's What We Found</h1>
@@ -663,7 +663,7 @@ export default function OnboardingPage() {
   const categorySelectedCount = category.symptoms.filter(s => selectedSymptoms.has(s.id)).length
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-background">
+    <div className="min-h-screen flex items-center justify-center p-3 sm:p-6 bg-background">
       <Card className="max-w-2xl w-full">
         <CardContent className="p-8 space-y-6">
           {/* Progress */}

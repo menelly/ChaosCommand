@@ -19,8 +19,8 @@
  * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
  */
 /**
- * DYSAUTONOMIA FLASK ANALYTICS COMPONENT 🩺
- * Flask-powered POTS detection, SpO2 tracking, and autonomic dysfunction analysis
+ * DYSAUTONOMIA ANALYTICS COMPONENT 🩺
+ * Built-in POTS detection, SpO2 tracking, and autonomic dysfunction analysis
  * 
  * Because oxygen desaturation episodes are NOT optional to track! 💨
  */
@@ -107,7 +107,7 @@ export default function DysautonomiaFlaskAnalytics({ entries, currentDate, loadA
   const [error, setError] = useState<string | null>(null)
   const [dateRange, setDateRange] = useState('all')
 
-  // Load Flask analytics when entries change
+  // Load analytics when entries change
   useEffect(() => {
     loadFlaskAnalytics()
   }, [dateRange])
@@ -128,7 +128,7 @@ export default function DysautonomiaFlaskAnalytics({ entries, currentDate, loadA
         return
       }
 
-      // Convert entries to the format expected by Flask
+      // Convert entries to the format expected by analytics
       const flaskEntries = allEntries.map(entry => ({
         date: entry.date,
         time: entry.timestamp ? new Date(entry.timestamp).toTimeString().slice(0, 5) : '00:00',
@@ -289,7 +289,7 @@ export default function DysautonomiaFlaskAnalytics({ entries, currentDate, loadA
 
       setAnalyticsData(data)
     } catch (err) {
-      console.error('Flask dysautonomia analytics error:', err)
+      console.error('Dysautonomia analytics error:', err)
       setError(err instanceof Error ? err.message : 'Failed to load analytics')
     } finally {
       setLoading(false)
@@ -301,7 +301,7 @@ export default function DysautonomiaFlaskAnalytics({ entries, currentDate, loadA
       <Card>
         <CardContent className="p-8 text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading Flask-powered POTS analytics...</p>
+          <p className="text-muted-foreground">Loading POTS analytics...</p>
         </CardContent>
       </Card>
     )
@@ -328,7 +328,7 @@ export default function DysautonomiaFlaskAnalytics({ entries, currentDate, loadA
           <Heart className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
           <h3 className="text-lg font-semibold mb-2">No Dysautonomia Data</h3>
           <p className="text-muted-foreground">
-            Record dysautonomia episodes to see Flask-powered POTS and SpO2 analytics!
+            Record dysautonomia episodes to see POTS and SpO2 analytics!
           </p>
         </CardContent>
       </Card>
@@ -343,7 +343,7 @@ export default function DysautonomiaFlaskAnalytics({ entries, currentDate, loadA
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold flex items-center gap-2">
           <Heart className="h-6 w-6 text-purple-500" />
-          Flask-Powered Dysautonomia Analytics 🩺
+          Built-In Dysautonomia Analytics 🩺
         </h2>
         <Select value={dateRange} onValueChange={setDateRange}>
           <SelectTrigger className="w-32">
