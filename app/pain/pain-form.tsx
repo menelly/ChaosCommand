@@ -44,10 +44,11 @@ import {
 interface PainFormProps {
   initialData?: Partial<PainEntry>
   onSave: (data: Partial<PainEntry>) => void
+  onCancel?: () => void
   isLoading: boolean
 }
 
-export function PainForm({ initialData, onSave, isLoading }: PainFormProps) {
+export function PainForm({ initialData, onSave, onCancel, isLoading }: PainFormProps) {
   const [formData, setFormData] = useState<Partial<PainEntry>>(initialData || {
     painLevel: 0,
     painLocations: [],
@@ -594,9 +595,9 @@ export function PainForm({ initialData, onSave, isLoading }: PainFormProps) {
 
 
 
-      {/* Save Button */}
+      {/* Save & Cancel Buttons */}
       <Card>
-        <CardContent className="pt-6">
+        <CardContent className="pt-6 space-y-3">
           <Button
             onClick={() => onSave(formData)}
             disabled={isLoading}
@@ -614,6 +615,16 @@ export function PainForm({ initialData, onSave, isLoading }: PainFormProps) {
               </>
             )}
           </Button>
+          {onCancel && (
+            <Button
+              onClick={onCancel}
+              variant="outline"
+              className="w-full"
+              size="lg"
+            >
+              Cancel
+            </Button>
+          )}
         </CardContent>
       </Card>
     </div>

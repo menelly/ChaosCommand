@@ -31,6 +31,7 @@ export interface DysautonomiaEntry {
   
   // Vital Signs (Lite Vitals - Phase 3 will have full vitals)
   restingHeartRate?: number
+  sittingHeartRate?: number
   standingHeartRate?: number
   heartRateIncrease?: number
   bloodPressureSitting?: string // e.g., "120/80"

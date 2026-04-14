@@ -19,8 +19,10 @@
  * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
  */
 /**
- * POTS EPISODE MODAL
- * Focused modal for POTS-specific symptoms and heart rate tracking
+ * POTS / IST EPISODE MODAL
+ * Focused modal for POTS and IST symptoms and heart rate tracking
+ * POTS = orthostatic (standing HR increase ≥30bpm)
+ * IST = inappropriate sinus tachycardia (resting/sitting HR >100bpm)
  */
 
 'use client'
@@ -42,7 +44,7 @@ import { DysautonomiaEntry, EpisodeModalProps } from '../dysautonomia-types'
 import { POSITION_CHANGES, DURATION_UNITS, getSeverityLabel, getSeverityColor } from '../dysautonomia-constants'
 import { TagInput } from '@/components/tag-input'
 
-// POTS-specific symptoms
+// POTS + IST symptoms
 const POTS_SYMPTOMS = [
   'Dizziness',
   'Lightheadedness',
@@ -51,11 +53,14 @@ const POTS_SYMPTOMS = [
   'Chest Pain',
   'Shortness of Breath',
   'Rapid Heart Rate',
+  'Resting Tachycardia',
   'Blood Pressure Drop',
   'Exercise Intolerance',
   'Fatigue',
   'Brain Fog',
-  'Trembling/Shaking'
+  'Trembling/Shaking',
+  'Heart Racing While Sitting',
+  'Heart Racing While Lying Down',
 ]
 
 // POTS-specific triggers
@@ -87,6 +92,7 @@ const POTS_INTERVENTIONS = [
 export function PotsEpisodeModal({ isOpen, onClose, onSave, editingEntry }: EpisodeModalProps) {
   // Form state
   const [restingHeartRate, setRestingHeartRate] = useState('')
+  const [sittingHeartRate, setSittingHeartRate] = useState('')
   const [standingHeartRate, setStandingHeartRate] = useState('')
   const [symptoms, setSymptoms] = useState<string[]>([])
   const [severity, setSeverity] = useState([5])
@@ -103,6 +109,7 @@ export function PotsEpisodeModal({ isOpen, onClose, onSave, editingEntry }: Epis
   useEffect(() => {
     if (editingEntry && editingEntry.episodeType === 'pots') {
       setRestingHeartRate(editingEntry.restingHeartRate?.toString() || '')
+      setSittingHeartRate(editingEntry.sittingHeartRate?.toString() || '')
       setStandingHeartRate(editingEntry.standingHeartRate?.toString() || '')
       setSymptoms(editingEntry.symptoms || [])
       setSeverity([editingEntry.severity || 5])
@@ -135,6 +142,7 @@ export function PotsEpisodeModal({ isOpen, onClose, onSave, editingEntry }: Epis
 
   const resetForm = () => {
     setRestingHeartRate('')
+    setSittingHeartRate('')
     setStandingHeartRate('')
     setSymptoms([])
     setSeverity([5])
@@ -174,12 +182,14 @@ export function PotsEpisodeModal({ isOpen, onClose, onSave, editingEntry }: Epis
 
   const handleSave = () => {
     const restingHR = restingHeartRate ? parseInt(restingHeartRate) : undefined
+    const sittingHR = sittingHeartRate ? parseInt(sittingHeartRate) : undefined
     const standingHR = standingHeartRate ? parseInt(standingHeartRate) : undefined
     const heartRateIncrease = restingHR && standingHR ? standingHR - restingHR : undefined
 
     const entryData: Omit<DysautonomiaEntry, 'id' | 'timestamp' | 'date'> = {
       episodeType: 'pots',
       restingHeartRate: restingHR,
+      sittingHeartRate: sittingHR,
       standingHeartRate: standingHR,
       heartRateIncrease,
       symptoms,
@@ -208,7 +218,7 @@ export function PotsEpisodeModal({ isOpen, onClose, onSave, editingEntry }: Epis
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Heart className="h-5 w-5 text-red-500" />
-            💓 POTS Episode
+            💓 POTS / IST Episode
           </DialogTitle>
         </DialogHeader>
 
@@ -216,9 +226,9 @@ export function PotsEpisodeModal({ isOpen, onClose, onSave, editingEntry }: Epis
           {/* Heart Rate Section */}
           <div className="space-y-4">
             <h4 className="font-medium text-foreground">Heart Rate (Optional)</h4>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-3">
               <div>
-                <Label htmlFor="resting-hr">Resting HR (bpm)</Label>
+                <Label htmlFor="resting-hr">Resting/Lying</Label>
                 <Input
                   id="resting-hr"
                   type="number"
@@ -228,7 +238,17 @@ export function PotsEpisodeModal({ isOpen, onClose, onSave, editingEntry }: Epis
                 />
               </div>
               <div>
-                <Label htmlFor="standing-hr">Standing HR (bpm)</Label>
+                <Label htmlFor="sitting-hr">Sitting</Label>
+                <Input
+                  id="sitting-hr"
+                  type="number"
+                  placeholder="e.g., 95"
+                  value={sittingHeartRate}
+                  onChange={(e) => setSittingHeartRate(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="standing-hr">Standing</Label>
                 <Input
                   id="standing-hr"
                   type="number"
@@ -238,9 +258,22 @@ export function PotsEpisodeModal({ isOpen, onClose, onSave, editingEntry }: Epis
                 />
               </div>
             </div>
+            {/* POTS indicator: standing - resting ≥ 30bpm */}
             {restingHeartRate && standingHeartRate && (
-              <div className="text-sm text-muted-foreground">
-                Heart Rate Increase: +{parseInt(standingHeartRate) - parseInt(restingHeartRate)} bpm
+              <div className={`text-sm font-medium ${parseInt(standingHeartRate) - parseInt(restingHeartRate) >= 30 ? 'text-red-600' : 'text-muted-foreground'}`}>
+                Standing increase: +{parseInt(standingHeartRate) - parseInt(restingHeartRate)} bpm
+                {parseInt(standingHeartRate) - parseInt(restingHeartRate) >= 30 && ' (meets POTS criteria ≥30)'}
+              </div>
+            )}
+            {/* IST indicator: sitting or resting HR > 100 */}
+            {(sittingHeartRate && parseInt(sittingHeartRate) > 100) && (
+              <div className="text-sm font-medium text-orange-600">
+                Sitting HR {sittingHeartRate} bpm — elevated at rest (IST pattern)
+              </div>
+            )}
+            {(restingHeartRate && parseInt(restingHeartRate) > 100) && (
+              <div className="text-sm font-medium text-orange-600">
+                Resting HR {restingHeartRate} bpm — elevated at rest (IST pattern)
               </div>
             )}
           </div>

@@ -27,9 +27,9 @@
 export const EPISODE_TYPES = [
   {
     id: 'pots',
-    name: 'POTS Episode',
+    name: 'POTS / IST Episode',
     icon: '💓',
-    description: 'Heart rate changes, orthostatic symptoms',
+    description: 'Heart rate changes — orthostatic or inappropriate sinus tachycardia',
     color: 'bg-red-100 text-red-800 border-red-200'
   },
   {

@@ -602,6 +602,7 @@ export default function PainTracker() {
           </DialogHeader>
           <PainForm
             onSave={handleSaveEntry}
+            onCancel={() => setIsAddDialogOpen(false)}
             isLoading={isLoading}
           />
         </DialogContent>
@@ -619,6 +620,7 @@ export default function PainTracker() {
           <PainForm
             initialData={editingEntry || undefined}
             onSave={handleSaveEntry}
+            onCancel={() => setIsEditDialogOpen(false)}
             isLoading={isLoading}
           />
         </DialogContent>
