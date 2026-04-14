@@ -47,7 +47,10 @@ import {
   Pill,
   Hospital,
   Clock,
-  Printer
+  Printer,
+  ChevronDown,
+  ChevronUp,
+  Upload
 } from 'lucide-react';
 
 import MedicalTimeline from '@/components/medical-timeline';
@@ -91,6 +94,7 @@ export default function TimelinePage() {
   const [viewMode, setViewMode] = useState<'list' | 'timeline'>('list');
   const [filterType, setFilterType] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [showImportSection, setShowImportSection] = useState(false);
 
   // 🚀 REVOLUTIONARY HYBRID DATABASE SYSTEM (Commented out for vacation! 🏖️)
   // const hybridDB = useHybridDatabase();
@@ -516,116 +520,23 @@ export default function TimelinePage() {
   return (
     <AppCanvas currentPage="manage">
       <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <header className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2 flex items-center justify-center gap-2">
-            <Clock className="h-8 w-8 text-blue-500" />
-            Medical Timeline & History
+        {/* Header — mobile-first, compact */}
+        <header className="mb-4">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1 flex items-center gap-2">
+            <Clock className="h-6 w-6 sm:h-8 sm:w-8 text-blue-500" />
+            Medical Timeline
           </h1>
-          <p className="text-lg text-muted-foreground">
-            Track diagnoses, treatments, and medical events with timeline visualization
+          <p className="text-sm text-muted-foreground">
+            Your diagnosis history, medications, and lab results
           </p>
         </header>
 
-        {/* 🔥 REVOLUTIONARY DOCUMENT UPLOADER — desktop only
-            NER model is 64MB and would blow Dexie's IndexedDB quota on mobile.
-            Medical docs should be parsed on desktop and synced to phone. */}
-        {!('__TAURI_INTERNALS__' in window && /android|iphone|ipad/i.test(navigator.userAgent)) && <DocumentUploader
-          onEventsExtracted={async (events: any[]) => {
-            // Add extracted events to the medical events list AND SAVE TO DATABASE!
-            const now = new Date().toISOString();
-            const newEvents: MedicalEvent[] = events.map((event: any) => ({
-              id: event.id || `medical-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-              type: event.type || 'diagnosis',
-              title: event.title,
-              date: event.date || now.split('T')[0],
-              endDate: event.endDate,
-              provider: event.provider,
-              providerId: event.providerId,
-              location: event.location,
-              description: event.description || '',
-              status: event.status || 'needs_review',
-              severity: event.severity,
-              tags: event.tags || ['imported'],
-              notes: event.notes,
-              createdAt: now,
-              updatedAt: now
-            }));
-
-            // 🔥 SAVE EACH EVENT TO DEXIE DATABASE!
-            for (const event of newEvents) {
-              try {
-                const subcategory = `${SUBCATEGORIES.MEDICAL_EVENTS}-${event.id}`;
-                await saveData(
-                  formatDateForStorage(new Date(event.date)),
-                  CATEGORIES.USER,
-                  subcategory,
-                  JSON.stringify(event)
-                );
-                console.log(`✅ Saved event to Dexie: ${event.title}`);
-              } catch (error) {
-                console.error(`❌ Failed to save event "${event.title}":`, error);
-              }
-            }
-
-            // Update React state
-            setMedicalEvents(prev => [...newEvents, ...prev].sort((a, b) =>
-              new Date(b.date).getTime() - new Date(a.date).getTime()
-            ));
-            console.log(`🎉 Added AND SAVED ${events.length} events from document parsing!`);
-          }}
-          className="mb-8"
-        />}
-
-        {/* Controls */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <div className="flex gap-2">
-            <Button
-              variant={viewMode === 'list' ? 'default' : 'outline'}
-              onClick={() => setViewMode('list')}
-              size="sm"
-            >
-              <FileText className="h-4 w-4 mr-2" />
-              List View
-            </Button>
-            <Button
-              variant={viewMode === 'timeline' ? 'default' : 'outline'}
-              onClick={() => setViewMode('timeline')}
-              size="sm"
-            >
-              <Clock className="h-4 w-4 mr-2" />
-              Timeline View
-            </Button>
-          </div>
-
-          <div className="flex gap-2 flex-1">
-            <Input
-              placeholder="Search events..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="flex-1"
-            />
-            <Select value={filterType} onValueChange={setFilterType}>
-              <SelectTrigger className="w-40">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="diagnosis">Diagnoses</SelectItem>
-                <SelectItem value="surgery">Surgeries</SelectItem>
-                <SelectItem value="hospitalization">Hospitalizations</SelectItem>
-                <SelectItem value="treatment">Treatments</SelectItem>
-                <SelectItem value="test">Tests</SelectItem>
-                <SelectItem value="medication">Medications</SelectItem>
-                <SelectItem value="dismissed_findings">Dismissed Findings</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
+        {/* Add Event — prominent at top */}
+        <div className="mb-4">
           <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
             <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
+              <Button className="w-full sm:w-auto" size="lg">
+                <Plus className="h-5 w-5 mr-2" />
                 Add Medical Event
               </Button>
             </DialogTrigger>
@@ -770,7 +681,7 @@ export default function TimelinePage() {
                   />
                 </div>
 
-                {/* 🏷️ TAGS SYSTEM! */}
+                {/* Tags */}
                 <div>
                   <Label htmlFor="tags">Tags</Label>
                   <p className="text-sm text-muted-foreground mb-2">
@@ -827,6 +738,52 @@ export default function TimelinePage() {
               </div>
             </DialogContent>
           </Dialog>
+        </div>
+
+        {/* Controls — search/filter, compact */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-4">
+          <div className="flex gap-2">
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'outline'}
+              onClick={() => setViewMode('list')}
+              size="sm"
+            >
+              <FileText className="h-4 w-4 mr-1" />
+              List
+            </Button>
+            <Button
+              variant={viewMode === 'timeline' ? 'default' : 'outline'}
+              onClick={() => setViewMode('timeline')}
+              size="sm"
+            >
+              <Clock className="h-4 w-4 mr-1" />
+              Timeline
+            </Button>
+          </div>
+
+          <div className="flex gap-2 flex-1">
+            <Input
+              placeholder="Search events..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="flex-1"
+            />
+            <Select value={filterType} onValueChange={setFilterType}>
+              <SelectTrigger className="w-32 sm:w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="diagnosis">Diagnoses</SelectItem>
+                <SelectItem value="surgery">Surgeries</SelectItem>
+                <SelectItem value="hospitalization">Hospitalizations</SelectItem>
+                <SelectItem value="treatment">Treatments</SelectItem>
+                <SelectItem value="test">Tests</SelectItem>
+                <SelectItem value="medication">Medications</SelectItem>
+                <SelectItem value="dismissed_findings">Dismissed Findings</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Events Display */}
@@ -956,6 +913,80 @@ export default function TimelinePage() {
             onEditEvent={handleEditEvent}
             onViewProvider={(providerId) => window.location.href = `/providers#${providerId}`}
           />
+        )}
+
+        {/* Import Documents — collapsible, below timeline, desktop only */}
+        {!('__TAURI_INTERNALS__' in window && /android|iphone|ipad/i.test(navigator.userAgent)) && (
+          <div className="mt-8">
+            <button
+              onClick={() => setShowImportSection(!showImportSection)}
+              className="w-full flex items-center justify-between p-4 rounded-lg border border-[var(--border-soft,#e5e7eb)] bg-muted/30 hover:bg-muted/50 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Upload className="h-5 w-5 text-muted-foreground" />
+                <div className="text-left">
+                  <span className="font-medium text-foreground">Import Documents</span>
+                  <p className="text-xs text-muted-foreground">
+                    Desktop only — upload medical PDFs to extract diagnoses, medications, and lab values automatically
+                  </p>
+                </div>
+              </div>
+              {showImportSection ? (
+                <ChevronUp className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+              ) : (
+                <ChevronDown className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+              )}
+            </button>
+            {showImportSection && (
+              <div className="mt-3">
+                <DocumentUploader
+                  onEventsExtracted={async (events: any[]) => {
+                    // Add extracted events to the medical events list AND SAVE TO DATABASE!
+                    const now = new Date().toISOString();
+                    const newEvents: MedicalEvent[] = events.map((event: any) => ({
+                      id: event.id || `medical-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                      type: event.type || 'diagnosis',
+                      title: event.title,
+                      date: event.date || now.split('T')[0],
+                      endDate: event.endDate,
+                      provider: event.provider,
+                      providerId: event.providerId,
+                      location: event.location,
+                      description: event.description || '',
+                      status: event.status || 'needs_review',
+                      severity: event.severity,
+                      tags: event.tags || ['imported'],
+                      notes: event.notes,
+                      createdAt: now,
+                      updatedAt: now
+                    }));
+
+                    // Save each event to Dexie database
+                    for (const event of newEvents) {
+                      try {
+                        const subcategory = `${SUBCATEGORIES.MEDICAL_EVENTS}-${event.id}`;
+                        await saveData(
+                          formatDateForStorage(new Date(event.date)),
+                          CATEGORIES.USER,
+                          subcategory,
+                          JSON.stringify(event)
+                        );
+                        console.log(`Saved event to Dexie: ${event.title}`);
+                      } catch (error) {
+                        console.error(`Failed to save event "${event.title}":`, error);
+                      }
+                    }
+
+                    // Update React state
+                    setMedicalEvents(prev => [...newEvents, ...prev].sort((a, b) =>
+                      new Date(b.date).getTime() - new Date(a.date).getTime()
+                    ));
+                    console.log(`Added and saved ${events.length} events from document parsing`);
+                  }}
+                />
+              </div>
+            )}
+          </div>
         )}
 
         {/* Bottom Actions */}
