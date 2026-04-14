@@ -311,25 +311,28 @@ export default function ReproductiveHealthTracker() {
   return (
     <div className="container mx-auto p-4 max-w-4xl">
       {/* Header with fun title and navigation */}
-      <Card className="mb-6">
-        <CardHeader className="text-center">
-          <div className="flex items-center justify-between">
+      <Card className="mb-4 sm:mb-6">
+        <CardHeader className="text-center p-3 sm:p-6">
+          <div className="relative flex items-center justify-center">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => navigateDate('prev')}
-              className="p-2"
+              className="absolute left-0 p-1 sm:p-2 h-8 w-8 sm:h-9 sm:w-9"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
 
-            <div className="flex-1">
-              <CardTitle className="text-2xl font-bold flex items-center justify-center gap-2">
-                <Moon className="h-6 w-6 text-slate-500" />
-                🌙 Reproductive Health Tracker 🌛
-                <Sparkles className="h-6 w-6 text-slate-500" />
+            <div className="px-8 sm:px-10">
+              <CardTitle className="text-lg sm:text-2xl font-bold flex items-center justify-center gap-1 sm:gap-2">
+                <Moon className="h-4 w-4 sm:h-6 sm:w-6 text-slate-500 hidden sm:inline" />
+                <span className="sm:hidden">🌙</span>
+                Reproductive Health
+                <span className="hidden sm:inline">Tracker</span>
+                <span className="sm:hidden">🌛</span>
+                <Sparkles className="h-4 w-4 sm:h-6 sm:w-6 text-slate-500 hidden sm:inline" />
               </CardTitle>
-              <CardDescription className="mt-2">
+              <CardDescription className="mt-1 sm:mt-2 text-xs sm:text-sm">
                 {fertilityTrackingEnabled
                   ? "Track your menstrual cycle, ovulation signs, and reproductive wellness"
                   : "Track your menstrual cycle and reproductive wellness"}
@@ -340,14 +343,14 @@ export default function ReproductiveHealthTracker() {
               variant="ghost"
               size="sm"
               onClick={() => navigateDate('next')}
-              className="p-2"
+              className="absolute right-0 p-1 sm:p-2 h-8 w-8 sm:h-9 sm:w-9"
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
 
           {/* Date selector */}
-          <div className="flex items-center justify-center gap-4 mt-4">
+          <div className="flex items-center justify-center gap-4 mt-3 sm:mt-4">
             <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
               <PopoverTrigger asChild>
                 <Button

@@ -26,6 +26,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { MessageSquare, HelpCircle, Mail, Info, ExternalLink, Heart, Code, Zap } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
+import { openExternal } from "@/lib/open-external"
 
 interface SupportModalProps {
   isOpen: boolean
@@ -38,7 +39,7 @@ export function SupportModal({ isOpen, onClose }: SupportModalProps) {
   const [expandedHelp, setExpandedHelp] = useState<string | null>(null)
 
   const openExternalLink = (url: string) => {
-    window.open(url, '_blank', 'noopener,noreferrer')
+    openExternal(url)
   }
 
   return (

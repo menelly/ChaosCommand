@@ -920,7 +920,7 @@ export default function TimelinePage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => window.open(`/providers#${event.providerId}`, '_blank')}
+                            onClick={() => window.location.href = `/providers#${event.providerId}`}
                             title="View Provider"
                           >
                             <Link className="h-4 w-4" />
@@ -952,7 +952,7 @@ export default function TimelinePage() {
           <MedicalTimeline
             events={filteredEvents}
             onEditEvent={handleEditEvent}
-            onViewProvider={(providerId) => window.open(`/providers#${providerId}`, '_blank')}
+            onViewProvider={(providerId) => window.location.href = `/providers#${providerId}`}
           />
         )}
 

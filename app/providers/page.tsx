@@ -877,7 +877,7 @@ export default function ProvidersPage() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => window.open(`/timeline?provider=${provider.id}`, '_blank')}
+                        onClick={() => window.location.href = `/timeline?provider=${provider.id}`}
                         className="text-purple-600 hover:text-purple-700"
                         title="View Medical Timeline"
                       >

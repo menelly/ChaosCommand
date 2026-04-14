@@ -119,6 +119,7 @@ export default function BathroomTracker() {
   const [editingEntry, setEditingEntry] = useState<BathroomEntry | null>(null)
   const [activeTab, setActiveTab] = useState("entry")
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [expandedPhoto, setExpandedPhoto] = useState<string | null>(null)
 
   // Load entries on mount
   useEffect(() => {
@@ -692,7 +693,7 @@ export default function BathroomTracker() {
                                       src={photo}
                                       alt={`Medical photo ${index + 1}`}
                                       className="w-full h-24 object-cover rounded border cursor-pointer hover:opacity-80"
-                                      onClick={() => window.open(photo, '_blank')}
+                                      onClick={() => setExpandedPhoto(photo)}
                                     />
                                   ))}
                                 </div>
@@ -953,6 +954,22 @@ export default function BathroomTracker() {
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* Photo Viewer Dialog */}
+      <Dialog open={!!expandedPhoto} onOpenChange={() => setExpandedPhoto(null)}>
+        <DialogContent className="max-w-[90vw] max-h-[90vh] p-2">
+          <DialogHeader>
+            <DialogTitle>Medical Photo</DialogTitle>
+          </DialogHeader>
+          {expandedPhoto && (
+            <img
+              src={expandedPhoto}
+              alt="Medical photo (expanded)"
+              className="w-full h-auto max-h-[75vh] object-contain rounded"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </AppCanvas>
   )
 }

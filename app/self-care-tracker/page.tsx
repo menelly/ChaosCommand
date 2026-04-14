@@ -34,6 +34,8 @@ import { SelfCareAnalytics } from './self-care-analytics'
 import { SelfCareEntry } from './self-care-types'
 import { SELF_CARE_CATEGORIES, SELF_CARE_GOBLINISMS } from './self-care-constants'
 
+import { penguinParty } from '@/lib/particle-physics-engine'
+
 // Dexie imports
 import { useDailyData, CATEGORIES, formatDateForStorage } from '@/lib/database'
 import { format } from 'date-fns'
@@ -73,6 +75,12 @@ export default function SelfCareTracker() {
       setIsFormOpen(false)
       setSelectedCategory(null)
       setRefreshTrigger(prev => prev + 1)
+
+      // 🐧 PENGUIN PARTY for taking care of yourself!
+      const bounceLevel = parseInt(localStorage.getItem('chaos-bounce-intensity') || '10')
+      if (bounceLevel > 0) {
+        penguinParty()
+      }
 
       // Show caring goblin message
       toast({
