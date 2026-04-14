@@ -280,12 +280,23 @@ export default function DocumentUploader({ onEventsExtracted, className = "" }: 
       }
 
       // Step 2: Run NER + all pipeline layers (sections, negation, impression parsing)
+      // NER requires downloading a 64MB ONNX model from HuggingFace CDN.
+      // On mobile WebViews this can fail due to CSP/CORS restrictions.
       let nerEvents;
       try {
         nerEvents = await extractMedicalEvents(extractedText, file.name, demographics);
       } catch (nerErr) {
+        const errMsg = nerErr instanceof Error ? nerErr.message : String(nerErr);
         console.error('NER extraction failed:', nerErr);
-        throw new Error(`NER model failed: ${nerErr instanceof Error ? nerErr.message : 'Unknown error'}`);
+        // If it's the DOCTYPE/JSON parse error, give a helpful mobile-specific message
+        if (errMsg.includes('<!DOCTYPE') || errMsg.includes('Unexpected token') || errMsg.includes('not valid JSON')) {
+          throw new Error(
+            `Medical document parsing isn't available on this device yet. ` +
+            `Upload documents on desktop and sync to your phone. ` +
+            `(The NER model requires a one-time 64MB download that some mobile browsers block.)`
+          );
+        }
+        throw new Error(`NER model failed: ${errMsg}`);
       }
 
       // Step 3: Extract lab results (separate specialized parser)

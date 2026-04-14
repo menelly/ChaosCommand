@@ -527,8 +527,10 @@ export default function TimelinePage() {
           </p>
         </header>
 
-        {/* 🔥 REVOLUTIONARY DOCUMENT UPLOADER */}
-        <DocumentUploader
+        {/* 🔥 REVOLUTIONARY DOCUMENT UPLOADER — desktop only
+            NER model is 64MB and would blow Dexie's IndexedDB quota on mobile.
+            Medical docs should be parsed on desktop and synced to phone. */}
+        {!('__TAURI_INTERNALS__' in window && /android|iphone|ipad/i.test(navigator.userAgent)) && <DocumentUploader
           onEventsExtracted={async (events: any[]) => {
             // Add extracted events to the medical events list AND SAVE TO DATABASE!
             const now = new Date().toISOString();
@@ -573,7 +575,7 @@ export default function TimelinePage() {
             console.log(`🎉 Added AND SAVED ${events.length} events from document parsing!`);
           }}
           className="mb-8"
-        />
+        />}
 
         {/* Controls */}
         <div className="flex flex-col sm:flex-row gap-4 mb-6">

@@ -82,32 +82,47 @@ export async function getNerPipeline(
 
     const { pipeline: pipelineFn } = await getTransformers();
 
-    // Model loads directly from HuggingFace CDN on first use, then cached by the browser.
-    // We don't bundle the ~64MB ONNX model — it would bloat the APK/IPA and the CDN
-    // handles caching better than we can. Works on Android, iOS, and desktop.
-    // NOTE: local models were disabled because Tauri's WebView returns 404 HTML pages
-    // instead of proper 404 responses, which Transformers.js tries to parse as JSON.
+    // Model loads from HuggingFace CDN, cached by browser after first download.
+    // Local models disabled: Tauri's WebView returns HTML 404 pages that break JSON parsing.
+    // WASM backend forced: WebGL isn't available in all Android WebViews.
     const { env: tfEnv } = await getTransformers();
     tfEnv.allowLocalModels = false;
     tfEnv.allowRemoteModels = true;
+    // Force WASM backend — WebGL can fail silently in Tauri Android WebView
+    tfEnv.backends.onnx.wasm.proxy = false;
 
     console.log(`📦 Model source: HuggingFace CDN (cached by browser after first load)`);
 
-    const pipe = await pipelineFn('token-classification', MODEL_ID, {
-      ...MODEL_OPTIONS,
-      progress_callback: onProgress || ((p: any) => {
-        if (p.status === 'progress' && p.progress !== undefined) {
-          console.log(`📦 Loading model: ${Math.round(p.progress)}%`);
-        }
-      }),
-    });
+    try {
+      const pipe = await pipelineFn('token-classification', MODEL_ID, {
+        ...MODEL_OPTIONS,
+        progress_callback: onProgress || ((p: any) => {
+          if (p.status === 'progress' && p.progress !== undefined) {
+            console.log(`📦 Loading model: ${Math.round(p.progress)}%`);
+          }
+        }),
+      });
 
-    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-    console.log(`✅ Medical NER model loaded in ${elapsed}s`);
+      const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+      console.log(`✅ Medical NER model loaded in ${elapsed}s`);
 
-    _pipeline = pipe;
-    _loading = null;
-    return pipe;
+      _pipeline = pipe;
+      _loading = null;
+      return pipe;
+    } catch (err) {
+      _loading = null;
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error(`❌ NER model failed to load: ${msg}`);
+      // Surface which URL failed if it's a fetch error
+      if (msg.includes('<!DOCTYPE') || msg.includes('Unexpected token')) {
+        throw new Error(
+          `NER model loading failed — a fetch returned HTML instead of data. ` +
+          `This usually means the device can't reach HuggingFace CDN. ` +
+          `NER features require an internet connection on first use. Original: ${msg.slice(0, 200)}`
+        );
+      }
+      throw err;
+    }
   })();
 
   return _loading;
