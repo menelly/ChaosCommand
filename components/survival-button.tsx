@@ -155,9 +155,10 @@ export default function SurvivalButton() {
 
   const triggerConfetti = useCallback(() => {
     // 🎆 EPIC PARTICLE PHYSICS CELEBRATION!
-    // Scale intensity with bounce slider
-    const bounceLevel = parseInt(localStorage.getItem('chaos-bounce-intensity') || '10')
-    const scale = bounceLevel / 100
+    // Scale intensity with confetti level (independent of bounce/motion)
+    const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
+    if (confettiLevel === 'none') return
+    const scale = confettiLevel === 'low' ? 0.3 : confettiLevel === 'medium' ? 0.6 : 1.0
     const particles = Math.round(100 * scale)
     const currentTheme = document.body.className.match(/theme-[\w-]+/)?.[0];
 
@@ -224,9 +225,9 @@ export default function SurvivalButton() {
         localStorage.setItem(getStorageKey("lastCheckedDate"), today)
       }
 
-      // Trigger confetti + familiar (respects bounce intensity slider)
-      const bounceLevel = parseInt(localStorage.getItem('chaos-bounce-intensity') || '10')
-      if (bounceLevel > 0) {
+      // Trigger confetti + familiar (respects confetti level, independent of bounce)
+      const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
+      if (confettiLevel !== 'none') {
         triggerConfetti()
 
         // Show the cheerleading familiar!

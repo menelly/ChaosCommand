@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
+import { Slider } from '@/components/ui/slider'
+import { Label } from '@/components/ui/label'
 import {
   Brain,
   Heart,
@@ -419,6 +421,10 @@ export default function OnboardingPage() {
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState(0) // 0 = theme, 1 = intro, 2-N+1 = categories, last = results
   const [selectedTheme, setSelectedTheme] = useState(localStorage.getItem('chaos-theme') || 'theme-lavender')
+  const [bounceIntensity, setBounceIntensity] = useState(parseInt(localStorage.getItem('chaos-bounce-intensity') || '10'))
+  const [confettiLevel, setConfettiLevel] = useState<'none' | 'low' | 'medium' | 'high'>(
+    (localStorage.getItem('chaos-confetti-level') as any) || 'medium'
+  )
   const [selectedSymptoms, setSelectedSymptoms] = useState<Set<string>>(new Set())
 
   const totalSteps = SYMPTOM_CATEGORIES.length + 2 // intro + categories + results
@@ -524,6 +530,64 @@ export default function OnboardingPage() {
                   <span className="text-xs opacity-70">{theme.description}</span>
                 </Button>
               ))}
+            </div>
+
+            {/* Animation settings — accessibility first */}
+            <div className="space-y-4 pt-2 border-t">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-medium">Screen Motion</Label>
+                  <span className="text-xs text-muted-foreground font-mono">
+                    {bounceIntensity === 0 ? 'Off' : `${bounceIntensity}%`}
+                  </span>
+                </div>
+                <Slider
+                  value={[bounceIntensity]}
+                  onValueChange={([v]) => {
+                    setBounceIntensity(v)
+                    localStorage.setItem('chaos-bounce-intensity', v.toString())
+                    const scale = v / 100
+                    document.documentElement.style.setProperty('--bounce-scale', scale.toString())
+                  }}
+                  min={0}
+                  max={100}
+                  step={5}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Controls bouncing, floating, and motion effects.
+                  {bounceIntensity === 0 && ' (Reduced motion — migraine safe)'}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Celebrations</Label>
+                <div className="grid grid-cols-4 gap-2">
+                  {([
+                    { value: 'none', label: 'Off', emoji: '🚫' },
+                    { value: 'low', label: 'Subtle', emoji: '✨' },
+                    { value: 'medium', label: 'Party', emoji: '🎉' },
+                    { value: 'high', label: 'CHAOS', emoji: '🐧' },
+                  ] as const).map(opt => (
+                    <Button
+                      key={opt.value}
+                      variant={confettiLevel === opt.value ? 'default' : 'outline'}
+                      size="sm"
+                      className="h-auto py-1.5 flex flex-col text-xs"
+                      onClick={() => {
+                        setConfettiLevel(opt.value)
+                        localStorage.setItem('chaos-confetti-level', opt.value)
+                      }}
+                    >
+                      <span>{opt.emoji}</span>
+                      <span>{opt.label}</span>
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <p className="text-xs text-muted-foreground italic">
+                You can change these anytime in Settings → Visual.
+              </p>
             </div>
 
             <Button onClick={() => setCurrentStep(1)} className="w-full flex items-center justify-center gap-2">

@@ -39,6 +39,7 @@ export function VisualSettingsModal({ isOpen, onClose }: VisualSettingsModalProp
   const [currentFont, setCurrentFont] = useState('font-atkinson')
   const [animatedEffects, setAnimatedEffects] = useState(true)
   const [bounceIntensity, setBounceIntensity] = useState(10) // 0-100%, default gentle sparkle
+  const [confettiLevel, setConfettiLevel] = useState<'none' | 'low' | 'medium' | 'high'>('medium')
 
   const themes = [
     { id: 'theme-lavender', name: 'Lavender Garden', description: 'Gentle lavender serenity (default)' },
@@ -166,6 +167,8 @@ export function VisualSettingsModal({ isOpen, onClose }: VisualSettingsModalProp
     // Apply saved animation preference
     const savedIntensity = parseInt(localStorage.getItem('chaos-bounce-intensity') || '10')
     setBounceIntensity(savedIntensity)
+    const savedConfetti = localStorage.getItem('chaos-confetti-level') as any || 'medium'
+    setConfettiLevel(savedConfetti)
 
     if (!savedAnimations) {
       document.body.classList.add('no-animations')
@@ -248,6 +251,38 @@ export function VisualSettingsModal({ isOpen, onClose }: VisualSettingsModalProp
                 <span>Gentle</span>
                 <span>Lively</span>
                 <span>Full</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Confetti Intensity — separate from motion */}
+          <div>
+            <Label className="text-sm font-medium mb-2 block">Celebrations</Label>
+            <div className="p-4 border rounded-lg space-y-3">
+              <p className="text-xs text-muted-foreground">
+                Confetti, penguins, and party effects when you complete things.
+              </p>
+              <div className="grid grid-cols-4 gap-2">
+                {([
+                  { value: 'none', label: 'Off', emoji: '🚫' },
+                  { value: 'low', label: 'Subtle', emoji: '✨' },
+                  { value: 'medium', label: 'Party', emoji: '🎉' },
+                  { value: 'high', label: 'CHAOS', emoji: '🐧' },
+                ] as const).map(opt => (
+                  <Button
+                    key={opt.value}
+                    variant={confettiLevel === opt.value ? 'default' : 'outline'}
+                    size="sm"
+                    className="h-auto py-2 flex flex-col"
+                    onClick={() => {
+                      setConfettiLevel(opt.value)
+                      localStorage.setItem('chaos-confetti-level', opt.value)
+                    }}
+                  >
+                    <span>{opt.emoji}</span>
+                    <span className="text-xs">{opt.label}</span>
+                  </Button>
+                ))}
               </div>
             </div>
           </div>

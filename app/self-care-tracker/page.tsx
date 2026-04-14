@@ -77,8 +77,8 @@ export default function SelfCareTracker() {
       setRefreshTrigger(prev => prev + 1)
 
       // 🐧 PENGUIN PARTY for taking care of yourself!
-      const bounceLevel = parseInt(localStorage.getItem('chaos-bounce-intensity') || '10')
-      if (bounceLevel > 0) {
+      const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
+      if (confettiLevel !== 'none') {
         penguinParty()
       }
 
