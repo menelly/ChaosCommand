@@ -24,7 +24,7 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Database, Download, Upload, Shield, Zap, Beaker } from "lucide-react"
+import { Database, Download, Upload, Shield, Zap, Beaker, RefreshCw, QrCode } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useDailyData } from "@/lib/database/hooks/use-daily-data"
@@ -304,6 +304,27 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
                   G-Spot Export (Encrypted)
                 </Button>
               </div>
+            </div>
+
+            {/* Device Sync Section */}
+            <div className="p-4 border rounded-lg border-purple-200 bg-purple-50/50 dark:bg-purple-950/20">
+              <div className="flex items-center gap-2 mb-3">
+                <RefreshCw className="h-4 w-4 text-purple-600" />
+                <Label className="text-sm font-medium">Device Sync</Label>
+                <Badge variant="outline" className="text-xs">New</Badge>
+              </div>
+              <p className="text-sm text-muted-foreground mb-3">
+                Sync data between your phone and desktop over local WiFi. No cloud, no files to manage.
+              </p>
+              <Button
+                asChild
+                className="w-full bg-purple-600 hover:bg-purple-700"
+              >
+                <a href="/sync">
+                  <QrCode className="h-4 w-4 mr-2" />
+                  Open Device Sync
+                </a>
+              </Button>
             </div>
 
             {/* Import Section */}

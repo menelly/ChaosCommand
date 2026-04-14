@@ -9,6 +9,8 @@
 
 import { useState, useEffect } from 'react'
 import { useDatabase } from '@/lib/database/hooks/use-database'
+import { LicenseProvider } from '@/lib/contexts/license-context'
+import LicenseGate from '@/components/license-gate'
 import { UserProvider, useUser } from '@/lib/contexts/user-context'
 import { Toaster } from '@/components/ui/toaster'
 import PinLogin from '@/components/pin-login'
@@ -202,6 +204,16 @@ function AppContent({ children }: AppWrapperProps) {
 }
 
 export function AppWrapper({ children }: AppWrapperProps) {
+  // TODO: Uncomment LicenseProvider + LicenseGate when Polar.sh is ready
+  // return (
+  //   <LicenseProvider>
+  //     <LicenseGate>
+  //       <UserProvider>
+  //         <AppContent>{children}</AppContent>
+  //       </UserProvider>
+  //     </LicenseGate>
+  //   </LicenseProvider>
+  // )
   return (
     <UserProvider>
       <AppContent>{children}</AppContent>
