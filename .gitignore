@@ -78,3 +78,8 @@ backend/build_venv/
 
 # Tauri sidecar binaries (too large for git, built from backend/)
 src-tauri/binaries/
+
+# Handoff / session notes — kept local, not committed (may contain
+# contact names, in-progress thoughts, etc.). Store at E:\Ace\ instead.
+HANDOFF*.md
+HANDOFF*.txt
