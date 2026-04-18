@@ -38,15 +38,19 @@ export function KeyboardAvoidingWrapper({
     if (typeof window === 'undefined') return
 
     const handleResize = () => {
-      // Detect virtual keyboard on mobile by viewport height change
       const viewportHeight = window.visualViewport?.height || window.innerHeight
       const windowHeight = window.screen.height
-      
-      // If viewport is significantly smaller than screen, keyboard is likely open
       const keyboardOpen = windowHeight - viewportHeight > 150
-      
+
       if (keyboardOpen) {
         setKeyboardHeight(windowHeight - viewportHeight)
+        // Scroll focused element into view above keyboard
+        setTimeout(() => {
+          const focused = document.activeElement as HTMLElement
+          if (focused && (focused.tagName === 'INPUT' || focused.tagName === 'TEXTAREA' || focused.tagName === 'SELECT')) {
+            focused.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          }
+        }, 100)
       } else {
         setKeyboardHeight(0)
       }

@@ -182,7 +182,7 @@ export function FoodAllergensHistory() {
       case 'Moderate': return 'bg-orange-100 text-orange-800 border-orange-200'
       case 'Severe': return 'bg-red-100 text-red-800 border-red-200'
       case 'Life-threatening': return 'bg-red-200 text-red-900 border-red-300'
-      default: return 'bg-gray-100 text-gray-800 border-gray-200'
+      default: return 'bg-[var(--surface-1,#f3f4f6)] text-[var(--text-main)] border-[var(--border-soft)]'
     }
   }
 

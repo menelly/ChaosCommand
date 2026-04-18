@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Tag, Plus, X, HelpCircle } from "lucide-react"
+import { KeyboardAvoidingWrapper } from '@/components/ui/keyboard-avoiding-wrapper'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { db, getCurrentTimestamp } from "@/lib/database/dexie-db"
 import type { UserTag as DexieUserTag } from "@/lib/database/dexie-db"
@@ -167,6 +168,7 @@ export function TagsModal({ isOpen, onClose }: TagsModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <KeyboardAvoidingWrapper>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Tag className="h-5 w-5" />
@@ -308,6 +310,7 @@ export function TagsModal({ isOpen, onClose }: TagsModalProps) {
             Close
           </Button>
         </div>
+        </KeyboardAvoidingWrapper>
       </DialogContent>
     </Dialog>
   )

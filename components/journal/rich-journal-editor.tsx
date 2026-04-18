@@ -290,7 +290,7 @@ export function RichJournalEditor({ date, tabId, placeholder = "Start writing...
         onPaste={handlePaste}
         onFocus={handleFocus}
         onBlur={handleBlur}
-        className="w-full min-h-[400px] p-4 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+        className="w-full min-h-[400px] p-4 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-[var(--bg-card)]"
         style={{
           fontFamily: 'inherit',
           fontSize: '16px',

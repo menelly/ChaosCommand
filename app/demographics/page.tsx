@@ -84,7 +84,8 @@ interface UserDemographics {
   email?: string;
   emergencyContacts?: EmergencyContact[];
   insuranceInfo?: {
-    medical?: InsuranceInfo;
+    medical?: InsuranceInfo; // legacy single — migrated to medicalPlans on load
+    medicalPlans?: (InsuranceInfo & { id: string; label?: string })[];
     dental?: InsuranceInfo;
     vision?: InsuranceInfo;
   };
@@ -128,12 +129,7 @@ export default function DemographicsPage() {
     email: '',
     emergencyContacts: [],
     insuranceInfo: {
-      medical: {
-        company: '',
-        memberNumber: '',
-        groupNumber: '',
-        phone: ''
-      },
+      medicalPlans: [],
       dental: {
         company: '',
         memberNumber: '',
@@ -165,6 +161,18 @@ export default function DemographicsPage() {
 
         if (record?.content) {
           const existing = JSON.parse(record.content);
+          // Migrate legacy single medical insurance to medicalPlans array
+          if (existing.insuranceInfo?.medical && !existing.insuranceInfo?.medicalPlans) {
+            const legacy = existing.insuranceInfo.medical;
+            if (legacy.company || legacy.memberNumber || legacy.groupNumber || legacy.phone) {
+              existing.insuranceInfo.medicalPlans = [{ id: 'primary', label: 'Primary', ...legacy }];
+            } else {
+              existing.insuranceInfo.medicalPlans = [];
+            }
+          }
+          if (!existing.insuranceInfo?.medicalPlans) {
+            existing.insuranceInfo = { ...existing.insuranceInfo, medicalPlans: [] };
+          }
           setFormData(existing);
         }
       } catch (error) {
@@ -202,6 +210,41 @@ export default function DemographicsPage() {
           ...prev.insuranceInfo?.[type],
           [field]: value
         }
+      }
+    }));
+  };
+
+  const addMedicalPlan = () => {
+    setFormData(prev => ({
+      ...prev,
+      insuranceInfo: {
+        ...prev.insuranceInfo,
+        medicalPlans: [
+          ...(prev.insuranceInfo?.medicalPlans || []),
+          { id: Date.now().toString(), label: '', company: '', memberNumber: '', groupNumber: '', phone: '' }
+        ]
+      }
+    }));
+  };
+
+  const updateMedicalPlan = (planId: string, field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      insuranceInfo: {
+        ...prev.insuranceInfo,
+        medicalPlans: prev.insuranceInfo?.medicalPlans?.map(p =>
+          p.id === planId ? { ...p, [field]: value } : p
+        ) || []
+      }
+    }));
+  };
+
+  const removeMedicalPlan = (planId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      insuranceInfo: {
+        ...prev.insuranceInfo,
+        medicalPlans: prev.insuranceInfo?.medicalPlans?.filter(p => p.id !== planId) || []
       }
     }));
   };
@@ -256,7 +299,11 @@ export default function DemographicsPage() {
         phone: formData.phone,
         email: formData.email,
         emergencyContacts: formData.emergencyContacts || [],
-        insuranceInfo: formData.insuranceInfo,
+        insuranceInfo: {
+          ...formData.insuranceInfo,
+          // Keep legacy `medical` in sync with first plan for backward compat
+          medical: formData.insuranceInfo?.medicalPlans?.[0] || formData.insuranceInfo?.medical,
+        },
         createdAt: formData.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
@@ -536,62 +583,81 @@ export default function DemographicsPage() {
         </div>
 
         <div className="space-y-6">
-          {/* Medical Insurance */}
+          {/* Medical Insurance (supports multiple plans) */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-blue-700">Medical Insurance</h3>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="medicalCompany">Insurance Company</Label>
-                <Input
-                  id="medicalCompany"
-                  value={formData.insuranceInfo?.medical?.company || ''}
-                  onChange={(e) => handleInsuranceChange('medical', 'company', e.target.value)}
-                  placeholder="Blue Cross Blue Shield"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="medicalPhone">Insurance Phone</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="medicalPhone"
-                    type="tel"
-                    value={formData.insuranceInfo?.medical?.phone || ''}
-                    onChange={(e) => handleInsuranceChange('medical', 'phone', e.target.value)}
-                    placeholder="(800) 555-1234"
-                  />
-                  {formData.insuranceInfo?.medical?.phone && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => openExternal(`tel:${formData.insuranceInfo?.medical?.phone}`)}
-                    >
-                      <Phone className="h-4 w-4" />
-                    </Button>
-                  )}
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-medium text-blue-700">Medical Insurance</h3>
+              <Button variant="outline" size="sm" onClick={addMedicalPlan} className="gap-1">
+                <Plus className="h-3 w-3" /> Add Plan
+              </Button>
+            </div>
+            {(formData.insuranceInfo?.medicalPlans || []).length === 0 && (
+              <p className="text-sm text-[var(--text-muted)] py-4 text-center">
+                No medical insurance plans added yet. Click "Add Plan" to add one.
+              </p>
+            )}
+            {(formData.insuranceInfo?.medicalPlans || []).map((plan, idx) => (
+              <div key={plan.id} className="border border-[var(--border-soft)] rounded-lg p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-xs">{idx === 0 ? 'Primary' : idx === 1 ? 'Secondary' : `Plan ${idx + 1}`}</Badge>
+                    <Input
+                      value={plan.label || ''}
+                      onChange={(e) => updateMedicalPlan(plan.id, 'label', e.target.value)}
+                      placeholder="e.g., VA, SSDI, Private"
+                      className="h-7 text-sm w-40"
+                    />
+                  </div>
+                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-red-500 hover:text-red-700"
+                    onClick={() => removeMedicalPlan(plan.id)}>
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Insurance Company</Label>
+                    <Input
+                      value={plan.company || ''}
+                      onChange={(e) => updateMedicalPlan(plan.id, 'company', e.target.value)}
+                      placeholder="Blue Cross Blue Shield"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Insurance Phone</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        type="tel"
+                        value={plan.phone || ''}
+                        onChange={(e) => updateMedicalPlan(plan.id, 'phone', e.target.value)}
+                        placeholder="(800) 555-1234"
+                      />
+                      {plan.phone && (
+                        <Button size="sm" variant="outline"
+                          onClick={() => openExternal(`tel:${plan.phone}`)}>
+                          <Phone className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Member Number</Label>
+                    <Input
+                      value={plan.memberNumber || ''}
+                      onChange={(e) => updateMedicalPlan(plan.id, 'memberNumber', e.target.value)}
+                      placeholder="ABC123456789"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Group Number</Label>
+                    <Input
+                      value={plan.groupNumber || ''}
+                      onChange={(e) => updateMedicalPlan(plan.id, 'groupNumber', e.target.value)}
+                      placeholder="GRP001234"
+                    />
+                  </div>
                 </div>
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="medicalMember">Member Number</Label>
-                <Input
-                  id="medicalMember"
-                  value={formData.insuranceInfo?.medical?.memberNumber || ''}
-                  onChange={(e) => handleInsuranceChange('medical', 'memberNumber', e.target.value)}
-                  placeholder="ABC123456789"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="medicalGroup">Group Number</Label>
-                <Input
-                  id="medicalGroup"
-                  value={formData.insuranceInfo?.medical?.groupNumber || ''}
-                  onChange={(e) => handleInsuranceChange('medical', 'groupNumber', e.target.value)}
-                  placeholder="GRP001234"
-                />
-              </div>
-            </div>
+            ))}
           </div>
 
           {/* Dental Insurance */}

@@ -41,6 +41,7 @@ import { Utensils, Plus, ExternalLink } from 'lucide-react'
 import { DysautonomiaEntry, EpisodeModalProps } from '../dysautonomia-types'
 import { DURATION_UNITS, getSeverityLabel, getSeverityColor } from '../dysautonomia-constants'
 import { TagInput } from '@/components/tag-input'
+import { KeyboardAvoidingWrapper } from '@/components/ui/keyboard-avoiding-wrapper'
 
 // GI-specific symptoms
 const GI_SYMPTOMS = [
@@ -199,6 +200,7 @@ export function GiSymptomsModal({ isOpen, onClose, onSave, editingEntry }: Episo
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <KeyboardAvoidingWrapper>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Utensils className="h-5 w-5 text-green-500" />
@@ -405,6 +407,7 @@ export function GiSymptomsModal({ isOpen, onClose, onSave, editingEntry }: Episo
             </Button>
           </div>
         </div>
+        </KeyboardAvoidingWrapper>
       </DialogContent>
     </Dialog>
   )

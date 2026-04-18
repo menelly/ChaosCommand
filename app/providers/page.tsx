@@ -29,6 +29,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDailyData, CATEGORIES, SUBCATEGORIES, formatDateForStorage } from '@/lib/database';
 import { openExternal } from '@/lib/open-external';
+import { KeyboardAvoidingWrapper } from '@/components/ui/keyboard-avoiding-wrapper';
 import AppCanvas from '@/components/app-canvas';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -648,6 +649,7 @@ export default function ProvidersPage() {
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <KeyboardAvoidingWrapper>
               <DialogHeader>
                 <DialogTitle>{editingProvider ? 'Edit Healthcare Provider' : 'Add Healthcare Provider'}</DialogTitle>
                 <DialogDescription>
@@ -805,6 +807,7 @@ export default function ProvidersPage() {
                   </Button>
                 </div>
               </div>
+              </KeyboardAvoidingWrapper>
             </DialogContent>
           </Dialog>
 
@@ -962,7 +965,7 @@ export default function ProvidersPage() {
 
 
                   {provider.notes && (
-                    <div className="text-xs text-muted-foreground bg-gray-50 p-2 rounded">
+                    <div className="text-xs text-muted-foreground bg-[var(--surface-1,#f9fafb)] p-2 rounded">
                       {provider.notes}
                     </div>
                   )}
@@ -1024,7 +1027,7 @@ export default function ProvidersPage() {
                                 {providerAppointments
                                   .sort((a, b) => new Date(b.appointmentDate).getTime() - new Date(a.appointmentDate).getTime())
                                   .map((appointment) => (
-                                    <div key={appointment.id} className="text-xs p-2 bg-gray-50 rounded">
+                                    <div key={appointment.id} className="text-xs p-2 bg-[var(--surface-1,#f9fafb)] rounded">
                                       <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-1">
                                           {isUpcoming(appointment.appointmentDate) ? (

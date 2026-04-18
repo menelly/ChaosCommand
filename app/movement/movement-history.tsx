@@ -226,7 +226,7 @@ export function MovementHistory({
                         <strong>Energy:</strong> {entry.energyBefore} → {entry.energyAfter}
                         {entry.energyAfter > entry.energyBefore && <span className="text-green-600 ml-1">↗️</span>}
                         {entry.energyAfter < entry.energyBefore && <span className="text-blue-600 ml-1">↘️</span>}
-                        {entry.energyAfter === entry.energyBefore && <span className="text-gray-600 ml-1">→</span>}
+                        {entry.energyAfter === entry.energyBefore && <span className="text-[var(--text-muted)] ml-1">→</span>}
                       </div>
 
                       {entry.bodyFeel.length > 0 && (

@@ -694,7 +694,7 @@ export default function WeatherEnvironmentTracker({ selectedDate = new Date() }:
                           {entry.tags && entry.tags.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-2">
                               {entry.tags.map((tag, tagIndex) => (
-                                <span key={tagIndex} className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
+                                <span key={tagIndex} className="text-xs bg-[var(--surface-1,#f3f4f6)] text-[var(--text-main)] px-2 py-1 rounded">
                                   #{tag}
                                 </span>
                               ))}
@@ -787,7 +787,7 @@ export default function WeatherEnvironmentTracker({ selectedDate = new Date() }:
                           {entry.tags && entry.tags.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-2">
                               {entry.tags.map((tag, tagIndex) => (
-                                <span key={tagIndex} className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
+                                <span key={tagIndex} className="text-xs bg-[var(--surface-1,#f3f4f6)] text-[var(--text-main)] px-2 py-1 rounded">
                                   #{tag}
                                 </span>
                               ))}

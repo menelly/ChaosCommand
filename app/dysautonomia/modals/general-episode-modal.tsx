@@ -40,6 +40,7 @@ import { RotateCcw, Plus } from 'lucide-react'
 import { DysautonomiaEntry, EpisodeModalProps } from '../dysautonomia-types'
 import { DYSAUTONOMIA_SYMPTOMS, DYSAUTONOMIA_TRIGGERS, DYSAUTONOMIA_INTERVENTIONS, POSITION_CHANGES, DURATION_UNITS, getSeverityLabel, getSeverityColor } from '../dysautonomia-constants'
 import { TagInput } from '@/components/tag-input'
+import { KeyboardAvoidingWrapper } from '@/components/ui/keyboard-avoiding-wrapper'
 
 export function GeneralEpisodeModal({ isOpen, onClose, onSave, editingEntry }: EpisodeModalProps) {
   // Form state
@@ -170,6 +171,7 @@ export function GeneralEpisodeModal({ isOpen, onClose, onSave, editingEntry }: E
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <KeyboardAvoidingWrapper>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <RotateCcw className="h-5 w-5 text-purple-500" />
@@ -414,6 +416,7 @@ export function GeneralEpisodeModal({ isOpen, onClose, onSave, editingEntry }: E
             </Button>
           </div>
         </div>
+        </KeyboardAvoidingWrapper>
       </DialogContent>
     </Dialog>
   )

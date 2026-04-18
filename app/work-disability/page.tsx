@@ -123,6 +123,7 @@ export default function WorkDisabilityPage() {
   // --- MISSED WORK STATE ---
   const [missedDays, setMissedDays] = useState<MissedWorkDay[]>([])
   const [showMissedForm, setShowMissedForm] = useState(false)
+  const [editingMissedId, setEditingMissedId] = useState<string | null>(null)
   const [missedForm, setMissedForm] = useState<Omit<MissedWorkDay, "id">>({
     date: formatDateForStorage(new Date()),
     workType: "paid job",
@@ -138,6 +139,7 @@ export default function WorkDisabilityPage() {
   // --- EMPLOYMENT STATE ---
   const [employments, setEmployments] = useState<Employment[]>([])
   const [showEmploymentForm, setShowEmploymentForm] = useState(false)
+  const [editingEmploymentId, setEditingEmploymentId] = useState<string | null>(null)
   const [employmentForm, setEmploymentForm] = useState<Omit<Employment, "id">>({
     employer: "", jobTitle: "", hrContact: "",
     dateStarted: "", dateEnded: "", jobDuties: "",
@@ -150,6 +152,7 @@ export default function WorkDisabilityPage() {
   // --- DISABILITY APP STATE ---
   const [applications, setApplications] = useState<DisabilityApplication[]>([])
   const [showAppForm, setShowAppForm] = useState(false)
+  const [editingAppId, setEditingAppId] = useState<string | null>(null)
   const [appForm, setAppForm] = useState<Omit<DisabilityApplication, "id">>({
     applicationType: "SSDI", dateSubmitted: "", status: "Pending",
     agency: "", caseNumber: "",
@@ -171,17 +174,17 @@ export default function WorkDisabilityPage() {
       if (!records) return
 
       const missed = records
-        .filter((r: any) => r.subcategory === 'missed-work')
+        .filter((r: any) => r.subcategory === 'missed-work' || r.subcategory?.startsWith('missed-work-'))
         .map((r: any) => typeof r.content === 'string' ? JSON.parse(r.content) : r.content)
         .sort((a: MissedWorkDay, b: MissedWorkDay) => b.date.localeCompare(a.date))
 
       const emps = records
-        .filter((r: any) => r.subcategory === 'employment-history')
+        .filter((r: any) => r.subcategory === 'employment-history' || r.subcategory?.startsWith('employment-history-'))
         .map((r: any) => typeof r.content === 'string' ? JSON.parse(r.content) : r.content)
         .sort((a: Employment, b: Employment) => (b.dateStarted || '').localeCompare(a.dateStarted || ''))
 
       const apps = records
-        .filter((r: any) => r.subcategory === 'disability-applications')
+        .filter((r: any) => r.subcategory === 'disability-applications' || r.subcategory?.startsWith('disability-application-'))
         .map((r: any) => typeof r.content === 'string' ? JSON.parse(r.content) : r.content)
         .sort((a: DisabilityApplication, b: DisabilityApplication) => (b.dateSubmitted || '').localeCompare(a.dateSubmitted || ''))
 
@@ -201,12 +204,16 @@ export default function WorkDisabilityPage() {
 
   const saveMissedDay = async () => {
     if (!missedForm.reason.trim()) return
-    const entry: MissedWorkDay = {
-      id: `missed-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      ...missedForm,
+    const id = editingMissedId || `missed-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    const entry: MissedWorkDay = { id, ...missedForm }
+    // Delete old record if editing (date may have changed)
+    if (editingMissedId) {
+      const old = missedDays.find(d => d.id === editingMissedId)
+      if (old) await deleteData(old.date, CATEGORIES.USER, `missed-work-${old.id}`).catch(() => {})
     }
-    await saveData(entry.date, CATEGORIES.USER, 'missed-work', JSON.stringify(entry))
+    await saveData(entry.date, CATEGORIES.USER, `missed-work-${entry.id}`, JSON.stringify(entry))
     setShowMissedForm(false)
+    setEditingMissedId(null)
     setMissedForm({
       date: formatDateForStorage(new Date()), workType: "paid job", reason: "",
       impactLevel: "moderate", couldNotDoAnythingElse: false, duration: "full",
@@ -215,17 +222,30 @@ export default function WorkDisabilityPage() {
     await loadAllData()
   }
 
+  const editMissedDay = (day: MissedWorkDay) => {
+    setEditingMissedId(day.id)
+    setMissedForm({
+      date: day.date, workType: day.workType, reason: day.reason,
+      impactLevel: day.impactLevel, couldNotDoAnythingElse: day.couldNotDoAnythingElse,
+      duration: day.duration, hoursMissed: day.hoursMissed, notes: day.notes, tags: day.tags,
+    })
+    setShowMissedForm(true)
+  }
+
   const saveEmployment = async () => {
     if (!employmentForm.employer.trim()) return
-    const entry: Employment = {
-      id: `emp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      ...employmentForm,
+    const id = editingEmploymentId || `emp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    const entry: Employment = { id, ...employmentForm }
+    if (editingEmploymentId) {
+      const old = employments.find(e => e.id === editingEmploymentId)
+      if (old) await deleteData(old.dateStarted || formatDateForStorage(new Date()), CATEGORIES.USER, `employment-history-${old.id}`).catch(() => {})
     }
     await saveData(
       entry.dateStarted || formatDateForStorage(new Date()),
-      CATEGORIES.USER, 'employment-history', JSON.stringify(entry)
+      CATEGORIES.USER, `employment-history-${entry.id}`, JSON.stringify(entry)
     )
     setShowEmploymentForm(false)
+    setEditingEmploymentId(null)
     setEmploymentForm({
       employer: "", jobTitle: "", hrContact: "",
       dateStarted: "", dateEnded: "", jobDuties: "",
@@ -237,17 +257,33 @@ export default function WorkDisabilityPage() {
     await loadAllData()
   }
 
+  const editEmployment = (emp: Employment) => {
+    setEditingEmploymentId(emp.id)
+    setEmploymentForm({
+      employer: emp.employer, jobTitle: emp.jobTitle, hrContact: emp.hrContact,
+      dateStarted: emp.dateStarted, dateEnded: emp.dateEnded, jobDuties: emp.jobDuties,
+      active: emp.active,
+      accommodationsRequested: emp.accommodationsRequested,
+      accommodationsReceived: emp.accommodationsReceived,
+      symptomsExacerbated: emp.symptomsExacerbated, reflections: emp.reflections, tags: emp.tags,
+    })
+    setShowEmploymentForm(true)
+  }
+
   const saveApplication = async () => {
     if (!appForm.applicationType.trim()) return
-    const entry: DisabilityApplication = {
-      id: `app-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      ...appForm,
+    const id = editingAppId || `app-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    const entry: DisabilityApplication = { id, ...appForm }
+    if (editingAppId) {
+      const old = applications.find(a => a.id === editingAppId)
+      if (old) await deleteData(old.dateSubmitted || formatDateForStorage(new Date()), CATEGORIES.USER, `disability-application-${old.id}`).catch(() => {})
     }
     await saveData(
       entry.dateSubmitted || formatDateForStorage(new Date()),
-      CATEGORIES.USER, 'disability-applications', JSON.stringify(entry)
+      CATEGORIES.USER, `disability-application-${entry.id}`, JSON.stringify(entry)
     )
     setShowAppForm(false)
+    setEditingAppId(null)
     setAppForm({
       applicationType: "SSDI", dateSubmitted: "", status: "Pending",
       agency: "Social Security Administration", caseNumber: "",
@@ -257,27 +293,38 @@ export default function WorkDisabilityPage() {
     await loadAllData()
   }
 
+  const editApplication = (app: DisabilityApplication) => {
+    setEditingAppId(app.id)
+    setAppForm({
+      applicationType: app.applicationType, dateSubmitted: app.dateSubmitted, status: app.status,
+      agency: app.agency, caseNumber: app.caseNumber,
+      contactPerson: app.contactPerson, contactPhone: app.contactPhone, documents: app.documents,
+      notes: app.notes, nextSteps: app.nextSteps, nextAppointment: app.nextAppointment, appealDeadline: app.appealDeadline,
+    })
+    setShowAppForm(true)
+  }
+
   // ============================================================================
   // DELETE FUNCTIONS
   // ============================================================================
 
   const deleteMissedDay = async (day: MissedWorkDay) => {
     if (!confirm(`Delete missed work entry for ${day.date}?`)) return
-    await deleteData(day.date, CATEGORIES.USER, 'missed-work')
+    await deleteData(day.date, CATEGORIES.USER, `missed-work-${day.id}`)
     await loadAllData()
   }
 
   const deleteEmployment = async (emp: Employment) => {
     if (!confirm(`Delete employment record for ${emp.employer}?`)) return
     const date = emp.dateStarted || formatDateForStorage(new Date())
-    await deleteData(date, CATEGORIES.USER, 'employment-history')
+    await deleteData(date, CATEGORIES.USER, `employment-history-${emp.id}`)
     await loadAllData()
   }
 
   const deleteApplication = async (app: DisabilityApplication) => {
     if (!confirm(`Delete ${app.applicationType} application?`)) return
     const date = app.dateSubmitted || formatDateForStorage(new Date())
-    await deleteData(date, CATEGORIES.USER, 'disability-applications')
+    await deleteData(date, CATEGORIES.USER, `disability-application-${app.id}`)
     await loadAllData()
   }
 
@@ -373,13 +420,63 @@ export default function WorkDisabilityPage() {
             )}
 
             {!showMissedForm && (
-              <Button
-                onClick={() => setShowMissedForm(true)}
-                className="w-full mb-4 bg-[var(--accent-primary)] text-[var(--text-main)] hover:opacity-90 font-medium border-2 border-[var(--accent-primary)]"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Log Missed Work Day
-              </Button>
+              <div className="flex gap-2 mb-4">
+                <Button
+                  onClick={() => setShowMissedForm(true)}
+                  className="flex-1 bg-[var(--accent-primary)] text-[var(--text-main)] hover:opacity-90 font-medium border-2 border-[var(--accent-primary)]"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Log Missed Work Day
+                </Button>
+              </div>
+            )}
+
+            {/* Analytics Summary */}
+            {missedDays.length >= 3 && !showMissedForm && (
+              <Card className="mb-4 border-[var(--border-soft)] bg-[var(--bg-card)]">
+                <CardContent className="py-4">
+                  <h3 className="font-semibold text-[var(--text-main)] mb-3 flex items-center gap-2">
+                    <Search className="h-4 w-4" />
+                    Pattern Summary
+                  </h3>
+                  <div className="space-y-2 text-sm">
+                    {/* By work type */}
+                    <div>
+                      <span className="text-[var(--text-muted)]">Most missed: </span>
+                      <span className="text-[var(--text-main)] font-medium">
+                        {missedStats.byType.sort((a, b) => b.count - a.count)[0]?.label} ({missedStats.byType.sort((a, b) => b.count - a.count)[0]?.count} days)
+                      </span>
+                    </div>
+                    {/* Severe percentage */}
+                    <div>
+                      <span className="text-[var(--text-muted)]">Severe or total limitation: </span>
+                      <span className="text-[var(--text-main)] font-medium">
+                        {Math.round(((missedStats.byImpact.find(i => i.value === "severe")?.count || 0) + missedStats.totalDisabled) / missedStats.total * 100)}% of days
+                      </span>
+                    </div>
+                    {/* Monthly breakdown */}
+                    {(() => {
+                      const months: Record<string, number> = {}
+                      missedDays.forEach(d => {
+                        const m = d.date.substring(0, 7)
+                        months[m] = (months[m] || 0) + 1
+                      })
+                      const sorted = Object.entries(months).sort((a, b) => b[0].localeCompare(a[0])).slice(0, 3)
+                      return sorted.length > 0 && (
+                        <div>
+                          <span className="text-[var(--text-muted)]">Recent months: </span>
+                          <span className="text-[var(--text-main)]">
+                            {sorted.map(([m, c]) => `${m}: ${c} days`).join(' · ')}
+                          </span>
+                        </div>
+                      )
+                    })()}
+                  </div>
+                  <p className="text-xs text-[var(--text-muted)] mt-3 italic">
+                    This data is what wins SSDI cases. Keep logging.
+                  </p>
+                </CardContent>
+              </Card>
             )}
 
             {showMissedForm && (
@@ -533,9 +630,9 @@ export default function WorkDisabilityPage() {
                       className="flex-1 bg-[var(--accent-primary)] text-[var(--text-main)] hover:opacity-90 font-medium border-2 border-[var(--accent-primary)]"
                     >
                       <CheckCircle className="h-4 w-4 mr-2" />
-                      Log Day
+                      {editingMissedId ? 'Update Day' : 'Log Day'}
                     </Button>
-                    <Button variant="outline" onClick={() => setShowMissedForm(false)}
+                    <Button variant="outline" onClick={() => { setShowMissedForm(false); setEditingMissedId(null); setMissedForm({ date: formatDateForStorage(new Date()), workType: "paid job", reason: "", impactLevel: "moderate", couldNotDoAnythingElse: false, duration: "full", hoursMissed: undefined, notes: "", tags: [] }) }}
                       className="border-[var(--border-soft)] text-[var(--text-muted)]">
                       Cancel
                     </Button>
@@ -573,14 +670,24 @@ export default function WorkDisabilityPage() {
                             <span className="text-xs text-[var(--text-muted)]">{day.hoursMissed}h</span>
                           )}
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 w-7 p-0 text-[var(--text-muted)] hover:text-red-500"
-                          onClick={() => deleteMissedDay(day)}
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0 text-[var(--text-muted)] hover:text-blue-500"
+                            onClick={() => editMissedDay(day)}
+                          >
+                            <Edit3 className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0 text-[var(--text-muted)] hover:text-red-500"
+                            onClick={() => deleteMissedDay(day)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
                       </div>
                       <p className="text-sm text-[var(--text-muted)] mt-1">{day.reason}</p>
                       {day.notes && (
@@ -698,7 +805,7 @@ export default function WorkDisabilityPage() {
                   <div className="flex gap-3">
                     <Button onClick={saveEmployment} disabled={!employmentForm.employer.trim()}
                       className="flex-1 bg-[var(--accent-primary)] text-[var(--text-main)] hover:opacity-90 font-medium border-2 border-[var(--accent-primary)]">
-                      <CheckCircle className="h-4 w-4 mr-2" /> Save Employment
+                      <CheckCircle className="h-4 w-4 mr-2" /> {editingEmploymentId ? 'Update Employment' : 'Save Employment'}
                     </Button>
                     <Button variant="outline" onClick={() => setShowEmploymentForm(false)}
                       className="border-[var(--border-soft)] text-[var(--text-muted)]">Cancel</Button>
@@ -723,14 +830,16 @@ export default function WorkDisabilityPage() {
                         <Badge variant={emp.active ? "default" : "secondary"}>
                           {emp.active ? "Current" : "Past"}
                         </Badge>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 w-7 p-0 text-[var(--text-muted)] hover:text-red-500"
-                          onClick={() => deleteEmployment(emp)}
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
+                        <div className="flex gap-1">
+                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-[var(--text-muted)] hover:text-blue-500"
+                            onClick={() => editEmployment(emp)}>
+                            <Edit3 className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-[var(--text-muted)] hover:text-red-500"
+                            onClick={() => deleteEmployment(emp)}>
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                     {emp.jobDuties && <p className="text-sm text-[var(--text-muted)] mt-2">{emp.jobDuties}</p>}
@@ -877,7 +986,7 @@ export default function WorkDisabilityPage() {
                   <div className="flex gap-3">
                     <Button onClick={saveApplication}
                       className="flex-1 bg-[var(--accent-primary)] text-[var(--text-main)] hover:opacity-90 font-medium border-2 border-[var(--accent-primary)]">
-                      <CheckCircle className="h-4 w-4 mr-2" /> Save Application
+                      <CheckCircle className="h-4 w-4 mr-2" /> {editingAppId ? 'Update Application' : 'Save Application'}
                     </Button>
                     <Button variant="outline" onClick={() => setShowAppForm(false)}
                       className="border-[var(--border-soft)] text-[var(--text-muted)]">Cancel</Button>
@@ -908,14 +1017,16 @@ export default function WorkDisabilityPage() {
                             Deadline: {app.appealDeadline}
                           </Badge>
                         )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 w-7 p-0 text-[var(--text-muted)] hover:text-red-500"
-                          onClick={() => deleteApplication(app)}
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
+                        <div className="flex gap-1">
+                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-[var(--text-muted)] hover:text-blue-500"
+                            onClick={() => editApplication(app)}>
+                            <Edit3 className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-[var(--text-muted)] hover:text-red-500"
+                            onClick={() => deleteApplication(app)}>
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                     {app.nextSteps && (

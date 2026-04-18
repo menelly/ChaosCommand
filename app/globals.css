@@ -156,4 +156,9 @@
   animation: gremlin-cheer 0.6s ease-in-out infinite;
 }
 
+/* Fix button rows: when buttons wrap, all items stretch to match tallest */
+.flex.flex-wrap {
+  align-items: stretch;
+}
+
 

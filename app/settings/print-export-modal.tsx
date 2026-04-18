@@ -19,6 +19,7 @@ import { Printer, FileText, Stethoscope, Scale, ChevronRight, ChevronLeft, Downl
 import { useDailyData } from "@/lib/database/hooks/use-daily-data"
 import { CATEGORIES, formatDateForStorage } from "@/lib/database/dexie-db"
 import { generateMedicalReport } from "@/lib/pdf-report-generator"
+import { KeyboardAvoidingWrapper } from '@/components/ui/keyboard-avoiding-wrapper'
 
 interface PrintExportModalProps {
   isOpen: boolean
@@ -323,6 +324,7 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <KeyboardAvoidingWrapper>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Printer className="h-5 w-5" />
@@ -620,6 +622,7 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
             </div>
           )}
         </div>
+        </KeyboardAvoidingWrapper>
       </DialogContent>
     </Dialog>
   )

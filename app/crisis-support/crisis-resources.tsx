@@ -86,7 +86,7 @@ export function CrisisResources() {
       case 'youth': return 'bg-green-100 text-green-800'
       case 'veterans': return 'bg-indigo-100 text-indigo-800'
       case 'eating-disorders': return 'bg-yellow-100 text-yellow-800'
-      default: return 'bg-gray-100 text-gray-800'
+      default: return 'bg-[var(--surface-1,#f3f4f6)] text-[var(--text-main)]'
     }
   }
 

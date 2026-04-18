@@ -41,6 +41,7 @@ import { Activity, AlertTriangle } from 'lucide-react'
 import { DysautonomiaEntry, EpisodeModalProps } from '../dysautonomia-types'
 import { DYSAUTONOMIA_SYMPTOMS, DYSAUTONOMIA_TRIGGERS, DYSAUTONOMIA_INTERVENTIONS, POSITION_CHANGES, DURATION_UNITS, getSeverityLabel, getSeverityColor } from '../dysautonomia-constants'
 import { TagInput } from '@/components/tag-input'
+import { KeyboardAvoidingWrapper } from '@/components/ui/keyboard-avoiding-wrapper'
 
 export function SpO2EpisodeModal({ isOpen, onClose, onSave, editingEntry }: EpisodeModalProps) {
   // SpO2-specific form state
@@ -170,6 +171,7 @@ export function SpO2EpisodeModal({ isOpen, onClose, onSave, editingEntry }: Epis
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <KeyboardAvoidingWrapper>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Activity className="h-5 w-5 text-cyan-500" />
@@ -300,6 +302,7 @@ export function SpO2EpisodeModal({ isOpen, onClose, onSave, editingEntry }: Epis
             </Button>
           </div>
         </div>
+        </KeyboardAvoidingWrapper>
       </DialogContent>
     </Dialog>
   )

@@ -331,7 +331,7 @@ export function WeatherAnalyticsDesktop({
       case 'A little': return 'bg-yellow-50 text-yellow-700'
       case 'Yes': return 'bg-orange-50 text-orange-700'
       case 'A LOT': return 'bg-red-50 text-red-700'
-      default: return 'bg-gray-50 text-gray-700'
+      default: return 'bg-[var(--surface-1,#f3f4f6)] text-[var(--text-main)]'
     }
   }
 
@@ -341,7 +341,7 @@ export function WeatherAnalyticsDesktop({
       case 'Moderate': return 'bg-orange-50 text-orange-700'
       case 'Severe': return 'bg-red-50 text-red-700'
       case 'Extreme': return 'bg-red-100 text-red-900'
-      default: return 'bg-gray-50 text-gray-700'
+      default: return 'bg-[var(--surface-1,#f3f4f6)] text-[var(--text-main)]'
     }
   }
 

@@ -27,6 +27,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Database, Download, Upload, Shield, Zap } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { KeyboardAvoidingWrapper } from '@/components/ui/keyboard-avoiding-wrapper'
 
 interface DataManagementModalProps {
   isOpen: boolean
@@ -122,6 +123,7 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <KeyboardAvoidingWrapper>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Database className="h-5 w-5" />
@@ -268,6 +270,7 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
             Close
           </Button>
         </div>
+        </KeyboardAvoidingWrapper>
       </DialogContent>
     </Dialog>
   )

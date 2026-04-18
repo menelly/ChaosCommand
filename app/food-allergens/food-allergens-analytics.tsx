@@ -242,7 +242,7 @@ export default function FoodAllergensAnalytics({ entries, currentDate, loadAllEn
       case 'moderate': return 'text-orange-600'
       case 'severe': return 'text-red-600'
       case 'life_threatening': return 'text-red-800'
-      default: return 'text-gray-600'
+      default: return '	ext-[var(--text-muted)]'
     }
   }
 

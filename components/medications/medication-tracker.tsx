@@ -207,14 +207,14 @@ export function MedicationTracker() {
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="opacity-50">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">With Reminders</CardTitle>
+            <CardTitle className="text-sm font-medium">Reminders</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{medicationsWithReminders.length}</div>
+            <div className="text-2xl font-bold">v2.0</div>
             <p className="text-xs text-muted-foreground">
-              reminder notifications enabled
+              coming soon
             </p>
           </CardContent>
         </Card>

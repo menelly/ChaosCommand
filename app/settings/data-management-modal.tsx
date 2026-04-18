@@ -33,6 +33,7 @@ import { exportAllData } from "@/lib/database/migration-helper"
 import TestPinManagerComponent from "@/components/test-pin-manager"
 import { generateStarterData, STARTER_DATA_TRACKERS } from "@/lib/database/starter-data"
 import { generateInterestingData } from "@/lib/database/interesting-data"
+import { KeyboardAvoidingWrapper } from '@/components/ui/keyboard-avoiding-wrapper'
 
 interface DataManagementModalProps {
   isOpen: boolean
@@ -210,6 +211,7 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-card rounded-lg max-w-2xl max-h-[80vh] overflow-y-auto p-6">
+        <KeyboardAvoidingWrapper>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold flex items-center gap-2">
             <Database className="h-5 w-5" />
@@ -482,6 +484,7 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
           </TabsContent>
           */}
         </Tabs>
+        </KeyboardAvoidingWrapper>
       </div>
     </div>
   )

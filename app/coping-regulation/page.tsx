@@ -818,7 +818,7 @@ export default function CopingRegulationPage() {
           >
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <div className="p-3 rounded-lg bg-gray-500 text-white">
+                <div className="p-3 rounded-lg bg-[var(--surface-2,#6b7280)] text-[var(--text-main)]">
                   <Plus className="h-6 w-6" />
                 </div>
               </div>

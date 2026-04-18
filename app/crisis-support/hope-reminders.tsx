@@ -178,7 +178,7 @@ export function HopeReminders() {
       case 'person': return 'text-purple-600'
       case 'achievement': return 'text-yellow-600'
       case 'reason': return 'text-orange-600'
-      default: return 'text-gray-600'
+      default: return '	ext-[var(--text-muted)]'
     }
   }
 
