@@ -39,6 +39,7 @@ import { useDailyData } from '@/lib/database/hooks/use-daily-data'
 import { toast } from '@/hooks/use-toast'
 import { Timer, TimerManagerProps } from './diabetes-types'
 import { TIMER_CONFIGS, getTimeRemaining } from './diabetes-constants'
+import AddToCalendarButton from '@/components/add-to-calendar-button'
 
 export function DiabetesTimerManager({ timers, onTimersChange, currentUserId }: TimerManagerProps) {
   const [isTimerModalOpen, setIsTimerModalOpen] = useState(false)
@@ -697,7 +698,22 @@ export function DiabetesTimerManager({ timers, onTimersChange, currentUserId }: 
                         <Badge variant={isExpired ? "destructive" : "secondary"}>
                           {remaining.text}
                         </Badge>
-                        <div className="flex gap-2 mt-2">
+                        <div className="flex gap-2 mt-2 flex-wrap justify-end">
+                          {!isExpired && (
+                            <AddToCalendarButton
+                              compact
+                              label="Add to Calendar"
+                              event={{
+                                title: `Change ${timer.name} (${config.name})`,
+                                description: `Time to change your ${config.name} device (${timer.name}). Started ${new Date(timer.inserted_at).toLocaleDateString()}.`,
+                                start: timer.expires_at,
+                                durationMinutes: 30,
+                                // Alert 1 day before so there's time to grab supplies
+                                reminderMinutesBefore: 24 * 60,
+                              }}
+                              filename={`change-${timer.type}-${timer.name.replace(/\W+/g, '-').toLowerCase()}.ics`}
+                            />
+                          )}
                           {isExpired && (
                             <Button
                               size="sm"

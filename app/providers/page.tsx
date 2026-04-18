@@ -61,6 +61,7 @@ import TextParserComponent from '@/components/text-parser';
 import { providerParserConfig } from '@/lib/parsers/configs/provider';
 import { TagInput } from '@/components/tag-input';
 import AppointmentPlanner from '@/components/appointments/appointment-planner';
+import AddToCalendarButton from '@/components/add-to-calendar-button';
 import AppointmentReview from '@/components/appointments/appointment-review';
 
 interface Provider {
@@ -1041,7 +1042,26 @@ export default function ProvidersPage() {
                                             </>
                                           )}
                                         </div>
-                                        <div className="flex gap-1">
+                                        <div className="flex gap-1 items-center">
+                                          {isUpcoming(appointment.appointmentDate) && (
+                                            <AddToCalendarButton
+                                              compact
+                                              event={{
+                                                title: `Appointment: ${appointment.providerName}`,
+                                                description: [
+                                                  appointment.appointmentGoals && `Goals:\n${appointment.appointmentGoals}`,
+                                                  appointment.newSymptoms && `Symptoms to discuss:\n${appointment.newSymptoms}`,
+                                                  appointment.questionsToAsk && `Questions:\n${appointment.questionsToAsk}`,
+                                                ].filter(Boolean).join('\n\n'),
+                                                start: appointment.appointmentTime
+                                                  ? `${appointment.appointmentDate}T${appointment.appointmentTime}:00`
+                                                  : `${appointment.appointmentDate}T09:00:00`,
+                                                durationMinutes: 60,
+                                                reminderMinutesBefore: (appointment.reminderDays || 1) * 24 * 60,
+                                              }}
+                                              filename={`appt-${appointment.providerName.replace(/\W+/g, '-').toLowerCase()}-${appointment.appointmentDate}.ics`}
+                                            />
+                                          )}
                                           <Button
                                             variant="ghost"
                                             size="sm"

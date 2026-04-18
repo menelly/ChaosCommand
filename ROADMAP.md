@@ -18,7 +18,46 @@ Living doc. Append as we go. Short entries; link to code/files where useful.
 
 ---
 
-## Notifications v2 — delegate to the OS calendar (recommended)
+## Notifications — decided strategy (2026-04-18)
+
+**We ship Tier 1 + Tier 2. We do NOT pursue Tier 3 or Tier 4 at current team size.**
+
+### Why (Ren's call, and it's the right one)
+
+Current team is one disabled human and one AI that gets activated when the human remembers to bonk it. Chaos Command is open-source, pay-what-you-want, no recurring dev funding.
+
+For a medical-adjacent app, **silent failure modes are a safety problem.** A diabetic whose insulin reminder stops because an OAuth token expired and nobody noticed is worse off than if we'd never offered the feature. We don't have the maintenance bandwidth to keep complex integrations alive across Android/iOS/Google/Apple platform churn.
+
+So: **ship what stays working, document what we don't do and why.**
+
+### The four tiers, ranked by maintenance cost
+
+| Tier | What | Maintenance | Failure mode | Status |
+|------|------|-------------|--------------|--------|
+| 1 | Deep-link "Add to Calendar" button + .ics download | **LOW** — URL formats + iCal spec are effectively frozen (Google URL ~2015, RFC 5545 from 2009) | Button opens wrong thing → visible immediately, fix a string | **SHIP** |
+| 2 | In-app Dexie-queue + minute ticker (current) | **ZERO** — no external deps | Misses reminders when app closed. **Honest, visible, users adapt.** | **SHIP (done)** |
+| 3 | Native scheduled notifications via plugin | **MEDIUM** — Android tightens background-wake every major version (API 33→34→35 each narrower) | Silent break on OS update | **SKIP** |
+| 4 | OAuth + Google Calendar API / CalDAV | **HIGH** — token refresh, API deprecations, rate limits, entitlements | **Silent** failure: token expires, sync stops, user doesn't notice until they miss something | **SKIP** |
+
+### User-facing honesty
+
+Near the Reminders UI, add a small note:
+
+> Reminders fire while Chaos Command is open. Use the **Add to Calendar** button to put the reminder into your phone/desktop calendar — then your calendar handles delivery forever, even when this app is closed.
+
+No apology. Just honest about the deal.
+
+### When to revisit Tier 3/4
+
+Either:
+- Chaos Command gets real dev funding / a maintenance team, OR
+- A specific user has a concrete need we can't meet with Tier 1+2 AND is willing to pay for the dev cycles
+
+Until then, **default answer is no.** "Do it right or don't do it" applies to operations, not just code.
+
+---
+
+## Notifications v2 implementation — Tier 1 (calendar deep-link)
 
 **The insight (Ren, 2026-04-18):** we shouldn't rewrite the calendar wheel. Every phone and desktop already has a robust notification-scheduling system sitting inside the user's calendar app. Our job is to get the reminder **into their calendar**; the calendar app handles delivery.
 

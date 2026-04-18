@@ -48,6 +48,8 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Medication } from '@/lib/types/medication-types';
+import AddToCalendarButton from '@/components/add-to-calendar-button';
+import type { CalendarEventInput } from '@/lib/services/calendar-export';
 
 interface MedicationCardProps {
   medication: Medication;
@@ -242,7 +244,7 @@ export function MedicationCard({
               )}
               
               {medication.refillDate && (
-                <div className="flex items-center gap-2 text-sm">
+                <div className="flex items-center gap-2 text-sm flex-wrap">
                   <Calendar className="h-4 w-4 text-muted-foreground" />
                   <span>Refill: {formatDate(medication.refillDate)}</span>
                   {refillStatus === 'overdue' && (
@@ -251,6 +253,20 @@ export function MedicationCard({
                   {refillStatus === 'soon' && (
                     <Badge variant="secondary" className="text-xs">Soon</Badge>
                   )}
+                  <AddToCalendarButton
+                    compact
+                    label="Add refill"
+                    className="ml-auto"
+                    event={{
+                      title: `Refill: ${displayName}`,
+                      description: `Time to refill ${displayName}${medication.dose ? ` (${medication.dose})` : ''}.${medication.pharmacy ? `\n\nPharmacy: ${medication.pharmacy}` : ''}${medication.pharmacyPhone ? `\nPhone: ${medication.pharmacyPhone}` : ''}`,
+                      start: `${medication.refillDate}T09:00:00`,
+                      durationMinutes: 30,
+                      // Alert 2 days before so there's time to call the pharmacy
+                      reminderMinutesBefore: 2 * 24 * 60,
+                    }}
+                    filename={`refill-${displayName.replace(/\W+/g, '-').toLowerCase()}.ics`}
+                  />
                 </div>
               )}
             </div>
@@ -322,13 +338,33 @@ export function MedicationCard({
           </div>
           
           {medication.enableReminders && medication.reminderTimes && medication.reminderTimes.length > 0 && (
-            <div className="pl-6">
-              <div className="flex flex-wrap gap-1">
+            <div className="pl-6 space-y-2">
+              <div className="flex flex-wrap gap-1 items-center">
                 {medication.reminderTimes.map((time, index) => (
                   <Badge key={index} variant="outline" className="text-xs">
                     {time}
                   </Badge>
                 ))}
+                <AddToCalendarButton
+                  compact
+                  label={medication.reminderTimes.length === 1 ? 'Add dose' : 'Add doses'}
+                  className="ml-auto"
+                  events={medication.reminderTimes.map((time): CalendarEventInput => {
+                    const [h, m] = time.split(':').map(n => parseInt(n, 10))
+                    // Anchor the recurrence to today at the specified time.
+                    const start = new Date()
+                    start.setHours(h || 0, m || 0, 0, 0)
+                    return {
+                      title: `Take: ${displayName}${medication.dose ? ` (${medication.dose})` : ''}`,
+                      description: `Daily dose at ${time}.${medication.requiresFood ? ' Take with food.' : ''}${medication.conditionTreating ? `\n\nFor: ${medication.conditionTreating}` : ''}`,
+                      start: start.toISOString(),
+                      durationMinutes: 15,
+                      reminderMinutesBefore: 0,
+                      recurrenceRule: 'FREQ=DAILY',
+                    }
+                  })}
+                  filename={`doses-${displayName.replace(/\W+/g, '-').toLowerCase()}.ics`}
+                />
               </div>
             </div>
           )}
