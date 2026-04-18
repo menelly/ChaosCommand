@@ -628,6 +628,19 @@ export function MedicationForm({
                     <p className="text-sm text-destructive">{errors.pharmacyPhone}</p>
                   )}
                 </div>
+
+                <div className="space-y-2 sm:col-span-2">
+                  <Label htmlFor="pharmacyWebsite">
+                    Pharmacy Website <span className="text-muted-foreground">(optional — for online refills)</span>
+                  </Label>
+                  <Input
+                    id="pharmacyWebsite"
+                    type="url"
+                    placeholder="https://www.cvs.com"
+                    value={formData.pharmacyWebsite}
+                    onChange={(e) => handleInputChange('pharmacyWebsite', e.target.value)}
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>

@@ -29,18 +29,19 @@
 
 import { useState } from 'react';
 import { openExternal } from '@/lib/open-external';
-import { 
-  Edit2, 
-  Trash2, 
-  Phone, 
-  Calendar, 
-  Clock, 
-  AlertTriangle, 
-  Bell, 
+import {
+  Edit2,
+  Trash2,
+  Phone,
+  Calendar,
+  Clock,
+  AlertTriangle,
+  Bell,
   BellOff,
   Pill,
   User,
-  Building2
+  Building2,
+  Globe
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -259,7 +260,7 @@ export function MedicationCard({
                     className="ml-auto"
                     event={{
                       title: `Refill: ${displayName}`,
-                      description: `Time to refill ${displayName}${medication.dose ? ` (${medication.dose})` : ''}.${medication.pharmacy ? `\n\nPharmacy: ${medication.pharmacy}` : ''}${medication.pharmacyPhone ? `\nPhone: ${medication.pharmacyPhone}` : ''}`,
+                      description: `Time to refill ${displayName}${medication.dose ? ` (${medication.dose})` : ''}.${medication.pharmacy ? `\n\nPharmacy: ${medication.pharmacy}` : ''}${medication.pharmacyPhone ? `\nPhone: ${medication.pharmacyPhone}` : ''}${medication.pharmacyWebsite ? `\nOnline refill: ${medication.pharmacyWebsite}` : ''}`,
                       start: `${medication.refillDate}T09:00:00`,
                       durationMinutes: 30,
                       // Alert 2 days before so there's time to call the pharmacy
@@ -296,21 +297,35 @@ export function MedicationCard({
                 </div>
               )}
               
-              {medication.pharmacy && (
-                <div className="flex items-center gap-2 text-sm">
+              {(medication.pharmacy || medication.pharmacyWebsite) && (
+                <div className="flex items-center gap-2 text-sm flex-wrap">
                   <Building2 className="h-4 w-4 text-muted-foreground" />
-                  <span>Pharmacy: {medication.pharmacy}</span>
-                  {medication.pharmacyPhone && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handlePhoneCall(medication.pharmacyPhone!)}
-                      className="h-6 px-2 ml-auto"
-                    >
-                      <Phone className="h-3 w-3 mr-1" />
-                      Call
-                    </Button>
-                  )}
+                  <span>Pharmacy: {medication.pharmacy || '—'}</span>
+                  <div className="flex gap-1 ml-auto">
+                    {medication.pharmacyPhone && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handlePhoneCall(medication.pharmacyPhone!)}
+                        className="h-6 px-2"
+                      >
+                        <Phone className="h-3 w-3 mr-1" />
+                        Call
+                      </Button>
+                    )}
+                    {medication.pharmacyWebsite && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openExternal(medication.pharmacyWebsite!)}
+                        className="h-6 px-2"
+                        title={medication.pharmacyWebsite}
+                      >
+                        <Globe className="h-3 w-3 mr-1" />
+                        Refill online
+                      </Button>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -337,7 +352,10 @@ export function MedicationCard({
             />
           </div>
           
-          {medication.enableReminders && medication.reminderTimes && medication.reminderTimes.length > 0 && (
+          {/* Show reminder times whenever any are set — don't gate on the
+              in-app reminders toggle. User might want calendar even with
+              the toggle off, and the times are their data either way. */}
+          {medication.reminderTimes && medication.reminderTimes.length > 0 && (
             <div className="pl-6 space-y-2">
               <div className="flex flex-wrap gap-1 items-center">
                 {medication.reminderTimes.map((time, index) => (

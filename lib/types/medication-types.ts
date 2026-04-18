@@ -47,6 +47,7 @@ export interface Medication {
   // Pharmacy info (all optional)
   pharmacy?: string;                    // "CVS", "Walgreens"
   pharmacyPhone?: string;               // "(555) 987-6543"
+  pharmacyWebsite?: string;             // "https://www.cvs.com" — full URL for online refill portals
   
   // Timeline info (all optional)
   dateStarted?: string;                 // "2025-06-17" - YYYY-MM-DD format
@@ -98,6 +99,7 @@ export interface MedicationFormData {
   doctorPhone: string;
   pharmacy: string;
   pharmacyPhone: string;
+  pharmacyWebsite: string;
   dateStarted: string;
   lastFillDate: string;
   refillDate: string;
@@ -252,6 +254,7 @@ export const DEFAULT_MEDICATION_FORM: MedicationFormData = {
   doctorPhone: '',
   pharmacy: '',
   pharmacyPhone: '',
+  pharmacyWebsite: '',
   dateStarted: '',
   lastFillDate: '',
   refillDate: '',

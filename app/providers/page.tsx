@@ -1043,8 +1043,8 @@ export default function ProvidersPage() {
                                           )}
                                         </div>
                                         <div className="flex gap-1 items-center">
-                                          {isUpcoming(appointment.appointmentDate) && (
-                                            <AddToCalendarButton
+                                          {/* Show on all appointments — past ones can go on the calendar as a history record too */}
+                                          <AddToCalendarButton
                                               compact
                                               event={{
                                                 title: `Appointment: ${appointment.providerName}`,
@@ -1061,7 +1061,6 @@ export default function ProvidersPage() {
                                               }}
                                               filename={`appt-${appointment.providerName.replace(/\W+/g, '-').toLowerCase()}-${appointment.appointmentDate}.ics`}
                                             />
-                                          )}
                                           <Button
                                             variant="ghost"
                                             size="sm"

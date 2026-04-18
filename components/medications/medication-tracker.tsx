@@ -242,9 +242,12 @@ export function MedicationTracker() {
           instead of spamming N identical calendar entries at 5pm when you
           take 5 meds at 5pm. */}
       {(() => {
+        // Include any med that has reminderTimes set — don't require the
+        // in-app `enableReminders` toggle. Users may want calendar
+        // reminders without also having app-ticker reminders.
         const timeBuckets = new Map<string, Medication[]>()
         for (const med of medications) {
-          if (!med.enableReminders || !Array.isArray(med.reminderTimes)) continue
+          if (!Array.isArray(med.reminderTimes) || med.reminderTimes.length === 0) continue
           for (const t of med.reminderTimes) {
             if (!timeBuckets.has(t)) timeBuckets.set(t, [])
             timeBuckets.get(t)!.push(med)
