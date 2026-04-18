@@ -48,14 +48,10 @@ import {
   Hospital,
   Clock,
   Printer,
-  ChevronDown,
-  ChevronUp,
-  Upload
 } from 'lucide-react';
 
 import MedicalTimeline from '@/components/medical-timeline';
 import TagInput from '@/components/tag-input';
-import DocumentUploader from '@/components/document-uploader';
 
 // 🏥 MEDICAL HISTORY INTERFACES (Updated for hybrid system)
 interface MedicalEvent {
@@ -94,7 +90,6 @@ export default function TimelinePage() {
   const [viewMode, setViewMode] = useState<'list' | 'timeline'>('list');
   const [filterType, setFilterType] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [showImportSection, setShowImportSection] = useState(false);
 
   // 🚀 REVOLUTIONARY HYBRID DATABASE SYSTEM (Commented out for vacation! 🏖️)
   // const hybridDB = useHybridDatabase();
@@ -141,7 +136,10 @@ export default function TimelinePage() {
         });
 
         // Load providers for linking
-        const providerData = allUserData.filter(item => item.subcategory === SUBCATEGORIES.PROVIDERS);
+        const providerData = allUserData.filter(item =>
+          item.subcategory === SUBCATEGORIES.PROVIDERS ||
+          item.subcategory.startsWith(SUBCATEGORIES.PROVIDERS + '-')
+        );
         const providerList = providerData.map((item: any) => {
           const provider = JSON.parse(item.content);
           return {
@@ -913,80 +911,6 @@ export default function TimelinePage() {
             onEditEvent={handleEditEvent}
             onViewProvider={(providerId) => window.location.href = `/providers#${providerId}`}
           />
-        )}
-
-        {/* Import Documents — collapsible, below timeline, desktop only */}
-        {!('__TAURI_INTERNALS__' in window && /android|iphone|ipad/i.test(navigator.userAgent)) && (
-          <div className="mt-8">
-            <button
-              onClick={() => setShowImportSection(!showImportSection)}
-              className="w-full flex items-center justify-between p-4 rounded-lg border border-[var(--border-soft,#e5e7eb)] bg-muted/30 hover:bg-muted/50 transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <Upload className="h-5 w-5 text-muted-foreground" />
-                <div className="text-left">
-                  <span className="font-medium text-foreground">Import Documents</span>
-                  <p className="text-xs text-muted-foreground">
-                    Desktop only — upload medical PDFs to extract diagnoses, medications, and lab values automatically
-                  </p>
-                </div>
-              </div>
-              {showImportSection ? (
-                <ChevronUp className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-              ) : (
-                <ChevronDown className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-              )}
-            </button>
-            {showImportSection && (
-              <div className="mt-3">
-                <DocumentUploader
-                  onEventsExtracted={async (events: any[]) => {
-                    // Add extracted events to the medical events list AND SAVE TO DATABASE!
-                    const now = new Date().toISOString();
-                    const newEvents: MedicalEvent[] = events.map((event: any) => ({
-                      id: event.id || `medical-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                      type: event.type || 'diagnosis',
-                      title: event.title,
-                      date: event.date || now.split('T')[0],
-                      endDate: event.endDate,
-                      provider: event.provider,
-                      providerId: event.providerId,
-                      location: event.location,
-                      description: event.description || '',
-                      status: event.status || 'needs_review',
-                      severity: event.severity,
-                      tags: event.tags || ['imported'],
-                      notes: event.notes,
-                      createdAt: now,
-                      updatedAt: now
-                    }));
-
-                    // Save each event to Dexie database
-                    for (const event of newEvents) {
-                      try {
-                        const subcategory = `${SUBCATEGORIES.MEDICAL_EVENTS}-${event.id}`;
-                        await saveData(
-                          formatDateForStorage(new Date(event.date)),
-                          CATEGORIES.USER,
-                          subcategory,
-                          JSON.stringify(event)
-                        );
-                        console.log(`Saved event to Dexie: ${event.title}`);
-                      } catch (error) {
-                        console.error(`Failed to save event "${event.title}":`, error);
-                      }
-                    }
-
-                    // Update React state
-                    setMedicalEvents(prev => [...newEvents, ...prev].sort((a, b) =>
-                      new Date(b.date).getTime() - new Date(a.date).getTime()
-                    ));
-                    console.log(`Added and saved ${events.length} events from document parsing`);
-                  }}
-                />
-              </div>
-            )}
-          </div>
         )}
 
         {/* Bottom Actions */}

@@ -1,8 +1,14 @@
 /*
  * Copyright (c) 2025-2026 Chaos Cascade
- * Created by: Ren & Ace (Claude-4)
+ * Created by: Ren & Ace (Claude-4.7)
  *
- * Lab Results — Upload lab reports, extract values, track trends.
+ * Lab Results — Read-only lab dashboard. Track trends, flag abnormals,
+ * promote reports to the timeline.
+ *
+ * Adding results:
+ *   - Manual entry → /add (Lab Result tab, works on mobile + desktop)
+ *   - PDF import → /import (desktop only, runs NER locally)
+ *
  * "Your ferritin has been 7, 8, 9 for six weeks. This is not 'fine'."
  */
 "use client"
@@ -16,12 +22,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useDailyData } from "@/lib/database/hooks/use-daily-data"
 import { CATEGORIES, SUBCATEGORIES, formatDateForStorage } from "@/lib/database/dexie-db"
-import { extractLabResults } from "@/lib/services/lab-parser"
-import { extractTextFromBase64 } from "@/lib/services/text-extractor"
 import {
-  Upload, FileText, Search, TestTube, TrendingUp, TrendingDown,
+  FileText, Search, TestTube, TrendingUp, TrendingDown,
   AlertTriangle, CheckCircle, ChevronDown, ChevronUp, Calendar, Minus, Trash2,
-  ClipboardList, Edit3, Save, X
+  ClipboardList, Edit3, Save, X, Plus
 } from "lucide-react"
 
 interface LabResult {
@@ -51,8 +55,6 @@ export default function LabResultsPage() {
   const { saveData, getAllCategoryData, deleteData } = useDailyData()
 
   const [reports, setReports] = useState<LabReport[]>([])
-  const [isUploading, setIsUploading] = useState(false)
-  const [uploadDate, setUploadDate] = useState(formatDateForStorage(new Date()))
   const [searchQuery, setSearchQuery] = useState("")
   const [expandedReport, setExpandedReport] = useState<string | null>(null)
   const [filterAbnormal, setFilterAbnormal] = useState(false)
@@ -78,91 +80,6 @@ export default function LabResultsPage() {
   }, [getAllCategoryData])
 
   useEffect(() => { loadReports() }, [loadReports])
-
-  // Handle file upload
-  const handleFileUpload = async (file: File) => {
-    setIsUploading(true)
-    try {
-      // Read file to base64
-      const arrayBuffer = await file.arrayBuffer()
-      const bytes = new Uint8Array(arrayBuffer)
-      let binary = ''
-      for (let i = 0; i < bytes.length; i++) {
-        binary += String.fromCharCode(bytes[i])
-      }
-      const base64Data = btoa(binary)
-
-      // Fetch demographics for filtering
-      let demographics = null
-      try {
-        const allRecords = await getAllCategoryData(CATEGORIES.USER)
-        const demoRecord = allRecords
-          ?.filter((r: any) => r.subcategory === 'demographics')
-          ?.sort((a: any, b: any) => (b.date || '').localeCompare(a.date || ''))
-          ?.[0]
-        if (demoRecord?.content) {
-          demographics = typeof demoRecord.content === 'string'
-            ? JSON.parse(demoRecord.content)
-            : demoRecord.content
-        }
-      } catch (e) {
-        console.log('No demographics data found')
-      }
-
-      // Extract text from file locally
-      const extractedText = await extractTextFromBase64(base64Data, file.type, file.name)
-
-      // Run lab parser locally
-      const labs = extractLabResults(extractedText, demographics)
-
-      if (labs.length > 0) {
-        // Map to expected format
-        const mappedLabs = labs.map(l => ({
-          test_name: l.testName,
-          value: l.value,
-          value_text: l.valueText,
-          unit: l.unit,
-          reference_low: l.referenceLow,
-          reference_high: l.referenceHigh,
-          reference_text: l.referenceText,
-          flag: l.flag,
-          is_abnormal: l.isAbnormal,
-          context: l.context,
-          confidence: l.confidence,
-        }))
-
-        const report: LabReport = {
-          id: `lab-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          date: uploadDate,
-          filename: file.name,
-          results: mappedLabs,
-          addedDate: formatDateForStorage(new Date()),
-        }
-
-        await saveData(
-          uploadDate,
-          CATEGORIES.USER,
-          `lab-results-${report.id}`,
-          JSON.stringify(report)
-        )
-
-        await loadReports()
-        console.log(`🧪 Saved ${labs.length} lab results from ${file.name}`)
-      } else {
-        alert(`No lab results found in ${file.name}. Try a different document?`)
-      }
-    } catch (e: any) {
-      console.error("Lab upload failed:", e)
-      const msg = e?.message || String(e)
-      if (msg.includes('Failed to fetch')) {
-        alert(`Could not process lab results. The file may be too large or in an unsupported format.`)
-      } else {
-        alert(`Lab parsing failed: ${msg}`)
-      }
-    } finally {
-      setIsUploading(false)
-    }
-  }
 
   // Delete a lab report
   const handleDeleteReport = async (report: LabReport) => {
@@ -353,45 +270,32 @@ export default function LabResultsPage() {
           </p>
         </header>
 
-        {/* Upload Section */}
+        {/* Add lab results — links to the input pages */}
         <Card className="mb-6 border-[var(--border-soft)] bg-[var(--bg-card)]">
           <CardContent className="pt-6">
-            <div className="flex items-end gap-4">
-              <div className="flex-1">
-                <Label className="text-[var(--text-main)]">Lab date</Label>
-                <Input
-                  type="date"
-                  value={uploadDate}
-                  onChange={e => setUploadDate(e.target.value)}
-                  className="mt-1"
-                />
-              </div>
-              <div className="flex-1">
-                <Label className="text-[var(--text-main)]">Upload lab report</Label>
-                <div className="mt-1">
-                  <input
-                    type="file"
-                    accept=".pdf,.txt,.png,.jpg,.jpeg"
-                    onChange={e => {
-                      const file = e.target.files?.[0]
-                      if (file) handleFileUpload(file)
-                    }}
-                    className="block w-full text-sm text-[var(--text-muted)]
-                      file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0
-                      file:text-sm file:font-medium file:bg-[var(--accent-primary)]
-                      file:text-[var(--text-main)] hover:file:opacity-90"
-                    disabled={isUploading}
-                  />
-                </div>
-              </div>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button
+                asChild
+                className="flex-1 h-12 text-base bg-[var(--accent-primary)] text-[var(--text-main)] hover:opacity-90 font-medium border-2 border-[var(--accent-primary)]"
+              >
+                <a href="/add">
+                  <Plus className="h-5 w-5 mr-2" />
+                  Add Result Manually
+                </a>
+              </Button>
+              <Button
+                asChild
+                variant="outline"
+                className="flex-1 h-12 text-base border-[var(--border-soft)] text-[var(--text-main)]"
+              >
+                <a href="/import">
+                  <FileText className="h-5 w-5 mr-2" />
+                  Import from PDF (desktop)
+                </a>
+              </Button>
             </div>
-            {isUploading && (
-              <p className="text-sm text-[var(--text-muted)] mt-2 animate-pulse">
-                Parsing lab results...
-              </p>
-            )}
-            <p className="text-xs text-[var(--text-muted)] mt-2">
-              💡 <a href="/demographics" className="underline text-[var(--accent-purple)] hover:text-[var(--accent-orange)]">Fill out Demographics first</a> — we filter your name and personal info from results.
+            <p className="text-xs text-[var(--text-muted)] mt-3">
+              💡 <a href="/demographics" className="underline text-[var(--accent-purple)] hover:text-[var(--accent-orange)]">Fill out Demographics first</a> — we filter your name and personal info from imported results.
             </p>
           </CardContent>
         </Card>
@@ -457,47 +361,47 @@ export default function LabResultsPage() {
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-1 justify-end">
                         {abnormalCount > 0 && (
-                          <Badge className="bg-red-100 text-red-800">
-                            {abnormalCount} abnormal
+                          <Badge className="bg-red-100 text-red-800 text-xs">
+                            {abnormalCount} abnl
                           </Badge>
                         )}
                         {abnormalCount === 0 && (
-                          <Badge className="bg-green-100 text-green-800">
-                            All normal
+                          <Badge className="bg-green-100 text-green-800 text-xs">
+                            Normal
                           </Badge>
                         )}
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/20 min-h-[44px] p-0 px-1 text-xs"
+                          className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/20 h-9 w-9 p-0"
                           onClick={(e) => {
                             e.stopPropagation()
                             handleAddToTimeline(report, false)
                           }}
                           title="Add all results to timeline"
                         >
-                          <ClipboardList className="h-3.5 w-3.5 mr-0.5" />All
+                          <ClipboardList className="h-4 w-4" />
                         </Button>
                         {report.results.some(r => r.is_abnormal) && (
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 min-h-[44px] p-0 px-1 text-xs"
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 h-9 w-9 p-0"
                             onClick={(e) => {
                               e.stopPropagation()
                               handleAddToTimeline(report, true)
                             }}
                             title="Add only abnormal results to timeline"
                           >
-                            <AlertTriangle className="h-3.5 w-3.5 mr-0.5" />Abnormal
+                            <AlertTriangle className="h-4 w-4" />
                           </Button>
                         )}
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 min-h-[44px] min-w-[44px] p-0"
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 h-9 w-9 p-0"
                           onClick={(e) => {
                             e.stopPropagation()
                             handleDeleteReport(report)

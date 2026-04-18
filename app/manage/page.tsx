@@ -41,8 +41,10 @@ import {
   User,
   Pill,
   Stethoscope,
-  Settings2
+  Settings2,
+  Plus,
 } from "lucide-react"
+import { useIsMobilePlatform } from "@/lib/platform"
 
 const HIDDEN_TRACKERS_KEY = 'chaos-manage-hidden-trackers'
 
@@ -60,6 +62,7 @@ export default function WorkLifeIndex() {
   // Hidden trackers state - persisted to localStorage
   const [hiddenTrackers, setHiddenTrackers] = useState<string[]>([])
   const [isCustomizeOpen, setIsCustomizeOpen] = useState(false)
+  const isMobile = useIsMobilePlatform()
 
   // Load hidden trackers from localStorage on mount
   useEffect(() => {
@@ -116,9 +119,29 @@ export default function WorkLifeIndex() {
     {
       id: 'timeline',
       name: '🏆 Medical History & Timeline',
-      shortDescription: 'Diagnoses, procedures, document uploads, interactive timeline',
-      helpContent: 'Your complete medical history in one place! Upload documents for AI-powered parsing, track diagnoses, surgeries, hospitalizations, and treatments. Visual timeline view with provider linking and dismissed finding detection.',
+      shortDescription: 'View and filter your full medical timeline',
+      helpContent: 'Your complete medical history in one place! Visual timeline view with provider linking, diagnoses, surgeries, hospitalizations, treatments, and labs. Add new entries via "Add to Timeline" or "Import Records".',
       icon: <FileText className="h-5 w-5" />,
+      status: 'available'
+    },
+
+    // ADD TO TIMELINE (manual entry — mobile + desktop)
+    {
+      id: 'add',
+      name: '➕ Add to Timeline',
+      shortDescription: 'Add an event or lab result by hand — works everywhere',
+      helpContent: 'Hand-enter a medical event (diagnosis, medication, surgery, appointment, etc.) or a lab result. Lightweight, no model download, works on phone and desktop. Goes straight into your timeline.',
+      icon: <Plus className="h-5 w-5" />,
+      status: 'available'
+    },
+
+    // IMPORT FROM PDF (desktop only — gated at route)
+    {
+      id: 'import',
+      name: '📥 Import Medical Records',
+      shortDescription: 'Upload PDFs, auto-extract events and labs (desktop)',
+      helpContent: 'Desktop-only PDF importer. Runs a 64MB local AI model to pull diagnoses, medications, procedures, and lab values out of documents — all on-device, nothing uploaded. Hidden on mobile because the model download is unreliable there.',
+      icon: <Upload className="h-5 w-5" />,
       status: 'available'
     },
 
@@ -232,6 +255,14 @@ export default function WorkLifeIndex() {
       return '/lab-results'
     }
 
+    if (trackerId === 'add') {
+      return '/add'
+    }
+
+    if (trackerId === 'import') {
+      return '/import'
+    }
+
     // Default fallback
     return '#'
   }
@@ -252,6 +283,7 @@ export default function WorkLifeIndex() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {trackers
             .filter(tracker => !hiddenTrackers.includes(tracker.id))
+            .filter(tracker => !(isMobile && tracker.id === 'import'))
             .map((tracker) => (
             <a
               key={tracker.id}
