@@ -121,6 +121,26 @@ Medical data currently writes through `useDailyData` → Dexie despite `advanced
 
 ---
 
+## Extract Planning / Calendar section to its own app
+
+Currently hidden from navigation (`/* MVP-HIDDEN */` blocks in `components/app-sidebar.tsx`) but the code still ships:
+- `app/planning/page.tsx` — 293 lines
+- `app/calendar/page.tsx` — 397 lines
+- `app/manage/page.tsx` has planning-adjacent tracker cards wrapped in similar MVP-HIDDEN comments
+
+**Why it's not in Chaos Command:** Chaos Command is scoped to *medical* — symptoms, meds, appointments, labs, timers, reflection. Daily planning (tasks, goals, monthly calendar) is a *different* app shape that would bloat the medical focus and the bundle.
+
+**Extraction plan (when we're ready):**
+1. New Tauri project: `chaos-plan` (or whatever the name ends up being)
+2. Port `app/planning/`, `app/calendar/`, and the related `manage/` tracker cards
+3. Share the same hybrid-db + theme system via a shared npm package (or just copy forward and diverge)
+4. Cross-link between apps via deep-links if useful
+5. Delete the MVP-HIDDEN blocks + the `/planning` + `/calendar` routes from Chaos Command so deep-linkers can't reach them
+
+**When:** before public 1.0 of Chaos Command. We don't want curious testers deep-linking to half-built "coming-soon" pages and forming opinions about product quality.
+
+---
+
 ## Android sideload / signing checklist
 
 Documented separately in `E:\Ace\android signing keys - don't commit to git dammit.txt`. When we're ready for Play Store: Ren applies for dev account, we swap release keystore, add Play-required metadata (privacy policy URL, data-safety form, screenshots in multiple languages).
