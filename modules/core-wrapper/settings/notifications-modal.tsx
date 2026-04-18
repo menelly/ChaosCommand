@@ -28,6 +28,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Bell, Clock, Pill, Calendar } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { KeyboardAvoidingWrapper } from '@/components/ui/keyboard-avoiding-wrapper'
 
 interface NotificationsModalProps {
   isOpen: boolean
@@ -119,6 +120,7 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <KeyboardAvoidingWrapper>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Bell className="h-5 w-5" />
@@ -279,6 +281,7 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
             Close
           </Button>
         </div>
+        </KeyboardAvoidingWrapper>
       </DialogContent>
     </Dialog>
   )

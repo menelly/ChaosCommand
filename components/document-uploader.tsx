@@ -89,12 +89,42 @@ interface UploadedFile {
   error?: string;
 }
 
+// Structured lab result shape passed through to onLabsExtracted. Mirrors the
+// snake_case schema /lab-results and /add already use so the consumer can
+// save directly to the `lab-results-${id}` subcategory without remapping.
+export interface ExtractedLabResult {
+  test_name: string;
+  value: number | null;
+  value_text: string;
+  unit: string;
+  reference_low: number | null;
+  reference_high: number | null;
+  reference_text: string;
+  flag: string;
+  is_abnormal: boolean;
+  context: string;
+  confidence: number;
+}
+
+export interface ExtractedLabBatch {
+  filename: string;
+  date: string;              // formatDateForStorage of best-guess doc date
+  results: ExtractedLabResult[];
+}
+
 interface DocumentUploaderProps {
   onEventsExtracted: (events: ParsedMedicalEvent[]) => void;
+  /**
+   * Optional — called with structured lab results when the lab parser
+   * finds any. If the consumer provides this, labs are NOT also added
+   * to the events stream (avoids double-representation). If the consumer
+   * omits it, labs fall back to legacy behavior (labResultsToEvents merge).
+   */
+  onLabsExtracted?: (batch: ExtractedLabBatch) => void;
   className?: string;
 }
 
-export default function DocumentUploader({ onEventsExtracted, className = "" }: DocumentUploaderProps) {
+export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, className = "" }: DocumentUploaderProps) {
   // 🚀 Hybrid database integration
   // TEMPORARILY COMMENTED OUT FOR DEBUGGING
   // const hybridDB = useHybridDatabase();
@@ -301,15 +331,42 @@ export default function DocumentUploader({ onEventsExtracted, className = "" }: 
 
       // Step 3: Extract lab results (separate specialized parser)
       const labResults = extractLabResults(extractedText, demographics);
-      const labEvents = labResultsToEvents(labResults);
 
-      // Combine all events, dedup by title
-      const seenTitles = new Set(nerEvents.map(e => e.title.toLowerCase()));
+      // If the consumer wants structured labs, emit them through onLabsExtracted
+      // and DO NOT also fold them into the events stream (avoids double-
+      // representation — labs belong in /lab-results, not the timeline).
+      if (onLabsExtracted && labResults.length > 0) {
+        const mapped: ExtractedLabResult[] = labResults.map(l => ({
+          test_name: l.testName,
+          value: l.value,
+          value_text: l.valueText,
+          unit: l.unit,
+          reference_low: l.referenceLow,
+          reference_high: l.referenceHigh,
+          reference_text: l.referenceText,
+          flag: l.flag,
+          is_abnormal: l.isAbnormal,
+          context: l.context,
+          confidence: l.confidence,
+        }));
+        onLabsExtracted({
+          filename: file.name,
+          date: new Date().toISOString().split('T')[0],
+          results: mapped,
+        });
+        console.log(`🧪 ${mapped.length} lab results handed to consumer`);
+      }
+
+      // Legacy behavior when onLabsExtracted isn't provided: fold labs into events
       const allEvents = [...nerEvents];
-      for (const labEvent of labEvents) {
-        if (!seenTitles.has(labEvent.title.toLowerCase())) {
-          allEvents.push(labEvent);
-          seenTitles.add(labEvent.title.toLowerCase());
+      if (!onLabsExtracted) {
+        const labEvents = labResultsToEvents(labResults);
+        const seenTitles = new Set(nerEvents.map(e => e.title.toLowerCase()));
+        for (const labEvent of labEvents) {
+          if (!seenTitles.has(labEvent.title.toLowerCase())) {
+            allEvents.push(labEvent);
+            seenTitles.add(labEvent.title.toLowerCase());
+          }
         }
       }
 
@@ -572,16 +629,38 @@ export default function DocumentUploader({ onEventsExtracted, className = "" }: 
       // Run NER directly on pasted text
       const nerEvents = await extractMedicalEvents(text, 'Pasted Notes');
 
-      // Also try lab extraction
+      // Also try lab extraction — same routing logic as PDF flow
       const labResults = extractLabResults(text);
-      const labEvents = labResultsToEvents(labResults);
+      if (onLabsExtracted && labResults.length > 0) {
+        const mapped: ExtractedLabResult[] = labResults.map(l => ({
+          test_name: l.testName,
+          value: l.value,
+          value_text: l.valueText,
+          unit: l.unit,
+          reference_low: l.referenceLow,
+          reference_high: l.referenceHigh,
+          reference_text: l.referenceText,
+          flag: l.flag,
+          is_abnormal: l.isAbnormal,
+          context: l.context,
+          confidence: l.confidence,
+        }));
+        onLabsExtracted({
+          filename: 'Pasted Notes',
+          date: new Date().toISOString().split('T')[0],
+          results: mapped,
+        });
+      }
 
-      const seenTitles = new Set(nerEvents.map(e => e.title.toLowerCase()));
       const allEvents = [...nerEvents];
-      for (const labEvent of labEvents) {
-        if (!seenTitles.has(labEvent.title.toLowerCase())) {
-          allEvents.push(labEvent);
-          seenTitles.add(labEvent.title.toLowerCase());
+      if (!onLabsExtracted) {
+        const labEvents = labResultsToEvents(labResults);
+        const seenTitles = new Set(nerEvents.map(e => e.title.toLowerCase()));
+        for (const labEvent of labEvents) {
+          if (!seenTitles.has(labEvent.title.toLowerCase())) {
+            allEvents.push(labEvent);
+            seenTitles.add(labEvent.title.toLowerCase());
+          }
         }
       }
 
@@ -1319,7 +1398,7 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
             <div className="flex gap-3 justify-center pt-4 border-t border-[var(--border-soft)]">
               <Button
                 onClick={handleConfirmEvents}
-                className="bg-[var(--accent-primary)] text-white hover:opacity-90"
+                className="bg-[var(--accent-primary,#a78bfa)] text-white hover:opacity-90 font-semibold"
               >
                 <CheckCircle className="h-4 w-4 mr-2" />
                 Add {allParsedEvents.length} Events to Timeline

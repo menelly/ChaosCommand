@@ -227,6 +227,68 @@ body.theme-colorblind .info {
   border-left: 6px solid #007bff !important;
 }
 
+/* === COLORBLIND-SAFE BADGE OVERRIDES ===
+ * Replace red/green with blue/orange + shape cues.
+ * Red-green colorblindness (deuteranopia/protanopia) is ~8% of males. */
+
+/* "Bad" badges: red -> dark blue with left border */
+body.theme-colorblind .bg-red-100,
+body.theme-colorblind .bg-red-50 {
+  background-color: #cce7ff !important;
+  border-left: 4px solid #004085 !important;
+}
+body.theme-colorblind .text-red-800,
+body.theme-colorblind .text-red-700,
+body.theme-colorblind .text-red-600 {
+  color: #004085 !important;
+}
+
+/* "Good" badges: green -> orange with left border dashed */
+body.theme-colorblind .bg-green-100,
+body.theme-colorblind .bg-green-50 {
+  background-color: #fff3cd !important;
+  border-left: 4px dashed #856404 !important;
+}
+body.theme-colorblind .text-green-800,
+body.theme-colorblind .text-green-700,
+body.theme-colorblind .text-green-600 {
+  color: #856404 !important;
+}
+
+/* "Info" badges: blue stays blue */
+body.theme-colorblind .bg-blue-100,
+body.theme-colorblind .bg-blue-50 {
+  background-color: #d1ecf1 !important;
+  border-left: 4px dotted #0c5460 !important;
+}
+body.theme-colorblind .text-blue-800 {
+  color: #0c5460 !important;
+}
+
+/* "Warning" badges: orange/yellow stays orange */
+body.theme-colorblind .bg-orange-100,
+body.theme-colorblind .bg-orange-50,
+body.theme-colorblind .bg-yellow-100,
+body.theme-colorblind .bg-yellow-50 {
+  background-color: #fff3cd !important;
+  border-left: 4px double #856404 !important;
+}
+body.theme-colorblind .text-orange-800,
+body.theme-colorblind .text-yellow-800 {
+  color: #856404 !important;
+}
+
+/* Gray defaults */
+body.theme-colorblind .bg-gray-100,
+body.theme-colorblind .bg-gray-50 {
+  background-color: #e9ecef !important;
+  border-left: 4px solid #6c757d !important;
+}
+body.theme-colorblind .text-gray-800,
+body.theme-colorblind .text-gray-700 {
+  color: #212529 !important;
+}
+
 /* No animations fallback */
 body.no-animations.theme-colorblind {
   background: #f8f9fa !important;

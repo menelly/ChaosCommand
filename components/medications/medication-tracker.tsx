@@ -89,11 +89,53 @@ export function MedicationTracker() {
 
   const handleFormSubmit = async (data: MedicationFormData) => {
     try {
+      let medId: string | null = null;
       if (editingMedication) {
         await updateMedication(editingMedication.id, data);
+        medId = editingMedication.id;
       } else {
         await addMedication(data);
+        // Use medication name as ID suffix for new meds (no returned ID from addMedication)
+        const medName = data.brandName || data.genericName || 'medication';
+        medId = `new-${medName}-${Date.now()}`;
       }
+
+      // Schedule today's remaining doses + tomorrow's doses as reminders.
+      // Future doses get scheduled daily by a separate roll-forward pass
+      // (TODO: cron-style daily roll-forward — for now, user gets ~24h of coverage).
+      if (data.enableReminders && Array.isArray(data.reminderTimes) && data.reminderTimes.length > 0) {
+        try {
+          const { scheduleReminder, cancelReminder } = await import('@/lib/services/notification-service');
+          // Clear any previous reminders for this medication
+          for (let d = 0; d < 2; d++) {
+            for (const t of data.reminderTimes) {
+              await cancelReminder(`med-${medId}-${d}-${t}`);
+            }
+          }
+          const now = new Date();
+          for (let d = 0; d < 2; d++) {
+            const date = new Date(now);
+            date.setDate(now.getDate() + d);
+            for (const time of data.reminderTimes) {
+              const [h, m] = String(time).split(':').map(n => parseInt(n, 10));
+              const fireAt = new Date(date);
+              fireAt.setHours(h || 0, m || 0, 0, 0);
+              if (fireAt.getTime() <= now.getTime()) continue; // skip past-due today
+              const medName = data.brandName || data.genericName || 'medication';
+              await scheduleReminder({
+                id: `med-${medId}-${d}-${time}`,
+                title: `Medication: ${medName}`,
+                body: `Time for ${data.dose || 'your dose'}${data.requiresFood ? ' (take with food)' : ''}.`,
+                fireAt: fireAt.toISOString(),
+                source: `medication-${medId}`,
+              });
+            }
+          }
+        } catch (remErr) {
+          console.warn('Failed to schedule medication reminders:', remErr);
+        }
+      }
+
       setIsFormOpen(false);
       setEditingMedication(null);
     } catch (err) {

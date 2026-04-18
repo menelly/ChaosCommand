@@ -9,6 +9,7 @@
     "core:default",
     "sql:default",
     "opener:default",
+    "notification:default",
     {
       "identifier": "http:default",
       "allow": [

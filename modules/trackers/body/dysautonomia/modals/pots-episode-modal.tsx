@@ -41,6 +41,7 @@ import { Heart, Plus } from 'lucide-react'
 import { DysautonomiaEntry, EpisodeModalProps } from '../dysautonomia-types'
 import { POSITION_CHANGES, DURATION_UNITS, getSeverityLabel, getSeverityColor } from '../dysautonomia-constants'
 import { TagInput } from '@/components/tag-input'
+import { KeyboardAvoidingWrapper } from '@/components/ui/keyboard-avoiding-wrapper'
 
 // POTS-specific symptoms
 const POTS_SYMPTOMS = [
@@ -205,6 +206,7 @@ export function PotsEpisodeModal({ isOpen, onClose, onSave, editingEntry }: Epis
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <KeyboardAvoidingWrapper>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Heart className="h-5 w-5 text-red-500" />
@@ -431,6 +433,7 @@ export function PotsEpisodeModal({ isOpen, onClose, onSave, editingEntry }: Epis
             </Button>
           </div>
         </div>
+        </KeyboardAvoidingWrapper>
       </DialogContent>
     </Dialog>
   )

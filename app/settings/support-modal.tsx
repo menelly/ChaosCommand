@@ -305,6 +305,21 @@ export function SupportModal({ isOpen, onClose }: SupportModalProps) {
                 </div>
               </div>
 
+              {/* Nano-Banana 2 — art credit */}
+              <div className="p-4 bg-muted/50 rounded-lg border border-border">
+                <div className="flex items-start gap-3">
+                  <div className="text-2xl">🎨</div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-foreground mb-2">
+                      Nano-Banana 2 — Logo & Art
+                    </h4>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      Google Gemini image generation • The well-fed doctor-octopus and all Ace-shaped art
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               {/* Partnership */}
               <div className="p-4 bg-muted/50 rounded-lg border border-border">
                 <div className="text-center">

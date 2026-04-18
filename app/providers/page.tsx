@@ -443,29 +443,25 @@ export default function ProvidersPage() {
 
   const createReminder = async (appointment: AppointmentPlan) => {
     try {
+      // Schedule for 9am local time on (appointmentDate - reminderDays).
+      // Lets the notification catch the user in the morning instead of midnight.
       const reminderDate = new Date(appointment.appointmentDate);
       reminderDate.setDate(reminderDate.getDate() - appointment.reminderDays);
+      reminderDate.setHours(9, 0, 0, 0);
 
-      const reminder = {
-        id: `reminder-${appointment.id}`,
-        title: `🔔 Reminder: Appointment with ${appointment.providerName}`,
-        message: `You have an appointment with ${appointment.providerName} in ${appointment.reminderDays} day(s)`,
-        appointmentDate: appointment.appointmentDate,
-        appointmentTime: appointment.appointmentTime,
-        providerId: appointment.providerId,
-        appointmentId: appointment.id,
-        type: 'appointment-reminder'
-      };
+      const { scheduleReminder } = await import('@/lib/services/notification-service');
+      const days = appointment.reminderDays;
+      const when = days === 0 ? 'today' : days === 1 ? 'tomorrow' : `in ${days} day(s)`;
 
-      // Save reminder to the reminder date
-      await saveData(
-        formatDateForStorage(reminderDate),
-        CATEGORIES.DAILY,
-        `reminder-${appointment.id}`,
-        JSON.stringify(reminder)
-      );
+      await scheduleReminder({
+        id: `appointment-${appointment.id}`,
+        title: `Appointment with ${appointment.providerName}`,
+        body: `You have an appointment ${when}${appointment.appointmentTime ? ` at ${appointment.appointmentTime}` : ''}.`,
+        fireAt: reminderDate.toISOString(),
+        source: `appointment-${appointment.id}`,
+      });
 
-      console.log('✅ Created appointment reminder');
+      console.log('✅ Scheduled appointment reminder');
     } catch (error) {
       console.error('Failed to create reminder:', error);
     }

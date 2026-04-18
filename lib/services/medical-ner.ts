@@ -56,6 +56,14 @@ const D4DATA_JUNK = new Set([
   'images', 'series', 'section', 'phase', 'contrast', 'technique', 'comparison',
   'indication', 'impression', 'conclusion', 'summary', 'review', 'follow',
   'patient', 'clinical', 'medical', 'treatment', 'reactive imaging',
+  // Severity/qualifier adjectives — these get tagged by d4data as Severity or
+  // Lab_value entities when they appear in reference-range templates like
+  // "G2 Mild, G3 Moderate, G4 Severe." They are descriptors, not events.
+  'mild', 'moderate', 'severe', 'slight', 'marked', 'minimal', 'significant',
+  'normal', 'abnormal', 'elevated', 'decreased', 'increased', 'low', 'high',
+  'positive', 'negative', 'stable', 'unchanged', 'chronic', 'acute',
+  // Stage-identifier fragments from reference tables
+  'stage', 'grade', 'level', 'score',
 ]);
 
 // ============================================================================
@@ -511,7 +519,11 @@ function findNearestDate(
 
 function parseImpressionItems(impressionText: string): { number: string; text: string }[] {
   const items: { number: string; text: string }[] = [];
-  const pattern = /(?:^|\s|\.)\s*(\d+)\s*[.)]\s*(.+?)(?=\s*\d+\s*[.)]\s*[A-Z]|$)/gm;
+  // [\s\S]+? so items can span line breaks (PDFs often wrap impression bodies
+  // across 3-4 lines). Terminator lookahead matches the NEXT number followed
+  // by . or ), with optional whitespace — no longer requires [A-Z] because
+  // items can legitimately start with a digit (e.g. "5. 7 mm renal stone").
+  const pattern = /(?:^|[\n\r]|\.\s)\s*(\d+)\s*[.)]\s+([\s\S]+?)(?=\s*\d+\s*[.)]\s+\S|\s*$)/g;
   let match;
   while ((match = pattern.exec(impressionText)) !== null) {
     const text = match[2].replace(/\s+/g, ' ').trim().replace(/\.$/, '');
@@ -575,6 +587,17 @@ export async function extractMedicalEvents(
   const findingsSection = sections.find(s => s.name === 'findings') || null;
   const impressionEntitiesLower = new Set<string>();
 
+  // Pre-compute the impression's flattened text so the NER loop below can
+  // dedupe against it. Done BEFORE NER so the doctor's own summary wins
+  // over model fragments — e.g. "Pulmonary emboli in right basilar..."
+  // survives instead of being silenced by a bare "pulmonary" entity.
+  const impressionItems = impressionSection
+    ? parseImpressionItems(impressionSection.text)
+    : [];
+  const impressionTextLower = impressionItems
+    .map(i => i.text.toLowerCase())
+    .join(' | ');
+
   // --- DATES ---
   const datesFound = extractDatesFromText(chunk, excludedDates);
 
@@ -588,7 +611,17 @@ export async function extractMedicalEvents(
   // --- PROCESS NER ENTITIES ---
   for (const ent of entities) {
     const key = ent.text.toLowerCase().trim();
-    if (key.length < 3 || nameExclusions.has(key) || seenKeys.has(key)) continue;
+    // Floor: 4+ chars AND at least one vowel. Kills subword tokens that
+    // escape the WordPiece cleanup ("nod", "cho", "sub", "per", "pan",
+    // "arch", "basil", "retro", "para", "media", "ate") without a
+    // hardcoded list.
+    if (key.length < 4) continue;
+    if (!/[aeiouy]/i.test(key)) continue;
+    if (nameExclusions.has(key) || seenKeys.has(key)) continue;
+    // Skip entities already covered by the doctor's impression summary.
+    // impressionTextLower is populated BEFORE this loop so multi-word
+    // impressions win over fragment-level NER tags.
+    if (impressionTextLower && impressionTextLower.includes(key)) continue;
 
     if (isNegated(chunk, ent.start, ent.end)) {
       console.log(`🚫 NEGATED: '${ent.text}' — skipping`);
@@ -655,10 +688,11 @@ export async function extractMedicalEvents(
 
   // --- IMPRESSION DIRECT PARSING ---
   if (impressionSection) {
-    const items = parseImpressionItems(impressionSection.text);
-    console.log(`📋 ${items.length} numbered impression items found`);
+    // impressionItems was already parsed above (before the NER loop) so the
+    // NER loop could dedupe against it. Reuse rather than re-parse.
+    console.log(`📋 ${impressionItems.length} numbered impression items found`);
 
-    for (const item of items) {
+    for (const item of impressionItems) {
       const itemLower = item.text.toLowerCase();
       const alreadyCaptured = Array.from(seenKeys).some(
         k => k.length >= 5 && itemLower.includes(k)

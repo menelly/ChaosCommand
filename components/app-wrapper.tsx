@@ -15,6 +15,7 @@ import { UserProvider, useUser } from '@/lib/contexts/user-context'
 import { Toaster } from '@/components/ui/toaster'
 import PinLogin from '@/components/pin-login'
 import KonamiEasterEgg from '@/components/konami-easter-egg'
+import ReminderTicker from '@/components/reminder-ticker'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Sparkles, Rocket } from 'lucide-react'
@@ -197,6 +198,7 @@ function AppContent({ children }: AppWrapperProps) {
   return (
     <>
       {children}
+      <ReminderTicker />
       <KonamiEasterEgg />
       <Toaster />
     </>

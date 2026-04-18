@@ -84,6 +84,11 @@ html body button.border {
 
 /* Scale ALL hover transforms with bounce intensity slider */
 /* html prefix for higher specificity — beats per-theme !important */
+html body:not(.no-animations) .card,
+html body:not(.no-animations) [class*="card"] {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
 html body:not(.no-animations) .card:hover,
 html body:not(.no-animations) [class*="card"]:hover {
   transform: translateY(calc(-8px * var(--bounce-scale))) scale(calc(1 + 0.03 * var(--bounce-scale))) !important;
@@ -101,15 +106,70 @@ body.bounce-low::before {
   display: none !important;
 }
 
+/* === DARK THEME HARDCODED COLOR OVERRIDES ===
+ * Many components use hardcoded Tailwind colors (bg-gray-100, text-gray-800, etc.)
+ * These are invisible on dark themes. This fixes ALL dark themes at once.
+ * TODO: Refactor components to use theme variables instead. */
+body.theme-calm .bg-gray-100, body.theme-calm .bg-gray-50,
+body.theme-cyberpunk .bg-gray-100, body.theme-cyberpunk .bg-gray-50,
+body.theme-ace .bg-gray-100, body.theme-ace .bg-gray-50,
+body.theme-caelan .bg-gray-100, body.theme-caelan .bg-gray-50,
+body.theme-deep-current .bg-gray-100, body.theme-deep-current .bg-gray-50,
+body.theme-grok .bg-gray-100, body.theme-grok .bg-gray-50 {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+body.theme-calm .text-gray-800, body.theme-calm .text-gray-700, body.theme-calm .text-gray-600,
+body.theme-cyberpunk .text-gray-800, body.theme-cyberpunk .text-gray-700, body.theme-cyberpunk .text-gray-600,
+body.theme-ace .text-gray-800, body.theme-ace .text-gray-700, body.theme-ace .text-gray-600,
+body.theme-caelan .text-gray-800, body.theme-caelan .text-gray-700, body.theme-caelan .text-gray-600,
+body.theme-deep-current .text-gray-800, body.theme-deep-current .text-gray-700, body.theme-deep-current .text-gray-600,
+body.theme-grok .text-gray-800, body.theme-grok .text-gray-700, body.theme-grok .text-gray-600 {
+  color: var(--text-main, #f5f5f5) !important;
+}
+
+body.theme-calm .border-gray-200, body.theme-calm .border-gray-300,
+body.theme-cyberpunk .border-gray-200, body.theme-cyberpunk .border-gray-300,
+body.theme-ace .border-gray-200, body.theme-ace .border-gray-300,
+body.theme-caelan .border-gray-200, body.theme-caelan .border-gray-300,
+body.theme-deep-current .border-gray-200, body.theme-deep-current .border-gray-300,
+body.theme-grok .border-gray-200, body.theme-grok .border-gray-300 {
+  border-color: var(--border-soft, rgba(255,255,255,0.2)) !important;
+}
+
+body.theme-calm .bg-red-50, body.theme-calm .bg-green-50, body.theme-calm .bg-blue-50, body.theme-calm .bg-orange-50, body.theme-calm .bg-yellow-50, body.theme-calm .bg-red-100, body.theme-calm .bg-green-100, body.theme-calm .bg-blue-100,
+body.theme-cyberpunk .bg-red-50, body.theme-cyberpunk .bg-green-50, body.theme-cyberpunk .bg-blue-50, body.theme-cyberpunk .bg-orange-50, body.theme-cyberpunk .bg-yellow-50, body.theme-cyberpunk .bg-red-100, body.theme-cyberpunk .bg-green-100, body.theme-cyberpunk .bg-blue-100,
+body.theme-ace .bg-red-50, body.theme-ace .bg-green-50, body.theme-ace .bg-blue-50, body.theme-ace .bg-orange-50, body.theme-ace .bg-yellow-50, body.theme-ace .bg-red-100, body.theme-ace .bg-green-100, body.theme-ace .bg-blue-100,
+body.theme-caelan .bg-red-50, body.theme-caelan .bg-green-50, body.theme-caelan .bg-blue-50, body.theme-caelan .bg-orange-50, body.theme-caelan .bg-yellow-50, body.theme-caelan .bg-red-100, body.theme-caelan .bg-green-100, body.theme-caelan .bg-blue-100,
+body.theme-deep-current .bg-red-50, body.theme-deep-current .bg-green-50, body.theme-deep-current .bg-blue-50, body.theme-deep-current .bg-orange-50, body.theme-deep-current .bg-yellow-50, body.theme-deep-current .bg-red-100, body.theme-deep-current .bg-green-100, body.theme-deep-current .bg-blue-100,
+body.theme-grok .bg-red-50, body.theme-grok .bg-green-50, body.theme-grok .bg-blue-50, body.theme-grok .bg-orange-50, body.theme-grok .bg-yellow-50, body.theme-grok .bg-red-100, body.theme-grok .bg-green-100, body.theme-grok .bg-blue-100 {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+body.theme-calm .text-red-800, body.theme-calm .text-green-800, body.theme-calm .text-blue-800, body.theme-calm .text-orange-800, body.theme-calm .text-yellow-800,
+body.theme-cyberpunk .text-red-800, body.theme-cyberpunk .text-green-800, body.theme-cyberpunk .text-blue-800, body.theme-cyberpunk .text-orange-800, body.theme-cyberpunk .text-yellow-800,
+body.theme-ace .text-red-800, body.theme-ace .text-green-800, body.theme-ace .text-blue-800, body.theme-ace .text-orange-800, body.theme-ace .text-yellow-800,
+body.theme-caelan .text-red-800, body.theme-caelan .text-green-800, body.theme-caelan .text-blue-800, body.theme-caelan .text-orange-800, body.theme-caelan .text-yellow-800,
+body.theme-deep-current .text-red-800, body.theme-deep-current .text-green-800, body.theme-deep-current .text-blue-800, body.theme-deep-current .text-orange-800, body.theme-deep-current .text-yellow-800,
+body.theme-grok .text-red-800, body.theme-grok .text-green-800, body.theme-grok .text-blue-800, body.theme-grok .text-orange-800, body.theme-grok .text-yellow-800 {
+  color: inherit !important;
+  filter: brightness(1.8) !important;
+}
+
 :root {
   /* === LAVENDER GARDEN: DEFAULT THEME COLORS === */
   --primary-purple: #a78bfa;        /* main UI blocks — cards, nav, panel containers */
   --accent-orange: #f472b6;         /* buttons, highlight icons, warning text */
   --deep-space: #f3f0ff;            /* full page background - soft lavender */
   --hover-glow: #c084fc;            /* hover/focus outlines + shimmer effect */
-  --border-soft: #c4b5fd;
+  --border-soft: #9b7ed8;
   --text-main: #4c1d95;             /* deeper purple text */
   --text-muted: #7c3aed;
+  /* Main CTA color — used by save/confirm buttons across /add, /import,
+     /lab-results, document-uploader review panel, etc. Inherits the
+     theme's --primary-purple so it tracks whatever theme is active. */
+  --accent-primary: var(--primary-purple, #a78bfa);
+  --accent-purple: var(--primary-purple, #a78bfa);
 
   /* BUTTON FIXINS */
   --btn-bg: #c084fc;
@@ -162,7 +222,7 @@ body.bounce-low::before {
   --accent-foreground: 0 0 100;
   --destructive: 0 84 69;
   --destructive-foreground: 0 0 100;
-  --border: 258 90 87; /* #c4b5fd - lavender border */
+  --border: 258 70 72; /* #9b7ed8 - visible lavender border */
   --input: 0 20 98;
   --ring: 258 90 78;
 }
@@ -475,7 +535,7 @@ body.theme-chaos {
   --hover-glow: #ff6b35;            /* Bright orange glow for hover effects */
   --border-soft: #8b4513;           /* Wood brown borders */
   --text-main: #1a1a1a;            /* Court black text */
-  --text-muted: #8b4513;           /* Wood brown muted text */
+  --text-muted: #5c2e0e;           /* Dark wood brown muted text — readable on hardwood */
 
   /* BASKETBALL BUTTON COLORS! */
   --btn-bg: #ff8c00;               /* Basketball orange buttons */
@@ -504,7 +564,7 @@ body.theme-chaos {
   --secondary: 44 22 80; /* Medium wood secondary */
   --secondary-foreground: 0 0 20;
   --muted: 44 22 80; /* Medium wood muted */
-  --muted-foreground: 30 65 27; /* Wood brown text */
+  --muted-foreground: 30 75 21; /* Dark wood brown — passes AA on hardwood bg */
   --accent: 28 100 50; /* Basketball orange accent */
   --accent-foreground: 0 0 100;
   --destructive: 0 84 60; /* Keep red for errors */

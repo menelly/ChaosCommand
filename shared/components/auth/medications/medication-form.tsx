@@ -395,7 +395,12 @@ export function MedicationForm({
                   checked={formData.requiresFood}
                   onCheckedChange={(checked) => handleInputChange('requiresFood', checked)}
                 />
-                <Label htmlFor="requiresFood">Take with food</Label>
+                <Label htmlFor="requiresFood" className="cursor-pointer">
+                  Take with food:{" "}
+                  <span className={`font-semibold ${formData.requiresFood ? 'text-[var(--accent-primary)]' : 'text-[var(--text-muted)]'}`}>
+                    {formData.requiresFood ? 'Yes' : 'No'}
+                  </span>
+                </Label>
               </div>
 
               <div className="space-y-2">

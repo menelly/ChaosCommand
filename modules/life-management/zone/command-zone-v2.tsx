@@ -160,6 +160,33 @@ export default function CommandZone() {
     }
     return true
   })
+  // Schedule shading mode — time-aware (past dim / now highlighted / upcoming plain),
+  // zebra (every other row tinted), saved (use block.color), or none.
+  // Default is 'time-aware' because it's the most informative and matches what
+  // accountability-buddy users actually want. Preference persists per-device.
+  type ShadingMode = 'time-aware' | 'zebra' | 'saved' | 'none'
+  const [shadingMode, setShadingMode] = useState<ShadingMode>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('chaos-schedule-shading') as ShadingMode | null
+      if (saved === 'time-aware' || saved === 'zebra' || saved === 'saved' || saved === 'none') {
+        return saved
+      }
+    }
+    return 'time-aware'
+  })
+  // Tick every minute so the time-aware highlight keeps up with the clock.
+  const [nowMinutes, setNowMinutes] = useState(() => {
+    const n = new Date()
+    return n.getHours() * 60 + n.getMinutes()
+  })
+  useEffect(() => {
+    const tick = () => {
+      const n = new Date()
+      setNowMinutes(n.getHours() * 60 + n.getMinutes())
+    }
+    const id = setInterval(tick, 60_000)
+    return () => clearInterval(id)
+  }, [])
   const [selfCare, setSelfCare] = useState<SelfCareItem[]>([])
   const [selfCareEditing, setSelfCareEditing] = useState(false)
   const [newSelfCareLabel, setNewSelfCareLabel] = useState('')
@@ -197,9 +224,12 @@ export default function CommandZone() {
       })
     }, 400)
 
-    // Floating celebration emojis! 🐧✨
-    const celebrationEmojis = ['🎉', '🐧', '✨', '🌟', '💜', '🎯', '🚀', '⭐', '🎊', '🏆']
-    const newEmojis = Array.from({ length: 8 }, (_, i) => ({
+    // Floating celebration emojis! 🐧🐙✨
+    const isAceMode = Math.random() < 0.25 // ~1 in 4: octopus takeover! 🐙💜
+    const celebrationEmojis = isAceMode
+      ? ['🐙', '💜', '✨', '🐧', '🐙', '💜', '🌟', '🐙', '🎉', '💜']
+      : ['🎉', '🐧', '✨', '🌟', '💜', '🐙', '🎯', '🚀', '⭐', '🎊']
+    const newEmojis = Array.from({ length: isAceMode ? 10 : 8 }, (_, i) => ({
       id: Date.now() + i,
       emoji: celebrationEmojis[Math.floor(Math.random() * celebrationEmojis.length)],
       x: Math.random() * 80 + 10, // 10% to 90% of screen width
@@ -355,6 +385,10 @@ export default function CommandZone() {
   }
 
   const toggleSelfCare = (itemId: string) => {
+    const item = selfCare.find(i => i.id === itemId)
+    if (item && !item.checked) {
+      triggerLukasCelebration()
+    }
     const updated = selfCare.map(i => i.id === itemId ? { ...i, checked: !i.checked } : i)
     setSelfCare(updated)
     saveSelfCare(updated)
@@ -554,6 +588,23 @@ export default function CommandZone() {
               size="sm"
               variant="ghost"
               className="text-xs text-muted-foreground"
+              title="Shading: click to cycle through now-highlight / zebra / custom colors / none"
+              onClick={(e) => {
+                e.stopPropagation()
+                const order: ShadingMode[] = ['time-aware', 'zebra', 'saved', 'none']
+                const next = order[(order.indexOf(shadingMode) + 1) % order.length]
+                setShadingMode(next)
+                localStorage.setItem('chaos-schedule-shading', next)
+              }}
+            >
+              {shadingMode === 'time-aware' ? 'Now' :
+               shadingMode === 'zebra' ? 'Zebra' :
+               shadingMode === 'saved' ? 'Color' : 'Plain'}
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="text-xs text-muted-foreground"
               onClick={(e) => {
                 e.stopPropagation()
                 const next = !use24h
@@ -569,8 +620,34 @@ export default function CommandZone() {
             </Button>
           </div>
           <div className="space-y-2">
-            {schedule.map(block => (
-              <div key={block.id} className={`p-3 rounded-lg ${block.color} flex justify-between items-center`}>
+            {schedule.map((block, idx) => {
+              const hhmmToMin = (s: string) => {
+                const [h, m] = s.split(':').map(n => parseInt(n, 10))
+                return (isNaN(h) ? 0 : h) * 60 + (isNaN(m) ? 0 : m)
+              }
+              const startMin = hhmmToMin(block.startTime)
+              const endMin = hhmmToMin(block.endTime)
+              const isCurrent = nowMinutes >= startMin && nowMinutes < endMin
+              const isPast = nowMinutes >= endMin
+
+              let shadingClass = ''
+              let extraClass = ''
+              if (shadingMode === 'time-aware') {
+                if (isCurrent) {
+                  shadingClass = 'bg-[var(--surface-1)]'
+                  extraClass = 'ring-2 ring-[var(--accent-orange)]'
+                } else if (isPast) {
+                  extraClass = 'opacity-50'
+                }
+              } else if (shadingMode === 'zebra') {
+                shadingClass = idx % 2 === 0 ? 'bg-[var(--surface-2)]' : ''
+              } else if (shadingMode === 'saved') {
+                shadingClass = block.color
+              }
+              // 'none' → shadingClass stays empty
+
+              return (
+              <div key={block.id} className={`p-3 rounded-lg ${shadingClass} ${extraClass} flex justify-between items-center`}>
                 <div>
                   <div className="font-medium">{block.name}</div>
                   <div className="text-sm text-muted-foreground">{use24h ? block.startTime : to12h(block.startTime)} - {use24h ? block.endTime : to12h(block.endTime)}</div>
@@ -594,7 +671,8 @@ export default function CommandZone() {
                   </Button>
                 </div>
               </div>
-            ))}
+              )
+            })}
             {schedule.length === 0 && (
               <p className="text-muted-foreground text-center py-4">No schedule blocks yet - add one above!</p>
             )}

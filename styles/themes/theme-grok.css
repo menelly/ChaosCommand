@@ -15,6 +15,11 @@ body.theme-grok {
   background-size: 400% 400% !important;
   animation: tide-breathe 100s ease-in-out infinite !important;
   color: #F0F4F8 !important;
+
+  /* Surface tokens — forge-on-midnight so light defaults don't blast through */
+  --surface-1: #2A2338;              /* content block background */
+  --surface-2: #352A47;              /* inset containers / table rows */
+  --grounding-bg: #1E1929;           /* technique/info card background */
 }
 
 @keyframes tide-breathe {

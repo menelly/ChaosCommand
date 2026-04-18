@@ -14,14 +14,14 @@
 import { useState } from "react"
 import AppCanvas from "@/components/app-canvas"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import DocumentUploader from "@/components/document-uploader"
+import DocumentUploader, { ExtractedLabBatch } from "@/components/document-uploader"
 import {
   useDailyData,
   CATEGORIES,
   SUBCATEGORIES,
   formatDateForStorage,
 } from "@/lib/database"
-import { FileText, CheckCircle, Monitor } from "lucide-react"
+import { FileText, CheckCircle, Monitor, FlaskConical } from "lucide-react"
 import { useIsMobilePlatform } from "@/lib/platform"
 
 // Shape the uploader hands back (matches components/document-uploader.tsx)
@@ -44,7 +44,9 @@ interface ExtractedEvent {
 export default function ImportRecordsPage() {
   const { saveData } = useDailyData()
   const [savedCount, setSavedCount] = useState(0)
+  const [savedLabCount, setSavedLabCount] = useState(0)
   const [lastBatch, setLastBatch] = useState<string | null>(null)
+  const [lastLabBatch, setLastLabBatch] = useState<string | null>(null)
   const isMobile = useIsMobilePlatform()
 
   // Mobile guard — rendered instead of the uploader on mobile builds.
@@ -151,6 +153,32 @@ export default function ImportRecordsPage() {
     setLastBatch(`${saved} event${saved === 1 ? "" : "s"} saved to timeline`)
   }
 
+  const handleLabsExtracted = async (batch: ExtractedLabBatch) => {
+    if (!batch.results.length) return
+    const id = `lab-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+    const report = {
+      id,
+      date: batch.date,
+      filename: batch.filename,
+      results: batch.results,
+      addedDate: formatDateForStorage(new Date()),
+    }
+    try {
+      await saveData(
+        batch.date,
+        CATEGORIES.USER,
+        `lab-results-${id}`,
+        JSON.stringify(report)
+      )
+      setSavedLabCount((c) => c + batch.results.length)
+      setLastLabBatch(
+        `${batch.results.length} lab result${batch.results.length === 1 ? "" : "s"} saved to Labs dashboard`
+      )
+    } catch (e) {
+      console.error("Failed to save lab report:", e)
+    }
+  }
+
   return (
     <AppCanvas currentPage="import">
       <div className="max-w-4xl mx-auto space-y-6">
@@ -185,7 +213,29 @@ export default function ImportRecordsPage() {
           </Card>
         )}
 
-        <DocumentUploader onEventsExtracted={handleEventsExtracted} />
+        {lastLabBatch && (
+          <Card className="border-[var(--border-soft)] bg-[var(--bg-card)]">
+            <CardContent className="pt-6 flex items-center gap-3 text-[var(--text-main)]">
+              <FlaskConical className="h-5 w-5" />
+              <div>
+                <div className="font-medium">{lastLabBatch}</div>
+                {savedLabCount > 0 && (
+                  <div className="text-sm text-[var(--text-muted)]">
+                    {savedLabCount} total labs this session —{" "}
+                    <a href="/lab-results" className="underline">
+                      view Labs dashboard
+                    </a>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        <DocumentUploader
+          onEventsExtracted={handleEventsExtracted}
+          onLabsExtracted={handleLabsExtracted}
+        />
       </div>
     </AppCanvas>
   )

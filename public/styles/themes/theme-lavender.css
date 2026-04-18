@@ -53,7 +53,7 @@ body.theme-lavender .text-muted-foreground {
 body.theme-lavender .card,
 body.theme-lavender [class*="card"] {
   background: linear-gradient(135deg, #ffebe0 0%, #fef3f2 50%, #ffebe0 100%);
-  border: 1px solid #c4b5fd;
+  border: 1px solid #9b7ed8;
   box-shadow: 0 2px 15px rgba(167, 139, 250, 0.2);
   transition: all 0.4s ease;
   animation: ren-gentle-sway 32s ease-in-out infinite;
@@ -135,7 +135,7 @@ body.theme-lavender input,
 body.theme-lavender textarea,
 body.theme-lavender select {
   background: linear-gradient(135deg, #fef3f2 0%, #ffebe0 100%);
-  border: 1px solid #c4b5fd;
+  border: 1px solid #9b7ed8;
   color: #4c1d95;
   transition: all 0.3s ease;
 }

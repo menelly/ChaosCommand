@@ -40,6 +40,7 @@ import { Thermometer, Plus } from 'lucide-react'
 import { DysautonomiaEntry, EpisodeModalProps } from '../dysautonomia-types'
 import { DURATION_UNITS, getSeverityLabel, getSeverityColor } from '../dysautonomia-constants'
 import { TagInput } from '@/components/tag-input'
+import { KeyboardAvoidingWrapper } from '@/components/ui/keyboard-avoiding-wrapper'
 
 // Temperature-specific symptoms
 const TEMP_SYMPTOMS = [
@@ -219,6 +220,7 @@ export function TemperatureModal({ isOpen, onClose, onSave, editingEntry }: Epis
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <KeyboardAvoidingWrapper>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Thermometer className="h-5 w-5 text-orange-500" />
@@ -424,6 +426,7 @@ export function TemperatureModal({ isOpen, onClose, onSave, editingEntry }: Epis
             </Button>
           </div>
         </div>
+        </KeyboardAvoidingWrapper>
       </DialogContent>
     </Dialog>
   )

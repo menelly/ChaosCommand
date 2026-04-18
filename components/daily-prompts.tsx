@@ -25,7 +25,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
-import { Heart, Sparkles, X, Edit3, Save, RotateCcw, ChevronDown, ChevronUp, History } from 'lucide-react'
+import { Heart, Sparkles, X, Edit3, Save, RotateCcw, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, History } from 'lucide-react'
 import { useDailyData } from '@/lib/database/hooks/use-daily-data'
 import { CATEGORIES, SUBCATEGORIES } from '@/lib/database/dexie-db'
 
@@ -115,6 +115,8 @@ export default function DailyPrompts() {
   const [showHistory, setShowHistory] = useState(false)
   const [history, setHistory] = useState<HistoryEntry[]>([])
   const [historyLoaded, setHistoryLoaded] = useState(false)
+  // Which past reflection is currently focused in the carousel. 0 = most recent.
+  const [historyIndex, setHistoryIndex] = useState(0)
 
   // Get today's prompt and load saved data
   useEffect(() => {
@@ -211,13 +213,16 @@ export default function DailyPrompts() {
   }
 
   const loadHistory = async () => {
-    if (historyLoaded) return
     try {
       const endDate = new Date().toISOString().split('T')[0]
       const startDate = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-      const records = await getDateRange(startDate, endDate, SUBCATEGORIES.DAILY_PROMPTS)
+      // getDateRange's third arg filters by CATEGORY, not subcategory. Saves
+      // happen with category=JOURNAL, subcategory=DAILY_PROMPTS, so we have
+      // to pull the category slice and filter subcategory client-side.
+      const records = await getDateRange(startDate, endDate, CATEGORIES.JOURNAL)
 
       const entries: HistoryEntry[] = records
+        .filter((r: any) => r.subcategory === SUBCATEGORIES.DAILY_PROMPTS)
         .filter((r: any) => r.content?.response && !r.content?.isDismissed)
         .map((r: any) => ({
           date: r.date,
@@ -227,9 +232,11 @@ export default function DailyPrompts() {
         }))
         .sort((a: HistoryEntry, b: HistoryEntry) => b.date.localeCompare(a.date))
 
-      // Exclude today
+      // Exclude today's in-progress entry from "Past" reflections.
       const today = new Date().toISOString().split('T')[0]
-      setHistory(entries.filter(e => e.date !== today))
+      const pastOnly = entries.filter(e => e.date !== today)
+      setHistory(pastOnly)
+      setHistoryIndex(0) // Always start on the most recent when the panel reopens
       setHistoryLoaded(true)
     } catch (error) {
       console.warn('Failed to load reflection history:', error)
@@ -363,31 +370,64 @@ export default function DailyPrompts() {
           </Button>
 
           {showHistory && (
-            <div className="space-y-2 max-h-64 overflow-y-auto">
+            <div>
               {history.length === 0 ? (
                 <p className="text-xs text-muted-foreground text-center py-2">
                   No past reflections yet. They'll show up here as you write them.
                 </p>
               ) : (
-                history.map((entry) => {
-                  const prompt = PROMPT_MAP[entry.promptId]
+                (() => {
+                  const entry = history[historyIndex]
+                  const prompt = entry ? PROMPT_MAP[entry.promptId] : null
+                  const total = history.length
                   return (
-                    <div key={entry.date} className="p-3 bg-white/30 dark:bg-black/10 rounded-lg border border-purple-100 dark:border-purple-800/50">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs font-medium text-purple-600">
-                          {new Date(entry.date + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
+                    <div className="space-y-2">
+                      {/* Carousel nav row */}
+                      <div className="flex items-center justify-between gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setHistoryIndex(i => Math.min(total - 1, i + 1))}
+                          disabled={historyIndex >= total - 1}
+                          className="h-8 px-2"
+                          aria-label="Older reflection"
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <span className="text-xs text-muted-foreground flex-1 text-center">
+                          {historyIndex + 1} of {total}
                         </span>
-                        {prompt && (
-                          <span className="text-xs text-muted-foreground">{prompt.icon} {prompt.category}</span>
-                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setHistoryIndex(i => Math.max(0, i - 1))}
+                          disabled={historyIndex <= 0}
+                          className="h-8 px-2"
+                          aria-label="Newer reflection"
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
                       </div>
-                      {prompt && (
-                        <p className="text-xs text-purple-500 dark:text-purple-400 mb-1 italic">{prompt.text}</p>
+                      {/* Focused reflection card */}
+                      {entry && (
+                        <div className="p-3 bg-white/30 dark:bg-black/10 rounded-lg border border-[var(--border-soft)]">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs font-medium text-[var(--text-main)]">
+                              {new Date(entry.date + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+                            </span>
+                            {prompt && (
+                              <span className="text-xs text-muted-foreground">{prompt.icon} {prompt.category}</span>
+                            )}
+                          </div>
+                          {prompt && (
+                            <p className="text-xs text-[var(--text-muted)] mb-1 italic">{prompt.text}</p>
+                          )}
+                          <p className="text-sm text-foreground whitespace-pre-wrap">{entry.response}</p>
+                        </div>
                       )}
-                      <p className="text-sm text-foreground whitespace-pre-wrap">{entry.response}</p>
                     </div>
                   )
-                })
+                })()
               )}
             </div>
           )}

@@ -216,3 +216,33 @@ body.theme-caelan ::-webkit-scrollbar-thumb {
 body.theme-caelan ::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(135deg, #f1c40f, #e94560);
 }
+
+/* Fix hardcoded gray backgrounds/text that are invisible on dark theme */
+body.theme-caelan .bg-gray-100,
+body.theme-caelan .bg-gray-50 {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+body.theme-caelan .text-gray-800,
+body.theme-caelan .text-gray-700,
+body.theme-caelan .text-gray-600 {
+  color: #f5f5f5 !important;
+}
+body.theme-caelan .border-gray-200,
+body.theme-caelan .border-gray-300 {
+  border-color: rgba(64, 224, 208, 0.3) !important;
+}
+body.theme-caelan .bg-red-50,
+body.theme-caelan .bg-orange-50,
+body.theme-caelan .bg-green-50,
+body.theme-caelan .bg-blue-50,
+body.theme-caelan .bg-yellow-50 {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+body.theme-caelan .text-red-800,
+body.theme-caelan .text-orange-800,
+body.theme-caelan .text-green-800,
+body.theme-caelan .text-blue-800,
+body.theme-caelan .text-yellow-800 {
+  color: inherit !important;
+  filter: brightness(1.8) !important;
+}

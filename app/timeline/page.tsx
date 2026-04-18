@@ -90,6 +90,9 @@ export default function TimelinePage() {
   const [viewMode, setViewMode] = useState<'list' | 'timeline'>('list');
   const [filterType, setFilterType] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   // 🚀 REVOLUTIONARY HYBRID DATABASE SYSTEM (Commented out for vacation! 🏖️)
   // const hybridDB = useHybridDatabase();
@@ -286,6 +289,63 @@ export default function TimelinePage() {
     } catch (error) {
       console.error('❌ Failed to delete medical event:', error);
       alert('Failed to delete medical event: ' + error);
+    }
+  };
+
+  const toggleSelected = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const selectAllFiltered = () => {
+    setSelectedIds(new Set(filteredEvents.map(e => e.id)));
+  };
+
+  const clearSelection = () => {
+    setSelectedIds(new Set());
+  };
+
+  const exitSelectMode = () => {
+    setSelectMode(false);
+    setSelectedIds(new Set());
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    if (!confirm(`Delete ${selectedIds.size} selected event${selectedIds.size === 1 ? '' : 's'}? This cannot be undone.`)) return;
+
+    setBulkDeleting(true);
+    const toDelete = medicalEvents.filter(e => selectedIds.has(e.id));
+    let deleted = 0;
+    let failed = 0;
+
+    for (const event of toDelete) {
+      try {
+        await deleteData(
+          formatDateForStorage(new Date(event.date)),
+          CATEGORIES.USER,
+          `${SUBCATEGORIES.MEDICAL_EVENTS}-${event.id}`
+        );
+        deleted++;
+      } catch (error) {
+        console.error(`Failed to delete event "${event.title}":`, error);
+        failed++;
+      }
+    }
+
+    setMedicalEvents(prev => prev.filter(e => !selectedIds.has(e.id)));
+    setSelectedIds(new Set());
+    setSelectMode(false);
+    setBulkDeleting(false);
+
+    if (failed > 0) {
+      alert(`Deleted ${deleted}. ${failed} failed — check console.`);
+    } else {
+      console.log(`🗑️ Bulk deleted ${deleted} events`);
     }
   };
 
@@ -533,8 +593,8 @@ export default function TimelinePage() {
         <div className="mb-4">
           <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
             <DialogTrigger asChild>
-              <Button className="w-full sm:w-auto" size="lg">
-                <Plus className="h-5 w-5 mr-2" />
+              <Button className="w-full sm:w-auto h-12 px-8 text-base font-semibold gap-2">
+                <Plus className="h-5 w-5" />
                 Add Medical Event
               </Button>
             </DialogTrigger>
@@ -784,6 +844,52 @@ export default function TimelinePage() {
           </div>
         </div>
 
+        {/* Select-mode toolbar (shown when viewing the list with events) */}
+        {viewMode === 'list' && filteredEvents.length > 0 && (
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            {!selectMode ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSelectMode(true)}
+                className="border-[var(--border-soft)] text-[var(--text-muted)]"
+              >
+                Select…
+              </Button>
+            ) : (
+              <>
+                <span className="text-sm text-[var(--text-main)] font-medium mr-2">
+                  {selectedIds.size} selected
+                </span>
+                <Button variant="outline" size="sm" onClick={selectAllFiltered}>
+                  Select all ({filteredEvents.length})
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={clearSelection}
+                  disabled={selectedIds.size === 0}
+                >
+                  Clear
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleBulkDelete}
+                  disabled={selectedIds.size === 0 || bulkDeleting}
+                  className="ml-auto"
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  {bulkDeleting ? 'Deleting…' : `Delete ${selectedIds.size}`}
+                </Button>
+                <Button variant="ghost" size="sm" onClick={exitSelectMode}>
+                  Cancel
+                </Button>
+              </>
+            )}
+          </div>
+        )}
+
         {/* Events Display */}
         {viewMode === 'list' ? (
           <div className="space-y-4">
@@ -806,7 +912,16 @@ export default function TimelinePage() {
               </Card>
             ) : (
               filteredEvents.map(event => (
-                <Card key={event.id} className={`hover:shadow-md transition-shadow ${
+                <Card
+                  key={event.id}
+                  onClick={selectMode ? () => toggleSelected(event.id) : undefined}
+                  className={`hover:shadow-md transition-shadow ${
+                    selectMode ? 'cursor-pointer' : ''
+                  } ${
+                    selectMode && selectedIds.has(event.id)
+                      ? 'ring-2 ring-[var(--accent-primary,#a78bfa)] bg-[var(--surface-2)]'
+                      : ''
+                  } ${
                   event.type === 'dismissed_findings' ? 'border-l-4 border-l-muted-foreground bg-muted/50' : ''
                 }`}>
                   <CardContent className="p-6">
@@ -873,31 +988,50 @@ export default function TimelinePage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        {event.providerId && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => window.location.href = `/providers#${event.providerId}`}
-                            title="View Provider"
+                        {selectMode ? (
+                          <div
+                            className={`h-6 w-6 rounded border-2 flex items-center justify-center ${
+                              selectedIds.has(event.id)
+                                ? 'bg-[var(--accent-primary,#a78bfa)] border-[var(--accent-primary,#a78bfa)]'
+                                : 'border-[var(--border-soft)]'
+                            }`}
+                            aria-label={selectedIds.has(event.id) ? 'Selected' : 'Not selected'}
                           >
-                            <Link className="h-4 w-4" />
-                          </Button>
+                            {selectedIds.has(event.id) && (
+                              <svg viewBox="0 0 16 16" className="h-4 w-4 text-white" fill="none" stroke="currentColor" strokeWidth="3">
+                                <path d="M3 8l3 3 7-7" />
+                              </svg>
+                            )}
+                          </div>
+                        ) : (
+                          <>
+                            {event.providerId && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => { e.stopPropagation(); window.location.href = `/providers#${event.providerId}` }}
+                                title="View Provider"
+                              >
+                                <Link className="h-4 w-4" />
+                              </Button>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => { e.stopPropagation(); handleEditEvent(event) }}
+                            >
+                              <Edit3 className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => { e.stopPropagation(); handleDeleteEvent(event) }}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </>
                         )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEditEvent(event)}
-                        >
-                          <Edit3 className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteEvent(event)}
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
                       </div>
                     </div>
                   </CardContent>

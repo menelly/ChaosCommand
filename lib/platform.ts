@@ -46,3 +46,32 @@ export function useIsMobilePlatform(): boolean {
   }, [])
   return isMobile
 }
+
+/**
+ * Phone-only check (stricter than isMobilePlatform): mobile UA AND narrow
+ * viewport. Tablets (mobile UA, wider viewport) return false — use this
+ * for features that want to allow tablet + desktop but block phone
+ * because tap targets are too cramped.
+ *
+ * Threshold: 768px. Anything narrower is treated as phone.
+ */
+export function isPhoneOnly(): boolean {
+  if (typeof window === "undefined") return false
+  const mobileUA = /android|iphone|ipad|ipod/i.test(window.navigator.userAgent)
+  const ipadLike = /ipad/i.test(window.navigator.userAgent)
+  if (ipadLike) return false // iPad is tablet
+  const narrow = window.innerWidth < 768
+  return mobileUA && narrow
+}
+
+/** React hook form of `isPhoneOnly`. SSR-safe. */
+export function useIsPhoneOnly(): boolean {
+  const [phone, setPhone] = useState(false)
+  useEffect(() => {
+    const check = () => setPhone(isPhoneOnly())
+    check()
+    window.addEventListener("resize", check)
+    return () => window.removeEventListener("resize", check)
+  }, [])
+  return phone
+}

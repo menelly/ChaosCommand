@@ -114,7 +114,19 @@ export default function SettingsPage() {
           {settingsCategories.map((category) => {
             const IconComponent = category.icon
             return (
-              <Card key={category.id} className="cursor-pointer hover:shadow-lg transition-shadow">
+              <Card
+                key={category.id}
+                onClick={() => openModal(category.id)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    openModal(category.id)
+                  }
+                }}
+                className="cursor-pointer hover:shadow-lg hover:ring-2 hover:ring-[var(--accent-primary)] transition-all"
+              >
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <IconComponent className="h-5 w-5" />
@@ -124,64 +136,70 @@ export default function SettingsPage() {
                     {category.description}
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <Button
-                    onClick={() => openModal(category.id)}
-                    className="w-full"
-                    variant="outline"
-                  >
-                    Configure
-                  </Button>
-                </CardContent>
               </Card>
             )
           })}
 
-          {/* QR Sync + Restart Onboarding — same grid */}
-          <Card className="cursor-pointer hover:shadow-lg transition-shadow">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Smartphone className="h-5 w-5" />
-              Device Sync
-            </CardTitle>
-            <CardDescription>
-              Sync data between desktop and phone over WiFi
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button onClick={() => openModal('qrsync')} className="w-full" variant="outline">
-              Configure
-            </Button>
-          </CardContent>
-        </Card>
+          {/* Device Sync — its own card, NOT nested inside Data Management.
+              Kept separate so brain-fogged users reaching for Sync don't
+              accidentally land on G-Spot protocol. */}
+          <Card
+            onClick={() => openModal('qrsync')}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                openModal('qrsync')
+              }
+            }}
+            className="cursor-pointer hover:shadow-lg hover:ring-2 hover:ring-[var(--accent-primary)] transition-all"
+          >
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Smartphone className="h-5 w-5" />
+                Device Sync
+              </CardTitle>
+              <CardDescription>
+                Sync data between desktop and phone over WiFi
+              </CardDescription>
+            </CardHeader>
+          </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <RotateCcw className="h-5 w-5" />
-              Restart Onboarding
-            </CardTitle>
-            <CardDescription>
-              Reset your setup and go through the welcome flow again
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button
-              onClick={() => {
+          <Card
+            onClick={() => {
+              if (confirm('This will reset your onboarding progress. Continue?')) {
+                localStorage.removeItem('chaos-onboarding-complete')
+                const pin = localStorage.getItem('chaos-user-pin')
+                if (pin) localStorage.removeItem(`chaos-onboarding-complete-${pin}`)
+                window.location.href = '/onboarding'
+              }
+            }}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
                 if (confirm('This will reset your onboarding progress. Continue?')) {
                   localStorage.removeItem('chaos-onboarding-complete')
                   const pin = localStorage.getItem('chaos-user-pin')
                   if (pin) localStorage.removeItem(`chaos-onboarding-complete-${pin}`)
                   window.location.href = '/onboarding'
                 }
-              }}
-              className="w-full"
-              variant="outline"
-            >
-              Restart Setup
-            </Button>
-          </CardContent>
-        </Card>
+              }
+            }}
+            className="cursor-pointer hover:shadow-lg hover:ring-2 hover:ring-[var(--accent-primary)] transition-all"
+          >
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <RotateCcw className="h-5 w-5" />
+                Restart Onboarding
+              </CardTitle>
+              <CardDescription>
+                Reset your setup and go through the welcome flow again
+              </CardDescription>
+            </CardHeader>
+          </Card>
         </div>
 
         {/* Render active modal */}
