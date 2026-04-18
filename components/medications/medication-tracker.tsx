@@ -43,6 +43,8 @@ import {
   MedicationFormData,
   DEFAULT_MEDICATION_FORM
 } from '@/lib/types/medication-types';
+import AddToCalendarButton from '@/components/add-to-calendar-button';
+import type { CalendarEventInput } from '@/lib/services/calendar-export';
 
 export function MedicationTracker() {
   // ============================================================================
@@ -234,6 +236,66 @@ export function MedicationTracker() {
           </AlertDescription>
         </Alert>
       )}
+
+      {/* Full medication schedule → calendar.
+          Collapses meds with shared reminderTimes into ONE event per time
+          instead of spamming N identical calendar entries at 5pm when you
+          take 5 meds at 5pm. */}
+      {(() => {
+        const timeBuckets = new Map<string, Medication[]>()
+        for (const med of medications) {
+          if (!med.enableReminders || !Array.isArray(med.reminderTimes)) continue
+          for (const t of med.reminderTimes) {
+            if (!timeBuckets.has(t)) timeBuckets.set(t, [])
+            timeBuckets.get(t)!.push(med)
+          }
+        }
+        if (timeBuckets.size === 0) return null
+        const events: CalendarEventInput[] = []
+        const totalMeds = new Set<string>()
+        for (const [time, meds] of timeBuckets.entries()) {
+          const [h, m] = time.split(':').map(n => parseInt(n, 10))
+          const start = new Date()
+          start.setHours(h || 0, m || 0, 0, 0)
+          const lines = meds.map(md => {
+            const name = md.brandName || md.genericName || 'medication'
+            const bits: string[] = []
+            if (md.dose) bits.push(md.dose)
+            if (md.requiresFood) bits.push('with food')
+            return `• ${name}${bits.length ? ` — ${bits.join(', ')}` : ''}`
+          })
+          meds.forEach(md => totalMeds.add(md.id))
+          events.push({
+            title: meds.length === 1
+              ? `Take: ${meds[0].brandName || meds[0].genericName || 'medication'}`
+              : `Meds (${time})`,
+            description: lines.join('\n'),
+            start: start.toISOString(),
+            durationMinutes: 15,
+            reminderMinutesBefore: 0,
+            recurrenceRule: 'FREQ=DAILY',
+          })
+        }
+        return (
+          <Card className="border-[var(--border-soft)] bg-[var(--bg-card)]">
+            <CardContent className="pt-6 flex flex-wrap items-center gap-3">
+              <div className="flex-1 min-w-[200px]">
+                <div className="font-medium text-[var(--text-main)]">
+                  Set medication reminder schedule
+                </div>
+                <div className="text-sm text-[var(--text-muted)]">
+                  {events.length} time-slot{events.length === 1 ? '' : 's'}, {totalMeds.size} med{totalMeds.size === 1 ? '' : 's'} — grouped so 5pm meds share one reminder, not five.
+                </div>
+              </div>
+              <AddToCalendarButton
+                events={events}
+                label="Add full schedule"
+                filename="chaos-command-medication-schedule.ics"
+              />
+            </CardContent>
+          </Card>
+        )
+      })()}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

@@ -669,10 +669,13 @@ export default function AppointmentPlanner({ onSave, existingPlan, preSelectedPr
               )}
             </div>
 
-            <div className="rounded-md border border-[var(--border-soft)] bg-[var(--surface-2)] p-3 text-xs text-[var(--text-muted)] space-y-1">
+            <div className="rounded-md border border-[var(--border-soft)] bg-[var(--surface-2)] p-3 text-xs text-[var(--text-muted)] space-y-2">
               <p className="font-medium text-[var(--text-main)]">How reminders actually work:</p>
               <p>
                 The in-app reminder fires only while Chaos Command is open. After you save, an <strong>Add to Calendar</strong> button appears on the appointment — tap it to push the reminder into your phone/desktop calendar (Google, Apple, Outlook) so it fires even when this app is closed.
+              </p>
+              <p>
+                <strong className="text-[var(--text-main)]">Tip:</strong> make a "Chaos Command" calendar in your calendar app first, then pick it when adding events. That way you can toggle all Chaos Command reminders on/off in one click instead of deleting them individually.
               </p>
               <p className="pt-1">
                 We ship it this way on purpose: it's one disabled human + one AI maintaining this app, and calendar deep-linking stays working across OS updates in a way deeper integrations don't.

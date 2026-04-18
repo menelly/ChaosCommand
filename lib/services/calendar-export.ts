@@ -139,12 +139,22 @@ export function toIcsString(input: CalendarEventInput): string {
     'PRODID:-//Chaos Cascade//Chaos Command//EN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
+    // X-WR-CALNAME hints calendar apps (Apple Calendar especially) to
+    // create or use a named calendar on import. Not all apps honor it
+    // but Apple / Outlook / Thunderbird do. Gives users a togglable
+    // "Chaos Command" calendar if their app supports calendar creation
+    // at import time.
+    'X-WR-CALNAME:Chaos Command Reminders',
+    'X-WR-CALDESC:Medication doses, refills, appointments, and device timers from Chaos Command',
     'BEGIN:VEVENT',
     `UID:${uid}`,
     `DTSTAMP:${dtStamp}`,
     `DTSTART:${dtStart}`,
     `DTEND:${dtEnd}`,
     `SUMMARY:${icsEscape(input.title)}`,
+    // CATEGORIES lets users filter/color by category inside one calendar
+    // — a fallback for apps that didn't honor X-WR-CALNAME.
+    'CATEGORIES:Chaos Command',
   ]
   if (input.description) lines.push(`DESCRIPTION:${icsEscape(input.description)}`)
   if (input.location) lines.push(`LOCATION:${icsEscape(input.location)}`)
@@ -174,6 +184,10 @@ export function toMultipleIcsString(events: CalendarEventInput[]): string {
     'PRODID:-//Chaos Cascade//Chaos Command//EN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
+    // Named-calendar hint so Apple Calendar / Outlook / Thunderbird can
+    // create a togglable "Chaos Command Reminders" calendar on import.
+    'X-WR-CALNAME:Chaos Command Reminders',
+    'X-WR-CALDESC:Medication doses, refills, appointments, and device timers from Chaos Command',
   ]
   // Pull inner VEVENT lines out of toIcsString (strip the VCALENDAR wrapper)
   const bodies = events.map(e => {
