@@ -102,25 +102,97 @@ export async function exportAllData(): Promise<string> {
 }
 
 /**
- * Import data from backup
+ * Import data from backup or sync payload.
+ *
+ * Merge strategy (fixes ConstraintError that plain bulkAdd produced —
+ * Dexie primary keys are auto-increment and device-local, so both
+ * devices have id:1, id:2, etc. Bulk-adding the other device's data
+ * hit "Key already exists" on every row):
+ *
+ * - daily_data: identity = [date + category + subcategory]. Newer
+ *   metadata.updated_at wins (last-writer-wins).
+ * - user_tags: identity = tag_name. Newer created_at wins.
+ * - image_blobs: identity = blob_key. Content-addressed, skip if
+ *   key already exists.
+ *
+ * Incoming device-local IDs get stripped so Dexie assigns fresh ones.
+ *
+ * NOTE: This is duplicated in shared/database/migration-helper.ts for
+ * historical reasons — the sync page imports from here, the QR-sync
+ * modal imports from the shared copy. TODO: unify so future fixes
+ * only need to happen once.
  */
 export async function importData(jsonData: string): Promise<void> {
   try {
-    const importData = JSON.parse(jsonData);
-    
-    if (importData.daily_data) {
-      await db.daily_data.bulkAdd(importData.daily_data);
-    }
-    
-    if (importData.user_tags) {
-      await db.user_tags.bulkAdd(importData.user_tags);
-    }
-    
-    if (importData.image_blobs) {
-      await db.image_blobs.bulkAdd(importData.image_blobs);
+    const payload = JSON.parse(jsonData);
+
+    let dailyInserted = 0, dailyUpdated = 0, dailySkipped = 0;
+    let tagsInserted = 0, tagsUpdated = 0, tagsSkipped = 0;
+    let blobsInserted = 0, blobsSkipped = 0;
+
+    if (Array.isArray(payload.daily_data)) {
+      for (const raw of payload.daily_data) {
+        const { id: _incomingId, ...record } = raw;
+        const existing = await db.daily_data
+          .where('[date+category+subcategory]')
+          .equals([record.date, record.category, record.subcategory])
+          .first();
+
+        if (!existing) {
+          await db.daily_data.add(record);
+          dailyInserted++;
+        } else {
+          const existingTime = new Date(existing.metadata?.updated_at || 0).getTime();
+          const incomingTime = new Date(record.metadata?.updated_at || 0).getTime();
+          if (incomingTime > existingTime) {
+            await db.daily_data.update(existing.id!, record);
+            dailyUpdated++;
+          } else {
+            dailySkipped++;
+          }
+        }
+      }
     }
 
-    console.log('📦 IMPORT: Data imported successfully');
+    if (Array.isArray(payload.user_tags)) {
+      for (const raw of payload.user_tags) {
+        const { id: _incomingId, ...tag } = raw;
+        const existing = await db.user_tags.where('tag_name').equals(tag.tag_name).first();
+
+        if (!existing) {
+          await db.user_tags.add(tag);
+          tagsInserted++;
+        } else {
+          const existingTime = new Date(existing.created_at || 0).getTime();
+          const incomingTime = new Date(tag.created_at || 0).getTime();
+          if (incomingTime > existingTime) {
+            await db.user_tags.update(existing.id!, tag);
+            tagsUpdated++;
+          } else {
+            tagsSkipped++;
+          }
+        }
+      }
+    }
+
+    if (Array.isArray(payload.image_blobs)) {
+      for (const raw of payload.image_blobs) {
+        const { id: _incomingId, ...blob } = raw;
+        const existing = await db.image_blobs.where('blob_key').equals(blob.blob_key).first();
+        if (!existing) {
+          await db.image_blobs.add(blob);
+          blobsInserted++;
+        } else {
+          blobsSkipped++;
+        }
+      }
+    }
+
+    console.log(
+      `📦 IMPORT: daily_data ${dailyInserted}+${dailyUpdated}~${dailySkipped}=, ` +
+      `tags ${tagsInserted}+${tagsUpdated}~${tagsSkipped}=, ` +
+      `blobs ${blobsInserted}+0~${blobsSkipped}=`
+    );
   } catch (error) {
     console.error('💥 IMPORT: Failed to import data:', error);
     throw error;
