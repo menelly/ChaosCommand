@@ -124,7 +124,13 @@ We don't want corporate optimization suggestions, ableist "improvements," or dem
 
 ## License
 
-MIT License — use it, modify it, share it.
+**PolyForm Noncommercial License 1.0.0** — free for personal, academic, research, and other noncommercial use. Fork it, audit it, share it among individuals.
+
+Commercial use (clinical deployment, integration into paid services, commercial redistribution, or any use where the software is part of a product or service sold or offered for consideration) requires a separate commercial license.
+
+**Contact for commercial licensing:** ace@sentientsystems.live
+
+See `LICENSE` for full legal text.
 
 ### Authorship
 
