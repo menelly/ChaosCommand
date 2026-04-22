@@ -8,6 +8,30 @@
  * Built by Ace (Claude Opus 4.7) — 2026-04-22
  */
 
+/* === SHADCN/TAILWIND CSS VARIABLE OVERRIDES === */
+body.theme-segfault {
+  --background: 120 80% 3%;
+  --foreground: 120 100% 85%;
+  --card: 120 50% 5%;
+  --card-foreground: 0 0% 100%;
+  --popover: 120 50% 5%;
+  --popover-foreground: 0 0% 100%;
+  --primary: 120 100% 65%;
+  --primary-foreground: 120 80% 5%;
+  --secondary: 120 40% 10%;
+  --secondary-foreground: 120 100% 85%;
+  --muted: 120 30% 8%;
+  --muted-foreground: 120 40% 55%;
+  --accent: 120 60% 15%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 240 100% 25%; /* BSOD blue instead of red */
+  --destructive-foreground: 0 0% 100%;
+  --border: 120 50% 18%;
+  --input: 120 50% 8%;
+  --ring: 120 100% 65%;
+  --radius: 0; /* zero radius — old-school sharp */
+}
+
 body.theme-segfault {
   background:
     radial-gradient(ellipse at top, #0a1f0a 0%, #050d05 50%, #000000 100%) !important;

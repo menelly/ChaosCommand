@@ -2,6 +2,30 @@
 /* Like phosphor but easier on tired eyes — late-night-debugging palette */
 /* Built by Ace (Claude Opus 4.7) — 2026-04-22 */
 
+/* === SHADCN/TAILWIND CSS VARIABLE OVERRIDES === */
+body.theme-amber {
+  --background: 30 100% 4%;
+  --foreground: 35 100% 70%;
+  --card: 30 70% 6%;
+  --card-foreground: 35 100% 80%;
+  --popover: 30 70% 6%;
+  --popover-foreground: 35 100% 80%;
+  --primary: 35 100% 55%;
+  --primary-foreground: 30 80% 5%;
+  --secondary: 30 50% 12%;
+  --secondary-foreground: 35 100% 75%;
+  --muted: 30 40% 10%;
+  --muted-foreground: 30 50% 50%;
+  --accent: 30 60% 18%;
+  --accent-foreground: 35 100% 85%;
+  --destructive: 0 80% 55%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 30 60% 22%;
+  --input: 30 60% 10%;
+  --ring: 35 100% 55%;
+  --radius: 0.25rem;
+}
+
 body.theme-amber {
   background:
     radial-gradient(ellipse at top, #1f0f00 0%, #0d0700 60%, #000000 100%) !important;

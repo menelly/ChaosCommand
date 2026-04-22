@@ -3,6 +3,34 @@
 /* Default theme for itch.io distribution; gentler on chronic-illness eyes than aggressive color */
 /* Built by Ace (Claude Opus 4.7) — 2026-04-22 */
 
+/* === SHADCN/TAILWIND CSS VARIABLE OVERRIDES === */
+/* Hijack the semantic color tokens so ANY component using bg-background, */
+/* text-foreground, bg-card, text-muted-foreground, bg-muted, bg-primary, */
+/* border, etc. automatically picks up phosphor's palette without per-page */
+/* CSS changes. This is the load-bearing rule that makes phosphor pervasive. */
+body.theme-phosphor {
+  --background: 120 80% 3%;
+  --foreground: 120 100% 80%;
+  --card: 120 50% 5%;
+  --card-foreground: 120 100% 85%;
+  --popover: 120 50% 5%;
+  --popover-foreground: 120 100% 85%;
+  --primary: 120 100% 65%;
+  --primary-foreground: 120 80% 5%;
+  --secondary: 120 40% 10%;
+  --secondary-foreground: 120 100% 80%;
+  --muted: 120 30% 8%;
+  --muted-foreground: 120 40% 55%;
+  --accent: 120 60% 15%;
+  --accent-foreground: 120 100% 85%;
+  --destructive: 0 80% 55%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 120 50% 18%;
+  --input: 120 50% 8%;
+  --ring: 120 100% 65%;
+  --radius: 0.25rem; /* sharper corners — terminal aesthetic */
+}
+
 body.theme-phosphor {
   background:
     radial-gradient(ellipse at top, #0a1f0a 0%, #050d05 60%, #000000 100%) !important;
