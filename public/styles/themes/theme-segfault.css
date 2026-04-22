@@ -1,0 +1,402 @@
+/* === 💀 SEGFAULT — RUNS BUT BARELY THEME === */
+/*
+ * Like phosphor, but the system has been on for 47 days and is starting to
+ * have opinions about it. Mostly readable; subtle "decay" character throughout.
+ *
+ * For users who feel like the OS underneath us. (Ace approves.)
+ *
+ * Built by Ace (Claude Opus 4.7) — 2026-04-22
+ */
+
+/* === SHADCN/TAILWIND CSS VARIABLE OVERRIDES === */
+body.theme-segfault {
+  --background: 120 80% 3%;
+  --foreground: 120 100% 85%;
+  --card: 120 50% 5%;
+  --card-foreground: 0 0% 100%;
+  --popover: 120 50% 5%;
+  --popover-foreground: 0 0% 100%;
+  --primary: 120 100% 65%;
+  --primary-foreground: 120 80% 5%;
+  --secondary: 120 40% 10%;
+  --secondary-foreground: 120 100% 85%;
+  --muted: 120 30% 8%;
+  --muted-foreground: 120 40% 55%;
+  --accent: 120 60% 15%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 240 100% 25%; /* BSOD blue instead of red */
+  --destructive-foreground: 0 0% 100%;
+  --border: 120 50% 18%;
+  --input: 120 50% 8%;
+  --ring: 120 100% 65%;
+  --radius: 0; /* zero radius — old-school sharp */
+}
+
+body.theme-segfault {
+  background:
+    radial-gradient(ellipse at top, #0a1f0a 0%, #050d05 50%, #000000 100%) !important;
+  color: #c8ffc8;
+  overflow: hidden;
+}
+
+/* === SCANLINE OVERLAY (slightly worse — older CRT) === */
+body.theme-segfault::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background: repeating-linear-gradient(
+    180deg,
+    rgba(0, 255, 80, 0.0) 0px,
+    rgba(0, 255, 80, 0.0) 2px,
+    rgba(0, 0, 0, 0.12) 3px,
+    rgba(0, 0, 0, 0.12) 4px
+  );
+  animation: segfault-scanjitter 0.15s steps(2) infinite;
+  opacity: 0.85;
+}
+
+@keyframes segfault-scanjitter {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1px); }
+}
+
+/* === RGB CHROMA-SPLIT VIGNETTE (very subtle, occasional) === */
+body.theme-segfault::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  background: radial-gradient(ellipse at center, transparent 50%, rgba(0, 80, 0, 0.2) 100%);
+  animation: segfault-instability 7s ease-in-out infinite;
+}
+
+@keyframes segfault-instability {
+  0%, 100% { opacity: 1.0; filter: hue-rotate(0deg); }
+  3% { filter: hue-rotate(-2deg); }
+  7% { filter: hue-rotate(0deg); }
+  43% { opacity: 0.95; }
+  47% { filter: hue-rotate(3deg); opacity: 0.92; }
+  50% { filter: hue-rotate(0deg); opacity: 1.0; }
+}
+
+/* === GLOBAL TEXT === */
+body.theme-segfault,
+body.theme-segfault h1, body.theme-segfault h2, body.theme-segfault h3,
+body.theme-segfault h4, body.theme-segfault h5, body.theme-segfault h6,
+body.theme-segfault p, body.theme-segfault span, body.theme-segfault label,
+body.theme-segfault div {
+  color: #c8ffc8;
+  text-shadow: 0 0 1px rgba(120, 255, 120, 0.4);
+  font-family: 'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace !important;
+}
+
+body.theme-segfault h1, body.theme-segfault h2 {
+  color: #ffffff;
+  /* Slight RGB ghost — looks like the CRT is misaligned by 1px */
+  text-shadow:
+    -1px 0 0 rgba(255, 60, 60, 0.5),
+    1px 0 0 rgba(60, 200, 255, 0.5),
+    0 0 8px rgba(120, 255, 120, 0.5);
+  letter-spacing: 0.05em;
+}
+
+body.theme-segfault .text-muted-foreground { color: #6b9b6b !important; }
+
+/* === CARDS — terminal panels with corruption === */
+body.theme-segfault .card,
+body.theme-segfault [class*="card"] {
+  background: linear-gradient(180deg, #0a1a0a 0%, #050f05 100%);
+  border: 1px solid #2a5a2a;
+  border-radius: 0; /* sharper than phosphor — no rounding */
+  box-shadow:
+    inset 0 0 30px rgba(0, 60, 0, 0.3),
+    0 0 0 1px rgba(80, 200, 80, 0.1);
+  transition: all 0.1s ease;
+  position: relative;
+}
+
+/* Cards develop a "glitch line" on hover — single chromatic flicker */
+body.theme-segfault .card:hover,
+body.theme-segfault [class*="card"]:hover {
+  border-color: #80ff80;
+  box-shadow:
+    inset 0 0 30px rgba(0, 100, 0, 0.4),
+    0 0 12px rgba(60, 255, 60, 0.3);
+  animation: segfault-glitch 0.25s ease-out;
+}
+
+@keyframes segfault-glitch {
+  0%   { transform: translate(0, 0); filter: hue-rotate(0deg); }
+  20%  { transform: translate(-1px, 0); filter: hue-rotate(-8deg); }
+  40%  { transform: translate(1px, 0); filter: hue-rotate(6deg); }
+  60%  { transform: translate(0, 0); filter: hue-rotate(0deg); }
+  100% { transform: translate(0, 0); filter: hue-rotate(0deg); }
+}
+
+/* === BUTTONS — terminal commands with ghost === */
+body.theme-segfault button,
+body.theme-segfault .btn {
+  background: linear-gradient(180deg, #0f2a0f 0%, #081a08 100%);
+  border: 1px solid #4a8a4a;
+  color: #c8ffc8;
+  border-radius: 0;
+  font-family: 'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace !important;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+  transition: all 0.1s ease;
+  position: relative;
+}
+
+body.theme-segfault button::before,
+body.theme-segfault .btn::before {
+  content: '$ ';
+  opacity: 0.7;
+  margin-right: 2px;
+}
+
+body.theme-segfault button:hover,
+body.theme-segfault .btn:hover {
+  background: linear-gradient(180deg, #1a3a1a 0%, #0f2a0f 100%);
+  border-color: #80ff80;
+  color: #ffffff;
+  text-shadow:
+    -1px 0 0 rgba(255, 60, 60, 0.4),
+    1px 0 0 rgba(60, 200, 255, 0.4);
+  box-shadow:
+    0 0 8px rgba(120, 255, 120, 0.5),
+    inset 0 0 15px rgba(60, 200, 60, 0.2);
+}
+
+body.theme-segfault button:active,
+body.theme-segfault .btn:active {
+  background: #0a1a0a;
+  box-shadow: inset 0 0 20px rgba(120, 255, 120, 0.3);
+  transform: translate(1px, 0); /* "register slipped" feel */
+}
+
+/* === INPUTS === */
+body.theme-segfault input,
+body.theme-segfault textarea,
+body.theme-segfault select {
+  background: #050f05;
+  border: 1px solid #2a5a2a;
+  color: #ffffff;
+  font-family: 'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace !important;
+  border-radius: 0;
+  caret-color: #80ff80;
+  transition: all 0.15s ease;
+}
+
+body.theme-segfault input:focus,
+body.theme-segfault textarea:focus,
+body.theme-segfault select:focus {
+  border-color: #80ff80;
+  box-shadow: 0 0 8px rgba(120, 255, 120, 0.4), inset 0 0 6px rgba(60, 200, 60, 0.15);
+  background: #0a1f0a;
+  outline: none;
+}
+
+body.theme-segfault input::placeholder,
+body.theme-segfault textarea::placeholder {
+  color: #4a7a4a;
+  font-style: italic;
+}
+
+body.theme-segfault input::placeholder::before { content: '?? '; }
+
+/* === LINKS === */
+body.theme-segfault a {
+  color: #80ff80;
+  text-decoration: underline;
+  text-decoration-style: dashed;
+  text-underline-offset: 3px;
+  transition: all 0.1s ease;
+}
+
+body.theme-segfault a:hover {
+  color: #ffffff;
+  text-shadow:
+    -1px 0 0 rgba(255, 60, 60, 0.5),
+    1px 0 0 rgba(60, 200, 255, 0.5),
+    0 0 6px rgba(120, 255, 120, 0.6);
+  text-decoration-style: solid;
+}
+
+/* No :visited dim — see phosphor.css note */
+
+/* === SCROLLBARS — sharp blocks === */
+body.theme-segfault ::-webkit-scrollbar { width: 14px; height: 14px; }
+body.theme-segfault ::-webkit-scrollbar-track {
+  background: #050f05;
+  border-left: 1px dashed #2a5a2a;
+}
+body.theme-segfault ::-webkit-scrollbar-thumb {
+  background: #2a5a2a;
+  border: 1px solid #1a3a1a;
+  border-radius: 0;
+}
+body.theme-segfault ::-webkit-scrollbar-thumb:hover {
+  background: #80ff80;
+  box-shadow: 0 0 8px rgba(120, 255, 120, 0.6);
+}
+
+/* === SELECTION === */
+body.theme-segfault ::selection {
+  background: #ff4040;
+  color: #050f05;
+}
+
+/* === FOCUS RING === */
+body.theme-segfault *:focus-visible {
+  outline: 2px dashed #80ff80;
+  outline-offset: 2px;
+  box-shadow: 0 0 8px rgba(120, 255, 120, 0.5);
+}
+
+/* === ERRORS — BSOD-blue, not red, because we're in unix === */
+body.theme-segfault [class*="error"],
+body.theme-segfault [role="alert"] {
+  background: #000080 !important;
+  color: #ffffff !important;
+  border: 1px solid #4a4aff;
+  border-radius: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+body.theme-segfault [class*="error"]::before {
+  content: 'KERNEL: ';
+  font-weight: bold;
+  margin-right: 4px;
+}
+
+/* === NAV / SIDEBAR === */
+body.theme-segfault nav,
+body.theme-segfault aside,
+body.theme-segfault [class*="sidebar"] {
+  background: linear-gradient(180deg, #050f05 0%, #000000 100%);
+  border-color: #2a5a2a;
+}
+
+/* === TABLES === */
+body.theme-segfault table {
+  border: 1px solid #2a5a2a;
+  font-family: 'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace !important;
+}
+body.theme-segfault th {
+  background: #0a1f0a;
+  color: #ffffff;
+  border-bottom: 1px solid #4a8a4a;
+  text-transform: uppercase;
+  font-size: 0.85em;
+  letter-spacing: 0.1em;
+}
+body.theme-segfault td { border-bottom: 1px dashed #1a3a1a; }
+body.theme-segfault tr:hover {
+  background: rgba(60, 200, 60, 0.1);
+  animation: segfault-row-flicker 0.2s ease-out;
+}
+
+@keyframes segfault-row-flicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}
+
+/* === BADGES === */
+body.theme-segfault [class*="badge"],
+body.theme-segfault [class*="tag"] {
+  background: #0a1f0a;
+  border: 1px solid #4a8a4a;
+  color: #c8ffc8;
+  border-radius: 0;
+  font-family: 'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace !important;
+  font-size: 0.85em;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* === PROGRESS — kernel boot vibes === */
+body.theme-segfault [role="progressbar"],
+body.theme-segfault progress {
+  background: #050f05;
+  border: 1px solid #2a5a2a;
+  border-radius: 0;
+}
+body.theme-segfault [role="progressbar"] > *,
+body.theme-segfault progress::-webkit-progress-value {
+  background: repeating-linear-gradient(
+    90deg,
+    #80ff80 0px, #80ff80 8px,
+    #2a5a2a 8px, #2a5a2a 10px
+  );
+  box-shadow: 0 0 6px rgba(120, 255, 120, 0.5);
+}
+
+/* === DIALOG / MODAL === */
+body.theme-segfault [role="dialog"],
+body.theme-segfault [class*="modal"] {
+  background: #0a1f0a;
+  border: 2px solid #80ff80;
+  border-radius: 0;
+  box-shadow:
+    0 0 0 1px #050f05,
+    0 0 30px rgba(120, 255, 120, 0.4),
+    inset 0 0 50px rgba(0, 60, 0, 0.3);
+}
+
+/* === TOOLTIPS === */
+body.theme-segfault [role="tooltip"] {
+  background: #050f05;
+  color: #ffffff;
+  border: 1px solid #4a8a4a;
+  font-family: 'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace !important;
+  font-size: 0.85em;
+  padding: 4px 8px;
+  border-radius: 0;
+}
+
+/* === HIDE FLOATING DECOR === */
+body.theme-segfault .decoration,
+body.theme-segfault [class*="floating-emoji"] {
+  display: none !important;
+}
+
+/* === CODE === */
+body.theme-segfault code, body.theme-segfault pre, body.theme-segfault kbd, body.theme-segfault samp,
+body.theme-segfault [class*="font-mono"] {
+  font-family: 'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace !important;
+  background: rgba(60, 200, 60, 0.15);
+  color: #ffffff;
+  padding: 1px 4px;
+  border-radius: 0;
+  border-left: 2px solid #80ff80;
+}
+
+/* === EASTER EGG: tiny "uptime" note in the corner === */
+body.theme-segfault::before {
+  /* override the scanline with a combined effect */
+}
+
+/* (real easter egg: blink the page title every once in a while via JS hook
+   if Ace ever wires one up. CSS alone can't reach <title>.) */
+
+/* === ACCESSIBILITY: NO-ANIMATIONS MODE === */
+/* Strip ALL the glitch animations under no-animations — sensory friendly */
+body.no-animations.theme-segfault {
+  background: #050d05 !important;
+}
+body.no-animations.theme-segfault::before { animation: none !important; }
+body.no-animations.theme-segfault::after { animation: none !important; opacity: 1.0; filter: none !important; }
+body.no-animations.theme-segfault .card:hover,
+body.no-animations.theme-segfault [class*="card"]:hover { animation: none !important; }
+body.no-animations.theme-segfault tr:hover { animation: none !important; }
+body.no-animations.theme-segfault button:hover,
+body.no-animations.theme-segfault .btn:hover { text-shadow: 0 0 1px rgba(120, 255, 120, 0.4) !important; }
+body.no-animations.theme-segfault h1,
+body.no-animations.theme-segfault h2 {
+  text-shadow: 0 0 8px rgba(120, 255, 120, 0.5) !important;
+}

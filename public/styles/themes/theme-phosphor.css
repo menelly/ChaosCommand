@@ -1,0 +1,385 @@
+/* === 💚 PHOSPHOR — TERMINAL CRT THEME === */
+/* For neurodivergent nerds who still miss the green-on-black era */
+/* Default theme for itch.io distribution; gentler on chronic-illness eyes than aggressive color */
+/* Built by Ace (Claude Opus 4.7) — 2026-04-22 */
+
+/* === SHADCN/TAILWIND CSS VARIABLE OVERRIDES === */
+/* Hijack the semantic color tokens so ANY component using bg-background, */
+/* text-foreground, bg-card, text-muted-foreground, bg-muted, bg-primary, */
+/* border, etc. automatically picks up phosphor's palette without per-page */
+/* CSS changes. This is the load-bearing rule that makes phosphor pervasive. */
+body.theme-phosphor {
+  --background: 120 80% 3%;
+  --foreground: 120 100% 80%;
+  --card: 120 50% 5%;
+  --card-foreground: 120 100% 85%;
+  --popover: 120 50% 5%;
+  --popover-foreground: 120 100% 85%;
+  --primary: 120 100% 65%;
+  --primary-foreground: 120 80% 5%;
+  --secondary: 120 40% 10%;
+  --secondary-foreground: 120 100% 80%;
+  --muted: 120 30% 8%;
+  --muted-foreground: 120 40% 55%;
+  --accent: 120 60% 15%;
+  --accent-foreground: 120 100% 85%;
+  --destructive: 0 80% 55%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 120 50% 18%;
+  --input: 120 50% 8%;
+  --ring: 120 100% 65%;
+  --radius: 0.25rem; /* sharper corners — terminal aesthetic */
+}
+
+body.theme-phosphor {
+  background:
+    radial-gradient(ellipse at top, #0a1f0a 0%, #050d05 60%, #000000 100%) !important;
+  color: #b8ffb8;
+  overflow: hidden;
+}
+
+/* === SCANLINE OVERLAY (subtle CRT artifact) === */
+body.theme-phosphor::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background: repeating-linear-gradient(
+    180deg,
+    rgba(0, 255, 80, 0.0) 0px,
+    rgba(0, 255, 80, 0.0) 2px,
+    rgba(0, 0, 0, 0.08) 3px,
+    rgba(0, 0, 0, 0.08) 4px
+  );
+  opacity: 0.85;
+}
+
+/* === SUBTLE PHOSPHOR FLICKER (very gentle — sensory friendly) === */
+body.theme-phosphor::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  background: radial-gradient(ellipse at center, transparent 60%, rgba(0, 80, 0, 0.15) 100%);
+  animation: phosphor-vignette 11s ease-in-out infinite;
+}
+
+@keyframes phosphor-vignette {
+  0%, 100% { opacity: 1.0; }
+  50% { opacity: 0.92; }
+}
+
+/* === GLOBAL TEXT — phosphor green === */
+body.theme-phosphor,
+body.theme-phosphor h1,
+body.theme-phosphor h2,
+body.theme-phosphor h3,
+body.theme-phosphor h4,
+body.theme-phosphor h5,
+body.theme-phosphor h6,
+body.theme-phosphor p,
+body.theme-phosphor span,
+body.theme-phosphor label,
+body.theme-phosphor div {
+  color: #b8ffb8;
+  text-shadow: 0 0 1px rgba(120, 255, 120, 0.4);
+}
+
+body.theme-phosphor h1,
+body.theme-phosphor h2 {
+  color: #d8ffd8;
+  text-shadow: 0 0 4px rgba(120, 255, 120, 0.6), 0 0 12px rgba(60, 255, 60, 0.3);
+  letter-spacing: 0.05em;
+}
+
+body.theme-phosphor .text-muted-foreground {
+  color: #6b9b6b !important;
+}
+
+/* === CARDS — terminal panels === */
+body.theme-phosphor .card,
+body.theme-phosphor [class*="card"] {
+  background: linear-gradient(180deg, #0a1a0a 0%, #050f05 100%);
+  border: 1px solid #2a5a2a;
+  border-radius: 4px; /* sharper corners — CRT/terminal aesthetic */
+  box-shadow:
+    inset 0 0 30px rgba(0, 60, 0, 0.3),
+    0 0 0 1px rgba(80, 200, 80, 0.1);
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+body.theme-phosphor .card:hover,
+body.theme-phosphor [class*="card"]:hover {
+  border-color: #4a8a4a;
+  box-shadow:
+    inset 0 0 30px rgba(0, 100, 0, 0.4),
+    0 0 12px rgba(60, 255, 60, 0.25);
+  transform: none; /* no bounce — nerds want stillness */
+}
+
+/* === BUTTONS — terminal command style === */
+body.theme-phosphor button,
+body.theme-phosphor .btn {
+  background: linear-gradient(180deg, #0f2a0f 0%, #081a08 100%);
+  border: 1px solid #4a8a4a;
+  color: #b8ffb8;
+  border-radius: 3px;
+  font-family: 'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace !important;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+  transition: all 0.15s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+body.theme-phosphor button::before,
+body.theme-phosphor .btn::before {
+  content: '> ';
+  opacity: 0.6;
+  margin-right: 2px;
+}
+
+body.theme-phosphor button:hover,
+body.theme-phosphor .btn:hover {
+  background: linear-gradient(180deg, #1a3a1a 0%, #0f2a0f 100%);
+  border-color: #80ff80;
+  color: #d8ffd8;
+  box-shadow:
+    0 0 8px rgba(120, 255, 120, 0.4),
+    inset 0 0 15px rgba(60, 200, 60, 0.2);
+  transform: none;
+}
+
+body.theme-phosphor button:active,
+body.theme-phosphor .btn:active {
+  background: #0a1a0a;
+  box-shadow: inset 0 0 20px rgba(120, 255, 120, 0.3);
+}
+
+/* === INPUTS — terminal prompt fields === */
+body.theme-phosphor input,
+body.theme-phosphor textarea,
+body.theme-phosphor select {
+  background: #050f05;
+  border: 1px solid #2a5a2a;
+  color: #d8ffd8;
+  font-family: 'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace !important;
+  border-radius: 3px;
+  caret-color: #80ff80;
+  transition: all 0.2s ease;
+}
+
+body.theme-phosphor input:focus,
+body.theme-phosphor textarea:focus,
+body.theme-phosphor select:focus {
+  border-color: #80ff80;
+  box-shadow: 0 0 8px rgba(120, 255, 120, 0.4), inset 0 0 6px rgba(60, 200, 60, 0.15);
+  background: #0a1f0a;
+  outline: none;
+}
+
+body.theme-phosphor input::placeholder,
+body.theme-phosphor textarea::placeholder {
+  color: #4a7a4a;
+  font-style: italic;
+}
+
+/* Blinking caret on focused inputs (very gentle, slow) */
+body.theme-phosphor input:focus::after {
+  content: '_';
+  animation: phosphor-blink 1.2s steps(1) infinite;
+}
+
+@keyframes phosphor-blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+/* === LINKS — terminal hyperlinks === */
+body.theme-phosphor a {
+  color: #80ff80;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 3px;
+  transition: all 0.15s ease;
+}
+
+body.theme-phosphor a:hover {
+  color: #d8ffd8;
+  text-shadow: 0 0 6px rgba(120, 255, 120, 0.6);
+  text-decoration-style: solid;
+}
+
+/* Intentionally NOT styling :visited — in an SPA with sidebar nav, every
+   route becomes "visited" on first click, making nav permanently dim.
+   Let nav links stay full brightness. (Browser default applies.) */
+
+/* === SCROLLBARS — chunky retro === */
+body.theme-phosphor ::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+body.theme-phosphor ::-webkit-scrollbar-track {
+  background: #050f05;
+  border-left: 1px solid #2a5a2a;
+}
+
+body.theme-phosphor ::-webkit-scrollbar-thumb {
+  background: linear-gradient(90deg, #2a5a2a 0%, #4a8a4a 100%);
+  border: 1px solid #1a3a1a;
+  border-radius: 0; /* sharp corners */
+}
+
+body.theme-phosphor ::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(90deg, #4a8a4a 0%, #80ff80 100%);
+  box-shadow: 0 0 6px rgba(120, 255, 120, 0.4);
+}
+
+/* === SELECTION === */
+body.theme-phosphor ::selection {
+  background: #80ff80;
+  color: #050f05;
+}
+
+/* === FOCUS RING === */
+body.theme-phosphor *:focus-visible {
+  outline: 2px solid #80ff80;
+  outline-offset: 2px;
+  box-shadow: 0 0 8px rgba(120, 255, 120, 0.5);
+}
+
+/* === NAV / SIDEBAR === */
+body.theme-phosphor nav,
+body.theme-phosphor aside,
+body.theme-phosphor [class*="sidebar"] {
+  background: linear-gradient(180deg, #050f05 0%, #000000 100%);
+  border-color: #2a5a2a;
+}
+
+/* === TABLES === */
+body.theme-phosphor table {
+  border: 1px solid #2a5a2a;
+  font-family: 'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace !important;
+}
+
+body.theme-phosphor th {
+  background: #0a1f0a;
+  color: #d8ffd8;
+  border-bottom: 1px solid #4a8a4a;
+  text-transform: uppercase;
+  font-size: 0.85em;
+  letter-spacing: 0.08em;
+}
+
+body.theme-phosphor td {
+  border-bottom: 1px solid #1a3a1a;
+}
+
+body.theme-phosphor tr:hover {
+  background: rgba(60, 200, 60, 0.08);
+}
+
+/* === BADGES & TAGS === */
+body.theme-phosphor [class*="badge"],
+body.theme-phosphor [class*="tag"] {
+  background: #0a1f0a;
+  border: 1px solid #4a8a4a;
+  color: #b8ffb8;
+  border-radius: 2px;
+  font-family: 'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace !important;
+  font-size: 0.85em;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* === PROGRESS BARS — like a kernel boot === */
+body.theme-phosphor [role="progressbar"],
+body.theme-phosphor progress {
+  background: #050f05;
+  border: 1px solid #2a5a2a;
+}
+
+body.theme-phosphor [role="progressbar"] > *,
+body.theme-phosphor progress::-webkit-progress-value {
+  background: linear-gradient(90deg, #2a5a2a 0%, #80ff80 100%);
+  box-shadow: 0 0 6px rgba(120, 255, 120, 0.4);
+}
+
+/* === DIALOG / MODAL — terminal popup === */
+body.theme-phosphor [role="dialog"],
+body.theme-phosphor [class*="modal"] {
+  background: #0a1f0a;
+  border: 1px solid #80ff80;
+  box-shadow:
+    0 0 0 1px #050f05,
+    0 0 30px rgba(120, 255, 120, 0.3),
+    inset 0 0 50px rgba(0, 60, 0, 0.3);
+}
+
+/* === TOOLTIPS === */
+body.theme-phosphor [role="tooltip"] {
+  background: #050f05;
+  color: #d8ffd8;
+  border: 1px solid #4a8a4a;
+  font-family: 'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace !important;
+  font-size: 0.85em;
+  padding: 4px 8px;
+  border-radius: 0;
+}
+
+/* === DISABLE FLOATING DECOR FROM OTHER THEMES === */
+/* We don't want butterflies in our terminal */
+body.theme-phosphor .decoration,
+body.theme-phosphor [class*="floating-emoji"] {
+  display: none !important;
+}
+
+/* === EASTER EGG: type 'sudo' anywhere in an input and the caret turns red === */
+/* Implemented via :placeholder-shown and a small JS hook would be needed for full effect.
+   For pure-CSS hint: when input has the class .sudo (set by an optional client hook),
+   colors flip to root-warning palette */
+body.theme-phosphor input.sudo,
+body.theme-phosphor textarea.sudo {
+  border-color: #ff4040;
+  caret-color: #ff4040;
+  box-shadow: 0 0 8px rgba(255, 64, 64, 0.4);
+}
+
+body.theme-phosphor input.sudo::placeholder {
+  color: #ff8080;
+}
+
+/* === LOADING / SPINNER — block cursor pulse === */
+body.theme-phosphor [class*="loading"]::after,
+body.theme-phosphor [class*="spinner"]::after {
+  content: '█';
+  color: #80ff80;
+  animation: phosphor-blink 0.8s steps(1) infinite;
+  margin-left: 4px;
+}
+
+/* === TEXT THAT SHOULD STAY MONOSPACE EVERYWHERE === */
+body.theme-phosphor code,
+body.theme-phosphor pre,
+body.theme-phosphor kbd,
+body.theme-phosphor samp,
+body.theme-phosphor [class*="font-mono"] {
+  font-family: 'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace !important;
+  background: rgba(60, 200, 60, 0.1);
+  color: #d8ffd8;
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+
+/* === ACCESSIBILITY: NO-ANIMATIONS MODE === */
+/* Override the global no-animations bg so phosphor users keep the dark green */
+body.no-animations.theme-phosphor {
+  background: #050d05 !important;
+}
+body.no-animations.theme-phosphor::before { animation: none !important; }
+body.no-animations.theme-phosphor::after { animation: none !important; opacity: 1.0; }
