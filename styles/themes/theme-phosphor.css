@@ -214,9 +214,9 @@ body.theme-phosphor a:hover {
   text-decoration-style: solid;
 }
 
-body.theme-phosphor a:visited {
-  color: #6bb86b;
-}
+/* Intentionally NOT styling :visited — in an SPA with sidebar nav, every
+   route becomes "visited" on first click, making nav permanently dim.
+   Let nav links stay full brightness. (Browser default applies.) */
 
 /* === SCROLLBARS — chunky retro === */
 body.theme-phosphor ::-webkit-scrollbar {

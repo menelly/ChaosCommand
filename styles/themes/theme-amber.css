@@ -183,7 +183,7 @@ body.theme-amber a:hover {
   text-decoration-style: solid;
 }
 
-body.theme-amber a:visited { color: #b88a4a; }
+/* No :visited dim — see phosphor.css note */
 
 /* === SCROLLBARS === */
 body.theme-amber ::-webkit-scrollbar { width: 12px; height: 12px; }

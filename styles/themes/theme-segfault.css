@@ -226,7 +226,7 @@ body.theme-segfault a:hover {
   text-decoration-style: solid;
 }
 
-body.theme-segfault a:visited { color: #6bb86b; }
+/* No :visited dim — see phosphor.css note */
 
 /* === SCROLLBARS — sharp blocks === */
 body.theme-segfault ::-webkit-scrollbar { width: 14px; height: 14px; }
