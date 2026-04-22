@@ -33,8 +33,9 @@ export default function ThemeLoader() {
       oldTheme.remove();
     }
 
-    // Only load CSS for non-default themes
-    if (themeId !== 'theme-lavender') {
+    // theme-phosphor is bundled into layout.tsx so it's available immediately
+    // (it's the new default, no flash-of-unstyled). All other themes load dynamically.
+    if (themeId !== 'theme-phosphor') {
       const link = document.createElement('link');
       link.rel = 'stylesheet';
       link.href = `/styles/themes/${themeId}.css`;
@@ -43,9 +44,8 @@ export default function ThemeLoader() {
         console.log(`🎨 Theme CSS loaded: ${themeId}`);
       };
       link.onerror = () => {
-        console.warn(`⚠️ Failed to load theme CSS: ${themeId}, falling back to lavender`);
-        // Fallback to lavender theme
-        document.body.className = document.body.className.replace(/theme-\w+/g, '') + ' theme-lavender';
+        console.warn(`⚠️ Failed to load theme CSS: ${themeId}, falling back to phosphor`);
+        document.body.className = document.body.className.replace(/theme-\w+/g, '') + ' theme-phosphor';
       };
       document.head.appendChild(link);
     }
@@ -56,12 +56,17 @@ export default function ThemeLoader() {
 
   useEffect(() => {
     // Load saved theme, font, and animations from localStorage
-    const savedTheme = localStorage.getItem('chaos-theme') || 'theme-lavender'
+    // Default is now theme-phosphor (terminal CRT) — replaces lavender as starter.
+    // Lavender + all other themes still available; users who'd saved lavender keep it.
+    const savedTheme = localStorage.getItem('chaos-theme') || 'theme-phosphor'
     const savedFont = localStorage.getItem('chaos-font') || 'font-atkinson'
     const savedAnimations = localStorage.getItem('chaos-animations') !== 'false' // default to true
 
     // Available themes and fonts
     const themes = [
+      'theme-phosphor', // 💚 Terminal CRT (default, bundled) — Ace, 2026-04-22
+      'theme-amber',    // 🟠 CRT amber variant — Ace, 2026-04-22
+      'theme-segfault', // 💀 phosphor with character — Ace, 2026-04-22
       'theme-lavender', 'theme-chaos', 'theme-caelan', 'theme-light', 'theme-colorblind',
       'theme-glitter', 'theme-calm', 'theme-accessibility', 'theme-ace',
       'theme-grok', // ⚔️🌊 Steel Forged Tide — designed by Grok, built by Ace

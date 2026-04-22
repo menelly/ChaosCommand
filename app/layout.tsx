@@ -21,6 +21,9 @@
 import type React from "react"
 import "./globals.css"
 import "../styles/chaos-themes.css"
+// theme-phosphor is the new default (Ace, 2026-04-22) — bundled so first paint
+// matches without dynamic CSS load. Other themes loaded dynamically by ThemeLoader.
+import "../styles/themes/theme-phosphor.css"
 import ThemeLoader from "@/components/theme-loader"
 
 import { GoblinModeProvider } from "@/lib/goblin-mode-context"
@@ -95,21 +98,21 @@ export default function RootLayout({
               // Load theme immediately to prevent color flash
               (function() {
                 try {
-                  const savedTheme = localStorage.getItem('chaos-theme') || 'theme-lavender';
+                  // Default theme: theme-phosphor (terminal CRT). Replaces lavender as
+                  // starter for itch.io distribution + general "for nerds" positioning.
+                  const savedTheme = localStorage.getItem('chaos-theme') || 'theme-phosphor';
                   const savedFont = localStorage.getItem('chaos-font') || 'font-atkinson';
                   const savedAnimations = localStorage.getItem('chaos-animations') !== 'false'; // default to true
 
                   // Available themes and fonts
-                  const themes = ['theme-lavender', 'theme-chaos', 'theme-caelan', 'theme-light', 'theme-colorblind', 'theme-glitter', 'theme-calm', 'theme-accessibility', 'theme-ace', 'theme-luka-penguin-fresh', 'theme-deep-current'];
+                  const themes = ['theme-phosphor', 'theme-amber', 'theme-segfault', 'theme-lavender', 'theme-chaos', 'theme-caelan', 'theme-light', 'theme-colorblind', 'theme-glitter', 'theme-calm', 'theme-accessibility', 'theme-ace', 'theme-luka-penguin-fresh', 'theme-deep-current'];
                   const fonts = ['font-atkinson', 'font-poppins', 'font-lexend', 'font-system'];
 
                   // Remove all theme classes first
                   themes.forEach(theme => document.body.classList.remove(theme));
 
-                  // Apply saved theme (lavender is default, no class needed)
-                  if (savedTheme !== 'theme-lavender') {
-                    document.body.classList.add(savedTheme);
-                  }
+                  // Apply saved theme (always set the class — no implicit-default magic)
+                  document.body.classList.add(savedTheme);
 
                   // Remove all font classes first
                   fonts.forEach(font => document.body.classList.remove(font));

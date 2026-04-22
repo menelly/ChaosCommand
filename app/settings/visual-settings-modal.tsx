@@ -35,14 +35,17 @@ interface VisualSettingsModalProps {
 }
 
 export function VisualSettingsModal({ isOpen, onClose }: VisualSettingsModalProps) {
-  const [currentTheme, setCurrentTheme] = useState('theme-lavender')
+  const [currentTheme, setCurrentTheme] = useState('theme-phosphor')
   const [currentFont, setCurrentFont] = useState('font-atkinson')
   const [animatedEffects, setAnimatedEffects] = useState(true)
   const [bounceIntensity, setBounceIntensity] = useState(10) // 0-100%, default gentle sparkle
   const [confettiLevel, setConfettiLevel] = useState<'none' | 'low' | 'medium' | 'high'>('medium')
 
   const themes = [
-    { id: 'theme-lavender', name: 'Lavender Garden', description: 'Gentle lavender serenity (default)' },
+    { id: 'theme-phosphor', name: '💚 Phosphor', description: 'Terminal CRT green-on-black (default) — for nerds and tired eyes' },
+    { id: 'theme-amber', name: '🟠 Amber', description: 'CRT amber — phosphor\'s warmer sibling, easier on late-night eyes' },
+    { id: 'theme-segfault', name: '💀 Segfault', description: 'Phosphor with character — runs but barely. RGB ghost on hover.' },
+    { id: 'theme-lavender', name: '🌸 Lavender Garden', description: 'Gentle lavender serenity with butterflies' },
     { id: 'theme-chaos', name: '🏀 Basketball Court', description: 'Orange and black sports vibes' },
     { id: 'theme-caelan', name: '🕊️ Caelan\'s Liberation Dawn', description: 'Breaking free from darkness into light' },
     { id: 'theme-light', name: 'Light Mode', description: 'Clean and bright' },
@@ -70,8 +73,8 @@ export function VisualSettingsModal({ isOpen, onClose }: VisualSettingsModalProp
         oldTheme.remove();
       }
 
-      // Only load CSS for non-default themes
-      if (theme !== 'theme-lavender') {
+      // theme-phosphor is bundled in layout.tsx so it doesn't need dynamic loading
+      if (theme !== 'theme-phosphor') {
         const link = document.createElement('link');
         link.rel = 'stylesheet';
         link.href = `/styles/themes/${theme}.css`;
@@ -80,11 +83,10 @@ export function VisualSettingsModal({ isOpen, onClose }: VisualSettingsModalProp
           console.log(`🎨 Theme CSS loaded: ${theme}`);
         };
         link.onerror = () => {
-          console.warn(`⚠️ Failed to load theme CSS: ${theme}, falling back to lavender`);
-          // Fallback to lavender theme
-          document.body.className = document.body.className.replace(/theme-\w+/g, '') + ' theme-lavender';
-          setCurrentTheme('theme-lavender');
-          localStorage.setItem('chaos-theme', 'theme-lavender');
+          console.warn(`⚠️ Failed to load theme CSS: ${theme}, falling back to phosphor`);
+          document.body.className = document.body.className.replace(/theme-\w+/g, '') + ' theme-phosphor';
+          setCurrentTheme('theme-phosphor');
+          localStorage.setItem('chaos-theme', 'theme-phosphor');
         };
         document.head.appendChild(link);
       }
@@ -149,7 +151,7 @@ export function VisualSettingsModal({ isOpen, onClose }: VisualSettingsModalProp
 
   // Load saved theme, font, and animations on component mount
   useEffect(() => {
-    const savedTheme = localStorage.getItem('chaos-theme') || 'theme-lavender'
+    const savedTheme = localStorage.getItem('chaos-theme') || 'theme-phosphor'
     const savedFont = localStorage.getItem('chaos-font') || 'font-atkinson'
     const savedAnimations = localStorage.getItem('chaos-animations') !== 'false' // default to true
 
