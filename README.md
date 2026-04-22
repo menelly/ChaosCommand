@@ -52,7 +52,7 @@ Everything runs on your device. No cloud. No accounts. No telemetry. Your health
 ### Privacy & Security
 - **Local-first**: All data stays on your device (IndexedDB via Dexie.js)
 - **PIN-based isolation**: Multiple users, separate databases, no corporate auth
-- **G-SPOT Protocol**: Emergency data replacement with plausible "demo data" — they can't find it if they don't think it exists
+- **G-SPOT Protocol**: Emergency wipe that replaces your real data with the app's *starter data* — the exact state the app is in on first install. Cover story writes itself: *"Oh that? I forgot I downloaded it. ADHD tax."* They can't find it if they don't think it was ever there.
 - **G-SPOT Export**: Medical data encrypted and hidden in boring files (Costco receipts, family recipes)
 - **Open source**: Audit our code
 

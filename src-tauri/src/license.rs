@@ -11,10 +11,34 @@ use std::fs;
 use std::path::PathBuf;
 use tauri::{command, Manager};
 
+// Polar environment selection via Cargo feature flag.
+// Default build → production (api.polar.sh + real org).
+// `--features sandbox` → sandbox-api.polar.sh + sandbox org.
+// Customer-portal endpoints are public (no API key), so a feature flag is
+// sufficient — nothing secret leaks into sandbox builds.
+
+#[cfg(not(feature = "sandbox"))]
+const POLAR_BASE_URL: &str = "https://api.polar.sh/v1";
+#[cfg(feature = "sandbox")]
+const POLAR_BASE_URL: &str = "https://sandbox-api.polar.sh/v1";
+
+#[cfg(not(feature = "sandbox"))]
 const POLAR_ORG_ID: &str = "039db970-acae-4c1a-88cc-3a3bba63b685";
-const POLAR_VALIDATE_URL: &str = "https://api.polar.sh/v1/customer-portal/license-keys/validate";
-const POLAR_ACTIVATE_URL: &str = "https://api.polar.sh/v1/customer-portal/license-keys/activate";
-const POLAR_DEACTIVATE_URL: &str = "https://api.polar.sh/v1/customer-portal/license-keys/deactivate";
+#[cfg(feature = "sandbox")]
+const POLAR_ORG_ID: &str = "22252c63-6c15-4046-9792-5e5f05e4e4d3";
+
+// Paths constructed from the base so a single switch covers everything.
+// Using `macro_rules!` + `concat!` would let us keep them as &'static str,
+// but a const fn via format_args isn't stable in const context yet, so we
+// just build paths at call-time in the three commands below. The base URL
+// + path approach is cheap and keeps the feature-flag switch to one place.
+const VALIDATE_PATH: &str = "/customer-portal/license-keys/validate";
+const ACTIVATE_PATH: &str = "/customer-portal/license-keys/activate";
+const DEACTIVATE_PATH: &str = "/customer-portal/license-keys/deactivate";
+
+fn polar_url(path: &str) -> String {
+    format!("{}{}", POLAR_BASE_URL, path)
+}
 
 // 90 days offline grace — rural users, spotty internet, medical app can't brick
 const OFFLINE_GRACE_SECONDS: u64 = 90 * 24 * 60 * 60;
@@ -100,7 +124,7 @@ pub async fn validate_license(app: tauri::AppHandle) -> Result<LicenseStatus, St
     // Try online validation
     let client = reqwest::Client::new();
     let res = client
-        .post(POLAR_VALIDATE_URL)
+        .post(polar_url(VALIDATE_PATH))
         .json(&serde_json::json!({
             "key": cache.key,
             "organization_id": POLAR_ORG_ID
@@ -167,7 +191,7 @@ pub async fn activate_license(app: tauri::AppHandle, key: String) -> Result<Lice
     let label = device_label();
 
     let res = client
-        .post(POLAR_ACTIVATE_URL)
+        .post(polar_url(ACTIVATE_PATH))
         .json(&serde_json::json!({
             "key": key,
             "organization_id": POLAR_ORG_ID,
@@ -205,7 +229,7 @@ pub async fn activate_license(app: tauri::AppHandle, key: String) -> Result<Lice
         // Still might be valid — could be already activated on this device
         // Try a plain validate instead
         let validate_res = client
-            .post(POLAR_VALIDATE_URL)
+            .post(polar_url(VALIDATE_PATH))
             .json(&serde_json::json!({
                 "key": key,
                 "organization_id": POLAR_ORG_ID
@@ -248,7 +272,7 @@ pub async fn deactivate_license(app: tauri::AppHandle) -> Result<LicenseStatus, 
 
     let client = reqwest::Client::new();
     let res = client
-        .post(POLAR_DEACTIVATE_URL)
+        .post(polar_url(DEACTIVATE_PATH))
         .json(&serde_json::json!({
             "key": cache.key,
             "organization_id": POLAR_ORG_ID,
