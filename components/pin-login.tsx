@@ -56,7 +56,7 @@ export default function PinLogin({ onPinEntered }: PinLoginProps) {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950 dark:to-pink-950 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-transparent p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">🔐 Command Center</CardTitle>

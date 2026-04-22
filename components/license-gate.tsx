@@ -21,7 +21,7 @@ export default function LicenseGate({ children }: { children: React.ReactNode })
 
   if (isChecking) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950 dark:to-pink-950">
+      <div className="min-h-screen flex items-center justify-center bg-transparent">
         <div className="text-center space-y-4">
           <Loader2 className="h-8 w-8 animate-spin mx-auto text-purple-600" />
           <h2 className="text-xl font-semibold">Checking license...</h2>
@@ -49,11 +49,11 @@ export default function LicenseGate({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950 dark:to-pink-950 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-transparent p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
-            <KeyRound className="h-6 w-6 text-purple-600 dark:text-purple-300" />
+          <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-muted flex items-center justify-center">
+            <KeyRound className="h-6 w-6 text-foreground" />
           </div>
           <CardTitle className="text-2xl font-bold">
             Activate Chaos Command
