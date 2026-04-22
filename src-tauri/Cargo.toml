@@ -16,10 +16,9 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 
 [features]
 default = []
-# Build against Polar's sandbox environment for license-key testing.
-# Uses sandbox-api.polar.sh + sandbox org ID. Never ship this to users.
-#   cargo tauri dev --features sandbox
-#   cargo tauri build --features sandbox   (for a test binary only)
+# Legacy Polar sandbox flag — retained in case we ever switch BACK to a
+# hosted license server. Current v1 uses offline Ed25519 signed keys
+# (no network required). See src/license.rs.
 sandbox = []
 
 [build-dependencies]
@@ -39,3 +38,7 @@ tauri-plugin-http = "2"
 tokio = { version = "1.0", features = ["full"] }
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
 hostname = "0.4"
+
+# Offline license-key validation via Ed25519 signatures (no network needed)
+ed25519-dalek = { version = "2.1", default-features = false, features = ["std"] }
+base64 = "0.22"
