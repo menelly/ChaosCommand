@@ -645,74 +645,10 @@ export function MedicationForm({
             </CardContent>
           </Card>
 
-          {/* Reminders */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Reminders</CardTitle>
-              <CardDescription>
-                Set up reminder notifications for this medication
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="enableReminders"
-                  checked={formData.enableReminders}
-                  onCheckedChange={(checked) => handleInputChange('enableReminders', checked)}
-                />
-                <Label htmlFor="enableReminders">Enable reminder notifications</Label>
-              </div>
-
-              {formData.enableReminders && (
-                <div className="space-y-4 pl-6 border-l-2 border-muted">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <Label>Reminder Times</Label>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="time"
-                      value={newReminderTime}
-                      onChange={(e) => setNewReminderTime(e.target.value)}
-                      className="w-32"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={addReminderTime}
-                    >
-                      <Plus className="h-4 w-4 mr-1" />
-                      Add Time
-                    </Button>
-                  </div>
-
-                  {formData.reminderTimes.length > 0 && (
-                    <div className="space-y-2">
-                      <p className="text-sm text-muted-foreground">Current reminder times:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {formData.reminderTimes.map((time, index) => (
-                          <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                            {time}
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeReminderTime(index)}
-                              className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground"
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          {/* Reminders — HIDDEN 2026-04-22 per MOBILE_BUILD_DEBUG.md HIGH #1.
+              Notifications aren't confirmed working on Android (HOI/Tauri
+              notification plugin needs verification). Re-enable when the
+              underlying notification delivery is tested + confirmed. */}
 
           {/* Refill Reminders */}
           <Card>

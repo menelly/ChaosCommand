@@ -370,8 +370,8 @@ export default function WorkDisabilityPage() {
               onClick={() => setActiveTab(tab.id)}
               className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-md text-sm font-medium transition-all ${
                 activeTab === tab.id
-                  ? 'bg-[var(--accent-primary)] text-[var(--text-main)] ring-2 ring-[var(--accent-primary)] ring-offset-1 font-bold'
-                  : 'text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-card)]'
+                  ? 'bg-primary text-primary-foreground ring-2 ring-primary ring-offset-1 font-bold'
+                  : 'text-foreground/70 hover:text-foreground hover:bg-card'
               }`}
             >
               {tab.icon}
