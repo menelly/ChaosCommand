@@ -263,7 +263,7 @@ export default function MentalHealthIndex() {
                           <Label htmlFor={`toggle-${tracker.id}`} className="font-medium cursor-pointer">
                             {tracker.name}
                           </Label>
-                          <p className="text-xs text-muted-foreground truncate">
+                          <p className="text-xs text-muted-foreground">
                             {tracker.shortDescription}
                           </p>
                         </div>

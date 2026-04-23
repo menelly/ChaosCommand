@@ -232,7 +232,7 @@ export default function ChoicePage() {
                             <Label htmlFor={`toggle-${area.id}`} className="font-medium cursor-pointer">
                               {area.title}
                             </Label>
-                            <p className="text-xs text-muted-foreground truncate">
+                            <p className="text-xs text-muted-foreground">
                               {area.description}
                             </p>
                           </div>
