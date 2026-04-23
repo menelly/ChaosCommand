@@ -252,14 +252,14 @@ export default function GaslightGaragePage() {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <header className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-[var(--text-main)] mb-2 flex items-center justify-center gap-2">
+          <h1 className="text-3xl font-bold text-foreground mb-2 flex items-center justify-center gap-2">
             <AlertTriangle className="h-8 w-8 text-orange-500" />
             Gaslight Garage
           </h1>
-          <p className="text-lg text-[var(--text-muted)] italic">
+          <p className="text-lg text-muted-foreground italic">
             "No REALLY, and I have proof."
           </p>
-          <p className="text-sm text-[var(--text-muted)] mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             Your medical evidence locker. Photos, screenshots, messages, receipts.
           </p>
         </header>
@@ -269,7 +269,7 @@ export default function GaslightGaragePage() {
           <div className="flex justify-center mb-6">
             <Button
               onClick={() => setShowForm(true)}
-              className="bg-[var(--accent-primary)] text-[var(--text-main)] hover:opacity-90 font-medium border-2 border-[var(--accent-primary)]"
+              className="bg-primary text-foreground hover:opacity-90 font-medium border-2 border-primary"
             >
               <Upload className="h-4 w-4 mr-2" />
               File New Evidence
@@ -279,9 +279,9 @@ export default function GaslightGaragePage() {
 
         {/* Add Evidence Form */}
         {showForm && (
-          <Card className="mb-6 border-[var(--border-soft)] bg-[var(--bg-card)]">
+          <Card className="mb-6 border-border bg-card">
             <CardHeader>
-              <CardTitle className="text-[var(--text-main)] flex items-center gap-2">
+              <CardTitle className="text-foreground flex items-center gap-2">
                 <FileText className="h-5 w-5" />
                 File New Evidence
               </CardTitle>
@@ -289,7 +289,7 @@ export default function GaslightGaragePage() {
             <CardContent className="space-y-4">
               {/* Title */}
               <div>
-                <Label className="text-[var(--text-main)]">What happened?</Label>
+                <Label className="text-foreground">What happened?</Label>
                 <Input
                   value={title}
                   onChange={e => setTitle(e.target.value)}
@@ -301,7 +301,7 @@ export default function GaslightGaragePage() {
               {/* Date (backdatable!) */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-[var(--text-main)] flex items-center gap-1">
+                  <Label className="text-foreground flex items-center gap-1">
                     <Calendar className="h-3 w-3" />
                     When did this happen?
                   </Label>
@@ -313,7 +313,7 @@ export default function GaslightGaragePage() {
                   />
                 </div>
                 <div>
-                  <Label className="text-[var(--text-main)]">Provider (optional)</Label>
+                  <Label className="text-foreground">Provider (optional)</Label>
                   <Input
                     value={provider}
                     onChange={e => setProvider(e.target.value)}
@@ -325,7 +325,7 @@ export default function GaslightGaragePage() {
 
               {/* Evidence Category */}
               <div>
-                <Label className="text-[var(--text-main)]">Type of evidence</Label>
+                <Label className="text-foreground">Type of evidence</Label>
                 <div className="flex flex-wrap gap-2 mt-1">
                   {EVIDENCE_CATEGORIES.map(cat => (
                     <button
@@ -333,8 +333,8 @@ export default function GaslightGaragePage() {
                       onClick={() => setCategory(cat.value)}
                       className={`px-3 py-1.5 rounded-full text-sm border transition-all ${
                         category === cat.value
-                          ? 'bg-[var(--accent-primary)] text-[var(--text-main)] border-[var(--accent-primary)] font-medium'
-                          : 'bg-[var(--bg-card)] text-[var(--text-muted)] border-[var(--border-soft)] hover:border-[var(--accent-primary)]'
+                          ? 'bg-primary text-foreground border-primary font-medium'
+                          : 'bg-card text-muted-foreground border-border hover:border-primary'
                       }`}
                       style={category === cat.value ? { textShadow: '0 1px 2px rgba(0,0,0,0.2)' } : {}}
                     >
@@ -346,7 +346,7 @@ export default function GaslightGaragePage() {
 
               {/* Description */}
               <div>
-                <Label className="text-[var(--text-main)]">The receipts (describe what happened)</Label>
+                <Label className="text-foreground">The receipts (describe what happened)</Label>
                 <Textarea
                   value={description}
                   onChange={e => setDescription(e.target.value)}
@@ -357,7 +357,7 @@ export default function GaslightGaragePage() {
 
               {/* Quick Tags */}
               <div>
-                <Label className="text-[var(--text-main)] mb-2 block">Quick tags</Label>
+                <Label className="text-foreground mb-2 block">Quick tags</Label>
                 <div className="flex flex-wrap gap-2 mb-2">
                   {QUICK_TAGS.map(qt => (
                     <button
@@ -366,7 +366,7 @@ export default function GaslightGaragePage() {
                       className={`px-3 py-1 rounded-full text-sm border transition-all ${
                         tags.includes(qt.tag)
                           ? qt.color + ' font-medium'
-                          : 'bg-[var(--bg-card)] text-[var(--text-muted)] border-[var(--border-soft)] opacity-60 hover:opacity-100'
+                          : 'bg-card text-muted-foreground border-border opacity-60 hover:opacity-100'
                       }`}
                     >
                       {qt.label}
@@ -385,16 +385,16 @@ export default function GaslightGaragePage() {
 
               {/* Image Upload */}
               <div>
-                <Label className="text-[var(--text-main)]">Upload evidence (photos, screenshots)</Label>
+                <Label className="text-foreground">Upload evidence (photos, screenshots)</Label>
                 <div
-                  className="mt-1 border-2 border-dashed border-[var(--border-soft)] rounded-lg p-6 text-center cursor-pointer hover:border-[var(--accent-primary)] transition-colors"
+                  className="mt-1 border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary transition-colors"
                   onClick={() => fileInputRef.current?.click()}
                 >
-                  <ImageIcon className="h-8 w-8 mx-auto text-[var(--text-muted)] mb-2" />
-                  <p className="text-sm text-[var(--text-muted)]">
+                  <ImageIcon className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                  <p className="text-sm text-muted-foreground">
                     Click to upload or drag and drop
                   </p>
-                  <p className="text-xs text-[var(--text-muted)] mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     JPG, PNG, GIF, PDF — your receipts, your proof
                   </p>
                 </div>
@@ -415,7 +415,7 @@ export default function GaslightGaragePage() {
                         <img
                           src={preview}
                           alt={`Evidence ${idx + 1}`}
-                          className="h-24 w-24 object-cover rounded-lg border border-[var(--border-soft)]"
+                          className="h-24 w-24 object-cover rounded-lg border border-border"
                         />
                         <button
                           onClick={() => removeImage(idx)}
@@ -434,7 +434,7 @@ export default function GaslightGaragePage() {
                 <Button
                   onClick={handleSubmit}
                   disabled={!title.trim() || isSubmitting}
-                  className="bg-[var(--accent-primary)] text-[var(--text-main)] hover:opacity-90 flex-1 font-medium border-2 border-[var(--accent-primary)]"
+                  className="bg-primary text-foreground hover:opacity-90 flex-1 font-medium border-2 border-primary"
                   style={{ textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}
                 >
                   <CheckCircle className="h-4 w-4 mr-2" />
@@ -443,7 +443,7 @@ export default function GaslightGaragePage() {
                 <Button
                   variant="outline"
                   onClick={() => setShowForm(false)}
-                  className="border-[var(--border-soft)] text-[var(--text-muted)]"
+                  className="border-border text-muted-foreground"
                 >
                   Cancel
                 </Button>
@@ -456,7 +456,7 @@ export default function GaslightGaragePage() {
         {entries.length > 0 && (
           <div className="flex gap-3 mb-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-muted)]" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
@@ -480,8 +480,8 @@ export default function GaslightGaragePage() {
                     onClick={() => setFilterTag(filterTag === tag ? null : tag)}
                     className={`px-2 py-1 rounded-full text-xs border transition-all ${
                       filterTag === tag
-                        ? 'bg-[var(--accent-primary)] text-[var(--text-main)] border-[var(--accent-primary)] font-medium'
-                        : 'bg-[var(--bg-card)] text-[var(--text-muted)] border-[var(--border-soft)]'
+                        ? 'bg-primary text-foreground border-primary font-medium'
+                        : 'bg-card text-muted-foreground border-border'
                     }`}
                   >
                     {tag}
@@ -494,19 +494,19 @@ export default function GaslightGaragePage() {
 
         {/* Evidence Gallery */}
         {filteredEntries.length === 0 && entries.length === 0 ? (
-          <Card className="border-[var(--border-soft)] bg-[var(--bg-card)]">
+          <Card className="border-border bg-card">
             <CardContent className="py-12 text-center">
-              <AlertTriangle className="h-12 w-12 mx-auto text-[var(--text-muted)] mb-4 opacity-30" />
-              <p className="text-[var(--text-muted)] text-lg mb-2">
+              <AlertTriangle className="h-12 w-12 mx-auto text-muted-foreground mb-4 opacity-30" />
+              <p className="text-muted-foreground text-lg mb-2">
                 No evidence filed yet
               </p>
-              <p className="text-[var(--text-muted)] text-sm">
+              <p className="text-muted-foreground text-sm">
                 When they say "that's normal" and it's not — this is where the receipts go.
               </p>
             </CardContent>
           </Card>
         ) : filteredEntries.length === 0 ? (
-          <p className="text-center text-[var(--text-muted)] py-8">
+          <p className="text-center text-muted-foreground py-8">
             No evidence matches your search.
           </p>
         ) : (
@@ -516,7 +516,7 @@ export default function GaslightGaragePage() {
               const isExpanded = expandedEntry === entry.id
 
               return (
-                <Card key={entry.id} className="border-[var(--border-soft)] bg-[var(--bg-card)]">
+                <Card key={entry.id} className="border-border bg-card">
                   <CardContent className="py-4">
                     {/* Header row */}
                     <div
@@ -529,7 +529,7 @@ export default function GaslightGaragePage() {
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <span>{catInfo?.icon || "📁"}</span>
-                          <h3 className="font-semibold text-[var(--text-main)]">{entry.title}</h3>
+                          <h3 className="font-semibold text-foreground">{entry.title}</h3>
                           {entry.imageKeys.length > 0 && (
                             <Badge variant="outline" className="text-xs">
                               <ImageIcon className="h-3 w-3 mr-1" />
@@ -537,7 +537,7 @@ export default function GaslightGaragePage() {
                             </Badge>
                           )}
                         </div>
-                        <div className="flex items-center gap-3 text-sm text-[var(--text-muted)]">
+                        <div className="flex items-center gap-3 text-sm text-muted-foreground">
                           <span className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
                             {entry.date}
@@ -567,7 +567,7 @@ export default function GaslightGaragePage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-[var(--text-muted)] hover:text-red-600"
+                          className="text-muted-foreground hover:text-red-600"
                           onClick={(e) => {
                             e.stopPropagation()
                             if (confirm("Delete this evidence? This cannot be undone.")) {
@@ -578,18 +578,18 @@ export default function GaslightGaragePage() {
                           <Trash2 className="h-4 w-4" />
                         </Button>
                         {isExpanded ? (
-                          <ChevronUp className="h-5 w-5 text-[var(--text-muted)]" />
+                          <ChevronUp className="h-5 w-5 text-muted-foreground" />
                         ) : (
-                          <ChevronDown className="h-5 w-5 text-[var(--text-muted)]" />
+                          <ChevronDown className="h-5 w-5 text-muted-foreground" />
                         )}
                       </div>
                     </div>
 
                     {/* Expanded content */}
                     {isExpanded && (
-                      <div className="mt-4 pt-4 border-t border-[var(--border-soft)]">
+                      <div className="mt-4 pt-4 border-t border-border">
                         {entry.description && (
-                          <p className="text-sm text-[var(--text-main)] mb-4 whitespace-pre-wrap">
+                          <p className="text-sm text-foreground mb-4 whitespace-pre-wrap">
                             {entry.description}
                           </p>
                         )}
@@ -608,7 +608,7 @@ export default function GaslightGaragePage() {
                                 <img
                                   src={url}
                                   alt={`Evidence ${idx + 1}`}
-                                  className="w-full h-48 object-cover rounded-lg border border-[var(--border-soft)] hover:border-[var(--accent-primary)] transition-colors cursor-pointer"
+                                  className="w-full h-48 object-cover rounded-lg border border-border hover:border-primary transition-colors cursor-pointer"
                                 />
                               </a>
                             ))}
@@ -616,10 +616,10 @@ export default function GaslightGaragePage() {
                         )}
 
                         {entry.imageKeys.length > 0 && !entryImages[entry.id] && (
-                          <p className="text-sm text-[var(--text-muted)] italic">Loading images...</p>
+                          <p className="text-sm text-muted-foreground italic">Loading images...</p>
                         )}
 
-                        <p className="text-xs text-[var(--text-muted)] mt-3">
+                        <p className="text-xs text-muted-foreground mt-3">
                           Filed on {entry.addedDate}
                         </p>
                       </div>

@@ -814,6 +814,12 @@ export default function DemographicsPage() {
         )}
       </div>
       </div>
+
+      <div className="mt-8 text-center">
+        <a href="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+          ← Back to Command Center
+        </a>
+      </div>
     </AppCanvas>
   );
 }
