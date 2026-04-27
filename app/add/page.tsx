@@ -589,6 +589,12 @@ export default function AddToTimelinePage() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        <div className="flex justify-center gap-4 mt-8 text-sm">
+          <Button variant="outline" asChild>
+            <a href="/manage">← Back to Manage</a>
+          </Button>
+        </div>
       </div>
     </AppCanvas>
   )

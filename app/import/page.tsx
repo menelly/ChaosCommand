@@ -13,6 +13,7 @@
 
 import { useState } from "react"
 import AppCanvas from "@/components/app-canvas"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import DocumentUploader, { ExtractedLabBatch } from "@/components/document-uploader"
 import {
@@ -188,8 +189,11 @@ export default function ImportRecordsPage() {
             Import Medical Records
           </h1>
           <p className="text-sm text-[var(--text-muted)] mt-1">
-            Upload PDFs or paste notes. The extractor pulls diagnoses, meds,
-            procedures, and lab results into your timeline. Runs locally — your
+            Two paths: medical documents (visit notes, summaries, imaging) go
+            through the NER extractor and land on your timeline. Lab panels go
+            through a number-anchored parser and land on your Labs dashboard.
+            Pick the right one — lab panels through the medical parser will
+            try to diagnose you with the test name. Runs locally — your
             documents never leave this computer.
           </p>
         </div>
@@ -232,10 +236,42 @@ export default function ImportRecordsPage() {
           </Card>
         )}
 
-        <DocumentUploader
-          onEventsExtracted={handleEventsExtracted}
-          onLabsExtracted={handleLabsExtracted}
-        />
+        <section className="space-y-2">
+          <h2 className="text-lg font-semibold text-[var(--text-main)] flex items-center gap-2">
+            <FileText className="h-5 w-5" />
+            Medical Documents
+          </h2>
+          <p className="text-xs text-[var(--text-muted)]">
+            Visit notes, after-visit summaries, imaging reports, hospital
+            discharge papers.
+          </p>
+          <DocumentUploader
+            mode="medical"
+            onEventsExtracted={handleEventsExtracted}
+          />
+        </section>
+
+        <section className="space-y-2">
+          <h2 className="text-lg font-semibold text-[var(--text-main)] flex items-center gap-2">
+            <FlaskConical className="h-5 w-5" />
+            Lab Results
+          </h2>
+          <p className="text-xs text-[var(--text-muted)]">
+            Lab panels, blood work, urinalysis, anything with test values and
+            reference ranges. Skips diagnosis extraction.
+          </p>
+          <DocumentUploader
+            mode="lab"
+            onEventsExtracted={() => { /* lab mode emits no events */ }}
+            onLabsExtracted={handleLabsExtracted}
+          />
+        </section>
+
+        <div className="flex justify-center gap-4 mt-8 text-sm">
+          <Button variant="outline" asChild>
+            <a href="/manage">← Back to Manage</a>
+          </Button>
+        </div>
       </div>
     </AppCanvas>
   )

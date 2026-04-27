@@ -121,10 +121,19 @@ interface DocumentUploaderProps {
    * omits it, labs fall back to legacy behavior (labResultsToEvents merge).
    */
   onLabsExtracted?: (batch: ExtractedLabBatch) => void;
+  /**
+   * Routing mode for uploaded files:
+   *   'medical' — run NER only (visit notes, summaries). Skip lab parser.
+   *   'lab'     — run lab parser only (panels, blood work). Skip NER, so the
+   *               panel name (e.g. "Myositis Panel") can't be misread as a
+   *               diagnosis.
+   *   'auto'    — legacy behavior: run both. Default for back-compat.
+   */
+  mode?: 'auto' | 'medical' | 'lab';
   className?: string;
 }
 
-export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, className = "" }: DocumentUploaderProps) {
+export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, mode = 'auto', className = "" }: DocumentUploaderProps) {
   // 🚀 Hybrid database integration
   // TEMPORARILY COMMENTED OUT FOR DEBUGGING
   // const hybridDB = useHybridDatabase();
@@ -309,28 +318,29 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, c
         throw new Error(`PDF text extraction failed: ${pdfErr instanceof Error ? pdfErr.message : 'Unknown error'}`);
       }
 
-      // Step 2: Run NER + all pipeline layers (sections, negation, impression parsing)
-      // NER requires downloading a 64MB ONNX model from HuggingFace CDN.
-      // On mobile WebViews this can fail due to CSP/CORS restrictions.
-      let nerEvents;
-      try {
-        nerEvents = await extractMedicalEvents(extractedText, file.name, demographics);
-      } catch (nerErr) {
-        const errMsg = nerErr instanceof Error ? nerErr.message : String(nerErr);
-        console.error('NER extraction failed:', nerErr);
-        // If it's the DOCTYPE/JSON parse error, give a helpful mobile-specific message
-        if (errMsg.includes('<!DOCTYPE') || errMsg.includes('Unexpected token') || errMsg.includes('not valid JSON')) {
-          throw new Error(
-            `Medical document parsing isn't available on this device yet. ` +
-            `Upload documents on desktop and sync to your phone. ` +
-            `(The NER model requires a one-time 64MB download that some mobile browsers block.)`
-          );
+      // Step 2: Run NER (skipped in lab-only mode so panel names like
+      // "Myositis Panel" can't be misread as diagnoses).
+      let nerEvents: any[] = [];
+      if (mode !== 'lab') {
+        try {
+          nerEvents = await extractMedicalEvents(extractedText, file.name, demographics);
+        } catch (nerErr) {
+          const errMsg = nerErr instanceof Error ? nerErr.message : String(nerErr);
+          console.error('NER extraction failed:', nerErr);
+          if (errMsg.includes('<!DOCTYPE') || errMsg.includes('Unexpected token') || errMsg.includes('not valid JSON')) {
+            throw new Error(
+              `Medical document parsing isn't available on this device yet. ` +
+              `Upload documents on desktop and sync to your phone. ` +
+              `(The NER model requires a one-time 64MB download that some mobile browsers block.)`
+            );
+          }
+          throw new Error(`NER model failed: ${errMsg}`);
         }
-        throw new Error(`NER model failed: ${errMsg}`);
       }
 
-      // Step 3: Extract lab results (separate specialized parser)
-      const labResults = extractLabResults(extractedText, demographics);
+      // Step 3: Extract lab results (skipped in medical-only mode — lab
+      // panels go through their own dedicated upload path).
+      const labResults = mode === 'medical' ? [] : extractLabResults(extractedText, demographics);
 
       // If the consumer wants structured labs, emit them through onLabsExtracted
       // and DO NOT also fold them into the events stream (avoids double-
@@ -626,11 +636,9 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, c
   // 🔥 LOCAL NER TEXT PARSING - Same model, no server needed!
   const parseTextWithBackend = async (text: string): Promise<ParsedMedicalEvent[]> => {
     try {
-      // Run NER directly on pasted text
-      const nerEvents = await extractMedicalEvents(text, 'Pasted Notes');
-
-      // Also try lab extraction — same routing logic as PDF flow
-      const labResults = extractLabResults(text);
+      // Respect mode: lab uploader skips NER, medical uploader skips lab parser.
+      const nerEvents = mode === 'lab' ? [] : await extractMedicalEvents(text, 'Pasted Notes');
+      const labResults = mode === 'medical' ? [] : extractLabResults(text);
       if (onLabsExtracted && labResults.length > 0) {
         const mapped: ExtractedLabResult[] = labResults.map(l => ({
           test_name: l.testName,
@@ -784,11 +792,18 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, c
             
             <div>
               <h3 className="text-lg font-semibold text-[var(--text-main)] mb-2">
-                📄 Medical Document Parser
+                {mode === 'lab'
+                  ? '🧪 Lab Result Parser'
+                  : mode === 'medical'
+                    ? '📄 Medical Document Parser'
+                    : '📄 Medical Document Parser'}
               </h3>
               <p className="text-[var(--text-muted)] mb-2">
-                Upload medical documents, lab reports, imaging results, or any medical records.
-                Our NER engine will extract events, flag dismissed findings, and build your timeline.
+                {mode === 'lab'
+                  ? 'Upload lab panels and blood work. Pulls test names, values, units, and reference ranges into your Labs dashboard. Skips the diagnosis-extraction model so a panel name (like "Myositis Panel") never gets mistaken for a diagnosis.'
+                  : mode === 'medical'
+                    ? 'Upload visit notes, after-visit summaries, imaging reports, or other medical records. The NER engine extracts events, flags dismissed findings, and builds your timeline. For lab panels, use the Lab Result uploader instead.'
+                    : 'Upload medical documents, lab reports, imaging results, or any medical records. Our NER engine will extract events, flag dismissed findings, and build your timeline.'}
               </p>
 
               {/* Demographics hint + first-time model download */}

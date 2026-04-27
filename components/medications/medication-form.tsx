@@ -467,6 +467,36 @@ export function MedicationForm({
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
+                  <Label htmlFor="dateStopped">
+                    Date Stopped <span className="text-muted-foreground">(optional)</span>
+                  </Label>
+                  <Input
+                    id="dateStopped"
+                    type="date"
+                    value={formData.dateStopped}
+                    onChange={(e) => handleInputChange('dateStopped', e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Fill in if you've stopped taking this. Lets the timeline show the trial window.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="discontinuedReason">
+                    Why Stopped <span className="text-muted-foreground">(optional)</span>
+                  </Label>
+                  <Input
+                    id="discontinuedReason"
+                    type="text"
+                    placeholder="didn't work / side effects / switched / no longer needed"
+                    value={formData.discontinuedReason}
+                    onChange={(e) => handleInputChange('discontinuedReason', e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
                   <Label htmlFor="refillDate">
                     Next Refill Date <span className="text-muted-foreground">(optional)</span>
                   </Label>
@@ -841,6 +871,20 @@ export function MedicationForm({
                   onCheckedChange={(checked) => handleInputChange('active', checked)}
                 />
                 <Label htmlFor="active">This medication is currently active</Label>
+              </div>
+
+              <div className="flex items-start space-x-2 mt-4">
+                <Switch
+                  id="showOnTimeline"
+                  checked={formData.showOnTimeline}
+                  onCheckedChange={(checked) => handleInputChange('showOnTimeline', checked)}
+                />
+                <div className="space-y-1">
+                  <Label htmlFor="showOnTimeline">Show on medical timeline</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Includes this med (and the trial window if you fill in stopped date) on your timeline. Turn off for meds you don't want appearing in exports your doctors see.
+                  </p>
+                </div>
               </div>
             </CardContent>
           </Card>

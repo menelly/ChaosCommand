@@ -336,6 +336,16 @@ export default function AppSidebar() {
             🚪 Logout
           </Link>
 
+          {/* Customize — unified hub for visual + visibility toggles */}
+          <Link
+            href={getHref('customize')}
+            className="mt-2 rounded text-xs font-medium transition-all py-1.5 px-1 hover:opacity-80 block text-center sidebar-btn-custom"
+            title="Customize"
+            onClick={() => isMobile && setShowSidebar(false)}
+          >
+            🎛️ Customize
+          </Link>
+
           {/* Settings */}
           <Link
             href={getHref('settings')}

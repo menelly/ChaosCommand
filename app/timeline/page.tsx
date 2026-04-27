@@ -21,7 +21,7 @@
 "use client"
 
 import React, { useState, useEffect } from 'react';
-import { useDailyData, CATEGORIES, SUBCATEGORIES, formatDateForStorage } from '@/lib/database';
+import { useDailyData, CATEGORIES, SUBCATEGORIES, formatDateForStorage, db } from '@/lib/database';
 // 🏖️ VACATION MODE: Hybrid system commented out
 // import { useHybridDatabase } from '@/lib/database/hybrid-router';
 // import type { MedicalEvent as SQLiteMedicalEvent, Provider as SQLiteProvider } from '@/lib/database/sqlite-db';
@@ -153,9 +153,57 @@ export default function TimelinePage() {
           };
         });
 
-        console.log(`🏥 LOADED ${eventList.length} medical events, ${providerList.length} providers`);
-        console.log('🔍 PARSED EVENT LIST:', eventList);
-        setMedicalEvents(eventList.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+        // Load medications and project them onto the timeline.
+        // Tracker uses category 'tracker' + subcategory 'medications-{id}', so
+        // re-fetch over the tracker category instead of relying on USER data.
+        const medRecords = await getDateRange('1900-01-01', '2100-12-31', 'tracker');
+        const medItems = medRecords.filter((r: any) => r.subcategory.startsWith('medications-'));
+        const medEvents: MedicalEvent[] = [];
+        for (const r of medItems) {
+          let med: any;
+          try {
+            med = typeof r.content === 'string' ? JSON.parse(r.content) : r.content;
+          } catch {
+            continue;
+          }
+          if (!med || med.showOnTimeline === false) continue;
+          // Need a date to land on the timeline. Skip meds with no start date.
+          const startDate = med.dateStarted;
+          if (!startDate) continue;
+
+          const name = med.brandName || med.genericName || 'Medication';
+          const titleBits = [name];
+          if (med.dose) titleBits.push(med.dose);
+          const title = titleBits.join(' ');
+
+          const descParts: string[] = [];
+          if (med.conditionTreating) descParts.push(`For: ${med.conditionTreating}`);
+          if (med.dateStopped) descParts.push(`Stopped: ${med.dateStopped}`);
+          if (med.discontinuedReason) descParts.push(`Why stopped: ${med.discontinuedReason}`);
+          if (med.persistentSideEffects) descParts.push(`Side effects: ${med.persistentSideEffects}`);
+          if (med.prescribingDoctor) descParts.push(`Prescriber: ${med.prescribingDoctor}`);
+
+          medEvents.push({
+            id: `med-${med.id}`,
+            type: 'medication',
+            title,
+            date: startDate,
+            endDate: med.dateStopped || undefined,
+            provider: med.prescribingDoctor || undefined,
+            location: undefined,
+            description: descParts.join('\n'),
+            status: med.dateStopped
+              ? 'resolved'
+              : (med.active === false ? 'resolved' : 'active'),
+            tags: ['medication', 'auto-from-tracker', ...(med.tags || [])],
+            createdAt: med.createdAt || new Date().toISOString(),
+            updatedAt: med.updatedAt || new Date().toISOString(),
+          });
+        }
+
+        const combined = [...eventList, ...medEvents];
+        console.log(`🏥 LOADED ${eventList.length} medical events, ${medEvents.length} med-derived events, ${providerList.length} providers`);
+        setMedicalEvents(combined.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()));
         setProviders(providerList);
       } catch (error) {
         console.error('Failed to load medical data:', error);
@@ -273,19 +321,35 @@ export default function TimelinePage() {
     setShowAddDialog(true);
   };
 
-  // 🏖️ VACATION MODE: Delete from Dexie (hybrid system commented out)
+  // Delete by subcategory only — the `medical-events-{id}` suffix is already
+  // unique. The old (date,category,subcategory) compound key silently missed
+  // when event.date didn't round-trip cleanly through `new Date(...)` — e.g.
+  // import-flow events stored a display-format date in JSON but a normalized
+  // date in the storage key. Querying by subcategory deletes the row no
+  // matter which date column it landed on.
+  const deleteEventBySubcategory = async (eventId: string): Promise<number> => {
+    const subcategory = `${SUBCATEGORIES.MEDICAL_EVENTS}-${eventId}`;
+    const matches = await db.daily_data
+      .where('subcategory').equals(subcategory)
+      .filter((r: any) => r.category === CATEGORIES.USER)
+      .toArray();
+    let removed = 0;
+    for (const r of matches) {
+      if (r.id !== undefined) {
+        await db.daily_data.delete(r.id);
+        removed++;
+      }
+    }
+    return removed;
+  };
+
   const handleDeleteEvent = async (event: MedicalEvent) => {
     if (!confirm(`Are you sure you want to delete "${event.title}"?`)) return;
 
     try {
-      await deleteData(
-        formatDateForStorage(new Date(event.date)),
-        CATEGORIES.USER,
-        `${SUBCATEGORIES.MEDICAL_EVENTS}-${event.id}`
-      );
-
+      const removed = await deleteEventBySubcategory(event.id);
       setMedicalEvents(prev => prev.filter(e => e.id !== event.id));
-      console.log('✅ Event deleted from Dexie');
+      console.log(`✅ Event deleted from Dexie (${removed} row${removed === 1 ? '' : 's'} removed)`);
     } catch (error) {
       console.error('❌ Failed to delete medical event:', error);
       alert('Failed to delete medical event: ' + error);
@@ -325,11 +389,7 @@ export default function TimelinePage() {
 
     for (const event of toDelete) {
       try {
-        await deleteData(
-          formatDateForStorage(new Date(event.date)),
-          CATEGORIES.USER,
-          `${SUBCATEGORIES.MEDICAL_EVENTS}-${event.id}`
-        );
+        await deleteEventBySubcategory(event.id);
         deleted++;
       } catch (error) {
         console.error(`Failed to delete event "${event.title}":`, error);

@@ -20,6 +20,7 @@ import { useDailyData } from "@/lib/database/hooks/use-daily-data"
 import { CATEGORIES, formatDateForStorage } from "@/lib/database/dexie-db"
 import { generateMedicalReport } from "@/lib/pdf-report-generator"
 import { KeyboardAvoidingWrapper } from '@/components/ui/keyboard-avoiding-wrapper'
+import { isMobilePlatform } from "@/lib/platform"
 
 interface PrintExportModalProps {
   isOpen: boolean
@@ -288,12 +289,17 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
         workData,
       })
 
-      // Download or share the PDF
+      // Download or share the PDF.
+      // Web Share API is great on actual phones (lets users send to email,
+      // Drive, etc.) but on Tauri/Windows desktop it pops the OS share sheet
+      // instead of saving to Downloads — the user expected a download. Gate
+      // share to mobile only; desktop always downloads.
       const audienceLabel = audience === 'attorney' ? 'legal' : audience === 'personal' ? 'personal' : 'medical'
       const filename = `${audienceLabel}-report-${providerName || 'export'}-${dateRangeEnd}.pdf`
       const file = new File([blob], filename, { type: 'application/pdf' })
+      const onMobile = isMobilePlatform()
 
-      if (navigator.share && navigator.canShare?.({ files: [file] })) {
+      if (onMobile && navigator.share && navigator.canShare?.({ files: [file] })) {
         await navigator.share({ title: 'Medical Report', files: [file] })
       } else {
         const url = URL.createObjectURL(blob)

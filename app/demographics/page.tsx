@@ -815,10 +815,10 @@ export default function DemographicsPage() {
       </div>
       </div>
 
-      <div className="mt-8 text-center">
-        <a href="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-          ← Back to Command Center
-        </a>
+      <div className="flex justify-center gap-4 mt-8 text-sm">
+        <Button variant="outline" asChild>
+          <a href="/manage">← Back to Manage</a>
+        </Button>
       </div>
     </AppCanvas>
   );

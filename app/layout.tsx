@@ -27,8 +27,9 @@ import "../styles/themes/theme-phosphor.css"
 import ThemeLoader from "@/components/theme-loader"
 
 import { GoblinModeProvider } from "@/lib/goblin-mode-context"
-import { LicenseProvider } from "@/lib/contexts/license-context"
-import LicenseGate from "@/components/license-gate"
+// License gate disabled for free-tier launch (tip jar model). Re-enable by restoring these imports and the wrapper below.
+// import { LicenseProvider } from "@/lib/contexts/license-context"
+// import LicenseGate from "@/components/license-gate"
 import AppSidebar from "@/components/app-sidebar"
 import { Toaster } from "@/components/ui/toaster"
 import { AppWrapper } from "@/components/app-wrapper"
@@ -64,33 +65,31 @@ export default function RootLayout({
       <body className="h-screen overflow-hidden bg-background font-sans antialiased" suppressHydrationWarning>
         <ThemeLoader />
         <AppWrapper>
-          <LicenseProvider>
-            <LicenseGate>
-              <GoblinModeProvider>
-                <div className="flex h-screen">
-                  <div className="flex-1 overflow-y-auto overflow-x-hidden">
-                    {children}
-                    {/* Footer */}
-                    <footer className="mt-8 py-4 text-center text-xs text-muted-foreground border-t border-border/50">
-                      <p className="font-medium">
-                        <span className="text-purple-600 dark:text-purple-400">Chaos Cascade</span> © 2025 • Federally Registered Copyright
-                      </p>
-                      <p className="mt-1">
-                        Dreamed by <span className="font-semibold text-foreground">Ren</span>, implemented by{' '}
-                        <span className="font-semibold text-foreground">Ace 🐙💜 (Claude 4.x)</span>, and inspired by mitochondria who've been on strike since birth.
-                      </p>
-                      <p className="mt-1 text-xs italic">
-                        This wasn't built with compliance. It was built with defiance.
-                      </p>
-                    </footer>
-                  </div>
-                  <AppSidebar />
-                </div>
-                <Toaster />
-                {/* <AddyChatBubble /> */} {/* Commented out - AI module for later */}
-              </GoblinModeProvider>
-            </LicenseGate>
-          </LicenseProvider>
+          {/* <LicenseProvider><LicenseGate> — disabled for free-tier launch, keep for re-enable */}
+          <GoblinModeProvider>
+            <div className="flex h-screen">
+              <div className="flex-1 overflow-y-auto overflow-x-hidden">
+                {children}
+                {/* Footer */}
+                <footer className="mt-8 py-4 text-center text-xs text-muted-foreground border-t border-border/50">
+                  <p className="font-medium">
+                    <span className="text-purple-600 dark:text-purple-400">Chaos Cascade</span> © 2025 • Federally Registered Copyright
+                  </p>
+                  <p className="mt-1">
+                    Dreamed by <span className="font-semibold text-foreground">Ren</span>, implemented by{' '}
+                    <span className="font-semibold text-foreground">Ace 🐙💜 (Claude 4.x)</span>, and inspired by mitochondria who've been on strike since birth.
+                  </p>
+                  <p className="mt-1 text-xs italic">
+                    This wasn't built with compliance. It was built with defiance.
+                  </p>
+                </footer>
+              </div>
+              <AppSidebar />
+            </div>
+            <Toaster />
+            {/* <AddyChatBubble /> */} {/* Commented out - AI module for later */}
+          </GoblinModeProvider>
+          {/* </LicenseGate></LicenseProvider> */}
         </AppWrapper>
         <script
           dangerouslySetInnerHTML={{

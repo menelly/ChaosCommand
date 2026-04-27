@@ -26,37 +26,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
-import {
-  FileText,
-  TestTube,
-  Users,
-  Home,
-  Briefcase,
-  Upload,
-  Calendar,
-  Clock,
-  FileImage,
-  User,
-  Pill,
-  Stethoscope,
-  Settings2,
-  Plus,
-} from "lucide-react"
+import { Briefcase, Settings2 } from "lucide-react"
 import { useIsMobilePlatform } from "@/lib/platform"
-
-const HIDDEN_TRACKERS_KEY = 'chaos-manage-hidden-trackers'
-
-interface TrackerButton {
-  id: string
-  name: string
-  shortDescription: string
-  helpContent: string
-  icon: React.ReactNode
-  status: 'available' | 'coming-soon' | 'planned'
-  subTrackers?: Array<{id: string, name: string, icon: string}>
-}
+import { TRACKERS, HIDDEN_TRACKERS_KEY } from "@/lib/manage/trackers-config"
+import VisibleTrackersPanel from "@/components/customize/visible-trackers-panel"
 
 export default function WorkLifeIndex() {
   // Hidden trackers state - persisted to localStorage
@@ -86,185 +59,10 @@ export default function WorkLifeIndex() {
     }
   }
 
-  const toggleTrackerVisibility = (trackerId: string) => {
-    if (hiddenTrackers.includes(trackerId)) {
-      updateHiddenTrackers(hiddenTrackers.filter(id => id !== trackerId))
-    } else {
-      updateHiddenTrackers([...hiddenTrackers, trackerId])
-    }
-  }
-
-  const trackers: TrackerButton[] = [
-    // MEDICATIONS & SUPPLEMENTS
-    {
-      id: 'medications',
-      name: 'Medications & Supplements',
-      shortDescription: 'Dosing schedules, refill reminders, pharmacy contacts, side effects',
-      helpContent: 'Track all your medications and supplements with dosing schedules, refill reminders, pharmacy contacts, and side effect monitoring. Essential for medication management and medical appointments.',
-      icon: <Pill className="h-5 w-5" />,
-      status: 'available'
-    },
-
-    // HEALTHCARE PROVIDERS
-    {
-      id: 'providers',
-      name: 'Healthcare Providers',
-      shortDescription: 'Contacts, appointments, therapy notes, specialists',
-      helpContent: 'Manage all your healthcare providers including doctors, therapists, vision/dental/hearing specialists. Store contact info with click-to-call and website links, track appointments, link providers to specific conditions.',
-      icon: <Stethoscope className="h-5 w-5" />,
-      status: 'available'
-    },
-
-    // MEDICAL HISTORY & TIMELINE
-    {
-      id: 'timeline',
-      name: '🏆 Medical History & Timeline',
-      shortDescription: 'View and filter your full medical timeline',
-      helpContent: 'Your complete medical history in one place! Visual timeline view with provider linking, diagnoses, surgeries, hospitalizations, treatments, and labs. Add new entries via "Add to Timeline" or "Import Records".',
-      icon: <FileText className="h-5 w-5" />,
-      status: 'available'
-    },
-
-    // ADD TO TIMELINE (manual entry — mobile + desktop)
-    {
-      id: 'add',
-      name: '➕ Add to Timeline',
-      shortDescription: 'Add an event or lab result by hand — works everywhere',
-      helpContent: 'Hand-enter a medical event (diagnosis, medication, surgery, appointment, etc.) or a lab result. Lightweight, no model download, works on phone and desktop. Goes straight into your timeline.',
-      icon: <Plus className="h-5 w-5" />,
-      status: 'available'
-    },
-
-    // IMPORT FROM PDF (desktop only — gated at route)
-    {
-      id: 'import',
-      name: '📥 Import Medical Records',
-      shortDescription: 'Upload PDFs, auto-extract events and labs (desktop)',
-      helpContent: 'Desktop-only PDF importer. Runs a 64MB local AI model to pull diagnoses, medications, procedures, and lab values out of documents — all on-device, nothing uploaded. Hidden on mobile because the model download is unreliable there.',
-      icon: <Upload className="h-5 w-5" />,
-      status: 'available'
-    },
-
-    // DEMOGRAPHICS & EMERGENCY INFO
-    {
-      id: 'demographics',
-      name: 'Demographics & Emergency Info',
-      shortDescription: 'Personal info and emergency contacts for OCR filtering and safety',
-      helpContent: 'Store your personal information and emergency contacts. This data helps filter your personal details from OCR results (so it focuses on prescription data instead of grabbing your name) and keeps emergency contacts easily accessible.',
-      icon: <User className="h-5 w-5" />,
-      status: 'available',
-      subTrackers: [
-        { id: 'personal-info', name: 'Personal Information', icon: '👤' },
-        { id: 'emergency-contacts', name: 'Emergency Contacts', icon: '📞' },
-        { id: 'medical-info', name: 'Medical Information', icon: '🏥' },
-        { id: 'ocr-filtering', name: 'OCR Privacy Filter', icon: '🛡️' }
-      ]
-    },
-
-    // MEDICAL HISTORY — ABSORBED INTO TIMELINE (removed from visible list)
-    {
-      id: 'lab-results',
-      name: 'Lab Results & Tests',
-      shortDescription: 'Upload lab reports, track values and trends, catch what "normal" is hiding',
-      helpContent: 'Upload lab report PDFs for automatic extraction of test values, reference ranges, and flags. Track trends over time — see your ferritin going 7, 8, 9 across months. Abnormal results highlighted. No hardcoded test lists — the NLP finds what matters.',
-      icon: <TestTube className="h-5 w-5" />,
-      status: 'available'
-    },
-    // Family History — hidden for ship, hot-add later
-    // {
-    //   id: 'family-history',
-    //   name: 'Family History',
-    //   shortDescription: 'Genetic health information (optional)',
-    //   helpContent: 'Optional family health history tracking for genetic information.',
-    //   icon: <Users className="h-5 w-5" />,
-    //   status: 'planned'
-    // },
-
-    // HOUSEHOLD MANAGEMENT — hidden until post-ship, hot-add later
-    // {
-    //   id: 'chore-chart',
-    //   name: 'Chore Chart & Adulting',
-    //   shortDescription: 'Household tasks with "normal people" guidance and reminders',
-    //   helpContent: 'Household task management with built-in guidance for neurodivergent folks.',
-    //   icon: <Home className="h-5 w-5" />,
-    //   status: 'planned',
-    //   subTrackers: [
-    //     { id: 'task-tracking', name: 'Task Tracking', icon: '✅' },
-    //     { id: 'adulting-guidance', name: 'Adulting Guidance', icon: '📚' },
-    //     { id: 'reminder-system', name: 'Gentle Reminders', icon: '🔔' },
-    //     { id: 'routine-building', name: 'Routine Building', icon: '🔄' }
-    //   ]
-    // },
-
-    // WORK & DISABILITY
-    {
-      id: 'work-disability',
-      name: 'Missed Work & Disability',
-      shortDescription: 'Missed work tracking, employment history, SSDI applications, accommodations',
-      helpContent: 'Track missed work days with impact levels and total limitation flags. Employment history with accommodation tracking (requested vs received). SSDI/disability application management with deadline tracking. Built-in SSDI education guide. Weaponize your paperwork.',
-      icon: <Briefcase className="h-5 w-5" />,
-      status: 'available',
-      subTrackers: [
-        { id: 'missed-days', name: 'Missed Work Days', icon: '📅' },
-        { id: 'employment', name: 'Employment History', icon: '🏢' },
-        { id: 'disability-apps', name: 'SSDI / Applications', icon: '📝' },
-        { id: 'ssdi-guide', name: 'SSDI Guide', icon: '📚' }
-      ]
-    },
-
-    // EMPLOYMENT HISTORY — absorbed into Work & Disability tab
-
-    // GASLIGHT GARAGE — evidence locker for medical gaslighting receipts
-    {
-      id: 'gaslight-garage',
-      name: 'Gaslight Garage',
-      shortDescription: '"No REALLY, and I have proof" — your medical evidence locker',
-      helpContent: 'Store photos, screenshots, and documents that prove what happened. Rashes that got dismissed, patient portal messages, before/after images, lab results that contradict what you were told. Your receipts, organized and ready to deploy.',
-      icon: <FileImage className="h-5 w-5" />,
-      status: 'available'
-    }
-  ]
+  const trackers = TRACKERS
 
   const getTrackerHref = (trackerId: string): string => {
-    // Handle specific tracker navigation
-    if (trackerId === 'medications') {
-      return '/medications'
-    }
-
-    if (trackerId === 'providers') {
-      return '/providers'
-    }
-
-    if (trackerId === 'timeline') {
-      return '/timeline'
-    }
-
-    if (trackerId === 'demographics') {
-      return '/demographics'
-    }
-
-    if (trackerId === 'gaslight-garage') {
-      return '/gaslight-garage'
-    }
-
-    if (trackerId === 'work-disability') {
-      return '/work-disability'
-    }
-
-    if (trackerId === 'lab-results') {
-      return '/lab-results'
-    }
-
-    if (trackerId === 'add') {
-      return '/add'
-    }
-
-    if (trackerId === 'import') {
-      return '/import'
-    }
-
-    // Default fallback
-    return '#'
+    return trackers.find(t => t.id === trackerId)?.href ?? '#'
   }
 
   return (
@@ -343,35 +141,9 @@ export default function WorkLifeIndex() {
                   Hide trackers that aren't relevant to you. Don't work? Hide the work stuff!
                 </DialogDescription>
               </DialogHeader>
-              <div className="space-y-4 mt-4">
-                {trackers.map((tracker) => (
-                  <div key={tracker.id} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      {tracker.icon}
-                      <Label htmlFor={`toggle-${tracker.id}`} className="cursor-pointer">
-                        {tracker.name}
-                      </Label>
-                    </div>
-                    <Switch
-                      id={`toggle-${tracker.id}`}
-                      checked={!hiddenTrackers.includes(tracker.id)}
-                      onCheckedChange={() => toggleTrackerVisibility(tracker.id)}
-                    />
-                  </div>
-                ))}
+              <div className="mt-4">
+                <VisibleTrackersPanel onChange={setHiddenTrackers} />
               </div>
-              {hiddenTrackers.length > 0 && (
-                <div className="mt-4 pt-4 border-t">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => updateHiddenTrackers([])}
-                  >
-                    Show All Trackers
-                  </Button>
-                </div>
-              )}
             </DialogContent>
           </Dialog>
 

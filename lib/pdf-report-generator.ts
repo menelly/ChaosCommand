@@ -245,6 +245,11 @@ export function generateMedicalReport(data: ReportData): Blob {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'letter' })
   const w = new PDFWriter(doc)
   const isDoctor = data.reportStyle === 'doctor'
+  // Attorney/SSDI audience: lead with functional impact, medical evidence
+  // follows. Reviewers (lawyers, ALJs, claims examiners) decide "can this
+  // person work?" first and use medical detail to support that finding —
+  // doctor audience is the inverse, medical first.
+  const isAttorney = data.audience === 'attorney'
   const trackerData = data.trackerData || []
   const labResults = data.labResults || []
 
@@ -275,6 +280,114 @@ export function generateMedicalReport(data: ReportData): Blob {
   let summaryText = `This report covers ${uniqueDates.size} days of tracked health data across ${trackerTypes.size} symptom categories. `
   if (labResults.length) summaryText += `${labResults.length} laboratory result set(s) included. `
   w.body(summaryText)
+
+  // Functional impact / work-capacity section. Defined here so it can be
+  // called either right after Executive Summary (attorney/SSDI audience —
+  // functional first) or at the end of the report (doctor/personal —
+  // medical first, work last).
+  const renderWorkSection = () => {
+    const workData = data.workData
+    if (!workData) return
+
+    w.sectionHeader(isDoctor ? 'Functional Impact & Work Capacity' : 'Work & Disability')
+
+    const missed = workData.missedWork || []
+    if (missed.length) {
+      const total = missed.length
+      const severe = missed.filter(m => m.impactLevel === 'severe' || m.couldNotDoAnythingElse).length
+      const fullDays = missed.filter(m => m.duration === 'full').length
+
+      w.subSection(isDoctor ? 'Occupational Impact Assessment' : 'Missed Work Days')
+
+      if (isDoctor) {
+        w.body(
+          `Total documented missed work days: ${total}. Full days missed: ${fullDays}. ` +
+          (total > 0 ? `Days with severe functional limitation: ${severe} (${(severe / total * 100).toFixed(0)}% of missed days).` : '')
+        )
+      } else {
+        w.body(`Missed ${total} work days total (${fullDays} full days), ${severe} of which were severe.`)
+      }
+
+      const rows = missed.slice(0, 30).map(m => {
+        const impact = m.impactLevel || m.severity || ''
+        const unable = m.couldNotDoAnythingElse ? ' (completely unable)' : ''
+        const duration = m.duration || ''
+        const hours = m.hoursMissed
+        const durText = duration + (hours ? ` (${hours}h)` : '')
+        let reasonText = m.reason || ''
+        if (m.notes && m.notes !== m.reason) {
+          reasonText += reasonText ? ` — ${m.notes}` : m.notes
+        }
+        return [m.date || '', `${impact}${unable}`, m.workType || m.type || '', durText, reasonText]
+      })
+
+      if (rows.length) {
+        w.table(['Date', 'Impact', 'Type', 'Duration', 'Reason / Notes'], rows, [55, 70, 55, 55, 185], COLORS.workHeader)
+      }
+    }
+
+    const employment = workData.employment || []
+    if (employment.length) {
+      w.subSection('Employment History')
+      for (const emp of employment) {
+        const employer = emp.employer || emp.company || ''
+        const title = emp.jobTitle || emp.title || emp.position || ''
+        const start = emp.dateStarted || emp.startDate || ''
+        const end = emp.active ? 'Present' : (emp.dateEnded || emp.endDate || '')
+        w.body(`${employer} — ${title} (${start} to ${end})`)
+
+        if (emp.jobDuties) w.body(`  Job duties: ${emp.jobDuties}`)
+
+        const accReq = emp.accommodationsRequested
+        if (accReq?.details) {
+          const dateNote = accReq.date ? ` (${accReq.date})` : ''
+          w.body(`  Accommodations requested${dateNote}: ${accReq.details}`)
+        }
+
+        const accRec = emp.accommodationsReceived
+        if (accRec?.details) {
+          const dateNote = accRec.date ? ` (${accRec.date})` : ''
+          w.body(`  Accommodations received${dateNote}: ${accRec.details}`)
+        } else if (accReq?.details) {
+          w.finding('  Accommodations received: None documented')
+        }
+
+        if (emp.symptomsExacerbated) w.finding(`  Symptoms exacerbated by role: ${emp.symptomsExacerbated}`)
+        if (emp.reflections) w.body(`  Notes: ${emp.reflections}`)
+        w.spacer(3)
+      }
+    }
+
+    const applications = workData.applications || []
+    if (applications.length) {
+      w.subSection(isDoctor ? 'Disability Application History' : 'Disability Applications')
+      for (const app of applications) {
+        const appType = app.applicationType || app.type || ''
+        const status = app.status || ''
+        const agency = app.agency || ''
+        const filed = app.dateSubmitted || app.dateFiled || ''
+        const caseNum = app.caseNumber || ''
+
+        let line = appType
+        if (agency) line += ` (${agency})`
+        line += `: ${status}`
+        if (filed) line += ` — filed ${filed}`
+        if (caseNum) line += ` — Case #${caseNum}`
+        w.body(line)
+
+        if (app.notes) w.body(`  Notes: ${app.notes}`)
+        if (app.nextSteps) w.body(`  Next steps: ${app.nextSteps}`)
+        if (app.appealDeadline) w.finding(`  Appeal deadline: ${app.appealDeadline}`)
+      }
+    }
+
+    w.spacer(6)
+  }
+
+  // Attorney/SSDI: functional limits lead, before any medical detail.
+  if (isAttorney) {
+    renderWorkSection()
+  }
 
   // === TRACKED CONDITIONS (ICD-10 for doctor mode) ===
   const trackerCounts: Record<string, number> = {}
@@ -534,102 +647,11 @@ export function generateMedicalReport(data: ReportData): Blob {
     }
   }
 
-  // === WORK & DISABILITY ===
-  const workData = data.workData
-  if (workData) {
-    w.sectionHeader(isDoctor ? 'Functional Impact & Work Capacity' : 'Work & Disability')
-
-    const missed = workData.missedWork || []
-    if (missed.length) {
-      const total = missed.length
-      const severe = missed.filter(m => m.impactLevel === 'severe' || m.couldNotDoAnythingElse).length
-      const fullDays = missed.filter(m => m.duration === 'full').length
-
-      w.subSection(isDoctor ? 'Occupational Impact Assessment' : 'Missed Work Days')
-
-      if (isDoctor) {
-        w.body(
-          `Total documented missed work days: ${total}. Full days missed: ${fullDays}. ` +
-          (total > 0 ? `Days with severe functional limitation: ${severe} (${(severe / total * 100).toFixed(0)}% of missed days).` : '')
-        )
-      } else {
-        w.body(`Missed ${total} work days total (${fullDays} full days), ${severe} of which were severe.`)
-      }
-
-      const rows = missed.slice(0, 30).map(m => {
-        const impact = m.impactLevel || m.severity || ''
-        const unable = m.couldNotDoAnythingElse ? ' (completely unable)' : ''
-        const duration = m.duration || ''
-        const hours = m.hoursMissed
-        const durText = duration + (hours ? ` (${hours}h)` : '')
-        let reasonText = m.reason || ''
-        if (m.notes && m.notes !== m.reason) {
-          reasonText += reasonText ? ` — ${m.notes}` : m.notes
-        }
-        return [m.date || '', `${impact}${unable}`, m.workType || m.type || '', durText, reasonText]
-      })
-
-      if (rows.length) {
-        w.table(['Date', 'Impact', 'Type', 'Duration', 'Reason / Notes'], rows, [55, 70, 55, 55, 185], COLORS.workHeader)
-      }
-    }
-
-    const employment = workData.employment || []
-    if (employment.length) {
-      w.subSection('Employment History')
-      for (const emp of employment) {
-        const employer = emp.employer || emp.company || ''
-        const title = emp.jobTitle || emp.title || emp.position || ''
-        const start = emp.dateStarted || emp.startDate || ''
-        const end = emp.active ? 'Present' : (emp.dateEnded || emp.endDate || '')
-        w.body(`${employer} — ${title} (${start} to ${end})`)
-
-        if (emp.jobDuties) w.body(`  Job duties: ${emp.jobDuties}`)
-
-        const accReq = emp.accommodationsRequested
-        if (accReq?.details) {
-          const dateNote = accReq.date ? ` (${accReq.date})` : ''
-          w.body(`  Accommodations requested${dateNote}: ${accReq.details}`)
-        }
-
-        const accRec = emp.accommodationsReceived
-        if (accRec?.details) {
-          const dateNote = accRec.date ? ` (${accRec.date})` : ''
-          w.body(`  Accommodations received${dateNote}: ${accRec.details}`)
-        } else if (accReq?.details) {
-          w.finding('  Accommodations received: None documented')
-        }
-
-        if (emp.symptomsExacerbated) w.finding(`  Symptoms exacerbated by role: ${emp.symptomsExacerbated}`)
-        if (emp.reflections) w.body(`  Notes: ${emp.reflections}`)
-        w.spacer(3)
-      }
-    }
-
-    const applications = workData.applications || []
-    if (applications.length) {
-      w.subSection(isDoctor ? 'Disability Application History' : 'Disability Applications')
-      for (const app of applications) {
-        const appType = app.applicationType || app.type || ''
-        const status = app.status || ''
-        const agency = app.agency || ''
-        const filed = app.dateSubmitted || app.dateFiled || ''
-        const caseNum = app.caseNumber || ''
-
-        let line = appType
-        if (agency) line += ` (${agency})`
-        line += `: ${status}`
-        if (filed) line += ` — filed ${filed}`
-        if (caseNum) line += ` — Case #${caseNum}`
-        w.body(line)
-
-        if (app.notes) w.body(`  Notes: ${app.notes}`)
-        if (app.nextSteps) w.body(`  Next steps: ${app.nextSteps}`)
-        if (app.appealDeadline) w.finding(`  Appeal deadline: ${app.appealDeadline}`)
-      }
-    }
-
-    w.spacer(6)
+  // === WORK & DISABILITY (skipped here for attorney audience — already
+  // rendered above, right after Executive Summary, so functional limits
+  // lead the report.)
+  if (!isAttorney) {
+    renderWorkSection()
   }
 
   // === FOOTER ===
