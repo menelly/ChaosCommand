@@ -31,10 +31,15 @@ const MODEL_OPTIONS = {
   dtype: 'q8' as const,  // int8 quantized — 64MB instead of 254MB
 };
 
-// Map d4data entity labels to our event types
+// Map d4data entity labels to our event types.
+// Note: Sign_symptom is intentionally mapped to 'finding', not 'diagnosis'.
+// d4data tags symptom WORDS like "weakness", "lifting", "pain" as Sign_symptom
+// regardless of whether they appear as standalone diagnoses or as fragments
+// inside symptom descriptions. Treating every symptom-token as a diagnosis
+// produces nonsense events ("limbs" as a diagnosis, "lifting" as a diagnosis).
 const LABEL_TO_EVENT_TYPE: Record<string, string> = {
   'Disease_disorder': 'diagnosis',
-  'Sign_symptom': 'diagnosis',
+  'Sign_symptom': 'finding',
   'Medication': 'medication',
   'Clinical_event': 'diagnosis',
   'Therapeutic_procedure': 'surgery',
@@ -64,7 +69,43 @@ const D4DATA_JUNK = new Set([
   'positive', 'negative', 'stable', 'unchanged', 'chronic', 'acute',
   // Stage-identifier fragments from reference tables
   'stage', 'grade', 'level', 'score',
+  // MRI / radiology imaging vocabulary — these are sequence/acquisition terms,
+  // not diagnoses or findings. d4data was not trained on radiology-heavy text
+  // and aggressively misclassifies these. Add as needed.
+  'diffusion', 'flow', 'void', 'flair', 'stir', 'dwi', 'adc', 'perfusion',
+  'gadolinium', 'gad', 'sequence', 'sequences', 'axial', 'sagittal', 'coronal',
+  'hyperintense', 'hypointense', 'isointense', 'enhancement', 'enhancing',
+  't1', 't2', 't1w', 't2w', 'fov', 'tr', 'te', 'mri', 'ct', 'pet', 'spect',
+  'ultrasound', 'doppler', 'fluoroscopy', 'tomography',
+  // Single body parts — anatomy alone has no clinical meaning as an event;
+  // a real diagnosis names the condition AND the location ("mass in the
+  // foramen of Monroe"), not just the location.
+  'limb', 'limbs', 'arm', 'arms', 'leg', 'legs', 'hand', 'hands', 'foot',
+  'feet', 'head', 'neck', 'chest', 'back', 'abdomen', 'pelvis', 'spine',
+  'globe', 'globes', 'orbit', 'orbits', 'muscle', 'muscles', 'bone', 'bones',
+  'joint', 'joints', 'tissue', 'tissues', 'organ', 'organs', 'vessel',
+  'vessels', 'nerve', 'nerves', 'artery', 'arteries', 'vein', 'veins',
+  // Movement / activity verbs that get tagged as Sign_symptom in symptom
+  // descriptions like "weakness with lifting"
+  'lifting', 'walking', 'standing', 'sitting', 'running', 'bending', 'reaching',
+  'climbing', 'gripping',
+  // Common positional / directional fragments that leak out of multi-word
+  // entities ("intra-axial" → "intra", "paracentral" → "para", etc.)
+  'intra', 'extra', 'para', 'supra', 'infra', 'sub', 'super', 'pre', 'post',
+  'anterior', 'posterior', 'medial', 'lateral', 'proximal', 'distal',
+  'superior', 'inferior', 'central', 'peripheral',
 ]);
+
+// Sub-word / tokenizer-fragment guard — entities shorter than this are
+// almost always tokenizer artifacts (sub-word pieces that escaped aggregation)
+// rather than real clinical entities.
+const MIN_ENTITY_LENGTH = 4;
+
+// Confidence floor for surfacing extracted events to the user-review queue.
+// d4data confidences below this on radiology / specialist text tend to be
+// noise; raise to filter aggressively. The user can lower this if they
+// want more recall at the cost of more noise.
+const MIN_EVENT_CONFIDENCE = 70;
 
 // ============================================================================
 // SINGLETON MODEL LOADER
@@ -618,6 +659,12 @@ export async function extractMedicalEvents(
     if (key.length < 4) continue;
     if (!/[aeiouy]/i.test(key)) continue;
     if (nameExclusions.has(key) || seenKeys.has(key)) continue;
+    // Sub-word tokenizer fragment guard — short entities are almost always
+    // tokenizer artifacts (e.g. "intra" leaked from "intra-axial").
+    if (ent.text.trim().length < MIN_ENTITY_LENGTH) continue;
+    // Junk filter — common words / radiology vocab / single body parts /
+    // movement verbs that d4data tags as clinical entities but aren't.
+    if (D4DATA_JUNK.has(key)) continue;
     // Skip entities already covered by the doctor's impression summary.
     // impressionTextLower is populated BEFORE this loop so multi-word
     // impressions win over fragment-level NER tags.
@@ -661,6 +708,11 @@ export async function extractMedicalEvents(
     const suggestions: string[] = [];
     if (!nearestDate && !docDate) suggestions.push('Verify date', 'Add provider information');
     if (speculative) suggestions.push('Described as possible/suspected — confirm with provider');
+
+    // Confidence floor — skip noisy low-confidence detections rather than
+    // surfacing them to the user-review queue. d4data on radiology / specialist
+    // text produces a long tail of weak detections that overwhelm signal.
+    if (confidence < MIN_EVENT_CONFIDENCE) continue;
 
     const eventDate = nearestDate || docDate || new Date().toISOString().split('T')[0];
 

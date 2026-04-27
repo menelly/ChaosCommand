@@ -330,11 +330,125 @@ function parseMayoFormat(
 }
 
 // ============================================================================
+// RESULT-RANGE CARD FORMAT (LabCorp / Quest / many specialist panels)
+// ============================================================================
+//
+// Catches the vertical card pattern that doesn't have MyChart's Test Date /
+// Test Location signature. Looks like:
+//
+//   dsDNA ANTIBODY
+//   Result: 17 IU/mL (High)
+//   Reference range: <4 IU/mL
+//   Status: final
+//
+// Test name on its own line, "Result:" line with value/unit/optional flag,
+// "Reference range:" line with single-bound or range. Status / Lab comments
+// optional and ignored.
+
+function parseResultRangeFormat(
+  text: string,
+  nameExclusions: Set<string>,
+  seenTests: Set<string>
+): LabResult[] {
+  const results: LabResult[] = [];
+
+  // Detect: need at least one "Result:" line followed reasonably soon by a
+  // "Reference range:" line. Keep cheap so it skips real fast on unrelated text.
+  if (!/^Result:\s/m.test(text) || !/^Reference range:\s/m.test(text)) {
+    return results;
+  }
+
+  // Match a card. Test name is on the line BEFORE "Result:". Use multiline
+  // mode so ^/$ are line anchors. Capture across the card.
+  const pattern = new RegExp(
+    '^(?<test_name>[A-Za-z][\\w\\s\\-\\(\\)/\\.,]{1,80}?)\\s*\\n' +
+    '\\s*Result:\\s*(?<value>[<>]?\\s*\\d+(?:\\.\\d+)?)\\s*(?<unit>' + LAB_UNITS + ')\\s*' +
+    '(?:\\((?<flag_paren>[A-Za-z]+)\\)|\\b(?<flag_bare>HIGH|LOW|HH|LL|H|L|CRITICAL|CRIT|ABNORMAL|ABN)\\b)?\\s*\\n' +
+    '\\s*Reference range:\\s*(?<ref>[^\\n]+?)\\s*\\n',
+    'gmi'
+  );
+
+  let match;
+  while ((match = pattern.exec(text)) !== null) {
+    const testName = match.groups!.test_name.trim();
+    const valueRaw = match.groups!.value.trim();
+    const unit = match.groups!.unit.trim();
+    const refLine = match.groups!.ref.trim();
+    const flagRaw = (match.groups!.flag_paren || match.groups!.flag_bare || '').trim().toUpperCase();
+
+    if (testName.length < 2 || testName.length > 80) continue;
+    if (nameExclusions.has(testName.toLowerCase())) continue;
+    if (/^[\d\s.]+$/.test(testName)) continue;
+    // Skip card-internal labels that the regex might catch in malformed text
+    if (['result', 'reference range', 'status', 'lab comments', 'comments'].includes(testName.toLowerCase())) continue;
+
+    const key = testName.toLowerCase();
+    if (seenTests.has(key)) continue;
+    seenTests.add(key);
+
+    // Parse value
+    let value: number | null = null;
+    const valClean = valueRaw.replace(/[<>]/g, '').trim();
+    try { value = parseFloat(valClean); if (isNaN(value)) value = null; } catch { value = null; }
+
+    // Parse reference range. Three shapes commonly seen:
+    //   "<4 IU/mL" or "< 4 IU/mL"   → upper bound only
+    //   ">10 IU/mL"                  → lower bound only
+    //   "4-10 IU/mL" or "4 - 10 IU/mL" → bounded range
+    let refLow: number | null = null;
+    let refHigh: number | null = null;
+    const rangeMatch = refLine.match(/(\d+(?:\.\d+)?)\s*[-–]\s*(\d+(?:\.\d+)?)/);
+    const upperOnlyMatch = refLine.match(/<\s*(\d+(?:\.\d+)?)/);
+    const lowerOnlyMatch = refLine.match(/>\s*(\d+(?:\.\d+)?)/);
+    if (rangeMatch) {
+      refLow = parseFloat(rangeMatch[1]);
+      refHigh = parseFloat(rangeMatch[2]);
+    } else if (upperOnlyMatch) {
+      refHigh = parseFloat(upperOnlyMatch[1]);
+    } else if (lowerOnlyMatch) {
+      refLow = parseFloat(lowerOnlyMatch[1]);
+    }
+
+    // Normalize flag
+    let flag = '';
+    if (['LL', 'LLOW'].includes(flagRaw)) flag = 'LL';
+    else if (['LOW', 'L'].includes(flagRaw)) flag = 'L';
+    else if (['HH'].includes(flagRaw)) flag = 'HH';
+    else if (['HIGH', 'HI', 'H'].includes(flagRaw)) flag = 'H';
+    else if (['CRITICAL', 'CRIT'].includes(flagRaw)) flag = 'CRITICAL';
+    else if (['ABNORMAL', 'ABN'].includes(flagRaw)) flag = 'ABNORMAL';
+
+    let isAbnormal = !!flag;
+    if (!isAbnormal && value !== null) {
+      if (refLow !== null && value < refLow) { isAbnormal = true; flag = 'L'; }
+      else if (refHigh !== null && value > refHigh) { isAbnormal = true; flag = 'H'; }
+    }
+
+    results.push({
+      testName,
+      value,
+      valueText: valueRaw,
+      unit,
+      referenceLow: refLow,
+      referenceHigh: refHigh,
+      referenceText: refLine,
+      flag,
+      isAbnormal,
+      context: `Result-range card: ${testName} = ${valueRaw} ${unit} (ref: ${refLine})`,
+      confidence: refLow !== null || refHigh !== null ? 0.92 : 0.78,
+    });
+  }
+
+  return results;
+}
+
+// ============================================================================
 // MAIN LAB EXTRACTION
 // ============================================================================
 
 /**
- * Extract lab results from text. Tries vertical (portal), mayo, then horizontal format.
+ * Extract lab results from text. Tries vertical (MyChart), mayo, result-range
+ * card (LabCorp/Quest/specialist panels), then horizontal as fallback.
  */
 export function extractLabResults(
   text: string,
@@ -355,6 +469,13 @@ export function extractLabResults(
   if (mayoResults.length > 0) {
     console.log(`🧪 Mayo format: ${mayoResults.length} results`);
     return sortLabResults(mayoResults);
+  }
+
+  // Try Result/Reference-range card format (LabCorp / Quest / specialist panels)
+  const resultRangeResults = parseResultRangeFormat(text, nameExclusions, seenTests);
+  if (resultRangeResults.length > 0) {
+    console.log(`🧪 Result-range card format: ${resultRangeResults.length} results`);
+    return sortLabResults(resultRangeResults);
   }
 
   // Fall back to horizontal format
