@@ -142,7 +142,7 @@ export default function WorkLifeIndex() {
                 </DialogDescription>
               </DialogHeader>
               <div className="mt-4">
-                <VisibleTrackersPanel onChange={setHiddenTrackers} />
+                <VisibleTrackersPanel sectionId="manage" onChange={setHiddenTrackers} />
               </div>
             </DialogContent>
           </Dialog>

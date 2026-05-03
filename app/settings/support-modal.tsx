@@ -27,6 +27,7 @@ import { Badge } from "@/components/ui/badge"
 import { MessageSquare, HelpCircle, Mail, Info, ExternalLink, Heart, Code, Zap } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import { openExternal } from "@/lib/open-external"
+import { APP_VERSION } from "@/lib/app-version"
 
 interface SupportModalProps {
   isOpen: boolean
@@ -34,7 +35,7 @@ interface SupportModalProps {
 }
 
 export function SupportModal({ isOpen, onClose }: SupportModalProps) {
-  const appVersion = "0.1.0"
+  const appVersion = APP_VERSION
   const buildDate = "2026-04-09"
   const [expandedHelp, setExpandedHelp] = useState<string | null>(null)
 

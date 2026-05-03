@@ -20,7 +20,7 @@
  */
 "use client"
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useDailyData, CATEGORIES, SUBCATEGORIES, formatDateForStorage, db } from '@/lib/database';
 // 🏖️ VACATION MODE: Hybrid system commented out
 // import { useHybridDatabase } from '@/lib/database/hybrid-router';
@@ -115,8 +115,12 @@ export default function TimelinePage() {
   });
 
   // 🏖️ VACATION MODE: Using reliable Dexie (hybrid system commented out)
-  useEffect(() => {
-    const loadData = async () => {
+  // Extracted to a useCallback so handleDeleteEvent / handleBulkDelete can
+  // trigger a forced re-fetch after mutating the DB. Without this the
+  // visible list relied solely on local setState filtering, which Ren
+  // reported sometimes left rows visually "active" until a screen change
+  // forced a remount + reload.
+  const loadData = useCallback(async () => {
       if (isLoading) return;
 
       try {
@@ -209,9 +213,11 @@ export default function TimelinePage() {
         console.error('Failed to load medical data:', error);
         console.error('🐉 DRAGON ERROR DETAILS:', error);
       }
-    };
+  }, [getCategoryData, getDateRange, isLoading]);
+
+  useEffect(() => {
     loadData();
-  }, [getCategoryData, isLoading]);
+  }, [loadData]);
 
   // Handle form input changes
   const handleInputChange = (field: string, value: any) => {
@@ -348,7 +354,13 @@ export default function TimelinePage() {
 
     try {
       const removed = await deleteEventBySubcategory(event.id);
+      // Optimistic local update so the row disappears instantly...
       setMedicalEvents(prev => prev.filter(e => e.id !== event.id));
+      // ...followed by a forced reload from Dexie so the visible state is
+      // guaranteed to match the DB. Belt + suspenders: if the local filter
+      // misses for any reason (id mismatch, stale closure), the reload
+      // catches it without the user having to navigate away and back.
+      await loadData();
       console.log(`✅ Event deleted from Dexie (${removed} row${removed === 1 ? '' : 's'} removed)`);
     } catch (error) {
       console.error('❌ Failed to delete medical event:', error);
@@ -400,6 +412,11 @@ export default function TimelinePage() {
     setMedicalEvents(prev => prev.filter(e => !selectedIds.has(e.id)));
     setSelectedIds(new Set());
     setSelectMode(false);
+    // Force a fresh reload from Dexie so the visible list matches DB
+    // even if some rows didn't belong to medical_events (e.g. med-derived
+    // synthetic events that were filtered locally but not persistently
+    // removed).
+    await loadData();
     setBulkDeleting(false);
 
     if (failed > 0) {

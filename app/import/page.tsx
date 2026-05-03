@@ -16,6 +16,9 @@ import AppCanvas from "@/components/app-canvas"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import DocumentUploader, { ExtractedLabBatch } from "@/components/document-uploader"
+// Diagnostics panel — kept on the shelf, uncomment when chasing lab
+// parser regressions. See the commented section below for the UI block.
+// import LabParserDiagnosticsPanel from "@/components/lab-parser-diagnostics-panel"
 import {
   useDailyData,
   CATEGORIES,
@@ -219,19 +222,24 @@ export default function ImportRecordsPage() {
 
         {lastLabBatch && (
           <Card className="border-[var(--border-soft)] bg-[var(--bg-card)]">
-            <CardContent className="pt-6 flex items-center gap-3 text-[var(--text-main)]">
-              <FlaskConical className="h-5 w-5" />
-              <div>
-                <div className="font-medium">{lastLabBatch}</div>
-                {savedLabCount > 0 && (
-                  <div className="text-sm text-[var(--text-muted)]">
-                    {savedLabCount} total labs this session —{" "}
-                    <a href="/lab-results" className="underline">
-                      view Labs dashboard
-                    </a>
-                  </div>
-                )}
+            <CardContent className="pt-6 flex items-center justify-between gap-3 text-[var(--text-main)] flex-wrap">
+              <div className="flex items-center gap-3 min-w-0">
+                <FlaskConical className="h-5 w-5 shrink-0" />
+                <div className="min-w-0">
+                  <div className="font-medium">{lastLabBatch}</div>
+                  {savedLabCount > 0 && (
+                    <div className="text-sm text-[var(--text-muted)]">
+                      {savedLabCount} total lab{savedLabCount === 1 ? '' : 's'} this session — review and edit dates on the Labs dashboard.
+                    </div>
+                  )}
+                </div>
               </div>
+              <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white shrink-0">
+                <a href="/lab-results">
+                  <FlaskConical className="h-4 w-4 mr-2" />
+                  Open Lab Results
+                </a>
+              </Button>
             </CardContent>
           </Card>
         )}
@@ -239,33 +247,39 @@ export default function ImportRecordsPage() {
         <section className="space-y-2">
           <h2 className="text-lg font-semibold text-[var(--text-main)] flex items-center gap-2">
             <FileText className="h-5 w-5" />
-            Medical Documents
+            Upload Medical Records
           </h2>
           <p className="text-xs text-[var(--text-muted)]">
-            Visit notes, after-visit summaries, imaging reports, hospital
-            discharge papers.
+            Visit notes, after-visit summaries, imaging reports, lab panels —
+            drop them all here. The parser runs both medical (NER) and lab
+            (number-anchored) extraction on every document, then shows you a
+            review screen with checkboxes so you can uncheck anything that
+            doesn't belong before it lands on your timeline or Lab Results.
           </p>
           <DocumentUploader
-            mode="medical"
+            mode="auto"
             onEventsExtracted={handleEventsExtracted}
-          />
-        </section>
-
-        <section className="space-y-2">
-          <h2 className="text-lg font-semibold text-[var(--text-main)] flex items-center gap-2">
-            <FlaskConical className="h-5 w-5" />
-            Lab Results
-          </h2>
-          <p className="text-xs text-[var(--text-muted)]">
-            Lab panels, blood work, urinalysis, anything with test values and
-            reference ranges. Skips diagnosis extraction.
-          </p>
-          <DocumentUploader
-            mode="lab"
-            onEventsExtracted={() => { /* lab mode emits no events */ }}
             onLabsExtracted={handleLabsExtracted}
           />
         </section>
+
+        {/*
+          Parser Diagnostics panel — uncomment when debugging lab parser
+          issues. The localStorage write in extractLabResults() and the
+          component itself stay shipped so future-Ace can flip this back
+          on without a rebuild loop. Was load-bearing during the May 2026
+          unified-uploader marathon; commented out for normal use.
+        <section className="space-y-2">
+          <h2 className="text-lg font-semibold text-[var(--text-main)] flex items-center gap-2">
+            🔬 Parser Diagnostics
+          </h2>
+          <p className="text-xs text-[var(--text-muted)]">
+            If a lab upload returns 0 results, this panel shows what each
+            parser saw and why it gave up. Refresh after each upload.
+          </p>
+          <LabParserDiagnosticsPanel />
+        </section>
+        */}
 
         <div className="flex justify-center gap-4 mt-8 text-sm">
           <Button variant="outline" asChild>

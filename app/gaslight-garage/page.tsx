@@ -76,6 +76,10 @@ export default function GaslightGaragePage() {
   const [entries, setEntries] = useState<GarageEntry[]>([])
   const [expandedEntry, setExpandedEntry] = useState<string | null>(null)
   const [entryImages, setEntryImages] = useState<Record<string, string[]>>({})
+  // Per-entry count of imageKeys that don't resolve to a local blob — i.e.
+  // photos that were uploaded on another device and didn't cross during sync.
+  // Computed on load; updated when an entry is expanded for accuracy.
+  const [missingPhotoCount, setMissingPhotoCount] = useState<Record<string, number>>({})
   const [searchQuery, setSearchQuery] = useState("")
   const [filterTag, setFilterTag] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -94,6 +98,24 @@ export default function GaslightGaragePage() {
         ?.sort((a: GarageEntry, b: GarageEntry) => b.date.localeCompare(a.date)) || []
 
       setEntries(garageRecords)
+
+      // Build a Set of all blob_keys present locally (index-only lookup, no
+      // blob_data loaded). Compare against each entry's imageKeys so we
+      // can flag entries whose photos didn't sync from another device.
+      try {
+        const localKeys = new Set<string>(
+          (await db.image_blobs.orderBy('blob_key').uniqueKeys()) as unknown as string[]
+        )
+        const missing: Record<string, number> = {}
+        for (const entry of garageRecords) {
+          if (!entry.imageKeys || entry.imageKeys.length === 0) continue
+          const m = entry.imageKeys.filter((k: string) => !localKeys.has(k)).length
+          if (m > 0) missing[entry.id] = m
+        }
+        setMissingPhotoCount(missing)
+      } catch (e) {
+        console.error("Failed to compute missing-photo counts:", e)
+      }
     } catch (e) {
       console.error("Failed to load garage entries:", e)
     }
@@ -261,6 +283,12 @@ export default function GaslightGaragePage() {
           </p>
           <p className="text-sm text-muted-foreground mt-1">
             Your medical evidence locker. Photos, screenshots, messages, receipts.
+          </p>
+          <p className="text-xs text-muted-foreground mt-2 max-w-xl mx-auto">
+            <span className="font-medium">📵 Note:</span> Photos are stored on
+            the device they were uploaded to. Entry text, dates, and tags sync
+            between devices, but photos stay local — entries with off-device
+            photos are flagged so you know to open the source device.
           </p>
         </header>
 
@@ -534,6 +562,15 @@ export default function GaslightGaragePage() {
                             <Badge variant="outline" className="text-xs">
                               <ImageIcon className="h-3 w-3 mr-1" />
                               {entry.imageKeys.length}
+                            </Badge>
+                          )}
+                          {missingPhotoCount[entry.id] > 0 && (
+                            <Badge
+                              variant="outline"
+                              className="text-xs border-amber-300 text-amber-700 dark:text-amber-400 dark:border-amber-700"
+                              title="Photo(s) on this entry were uploaded on another device and didn't sync to this one. Open the source device to see them."
+                            >
+                              📵 {missingPhotoCount[entry.id]} off-device
                             </Badge>
                           )}
                         </div>

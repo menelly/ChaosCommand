@@ -52,9 +52,11 @@ const TRIGGERS = [
 ]
 
 const TREATMENTS = [
-  'ibuprofen', 'acetaminophen', 'aspirin', 'naproxen', 'sumatriptan', 'rizatriptan', 'prescription-pain-med',
-  'preventive-medication', 'cold-compress', 'heat-therapy', 'rest-dark-room', 'hydration', 'caffeine',
-  'massage', 'stretching', 'meditation', 'breathing-exercises'
+  'ibuprofen', 'acetaminophen', 'aspirin', 'naproxen', 'sumatriptan', 'rizatriptan',
+  'rimegepant', 'ubrogepant', 'atogepant', 'cgrp-injectable',
+  'prescription-pain-med', 'preventive-medication', 'cold-compress', 'heat-therapy',
+  'rest-dark-room', 'hydration', 'caffeine', 'massage', 'stretching', 'meditation',
+  'breathing-exercises'
 ]
 
 const FUNCTIONAL_IMPACT_LEVELS = ['none', 'mild', 'moderate', 'severe', 'disabling']

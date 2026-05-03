@@ -33,8 +33,41 @@ async function getPdfjs() {
 function cleanExtractedText(text: string): string {
   let clean = text;
 
+  // -------------------------------------------------------------------
+  // Step A: protect medical units, abbreviations, and common nucleic-acid
+  // names from the camelCase fix below. Without this, "mg/dL" becomes
+  // "mg/d L", "dsDNA" becomes "ds DNA", "mRNA" becomes "m RNA", etc. —
+  // which silently breaks the lab parser (units no longer match LAB_UNITS)
+  // and the NER (test names get mangled). Stash them under sentinels,
+  // run the camelCase fix, then restore.
+  //
+  // Pattern matches:
+  //   - <numeric-prefix>/<unit-suffix> like mg/dL, IU/mL, mIU/L, ng/mL,
+  //     mcg/dL, cells/uL, copies/mL, mEq/L
+  //   - bare unit pairs that the camelCase rule would split: mEq, mIU,
+  //     µIU, uIU
+  //   - nucleic-acid abbreviations: dsDNA, ssDNA, mRNA, miRNA, siRNA,
+  //     snRNA, tRNA, rRNA, ncRNA, lncRNA, sgRNA, circRNA, mtDNA, cfDNA
+  // -------------------------------------------------------------------
+  const PROTECT_PATTERNS: RegExp[] = [
+    /\b(?:mg|mcg|ug|µg|ng|pg|g|kg|mL|dL|L|IU|mIU|µIU|uIU|mEq|mol|mmol|µmol|umol|cells|copies|x10\^[0-9]+)\/(?:dL|mL|L|min|µL|uL|day|hr|hour)\b/g,
+    /\b(?:mEq|mIU|µIU|uIU|mOsm|mAU|mU)\b/g,
+    /\b(?:ds|ss|m|mi|si|sn|t|r|nc|lnc|sg|circ|mt|cf|gu|lc)(?:DNA|RNA)\b/g,
+  ];
+
+  const stash: string[] = [];
+  for (const pat of PROTECT_PATTERNS) {
+    clean = clean.replace(pat, (m) => {
+      stash.push(m);
+      return `__CHAOS_PROTECT__${stash.length - 1}__CHAOS_PROTECT__`;
+    });
+  }
+
   // Fix camelCase splits from OCR (e.g., "bloodPressure" -> "blood Pressure")
   clean = clean.replace(/([a-z])([A-Z])/g, '$1 $2');
+
+  // Restore protected terms
+  clean = clean.replace(/__CHAOS_PROTECT__(\d+)__CHAOS_PROTECT__/g, (_, i) => stash[parseInt(i, 10)] ?? '');
 
   // Common OCR medical term corrections
   const corrections: Record<string, string> = {

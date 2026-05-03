@@ -335,11 +335,14 @@ export default function CustomTrackerPage() {
     }
   }
 
-  // Build entries array for analytics component: flat objects with date + field values
-  const analyticsEntries = historyEntries.map(entry => ({
-    date: entry.date,
-    ...entry.content.values
-  }))
+  // Build entries array for analytics component: flat objects with date + field values.
+  // Defensive: legacy/corrupted records may be missing .content or .content.values.
+  const analyticsEntries = historyEntries
+    .filter(entry => entry && typeof entry === 'object')
+    .map(entry => ({
+      date: entry.date,
+      ...((entry.content && entry.content.values) || {})
+    }))
 
   if (isLoading) {
     return (

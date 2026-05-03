@@ -86,6 +86,7 @@ interface UploadedFile {
   progress: number;
   extractedText?: string;
   parsedEvents?: ParsedMedicalEvent[];
+  parsedLabCount?: number;
   error?: string;
 }
 
@@ -143,6 +144,17 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
   const [isDragOver, setIsDragOver] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [allParsedEvents, setAllParsedEvents] = useState<ParsedMedicalEvent[]>([]);
+  // In 'auto' mode we accumulate lab results in a parallel review queue so
+  // the preview UI can show two sections (medical events + labs) and the
+  // user can uncheck/edit individual items before they hit /lab-results.
+  // Each lab result gets a synthetic id + filename so we can render and
+  // toggle them just like events.
+  type ReviewableLab = ExtractedLabResult & { _id: string; _filename: string; _included: boolean }
+  const [allParsedLabs, setAllParsedLabs] = useState<ReviewableLab[]>([]);
+  // Per-file date override for lab batches. Defaults to today on first
+  // upload; user can change before clicking Save Approved. Maps filename
+  // -> ISO date string (YYYY-MM-DD).
+  const [labFileDates, setLabFileDates] = useState<Record<string, string>>({});
   const [extractedProviders, setExtractedProviders] = useState<any[]>([]);
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
@@ -247,12 +259,32 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
       updateFileStatus(uploadedFile.id, {
         extractedText: result.extractedText,
         parsedEvents: result.events,
+        parsedLabCount: result.labCount,
         status: 'parsed',
         progress: 100
       });
 
       // Add to global parsed events for preview
       setAllParsedEvents(prev => [...prev, ...result.events]);
+
+      // In 'auto' mode, also queue labs for the review UI so the user can
+      // uncheck/edit individual lab rows before they hit /lab-results.
+      if (mode === 'auto' && result.mappedLabs.length > 0) {
+        const queued: ReviewableLab[] = result.mappedLabs.map((l, i) => ({
+          ...l,
+          _id: `lab-${Date.now()}-${i}-${Math.random().toString(36).slice(2, 7)}`,
+          _filename: uploadedFile.file.name,
+          _included: true,
+        }))
+        setAllParsedLabs(prev => [...prev, ...queued]);
+        // Initialize this file's date to today so the date input has a
+        // sensible default; user can edit before approving.
+        setLabFileDates(prev =>
+          prev[uploadedFile.file.name]
+            ? prev
+            : { ...prev, [uploadedFile.file.name]: new Date().toISOString().split('T')[0] }
+        );
+      }
 
       // 🎛️ Initialize provider toggle states for new events
       const newToggleStates: Record<string, boolean> = {};
@@ -277,7 +309,7 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
 
   // 🔥 LOCAL NER PROCESSING — Browser-side, no sidecar, no port, no CORS!
   // Transformers.js runs the same d4data/biomedical-ner-all model directly in the browser.
-  const processFileWithBackend = async (file: File): Promise<{extractedText: string, events: ParsedMedicalEvent[]}> => {
+  const processFileWithBackend = async (file: File): Promise<{extractedText: string, events: ParsedMedicalEvent[], labCount: number, mappedLabs: ExtractedLabResult[]}> => {
     try {
       // Read file to base64
       const arrayBuffer = await file.arrayBuffer();
@@ -342,34 +374,39 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
       // panels go through their own dedicated upload path).
       const labResults = mode === 'medical' ? [] : extractLabResults(extractedText, demographics);
 
-      // If the consumer wants structured labs, emit them through onLabsExtracted
-      // and DO NOT also fold them into the events stream (avoids double-
-      // representation — labs belong in /lab-results, not the timeline).
-      if (onLabsExtracted && labResults.length > 0) {
-        const mapped: ExtractedLabResult[] = labResults.map(l => ({
-          test_name: l.testName,
-          value: l.value,
-          value_text: l.valueText,
-          unit: l.unit,
-          reference_low: l.referenceLow,
-          reference_high: l.referenceHigh,
-          reference_text: l.referenceText,
-          flag: l.flag,
-          is_abnormal: l.isAbnormal,
-          context: l.context,
-          confidence: l.confidence,
-        }));
+      // Map LabResult → ExtractedLabResult (consumer-friendly snake_case).
+      const mappedLabs: ExtractedLabResult[] = labResults.map(l => ({
+        test_name: l.testName,
+        value: l.value,
+        value_text: l.valueText,
+        unit: l.unit,
+        reference_low: l.referenceLow,
+        reference_high: l.referenceHigh,
+        reference_text: l.referenceText,
+        flag: l.flag,
+        is_abnormal: l.isAbnormal,
+        context: l.context,
+        confidence: l.confidence,
+      }));
+
+      // 'auto' mode: surface labs in the review queue (handled by caller via
+      // setAllParsedLabs). Don't auto-emit through onLabsExtracted yet — the
+      // user gets a chance to uncheck items first.
+      // 'lab' mode (legacy): emit immediately, no review.
+      // 'medical' mode (legacy): no labs, skip.
+      if (mode === 'lab' && onLabsExtracted && mappedLabs.length > 0) {
         onLabsExtracted({
           filename: file.name,
           date: new Date().toISOString().split('T')[0],
-          results: mapped,
+          results: mappedLabs,
         });
-        console.log(`🧪 ${mapped.length} lab results handed to consumer`);
+        console.log(`🧪 ${mappedLabs.length} lab results auto-saved (lab mode)`);
       }
 
-      // Legacy behavior when onLabsExtracted isn't provided: fold labs into events
+      // When no lab-aware consumer exists at all, fold labs into events as a
+      // fallback so they at least show up somewhere.
       const allEvents = [...nerEvents];
-      if (!onLabsExtracted) {
+      if (!onLabsExtracted && mode !== 'medical') {
         const labEvents = labResultsToEvents(labResults);
         const seenTitles = new Set(nerEvents.map(e => e.title.toLowerCase()));
         for (const labEvent of labEvents) {
@@ -380,11 +417,13 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
         }
       }
 
-      console.log(`🎉 LOCAL NER SUCCESS: ${allEvents.length} events from ${file.name}`);
+      console.log(`🎉 LOCAL NER SUCCESS: ${allEvents.length} events + ${mappedLabs.length} labs from ${file.name}`);
 
       return {
         extractedText,
-        events: allEvents as any
+        events: allEvents as any,
+        labCount: mappedLabs.length,
+        mappedLabs,
       };
 
     } catch (error) {
@@ -465,6 +504,30 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
       // Add extracted events to timeline
       onEventsExtracted(allParsedEvents);
 
+      // Also emit any approved (still _included=true) lab results, grouped
+      // by source filename so each upload becomes its own /lab-results card.
+      if (onLabsExtracted) {
+        const includedLabs = allParsedLabs.filter(l => l._included);
+        const byFile = new Map<string, ExtractedLabResult[]>();
+        for (const l of includedLabs) {
+          const arr = byFile.get(l._filename) || [];
+          // Strip the synthetic review fields before emitting.
+          const { _id, _filename, _included, ...clean } = l;
+          arr.push(clean);
+          byFile.set(l._filename, arr);
+        }
+        for (const [filename, results] of byFile.entries()) {
+          if (results.length === 0) continue;
+          const fileDate = labFileDates[filename] || new Date().toISOString().split('T')[0];
+          onLabsExtracted({
+            filename,
+            date: fileDate,
+            results,
+          });
+          console.log(`🧪 ${results.length} approved lab results saved from ${filename} (date=${fileDate})`);
+        }
+      }
+
       // 🎉 SHOW SUCCESS ANIMATION
       setShowSuccessAnimation(true);
       setTimeout(() => setShowSuccessAnimation(false), 3000);
@@ -473,9 +536,11 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
       setExtractedProviders(Array.from(providersToCreate.values()));
       setFiles([]);
       setAllParsedEvents([]);
+      setAllParsedLabs([]);
+      setLabFileDates({});
       setShowPreview(false);
 
-      console.log(`🎉 Successfully processed ${allParsedEvents.length} events and auto-created ${providersToCreate.size} providers!`);
+      console.log(`🎉 Successfully processed ${allParsedEvents.length} events + ${allParsedLabs.filter(l => l._included).length} labs and auto-created ${providersToCreate.size} providers!`);
     } catch (error) {
       console.error('❌ Error processing events and providers:', error);
     }
@@ -1046,7 +1111,24 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
 
                 {file.status === 'parsed' && file.parsedEvents && (
                   <p className="text-sm text-green-600">
-                    ✅ Found {file.parsedEvents.length} potential medical events
+                    ✅ {(() => {
+                      const eventCount = file.parsedEvents.length
+                      const labCount = file.parsedLabCount ?? 0
+                      // In lab mode the NER step is intentionally skipped, so the
+                      // events count is always 0 and would mislead the reader.
+                      // Show whichever counts are non-zero; if both, show both.
+                      if (mode === 'lab') {
+                        return `Found ${labCount} lab result${labCount === 1 ? '' : 's'}`
+                      }
+                      if (mode === 'medical') {
+                        return `Found ${eventCount} potential medical event${eventCount === 1 ? '' : 's'}`
+                      }
+                      // mixed mode — surface both
+                      const parts: string[] = []
+                      parts.push(`${eventCount} medical event${eventCount === 1 ? '' : 's'}`)
+                      if (labCount > 0) parts.push(`${labCount} lab result${labCount === 1 ? '' : 's'}`)
+                      return `Found ${parts.join(' + ')}`
+                    })()}
                   </p>
                 )}
 
@@ -1061,18 +1143,25 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
         </Card>
       )}
 
-      {/* 👁️ PREVIEW PARSED EVENTS */}
-      {allParsedEvents.length > 0 && !showPreview && (
+      {/* 👁️ PREVIEW PARSED EVENTS + LABS */}
+      {(allParsedEvents.length > 0 || allParsedLabs.length > 0) && !showPreview && (
         <Card className="border-[var(--accent-orange)]">
           <CardContent className="p-6 text-center">
             <div className="space-y-4">
               <div className="text-[var(--text-main)]">
                 <h3 className="text-lg font-semibold mb-2">
-                  🎉 Found {allParsedEvents.length} Medical Events!
+                  🎉 Found{" "}
+                  {allParsedEvents.length > 0 && (
+                    <>{allParsedEvents.length} medical event{allParsedEvents.length === 1 ? '' : 's'}</>
+                  )}
+                  {allParsedEvents.length > 0 && allParsedLabs.length > 0 && ' + '}
+                  {allParsedLabs.length > 0 && (
+                    <>{allParsedLabs.length} lab result{allParsedLabs.length === 1 ? '' : 's'}</>
+                  )}!
                 </h3>
                 <p className="text-[var(--text-muted)]">
-                  Events extracted from your documents.
-                  Review and edit before adding to your timeline.
+                  Review and approve before they're saved to your timeline + Lab Results.
+                  Anything you uncheck won't be saved.
                 </p>
               </div>
 
@@ -1082,13 +1171,14 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
                   className="bg-[var(--btn-bg)] text-[var(--btn-text)] border-[var(--btn-border)] hover:bg-[var(--btn-hover-bg)]"
                 >
                   <Eye className="h-4 w-4 mr-2" />
-                  Review Events
+                  Review
                 </Button>
                 <Button
                   variant="outline"
                   onClick={() => {
                     setFiles([]);
                     setAllParsedEvents([]);
+                    setAllParsedLabs([]);
                   }}
                   className="border-[var(--border-soft)] text-[var(--text-muted)]"
                 >
@@ -1101,13 +1191,15 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
       )}
 
       {/* 📋 DETAILED EVENT PREVIEW & EDITING */}
-      {showPreview && allParsedEvents.length > 0 && (
+      {showPreview && (allParsedEvents.length > 0 || allParsedLabs.length > 0) && (
         <Card>
           <CardHeader>
             <CardTitle className="text-[var(--text-main)] flex items-center justify-between">
               <span className="flex items-center gap-2">
                 <Edit3 className="h-5 w-5" />
-                Review & Edit Extracted Events ({allParsedEvents.length})
+                Review &amp; Approve
+                {allParsedEvents.length > 0 && ` · ${allParsedEvents.length} event${allParsedEvents.length === 1 ? '' : 's'}`}
+                {allParsedLabs.length > 0 && ` · ${allParsedLabs.length} lab${allParsedLabs.length === 1 ? '' : 's'}`}
               </span>
               <Button
                 variant="ghost"
@@ -1409,14 +1501,154 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
               </div>
             ))}
 
+            {/* 🧪 LAB RESULTS REVIEW (auto mode only) */}
+            {allParsedLabs.length > 0 && (
+              <div className="border-t border-[var(--border-soft)] pt-4 mt-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-[var(--text-main)] flex items-center gap-2">
+                    🧪 Lab Results ({allParsedLabs.filter(l => l._included).length}/{allParsedLabs.length})
+                  </h3>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setAllParsedLabs(prev => prev.map(l => ({ ...l, _included: true })))}
+                    >
+                      All
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setAllParsedLabs(prev => prev.map(l => ({ ...l, _included: false })))}
+                    >
+                      None
+                    </Button>
+                  </div>
+                </div>
+                <p className="text-xs text-[var(--text-muted)]">
+                  Uncheck any rows that aren't real labs (e.g. a panel name the medical parser
+                  confused for a test). Click a test name, value, or unit to edit it. The
+                  collection date defaults to today — fix it per-file before approving.
+                </p>
+                {/* Group labs by source file. Each group gets a header with a date
+                    picker that applies to the whole batch from that file. */}
+                {(() => {
+                  const filenames = Array.from(new Set(allParsedLabs.map(l => l._filename)))
+                  return filenames.map(filename => {
+                    const fileLabs = allParsedLabs.filter(l => l._filename === filename)
+                    const includedInFile = fileLabs.filter(l => l._included).length
+                    return (
+                      <div
+                        key={filename}
+                        className="border border-[var(--border-soft)] rounded-md p-3 bg-[var(--surface-1)] space-y-2"
+                      >
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <span className="text-sm font-medium text-[var(--text-main)] truncate flex-1 min-w-0">
+                            📄 {filename}
+                          </span>
+                          <span className="text-xs text-[var(--text-muted)]">
+                            {includedInFile}/{fileLabs.length} included
+                          </span>
+                          <label className="flex items-center gap-2 text-xs text-[var(--text-main)]">
+                            <span>Collection date:</span>
+                            <input
+                              type="date"
+                              value={labFileDates[filename] || ''}
+                              onChange={(e) =>
+                                setLabFileDates(prev => ({ ...prev, [filename]: e.target.value }))
+                              }
+                              className="border border-[var(--border-soft)] rounded px-2 py-0.5 bg-white text-[var(--text-main)]"
+                            />
+                          </label>
+                        </div>
+                        <div className="space-y-1 max-h-60 overflow-y-auto">
+                          {fileLabs.map(lab => (
+                            <div
+                              key={lab._id}
+                              className={`flex items-center gap-2 p-2 rounded border text-sm transition-colors ${
+                                lab._included
+                                  ? 'border-[var(--border-soft)] bg-white dark:bg-[var(--surface-2)]'
+                                  : 'border-dashed border-[var(--border-soft)] opacity-50'
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={lab._included}
+                                onChange={(e) =>
+                                  setAllParsedLabs(prev =>
+                                    prev.map(l =>
+                                      l._id === lab._id ? { ...l, _included: e.target.checked } : l
+                                    )
+                                  )
+                                }
+                                className="h-4 w-4 shrink-0"
+                              />
+                              <input
+                                type="text"
+                                value={lab.test_name}
+                                onChange={(e) =>
+                                  setAllParsedLabs(prev =>
+                                    prev.map(l =>
+                                      l._id === lab._id ? { ...l, test_name: e.target.value } : l
+                                    )
+                                  )
+                                }
+                                className="font-medium text-[var(--text-main)] bg-transparent border border-transparent hover:border-[var(--border-soft)] focus:border-blue-300 focus:bg-white rounded px-1 py-0.5 flex-1 min-w-0"
+                                title="Edit test name"
+                              />
+                              <input
+                                type="text"
+                                value={lab.value_text}
+                                onChange={(e) =>
+                                  setAllParsedLabs(prev =>
+                                    prev.map(l =>
+                                      l._id === lab._id ? { ...l, value_text: e.target.value } : l
+                                    )
+                                  )
+                                }
+                                className="font-mono text-[var(--text-main)] bg-transparent border border-transparent hover:border-[var(--border-soft)] focus:border-blue-300 focus:bg-white rounded px-1 py-0.5 w-24 text-right"
+                                title="Edit value"
+                              />
+                              <input
+                                type="text"
+                                value={lab.unit}
+                                onChange={(e) =>
+                                  setAllParsedLabs(prev =>
+                                    prev.map(l =>
+                                      l._id === lab._id ? { ...l, unit: e.target.value } : l
+                                    )
+                                  )
+                                }
+                                className="font-mono text-[var(--text-muted)] bg-transparent border border-transparent hover:border-[var(--border-soft)] focus:border-blue-300 focus:bg-white rounded px-1 py-0.5 w-20 text-xs"
+                                title="Edit unit"
+                                placeholder="unit"
+                              />
+                              {lab.is_abnormal && (
+                                <Badge className="bg-red-100 text-red-800 text-xs shrink-0">
+                                  {lab.flag || 'ABNL'}
+                                </Badge>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  })
+                })()}
+              </div>
+            )}
+
             {/* Confirm Actions */}
-            <div className="flex gap-3 justify-center pt-4 border-t border-[var(--border-soft)]">
+            <div className="flex gap-3 justify-center pt-4 border-t border-[var(--border-soft)] flex-wrap">
               <Button
                 onClick={handleConfirmEvents}
                 className="bg-[var(--accent-primary,#a78bfa)] text-white hover:opacity-90 font-semibold"
               >
                 <CheckCircle className="h-4 w-4 mr-2" />
-                Add {allParsedEvents.length} Events to Timeline
+                Save Approved
+                {allParsedEvents.length > 0 && ` · ${allParsedEvents.length} event${allParsedEvents.length === 1 ? '' : 's'}`}
+                {allParsedLabs.filter(l => l._included).length > 0 &&
+                  ` · ${allParsedLabs.filter(l => l._included).length} lab${allParsedLabs.filter(l => l._included).length === 1 ? '' : 's'}`}
               </Button>
               <Button
                 variant="outline"

@@ -24,7 +24,8 @@ import { useState } from "react"
 import AppCanvas from "@/components/app-canvas"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Settings, Database, Palette, Bell, MessageSquare, Globe, HelpCircle, Tag, RotateCcw, Bot, Printer, Smartphone } from "lucide-react"
+import { Settings, Database, Palette, Bell, MessageSquare, Globe, HelpCircle, Tag, RotateCcw, Bot, Printer, Smartphone, Cloud } from "lucide-react"
+import { APP_VERSION } from "@/lib/app-version"
 
 // Modal components (to be created)
 import { VisualSettingsModal } from "./visual-settings-modal"
@@ -35,6 +36,7 @@ import { TagsModal } from "./tags-modal"
 import { SupportModal } from "./support-modal"
 import { PrintExportModal } from "./print-export-modal"
 import { QRSyncModal } from "./qr-sync-modal"
+import { UpdateCheckModal } from "./update-check-modal"
 
 export default function SettingsPage() {
   // Modal state management
@@ -166,6 +168,32 @@ export default function SettingsPage() {
             </CardHeader>
           </Card>
 
+          {/* Updates — opt-in only manifest check. Lives at the top level
+              (not buried in Data Management) so the "is there a newer
+              version?" question gets equal prominence with Device Sync. */}
+          <Card
+            onClick={() => openModal('updates')}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                openModal('updates')
+              }
+            }}
+            className="cursor-pointer hover:shadow-lg hover:ring-2 hover:ring-[var(--accent-primary)] transition-all"
+          >
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Cloud className="h-5 w-5" />
+                Updates
+              </CardTitle>
+              <CardDescription>
+                Manually check for a newer version (opt-in, never automatic)
+              </CardDescription>
+            </CardHeader>
+          </Card>
+
           <Card
             onClick={() => {
               if (confirm('This will reset your onboarding progress. Continue?')) {
@@ -217,11 +245,14 @@ export default function SettingsPage() {
         {/* QR Sync modal (not in the category array) */}
         <QRSyncModal isOpen={activeModal === 'qrsync'} onClose={closeModal} />
 
+        {/* Update Check modal (also not in the category array) */}
+        <UpdateCheckModal isOpen={activeModal === 'updates'} onClose={closeModal} />
+
         <div className="mt-8 text-center">
           <Button variant="outline" onClick={() => window.history.back()}>
             ← Back to Command Center
           </Button>
-          <p className="text-xs text-muted-foreground mt-4">Build: 2026-04-12-21:00</p>
+          <p className="text-xs text-muted-foreground mt-4">Version v{APP_VERSION}</p>
         </div>
       </AppCanvas>
     </div>

@@ -148,6 +148,10 @@ export const TREATMENTS: TreatmentOption[] = [
   { value: 'naproxen', label: 'Naproxen', category: 'medication' },
   { value: 'sumatriptan', label: 'Sumatriptan', category: 'medication' },
   { value: 'rizatriptan', label: 'Rizatriptan', category: 'medication' },
+  { value: 'rimegepant', label: 'Nurtec ODT (rimegepant) — CGRP', category: 'medication' },
+  { value: 'ubrogepant', label: 'Ubrelvy (ubrogepant) — CGRP', category: 'medication' },
+  { value: 'atogepant', label: 'Qulipta (atogepant) — CGRP preventive', category: 'medication' },
+  { value: 'cgrp-injectable', label: 'CGRP Injectable (Aimovig/Ajovy/Emgality)', category: 'medication' },
   { value: 'prescription-pain-med', label: 'Prescription Pain Med', category: 'medication' },
   { value: 'preventive-medication', label: 'Preventive Medication', category: 'medication' },
 

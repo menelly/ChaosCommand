@@ -53,9 +53,10 @@ export default function CustomizePage() {
               Visible Trackers
             </CardTitle>
             <CardDescription>
-              Hide trackers you don't use from the Manage page. Same toggles as
-              the Customize button on Manage — flip them on either, both stay
-              in sync.
+              Hide trackers you don't use across <strong>Body</strong>,{" "}
+              <strong>Mind</strong>, <strong>Choice</strong>, and{" "}
+              <strong>Manage</strong>. Same toggles as the per-page Customize
+              buttons — flip them on either surface, both stay in sync.
             </CardDescription>
           </CardHeader>
           <CardContent>

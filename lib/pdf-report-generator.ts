@@ -8,6 +8,40 @@
 
 import jsPDF from 'jspdf'
 
+/**
+ * Repair unit strings that were split by OCR / PDF text-extraction whitespace
+ * (e.g. "mg/d L" -> "mg/dL", "m mol/L" -> "mmol/L"). Applied to both lab
+ * values and reference ranges so the rendered report reads cleanly.
+ */
+function normalizeUnits(s: string): string {
+  if (!s) return s
+  return String(s)
+    .replace(/(mg|mcg|ug|ng|pg|g|kg)\/d\s+L\b/gi, '$1/dL')
+    .replace(/\bm\s+mol\/L\b/gi, 'mmol/L')
+    .replace(/\bU\s*\/\s*L\b/g, 'U/L')
+    .replace(/\bmEq\s*\/\s*L\b/gi, 'mEq/L')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+}
+
+/**
+ * Render a single lab value without duplicating the unit. If `value_text`
+ * already contains a unit (i.e. has any letter / % / / character after the
+ * number), trust it and skip appending `unit`. Otherwise append the unit.
+ */
+function formatLabValue(r: { value_text?: string; unit?: string }): string {
+  const value = normalizeUnits(r.value_text || '')
+  const unit = normalizeUnits(r.unit || '')
+  if (!value) return unit
+  if (!unit) return value
+  const valueHasUnit = /[a-zA-Z%/]/.test(value)
+  if (valueHasUnit) {
+    // Edge case: value_text is JUST the unit text repeated. Trust value_text.
+    return value
+  }
+  return `${value} ${unit}`
+}
+
 // ICD-10 mapping for common tracked symptoms
 const ICD10_MAP: Record<string, string> = {
   'pain': 'R52 — Pain, unspecified',
@@ -537,7 +571,7 @@ export function generateMedicalReport(data: ReportData): Blob {
         w.subSection(`Abnormal findings (${content.date || labSet.date || ''})`)
         for (const r of abnormals) {
           const flag = r.flag ? ` [${r.flag}]` : ''
-          w.finding(`${r.test_name || ''}: ${r.value_text || ''} ${r.unit || ''} (ref: ${r.reference_text || '—'})${flag}`)
+          w.finding(`${r.test_name || ''}: ${formatLabValue(r)} (ref: ${normalizeUnits(r.reference_text || '—')})${flag}`)
         }
       }
     }

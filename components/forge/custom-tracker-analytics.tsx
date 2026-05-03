@@ -37,89 +37,116 @@ import {
 } from 'lucide-react';
 import { useDailyData, CATEGORIES } from '@/lib/database';
 import { CustomTracker } from './tracker-builder';
+import AnalyticsErrorBoundary from './analytics-error-boundary';
 
 interface CustomTrackerAnalyticsProps {
   tracker: CustomTracker;
   entries: any[];
 }
 
-export default function CustomTrackerAnalytics({ tracker, entries }: CustomTrackerAnalyticsProps) {
-  const [analytics, setAnalytics] = useState<any>({});
+function CustomTrackerAnalyticsInner({ tracker, entries }: CustomTrackerAnalyticsProps) {
+  const safeEntries = Array.isArray(entries) ? entries : [];
+  const safeFields = Array.isArray(tracker?.fields) ? tracker.fields : [];
+
+  const [analytics, setAnalytics] = useState<any>({ fieldAnalytics: {}, dateRange: { first: 'N/A', last: 'N/A' }, totalEntries: 0 });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     generateAnalytics();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entries, tracker]);
 
   const generateAnalytics = () => {
-    if (!entries.length) {
+    if (!safeEntries.length) {
+      setAnalytics({ fieldAnalytics: {}, dateRange: { first: 'N/A', last: 'N/A' }, totalEntries: 0 });
       setLoading(false);
       return;
     }
 
     const stats: any = {
-      totalEntries: entries.length,
+      totalEntries: safeEntries.length,
       dateRange: {
-        first: entries[entries.length - 1]?.date || 'N/A',
-        last: entries[0]?.date || 'N/A'
+        first: safeEntries[safeEntries.length - 1]?.date || 'N/A',
+        last: safeEntries[0]?.date || 'N/A'
       },
       fieldAnalytics: {}
     };
 
-    // Analyze each field
-    tracker.fields.forEach(field => {
-      const fieldData = entries.map(entry => entry[field.id]).filter(val => val !== undefined && val !== null && val !== '');
-      
+    safeFields.forEach(field => {
+      if (!field || !field.id) return;
+      const fieldData = safeEntries
+        .map(entry => entry?.[field.id])
+        .filter(val => val !== undefined && val !== null && val !== '');
+
       if (!fieldData.length) return;
 
       const fieldStats: any = {
         totalResponses: fieldData.length,
-        responseRate: Math.round((fieldData.length / entries.length) * 100)
+        responseRate: Math.round((fieldData.length / safeEntries.length) * 100)
       };
 
-      switch (field.type) {
-        case 'scale':
-        case 'number':
-          const numericData = fieldData.map(val => Number(val)).filter(val => !isNaN(val));
-          if (numericData.length) {
-            fieldStats.average = Math.round((numericData.reduce((a, b) => a + b, 0) / numericData.length) * 10) / 10;
-            fieldStats.min = Math.min(...numericData);
-            fieldStats.max = Math.max(...numericData);
-            fieldStats.trend = calculateTrend(numericData);
+      try {
+        switch (field.type) {
+          case 'scale':
+          case 'number': {
+            const numericData = fieldData
+              .map(val => Number(val))
+              .filter(val => Number.isFinite(val));
+            if (numericData.length) {
+              fieldStats.average = Math.round((numericData.reduce((a, b) => a + b, 0) / numericData.length) * 10) / 10;
+              fieldStats.min = Math.min(...numericData);
+              fieldStats.max = Math.max(...numericData);
+              fieldStats.trend = calculateTrend(numericData);
+            }
+            break;
           }
-          break;
 
-        case 'dropdown':
-        case 'checkbox':
-          const counts = fieldData.reduce((acc: any, val) => {
-            acc[val] = (acc[val] || 0) + 1;
-            return acc;
-          }, {});
-          fieldStats.distribution = Object.entries(counts)
-            .map(([value, count]) => ({ value, count: count as number, percentage: Math.round(((count as number) / fieldData.length) * 100) }))
-            .sort((a, b) => b.count - a.count);
-          fieldStats.mostCommon = fieldStats.distribution[0]?.value || 'N/A';
-          break;
+          case 'dropdown':
+          case 'checkbox': {
+            const counts = fieldData.reduce((acc: any, val) => {
+              const key = String(val);
+              acc[key] = (acc[key] || 0) + 1;
+              return acc;
+            }, {});
+            fieldStats.distribution = Object.entries(counts)
+              .map(([value, count]) => ({ value, count: count as number, percentage: Math.round(((count as number) / fieldData.length) * 100) }))
+              .sort((a, b) => b.count - a.count);
+            fieldStats.mostCommon = fieldStats.distribution[0]?.value || 'N/A';
+            break;
+          }
 
-        case 'multiselect':
-        case 'tags':
-          const allTags = fieldData.flat().filter(tag => tag);
-          const tagCounts = allTags.reduce((acc: any, tag) => {
-            acc[tag] = (acc[tag] || 0) + 1;
-            return acc;
-          }, {});
-          fieldStats.tagDistribution = Object.entries(tagCounts)
-            .map(([tag, count]) => ({ tag, count: count as number, percentage: Math.round(((count as number) / allTags.length) * 100) }))
-            .sort((a, b) => b.count - a.count)
-            .slice(0, 10); // Top 10 tags
-          fieldStats.totalUniqueTags = Object.keys(tagCounts).length;
-          fieldStats.mostUsedTag = fieldStats.tagDistribution[0]?.tag || 'N/A';
-          break;
+          case 'multiselect':
+          case 'tags': {
+            // Field data may be arrays-of-strings, comma strings, or single strings depending on history age.
+            const allTags = fieldData
+              .flatMap(val => Array.isArray(val) ? val : (typeof val === 'string' ? val.split(',').map(s => s.trim()) : [val]))
+              .filter(tag => tag !== undefined && tag !== null && tag !== '')
+              .map(tag => String(tag));
+            const tagCounts = allTags.reduce((acc: any, tag) => {
+              acc[tag] = (acc[tag] || 0) + 1;
+              return acc;
+            }, {});
+            fieldStats.tagDistribution = Object.entries(tagCounts)
+              .map(([tag, count]) => ({ tag, count: count as number, percentage: allTags.length ? Math.round(((count as number) / allTags.length) * 100) : 0 }))
+              .sort((a, b) => b.count - a.count)
+              .slice(0, 10);
+            fieldStats.totalUniqueTags = Object.keys(tagCounts).length;
+            fieldStats.mostUsedTag = fieldStats.tagDistribution[0]?.tag || 'N/A';
+            break;
+          }
 
-        case 'text':
-          fieldStats.averageLength = Math.round(fieldData.reduce((acc, text) => acc + text.length, 0) / fieldData.length);
-          fieldStats.longestEntry = Math.max(...fieldData.map((text: string) => text.length));
-          break;
+          case 'text': {
+            const textLengths = fieldData.map(v => String(v ?? '').length);
+            if (textLengths.length) {
+              fieldStats.averageLength = Math.round(textLengths.reduce((a, b) => a + b, 0) / textLengths.length);
+              fieldStats.longestEntry = textLengths.reduce((a, b) => Math.max(a, b), 0);
+            }
+            break;
+          }
+        }
+      } catch (err) {
+        // Per-field failure shouldn't kill the whole view.
+        console.error(`[CustomTrackerAnalytics] field "${field.id}" (${field.type}) failed:`, err);
       }
 
       stats.fieldAnalytics[field.id] = fieldStats;
@@ -175,7 +202,7 @@ export default function CustomTrackerAnalytics({ tracker, entries }: CustomTrack
     );
   }
 
-  if (!entries.length) {
+  if (!safeEntries.length) {
     return (
       <Card>
         <CardContent className="pt-6">
@@ -183,7 +210,7 @@ export default function CustomTrackerAnalytics({ tracker, entries }: CustomTrack
             <BarChart3 className="h-12 w-12 mx-auto text-muted-foreground" />
             <h3 className="text-lg font-semibold">No Data Yet</h3>
             <p className="text-muted-foreground">
-              Start using your <strong>{tracker.name}</strong> tracker to see analytics here!
+              Start using your <strong>{tracker?.name || 'this'}</strong> tracker to see analytics here!
             </p>
           </div>
         </CardContent>
@@ -198,28 +225,28 @@ export default function CustomTrackerAnalytics({ tracker, entries }: CustomTrack
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BarChart3 className="h-5 w-5 text-primary" />
-            {tracker.name} Analytics
+            {tracker?.name || 'Tracker'} Analytics
           </CardTitle>
           <CardDescription>
-            Insights from {analytics.totalEntries} entries
+            Insights from {analytics.totalEntries ?? safeEntries.length} entries
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-primary">{analytics.totalEntries}</div>
+              <div className="text-2xl font-bold text-primary">{analytics.totalEntries ?? safeEntries.length}</div>
               <div className="text-xs text-muted-foreground">Total Entries</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-500">{tracker.fields.length}</div>
+              <div className="text-2xl font-bold text-green-500">{safeFields.length}</div>
               <div className="text-xs text-muted-foreground">Fields Tracked</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-500">{analytics.dateRange.first}</div>
+              <div className="text-2xl font-bold text-blue-500">{analytics.dateRange?.first ?? 'N/A'}</div>
               <div className="text-xs text-muted-foreground">First Entry</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-purple-500">{analytics.dateRange.last}</div>
+              <div className="text-2xl font-bold text-purple-500">{analytics.dateRange?.last ?? 'N/A'}</div>
               <div className="text-xs text-muted-foreground">Latest Entry</div>
             </div>
           </div>
@@ -228,7 +255,7 @@ export default function CustomTrackerAnalytics({ tracker, entries }: CustomTrack
 
       {/* 🎯 FIELD ANALYTICS */}
       <div className="grid gap-4">
-        {tracker.fields.map(field => {
+        {safeFields.map(field => {
           const fieldStats = analytics.fieldAnalytics[field.id];
           if (!fieldStats) return null;
 
@@ -303,14 +330,14 @@ export default function CustomTrackerAnalytics({ tracker, entries }: CustomTrack
                 )}
 
                 {/* Text Fields */}
-                {field.type === 'text' && fieldStats.averageLength && (
+                {field.type === 'text' && (fieldStats.averageLength != null) && (
                   <div className="grid grid-cols-2 gap-4 text-center">
                     <div>
                       <div className="text-xl font-bold">{fieldStats.averageLength}</div>
                       <div className="text-xs text-muted-foreground">Avg Length</div>
                     </div>
                     <div>
-                      <div className="text-xl font-bold">{fieldStats.longestEntry}</div>
+                      <div className="text-xl font-bold">{fieldStats.longestEntry ?? 0}</div>
                       <div className="text-xs text-muted-foreground">Longest Entry</div>
                     </div>
                   </div>
@@ -321,5 +348,13 @@ export default function CustomTrackerAnalytics({ tracker, entries }: CustomTrack
         })}
       </div>
     </div>
+  );
+}
+
+export default function CustomTrackerAnalytics(props: CustomTrackerAnalyticsProps) {
+  return (
+    <AnalyticsErrorBoundary label="CustomTrackerAnalytics">
+      <CustomTrackerAnalyticsInner {...props} />
+    </AnalyticsErrorBoundary>
   );
 }

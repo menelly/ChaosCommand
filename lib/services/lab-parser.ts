@@ -353,18 +353,28 @@ function parseResultRangeFormat(
   const results: LabResult[] = [];
 
   // Detect: need at least one "Result:" line followed reasonably soon by a
-  // "Reference range:" line. Keep cheap so it skips real fast on unrelated text.
-  if (!/^Result:\s/m.test(text) || !/^Reference range:\s/m.test(text)) {
+  // "Reference range:" line. Allow leading whitespace — VA / My HealtheVet
+  // and several specialist panels indent these lines in the extracted text.
+  if (!/^\s*Result:\s/m.test(text) || !/^\s*Reference range:\s/m.test(text)) {
     return results;
   }
 
   // Match a card. Test name is on the line BEFORE "Result:". Use multiline
-  // mode so ^/$ are line anchors. Capture across the card.
+  // mode so ^/$ are line anchors. Tolerate leading whitespace AND blank
+  // lines between the test header and the Result line (My HealtheVet
+  // formats often render them with a paragraph break).
+  //
+  // NOTE: test_name char class uses literal ' ' instead of \s so the
+  // regex cannot bleed the test name across newlines. With \s, captures
+  // like "you.\ndsDNA ANTIBODY" happened because the line above (the
+  // boilerplate "your provider will contact you.") got pulled in.
   const pattern = new RegExp(
-    '^(?<test_name>[A-Za-z][\\w\\s\\-\\(\\)/\\.,]{1,80}?)\\s*\\n' +
-    '\\s*Result:\\s*(?<value>[<>]?\\s*\\d+(?:\\.\\d+)?)\\s*(?<unit>' + LAB_UNITS + ')\\s*' +
-    '(?:\\((?<flag_paren>[A-Za-z]+)\\)|\\b(?<flag_bare>HIGH|LOW|HH|LL|H|L|CRITICAL|CRIT|ABNORMAL|ABN)\\b)?\\s*\\n' +
-    '\\s*Reference range:\\s*(?<ref>[^\\n]+?)\\s*\\n',
+    '^[ \\t]*(?<test_name>[A-Za-z][\\w \\-\\(\\)/\\.,]{1,80}?)[ \\t]*\\n' +
+    '(?:[ \\t]*\\n)*' +
+    '[ \\t]*Result:\\s*(?<value>[<>]?\\s*\\d+(?:\\.\\d+)?)\\s*(?<unit>' + LAB_UNITS + ')\\s*' +
+    '(?:\\((?<flag_paren>[A-Za-z]+)\\)|\\b(?<flag_bare>HIGH|LOW|HH|LL|H|L|CRITICAL|CRIT|ABNORMAL|ABN)\\b)?[ \\t]*\\n' +
+    '(?:[ \\t]*\\n)*' +
+    '[ \\t]*Reference range:\\s*(?<ref>[^\\n]+?)[ \\t]*\\n',
     'gmi'
   );
 
@@ -447,8 +457,82 @@ function parseResultRangeFormat(
 // ============================================================================
 
 /**
+ * Diagnostic trace describing what each parser saw on the most recent
+ * extraction attempt. Written to localStorage under DIAG_KEY by
+ * extractLabResults() so the user-facing import page can surface it when
+ * 0 results are returned. Production-debuggable without devtools.
+ */
+export interface LabParserDiagnostics {
+  timestamp: string
+  textLength: number
+  textSample: string // first ~3000 chars of (cleaned) input
+  attempts: Array<{
+    parser: 'vertical' | 'mayo' | 'result-range' | 'horizontal'
+    detectionPassed: boolean
+    detectionReason: string
+    resultsFound: number
+    sampleResults: string[] // first 3 testNames found, for quick eyeballing
+  }>
+  finalResultsCount: number
+  finalParser: 'vertical' | 'mayo' | 'result-range' | 'horizontal' | 'none'
+}
+
+const DIAG_KEY = 'chaos-lab-parser-last-trace'
+
+function detectionVertical(text: string): { ok: boolean; reason: string } {
+  const ok = /Test Date\s*\n[\s\S]*?\nTest Location/.test(text)
+  return { ok, reason: ok ? 'Found "Test Date ... Test Location" header' : 'No "Test Date / Test Location" signature (MyChart/Epic format)' }
+}
+function detectionMayo(text: string): { ok: boolean; reason: string } {
+  if (/Test Date\s*\n[\s\S]*?\nTest Location/.test(text)) return { ok: false, reason: 'Skipped: vertical format detected (Mayo only runs on non-vertical)' }
+  const count = (text.match(/Normal range:/g) || []).length
+  return { ok: count >= 2, reason: count >= 2 ? `Found ${count} "Normal range:" entries` : `Need ≥2 "Normal range:" entries; found ${count}` }
+}
+function detectionResultRange(text: string): { ok: boolean; reason: string } {
+  const hasResult = /^\s*Result:\s/m.test(text)
+  const hasRef = /^\s*Reference range:\s/m.test(text)
+  if (!hasResult) return { ok: false, reason: 'No line starting with "Result:"' }
+  if (!hasRef) return { ok: false, reason: 'No line starting with "Reference range:"' }
+  return { ok: true, reason: 'Found both "Result:" and "Reference range:" lines' }
+}
+
+function tryParser(
+  parser: 'vertical' | 'mayo' | 'result-range' | 'horizontal',
+  fn: (t: string, ex: Set<string>, seen: Set<string>) => LabResult[],
+  detectionFn: ((t: string) => { ok: boolean; reason: string }) | null,
+  text: string,
+  exclusions: Set<string>,
+  seen: Set<string>,
+  attempts: LabParserDiagnostics['attempts']
+): LabResult[] {
+  const detection = detectionFn ? detectionFn(text) : { ok: true, reason: 'Fallback parser, always runs' }
+  let results: LabResult[] = []
+  if (detection.ok) {
+    try {
+      results = fn(text, exclusions, seen)
+    } catch (e) {
+      attempts.push({ parser, detectionPassed: detection.ok, detectionReason: `${detection.reason} — but parser threw: ${e instanceof Error ? e.message : String(e)}`, resultsFound: 0, sampleResults: [] })
+      return []
+    }
+  }
+  attempts.push({
+    parser,
+    detectionPassed: detection.ok,
+    detectionReason: detection.reason,
+    resultsFound: results.length,
+    sampleResults: results.slice(0, 3).map(r => `${r.testName}: ${r.valueText} ${r.unit}`),
+  })
+  return results
+}
+
+/**
  * Extract lab results from text. Tries vertical (MyChart), mayo, result-range
  * card (LabCorp/Quest/specialist panels), then horizontal as fallback.
+ *
+ * Side effect: writes a diagnostic trace to localStorage[DIAG_KEY] describing
+ * which parsers were attempted and why each succeeded/failed. The import
+ * page reads this when results are empty so users can see what went wrong
+ * without devtools access.
  */
 export function extractLabResults(
   text: string,
@@ -457,31 +541,63 @@ export function extractLabResults(
   const nameExclusions = buildExclusionSet(demographics);
   const seenTests = new Set<string>();
 
-  // Try vertical format first (MyChart/Epic)
-  const verticalResults = parseVerticalFormat(text, nameExclusions, seenTests);
+  const attempts: LabParserDiagnostics['attempts'] = []
+  let finalResults: LabResult[] = []
+  let finalParser: LabParserDiagnostics['finalParser'] = 'none'
+
+  // Vertical (MyChart/Epic)
+  const verticalResults = tryParser('vertical', parseVerticalFormat, detectionVertical, text, nameExclusions, seenTests, attempts)
   if (verticalResults.length > 0) {
-    console.log(`🧪 Vertical format: ${verticalResults.length} results`);
-    return sortLabResults(verticalResults);
+    finalResults = verticalResults; finalParser = 'vertical'
+  } else {
+    // Mayo
+    const mayoResults = tryParser('mayo', parseMayoFormat, detectionMayo, text, nameExclusions, seenTests, attempts)
+    if (mayoResults.length > 0) {
+      finalResults = mayoResults; finalParser = 'mayo'
+    } else {
+      // Result-range card (LabCorp / Quest / VA / specialist panels)
+      const rangeResults = tryParser('result-range', parseResultRangeFormat, detectionResultRange, text, nameExclusions, seenTests, attempts)
+      if (rangeResults.length > 0) {
+        finalResults = rangeResults; finalParser = 'result-range'
+      } else {
+        // Horizontal (last resort)
+        const horizontalResults = tryParser('horizontal', parseHorizontalFormat, null, text, nameExclusions, seenTests, attempts)
+        if (horizontalResults.length > 0) {
+          finalResults = horizontalResults; finalParser = 'horizontal'
+        }
+      }
+    }
   }
 
-  // Try Mayo format
-  const mayoResults = parseMayoFormat(text, nameExclusions, seenTests);
-  if (mayoResults.length > 0) {
-    console.log(`🧪 Mayo format: ${mayoResults.length} results`);
-    return sortLabResults(mayoResults);
-  }
+  // Persist diagnostics for production debugging via the import-page viewer.
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const diag: LabParserDiagnostics = {
+        timestamp: new Date().toISOString(),
+        textLength: text.length,
+        textSample: text.slice(0, 3000),
+        attempts,
+        finalResultsCount: finalResults.length,
+        finalParser,
+      }
+      localStorage.setItem(DIAG_KEY, JSON.stringify(diag))
+    }
+  } catch { /* localStorage full or blocked — fail silent */ }
 
-  // Try Result/Reference-range card format (LabCorp / Quest / specialist panels)
-  const resultRangeResults = parseResultRangeFormat(text, nameExclusions, seenTests);
-  if (resultRangeResults.length > 0) {
-    console.log(`🧪 Result-range card format: ${resultRangeResults.length} results`);
-    return sortLabResults(resultRangeResults);
-  }
+  console.log(`🧪 Lab parser: ${finalResults.length} results via ${finalParser}`)
+  return sortLabResults(finalResults)
+}
 
-  // Fall back to horizontal format
-  const horizontalResults = parseHorizontalFormat(text, nameExclusions, seenTests);
-  console.log(`🧪 Horizontal format: ${horizontalResults.length} results`);
-  return sortLabResults(horizontalResults);
+/** Read the most recent parser diagnostic trace, if any. */
+export function getLastLabParserDiagnostics(): LabParserDiagnostics | null {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return null
+    const raw = localStorage.getItem(DIAG_KEY)
+    if (!raw) return null
+    return JSON.parse(raw) as LabParserDiagnostics
+  } catch {
+    return null
+  }
 }
 
 function sortLabResults(results: LabResult[]): LabResult[] {

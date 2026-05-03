@@ -20,7 +20,7 @@
  */
 "use client"
 
-import { useState } from "react"
+import { useState, type ReactNode } from "react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -32,6 +32,7 @@ import { Badge } from "@/components/ui/badge"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { format } from 'date-fns'
 import { cn } from "@/lib/utils"
 import {
@@ -39,8 +40,48 @@ import {
   Plus,
   Edit,
   Brain,
-  X
+  X,
+  ChevronDown,
 } from 'lucide-react'
+
+/**
+ * Migraine-friendly collapsible form section. Default-closed for optional
+ * sections so the form starts compact — important when a user filling this
+ * out is mid-headache and doesn't want to scroll past 12 sections of
+ * checkboxes to find the field they need.
+ */
+function FormSection({
+  title,
+  defaultOpen = false,
+  children,
+}: {
+  title: ReactNode
+  defaultOpen?: boolean
+  children: ReactNode
+}) {
+  const [open, setOpen] = useState(defaultOpen)
+  return (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <CollapsibleTrigger asChild>
+        <button
+          type="button"
+          className="flex w-full items-center justify-between border-b border-border/50 pb-2 text-left hover:opacity-80 transition-opacity"
+        >
+          <span className="text-sm font-medium">{title}</span>
+          <ChevronDown
+            className={cn(
+              "h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200",
+              open ? "rotate-0" : "-rotate-90"
+            )}
+          />
+        </button>
+      </CollapsibleTrigger>
+      <CollapsibleContent className="mt-3">
+        {children}
+      </CollapsibleContent>
+    </Collapsible>
+  )
+}
 import { HeadPainEntry, HeadPainFormState } from './head-pain-types'
 import {
   PAIN_LOCATIONS,
@@ -243,9 +284,8 @@ export function HeadPainForm({ isOpen, onClose, onSave, editingEntry, selectedDa
           </div>
 
           {/* Pain Location */}
-          <div>
-            <Label>Pain Location (select all that apply)</Label>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
+          <FormSection title="Pain Location (select all that apply)" defaultOpen>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
               {PAIN_LOCATIONS.map((location) => (
                 <div key={location.value} className="flex items-center space-x-2">
                   <Checkbox
@@ -259,12 +299,11 @@ export function HeadPainForm({ isOpen, onClose, onSave, editingEntry, selectedDa
                 </div>
               ))}
             </div>
-          </div>
+          </FormSection>
 
           {/* Pain Type */}
-          <div>
-            <Label>Pain Type (select all that apply)</Label>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
+          <FormSection title="Pain Type (select all that apply)" defaultOpen>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
               {PAIN_TYPES.map((type) => (
                 <div key={type.value} className="flex items-center space-x-2">
                   <Checkbox
@@ -278,9 +317,10 @@ export function HeadPainForm({ isOpen, onClose, onSave, editingEntry, selectedDa
                 </div>
               ))}
             </div>
-          </div>
+          </FormSection>
 
           {/* Duration & Timing */}
+          <FormSection title="Duration & Timing">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="duration">Duration</Label>
@@ -324,9 +364,10 @@ export function HeadPainForm({ isOpen, onClose, onSave, editingEntry, selectedDa
               </p>
             </div>
           </div>
+          </FormSection>
 
           {/* Aura Section */}
-          <div>
+          <FormSection title="Aura">
             <div className="flex items-center space-x-2 mb-3">
               <Checkbox
                 id="aura-present"
@@ -370,12 +411,11 @@ export function HeadPainForm({ isOpen, onClose, onSave, editingEntry, selectedDa
                 </div>
               </div>
             )}
-          </div>
+          </FormSection>
 
           {/* Associated Symptoms */}
-          <div>
-            <Label>Associated Symptoms</Label>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
+          <FormSection title="Associated Symptoms">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
               {ASSOCIATED_SYMPTOMS.map((symptom) => (
                 <div key={symptom.value} className="flex items-center space-x-2">
                   <Checkbox
@@ -389,12 +429,11 @@ export function HeadPainForm({ isOpen, onClose, onSave, editingEntry, selectedDa
                 </div>
               ))}
             </div>
-          </div>
+          </FormSection>
 
           {/* Triggers */}
-          <div>
-            <Label>Possible Triggers</Label>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
+          <FormSection title="Possible Triggers">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
               {TRIGGERS.map((trigger) => (
                 <div key={trigger.value} className="flex items-center space-x-2">
                   <Checkbox
@@ -408,12 +447,11 @@ export function HeadPainForm({ isOpen, onClose, onSave, editingEntry, selectedDa
                 </div>
               ))}
             </div>
-          </div>
+          </FormSection>
 
           {/* Treatments */}
-          <div>
-            <Label>Treatments Used</Label>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
+          <FormSection title="Treatments Used">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
               {TREATMENTS.map((treatment) => (
                 <div key={treatment.value} className="flex items-center space-x-2">
                   <Checkbox
@@ -448,12 +486,11 @@ export function HeadPainForm({ isOpen, onClose, onSave, editingEntry, selectedDa
                 </div>
               </div>
             )}
-          </div>
+          </FormSection>
 
           {/* Functional Impact */}
-          <div>
-            <Label>Functional Impact</Label>
-            <div className="grid grid-cols-1 gap-2 mt-2">
+          <FormSection title="Functional Impact">
+            <div className="grid grid-cols-1 gap-2">
               {FUNCTIONAL_IMPACT_OPTIONS.map((option) => (
                 <div key={option.value} className="flex items-center space-x-2">
                   <Checkbox
@@ -467,34 +504,35 @@ export function HeadPainForm({ isOpen, onClose, onSave, editingEntry, selectedDa
                 </div>
               ))}
             </div>
-          </div>
+          </FormSection>
 
-          {/* Recovery & Residual Symptoms */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="recovery-time">Recovery Time (optional)</Label>
-              <Input
-                id="recovery-time"
-                value={recoveryTime}
-                onChange={(e) => setRecoveryTime(e.target.value)}
-                placeholder="e.g., 2 hours, overnight"
-              />
+          {/* Recovery & Weather */}
+          <FormSection title="Recovery & Weather">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="recovery-time">Recovery Time (optional)</Label>
+                <Input
+                  id="recovery-time"
+                  value={recoveryTime}
+                  onChange={(e) => setRecoveryTime(e.target.value)}
+                  placeholder="e.g., 2 hours, overnight"
+                />
+              </div>
+              <div>
+                <Label htmlFor="weather">Weather (optional)</Label>
+                <Input
+                  id="weather"
+                  value={weather}
+                  onChange={(e) => setWeather(e.target.value)}
+                  placeholder="e.g., rainy, high pressure"
+                />
+              </div>
             </div>
-            <div>
-              <Label htmlFor="weather">Weather (optional)</Label>
-              <Input
-                id="weather"
-                value={weather}
-                onChange={(e) => setWeather(e.target.value)}
-                placeholder="e.g., rainy, high pressure"
-              />
-            </div>
-          </div>
+          </FormSection>
 
           {/* Residual Symptoms */}
-          <div>
-            <Label>Residual Symptoms (after main pain subsided)</Label>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
+          <FormSection title="Residual Symptoms (after main pain subsided)">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
               {RESIDUAL_SYMPTOMS.map((symptom) => (
                 <div key={symptom.value} className="flex items-center space-x-2">
                   <Checkbox
@@ -508,11 +546,10 @@ export function HeadPainForm({ isOpen, onClose, onSave, editingEntry, selectedDa
                 </div>
               ))}
             </div>
-          </div>
+          </FormSection>
 
           {/* Work Impact */}
-          <div>
-            <Label htmlFor="work-impact">Work/School Impact (optional)</Label>
+          <FormSection title="Work/School Impact (optional)">
             <Textarea
               id="work-impact"
               value={workImpact}
@@ -520,11 +557,10 @@ export function HeadPainForm({ isOpen, onClose, onSave, editingEntry, selectedDa
               placeholder="How did this affect your work or school activities?"
               rows={2}
             />
-          </div>
+          </FormSection>
 
           {/* Notes */}
-          <div>
-            <Label htmlFor="notes">Additional Notes (optional)</Label>
+          <FormSection title="Additional Notes (optional)">
             <Textarea
               id="notes"
               value={notes}
@@ -532,17 +568,16 @@ export function HeadPainForm({ isOpen, onClose, onSave, editingEntry, selectedDa
               placeholder="Any additional details, observations, or context..."
               rows={3}
             />
-          </div>
+          </FormSection>
 
           {/* Tags */}
-          <div>
-            <Label>Tags (optional)</Label>
+          <FormSection title="Tags (optional)">
             <TagInput
               value={tags}
               onChange={setTags}
               placeholder="Add tags like 'hormonal', 'weather', 'work', 'nope'..."
             />
-          </div>
+          </FormSection>
 
           {/* Action Buttons */}
           <div className="flex gap-3 pt-4">

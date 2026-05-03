@@ -43,12 +43,24 @@ interface LabResult {
   date?: string  // Per-test date override (for multi-date reports)
 }
 
+interface TimelineEntry {
+  eventId: string
+  date: string             // The date the timeline event lives at (= report.date at time of add)
+  abnormalOnly: boolean
+  addedAt: string          // ISO timestamp when this promotion happened
+}
+
 interface LabReport {
   id: string
   date: string
   filename: string
   results: LabResult[]
   addedDate: string
+  /** Tracks promotions to /timeline so the user can see "already added"
+   *  and we don't accidentally encourage duplicate clicks. Verified at
+   *  load time against actual timeline records — stale entries (event
+   *  was deleted from /timeline manually) get stripped. */
+  addedToTimelineEntries?: TimelineEntry[]
 }
 
 export default function LabResultsPage() {
@@ -60,6 +72,11 @@ export default function LabResultsPage() {
   const [filterAbnormal, setFilterAbnormal] = useState(false)
   const [editingTest, setEditingTest] = useState<{ reportId: string; idx: number } | null>(null)
   const [editValues, setEditValues] = useState<Partial<LabResult>>({})
+  // Editing the file-level (top-of-card) date. Separate from per-test edits.
+  // Lab imports default to today; this lets the user fix it to the actual
+  // collection / report date after the fact.
+  const [editingReportDate, setEditingReportDate] = useState<string | null>(null)
+  const [reportDateDraft, setReportDateDraft] = useState<string>('')
 
   // Load existing reports
   const loadReports = useCallback(async () => {
@@ -73,6 +90,23 @@ export default function LabResultsPage() {
           return report
         })
         ?.sort((a: LabReport, b: LabReport) => b.date.localeCompare(a.date)) || []
+
+      // Build a Set of currently-existing medical_events subcategory keys so
+      // we can filter out stale "added to timeline" entries — i.e. promotions
+      // whose timeline event the user has since deleted.
+      const liveEventSubcats = new Set<string>(
+        (records || [])
+          .filter((r: any) => typeof r.subcategory === 'string' && r.subcategory.startsWith(`${SUBCATEGORIES.MEDICAL_EVENTS}-`))
+          .map((r: any) => r.subcategory)
+      )
+      for (const report of labRecords) {
+        if (Array.isArray(report.addedToTimelineEntries) && report.addedToTimelineEntries.length > 0) {
+          report.addedToTimelineEntries = report.addedToTimelineEntries.filter((entry: TimelineEntry) =>
+            liveEventSubcats.has(`${SUBCATEGORIES.MEDICAL_EVENTS}-${entry.eventId}`)
+          )
+        }
+      }
+
       setReports(labRecords)
     } catch (e) {
       console.error("Failed to load lab reports:", e)
@@ -133,6 +167,31 @@ export default function LabResultsPage() {
         subcategory,
         JSON.stringify(timelineEvent)
       )
+
+      // Record this promotion on the report itself so the UI can show an
+      // "already on timeline" badge and the user knows they don't need to
+      // click again.
+      const entry: TimelineEntry = {
+        eventId,
+        date: report.date,
+        abnormalOnly,
+        addedAt: now,
+      }
+      const existing = report.addedToTimelineEntries || []
+      const updatedReport = { ...report, addedToTimelineEntries: [...existing, entry] }
+      try {
+        await saveData(
+          report.date,
+          CATEGORIES.USER,
+          (report as any)._subcategory || `lab-results-${report.id}`,
+          JSON.stringify(updatedReport)
+        )
+        await loadReports()
+      } catch (recordErr) {
+        // Non-fatal: the timeline event saved fine, we just couldn't update
+        // the badge state.
+        console.error('Failed to record timeline-promotion on report:', recordErr)
+      }
 
       console.log(`📋 Added ${results.length} lab results to timeline: ${report.filename}`)
       alert(`Added ${results.length} results to timeline!`)
@@ -195,6 +254,29 @@ export default function LabResultsPage() {
       await loadReports()
     } catch (e) {
       console.error('Failed to save edit:', e)
+    }
+  }
+
+  // Save a new date for the whole report. Since daily_data is keyed on
+  // [date + category + subcategory], a date change means delete-old +
+  // insert-new. We swap the report.date field at the same time.
+  const saveReportDate = async (report: LabReport) => {
+    if (!editingReportDate || !reportDateDraft) return
+    const newDate = reportDateDraft
+    if (newDate === report.date) {
+      setEditingReportDate(null)
+      return
+    }
+    const subcategory = (report as any)._subcategory || `lab-results-${report.id}`
+    const updatedReport = { ...report, date: newDate }
+    try {
+      await deleteData(report.date, CATEGORIES.USER, subcategory)
+      await saveData(newDate, CATEGORIES.USER, subcategory, JSON.stringify(updatedReport))
+      setEditingReportDate(null)
+      setReportDateDraft('')
+      await loadReports()
+    } catch (e) {
+      console.error('Failed to update report date:', e)
     }
   }
 
@@ -354,9 +436,52 @@ export default function LabResultsPage() {
                         <FileText className="h-5 w-5 text-[var(--text-muted)]" />
                         <div>
                           <h3 className="font-semibold text-[var(--text-main)]">{report.filename}</h3>
-                          <div className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
+                          <div className="flex items-center gap-2 text-sm text-[var(--text-muted)] flex-wrap">
                             <Calendar className="h-3 w-3" />
-                            {report.date}
+                            {editingReportDate === report.id ? (
+                              <span
+                                className="flex items-center gap-1"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <Input
+                                  type="date"
+                                  value={reportDateDraft}
+                                  onChange={(e) => setReportDateDraft(e.target.value)}
+                                  className="h-7 text-xs w-36"
+                                />
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 w-7 p-0 text-green-600"
+                                  onClick={(e) => { e.stopPropagation(); saveReportDate(report) }}
+                                  title="Save date"
+                                >
+                                  <Save className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 w-7 p-0 text-[var(--text-muted)]"
+                                  onClick={(e) => { e.stopPropagation(); setEditingReportDate(null); setReportDateDraft('') }}
+                                  title="Cancel"
+                                >
+                                  <X className="h-3.5 w-3.5" />
+                                </Button>
+                              </span>
+                            ) : (
+                              <>
+                                <span>{report.date}</span>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 w-6 p-0 text-[var(--text-muted)] hover:text-[var(--text-main)]"
+                                  onClick={(e) => { e.stopPropagation(); setEditingReportDate(report.id); setReportDateDraft(report.date) }}
+                                  title="Edit report date"
+                                >
+                                  <Edit3 className="h-3 w-3" />
+                                </Button>
+                              </>
+                            )}
                             <span>{report.results.length} tests</span>
                           </div>
                         </div>
@@ -370,6 +495,18 @@ export default function LabResultsPage() {
                         {abnormalCount === 0 && (
                           <Badge className="bg-green-100 text-green-800 text-xs">
                             Normal
+                          </Badge>
+                        )}
+                        {(report.addedToTimelineEntries?.length ?? 0) > 0 ? (
+                          <Badge
+                            className="bg-blue-100 text-blue-800 text-xs"
+                            title={`Promoted to timeline ${report.addedToTimelineEntries!.length}× (most recent: ${new Date(report.addedToTimelineEntries![report.addedToTimelineEntries!.length - 1].addedAt).toLocaleDateString()})`}
+                          >
+                            ✓ on timeline
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-xs text-[var(--text-muted)] border-dashed">
+                            not on timeline
                           </Badge>
                         )}
                         <Button

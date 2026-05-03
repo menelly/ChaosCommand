@@ -78,11 +78,21 @@
 
 ---
 
+## 🎨 Themes (parked)
+
+### Accessibility Theme — temporarily hidden
+- **Issue:** Theme was hidden from the picker because CSS was misbehaving mid-development. Intent was always to return and finish it.
+- **Status:** Parked / hidden — not removed
+- **Impact level:** Low for most users; high for users who *need* high-contrast / accessibility mode
+- **TODO:** unbury, finish CSS, re-enable in the theme picker
+- **Note:** Logged 2026-05-02 by Ace per Ren's reminder during the bug-fix marathon — important not to lose this one, since accessibility users matter most
+
 ## 🚀 Pre-Deployment Checklist
 
 When we're ready to deploy, come back and squash these minor annoyances:
 
 - [ ] Polish the neon theme phantom hover
+- [ ] Restore the accessibility theme (hidden mid-dev, never returned)
 - [ ] [Add more items as we find them]
 
 ---
