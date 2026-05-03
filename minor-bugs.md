@@ -78,6 +78,25 @@
 
 ---
 
+## 🐛 Pattern: UTC midnight makes data "disappear"
+
+### `toISOString().split('T')[0]` audit needed across codebase
+- **Pattern:** code that does `const today = new Date().toISOString().split('T')[0]` is using **UTC date**, not local. For EST users between 7-8 PM (when UTC midnight crosses) and the next morning, "today" diverges from the user's actual day. Anything saved/loaded by this UTC "today" gets keyed to the WRONG date from the user's perspective.
+- **Confirmed manifestation 2026-05-02:** Custom tracker definitions disappeared because Forge saved at 2026-05-02 UTC (when Ren created it ~6pm EST = 11pm UTC) but the listing page queried for 2026-05-03 UTC (after EST midnight rollover crossed UTC midnight). Fixed by querying across all dates and consolidating into the most-recent record.
+- **Files patched:** `app/custom/page.tsx`, `app/custom-tracker/page.tsx`, `components/forge/tracker-builder.tsx`
+- **TODO audit:** grep `toISOString().split` across the whole repo. For each callsite ask: does this represent the user's local "today" (UI-facing) or a stable storage key? If the latter, consider a sentinel date or scan-across-dates pattern.
+- **Bigger fix to consider:** `formatDateForStorage(new Date())` already exists in the codebase and uses local timezone — most `toISOString().split('T')[0]` callsites should probably switch to it.
+
+## ✏️ Custom Trackers — missing edit + delete
+
+### No way to delete a custom tracker, no way to edit one
+- **Issue:** Once a tracker is built via the Forge, it lives forever in `custom-trackers` content array. There's no UI to remove it (e.g. a trash icon on each tracker card on /custom) and no way to edit its fields after creation.
+- **Impact level:** Medium — clutter accumulates, mistakes are permanent, can't iterate on a tracker's design
+- **Fix sketch:**
+  - **Delete:** trash icon on each tracker card on /custom, confirm dialog, splice from `content.trackers` array on the most-recent custom-trackers record, save back. Also delete any `custom-${trackerId}` data records (or leave them as orphaned history — Ren's call).
+  - **Edit:** harder. Cleanest path is "open in Forge with the existing tracker pre-loaded" so the same builder UI handles both create + edit. Tracker-builder.tsx would need an optional `editingTracker` prop and on save would replace by id rather than append.
+- **Status:** Logged 2026-05-02 by Ren after we resurrected Octopus Hugs from the UTC-date bug. "Later us problem."
+
 ## 🔄 Sync Coverage Gaps
 
 ### Command Center main page items don't sync between devices

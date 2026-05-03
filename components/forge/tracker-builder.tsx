@@ -91,7 +91,7 @@ export default function TrackerBuilder() {
 
   // 🔨 HOOKS
   const { toast } = useToast();
-  const { saveData, getCategoryData } = useDailyData();
+  const { saveData, getCategoryData, getAllCategoryData } = useDailyData();
 
   // 🔨 TRACKER MANAGEMENT
   const updateTracker = (updates: Partial<CustomTracker>) => {
@@ -150,9 +150,21 @@ export default function TrackerBuilder() {
       // 🔥 LOAD EXISTING TRACKERS AND ADD TO ARRAY
       const today = new Date().toISOString().split('T')[0];
 
-      // Get existing custom trackers
-      const records = await getCategoryData(today, 'user');
-      const existingRecord = records.find(record => record.subcategory === 'custom-trackers');
+      // Tracker DEFINITIONS aren't date-stamped data; they're user-level
+      // config. Search across ALL dates so we don't miss records keyed
+      // to a different UTC bucket (timezone bug — toISOString returns
+      // UTC, so a tracker created at 6pm EST May 2 saves at 2026-05-02
+      // UTC, but the next day viewing at noon EST looks for 2026-05-03
+      // UTC and finds nothing). Take the most recent record's tracker
+      // list, append the new tracker, save the merged list to today.
+      // Over time everything consolidates into the most-recent bucket.
+      const allRecords = await getAllCategoryData('user');
+      const customRecords = (allRecords || []).filter(
+        (record: any) => record.subcategory === 'custom-trackers'
+      );
+      const existingRecord = customRecords.length > 0
+        ? customRecords.sort((a: any, b: any) => String(b.date).localeCompare(String(a.date)))[0]
+        : null;
 
       // Build array of trackers (existing + new)
       let allTrackers: CustomTracker[] = [];

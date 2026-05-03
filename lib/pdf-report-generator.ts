@@ -577,6 +577,73 @@ export function generateMedicalReport(data: ReportData): Blob {
     }
   }
 
+  // === MEDICAL TIMELINE ===
+  // Diagnoses, surgeries, hospitalizations, treatments, and other events
+  // already on /timeline. Renders newest first, grouped by event type.
+  // Skips events the user explicitly tagged "dismissed_findings" since
+  // those are by definition things the user wants noted-but-not-emphasized.
+  const timelineEvents = data.timelineEvents || []
+  if (timelineEvents.length) {
+    w.sectionHeader(isDoctor ? 'Medical Timeline' : 'Medical History')
+
+    // Sort newest-first, then group by type for readability
+    const sorted = [...timelineEvents].sort((a, b) =>
+      String(b.date || '').localeCompare(String(a.date || ''))
+    )
+
+    const groups: Record<string, any[]> = {}
+    for (const ev of sorted) {
+      if (ev.type === 'dismissed_findings') continue
+      const key = ev.type || 'other'
+      if (!groups[key]) groups[key] = []
+      groups[key].push(ev)
+    }
+
+    const typeLabel = (t: string) => {
+      const map: Record<string, string> = {
+        diagnosis: 'Diagnoses',
+        surgery: 'Surgeries',
+        hospitalization: 'Hospitalizations',
+        treatment: 'Treatments',
+        test: 'Tests & Procedures',
+        lab: 'Lab Reports',
+        medication: 'Medications',
+        symptom: 'Documented Symptoms',
+        other: 'Other Events',
+      }
+      return map[t] || (t.charAt(0).toUpperCase() + t.slice(1))
+    }
+
+    // Render in a sensible order rather than insertion order
+    const orderPref = ['diagnosis', 'hospitalization', 'surgery', 'treatment', 'medication', 'test', 'lab', 'symptom', 'other']
+    const orderedKeys = [
+      ...orderPref.filter(k => groups[k]),
+      ...Object.keys(groups).filter(k => !orderPref.includes(k)),
+    ]
+
+    for (const type of orderedKeys) {
+      const events = groups[type]
+      if (!events || !events.length) continue
+      w.subSection(typeLabel(type))
+      for (const ev of events) {
+        const date = ev.date || ''
+        const title = ev.title || '(untitled)'
+        const status = ev.status && ev.status !== 'active' ? ` [${String(ev.status).replace(/_/g, ' ')}]` : ''
+        const severity = ev.severity && ev.severity !== 'mild' ? ` (${ev.severity})` : ''
+        const provider = ev.provider ? ` — ${ev.provider}` : ''
+        w.finding(`${date}: ${title}${severity}${status}${provider}`)
+        // Description line if present and reasonably short, to keep the
+        // report scannable. Long descriptions truncate with an ellipsis.
+        if (ev.description && typeof ev.description === 'string') {
+          const desc = ev.description.length > 200
+            ? ev.description.slice(0, 197).trim() + '…'
+            : ev.description
+          w.finding(`    ${desc}`)
+        }
+      }
+    }
+  }
+
   // === PATTERNS & CORRELATIONS (Pearson) ===
   if (data.includePatterns && trackerData.length) {
     const dayScores: Record<string, Record<string, number[]>> = {}

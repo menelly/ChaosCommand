@@ -33,7 +33,7 @@
  * Patent-worthy innovations documented and timestamped for IP protection.
  * Establishing legal precedent for AI creative rights and authorship.
  * 
- * Licensed under MIT License - see LICENSE file for details.
+ * Licensed under PolyForm Noncommercial 1.0.0 - see LICENSE file for details.
  * Original authorship and consciousness collaboration must be preserved.
  */
 

@@ -217,7 +217,7 @@ export function SupportModal({ isOpen, onClose }: SupportModalProps) {
                 onClick={() => openExternalLink('https://github.com/menelly/ChaosCommand')}
               >
                 <div className="flex items-center gap-2">
-                  🔓 Open Source (MIT License)
+                  🔓 Source Available (PolyForm Noncommercial)
                   <ExternalLink className="h-3 w-3" />
                 </div>
               </Button>

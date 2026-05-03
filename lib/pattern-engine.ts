@@ -247,7 +247,13 @@ function findCrossTrackerCorrelations(data: TrackerData): PatternInsight[] {
         }
       }
 
-      if (xVals.length < 5) continue
+      // Need at least 3 same-day overlaps to compute a meaningful Pearson.
+      // Was 5, but that was too aggressive for early-data users (e.g. 22
+      // entries across 11 days × 10 trackers means most pairs only share
+      // 1-2 days, and patterns NEVER surface). 3 is the floor where r is
+      // statistically interpretable; we'll mark anything under 5 as
+      // "preliminary signal" so the user knows to keep tracking.
+      if (xVals.length < 3) continue
 
       const r = pearsonCorrelation(xVals, yVals)
       const absR = Math.abs(r)
@@ -258,17 +264,25 @@ function findCrossTrackerCorrelations(data: TrackerData): PatternInsight[] {
         const nameB = formatTrackerName(trackerB)
         const direction = r > 0 ? 'increases with' : 'decreases as'
         const strength = absR >= 0.7 ? 'strong' : absR >= 0.5 ? 'moderate' : 'mild'
+        const preliminary = xVals.length < 5
 
         insights.push({
           id: `corr-${trackerA}-${trackerB}`,
           type: 'correlation',
-          title: `${nameA} ↔ ${nameB}`,
-          description: r > 0
-            ? `${nameA} severity ${direction} ${nameB} severity (${strength} correlation, r=${r.toFixed(2)}, based on ${xVals.length} days)`
-            : `${nameA} severity ${direction} ${nameB} increases (${strength} inverse correlation, r=${r.toFixed(2)}, based on ${xVals.length} days)`,
-          confidence: Math.round(Math.min(95, absR * 100 + xVals.length)),
-          impact: absR >= 0.6 ? 'high' : absR >= 0.4 ? 'medium' : 'low',
-          data: { trackerA, trackerB, correlation: r, sampleSize: xVals.length, strength }
+          title: `${nameA} ↔ ${nameB}${preliminary ? ' (preliminary)' : ''}`,
+          description: (() => {
+            const base = r > 0
+              ? `${nameA} severity ${direction} ${nameB} severity (${strength} correlation, r=${r.toFixed(2)}, based on ${xVals.length} days)`
+              : `${nameA} severity ${direction} ${nameB} increases (${strength} inverse correlation, r=${r.toFixed(2)}, based on ${xVals.length} days)`
+            return preliminary
+              ? `${base} — preliminary signal, keep tracking to confirm.`
+              : base
+          })(),
+          // Preliminary signals get their confidence haircut so the UI
+          // doesn't misread early data as a confident pattern.
+          confidence: Math.round(Math.min(95, absR * 100 + xVals.length * (preliminary ? 0.5 : 1))),
+          impact: preliminary ? 'low' : (absR >= 0.6 ? 'high' : absR >= 0.4 ? 'medium' : 'low'),
+          data: { trackerA, trackerB, correlation: r, sampleSize: xVals.length, strength, preliminary }
         })
       }
     }
@@ -583,7 +597,10 @@ function findCoOccurrences(data: TrackerData): PatternInsight[] {
       }
 
       const smallerSet = Math.min(setA.size, setB.size)
-      if (smallerSet < 5 || overlap < 3) continue
+      // Lowered from (smallerSet < 5 || overlap < 3) — too aggressive for
+      // early-data users. 3 entries with 2 overlaps is enough to flag a
+      // co-occurrence worth noticing.
+      if (smallerSet < 3 || overlap < 2) continue
 
       const overlapPct = (overlap / smallerSet) * 100
 

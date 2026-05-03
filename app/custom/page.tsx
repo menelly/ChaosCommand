@@ -65,7 +65,7 @@ export default function CustomTrackersIndex() {
   const [customTrackers, setCustomTrackers] = useState<TrackerButton[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
-  const { getCategoryData } = useDailyData()
+  const { getCategoryData, getAllCategoryData } = useDailyData()
 
   // 📡 LOAD ALL CUSTOM TRACKERS FROM FORGE DEPLOYMENTS
   const loadCustomTrackers = async () => {
@@ -73,10 +73,19 @@ export default function CustomTrackersIndex() {
       setIsLoading(true)
       console.log('🔥 Loading ALL custom trackers for Custom section...')
 
-      // Get today's date for loading custom trackers
-      const today = new Date().toISOString().split('T')[0]
-      const records = await getCategoryData(today, 'user')
-      const customTrackerRecord = records.find(record => record.subcategory === 'custom-trackers')
+      // Tracker DEFINITIONS aren't date-stamped data — they're user-level
+      // config. Earlier we filtered by today's UTC date which was a
+      // timezone bug: a tracker created at 6pm EST May 2 saved at
+      // 2026-05-02 UTC, but viewing at 11pm EST May 2 looked for
+      // 2026-05-03 UTC and got nothing. Search across ALL records and
+      // pick the most recent custom-trackers bucket.
+      const allRecords = await getAllCategoryData('user')
+      const customRecords = (allRecords || []).filter(
+        (record: any) => record.subcategory === 'custom-trackers'
+      )
+      const customTrackerRecord = customRecords.length > 0
+        ? customRecords.sort((a: any, b: any) => String(b.date).localeCompare(String(a.date)))[0]
+        : null
 
       if (customTrackerRecord?.content?.trackers && Array.isArray(customTrackerRecord.content.trackers)) {
         // 🔥 HANDLE ARRAY OF ALL TRACKERS

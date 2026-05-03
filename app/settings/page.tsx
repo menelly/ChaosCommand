@@ -35,7 +35,11 @@ import { NotificationsModal } from "./notifications-modal"
 import { TagsModal } from "./tags-modal"
 import { SupportModal } from "./support-modal"
 import { PrintExportModal } from "./print-export-modal"
-import { QRSyncModal } from "./qr-sync-modal"
+// QRSyncModal removed from active use 2026-05-02 — it was a deprecated
+// stub that just said "coming soon." The Device Sync card now jumps
+// straight to /sync (the real bidirectional sync page). The modal file
+// is kept on disk in case the stub-modal flow ever gets revived.
+// import { QRSyncModal } from "./qr-sync-modal"
 import { UpdateCheckModal } from "./update-check-modal"
 
 export default function SettingsPage() {
@@ -142,17 +146,18 @@ export default function SettingsPage() {
             )
           })}
 
-          {/* Device Sync — its own card, NOT nested inside Data Management.
-              Kept separate so brain-fogged users reaching for Sync don't
-              accidentally land on G-Spot protocol. */}
+          {/* Device Sync — top-level entry to /sync. Used to open a stub
+              modal (QRSyncModal) that just said "coming soon" because the
+              QR sync was being rewritten. The new bidirectional /sync
+              page IS the rewrite, so this now jumps straight there. */}
           <Card
-            onClick={() => openModal('qrsync')}
+            onClick={() => { window.location.href = '/sync' }}
             role="button"
             tabIndex={0}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault()
-                openModal('qrsync')
+                window.location.href = '/sync'
               }
             }}
             className="cursor-pointer hover:shadow-lg hover:ring-2 hover:ring-[var(--accent-primary)] transition-all"
@@ -163,7 +168,7 @@ export default function SettingsPage() {
                 Device Sync
               </CardTitle>
               <CardDescription>
-                Sync data between desktop and phone over WiFi
+                Sync data between desktop and phone over WiFi (bidirectional — one QR scan syncs both ways)
               </CardDescription>
             </CardHeader>
           </Card>
@@ -242,8 +247,7 @@ export default function SettingsPage() {
           )
         })}
 
-        {/* QR Sync modal (not in the category array) */}
-        <QRSyncModal isOpen={activeModal === 'qrsync'} onClose={closeModal} />
+        {/* QRSyncModal removed — Device Sync card now navigates to /sync */}
 
         {/* Update Check modal (also not in the category array) */}
         <UpdateCheckModal isOpen={activeModal === 'updates'} onClose={closeModal} />

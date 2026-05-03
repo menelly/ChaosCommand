@@ -42,7 +42,7 @@ export default function CustomTrackerPage() {
   const [historyEntries, setHistoryEntries] = useState<HistoryEntry[]>([])
   const [historyLoading, setHistoryLoading] = useState(false)
   const [editingDate, setEditingDate] = useState<string | null>(null)
-  const { getCategoryData, saveData, getDateRange, deleteData } = useDailyData()
+  const { getCategoryData, getAllCategoryData, saveData, getDateRange, deleteData } = useDailyData()
   const { toast } = useToast()
 
   useEffect(() => {
@@ -59,9 +59,22 @@ export default function CustomTrackerPage() {
   const loadTracker = async () => {
     if (!trackerId) { setIsLoading(false); return }
     try {
+      // Tracker DEFINITIONS are user-level config — one record total —
+      // and are NOT date-stamped data. Searching only "today" was a bug:
+      // toISOString() returns UTC, so a tracker created at 6pm EST May 2
+      // saves at 2026-05-02 UTC, but viewing at 11pm EST May 2 looks
+      // for 2026-05-03 UTC and finds nothing. Use the all-categories
+      // helper so we find the record regardless of which date its
+      // compound-key bucket landed in. If multiple exist, take the most
+      // recent (last-write-wins per the storage timestamp).
       const today = new Date().toISOString().split('T')[0]
-      const records = await getCategoryData(today, 'user')
-      const customTrackerRecord = records.find(r => r.subcategory === 'custom-trackers')
+      const allRecords = await getAllCategoryData('user')
+      const customRecords = (allRecords || []).filter(
+        (r: any) => r.subcategory === 'custom-trackers'
+      )
+      const customTrackerRecord = customRecords.length > 0
+        ? customRecords.sort((a: any, b: any) => String(b.date).localeCompare(String(a.date)))[0]
+        : null
 
       if (customTrackerRecord?.content?.trackers) {
         const found = customTrackerRecord.content.trackers.find(

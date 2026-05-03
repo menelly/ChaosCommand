@@ -285,6 +285,17 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
           }
           return { date: r.date, content }
         }),
+        // Timeline records: parse content so the generator gets clean event
+        // objects (title, type, date, status, severity, description, tags).
+        // Was missing entirely before — the toggle existed and the records
+        // were filtered, but they were dropped on the floor here.
+        timelineEvents: timelineRecords.map(r => {
+          let content = r.content
+          if (typeof content === 'string') {
+            try { content = JSON.parse(content) } catch { content = {} }
+          }
+          return { date: r.date, ...content }
+        }),
         includePatterns,
         workData,
       })
