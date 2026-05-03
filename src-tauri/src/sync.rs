@@ -48,13 +48,20 @@ pub struct SyncEnvelope {
     pub data: String, // JSON string of the database export
 }
 
-/// Result of a sync operation
+/// Result of a sync operation. When the host is responding to a scanner, it
+/// includes its own export under `host_data` so the scanner can import it
+/// — that's the bidirectional path. When the host has nothing to send back,
+/// or when the scanner is just receiving an ack, `host_data` is None.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SyncResult {
     pub success: bool,
     pub message: String,
     pub records_received: Option<usize>,
     pub conflicts: Option<Vec<SyncConflict>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub host_data: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub host_device_name: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -185,10 +192,15 @@ pub async fn sync_send_data(
     }
 }
 
-/// Receive data as host — starts a one-shot HTTP server
+/// Receive data as host — starts a one-shot HTTP server. Optionally accepts
+/// the host's own data export (`host_data`) which gets stuffed into the
+/// response back to the scanner so both devices end up in sync after a
+/// single scan. Pass `None` (or an empty string client-side) to keep the
+/// legacy one-way behaviour.
 #[command]
 pub async fn sync_receive_data(
     state: State<'_, SyncState>,
+    host_data: Option<String>,
 ) -> Result<SyncEnvelope, String> {
     let session = state
         .session
@@ -274,13 +286,20 @@ pub async fn sync_receive_data(
         return Err("PIN mismatch — make sure both devices are logged in with the same PIN".to_string());
     }
 
-    // Send success response
+    // Send success response — bidirectional: include the host's own data
+    // export (if provided) so the scanner can import it and both devices
+    // end up in sync after a single QR scan.
     use std::io::Write;
+    let host_device_name = hostname::get()
+        .map(|h| h.to_string_lossy().to_string())
+        .unwrap_or_else(|_| "Unknown Device".to_string());
     let result = SyncResult {
         success: true,
         message: "Data received".to_string(),
         records_received: None,
         conflicts: None,
+        host_data: host_data.filter(|d| !d.is_empty()),
+        host_device_name: Some(host_device_name),
     };
     let result_json = serde_json::to_string(&result).unwrap_or_default();
     let response = format!(

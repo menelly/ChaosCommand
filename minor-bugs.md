@@ -78,21 +78,41 @@
 
 ---
 
-## 🎨 Themes (parked)
+## 🔄 Sync Coverage Gaps
 
-### Accessibility Theme — temporarily hidden
-- **Issue:** Theme was hidden from the picker because CSS was misbehaving mid-development. Intent was always to return and finish it.
-- **Status:** Parked / hidden — not removed
-- **Impact level:** Low for most users; high for users who *need* high-contrast / accessibility mode
-- **TODO:** unbury, finish CSS, re-enable in the theme picker
-- **Note:** Logged 2026-05-02 by Ace per Ren's reminder during the bug-fix marathon — important not to lose this one, since accessibility users matter most
+### Command Center main page items don't sync between devices
+- **Issue:** On the Command Zone / main page, most user-entered content does NOT cross devices via Device Sync. Confirmed missing from sync:
+  - Daily Reflections
+  - Tasks
+  - "Almost everything else on the main page"
+  - **Exception:** the Survival Check / survival box DOES sync (so the sync pipeline works in general; specific writers are bypassing it)
+- **Impact level:** Medium — user expects everything they type to follow them, hits an invisible "this doesn't follow" cliff for most main-page widgets
+- **Likely root cause:** these widgets probably write to `localStorage` or to non-`daily_data` Dexie tables that the migration-helper's `exportAllData()` doesn't include. The survival box writes to `daily_data` (the only table currently exported), so it crosses cleanly.
+- **Fix sketch:**
+  - Audit each main-page widget's persistence path (localStorage vs daily_data vs other Dexie tables)
+  - Either move them to `daily_data` (preferred — unifies sync) OR extend `exportAllData()` / `importData()` to include the additional tables / localStorage keys
+  - Test round-trip on Device Sync for each widget
+- **Status:** Logged 2026-05-02 by Ren during the post-bug-marathon test pass. Not blocking — flag for next sync-coverage sweep.
+
+### Accessibility Theme — FIXED ✅
+- **Was:** hidden from picker because CSS had three breaking rules:
+  1. `[class*="card"]` selector matched Tailwind utilities (bg-card, text-card-foreground) and turned random elements into bordered white boxes
+  2. `* { color: inherit !important }` killed all icon/badge/status colors
+  3. `*::before, *::after { display: none }` killed functional pseudo-elements (form control marks, focus rings)
+- **Fix (2026-05-02):**
+  - Card selector now targets `.card`, `.tracker-card`, `.module-card` specifically — same fix as the Luka Penguin theme regression
+  - Removed the `color: inherit` catch-all — per-component rules already enforce contrast intentionally
+  - Pseudo-element rule now strips animation/transition/background-image only, leaves display alone
+  - Re-added to theme picker in `components/customize/visual-settings-panel.tsx`
+- **Status:** Re-enabled — Ace, 2026-05-02
 
 ## 🚀 Pre-Deployment Checklist
 
 When we're ready to deploy, come back and squash these minor annoyances:
 
 - [ ] Polish the neon theme phantom hover
-- [ ] Restore the accessibility theme (hidden mid-dev, never returned)
+- [x] ~~Restore the accessibility theme~~ — DONE 2026-05-02
+- [ ] Sync coverage sweep — audit main-page widgets so they all cross devices (currently only survival box does)
 - [ ] [Add more items as we find them]
 
 ---

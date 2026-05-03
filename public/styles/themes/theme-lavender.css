@@ -50,13 +50,14 @@ body.theme-lavender .text-muted-foreground {
 
 /* Buttons in lavender get a purple gradient BG, which makes the default
  * --text-muted (also purple) unreadable. Bump muted-foreground inside any
- * button to a high-contrast translucent white so card-style buttons (e.g.
- * the Support modal Quick Help cards, the Forge tracker cards) stay
- * readable. Same for muted text inside <a> CTAs, which lavender also paints
- * purple. */
+ * REAL button element (or .btn) to a high-contrast translucent white so
+ * card-style buttons (e.g. the Support modal Quick Help cards) stay
+ * readable. Do NOT include [role="button"] in this override — Cards on
+ * the Settings page use role="button" for click handling but keep the
+ * cream card background, so forcing white text there makes the
+ * descriptions invisible-on-cream. */
 body.theme-lavender button .text-muted-foreground,
 body.theme-lavender .btn .text-muted-foreground,
-body.theme-lavender [role="button"] .text-muted-foreground,
 body.theme-lavender a.btn .text-muted-foreground {
   color: rgba(255, 255, 255, 0.92) !important;
 }

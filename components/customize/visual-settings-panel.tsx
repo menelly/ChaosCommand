@@ -24,6 +24,7 @@ const themes = [
   { id: 'theme-chaos', name: '🏀 Basketball Court', description: 'Orange and black sports vibes' },
   { id: 'theme-caelan', name: '🕊️ Caelan\'s Liberation Dawn', description: 'Breaking free from darkness into light' },
   { id: 'theme-light', name: 'Light Mode', description: 'Clean and bright' },
+  { id: 'theme-accessibility', name: '♿ Accessibility', description: 'Maximum contrast, large text, no animations, yellow focus rings' },
   { id: 'theme-colorblind', name: 'Colorblind Friendly', description: 'High contrast accessibility' },
   { id: 'theme-glitter', name: 'Glitter Mode', description: 'Sparkly pink dreams' },
   { id: 'theme-calm', name: 'Calm Mode', description: 'Blue and gold serenity' },

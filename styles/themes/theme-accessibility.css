@@ -31,9 +31,13 @@ body.theme-accessibility h6 {
   font-size: 1.2em !important;
 }
 
-/* High contrast cards */
+/* High contrast cards. Target specific component classes — NOT
+ * [class*="card"], which silently matched Tailwind utilities like bg-card
+ * and text-card-foreground and turned random elements into 3px-bordered
+ * white-bg-black-text boxes (same bug we hit on the Luka Penguin theme). */
 body.theme-accessibility .card,
-body.theme-accessibility [class*="card"] {
+body.theme-accessibility .tracker-card,
+body.theme-accessibility .module-card {
   background: #ffffff !important;
   border: 3px solid #000000 !important;
   color: #000000 !important;
@@ -41,7 +45,8 @@ body.theme-accessibility [class*="card"] {
 }
 
 body.theme-accessibility .card:hover,
-body.theme-accessibility [class*="card"]:hover {
+body.theme-accessibility .tracker-card:hover,
+body.theme-accessibility .module-card:hover {
   background: #f0f0f0 !important;
   border-color: #333333 !important;
 }
@@ -169,15 +174,26 @@ body.theme-accessibility [tabindex]:focus {
   outline-offset: 2px !important;
 }
 
-/* Ensure sufficient color contrast for all text */
-body.theme-accessibility * {
-  color: inherit !important;
-}
+/* DO NOT do `body.theme-accessibility * { color: inherit !important }`
+ * here — that nukes badge colors, icon tints, status indicators, and any
+ * nested element that needs its own color. The specific rules above
+ * (cards, buttons, links, headings, muted text) already enforce contrast
+ * intentionally.
+ *
+ * DO NOT do `body.theme-accessibility *::before, *::after { display: none }`
+ * either — Tailwind/Radix use ::before/::after for radio dots, checkbox
+ * marks, focus rings, and other functional indicators. Killing them all
+ * breaks every form control. If we want to drop decorative pseudo-element
+ * animations, target the animation/transform/background instead. */
 
-/* Remove background images and patterns */
+/* Strip decorative animation + background-image from pseudo-elements
+ * without hiding them entirely. Functional ::before/::after (form-control
+ * marks, focus rings) keep working. */
 body.theme-accessibility *::before,
 body.theme-accessibility *::after {
-  display: none !important;
+  animation: none !important;
+  transition: none !important;
+  background-image: none !important;
 }
 
 /* Large click targets */

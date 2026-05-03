@@ -77,8 +77,14 @@ export default function SyncPage() {
       setQrData(qrJson)
       setStatus('Waiting for other device to scan...')
 
-      // Start listening for incoming data
-      const envelope = await invoke<any>('sync_receive_data')
+      // Pre-export THIS device's data so we can ship it back to the scanner
+      // in the same handshake (bidirectional sync — both devices end up in
+      // sync after a single QR scan instead of needing two separate runs).
+      const ourData = await exportAllData()
+
+      // Start listening for incoming data, passing our export so it gets
+      // bundled into the response back to the scanner.
+      const envelope = await invoke<any>('sync_receive_data', { hostData: ourData })
 
       setMode('syncing')
       setStatus('Receiving data...')
@@ -86,7 +92,7 @@ export default function SyncPage() {
       // Import the received data
       await importData(envelope.data)
       setMode('done')
-      setStatus(`Synced data from ${envelope.device_name}`)
+      setStatus(`Synced with ${envelope.device_name} (both directions)`)
     } catch (e: any) {
       setError(e.toString())
       setMode('choose')
@@ -139,8 +145,23 @@ export default function SyncPage() {
             })
 
             if (result.success) {
+              // Bidirectional: if the host bundled its own data into the
+              // response, import it now so this device picks up everything
+              // from the host in the same handshake.
+              if (result.host_data) {
+                setStatus('Receiving data from host...')
+                try {
+                  await importData(result.host_data)
+                  const fromName = result.host_device_name || 'host'
+                  setStatus(`Synced with ${fromName} (both directions)`)
+                } catch (importErr: any) {
+                  console.error('Failed to import host data:', importErr)
+                  setStatus(`Sent to host. Couldn't import host data back: ${importErr.toString()}`)
+                }
+              } else {
+                setStatus('Sync complete!')
+              }
               setMode('done')
-              setStatus('Sync complete!')
             } else {
               setError(result.message)
               setMode('choose')
