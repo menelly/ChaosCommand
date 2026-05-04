@@ -29,6 +29,7 @@ import { celebrate, penguinParty } from "@/lib/particle-physics-engine"
 import { useUser } from "@/lib/contexts/user-context"
 import Image from "next/image"
 import { maybeRunAutoUpdateCheck } from "@/lib/auto-update-check"
+import { maybeRunAutoSync } from "@/lib/auto-sync"
 import { useToast } from "@/hooks/use-toast"
 import { openExternal } from "@/lib/open-external"
 
@@ -268,6 +269,46 @@ export default function SurvivalButton() {
           ) : undefined,
         })
       })
+
+      // Opt-in auto-sync to all paired peers. Off by default; respects
+      // a 1h throttle. Each peer attempt is independent — pin-mismatch
+      // and unreachable surface as separate toasts so the user knows
+      // exactly what didn't sync and why.
+      if (userPin) {
+        maybeRunAutoSync(userPin).then(outcome => {
+          if (outcome.kind !== "ran") return
+
+          for (const success of outcome.successes) {
+            toast({
+              title: `Synced with ${success.peer_name}`,
+              description: `${(success.pulled_bytes / 1024).toFixed(1)} KB pulled.`,
+              duration: 5000,
+            })
+          }
+          for (const mismatch of outcome.pin_mismatches) {
+            toast({
+              title: `${mismatch.peer_name}: different family member`,
+              description: `That device is signed in under a different PIN — sync skipped. Switch PINs there to sync.`,
+              duration: 8000,
+              variant: "destructive",
+            })
+          }
+          for (const unreach of outcome.unreachable) {
+            toast({
+              title: unreach.cleared
+                ? `${unreach.peer_name} unpaired`
+                : `${unreach.peer_name} not reachable`,
+              description: unreach.cleared
+                ? `Hasn't been reachable for 3+ days — pairing cleared. Re-pair from Sync if needed.`
+                : `Couldn't reach ${unreach.peer_name} on the local network. Same WiFi?`,
+              duration: 8000,
+              variant: "destructive",
+            })
+          }
+        }).catch(err => {
+          console.warn("[survival] auto-sync threw:", err)
+        })
+      }
     } else {
       // Set unchecked phrase
       const phraseIndex = currentCount % uncheckedGoblinPhrases.length

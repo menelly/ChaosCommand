@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Sparkles, Rocket } from 'lucide-react'
 import { useRouter, usePathname } from 'next/navigation'
+import { publishSnapshot } from '@/lib/auto-sync'
 
 interface AppWrapperProps {
   children: React.ReactNode
@@ -109,6 +110,30 @@ function AppContent({ children }: AppWrapperProps) {
       document.body.classList.add('no-animations')
     }
   }, [])
+
+  // Push a fresh database snapshot into the Rust auto-sync server so any
+  // peer that calls /sync gets current data. Fires on login, on tab focus,
+  // and every 5 minutes. Failures are silent — auto-sync degrades to "no
+  // snapshot" rather than breaking anything user-visible.
+  useEffect(() => {
+    if (!isLoggedIn || !userPin || !isInitialized) return
+    let cancelled = false
+    const push = () => {
+      if (cancelled) return
+      publishSnapshot(userPin).catch(err => {
+        console.warn('[auto-sync] publishSnapshot failed:', err)
+      })
+    }
+    push()
+    const interval = setInterval(push, 5 * 60 * 1000)
+    const onVis = () => { if (document.visibilityState === 'visible') push() }
+    document.addEventListener('visibilitychange', onVis)
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+      document.removeEventListener('visibilitychange', onVis)
+    }
+  }, [isLoggedIn, userPin, isInitialized])
 
   // Check if this PIN is new (no data in their database)
   useEffect(() => {

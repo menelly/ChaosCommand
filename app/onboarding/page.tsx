@@ -21,6 +21,7 @@ import {
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { getAutoUpdatePref, setAutoUpdatePref } from '@/lib/auto-update-check'
+import { getAutoSyncPref, setAutoSyncPref } from '@/lib/auto-sync'
 
 // ============================================================================
 // THEME DATA
@@ -428,6 +429,7 @@ export default function OnboardingPage() {
     (localStorage.getItem('chaos-confetti-level') as any) || 'medium'
   )
   const [autoUpdate, setAutoUpdate] = useState<boolean>(getAutoUpdatePref())
+  const [autoSync, setAutoSync] = useState<boolean>(getAutoSyncPref())
   const [selectedSymptoms, setSelectedSymptoms] = useState<Set<string>>(new Set())
 
   const totalSteps = SYMPTOM_CATEGORIES.length + 2 // intro + categories + results
@@ -617,6 +619,31 @@ export default function OnboardingPage() {
                     most once every 12 hours. Toast pings you if there is.
                     No background polling, no telemetry, no identifiers. You
                     can flip this off anytime in Settings → Updates.
+                  </p>
+                </div>
+              </label>
+
+              <label className="flex items-start gap-3 p-3 rounded-lg border cursor-pointer hover:bg-muted/50">
+                <Checkbox
+                  checked={autoSync}
+                  onCheckedChange={(checked) => {
+                    const v = checked === true
+                    setAutoSync(v)
+                    setAutoSyncPref(v)
+                  }}
+                  className="mt-0.5"
+                />
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Cloud className="h-4 w-4 text-purple-600" />
+                    <span className="text-sm font-medium">Auto-sync between my devices</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Off by default. When on, your daily survival click silently
+                    syncs with every device you've paired (max once per hour).
+                    Local-WiFi only — your data never leaves your network.
+                    You'll need to pair devices first via the Sync page; turning
+                    this on now without paired devices is harmless.
                   </p>
                 </div>
               </label>
