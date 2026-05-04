@@ -2,80 +2,94 @@
  * Copyright (c) 2025-2026 Chaos Cascade
  * Created by: Ren & Ace
  *
- * Local network sync — QR pairing + encrypted data transfer.
- * No cloud. No internet. Just two devices on the same WiFi.
+ * Tauri commands for the auto-sync feature. The persistent HTTP server
+ * itself lives in server.rs; this module exposes commands the frontend
+ * uses to:
+ *
+ *   - look up its own peer_id / port / IP for QR generation
+ *   - open and close pairing windows
+ *   - complete pairings as the scanner side
+ *   - run an auth'd outgoing sync against a known peer
+ *   - publish the latest data snapshot for incoming syncs
+ *   - list / remove paired peers
+ *
+ * All commands are PIN-aware: pairings are scoped to the active PIN, and
+ * outgoing sync attempts include the active PIN so the responder can
+ * detect cross-PIN mismatches and refuse cleanly.
  */
 
-use serde::{Deserialize, Serialize};
-use std::net::TcpListener;
-use std::sync::Mutex;
-use tauri::{command, State};
+use crate::peers::{self, Peer, PeerStore};
+use crate::server::{
+    self, CachedSnapshot, PairQr, PairRequest, PairResponse, ServerState, SyncRequest,
+    SyncResponse,
+};
+use serde::Serialize;
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
+use std::sync::{Arc, Mutex};
+use std::time::Duration;
+use tauri::State;
 
-/// Sync session state managed by Tauri
+// =============================================================================
+// LEGACY (kept for compile compatibility with lib.rs's manage() call)
+// =============================================================================
+
+/// The old one-shot session struct. Kept so existing lib.rs `.manage(SyncState{...})`
+/// and the deprecated sync_start_host / sync_send_data / sync_receive_data / sync_stop
+/// commands continue to compile during the rollout. The actual handlers below
+/// return a clear "deprecated" error so the frontend knows to migrate.
 pub struct SyncState {
-    pub session: Mutex<Option<SyncSession>>,
+    #[allow(dead_code)]
+    pub session: Mutex<Option<()>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SyncSession {
-    pub role: SyncRole,
-    pub token: String,
-    pub port: u16,
-    pub pin_hash: String,
+#[tauri::command]
+pub async fn sync_start_host(_pin: String) -> Result<String, String> {
+    Err("sync_start_host is deprecated — use sync_open_pairing_window".into())
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub enum SyncRole {
-    Host,   // The device showing the QR code
-    Client, // The device scanning the QR code
+#[tauri::command]
+pub async fn sync_send_data(_qr_json: String, _pin: String, _data: String) -> Result<(), String> {
+    Err("sync_send_data is deprecated — use sync_complete_pairing then sync_to_peer".into())
 }
 
-/// What goes in the QR code — just enough to find each other
-#[derive(Debug, Serialize, Deserialize)]
-pub struct QrPayload {
-    pub ip: String,
-    pub port: u16,
-    pub token: String,
+#[tauri::command]
+pub async fn sync_receive_data(_host_data: Option<String>) -> Result<(), String> {
+    Err("sync_receive_data is deprecated — the persistent server now handles incoming sync".into())
 }
 
-/// Data envelope for sync transfer
-#[derive(Debug, Serialize, Deserialize)]
-pub struct SyncEnvelope {
-    pub token: String,
-    pub pin_hash: String,
-    pub device_name: String,
-    pub timestamp: u64,
-    pub data: String, // JSON string of the database export
+#[tauri::command]
+pub fn sync_stop() -> Result<(), String> {
+    // The old "stop the one-shot listener" call. The persistent server is
+    // intended to keep running; calling stop is a no-op for forward
+    // compatibility.
+    Ok(())
 }
 
-/// Result of a sync operation. When the host is responding to a scanner, it
-/// includes its own export under `host_data` so the scanner can import it
-/// — that's the bidirectional path. When the host has nothing to send back,
-/// or when the scanner is just receiving an ack, `host_data` is None.
-#[derive(Debug, Serialize, Deserialize)]
-pub struct SyncResult {
-    pub success: bool,
-    pub message: String,
-    pub records_received: Option<usize>,
-    pub conflicts: Option<Vec<SyncConflict>>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub host_data: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub host_device_name: Option<String>,
+// =============================================================================
+// SHARED HELPERS
+// =============================================================================
+
+fn hash_pin(pin: &str) -> String {
+    let mut hasher = DefaultHasher::new();
+    pin.hash(&mut hasher);
+    format!("{:x}", hasher.finish())
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SyncConflict {
-    pub category: String,
-    pub key: String,
-    pub local_value: String,
-    pub remote_value: String,
-    pub local_updated: String,
-    pub remote_updated: String,
+fn now_unix() -> u64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs()
 }
 
-fn get_local_ip() -> Result<String, String> {
-    // Find the local network IP (not loopback)
+fn hostname_string() -> String {
+    hostname::get()
+        .map(|h| h.to_string_lossy().to_string())
+        .unwrap_or_else(|_| "Unknown Device".to_string())
+}
+
+fn local_ip() -> Result<String, String> {
     let socket = std::net::UdpSocket::bind("0.0.0.0:0")
         .map_err(|e| format!("Failed to bind UDP socket: {}", e))?;
     socket
@@ -87,237 +101,388 @@ fn get_local_ip() -> Result<String, String> {
     Ok(addr.ip().to_string())
 }
 
-fn find_open_port() -> Result<u16, String> {
-    let listener = TcpListener::bind("0.0.0.0:0")
-        .map_err(|e| format!("Failed to find open port: {}", e))?;
-    let port = listener
-        .local_addr()
-        .map_err(|e| format!("Failed to get port: {}", e))?
-        .port();
-    Ok(port)
+fn hmac_b64(secret_b64: &str, body: &[u8]) -> Result<String, String> {
+    use base64::{engine::general_purpose::STANDARD, Engine as _};
+    use hmac::{Hmac, Mac};
+    use sha2::Sha256;
+
+    let secret = STANDARD
+        .decode(secret_b64)
+        .map_err(|e| format!("Bad secret encoding: {}", e))?;
+    let mut mac = <Hmac<Sha256> as Mac>::new_from_slice(&secret)
+        .map_err(|e| format!("HMAC init: {}", e))?;
+    mac.update(body);
+    Ok(STANDARD.encode(mac.finalize().into_bytes()))
 }
 
-fn hash_pin(pin: &str) -> String {
-    use std::collections::hash_map::DefaultHasher;
-    use std::hash::{Hash, Hasher};
-    let mut hasher = DefaultHasher::new();
-    pin.hash(&mut hasher);
-    format!("{:x}", hasher.finish())
+// =============================================================================
+// SELF INFO
+// =============================================================================
+
+#[derive(Debug, Serialize)]
+pub struct SelfInfo {
+    pub peer_id: String,
+    pub port: u16,
+    pub ip: String,
+    pub device_name: String,
 }
 
-fn generate_token() -> String {
-    use std::time::{SystemTime, UNIX_EPOCH};
-    let nonce = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_nanos();
-    format!("{:x}", nonce)
-}
-
-fn now_unix() -> u64 {
-    std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_secs()
-}
-
-/// Start hosting a sync session — returns QR payload as JSON string
-#[command]
-pub async fn sync_start_host(
-    pin: String,
-    state: State<'_, SyncState>,
-) -> Result<String, String> {
-    let ip = get_local_ip()?;
-    let port = find_open_port()?;
-    let token = generate_token();
-    let pin_hash = hash_pin(&pin);
-
-    let session = SyncSession {
-        role: SyncRole::Host,
-        token: token.clone(),
-        port,
-        pin_hash,
-    };
-
-    *state.session.lock().map_err(|e| e.to_string())? = Some(session);
-
-    let qr = QrPayload {
-        ip,
-        port,
-        token,
-    };
-
-    serde_json::to_string(&qr).map_err(|e| format!("Failed to serialize QR payload: {}", e))
-}
-
-/// Send data to a host (client side after scanning QR)
-#[command]
-pub async fn sync_send_data(
-    qr_json: String,
-    pin: String,
-    data: String,
-) -> Result<SyncResult, String> {
-    let qr: QrPayload =
-        serde_json::from_str(&qr_json).map_err(|e| format!("Invalid QR data: {}", e))?;
-
-    let envelope = SyncEnvelope {
-        token: qr.token,
-        pin_hash: hash_pin(&pin),
-        device_name: hostname::get()
-            .map(|h| h.to_string_lossy().to_string())
-            .unwrap_or_else(|_| "Unknown Device".to_string()),
-        timestamp: now_unix(),
-        data,
-    };
-
-    let client = reqwest::Client::new();
-    let url = format!("http://{}:{}/sync", qr.ip, qr.port);
-
-    let res = client
-        .post(&url)
-        .json(&envelope)
-        .timeout(std::time::Duration::from_secs(30))
-        .send()
-        .await
-        .map_err(|e| format!("Failed to connect: {}. Are both devices on the same WiFi?", e))?;
-
-    if res.status().is_success() {
-        res.json::<SyncResult>()
-            .await
-            .map_err(|e| format!("Failed to parse response: {}", e))
-    } else {
-        let status = res.status();
-        let body = res.text().await.unwrap_or_default();
-        Err(format!("Sync failed ({}): {}", status, body))
-    }
-}
-
-/// Receive data as host — starts a one-shot HTTP server. Optionally accepts
-/// the host's own data export (`host_data`) which gets stuffed into the
-/// response back to the scanner so both devices end up in sync after a
-/// single scan. Pass `None` (or an empty string client-side) to keep the
-/// legacy one-way behaviour.
-#[command]
-pub async fn sync_receive_data(
-    state: State<'_, SyncState>,
-    host_data: Option<String>,
-) -> Result<SyncEnvelope, String> {
-    let session = state
-        .session
+#[tauri::command]
+pub fn sync_get_self_info(server_state: State<'_, Arc<ServerState>>) -> Result<SelfInfo, String> {
+    let port = server_state
+        .bound_port
         .lock()
         .map_err(|e| e.to_string())?
-        .clone()
-        .ok_or("No active sync session")?;
-
-    let addr = format!("0.0.0.0:{}", session.port);
-    let listener = TcpListener::bind(&addr)
-        .map_err(|e| format!("Failed to listen on {}: {}", addr, e))?;
-
-    // Set a timeout so we don't block forever
-    listener
-        .set_nonblocking(false)
-        .map_err(|e| format!("Failed to set blocking: {}", e))?;
-
-    // Accept one connection (with 120s timeout via tokio)
-    let (mut stream, _peer) = tokio::task::spawn_blocking(move || {
-        // Simple blocking accept with timeout
-        listener.set_nonblocking(false).ok();
-        listener.accept()
+        .ok_or("Sync server is not running yet")?;
+    let peer_id = server_state.peer_store.self_peer_id()?;
+    let ip = local_ip()?;
+    Ok(SelfInfo {
+        peer_id,
+        port,
+        ip,
+        device_name: hostname_string(),
     })
-    .await
-    .map_err(|e| format!("Task error: {}", e))?
-    .map_err(|e| format!("Accept error: {}", e))?;
-
-    // Read the HTTP request
-    use std::io::Read;
-    let mut buf = Vec::new();
-    let mut tmp = [0u8; 8192];
-
-    // Read until we have the full body
-    loop {
-        match stream.read(&mut tmp) {
-            Ok(0) => break,
-            Ok(n) => buf.extend_from_slice(&tmp[..n]),
-            Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => break,
-            Err(e) => return Err(format!("Read error: {}", e)),
-        }
-        // Check if we've received the full HTTP request (double CRLF marks end of headers)
-        if let Some(header_end) = buf.windows(4).position(|w| w == b"\r\n\r\n") {
-            // Parse Content-Length to know when body is complete
-            let headers = String::from_utf8_lossy(&buf[..header_end]);
-            if let Some(cl) = headers
-                .lines()
-                .find(|l| l.to_lowercase().starts_with("content-length:"))
-                .and_then(|l| l.split(':').nth(1))
-                .and_then(|v| v.trim().parse::<usize>().ok())
-            {
-                let body_start = header_end + 4;
-                if buf.len() >= body_start + cl {
-                    break;
-                }
-            }
-        }
-    }
-
-    // Extract body from HTTP request
-    let request = String::from_utf8_lossy(&buf);
-    let body = request
-        .split("\r\n\r\n")
-        .nth(1)
-        .ok_or("No body in request")?;
-
-    let envelope: SyncEnvelope =
-        serde_json::from_str(body).map_err(|e| format!("Invalid sync data: {}", e))?;
-
-    // Verify token
-    if envelope.token != session.token {
-        // Send error response
-        use std::io::Write;
-        let response = "HTTP/1.1 403 Forbidden\r\nContent-Type: text/plain\r\n\r\nInvalid token";
-        stream.write_all(response.as_bytes()).ok();
-        return Err("Token mismatch — QR code may have expired".to_string());
-    }
-
-    // Verify PIN hash matches
-    if envelope.pin_hash != session.pin_hash {
-        use std::io::Write;
-        let response = "HTTP/1.1 403 Forbidden\r\nContent-Type: text/plain\r\n\r\nPIN mismatch";
-        stream.write_all(response.as_bytes()).ok();
-        return Err("PIN mismatch — make sure both devices are logged in with the same PIN".to_string());
-    }
-
-    // Send success response — bidirectional: include the host's own data
-    // export (if provided) so the scanner can import it and both devices
-    // end up in sync after a single QR scan.
-    use std::io::Write;
-    let host_device_name = hostname::get()
-        .map(|h| h.to_string_lossy().to_string())
-        .unwrap_or_else(|_| "Unknown Device".to_string());
-    let result = SyncResult {
-        success: true,
-        message: "Data received".to_string(),
-        records_received: None,
-        conflicts: None,
-        host_data: host_data.filter(|d| !d.is_empty()),
-        host_device_name: Some(host_device_name),
-    };
-    let result_json = serde_json::to_string(&result).unwrap_or_default();
-    let response = format!(
-        "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n{}",
-        result_json.len(),
-        result_json
-    );
-    stream.write_all(response.as_bytes()).ok();
-
-    // Clear session
-    *state.session.lock().map_err(|e| e.to_string())? = None;
-
-    Ok(envelope)
 }
 
-/// Stop hosting
-#[command]
-pub fn sync_stop(state: State<'_, SyncState>) -> Result<(), String> {
-    *state.session.lock().map_err(|e| e.to_string())? = None;
-    Ok(())
+// =============================================================================
+// PAIRING WINDOW
+// =============================================================================
+
+#[tauri::command]
+pub fn sync_open_pairing_window(
+    pin: String,
+    server_state: State<'_, Arc<ServerState>>,
+) -> Result<PairQr, String> {
+    server::open_pairing_window(&server_state, hash_pin(&pin))
+}
+
+#[tauri::command]
+pub fn sync_close_pairing_window(
+    server_state: State<'_, Arc<ServerState>>,
+) -> Result<(), String> {
+    server::close_pairing_window(&server_state)
+}
+
+// =============================================================================
+// COMPLETE PAIRING (scanner side)
+// =============================================================================
+
+#[derive(Debug, Serialize)]
+pub struct PairingResult {
+    pub success: bool,
+    pub host_peer_id: String,
+    pub host_device_name: String,
+    pub message: Option<String>,
+}
+
+#[tauri::command]
+pub async fn sync_complete_pairing(
+    qr_json: String,
+    pin: String,
+    server_state: State<'_, Arc<ServerState>>,
+    peer_store: State<'_, Arc<PeerStore>>,
+) -> Result<PairingResult, String> {
+    let qr: PairQr = serde_json::from_str(&qr_json).map_err(|e| format!("Invalid QR: {}", e))?;
+    let pin_hash = hash_pin(&pin);
+    let scanner_peer_id = server_state.peer_store.self_peer_id()?;
+    let scanner_secret = peers::generate_shared_secret();
+    let scanner_device_name = hostname_string();
+
+    let body = PairRequest {
+        pairing_token: qr.pairing_token,
+        scanner_peer_id: scanner_peer_id.clone(),
+        scanner_device_name: scanner_device_name.clone(),
+        scanner_pin_hash: pin_hash.clone(),
+        shared_secret: scanner_secret.clone(),
+    };
+
+    let url = format!("http://{}:{}/pair", qr.ip, qr.port);
+    let client = reqwest::Client::new();
+    let resp = client
+        .post(&url)
+        .json(&body)
+        .timeout(Duration::from_secs(15))
+        .send()
+        .await
+        .map_err(|e| format!("Failed to reach pairing host: {}", e))?;
+
+    if !resp.status().is_success() {
+        let status = resp.status();
+        let body = resp.text().await.unwrap_or_default();
+        return Ok(PairingResult {
+            success: false,
+            host_peer_id: String::new(),
+            host_device_name: String::new(),
+            message: Some(format!("Pair failed ({}): {}", status, body)),
+        });
+    }
+
+    let pair_resp: PairResponse = resp
+        .json()
+        .await
+        .map_err(|e| format!("Failed to parse pair response: {}", e))?;
+
+    if !pair_resp.success {
+        return Ok(PairingResult {
+            success: false,
+            host_peer_id: String::new(),
+            host_device_name: String::new(),
+            message: pair_resp.message,
+        });
+    }
+
+    // Store the host as our new peer.
+    let now = now_unix();
+    let host_peer = Peer {
+        peer_id: pair_resp.host_peer_id.clone(),
+        peer_name: pair_resp.host_device_name.clone(),
+        shared_secret: scanner_secret,
+        pin_hash: pin_hash.clone(),
+        last_known_ip: qr.ip.clone(),
+        last_known_port: qr.port,
+        last_seen_unix: now,
+        last_synced_unix: 0,
+        consecutive_failures: 0,
+        first_failure_unix: 0,
+    };
+    peer_store.upsert(host_peer)?;
+
+    Ok(PairingResult {
+        success: true,
+        host_peer_id: pair_resp.host_peer_id,
+        host_device_name: pair_resp.host_device_name,
+        message: None,
+    })
+}
+
+// =============================================================================
+// OUTGOING SYNC TO A PAIRED PEER
+// =============================================================================
+
+#[derive(Debug, Serialize)]
+pub struct ToPeerResult {
+    pub success: bool,
+    pub reason: Option<String>,
+    pub peer_id: String,
+    pub peer_name: String,
+    pub data: Option<String>,
+    pub snapshot_age_secs: Option<u64>,
+}
+
+#[tauri::command]
+pub async fn sync_to_peer(
+    peer_id: String,
+    pin: String,
+    data: String,
+    peer_store: State<'_, Arc<PeerStore>>,
+) -> Result<ToPeerResult, String> {
+    let peer = peer_store
+        .find(&peer_id)?
+        .ok_or_else(|| format!("Unknown peer: {}", peer_id))?;
+
+    if peer.last_known_ip.is_empty() || peer.last_known_port == 0 {
+        return Ok(ToPeerResult {
+            success: false,
+            reason: Some("no_known_ip".into()),
+            peer_id: peer.peer_id,
+            peer_name: peer.peer_name,
+            data: None,
+            snapshot_age_secs: None,
+        });
+    }
+
+    let pin_hash = hash_pin(&pin);
+
+    if !subtle_eq(peer.pin_hash.as_bytes(), pin_hash.as_bytes()) {
+        // Caller is on a PIN that this pairing wasn't created under. The
+        // server will reject too, but we save a round-trip.
+        return Ok(ToPeerResult {
+            success: false,
+            reason: Some("local_pin_mismatch".into()),
+            peer_id: peer.peer_id,
+            peer_name: peer.peer_name,
+            data: None,
+            snapshot_age_secs: None,
+        });
+    }
+
+    let body = SyncRequest {
+        data,
+        pin_hash,
+        timestamp: now_unix(),
+        sender_device_name: hostname_string(),
+    };
+    let body_bytes = serde_json::to_vec(&body).map_err(|e| format!("serialize: {}", e))?;
+
+    let mac = hmac_b64(&peer.shared_secret, &body_bytes)?;
+    let auth_header = format!("{}:{}", peer.peer_id, mac);
+
+    let url = format!("http://{}:{}/sync", peer.last_known_ip, peer.last_known_port);
+    let client = reqwest::Client::new();
+    let resp_result = client
+        .post(&url)
+        .header("X-Chaos-Auth", auth_header)
+        .header("Content-Type", "application/json")
+        .body(body_bytes)
+        .timeout(Duration::from_secs(30))
+        .send()
+        .await;
+
+    let resp = match resp_result {
+        Ok(r) => r,
+        Err(e) => {
+            // Network error — record as failure and possibly surface auto-clear.
+            let now = now_unix();
+            let should_clear = peer_store.record_failure(&peer.peer_id, now)?;
+            if should_clear {
+                let _ = peer_store.remove(&peer.peer_id);
+                return Ok(ToPeerResult {
+                    success: false,
+                    reason: Some(format!("unreachable_cleared:{}", e)),
+                    peer_id: peer.peer_id,
+                    peer_name: peer.peer_name,
+                    data: None,
+                    snapshot_age_secs: None,
+                });
+            }
+            return Ok(ToPeerResult {
+                success: false,
+                reason: Some(format!("unreachable:{}", e)),
+                peer_id: peer.peer_id,
+                peer_name: peer.peer_name,
+                data: None,
+                snapshot_age_secs: None,
+            });
+        }
+    };
+
+    if !resp.status().is_success() {
+        let status = resp.status();
+        return Ok(ToPeerResult {
+            success: false,
+            reason: Some(format!("http_{}", status.as_u16())),
+            peer_id: peer.peer_id,
+            peer_name: peer.peer_name,
+            data: None,
+            snapshot_age_secs: None,
+        });
+    }
+
+    let sync_resp: SyncResponse = resp
+        .json()
+        .await
+        .map_err(|e| format!("Failed to parse sync response: {}", e))?;
+
+    let now = now_unix();
+    if sync_resp.success {
+        peer_store.record_success(&peer.peer_id, now)?;
+    } else {
+        // Server-side rejection (pin mismatch, snapshot missing, etc.) —
+        // not a delivery failure, don't increment the auto-clear counter.
+    }
+
+    Ok(ToPeerResult {
+        success: sync_resp.success,
+        reason: sync_resp.reason,
+        peer_id: peer.peer_id,
+        peer_name: peer.peer_name,
+        data: sync_resp.data,
+        snapshot_age_secs: sync_resp.snapshot_age_secs,
+    })
+}
+
+// =============================================================================
+// PUBLISH SNAPSHOT (frontend → server cache)
+// =============================================================================
+
+#[tauri::command]
+pub fn sync_publish_snapshot(
+    data: String,
+    pin: String,
+    device_name: Option<String>,
+    server_state: State<'_, Arc<ServerState>>,
+) -> Result<(), String> {
+    let snap = CachedSnapshot {
+        data_json: data,
+        pin_hash: hash_pin(&pin),
+        device_name: device_name.unwrap_or_else(hostname_string),
+        updated_unix: now_unix(),
+    };
+    server::publish_snapshot(&server_state, snap)
+}
+
+// =============================================================================
+// PEER MANAGEMENT
+// =============================================================================
+
+#[derive(Debug, Serialize)]
+pub struct PeerView {
+    pub peer_id: String,
+    pub peer_name: String,
+    pub pin_hash: String,
+    pub last_known_ip: String,
+    pub last_seen_unix: u64,
+    pub last_synced_unix: u64,
+    pub consecutive_failures: u32,
+}
+
+impl From<Peer> for PeerView {
+    fn from(p: Peer) -> Self {
+        Self {
+            peer_id: p.peer_id,
+            peer_name: p.peer_name,
+            pin_hash: p.pin_hash,
+            last_known_ip: p.last_known_ip,
+            last_seen_unix: p.last_seen_unix,
+            last_synced_unix: p.last_synced_unix,
+            consecutive_failures: p.consecutive_failures,
+        }
+    }
+}
+
+#[tauri::command]
+pub fn sync_list_peers(
+    pin: Option<String>,
+    peer_store: State<'_, Arc<PeerStore>>,
+) -> Result<Vec<PeerView>, String> {
+    let peers = match pin {
+        Some(p) => peer_store.list_for_pin(&hash_pin(&p))?,
+        None => peer_store.list_all()?,
+    };
+    Ok(peers.into_iter().map(PeerView::from).collect())
+}
+
+#[tauri::command]
+pub fn sync_remove_peer(
+    peer_id: String,
+    peer_store: State<'_, Arc<PeerStore>>,
+) -> Result<bool, String> {
+    peer_store.remove(&peer_id)
+}
+
+#[tauri::command]
+pub fn sync_rename_peer(
+    peer_id: String,
+    new_name: String,
+    peer_store: State<'_, Arc<PeerStore>>,
+) -> Result<bool, String> {
+    let mut peer = match peer_store.find(&peer_id)? {
+        Some(p) => p,
+        None => return Ok(false),
+    };
+    peer.peer_name = new_name;
+    peer_store.upsert(peer)?;
+    Ok(true)
+}
+
+// =============================================================================
+// MISC
+// =============================================================================
+
+fn subtle_eq(a: &[u8], b: &[u8]) -> bool {
+    use subtle::ConstantTimeEq;
+    if a.len() != b.len() {
+        return false;
+    }
+    a.ct_eq(b).into()
 }

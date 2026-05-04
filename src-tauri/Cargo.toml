@@ -42,3 +42,11 @@ hostname = "0.4"
 # Offline license-key validation via Ed25519 signatures (no network needed)
 ed25519-dalek = { version = "2.1", default-features = false, features = ["std"] }
 base64 = "0.22"
+
+# Auto-sync persistent server: HMAC-SHA256 auth on /sync, secure RNG for
+# peer_ids and shared secrets. All four are already transitive deps via
+# tauri/ed25519-dalek/etc — declared explicitly so the new modules can use them.
+hmac = "0.12"
+sha2 = "0.10"
+subtle = "2.6"
+getrandom = "0.2"
