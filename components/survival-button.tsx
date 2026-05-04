@@ -28,6 +28,9 @@ import { Check, Sparkles } from "lucide-react"
 import { celebrate, penguinParty } from "@/lib/particle-physics-engine"
 import { useUser } from "@/lib/contexts/user-context"
 import Image from "next/image"
+import { maybeRunAutoUpdateCheck } from "@/lib/auto-update-check"
+import { useToast } from "@/hooks/use-toast"
+import { openExternal } from "@/lib/open-external"
 
 // Gremlinisms from Cares
 const uncheckedGoblinPhrases = [
@@ -103,6 +106,7 @@ const familiars = [
 
 export default function SurvivalButton() {
   const { userPin } = useUser()
+  const { toast } = useToast()
   const [checked, setChecked] = useState(false)
   const [count, setCount] = useState(0)
   const [lastCheckedDate, setLastCheckedDate] = useState("")
@@ -243,6 +247,27 @@ export default function SurvivalButton() {
       const phraseIndex = currentCount % goblinPhrases.length
       setCurrentPhrase(goblinPhrases[phraseIndex])
       setPhraseType('goblin')
+
+      // Opt-in update check piggybacked on the daily survival ritual.
+      // Off by default; respects the 12h throttle inside maybeRunAutoUpdateCheck
+      // so multi-clicks in one day don't spam the server. Failures are silent.
+      maybeRunAutoUpdateCheck().then(latest => {
+        if (!latest) return
+        toast({
+          title: `Update available: v${latest.version}`,
+          description: latest.notes || 'A newer version is available on chaoscommand.center.',
+          duration: 12000,
+          action: latest.url ? (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => openExternal(latest.url!)}
+            >
+              Open
+            </Button>
+          ) : undefined,
+        })
+      })
     } else {
       // Set unchecked phrase
       const phraseIndex = currentCount % uncheckedGoblinPhrases.length

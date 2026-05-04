@@ -16,9 +16,11 @@ import {
   CheckCircle2,
   AlertCircle,
   Zap,
-  Palette
+  Palette,
+  Cloud
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { getAutoUpdatePref, setAutoUpdatePref } from '@/lib/auto-update-check'
 
 // ============================================================================
 // THEME DATA
@@ -425,6 +427,7 @@ export default function OnboardingPage() {
   const [confettiLevel, setConfettiLevel] = useState<'none' | 'low' | 'medium' | 'high'>(
     (localStorage.getItem('chaos-confetti-level') as any) || 'medium'
   )
+  const [autoUpdate, setAutoUpdate] = useState<boolean>(getAutoUpdatePref())
   const [selectedSymptoms, setSelectedSymptoms] = useState<Set<string>>(new Set())
 
   const totalSteps = SYMPTOM_CATEGORIES.length + 2 // intro + categories + results
@@ -588,6 +591,35 @@ export default function OnboardingPage() {
               <p className="text-xs text-muted-foreground italic">
                 You can change these anytime in Settings → Visual.
               </p>
+            </div>
+
+            {/* Connectivity prefs — opt-in, off by default */}
+            <div className="space-y-3 pt-2 border-t">
+              <label className="flex items-start gap-3 p-3 rounded-lg border cursor-pointer hover:bg-muted/50">
+                <Checkbox
+                  checked={autoUpdate}
+                  onCheckedChange={(checked) => {
+                    const v = checked === true
+                    setAutoUpdate(v)
+                    setAutoUpdatePref(v)
+                  }}
+                  className="mt-0.5"
+                />
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Cloud className="h-4 w-4 text-blue-600" />
+                    <span className="text-sm font-medium">Check for updates automatically</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Off by default. If you turn this on, the app piggybacks
+                    one quick check on your daily "I survived" button —
+                    asks chaoscommand.center if there's a newer version, at
+                    most once every 12 hours. Toast pings you if there is.
+                    No background polling, no telemetry, no identifiers. You
+                    can flip this off anytime in Settings → Updates.
+                  </p>
+                </div>
+              </label>
             </div>
 
             <Button onClick={() => setCurrentStep(1)} className="w-full flex items-center justify-center gap-2">

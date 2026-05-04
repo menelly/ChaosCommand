@@ -12,13 +12,15 @@
  */
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Cloud, CheckCircle, AlertCircle, ExternalLink, Loader2 } from "lucide-react"
 import { APP_VERSION, UPDATE_MANIFEST_URL, isNewerVersion } from "@/lib/app-version"
 import { openExternal } from "@/lib/open-external"
+import { getAutoUpdatePref, setAutoUpdatePref } from "@/lib/auto-update-check"
 
 interface ManifestPayload {
   version: string
@@ -67,6 +69,11 @@ async function fetchManifest(): Promise<ManifestPayload> {
 
 export default function UpdateCheckSection() {
   const [state, setState] = useState<CheckState>({ kind: 'idle' })
+  const [autoCheck, setAutoCheck] = useState<boolean>(false)
+
+  useEffect(() => {
+    setAutoCheck(getAutoUpdatePref())
+  }, [])
 
   const runCheck = async () => {
     setState({ kind: 'checking' })
@@ -167,6 +174,28 @@ export default function UpdateCheckSection() {
           <span>{state.message}</span>
         </div>
       )}
+
+      {/* Opt-in auto-check toggle */}
+      <label className="mt-4 pt-3 border-t border-blue-200/60 flex items-start gap-3 cursor-pointer">
+        <Checkbox
+          checked={autoCheck}
+          onCheckedChange={(checked) => {
+            const v = checked === true
+            setAutoCheck(v)
+            setAutoUpdatePref(v)
+          }}
+          className="mt-0.5"
+        />
+        <div className="space-y-0.5">
+          <span className="text-sm font-medium">Check on daily survival button</span>
+          <p className="text-xs text-muted-foreground">
+            Off by default. If on, the app piggybacks one quick check on
+            your daily "I survived" click — at most once every 12 hours.
+            Toast pings you if a newer version exists. No background polling.
+            Same fetch as the button above — no telemetry, no identifiers.
+          </p>
+        </div>
+      </label>
     </div>
   )
 }
