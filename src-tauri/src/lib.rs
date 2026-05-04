@@ -36,6 +36,10 @@ pub fn run() {
         .map_err(|e| format!("app_data_dir: {}", e))?;
       let peer_store = Arc::new(peers::PeerStore::load(&app_data_dir)?);
       let server_state = Arc::new(server::ServerState::new(Arc::clone(&peer_store)));
+      // Stash the AppHandle so the server thread can emit Tauri events
+      // when an incoming /sync request lands data in the inbox.
+      *server_state.app_handle.lock().expect("app_handle lock") =
+        Some(app.handle().clone());
       // Best-effort spawn — if the bind fails (e.g. firewall on Windows
       // first-launch) we don't want to crash the whole app. The frontend
       // surfaces a clear error when it queries the bound port and gets
@@ -65,6 +69,7 @@ pub fn run() {
       sync::sync_complete_pairing,
       sync::sync_to_peer,
       sync::sync_publish_snapshot,
+      sync::sync_drain_inbox,
       sync::sync_list_peers,
       sync::sync_remove_peer,
       sync::sync_rename_peer,

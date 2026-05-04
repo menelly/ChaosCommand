@@ -66,6 +66,20 @@ pub struct PairingWindow {
     pub expires_unix: u64,
 }
 
+/// One queued incoming-sync payload waiting for the frontend to import.
+/// Pushed by handle_sync after auth+pin pass; drained by the
+/// `sync_drain_inbox` Tauri command. Bounded to MAX_INBOX_ITEMS so a
+/// chatty (or buggy) peer can't grow this unboundedly.
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct InboxItem {
+    pub peer_id: String,
+    pub peer_name: String,
+    pub data: String,
+    pub received_unix: u64,
+}
+
+const MAX_INBOX_ITEMS: usize = 16;
+
 pub struct ServerState {
     pub peer_store: Arc<PeerStore>,
     pub cached_snapshot: Mutex<Option<CachedSnapshot>>,
@@ -73,6 +87,14 @@ pub struct ServerState {
     /// Bound port — set after the listener actually binds, exposed to
     /// the frontend so it can build QR payloads.
     pub bound_port: Mutex<Option<u16>>,
+    /// Incoming-sync data queued for the frontend to import. The /sync
+    /// handler can't write to Dexie (database lives in the webview);
+    /// instead it parks valid payloads here and notifies the frontend
+    /// via a Tauri event so the frontend can drain + import.
+    pub inbox: Mutex<Vec<InboxItem>>,
+    /// AppHandle for emitting Tauri events from the server thread.
+    /// Set by lib.rs after the Tauri builder produces it.
+    pub app_handle: Mutex<Option<tauri::AppHandle>>,
 }
 
 impl ServerState {
@@ -82,6 +104,8 @@ impl ServerState {
             cached_snapshot: Mutex::new(None),
             pairing_window: Mutex::new(None),
             bound_port: Mutex::new(None),
+            inbox: Mutex::new(Vec::new()),
+            app_handle: Mutex::new(None),
         }
     }
 }
@@ -534,6 +558,36 @@ fn handle_sync(
         .record_seen(&peer_id, &peer_addr.ip().to_string(), peer_addr.port(), now)?;
     state.peer_store.record_success(&peer_id, now)?;
 
+    // Park the caller's data in the inbox so the frontend can import it.
+    // The frontend can't be called synchronously from this thread (the
+    // database lives in the webview), so we drop the bytes into a
+    // bounded queue and ping the frontend via a Tauri event. The
+    // response we return reflects our snapshot at the time of receipt;
+    // the next sync from this peer (or any other) will return the
+    // newly-merged data once the frontend has imported.
+    {
+        let mut inbox = state.inbox.lock().map_err(|e| e.to_string())?;
+        if inbox.len() >= MAX_INBOX_ITEMS {
+            // Drop the oldest to make room — we'd rather lose stale
+            // queued data than silently fail an active peer.
+            inbox.remove(0);
+        }
+        inbox.push(InboxItem {
+            peer_id: peer_id.clone(),
+            peer_name: peer.peer_name.clone(),
+            data: req.data,
+            received_unix: now,
+        });
+    }
+    if let Ok(handle_guard) = state.app_handle.lock() {
+        if let Some(handle) = handle_guard.as_ref() {
+            // Fire-and-forget — frontend listens on this event name and
+            // calls sync_drain_inbox to pull the data out.
+            use tauri::Emitter;
+            let _ = handle.emit("chaos:sync-data-received", &peer_id);
+        }
+    }
+
     let age = now.saturating_sub(snapshot.updated_unix);
 
     Ok(SyncResponse {
@@ -630,6 +684,15 @@ pub fn close_pairing_window(state: &ServerState) -> Result<(), String> {
 pub fn publish_snapshot(state: &ServerState, snap: CachedSnapshot) -> Result<(), String> {
     *state.cached_snapshot.lock().map_err(|e| e.to_string())? = Some(snap);
     Ok(())
+}
+
+/// Drain and return all queued incoming-sync items. The frontend calls
+/// this on startup (in case items piled up while it wasn't listening)
+/// and again on every "chaos:sync-data-received" event.
+pub fn drain_inbox(state: &ServerState) -> Result<Vec<InboxItem>, String> {
+    let mut inbox = state.inbox.lock().map_err(|e| e.to_string())?;
+    let drained = inbox.drain(..).collect();
+    Ok(drained)
 }
 
 fn local_ip() -> Result<String, String> {

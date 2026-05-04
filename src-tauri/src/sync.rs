@@ -20,7 +20,7 @@
 
 use crate::peers::{self, Peer, PeerStore};
 use crate::server::{
-    self, CachedSnapshot, PairQr, PairRequest, PairResponse, ServerState, SyncRequest,
+    self, CachedSnapshot, InboxItem, PairQr, PairRequest, PairResponse, ServerState, SyncRequest,
     SyncResponse,
 };
 use serde::Serialize;
@@ -409,6 +409,17 @@ pub fn sync_publish_snapshot(
         updated_unix: now_unix(),
     };
     server::publish_snapshot(&server_state, snap)
+}
+
+/// Pull and clear all queued incoming-sync payloads. Called by the
+/// frontend on startup and on each "chaos:sync-data-received" event.
+/// Returns peer_id + peer_name + data so the frontend can attribute
+/// imports in toasts.
+#[tauri::command]
+pub fn sync_drain_inbox(
+    server_state: State<'_, Arc<ServerState>>,
+) -> Result<Vec<InboxItem>, String> {
+    server::drain_inbox(&server_state)
 }
 
 // =============================================================================

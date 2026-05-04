@@ -21,6 +21,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Sparkles, Rocket } from 'lucide-react'
 import { useRouter, usePathname } from 'next/navigation'
 import { publishSnapshot } from '@/lib/auto-sync'
+import { invoke } from '@tauri-apps/api/core'
+import { listen } from '@tauri-apps/api/event'
+import { importData } from '@/lib/database/migration-helper'
+import { useToast } from '@/hooks/use-toast'
 
 interface AppWrapperProps {
   children: React.ReactNode
@@ -96,6 +100,7 @@ function AppContent({ children }: AppWrapperProps) {
   const pathname = usePathname()
   const [isNewUser, setIsNewUser] = useState<boolean | null>(null)
   const [checkingNewUser, setCheckingNewUser] = useState(false)
+  const { toast } = useToast()
 
   // Restore bounce intensity from localStorage on mount — CSS default is 1 (full bounce)
   // so without this, navigating between pages resets to SUPER BOUNCY
@@ -134,6 +139,67 @@ function AppContent({ children }: AppWrapperProps) {
       document.removeEventListener('visibilitychange', onVis)
     }
   }, [isLoggedIn, userPin, isInitialized])
+
+  // Listen for incoming-sync events from paired peers. The Rust server
+  // can't write to Dexie directly (database lives in the webview), so it
+  // parks valid /sync payloads in an inbox and emits this event; we
+  // drain + import here. Also drain on mount in case items piled up
+  // while we weren't listening.
+  useEffect(() => {
+    if (!isLoggedIn || !userPin || !isInitialized) return
+    let unlisten: (() => void) | undefined
+    let cancelled = false
+
+    interface InboxItem {
+      peer_id: string
+      peer_name: string
+      data: string
+      received_unix: number
+    }
+
+    const drainAndImport = async () => {
+      if (cancelled) return
+      try {
+        const items = await invoke<InboxItem[]>('sync_drain_inbox')
+        for (const item of items) {
+          try {
+            await importData(item.data)
+            toast({
+              title: `Pulled changes from ${item.peer_name}`,
+              description: `${(item.data.length / 1024).toFixed(1)} KB merged.`,
+              duration: 5000,
+            })
+            // After importing peer data, republish OUR snapshot so that
+            // when the peer (or any other) syncs next, they receive the
+            // newly-merged state — that's how everyone converges.
+            publishSnapshot(userPin).catch(() => {})
+          } catch (err) {
+            console.error(`[auto-sync] import from ${item.peer_name} failed:`, err)
+            toast({
+              title: `Couldn't merge data from ${item.peer_name}`,
+              description: String(err),
+              duration: 8000,
+              variant: 'destructive',
+            })
+          }
+        }
+      } catch (err) {
+        console.warn('[auto-sync] drain inbox failed:', err)
+      }
+    }
+
+    drainAndImport()
+    listen<string>('chaos:sync-data-received', () => {
+      drainAndImport()
+    })
+      .then(fn => { if (cancelled) fn(); else unlisten = fn })
+      .catch(err => console.warn('[auto-sync] listen failed:', err))
+
+    return () => {
+      cancelled = true
+      if (unlisten) unlisten()
+    }
+  }, [isLoggedIn, userPin, isInitialized, toast])
 
   // Check if this PIN is new (no data in their database)
   useEffect(() => {
