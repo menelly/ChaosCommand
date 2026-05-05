@@ -39,9 +39,13 @@ import { MentalHealthHistory } from './mental-health-history'
 import { MentalHealthAnalytics } from './mental-health-analytics'
 import { MentalHealthEntry } from './mental-health-types'
 import { MENTAL_HEALTH_GOBLINISMS } from './mental-health-constants'
+import { celebrate } from '@/lib/particle-physics-engine'
+import { useUser } from '@/lib/contexts/user-context'
+import { isCelebrationEnabled } from '@/lib/celebration-prefs'
 
 export default function MentalHealthTracker() {
   const { saveData, getCategoryData, deleteData, isLoading } = useDailyData()
+  const { userPin } = useUser()
   const { toast } = useToast()
   const { goblinMode } = useGoblinMode()
 
@@ -124,6 +128,11 @@ export default function MentalHealthTracker() {
       }
 
       await saveData(selectedDate, CATEGORIES.TRACKER, 'mental-health', { entries: existingEntries }, entryData.tags)
+
+      const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
+      if (confettiLevel !== 'none' && isCelebrationEnabled('mental-health-general', userPin ?? '')) {
+        celebrate()
+      }
 
       const randomGoblinism = MENTAL_HEALTH_GOBLINISMS[Math.floor(Math.random() * MENTAL_HEALTH_GOBLINISMS.length)]
       toast({

@@ -48,9 +48,13 @@ import { INSULIN_TYPES, MOOD_OPTIONS, COMMON_TAGS, getTimeRemaining } from './di
 import DiabetesFlaskAnalytics from './diabetes-flask-analytics'
 import { DiabetesHistory } from './diabetes-history'
 import { DiabetesTimerManager } from './diabetes-timer-manager'
+import { celebrate } from '@/lib/particle-physics-engine'
+import { useUser } from '@/lib/contexts/user-context'
+import { isCelebrationEnabled } from '@/lib/celebration-prefs'
 
 export default function DiabetesTracker() {
   const router = useRouter()
+  const { userPin } = useUser()
   const [activeTab, setActiveTab] = useState('tracking')
   const [entries, setEntries] = useState<DiabetesEntry[]>([])
   const [timers, setTimers] = useState<Timer[]>([])
@@ -253,6 +257,11 @@ export default function DiabetesTracker() {
       resetForm()
       setEditingEntry(null)
       setIsAddModalOpen(false)
+
+      const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
+      if (confettiLevel !== 'none' && isCelebrationEnabled('diabetes-tracker', userPin ?? '')) {
+        celebrate()
+      }
 
       toast({
         title: editingEntry ? "Entry Updated" : "Entry Added",

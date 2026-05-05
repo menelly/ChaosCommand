@@ -51,6 +51,9 @@ import { WeatherAnalyticsDesktop } from './weather-analytics-desktop'
 import { WeatherForm } from './weather-form'
 import { AllergenForm } from './allergen-form'
 import { getSeverityColor } from './weather-constants'
+import { celebrate } from '@/lib/particle-physics-engine'
+import { useUser } from '@/lib/contexts/user-context'
+import { isCelebrationEnabled } from '@/lib/celebration-prefs'
 
 export default function WeatherEnvironmentTracker({ selectedDate = new Date() }: WeatherEnvironmentTrackerProps) {
   // State management
@@ -65,6 +68,7 @@ export default function WeatherEnvironmentTracker({ selectedDate = new Date() }:
 
   // Database hooks
   const { getSpecificData, saveData, isLoading } = useDailyData()
+  const { userPin } = useUser()
   const [weatherEntries, setWeatherEntries] = useState<WeatherData[]>([])
   const [allergenEntries, setAllergenEntries] = useState<AllergenData[]>([])
 
@@ -261,6 +265,11 @@ export default function WeatherEnvironmentTracker({ selectedDate = new Date() }:
 
       await saveData(formattedDate, CATEGORIES.TRACKER, 'weather', updatedEntries, data.tags)
 
+      const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
+      if (confettiLevel !== 'none' && isCelebrationEnabled('weather-environment', userPin ?? '')) {
+        celebrate()
+      }
+
       toast({
         title: "🌤️ Weather entry saved!",
         description: "Weather impact tracked successfully"
@@ -431,6 +440,11 @@ export default function WeatherEnvironmentTracker({ selectedDate = new Date() }:
       console.log('💾 Updated allergen entries to save:', updatedEntries) // DEBUG
 
       await saveData(formattedDate, CATEGORIES.TRACKER, 'environmental-allergens', updatedEntries, data.tags)
+
+      const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
+      if (confettiLevel !== 'none' && isCelebrationEnabled('weather-environment', userPin ?? '')) {
+        celebrate()
+      }
 
       toast({
         title: "🌿 Allergen entry saved!",

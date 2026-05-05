@@ -29,6 +29,9 @@ import { Progress } from '@/components/ui/progress'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Slider } from '@/components/ui/slider'
+import { celebrate } from '@/lib/particle-physics-engine'
+import { useUser } from '@/lib/contexts/user-context'
+import { isCelebrationEnabled } from '@/lib/celebration-prefs'
 import {
   Heart,
   Wind,
@@ -275,6 +278,7 @@ const copingTechniques: CopingTechnique[] = [
 ]
 
 export default function CopingRegulationPage() {
+  const { userPin } = useUser()
   const [selectedTechnique, setSelectedTechnique] = useState<CopingTechnique | null>(null)
   const [currentSession, setCurrentSession] = useState<CopingSession | null>(null)
   const [isActive, setIsActive] = useState(false)
@@ -406,6 +410,11 @@ export default function CopingRegulationPage() {
       const updatedSessions = [...sessions, completedSession]
       setSessions(updatedSessions)
       localStorage.setItem('coping-sessions', JSON.stringify(updatedSessions))
+
+      const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
+      if (confettiLevel !== 'none' && isCelebrationEnabled('coping-regulation', userPin ?? '')) {
+        celebrate()
+      }
     }
 
     resetSession()

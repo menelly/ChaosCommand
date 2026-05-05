@@ -76,6 +76,9 @@ import {
 } from "./energy-pacing-constants"
 
 import { EnergyPacingAnalytics } from "./energy-pacing-analytics"
+import { celebrate } from '@/lib/particle-physics-engine'
+import { useUser } from '@/lib/contexts/user-context'
+import { isCelebrationEnabled } from '@/lib/celebration-prefs'
 
 export default function EnergyPacingTracker() {
   // ============================================================================
@@ -83,6 +86,7 @@ export default function EnergyPacingTracker() {
   // ============================================================================
 
   const { saveData, getCategoryData, getDateRange, isLoading } = useDailyData()
+  const { userPin } = useUser()
   const { goblinMode } = useGoblinMode()
 
   const labels = goblinMode ? GOBLIN_MODE_LABELS : PROFESSIONAL_LABELS
@@ -308,6 +312,12 @@ export default function EnergyPacingTracker() {
     }
 
     await saveRecord(updated)
+
+    const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
+    if (confettiLevel !== 'none' && isCelebrationEnabled('energy', userPin ?? '')) {
+      celebrate()
+    }
+
     setShowActivityDialog(false)
     setActivityNotes("")
     setCustomActivityName("")

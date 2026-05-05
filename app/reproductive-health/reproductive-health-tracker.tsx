@@ -55,6 +55,9 @@ import { BBTChart } from "./bbt-chart"
 import { ReproductiveHistory } from "./reproductive-history"
 import { CycleAnalytics } from "./cycle-analytics"
 import { OvulationPredictionCard } from "./ovulation-prediction-card"
+import { celebrate } from '@/lib/particle-physics-engine'
+import { useUser } from '@/lib/contexts/user-context'
+import { isCelebrationEnabled } from '@/lib/celebration-prefs'
 
 // Types for reproductive health data
 export interface ReproductiveHealthEntry {
@@ -111,6 +114,7 @@ export const FERTILITY_SYMPTOM_OPTIONS = [
 
 export default function ReproductiveHealthTracker() {
   const { saveData, getSpecificData, getDateRange, deleteData, isLoading } = useDailyData()
+  const { userPin } = useUser()
   const [currentDate, setCurrentDate] = useState(() => {
     const today = new Date()
     console.log('🗓️ Calendar Debug: Today is', today.toISOString(), 'Display:', format(today, 'PPP'))
@@ -250,6 +254,11 @@ export default function ReproductiveHealthTracker() {
     try {
       const dateKey = formatDateForStorage(currentDate)
       await saveData(dateKey, CATEGORIES.TRACKER, 'reproductive-health', formData, formData.tags)
+
+      const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
+      if (confettiLevel !== 'none' && isCelebrationEnabled('reproductive-health', userPin ?? '')) {
+        celebrate()
+      }
 
       toast({
         title: "🌙 Reproductive Health Entry Saved!",

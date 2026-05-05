@@ -37,6 +37,9 @@ import { useDailyData, CATEGORIES } from "@/lib/database"
 import { useGoblinMode } from "@/lib/goblin-mode-context"
 import { useToast } from "@/hooks/use-toast"
 import { format } from "date-fns"
+import { celebrate } from '@/lib/particle-physics-engine'
+import { useUser } from '@/lib/contexts/user-context'
+import { isCelebrationEnabled } from '@/lib/celebration-prefs'
 
 interface BrainFogEntry {
   id: string
@@ -311,6 +314,7 @@ function BrainFogAnalytics({
 
 export default function BrainFogTracker() {
   const { saveData, getCategoryData, deleteData, getDateRange, isLoading } = useDailyData()
+  const { userPin } = useUser()
   const { toast } = useToast()
   const { goblinMode } = useGoblinMode()
 
@@ -465,6 +469,11 @@ export default function BrainFogTracker() {
       }
 
       await saveData(selectedDate, CATEGORIES.TRACKER, 'brain-fog', { entries: existingEntries })
+
+      const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
+      if (confettiLevel !== 'none' && isCelebrationEnabled('brain-fog', userPin ?? '')) {
+        celebrate()
+      }
 
       const randomGoblinism = BRAIN_FOG_GOBLINISMS[Math.floor(Math.random() * BRAIN_FOG_GOBLINISMS.length)]
       toast({

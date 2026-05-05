@@ -58,6 +58,9 @@ import { FoodAllergensForm } from "./food-allergens-form"
 import { FoodAllergensHistory } from "./food-allergens-history"
 import { AllergenManagement } from "./allergen-management"
 import FoodAllergensAnalytics from "./food-allergens-analytics"
+import { celebrate } from '@/lib/particle-physics-engine'
+import { useUser } from '@/lib/contexts/user-context'
+import { isCelebrationEnabled } from '@/lib/celebration-prefs'
 
 // 🧙‍♂️ Food Allergen Management Interface
 export interface KnownAllergen {
@@ -153,6 +156,7 @@ export function FoodAllergensTracker() {
   const [showDatePicker, setShowDatePicker] = useState(false)
 
   const { saveData, getSpecificData, getCategoryData } = useDailyData()
+  const { userPin } = useUser()
   const [todayEntries, setTodayEntries] = useState<FoodAllergenEntry[]>([])
   const [knownAllergens, setKnownAllergens] = useState<KnownAllergen[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -252,6 +256,12 @@ export function FoodAllergensTracker() {
     
     const updatedEntries = [...todayEntries, newEntry]
     await saveEntries(updatedEntries)
+
+    const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
+    if (confettiLevel !== 'none' && isCelebrationEnabled('food-allergens', userPin ?? '')) {
+      celebrate()
+    }
+
     setIsAddDialogOpen(false)
   }
 

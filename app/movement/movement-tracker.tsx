@@ -35,9 +35,13 @@ import { MOVEMENT_GOBLINISMS } from './movement-constants'
 import { useDailyData } from "@/lib/database"
 import { useToast } from "@/hooks/use-toast"
 import { format } from "date-fns"
+import { celebrate } from '@/lib/particle-physics-engine'
+import { useUser } from '@/lib/contexts/user-context'
+import { isCelebrationEnabled } from '@/lib/celebration-prefs'
 
 export default function MovementTracker() {
   const { saveData, deleteData, isLoading } = useDailyData()
+  const { userPin } = useUser()
   const { toast } = useToast()
   
   // State
@@ -77,6 +81,11 @@ export default function MovementTracker() {
       setEditingEntry(null)
       setIsModalOpen(false)
       setRefreshTrigger(prev => prev + 1)
+
+      const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
+      if (confettiLevel !== 'none' && isCelebrationEnabled('movement', userPin ?? '')) {
+        celebrate()
+      }
 
       toast({
         title: "Movement entry saved! 💖",

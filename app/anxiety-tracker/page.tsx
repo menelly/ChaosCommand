@@ -37,9 +37,13 @@ import { ANXIETY_GOBLINISMS } from './anxiety-constants'
 // Dexie imports
 import { useDailyData, CATEGORIES, formatDateForStorage } from '@/lib/database'
 import { format } from 'date-fns'
+import { celebrate } from '@/lib/particle-physics-engine'
+import { useUser } from '@/lib/contexts/user-context'
+import { isCelebrationEnabled } from '@/lib/celebration-prefs'
 
 export default function AnxietyTracker() {
   const { saveData, getCategoryData, deleteData, isLoading } = useDailyData()
+  const { userPin } = useUser()
   const { toast } = useToast()
 
   // State
@@ -71,6 +75,11 @@ export default function AnxietyTracker() {
       setEditingEntry(null)
       setIsFormOpen(false)
       setRefreshTrigger(prev => prev + 1)
+
+      const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
+      if (confettiLevel !== 'none' && isCelebrationEnabled('anxiety-tracker', userPin ?? '')) {
+        celebrate()
+      }
 
       // Show caring goblin message
       toast({

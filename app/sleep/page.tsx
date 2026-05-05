@@ -22,6 +22,9 @@ import { formatLocalDateString } from "@/lib/utils/dateUtils"
 import { SleepForm } from './sleep-form'
 import { SleepAnalytics } from './sleep-analytics'
 import { SleepEntry, isLegacyEntry, migrateLegacyEntry } from './sleep-types'
+import { celebrate } from '@/lib/particle-physics-engine'
+import { useUser } from '@/lib/contexts/user-context'
+import { isCelebrationEnabled } from '@/lib/celebration-prefs'
 import {
   QUALITY_OPTIONS,
   SLEEP_GOBLINISMS,
@@ -31,6 +34,7 @@ import {
 
 export default function SleepTracker() {
   const { saveData, getCategoryData, deleteData, isLoading: dbLoading } = useDailyData()
+  const { userPin } = useUser()
   const { toast } = useToast()
 
   // State
@@ -107,6 +111,11 @@ export default function SleepTracker() {
       setIsModalOpen(false)
       await loadEntries()
       setRefreshTrigger(prev => prev + 1)
+
+      const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
+      if (confettiLevel !== 'none' && isCelebrationEnabled('sleep', userPin ?? '')) {
+        celebrate()
+      }
 
       toast({
         title: "Sleep entry saved! 😴",

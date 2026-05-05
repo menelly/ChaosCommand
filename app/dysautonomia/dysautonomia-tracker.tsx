@@ -52,9 +52,13 @@ import { GeneralEpisodeModal } from './modals/general-episode-modal'
 // Database imports
 import { useDailyData, CATEGORIES } from '@/lib/database'
 import { format, addDays, subDays } from 'date-fns'
+import { celebrate } from '@/lib/particle-physics-engine'
+import { useUser } from '@/lib/contexts/user-context'
+import { isCelebrationEnabled } from '@/lib/celebration-prefs'
 
 export default function DysautonomiaTracker() {
   const { saveData, getCategoryData, getDateRange, deleteData, isLoading } = useDailyData()
+  const { userPin } = useUser()
   const { toast } = useToast()
   // const { episodeAlert } = useNotifications() // TODO: Add episode alerts
   const router = useRouter()
@@ -170,7 +174,12 @@ export default function DysautonomiaTracker() {
 
     const updatedEntries = [...entries, newEntry]
     await saveEntries(updatedEntries)
-    
+
+    const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
+    if (confettiLevel !== 'none' && isCelebrationEnabled('dysautonomia', userPin ?? '')) {
+      celebrate()
+    }
+
     setActiveModal(null)
     setRefreshTrigger(prev => prev + 1)
     

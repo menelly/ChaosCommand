@@ -38,6 +38,9 @@ import { useGoblinMode } from "@/lib/goblin-mode-context"
 import { useToast } from "@/hooks/use-toast"
 import { format } from "date-fns"
 import DigestiveFlaskAnalytics from '../../modules/trackers/body/upper-digestive/digestive-flask-analytics'
+import { celebrate } from '@/lib/particle-physics-engine'
+import { useUser } from '@/lib/contexts/user-context'
+import { isCelebrationEnabled } from '@/lib/celebration-prefs'
 // GraphAnalytics moved to Patterns page
 
 interface UpperDigestiveEntry {
@@ -92,6 +95,7 @@ const UPPER_DIGESTIVE_GOBLINISMS = [
 
 export default function UpperDigestiveTracker() {
   const { saveData, getCategoryData, deleteData, getDateRange, isLoading } = useDailyData()
+  const { userPin } = useUser()
   const { toast } = useToast()
   const { goblinMode } = useGoblinMode()
   
@@ -217,6 +221,11 @@ export default function UpperDigestiveTracker() {
       }
 
       await saveData(selectedDate, CATEGORIES.TRACKER, 'upper-digestive', { entries: existingEntries })
+
+      const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
+      if (confettiLevel !== 'none' && isCelebrationEnabled('upper-digestive', userPin ?? '')) {
+        celebrate()
+      }
 
       const randomGoblinism = UPPER_DIGESTIVE_GOBLINISMS[Math.floor(Math.random() * UPPER_DIGESTIVE_GOBLINISMS.length)]
       toast({

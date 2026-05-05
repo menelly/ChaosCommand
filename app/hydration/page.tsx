@@ -38,6 +38,9 @@ import { useToast } from "@/hooks/use-toast"
 import { format } from "date-fns"
 import { formatLocalDateString } from "@/lib/utils/dateUtils"
 import { HydrationForm } from './hydration-form'
+import { celebrate } from '@/lib/particle-physics-engine'
+import { useUser } from '@/lib/contexts/user-context'
+import { isCelebrationEnabled } from '@/lib/celebration-prefs'
 
 interface HydrationEntry {
   id: string
@@ -87,6 +90,7 @@ const HYDRATION_GOBLINISMS = [
 
 export default function HydrationTracker() {
   const { saveData, getCategoryData, getSpecificData, deleteData, isLoading } = useDailyData()
+  const { userPin } = useUser()
   const { toast } = useToast()
   
   // State
@@ -329,6 +333,11 @@ export default function HydrationTracker() {
       setEditingEntry(null)
       setIsModalOpen(false)
       await loadEntries()
+
+      const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
+      if (confettiLevel !== 'none' && isCelebrationEnabled('hydration', userPin ?? '')) {
+        celebrate()
+      }
 
       toast({
         title: "Hydration logged! 💧",

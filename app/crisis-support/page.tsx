@@ -54,10 +54,14 @@ import { CRISIS_RESOURCES, CRISIS_GOBLINISMS } from './crisis-constants'
 // Dexie imports
 import { useDailyData, CATEGORIES, formatDateForStorage } from '@/lib/database'
 import { format } from 'date-fns'
+import { celebrate } from '@/lib/particle-physics-engine'
+import { useUser } from '@/lib/contexts/user-context'
+import { isCelebrationEnabled } from '@/lib/celebration-prefs'
 
 export default function CrisisSupport() {
   const { saveData, getCategoryData, deleteData, isLoading } = useDailyData()
   const { toast } = useToast()
+  const { userPin } = useUser()
 
   // State
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'))
@@ -89,6 +93,11 @@ export default function CrisisSupport() {
       setEditingEntry(null)
       setIsFormOpen(false)
       setRefreshTrigger(prev => prev + 1)
+
+      const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
+      if (confettiLevel !== 'none' && isCelebrationEnabled('crisis-support', userPin ?? '')) {
+        celebrate()
+      }
 
       // Show caring goblin message
       toast({

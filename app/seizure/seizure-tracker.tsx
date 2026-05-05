@@ -39,10 +39,14 @@ import { getRandomSafetyMessage } from './seizure-constants'
 
 // Dexie imports
 import { useDailyData, CATEGORIES, formatDateForStorage } from '@/lib/database'
+import { celebrate } from '@/lib/particle-physics-engine'
+import { useUser } from '@/lib/contexts/user-context'
+import { isCelebrationEnabled } from '@/lib/celebration-prefs'
 
 export function SeizureTracker() {
   const { toast } = useToast()
   const { saveData, getSpecificData, getDateRange, isLoading } = useDailyData()
+  const { userPin } = useUser()
 
   // State management
   const [entries, setEntries] = useState<SeizureEntry[]>([])
@@ -154,6 +158,11 @@ export function SeizureTracker() {
       // Update local state
       setEntries(updatedEntries)
       setEditEntry(null)
+
+      const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
+      if (confettiLevel !== 'none' && isCelebrationEnabled('seizure-tracking', userPin ?? '')) {
+        celebrate()
+      }
     } catch (error) {
       console.error('Error saving seizure entry:', error)
       toast({

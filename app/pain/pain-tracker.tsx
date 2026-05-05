@@ -57,6 +57,9 @@ import { cn } from "@/lib/utils"
 import { TagInput } from "@/components/tag-input"
 import { PainForm } from "./pain-form"
 import { PainHistory } from "./pain-history"
+import { celebrate } from '@/lib/particle-physics-engine'
+import { useUser } from '@/lib/contexts/user-context'
+import { isCelebrationEnabled } from '@/lib/celebration-prefs'
 
 // Types for pain tracking data
 export interface PainEntry {
@@ -117,6 +120,7 @@ export const MEDICATIONS = [
 
 export default function PainTracker() {
   const { saveData, getCategoryData, deleteData, getDateRange, isLoading } = useDailyData()
+  const { userPin } = useUser()
   const [activeTab, setActiveTab] = useState<'track' | 'history' | 'analytics'>('track')
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
@@ -302,6 +306,11 @@ export default function PainTracker() {
         { entries: updatedEntries },
         entryData.tags || []
       )
+
+      const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
+      if (confettiLevel !== 'none' && isCelebrationEnabled('pain-tracking', userPin ?? '')) {
+        celebrate()
+      }
 
       toast({
         title: "🔥 Pain Entry Saved!",

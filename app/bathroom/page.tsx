@@ -38,6 +38,9 @@ import { useGoblinMode } from "@/lib/goblin-mode-context"
 import { useToast } from "@/hooks/use-toast"
 import { format } from "date-fns"
 import BathroomFlaskAnalytics from "./bathroom-flask-analytics"
+import { celebrate } from '@/lib/particle-physics-engine'
+import { useUser } from '@/lib/contexts/user-context'
+import { isCelebrationEnabled } from '@/lib/celebration-prefs'
 
 interface BathroomEntry {
   id: string
@@ -98,6 +101,7 @@ const BATHROOM_GOBLINISMS = [
 
 export default function BathroomTracker() {
   const { saveData, getCategoryData, deleteData, getDateRange, isLoading } = useDailyData()
+  const { userPin } = useUser()
   const { toast } = useToast()
   const { goblinMode } = useGoblinMode()
   
@@ -278,6 +282,11 @@ export default function BathroomTracker() {
       // Reset form
       resetForm()
       setEditingEntry(null)
+
+      const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
+      if (confettiLevel !== 'none' && isCelebrationEnabled('digestive-health', userPin ?? '')) {
+        celebrate()
+      }
 
       toast({
         title: "Bathroom entry saved! 💩",

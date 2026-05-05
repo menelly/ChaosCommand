@@ -46,9 +46,13 @@ import { getPainIntensityLabel, getPainIntensityColor, getFunctionalImpactColor,
 import { HeadPainForm } from './head-pain-form'
 import AppCanvas from "@/components/app-canvas"
 import HeadPainFlaskAnalytics from '../../modules/trackers/body/head-pain/head-pain-flask-analytics'
+import { celebrate } from '@/lib/particle-physics-engine'
+import { useUser } from '@/lib/contexts/user-context'
+import { isCelebrationEnabled } from '@/lib/celebration-prefs'
 
 export default function HeadPainTracker() {
   const { saveData, getCategoryData, deleteData, getDateRange, isLoading } = useDailyData()
+  const { userPin } = useUser()
   const [activeTab, setActiveTab] = useState<'track' | 'history' | 'analytics'>('track')
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
@@ -221,6 +225,10 @@ export default function HeadPainTracker() {
     const updatedEntries = [...entries, newEntry]
     saveEntries(updatedEntries)
     setIsAddDialogOpen(false)
+    const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
+    if (confettiLevel !== 'none' && isCelebrationEnabled('head-pain', userPin ?? '')) {
+      celebrate()
+    }
     toast({
       title: "Head Pain Episode Added",
       description: "Your head pain episode has been recorded successfully.",

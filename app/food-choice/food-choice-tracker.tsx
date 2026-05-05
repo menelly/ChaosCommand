@@ -37,9 +37,13 @@ import { GENTLE_ENCOURAGEMENTS } from "./food-choice-constants"
 import FoodChoiceForm from "./food-choice-form"
 import FoodChoiceHistory from "./food-choice-history"
 import FoodChoiceAnalyticsDesktop from "./food-choice-analytics-desktop"
+import { celebrate } from '@/lib/particle-physics-engine'
+import { useUser } from '@/lib/contexts/user-context'
+import { isCelebrationEnabled } from '@/lib/celebration-prefs'
 
 export default function FoodChoiceTracker() {
   const { saveData, getCategoryData, isLoading } = useDailyData()
+  const { userPin } = useUser()
   const { toast } = useToast()
   const { goblinMode } = useGoblinMode()
   
@@ -103,7 +107,12 @@ export default function FoodChoiceTracker() {
   const saveEntry = async (updatedEntry: FoodChoiceEntry) => {
     try {
       await saveData(selectedDate, CATEGORIES.TRACKER, 'food-choice', updatedEntry)
-      
+
+      const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
+      if (confettiLevel !== 'none' && isCelebrationEnabled('food-choice', userPin ?? '')) {
+        celebrate()
+      }
+
       const randomEncouragement = GENTLE_ENCOURAGEMENTS[Math.floor(Math.random() * GENTLE_ENCOURAGEMENTS.length)]
       toast({
         title: "Food Choice Saved!",
