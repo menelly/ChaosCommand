@@ -46,6 +46,7 @@ export default function VisualSettingsPanel() {
   const [animatedEffects, setAnimatedEffects] = useState(true)
   const [bounceIntensity, setBounceIntensity] = useState(10)
   const [confettiLevel, setConfettiLevel] = useState<'none' | 'low' | 'medium' | 'high'>('medium')
+  const [celebrationStyle, setCelebrationStyle] = useState<'default' | 'penguin' | 'octopus' | 'random'>('default')
 
   const applyTheme = (themeId: string) => {
     const oldTheme = document.querySelector('link[data-theme]')
@@ -115,12 +116,14 @@ export default function VisualSettingsPanel() {
     const savedAnimations = localStorage.getItem('chaos-animations') !== 'false'
     const savedIntensity = parseInt(localStorage.getItem('chaos-bounce-intensity') || '10')
     const savedConfetti = (localStorage.getItem('chaos-confetti-level') as any) || 'medium'
+    const savedStyle = (localStorage.getItem('chaos-celebration-style') as any) || 'default'
 
     setCurrentTheme(savedTheme)
     setCurrentFont(savedFont)
     setAnimatedEffects(savedAnimations)
     setBounceIntensity(savedIntensity)
     setConfettiLevel(savedConfetti)
+    setCelebrationStyle(savedStyle)
 
     applyTheme(savedTheme)
     fonts.forEach(font => document.body.classList.remove(font.id))
@@ -220,6 +223,33 @@ export default function VisualSettingsPanel() {
                 <span className="text-xs">{opt.label}</span>
               </Button>
             ))}
+          </div>
+
+          <div className="pt-2 border-t">
+            <p className="text-xs font-medium mb-2">Confetti Style</p>
+            <div className="grid grid-cols-4 gap-2">
+              {([
+                { value: 'default', label: 'Classic', emoji: '🎊' },
+                { value: 'penguin', label: 'Penguin', emoji: '🐧' },
+                { value: 'octopus', label: 'Octopus', emoji: '🐙' },
+                { value: 'random', label: 'Random', emoji: '🎲' },
+              ] as const).map(opt => (
+                <Button
+                  key={opt.value}
+                  variant={celebrationStyle === opt.value ? 'default' : 'outline'}
+                  size="sm"
+                  className="h-auto py-2 flex flex-col"
+                  disabled={confettiLevel === 'none'}
+                  onClick={() => {
+                    setCelebrationStyle(opt.value)
+                    localStorage.setItem('chaos-celebration-style', opt.value)
+                  }}
+                >
+                  <span>{opt.emoji}</span>
+                  <span className="text-xs">{opt.label}</span>
+                </Button>
+              ))}
+            </div>
           </div>
         </div>
       </div>

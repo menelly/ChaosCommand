@@ -569,8 +569,42 @@ export class EpicParticleEngine {
 export const epicParticles = new EpicParticleEngine();
 
 // 🎆 CONVENIENCE FUNCTIONS TO REPLACE BORING CONFETTI!
+// celebrate() called with NO args dispatches based on the user's
+// preferred celebration style (default | penguin | octopus | random).
+// Called WITH a config it ignores the pref and runs as a one-off — that
+// preserves the contract for callers that want a specific particle
+// shape (festival animations, easter eggs, etc.).
 export const celebrate = (config?: Partial<ParticleSystemConfig>) => {
-  epicParticles.celebrate(config);
+  if (config !== undefined) {
+    epicParticles.celebrate(config);
+    return;
+  }
+
+  // Lazy-import the style helper so this module stays usable in non-DOM
+  // contexts (tests, SSR fallback) without dragging localStorage in.
+  let style: 'default' | 'penguin' | 'octopus' = 'default';
+  if (typeof window !== 'undefined') {
+    const raw = localStorage.getItem('chaos-celebration-style');
+    if (raw === 'penguin' || raw === 'octopus' || raw === 'default') {
+      style = raw;
+    } else if (raw === 'random') {
+      const choices: ('default' | 'penguin' | 'octopus')[] = ['default', 'penguin', 'octopus'];
+      style = choices[Math.floor(Math.random() * choices.length)];
+    }
+  }
+
+  switch (style) {
+    case 'penguin':
+      epicParticles.penguinParty();
+      return;
+    case 'octopus':
+      epicParticles.octopusParty();
+      return;
+    case 'default':
+    default:
+      epicParticles.celebrate();
+      return;
+  }
 };
 
 export const penguinParty = () => {
