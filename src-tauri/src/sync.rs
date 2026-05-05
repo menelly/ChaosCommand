@@ -84,9 +84,7 @@ fn now_unix() -> u64 {
 }
 
 fn hostname_string() -> String {
-    hostname::get()
-        .map(|h| h.to_string_lossy().to_string())
-        .unwrap_or_else(|_| "Unknown Device".to_string())
+    server::hostname_string()
 }
 
 fn local_ip() -> Result<String, String> {
@@ -187,6 +185,14 @@ pub async fn sync_complete_pairing(
     let scanner_peer_id = server_state.peer_store.self_peer_id()?;
     let scanner_secret = peers::generate_shared_secret();
     let scanner_device_name = hostname_string();
+    // Tell the host what port our persistent server is listening on so
+    // it can initiate sync to us later. Without this, host pairs blind
+    // and gets "no_known_ip" the first time it tries to push.
+    let scanner_port = server_state
+        .bound_port
+        .lock()
+        .map_err(|e| e.to_string())?
+        .ok_or("Sync server isn't running yet — can't pair")?;
 
     let body = PairRequest {
         pairing_token: qr.pairing_token,
@@ -194,6 +200,7 @@ pub async fn sync_complete_pairing(
         scanner_device_name: scanner_device_name.clone(),
         scanner_pin_hash: pin_hash.clone(),
         shared_secret: scanner_secret.clone(),
+        scanner_port,
     };
 
     let url = format!("http://{}:{}/pair", qr.ip, qr.port);
