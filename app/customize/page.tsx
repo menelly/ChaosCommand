@@ -13,9 +13,11 @@
 import AppCanvas from "@/components/app-canvas"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Settings2, Palette, Eye } from "lucide-react"
+import { Settings2, Palette, Eye, PartyPopper } from "lucide-react"
 import VisualSettingsPanel from "@/components/customize/visual-settings-panel"
 import VisibleTrackersPanel from "@/components/customize/visible-trackers-panel"
+import CelebrateTrackersPanel from "@/components/customize/celebrate-trackers-panel"
+import HiddenCustomTrackersPanel from "@/components/hidden-custom-trackers-panel"
 
 export default function CustomizePage() {
   return (
@@ -63,6 +65,26 @@ export default function CustomizePage() {
             <VisibleTrackersPanel />
           </CardContent>
         </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <PartyPopper className="h-5 w-5" />
+              Celebrate When I Save
+            </CardTitle>
+            <CardDescription>
+              Pick which trackers fire confetti on save. Off by default for
+              crisis and mental-health trackers — dopamine confetti on
+              "logged a panic attack" is gross. Re-enable any of them if
+              you want it. Global confetti level still applies on top of this.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <CelebrateTrackersPanel />
+          </CardContent>
+        </Card>
+
+        <HiddenCustomTrackersPanel />
 
         <div className="flex justify-center gap-4 mt-8 text-sm">
           <Button variant="outline" asChild>

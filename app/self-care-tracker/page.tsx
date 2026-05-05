@@ -35,6 +35,8 @@ import { SelfCareEntry } from './self-care-types'
 import { SELF_CARE_CATEGORIES, SELF_CARE_GOBLINISMS } from './self-care-constants'
 
 import { penguinParty } from '@/lib/particle-physics-engine'
+import { useUser } from '@/lib/contexts/user-context'
+import { isCelebrationEnabled } from '@/lib/celebration-prefs'
 
 // Dexie imports
 import { useDailyData, CATEGORIES, formatDateForStorage } from '@/lib/database'
@@ -43,6 +45,7 @@ import { format } from 'date-fns'
 export default function SelfCareTracker() {
   const { saveData, getCategoryData, deleteData, isLoading } = useDailyData()
   const { toast } = useToast()
+  const { userPin } = useUser()
 
   // State
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'))
@@ -78,7 +81,7 @@ export default function SelfCareTracker() {
 
       // 🐧 PENGUIN PARTY for taking care of yourself!
       const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
-      if (confettiLevel !== 'none') {
+      if (confettiLevel !== 'none' && isCelebrationEnabled('self-care-tracker', userPin ?? '')) {
         penguinParty()
       }
 

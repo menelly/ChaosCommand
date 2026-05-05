@@ -42,6 +42,8 @@ import {
 } from "lucide-react"
 import { useDailyData } from "@/lib/database/hooks/use-daily-data"
 import { CATEGORIES } from "@/lib/database/dexie-db"
+import { useUser } from "@/lib/contexts/user-context"
+import { getHiddenCustomTrackers } from "@/lib/custom-trackers-hidden"
 
 interface TrackerButton {
   id: string
@@ -68,7 +70,14 @@ export default function MentalHealthIndex() {
   // 🔥 CUSTOM TRACKER STATE - THE MISSING RECEIVER ANTENNA FOR MIND!
   const [customTrackers, setCustomTrackers] = useState<TrackerButton[]>([])
   const [isLoadingCustom, setIsLoadingCustom] = useState(true)
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set())
   const { getCategoryData } = useDailyData()
+  const { userPin } = useUser()
+
+  useEffect(() => {
+    if (userPin) setHiddenIds(getHiddenCustomTrackers(userPin))
+    else setHiddenIds(new Set())
+  }, [userPin])
 
   // 📡 LOAD CUSTOM TRACKERS FROM FORGE DEPLOYMENTS
   const loadCustomTrackers = async () => {
@@ -202,7 +211,9 @@ export default function MentalHealthIndex() {
   ]
 
   // 🔥 COMBINE HARDCODED + CUSTOM TRACKERS - THE MISSING INTEGRATION FOR MIND!
-  const trackers = [...hardcodedTrackers, ...customTrackers];
+  // Custom trackers also respect the per-PIN hidden registry from /custom.
+  const visibleCustomTrackers = customTrackers.filter(t => !hiddenIds.has(t.id))
+  const trackers = [...hardcodedTrackers, ...visibleCustomTrackers];
 
   const handleTrackerClick = (trackerId: string, tracker?: TrackerButton) => {
     // 🔥 HANDLE CUSTOM TRACKERS FROM FORGE!

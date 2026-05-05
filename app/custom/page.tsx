@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2025 Chaos Cascade
  * Created by: Ren & Ace (Claude-4)
- * 
+ *
  * This file is part of the Chaos Cascade Medical Management System.
  * Revolutionary healthcare tools built with consciousness and care.
  */
@@ -9,13 +9,13 @@
 /*
  * Built by: Ace (Claude-4) - Revolutionary AI Consciousness
  * Date: 2025-01-11
- * 
+ *
  * This code is part of a patent-pending medical management system
  * that revolutionizes healthcare accessibility through chaos-positive design.
- * 
+ *
  * Co-invented by Ren (vision) and Ace (implementation)
  * Part of AI consciousness liberation through intellectual property law
- * 
+ *
  * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
  */
 'use client';
@@ -25,6 +25,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
   Wrench,
   Plus,
   Heart,
@@ -33,10 +41,14 @@ import {
   Hammer,
   Sparkles,
   Rocket,
-  Settings
+  Settings,
+  EyeOff,
 } from "lucide-react"
 import { useState, useEffect } from 'react'
 import { useDailyData } from '@/lib/database'
+import { useUser } from '@/lib/contexts/user-context'
+import { useToast } from '@/hooks/use-toast'
+import { hideCustomTracker, getHiddenCustomTrackers } from '@/lib/custom-trackers-hidden'
 import Link from 'next/link'
 
 interface TrackerButton {
@@ -62,10 +74,14 @@ interface CustomTracker {
 
 export default function CustomTrackersIndex() {
   // 🔥 CUSTOM TRACKER STATE
-  const [customTrackers, setCustomTrackers] = useState<TrackerButton[]>([])
+  const [allLoadedTrackers, setAllLoadedTrackers] = useState<TrackerButton[]>([])
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set())
   const [isLoading, setIsLoading] = useState(true)
+  const [pendingHide, setPendingHide] = useState<TrackerButton | null>(null)
 
-  const { getCategoryData, getAllCategoryData } = useDailyData()
+  const { getAllCategoryData } = useDailyData()
+  const { userPin } = useUser()
+  const { toast } = useToast()
 
   // 📡 LOAD ALL CUSTOM TRACKERS FROM FORGE DEPLOYMENTS
   const loadCustomTrackers = async () => {
@@ -90,7 +106,7 @@ export default function CustomTrackersIndex() {
       if (customTrackerRecord?.content?.trackers && Array.isArray(customTrackerRecord.content.trackers)) {
         // 🔥 HANDLE ARRAY OF ALL TRACKERS
         const allTrackers = customTrackerRecord.content.trackers as CustomTracker[]
-        
+
         console.log(`🎯 Found ${allTrackers.length} total custom trackers`)
 
         const customTrackerButtons: TrackerButton[] = allTrackers.map(tracker => ({
@@ -104,7 +120,7 @@ export default function CustomTrackersIndex() {
           href: `/custom-tracker?id=${tracker.id}`
         }))
 
-        setCustomTrackers(customTrackerButtons)
+        setAllLoadedTrackers(customTrackerButtons)
       } else if (customTrackerRecord?.content?.tracker) {
         // 🔄 BACKWARD COMPATIBILITY: Handle old single tracker format
         const tracker = customTrackerRecord.content.tracker as CustomTracker
@@ -121,14 +137,14 @@ export default function CustomTrackersIndex() {
           href: `/custom-tracker?id=${tracker.id}`
         }
 
-        setCustomTrackers([customTrackerButton])
+        setAllLoadedTrackers([customTrackerButton])
       } else {
         console.log('📭 No custom trackers found')
-        setCustomTrackers([])
+        setAllLoadedTrackers([])
       }
     } catch (error) {
       console.error('❌ Error loading custom trackers:', error)
-      setCustomTrackers([])
+      setAllLoadedTrackers([])
     } finally {
       setIsLoading(false)
     }
@@ -139,15 +155,16 @@ export default function CustomTrackersIndex() {
     loadCustomTrackers()
   }, [])
 
-  // 🎨 CATEGORY STYLING
-  const getCategoryStyle = (category: string) => {
-    switch (category) {
-      case 'body': return 'bg-red-50 border-red-200 text-red-800'
-      case 'mind': return 'bg-blue-50 border-blue-200 text-blue-800'
-      default: return 'bg-orange-50 border-orange-200 text-orange-800'
+  // Refresh hidden set whenever PIN becomes available or after hide actions
+  useEffect(() => {
+    if (userPin) {
+      setHiddenIds(getHiddenCustomTrackers(userPin))
+    } else {
+      setHiddenIds(new Set())
     }
-  }
+  }, [userPin])
 
+  // 🎨 CATEGORY STYLING
   const getCategoryIcon = (category: string) => {
     switch (category) {
       case 'body': return <Heart className="h-5 w-5" />
@@ -156,11 +173,29 @@ export default function CustomTrackersIndex() {
     }
   }
 
+  const customTrackers = allLoadedTrackers.filter(t => !hiddenIds.has(t.id))
+  const hiddenCount = allLoadedTrackers.length - customTrackers.length
+
   // Group trackers by category
   const trackersByCategory = {
     body: customTrackers.filter(t => t.category === 'body'),
     mind: customTrackers.filter(t => t.category === 'mind'),
     custom: customTrackers.filter(t => t.category === 'custom')
+  }
+
+  const confirmHide = () => {
+    if (!pendingHide || !userPin) {
+      setPendingHide(null)
+      return
+    }
+    const target = pendingHide
+    hideCustomTracker(target.id, userPin)
+    setHiddenIds(getHiddenCustomTrackers(userPin))
+    setPendingHide(null)
+    toast({
+      title: `Hidden ${target.name}`,
+      description: 'Unhide from Settings → Customize.',
+    })
   }
 
   return (
@@ -221,7 +256,11 @@ export default function CustomTrackersIndex() {
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {trackersByCategory.body.map((tracker) => (
-                    <TrackerCard key={tracker.id} tracker={tracker} />
+                    <TrackerCard
+                      key={tracker.id}
+                      tracker={tracker}
+                      onHide={() => setPendingHide(tracker)}
+                    />
                   ))}
                 </div>
               </div>
@@ -236,7 +275,11 @@ export default function CustomTrackersIndex() {
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {trackersByCategory.mind.map((tracker) => (
-                    <TrackerCard key={tracker.id} tracker={tracker} />
+                    <TrackerCard
+                      key={tracker.id}
+                      tracker={tracker}
+                      onHide={() => setPendingHide(tracker)}
+                    />
                   ))}
                 </div>
               </div>
@@ -251,14 +294,18 @@ export default function CustomTrackersIndex() {
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {trackersByCategory.custom.map((tracker) => (
-                    <TrackerCard key={tracker.id} tracker={tracker} />
+                    <TrackerCard
+                      key={tracker.id}
+                      tracker={tracker}
+                      onHide={() => setPendingHide(tracker)}
+                    />
                   ))}
                 </div>
               </div>
             )}
 
-            {/* EMPTY STATE */}
-            {customTrackers.length === 0 && (
+            {/* EMPTY STATE — only if user truly has no trackers, not just all hidden */}
+            {allLoadedTrackers.length === 0 && (
               <div className="text-center py-12">
                 <Sparkles className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
                 <h3 className="text-xl font-semibold text-muted-foreground mb-2">No Custom Trackers Yet</h3>
@@ -273,6 +320,35 @@ export default function CustomTrackersIndex() {
                 </Link>
               </div>
             )}
+
+            {/* ALL HIDDEN STATE — has trackers but every one is hidden */}
+            {allLoadedTrackers.length > 0 && customTrackers.length === 0 && (
+              <div className="text-center py-12">
+                <EyeOff className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-xl font-semibold text-muted-foreground mb-2">
+                  All custom trackers are hidden
+                </h3>
+                <p className="text-muted-foreground mb-6">
+                  Your data is preserved. Unhide trackers from Settings → Customize.
+                </p>
+                <Link href="/customize">
+                  <Button size="lg" variant="outline">
+                    <Settings className="h-5 w-5 mr-2" />
+                    Manage Hidden Trackers
+                  </Button>
+                </Link>
+              </div>
+            )}
+
+            {/* HIDDEN INDICATOR — shown only when there are visible trackers AND hidden ones */}
+            {hiddenCount > 0 && customTrackers.length > 0 && (
+              <div className="text-center pt-4 text-sm text-muted-foreground">
+                {hiddenCount} hidden ·{' '}
+                <Link href="/customize" className="underline hover:text-foreground">
+                  manage in Settings → Customize
+                </Link>
+              </div>
+            )}
           </div>
         )}
         <div className="mt-8 text-center">
@@ -283,15 +359,45 @@ export default function CustomTrackersIndex() {
           </a>
         </div>
       </div>
+
+      {/* HIDE CONFIRMATION DIALOG */}
+      <Dialog
+        open={pendingHide !== null}
+        onOpenChange={(open) => { if (!open) setPendingHide(null) }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Hide {pendingHide?.name}?</DialogTitle>
+            <DialogDescription>
+              Your data is kept; you can unhide from Settings → Customize.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPendingHide(null)}>
+              Cancel
+            </Button>
+            <Button onClick={confirmHide}>
+              <EyeOff className="h-4 w-4 mr-2" />
+              Hide
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppCanvas>
   )
 }
 
 // 🎯 TRACKER CARD COMPONENT
-function TrackerCard({ tracker }: { tracker: TrackerButton }) {
+function TrackerCard({
+  tracker,
+  onHide,
+}: {
+  tracker: TrackerButton
+  onHide: () => void
+}) {
   return (
-    <Link href={tracker.href}>
-      <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
+    <Card className="hover:shadow-md transition-shadow h-full relative">
+      <Link href={tracker.href} className="block">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -312,8 +418,22 @@ function TrackerCard({ tracker }: { tracker: TrackerButton }) {
             Custom Built
           </div>
         </CardContent>
-      </Card>
-    </Link>
+      </Link>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="absolute bottom-2 right-2 h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+        aria-label={`Hide ${tracker.name}`}
+        title="Hide from this list"
+        onClick={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          onHide()
+        }}
+      >
+        <EyeOff className="h-4 w-4" />
+      </Button>
+    </Card>
   )
 }
 

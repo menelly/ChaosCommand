@@ -99,6 +99,11 @@ const SYNCABLE_LS_SINGLETONS = (pin: string) => [
   `survivalCount_${pin}`,
   `lastCheckedDate_${pin}`,
   `survivalChecked_${pin}`,
+  // Hidden custom trackers (JSON array of tracker ids hidden from /custom)
+  `chaos-custom-trackers-hidden-${pin}`,
+  // Per-tracker celebration opt-out (JSON array of tracker ids that suppress
+  // confetti on save). LWW across devices.
+  `chaos-celebration-disabled-${pin}`,
 ];
 
 const SYNCABLE_LS_DATED_PREFIXES = (pin: string) => [
@@ -376,8 +381,50 @@ export async function importData(jsonData: string): Promise<void> {
           continue;
         }
 
+        // Hidden custom trackers: union merge (no LWW timestamp on this
+        // key — if a tracker is hidden on either device, keep it hidden;
+        // explicit unhide flows through the same import path on the
+        // device where the user took the action because the array no
+        // longer contains that id and the OTHER device's array does, so
+        // union would re-hide. Accept that limitation: unhide actions
+        // win locally until the next manual sync from the unhide-side
+        // device, which carries the smaller set forward).
+        if (key.startsWith('chaos-custom-trackers-hidden-')) {
+          try {
+            const localRaw = localStorage.getItem(key);
+            const localArr = localRaw ? JSON.parse(localRaw) : [];
+            const incomingArr = JSON.parse(value);
+            if (Array.isArray(localArr) && Array.isArray(incomingArr)) {
+              const merged = Array.from(new Set([
+                ...localArr.filter((x: unknown): x is string => typeof x === 'string'),
+                ...incomingArr.filter((x: unknown): x is string => typeof x === 'string'),
+              ]));
+              const mergedJson = JSON.stringify(merged);
+              if (mergedJson !== localRaw) {
+                localStorage.setItem(key, mergedJson);
+                lsImported++;
+              }
+            }
+          } catch {
+            localStorage.setItem(key, value);
+            lsImported++;
+          }
+          continue;
+        }
+
         // Singletons (schedule): LWW
         if (key.startsWith('schedule-')) {
+          if (localStorage.getItem(key) !== value) {
+            localStorage.setItem(key, value);
+            lsImported++;
+          }
+          continue;
+        }
+
+        // Per-tracker celebration opt-out: LWW. Small JSON array of tracker
+        // ids; users edit it deliberately on whichever device they happen to
+        // be on, and the most recent edit reflects intent.
+        if (key.startsWith('chaos-celebration-disabled-')) {
           if (localStorage.getItem(key) !== value) {
             localStorage.setItem(key, value);
             lsImported++;

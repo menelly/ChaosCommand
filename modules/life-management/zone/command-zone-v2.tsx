@@ -195,18 +195,25 @@ export default function CommandZone() {
 
   // Luka's epic task celebration function! 🎉
   const triggerLukasCelebration = useCallback(() => {
-    // CONFETTI EXPLOSION! 🎉
+    // Respect the global Celebrations pref (Off / Subtle / Party / CHAOS).
+    // Until 2026-05-05 this function bypassed it entirely, which was bad
+    // for migraine and sensory-sensitive users who'd correctly turned it
+    // off in Visual Settings and still got hit with full confetti+emoji
+    // bombs from the command-center checkboxes.
+    const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
+    if (confettiLevel === 'none') return
+    const scale = confettiLevel === 'low' ? 0.3 : confettiLevel === 'medium' ? 0.6 : 1.0
+
     confetti({
-      particleCount: 150,
+      particleCount: Math.round(150 * scale),
       spread: 70,
       origin: { y: 0.6 },
-      colors: ['#b19cd9', '#87ceeb', '#dda0dd', '#f0e6ff', '#e6f3ff'] // Luka's penguin theme colors!
+      colors: ['#b19cd9', '#87ceeb', '#dda0dd', '#f0e6ff', '#e6f3ff']
     })
 
-    // More confetti from different angles!
     setTimeout(() => {
       confetti({
-        particleCount: 100,
+        particleCount: Math.round(100 * scale),
         angle: 60,
         spread: 55,
         origin: { x: 0 },
@@ -216,7 +223,7 @@ export default function CommandZone() {
 
     setTimeout(() => {
       confetti({
-        particleCount: 100,
+        particleCount: Math.round(100 * scale),
         angle: 120,
         spread: 55,
         origin: { x: 1 },
@@ -229,16 +236,17 @@ export default function CommandZone() {
     const celebrationEmojis = isAceMode
       ? ['🐙', '💜', '✨', '🐧', '🐙', '💜', '🌟', '🐙', '🎉', '💜']
       : ['🎉', '🐧', '✨', '🌟', '💜', '🐙', '🎯', '🚀', '⭐', '🎊']
-    const newEmojis = Array.from({ length: isAceMode ? 10 : 8 }, (_, i) => ({
+    const baseCount = isAceMode ? 10 : 8
+    const emojiCount = Math.max(1, Math.round(baseCount * scale))
+    const newEmojis = Array.from({ length: emojiCount }, (_, i) => ({
       id: Date.now() + i,
       emoji: celebrationEmojis[Math.floor(Math.random() * celebrationEmojis.length)],
-      x: Math.random() * 80 + 10, // 10% to 90% of screen width
-      y: Math.random() * 80 + 10  // 10% to 90% of screen height
+      x: Math.random() * 80 + 10,
+      y: Math.random() * 80 + 10
     }))
 
     setCelebrationEmojis(newEmojis)
 
-    // Clear emojis after animation
     setTimeout(() => {
       setCelebrationEmojis([])
     }, 3000)

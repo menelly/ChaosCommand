@@ -47,6 +47,8 @@ import DailyDashboardToggle from "@/components/daily-dashboard-toggle"
 import { useState, useEffect } from 'react'
 import { useDailyData } from "@/lib/database/hooks/use-daily-data"
 import { CATEGORIES } from "@/lib/database/dexie-db"
+import { useUser } from "@/lib/contexts/user-context"
+import { getHiddenCustomTrackers } from "@/lib/custom-trackers-hidden"
 
 interface TrackerButton {
   id: string
@@ -76,7 +78,14 @@ export default function PhysicalHealthIndex() {
   // 🔥 CUSTOM TRACKER STATE - THE MISSING RECEIVER ANTENNA!
   const [customTrackers, setCustomTrackers] = useState<TrackerButton[]>([])
   const [isLoadingCustom, setIsLoadingCustom] = useState(true)
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set())
   const { getCategoryData } = useDailyData()
+  const { userPin } = useUser()
+
+  useEffect(() => {
+    if (userPin) setHiddenIds(getHiddenCustomTrackers(userPin))
+    else setHiddenIds(new Set())
+  }, [userPin])
 
   // 📡 LOAD CUSTOM TRACKERS FROM FORGE DEPLOYMENTS
   const loadCustomTrackers = async () => {
@@ -254,7 +263,9 @@ export default function PhysicalHealthIndex() {
   );
 
   // 🔥 COMBINE HARDCODED + CUSTOM TRACKERS - THE MISSING INTEGRATION!
-  const trackers = [...hardcodedTrackers, ...customTrackers];
+  // Custom trackers also respect the per-PIN hidden registry from /custom.
+  const visibleCustomTrackers = customTrackers.filter(t => !hiddenIds.has(t.id))
+  const trackers = [...hardcodedTrackers, ...visibleCustomTrackers];
 
   const getTrackerHref = (trackerId: string, tracker?: TrackerButton): string => {
     // 🔥 HANDLE CUSTOM TRACKERS FROM FORGE!
