@@ -103,7 +103,7 @@ export async function renamePeer(peerId: string, newName: string): Promise<boole
  * the Rust side, no disk I/O for snapshots.
  */
 export async function publishSnapshot(pin: string, deviceName?: string): Promise<void> {
-  const data = await exportAllData()
+  const data = await exportAllData(pin)
   await invoke("sync_publish_snapshot", { data, pin, deviceName })
 }
 
@@ -150,7 +150,7 @@ export async function maybeRunAutoSync(pin: string): Promise<AutoSyncOutcome> {
     console.warn("[auto-sync] publishSnapshot failed:", err)
   }
 
-  const data = await exportAllData()
+  const data = await exportAllData(pin)
 
   const pin_mismatches: { peer_name: string }[] = []
   const unreachable: { peer_name: string; cleared: boolean }[] = []

@@ -246,7 +246,7 @@ export default function SyncPage() {
       // peer can pull it back as part of the bidirectional exchange.
       await publishSnapshot(userPin).catch(() => {})
 
-      const data = await exportAllData()
+      const data = await exportAllData(userPin)
       const result = await invoke<ToPeerResult>('sync_to_peer', {
         peerId: peer.peer_id,
         pin: userPin,

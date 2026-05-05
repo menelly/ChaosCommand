@@ -78,20 +78,76 @@ export async function migrateLocalStorageJournals(): Promise<void> {
 }
 
 /**
- * Export all data for backup purposes
+ * Export all data for backup or sync.
+ *
+ * v1.1 (2026-05-05): added `local_storage` section. Many command-page
+ * widgets (survival button, daily tasks, gear checklist, self-care
+ * checklist, schedule) write to PIN-suffixed localStorage keys instead
+ * of Dexie. Without these in the export, users see different counts /
+ * tasks / states across paired devices even though daily_data syncs
+ * correctly. The export collects every syncable PIN-scoped key for the
+ * active PIN. Pass the PIN explicitly — exportAllData has no other way
+ * to know which user's localStorage to walk.
  */
-export async function exportAllData(): Promise<string> {
+const SYNCABLE_LS_SINGLETONS = (pin: string) => [
+  // Item definitions (lists merged by id on import)
+  `selfcare-items-${pin}`,
+  `gear-items-${pin}`,
+  // Schedule (LWW)
+  `schedule-${pin}`,
+  // Survival button (counter / date / checked-flag)
+  `survivalCount_${pin}`,
+  `lastCheckedDate_${pin}`,
+  `survivalChecked_${pin}`,
+];
+
+const SYNCABLE_LS_DATED_PREFIXES = (pin: string) => [
+  `selfcare-state-${pin}-`,
+  `gear-check-${pin}-`,
+  `daily-tasks-${pin}-`,
+];
+
+function collectSyncableLocalStorage(pin: string): Record<string, string> {
+  if (typeof window === 'undefined' || !pin) return {};
+  const out: Record<string, string> = {};
+
+  for (const key of SYNCABLE_LS_SINGLETONS(pin)) {
+    const v = localStorage.getItem(key);
+    if (v !== null) out[key] = v;
+  }
+
+  const datedPrefixes = SYNCABLE_LS_DATED_PREFIXES(pin);
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!key) continue;
+    if (datedPrefixes.some(p => key.startsWith(p))) {
+      const v = localStorage.getItem(key);
+      if (v !== null) out[key] = v;
+    }
+  }
+  return out;
+}
+
+export async function exportAllData(pin?: string): Promise<string> {
   try {
     const allData = await db.daily_data.toArray();
     const allTags = await db.user_tags.toArray();
     const allImages = await db.image_blobs.toArray();
 
+    // Best-effort PIN resolution if caller didn't pass one — fall back
+    // to whatever the user-context wrote to localStorage. Without a PIN
+    // we can't safely walk keys; we simply skip the localStorage block.
+    const effectivePin = pin || (typeof window !== 'undefined'
+      ? (localStorage.getItem('chaos-user-pin') || '')
+      : '');
+
     const exportData = {
-      version: '1.0',
+      version: '1.1',
       exported_at: getCurrentTimestamp(),
       daily_data: allData,
       user_tags: allTags,
-      image_blobs: allImages
+      image_blobs: allImages,
+      local_storage: collectSyncableLocalStorage(effectivePin),
     };
 
     return JSON.stringify(exportData, null, 2);
@@ -188,10 +244,157 @@ export async function importData(jsonData: string): Promise<void> {
       }
     }
 
+    // localStorage user-data section (v1.1+). Each key has a defined
+    // merge strategy so concurrent edits on different devices behave
+    // sensibly:
+    //   - survivalCount_<pin>: max wins (counter is monotonic)
+    //   - lastCheckedDate_<pin>: later date wins (string compare on YYYY-MM-DD)
+    //   - survivalChecked_<pin>: take whoever has the more recent
+    //     lastCheckedDate; same-date → OR (either being true wins)
+    //   - selfcare-state-<pin>-<date> / gear-check-<pin>-<date> /
+    //     daily-tasks-<pin>-<date>: per-date keys, incoming wins on
+    //     overlap, union on date-distinct
+    //   - selfcare-items-<pin> / gear-items-<pin>: merge by id
+    //     (union; incoming wins for same-id duplicates) — preserves
+    //     both sides' new items instead of clobbering one
+    //   - schedule-<pin>: LWW, incoming wins
+    let lsImported = 0;
+    if (typeof window !== 'undefined' && payload.local_storage && typeof payload.local_storage === 'object') {
+      const ls = payload.local_storage as Record<string, string>;
+
+      // First pass: extract survival metadata so we can resolve survivalChecked
+      // alongside lastCheckedDate consistently.
+      const survivalDates: Record<string, { incomingDate: string; incomingChecked: string | null }> = {};
+      for (const [key, value] of Object.entries(ls)) {
+        const m = key.match(/^lastCheckedDate_(.+)$/);
+        if (m && typeof value === 'string') {
+          const pin = m[1];
+          if (!survivalDates[pin]) survivalDates[pin] = { incomingDate: value, incomingChecked: null };
+          else survivalDates[pin].incomingDate = value;
+        }
+        const m2 = key.match(/^survivalChecked_(.+)$/);
+        if (m2 && typeof value === 'string') {
+          const pin = m2[1];
+          if (!survivalDates[pin]) survivalDates[pin] = { incomingDate: '', incomingChecked: value };
+          else survivalDates[pin].incomingChecked = value;
+        }
+      }
+
+      for (const [key, value] of Object.entries(ls)) {
+        if (typeof value !== 'string') continue;
+
+        // survivalCount: max wins
+        if (key.startsWith('survivalCount_')) {
+          const local = parseInt(localStorage.getItem(key) || '0', 10) || 0;
+          const incoming = parseInt(value, 10) || 0;
+          if (incoming > local) {
+            localStorage.setItem(key, String(incoming));
+            lsImported++;
+          }
+          continue;
+        }
+
+        // lastCheckedDate: later wins, and we set survivalChecked atomically
+        if (key.startsWith('lastCheckedDate_')) {
+          const pin = key.slice('lastCheckedDate_'.length);
+          const local = localStorage.getItem(key) || '';
+          if (value > local) {
+            localStorage.setItem(key, value);
+            // Carry the matching survivalChecked from the incoming side
+            const checkedKey = `survivalChecked_${pin}`;
+            const incomingChecked = ls[checkedKey];
+            if (typeof incomingChecked === 'string') {
+              localStorage.setItem(checkedKey, incomingChecked);
+            }
+            lsImported++;
+          } else if (value === local && value !== '') {
+            // Same date — survivalChecked is true if either side is true
+            const checkedKey = `survivalChecked_${pin}`;
+            const localChecked = localStorage.getItem(checkedKey) === 'true';
+            const incomingChecked = ls[checkedKey] === 'true';
+            if (incomingChecked && !localChecked) {
+              localStorage.setItem(checkedKey, 'true');
+              lsImported++;
+            }
+          }
+          continue;
+        }
+
+        // survivalChecked is handled together with lastCheckedDate above;
+        // skip standalone processing so we don't clobber the linked logic.
+        if (key.startsWith('survivalChecked_')) continue;
+
+        // Dated daily-state keys: incoming wins for date-overlap, union
+        // for date-distinct. Implementation: just write incoming since
+        // each date key is independent (no merge across dates needed).
+        if (
+          key.startsWith('selfcare-state-') ||
+          key.startsWith('gear-check-') ||
+          key.startsWith('daily-tasks-')
+        ) {
+          // For a same-date overlap, prefer incoming UNLESS local has
+          // strictly more content (rough heuristic — if local string is
+          // longer, it likely has additional items the sender hadn't
+          // seen yet). This isn't bulletproof but errs on the side of
+          // not deleting the user's work.
+          const localVal = localStorage.getItem(key);
+          if (!localVal || value.length >= localVal.length) {
+            if (localVal !== value) {
+              localStorage.setItem(key, value);
+              lsImported++;
+            }
+          }
+          continue;
+        }
+
+        // Item-definition lists: merge by id
+        if (key.startsWith('selfcare-items-') || key.startsWith('gear-items-')) {
+          try {
+            const localRaw = localStorage.getItem(key);
+            const localArr = localRaw ? JSON.parse(localRaw) : [];
+            const incomingArr = JSON.parse(value);
+            if (Array.isArray(localArr) && Array.isArray(incomingArr)) {
+              const byId = new Map<string, any>();
+              for (const item of localArr) {
+                if (item && typeof item.id !== 'undefined') byId.set(String(item.id), item);
+              }
+              for (const item of incomingArr) {
+                if (item && typeof item.id !== 'undefined') byId.set(String(item.id), item);
+              }
+              const merged = Array.from(byId.values());
+              const mergedJson = JSON.stringify(merged);
+              if (mergedJson !== localRaw) {
+                localStorage.setItem(key, mergedJson);
+                lsImported++;
+              }
+            }
+          } catch {
+            // Malformed — fall back to LWW
+            localStorage.setItem(key, value);
+            lsImported++;
+          }
+          continue;
+        }
+
+        // Singletons (schedule): LWW
+        if (key.startsWith('schedule-')) {
+          if (localStorage.getItem(key) !== value) {
+            localStorage.setItem(key, value);
+            lsImported++;
+          }
+          continue;
+        }
+
+        // Unknown key (shouldn't happen since we control the export
+        // allowlist, but tolerate forward-compat additions): skip.
+      }
+    }
+
     console.log(
       `📦 IMPORT: daily_data ${dailyInserted}+${dailyUpdated}~${dailySkipped}=, ` +
       `tags ${tagsInserted}+${tagsUpdated}~${tagsSkipped}=, ` +
-      `blobs ${blobsInserted}+0~${blobsSkipped}=`
+      `blobs ${blobsInserted}+0~${blobsSkipped}=, ` +
+      `localStorage ${lsImported} keys updated`
     );
   } catch (error) {
     console.error('💥 IMPORT: Failed to import data:', error);
