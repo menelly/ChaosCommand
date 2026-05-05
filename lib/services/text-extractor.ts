@@ -115,9 +115,8 @@ export async function extractTextFromPdf(data: ArrayBuffer | Uint8Array): Promis
   const pdf = await pdfjsLib.getDocument({
     data,
     useWorkerFetch: false,
-    isEvalSupported: false,
     disableAutoFetch: false,
-  }).promise;
+  } as any).promise;
   const pages: string[] = [];
 
   for (let i = 1; i <= pdf.numPages; i++) {
