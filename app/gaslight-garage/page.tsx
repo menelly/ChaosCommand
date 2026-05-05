@@ -89,8 +89,15 @@ export default function GaslightGaragePage() {
   const loadEntries = useCallback(async () => {
     try {
       const records = await getAllCategoryData(CATEGORIES.USER)
+      // Match both legacy "gaslight-garage" records (one entry per
+      // (date) — second entry on the same day silently overwrote the
+      // first, the bug Ren caught 2026-05-05) AND the new
+      // "gaslight-garage-<entryId>" per-entry records that fix it.
       const garageRecords = records
-        ?.filter((r: any) => r.subcategory === 'gaslight-garage')
+        ?.filter((r: any) =>
+          r.subcategory === 'gaslight-garage' ||
+          (typeof r.subcategory === 'string' && r.subcategory.startsWith('gaslight-garage-'))
+        )
         ?.map((r: any) => {
           const content = typeof r.content === 'string' ? JSON.parse(r.content) : r.content
           return content as GarageEntry
@@ -188,10 +195,13 @@ export default function GaslightGaragePage() {
         category,
       }
 
+      // Per-entry subcategory so two entries on the same evidenceDate
+      // don't share a daily_data key (and silently clobber each other,
+      // which they did until 2026-05-05). Each entry gets its own row.
       await saveData(
         evidenceDate,
         CATEGORIES.USER,
-        'gaslight-garage',
+        `gaslight-garage-${entry.id}`,
         JSON.stringify(entry)
       )
 
@@ -240,15 +250,23 @@ export default function GaslightGaragePage() {
       for (const key of entry.imageKeys) {
         await db.image_blobs.where('blob_key').equals(key).delete()
       }
-      // Delete the record
-      await db.daily_data
+      // Delete the record. Try the per-entry key first (new format);
+      // fall back to filtered-delete on the legacy shared key for
+      // entries written by older builds.
+      const perEntryDeleted = await db.daily_data
         .where('[date+category+subcategory]')
-        .equals([entry.date, CATEGORIES.USER, 'gaslight-garage'])
-        .filter((r: any) => {
-          const content = typeof r.content === 'string' ? JSON.parse(r.content) : r.content
-          return content.id === entry.id
-        })
+        .equals([entry.date, CATEGORIES.USER, `gaslight-garage-${entry.id}`])
         .delete()
+      if (perEntryDeleted === 0) {
+        await db.daily_data
+          .where('[date+category+subcategory]')
+          .equals([entry.date, CATEGORIES.USER, 'gaslight-garage'])
+          .filter((r: any) => {
+            const content = typeof r.content === 'string' ? JSON.parse(r.content) : r.content
+            return content.id === entry.id
+          })
+          .delete()
+      }
 
       await loadEntries()
     } catch (e) {

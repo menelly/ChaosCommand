@@ -311,7 +311,32 @@ export function DiabetesTimerManager({ timers, onTimersChange, currentUserId }: 
         color: TIMER_CONFIGS[timer.type].color
       }
 
-      const eventsData = { events: [calendarEvent] }
+      // Load existing calendar events for this date and merge — until
+      // 2026-05-05 this just overwrote the entire (date, CALENDAR,
+      // MONTHLY) record with `{events: [calendarEvent]}`, silently
+      // wiping any other timer changes / appointments / period events
+      // already on that day. Sibling removeFromCalendar already did
+      // load-merge correctly; addToCalendar now matches.
+      const existingRecord = await getSpecificData(dateKey, CATEGORIES.CALENDAR, SUBCATEGORIES.MONTHLY)
+      let existingEvents: any[] = []
+      if (existingRecord?.content) {
+        try {
+          const parsed = typeof existingRecord.content === 'string'
+            ? JSON.parse(existingRecord.content)
+            : existingRecord.content
+          if (Array.isArray(parsed?.events)) {
+            existingEvents = parsed.events
+          }
+        } catch {
+          // Malformed existing content — fall through with empty list
+          // rather than crashing the timer save.
+        }
+      }
+      // Replace any prior event for THIS timer (re-running addToCalendar
+      // for a re-saved timer) but preserve everything else.
+      const merged = existingEvents.filter(e => e?.id !== calendarEvent.id)
+      merged.push(calendarEvent)
+      const eventsData = { events: merged }
 
       // Save to calendar database
       await saveData(
