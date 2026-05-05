@@ -280,6 +280,12 @@ pub async fn sync_to_peer(
         .find(&peer_id)?
         .ok_or_else(|| format!("Unknown peer: {}", peer_id))?;
 
+    // The auth header identifies US to the remote so they can look us
+    // up in THEIR peer registry. Sending the remote's own id back to
+    // them would (and did, until 2026-05-05) fail with peer_not_found
+    // because nobody stores themselves as a peer.
+    let self_peer_id = peer_store.self_peer_id()?;
+
     if peer.last_known_ip.is_empty() || peer.last_known_port == 0 {
         return Ok(ToPeerResult {
             success: false,
@@ -315,7 +321,7 @@ pub async fn sync_to_peer(
     let body_bytes = serde_json::to_vec(&body).map_err(|e| format!("serialize: {}", e))?;
 
     let mac = hmac_b64(&peer.shared_secret, &body_bytes)?;
-    let auth_header = format!("{}:{}", peer.peer_id, mac);
+    let auth_header = format!("{}:{}", self_peer_id, mac);
 
     let url = format!("http://{}:{}/sync", peer.last_known_ip, peer.last_known_port);
     let client = reqwest::Client::new();
