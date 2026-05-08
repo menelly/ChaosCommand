@@ -1,6 +1,8 @@
 # 🏥 Chaos Command
 ## Privacy-First Health Tracking for Real Humans
 
+**Current version: v0.4.1** &middot; [Recent Updates](#recent-updates) &middot; [License: PolyForm Noncommercial](#license)
+
 > *"Dreamed by Ren, implemented by Ace, inspired by mitochondria who've been on strike since birth"*
 
 ---
@@ -52,6 +54,7 @@ Everything runs on your device. No cloud. No accounts. No telemetry. Your health
 ### Privacy & Security
 - **Local-first**: All data stays on your device (IndexedDB via Dexie.js)
 - **PIN-based isolation**: Multiple users, separate databases, no corporate auth
+- **Peer-to-peer sync (v0.3+, optional)**: Bidirectional sync between *your own* devices over LAN — phone ↔ laptop ↔ desktop. PIN-scoped, encrypted, no cloud, no third-party servers. Pair once, sync on demand.
 - **G-SPOT Protocol**: Emergency wipe that replaces your real data with the app's *starter data* — the exact state the app is in on first install. Cover story writes itself: *"Oh that? I forgot I downloaded it. ADHD tax."* They can't find it if they don't think it was ever there.
 - **G-SPOT Export**: Medical data encrypted and hidden in boring files (Costco receipts, family recipes)
 - **Open source**: Audit our code
@@ -61,6 +64,16 @@ Everything runs on your device. No cloud. No accounts. No telemetry. Your health
 - **Bounce intensity slider**: 0% static to 100% full sparkle — migraine-safe customization
 - **4 font options**: Atkinson Hyperlegible, Poppins, Lexend, System
 - **Chaos-positive design**: Goblin affirmations, survival checkbox with cheerleader familiars, "I KNOW" tags for intentional choices
+
+---
+
+## Recent Updates
+
+**v0.4.1** &middot; Confetti style picker (Classic / Penguin / Octopus / Random)
+**v0.4.0** &middot; Per-tracker celebration toggle, hide-custom-trackers preference, global-pref bug fix
+**v0.3.0** &middot; Auto-sync v1 architecture (peer-to-peer, PIN-scoped, no cloud); persistent Rust sync server with peer registry
+**v0.2.2** &middot; Bidirectional sync (initial), accessibility theme additions, lavender Settings fix
+**v0.2.x** &middot; Opt-in update check piggybacked on the daily survival ritual, timezone fixes, Pattern Engine + Timeline-PDF + Device Sync polish
 
 ---
 
@@ -84,19 +97,27 @@ Everything runs on your device. No cloud. No accounts. No telemetry. Your health
 
 ### Installation
 ```bash
-git clone https://github.com/menelly/CommandTauri.git
-cd CommandTauri
-npm install
-npm run tauri:dev
+git clone https://github.com/menelly/ChaosCommand.git
+cd ChaosCommand
+pnpm install
+pnpm tauri dev
 ```
 
-Two commands. The NER model is bundled. The PDF parser runs in-browser. Grandma Jane approved.
+The NER model is bundled. The PDF parser runs in-browser. Grandma Jane approved.
 
 ### First Run
 1. Pick a theme that sparks joy
 2. Set up your PIN
 3. Start tracking whatever feels manageable
 4. Explore The Forge to build custom trackers
+
+### iOS — self-build only
+
+We don't ship signed iOS binaries. **This is intentional.** App Store review is hostile to medical-adjacent tools, the $99/yr + cert/TestFlight maintenance treadmill isn't sustainable for a free disability-focused project, and we're not fighting Apple on steganography today.
+
+If you have a Mac and an iPhone, you can build and install Chaos Command yourself in under an hour using a free Apple ID. See [`docs/IOS_BUILD.md`](docs/IOS_BUILD.md) for the full walkthrough.
+
+Pre-built signed binaries for **Windows, Mac (Intel + Apple Silicon), Linux, and Android** are released through the normal channels.
 
 ---
 
