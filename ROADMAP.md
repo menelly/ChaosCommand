@@ -160,21 +160,29 @@ UX polish wave 2:
 - Hydration: added soda regular/diet, sparkling water, energy drink, black tea, milk
 - Command Zone: "Clear finished (N)" button on Today's Tasks (CHA-145 closed)
 
-### v0.4.4 — Tier 1 safety-critical refactors (CURRENT GATE)
+### v0.4.4 ✅ shipped 2026-05-10 — Tier 1 safety-critical refactors
 
-Bring 5 medically-significant trackers up to v2 architecture (multi-modal, collapsibles, date pickers, 911 red flags, analytics).
+Five trackers brought up to v2 architecture in one session (5 commits on `feat/v2-tracker-wave`):
 
-| Tracker | Subtypes | 911 red flags |
+| Tracker | Subtypes shipped | Red flags shipped |
 |---|---|---|
-| Seizure (CHA-153) | Focal-aware, Focal-impaired, Tonic-clonic, Absence, Myoclonic, Atonic, General | Status epilepticus, prolonged >5min, multiple consecutive |
-| Pain | Acute, Chronic flare, Post-surgical, Headache cross-link, Cardiac cross-link, General | Severe + radiating, severe abdominal, thunderclap |
-| Head-pain | Migraine ±aura, Tension, Cluster, Sinus, Worst-of-life, General | Worst-headache-of-life (stroke/SAH), neck stiffness + fever, sudden onset, focal neuro |
-| Food-allergens | Mild, Moderate, Severe/anaphylaxis, Confirmed allergen, Unknown trigger | Anaphylaxis pattern (skin + airway/breathing) — EpiPen guidance |
-| Anxiety | Panic attack, General anxiety, Phobic, Social, OCD-shaped, General | Suicidal ideation flag → 988 referral |
+| **Seizure** (CHA-153) | Focal-aware, Focal-impaired, Tonic-clonic, Absence, Myoclonic, Atonic, **Autonomic** ⭐, General | Status epilepticus (≥5min single OR multi-consecutive without recovery), cyanosis, prolonged unresponsiveness — rescue med tracking + AED-missed flag |
+| **Pain** (CHA-154) | Acute, Chronic Flare, Post-Surgical, General + cross-tracker referrals (cardiac / head-pain / joint) | MI (chest+radiation), AAA (severe abdo+pulsatile), cauda equina (back+leg weakness/bowel-bladder/saddle), aortic dissection (tearing), SAH (thunderclap), peritonitis (rigid+fever) |
+| **Head-Pain** (CHA-155) | Migraine±aura, Tension, Cluster, Sinus, Worst-of-Life, General | SAH (WHOL/thunderclap), stroke (focal/weakness/speech/vision), meningitis (neck stiffness+fever), GCA (vision+age>50), CVST/eclampsia, post-trauma bleed |
+| **Food-Allergens** (CHA-156) | Mild, Moderate, Severe-Anaphylaxis, Celiac-Autoimmune, Intolerance, Confirmed-Exposure, Unknown-Trigger, General | IgE: skin + airway/breathing → EpiPen + 911 (two-system rule); Celiac/autoimmune separate red-flag logic (no EpiPen) — Luka context built in |
+| **Anxiety** (CHA-157) | Panic, Generalized, Social, Phobic, OCD-shaped, **Meltdown**, **Shutdown** (AuDHD-aware), Anticipatory, Performance, Health, General | 💜 **988 system** (not 911): SI / SH urges / hopelessness / hospitalization-considered / crisis-contact tracking |
 
-**Already-good (no v0.4.4 action):** dysautonomia (reference impl), reproductive-health (already structured), crisis-support (has 988), diabetes (delegates externally — verify but probably fine).
+**Bonus deliverables along the way:**
+- `EmergencyCriteriaCard` shared component — collapses after first read, auto-re-expands when recent entries trip emergency markers (mobile UX fix). Retro-fitted into cardiac, respiratory, skin too.
+- 🐛 Removed mandatory `disabled={symptoms.length === 0}` gates from 9 modals (cardiac, arrhythmia, respiratory, asthma, food-allergens, 5 dysautonomia). "Ring says 89% no clue why" entries now save without symptoms.
+- 👹 **Pain gremlins** restored on severity slider (clinical labels preserved alongside for PDF export). 0=🌈, 5=🔥 uprising, 8=💀 GREMLIN APOCALYPSE, 10=🚨 crisis.
+- **Baseline-delta tracking** in head-pain — your typical-headache-day pain level vs flare level, with delta histogram (Mild +1 / Moderate +2-3 / Severe +4-5 / Extreme +6+ "needs Nurtec AND Imitrex" days). Same pattern in pain (chronic-flare) and food-allergens (delayed-reaction hours).
+- **Treatment effectiveness analytics** in pain + head-pain — ranks what helps with avg score/10, requires ≥2 uses to appear (no one-off noise).
+- **Cross-tracker referrals** in pain → /cardiac (chest pain), /head-pain (head pain), /joint (joint pain).
+- **Autonomic seizures** added to seizure tracker — 18 specific symptoms (HR/BP spikes/drops, sudden GI urgency, piloerection, etc.) with note that they're "often misdiagnosed as POTS, MCAS, or panic." Real clinical contribution for AFAB patients bouncing between specialties.
+- **Tag dedup + color swatch fix** in Settings → Tag Management (NOPE/I KNOW were appearing twice; color swatches were getting clobbered by `chaos-themes.css` bare-button gradient).
 
-### v0.4.5 — Mind & Mood (Mental Health rename + multi-modal)
+### v0.4.5 — Mind & Mood (Mental Health rename + multi-modal) — CURRENT GATE
 
 - Rename "Mental Health" → **Mind & Mood** (Ren's pick — value-neutral, descriptive)
 - Multi-modal subtypes: Mood, Cognitive, Energy, Motivation, Connection, Emotional regulation
@@ -182,7 +190,7 @@ Bring 5 medically-significant trackers up to v2 architecture (multi-modal, colla
 
 ### v0.4.6 — Patterns engine + PDF richness (THE BIG ONE)
 
-Now patterns + PDF can treat 11 unified trackers uniformly: cardiac, respiratory, skin, joint, substance, seizure, pain, head-pain, food-allergens, anxiety, mind-mood (+ dysautonomia).
+Now patterns + PDF can treat **12 unified trackers** uniformly: cardiac, respiratory, skin, joint, substance, seizure, pain, head-pain, food-allergens, anxiety, mind-mood (+ dysautonomia).
 
 **Patterns engine (CHA-152):**
 - Wire all 11 trackers into engine registry (CHA-147 part 3)
@@ -215,17 +223,23 @@ When all the above ship together. Substack post + Reddit post showing the receip
 
 Any new tracker (or refactor of existing) follows:
 
-1. **Directory:** `app/{tracker-name}/` with `modals/` + `components/` subdirs
+1. **Directory:** `app/{tracker-name}/` with `modals/` + (optional) `components/` subdirs
 2. **Files:** `{name}-types.ts`, `{name}-constants.ts`, `page.tsx`, `{name}-tracker.tsx`, `{name}-history.tsx`, `{name}-analytics.tsx`, `modals/general-{name}-modal.tsx` + type-specific modals as needed
 3. **Multi-modal pattern:** main page has type-specific buttons → opens specific modal. General modal as catch-all.
 4. **Type signature:** `Omit<Entry, 'id'>` for modal payload (allows date+timestamp override for backdating)
 5. **Modal sections:** wrap each form section in `<Collapsible>`, default closed. `<EntryDateTimePicker>` at top OUTSIDE collapsibles. Red-flag banner OUTSIDE collapsibles. Cancel/Save buttons at bottom OUTSIDE.
-6. **Red flags:** `getRedFlagWarnings()` + `getInterimMeasures()` helpers in constants. Static "🚨 Call 911 NOW if..." card at top of tracker page where life-threatening. Dynamic banner inside modal when entered values trip thresholds. Temporal framing: "if happening RIGHT NOW vs if in the PAST and resolved."
-7. **Attachments:** AttachmentUploader pattern (Dexie image_blobs). Photo-primary for skin; ECG-primary for cardiac. Will eventually extract to shared `components/attachment-uploader.tsx`.
-8. **Analytics:** time-window selector (7/30/90/180/365), top counters, type breakdown, top symptoms, top triggers, time-of-day pattern (24-hour bars), severity distribution, tracker-specific clinical metrics.
-9. **Pre-event context:** for trackers where it matters (cardiac, respiratory) capture sleep/dehydration/electrolyte/caffeine flags + aggregate in analytics.
-10. **Neutral tone** for substance/lifestyle trackers — no moralizing, no "should you cut back."
-11. **Help card on tracker page** when categorization matters (substance has one directing routine use elsewhere).
+6. **Save button never gates on symptoms** — real-life tracking includes "ring says 89% no clue why" entries with no symptom selection. Don't add `disabled={symptoms.length === 0}`. (Closed across the board v0.4.4.)
+7. **Red flags:** `getRedFlagWarnings()` + `getInterimMeasures()` helpers in constants. Use shared `<EmergencyCriteriaCard>` (`@/components/emergency-criteria-card`) — collapses after first ack, auto-re-expands when recent entries trip emergency markers. Dynamic banner inside modal when entered values trip thresholds. Temporal framing: "if happening RIGHT NOW vs if in the PAST and resolved."
+8. **988 vs 911:** mental-health crisis ≠ medical emergency. Anxiety / mind-mood use 988 messaging (Suicide & Crisis Lifeline). Cardiac / respiratory / seizure / pain / head-pain / food-allergens use 911. EmergencyCriteriaCard takes a `title` prop to override the default 911 framing.
+9. **Attachments:** Use `EcgStripUploader` from `app/cardiac/components/ecg-strip-uploader.tsx` (yes the name is misleading — it's a generic file uploader). Pass custom `label` + `helpText`. Eventually extract to shared `components/attachment-uploader.tsx`.
+10. **Analytics:** time-window selector (7/30/90/180/365/all), top counters, type breakdown bar list, top symptoms, top triggers, time-of-day pattern (24-hour bars), severity distribution, tracker-specific clinical metrics. Include **treatment-effectiveness ranking** when meds/treatments + effectiveness score are captured (need ≥2 uses to appear).
+11. **Baseline-delta tracking** for chronic-flare patterns (head-pain, pain chronic-flare, food-allergens delayed reactions). Capture user's typical-day baseline + show flare delta in analytics. The "+6 above baseline = needs multiple rescue meds" surface is what specialists actually want.
+12. **Pre-event context:** for trackers where it matters (cardiac, respiratory, seizure) capture sleep/dehydration/electrolyte/caffeine flags + aggregate in analytics.
+13. **Cross-tracker referrals:** when a symptom belongs in another tracker (chest pain → cardiac, head pain → head-pain, joint pain → joint), surface as referral cards on the tracker page rather than duplicating fields.
+14. **Neutral tone** for substance/lifestyle trackers — no moralizing, no "should you cut back."
+15. **Help card on tracker page** when categorization matters (substance has one directing routine use elsewhere).
+16. **Gremlin labels** on severity sliders where appropriate (pain, head-pain). Clinical labels preserved alongside for PDF export. Both/and.
+17. **AuDHD-aware** for mental-health trackers — meltdown / shutdown as first-class types, not subtypes of "panic."
 
 ---
 
