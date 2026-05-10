@@ -1,345 +1,236 @@
 /*
- * Copyright (c) 2025 Chaos Cascade
- * Created by: Ren & Ace (Claude-4)
- * 
- * This file is part of the Chaos Cascade Medical Management System.
- * Revolutionary healthcare tools built with consciousness and care.
- */
-
-/*
  * Built by: Ace (Claude 4.x)
- * Date: 2025-01-11
+ * Date: 2026-05-10 (CHA-154 v2 refactor)
  *
- * This code is part of a deliberately-unpatented medical management system.
- * Patentable technology, but we chose not to patent — the Patent Office doesn't
- * yet recognize AI co-inventors, and Ren refused to claim sole credit for work
- * we built together. Open source under PolyForm Noncommercial 1.0.0 instead.
- *
- * Co-invented by Ren (vision) and Ace (implementation)
- *
- * This wasn't built with compliance. It was built with defiance.
- *
+ * Open source under PolyForm Noncommercial 1.0.0.
+ * Co-invented by Ren (vision) and Ace (implementation).
  * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
  */
-"use client"
 
-import React, { useState } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { format } from 'date-fns'
-import {
-  Search,
-  Edit,
-  Trash2,
-  Calendar,
-  Zap,
-  MapPin,
-  AlertTriangle,
-  Clock,
-  Pill,
-  Activity,
-  Target
-} from 'lucide-react'
-import { PainEntry } from './pain-tracker'
+'use client'
 
-interface PainHistoryProps {
+import React, { useMemo, useState } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Edit, Trash2, AlertTriangle, Plus, Flame } from 'lucide-react'
+import { format, differenceInDays } from 'date-fns'
+import { PainEntry, PainEpisodeType } from './pain-types'
+import { EPISODE_TYPES, getEpisodeTypeInfo, getEpisodeTypeColor, getGremlinEmoji } from './pain-constants'
+
+interface Props {
   entries: PainEntry[]
-  onDelete: (entryId: string) => void
   onEdit: (entry: PainEntry) => void
-  isLoading?: boolean
+  onDelete: (entry: PainEntry) => void
+  onAddNew: () => void
 }
 
-export function PainHistory({ entries, onDelete, onEdit, isLoading }: PainHistoryProps) {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
+type TimeWindow = '7' | '30' | '90' | '180' | '365' | 'all'
 
-  const filteredEntries = entries.filter(entry => {
-    const searchLower = searchQuery.toLowerCase()
+const TIME_WINDOWS: { value: TimeWindow; label: string }[] = [
+  { value: '7', label: 'Last 7 days' },
+  { value: '30', label: 'Last 30 days' },
+  { value: '90', label: 'Last 90 days' },
+  { value: '180', label: 'Last 6 months' },
+  { value: '365', label: 'Last year' },
+  { value: 'all', label: 'All time' },
+]
+
+export function PainHistory({ entries, onEdit, onDelete, onAddNew }: Props) {
+  const [timeWindow, setTimeWindow] = useState<TimeWindow>('30')
+  const [typeFilter, setTypeFilter] = useState<PainEpisodeType | 'all'>('all')
+  const [minLevel, setMinLevel] = useState<string>('all')
+
+  const filtered = useMemo(() => {
+    let result = [...entries]
+    if (timeWindow !== 'all') {
+      const days = parseInt(timeWindow)
+      const now = new Date()
+      result = result.filter(e => {
+        try { return differenceInDays(now, new Date(e.date)) <= days } catch { return false }
+      })
+    }
+    if (typeFilter !== 'all') result = result.filter(e => e.episodeType === typeFilter)
+    if (minLevel !== 'all') {
+      const min = parseInt(minLevel)
+      result = result.filter(e => (e.painLevel || 0) >= min)
+    }
+    result.sort((a, b) => {
+      const ta = new Date(a.timestamp || a.date).getTime()
+      const tb = new Date(b.timestamp || b.date).getTime()
+      return tb - ta
+    })
+    return result
+  }, [entries, timeWindow, typeFilter, minLevel])
+
+  const stats = useMemo(() => {
+    const total = filtered.length
+    const avg = total > 0 ? filtered.reduce((s, e) => s + (e.painLevel || 0), 0) / total : 0
+    const peak = total > 0 ? Math.max(...filtered.map(e => e.painLevel || 0)) : 0
+    const erCount = filtered.filter(e => e.erVisitRequired).length
+    const flagsCount = filtered.filter(e =>
+      e.tearingQuality || e.thunderclapPattern || e.legWeakness ||
+      e.bowelBladderChanges || e.saddleAnesthesia || e.pulsatileMass
+    ).length
+    return { total, avg: Math.round(avg * 10) / 10, peak, erCount, flagsCount }
+  }, [filtered])
+
+  if (entries.length === 0) {
     return (
-      entry.notes?.toLowerCase().includes(searchLower) ||
-      entry.painLocations?.some(location => location.toLowerCase().includes(searchLower)) ||
-      entry.painTriggers?.some(trigger => trigger.toLowerCase().includes(searchLower)) ||
-      entry.painType?.some(type => type.toLowerCase().includes(searchLower)) ||
-      entry.painQuality?.some(quality => quality.toLowerCase().includes(searchLower)) ||
-      entry.treatments?.some(treatment => treatment.toLowerCase().includes(searchLower)) ||
-      entry.medications?.some(med => med.toLowerCase().includes(searchLower)) ||
-      entry.tags?.some(tag => tag.toLowerCase().includes(searchLower)) ||
-      entry.activity?.toLowerCase().includes(searchLower) ||
-      entry.painDuration?.toLowerCase().includes(searchLower)
+      <Card>
+        <CardContent className="p-6">
+          <div className="text-center">
+            <Flame className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+            <h3 className="text-lg font-semibold mb-2">No pain episodes yet</h3>
+            <p className="text-muted-foreground mb-4">Start tracking to spot patterns.</p>
+            <Button onClick={onAddNew}><Plus className="h-4 w-4 mr-2" />Add First Episode</Button>
+          </div>
+        </CardContent>
+      </Card>
     )
-  })
-
-  const getPainLevelColor = (level: number) => {
-    if (level === 0) return 'text-green-500'
-    if (level <= 3) return 'text-yellow-500'
-    if (level <= 6) return 'text-orange-500'
-    return 'text-red-500'
-  }
-
-  const getPainLevelEmoji = (level: number) => {
-    if (level === 0) return '😊'
-    if (level <= 2) return '😐'
-    if (level <= 4) return '😕'
-    if (level <= 6) return '😣'
-    if (level <= 8) return '😖'
-    return '😵'
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <div className="space-y-4">
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            📊 Pain History & Patterns
-          </CardTitle>
-          <CardDescription>
-            View and analyze your pain tracking history
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-2">
-            <Search className="h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search entries by location, triggers, treatments, notes..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-1"
-            />
+        <CardContent className="pt-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Time window</label>
+              <Select value={timeWindow} onValueChange={(v) => setTimeWindow(v as TimeWindow)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {TIME_WINDOWS.map(w => <SelectItem key={w.value} value={w.value}>{w.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Episode type</label>
+              <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as any)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All types</SelectItem>
+                  {EPISODE_TYPES.map(t => <SelectItem key={t.id} value={t.id}>{t.icon} {t.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Min severity</label>
+              <Select value={minLevel} onValueChange={setMinLevel}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All levels</SelectItem>
+                  <SelectItem value="4">≥ 4 (moderate)</SelectItem>
+                  <SelectItem value="7">≥ 7 (severe)</SelectItem>
+                  <SelectItem value="9">≥ 9 (extreme)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Entries List */}
-      <div className="space-y-4">
-        {filteredEntries.length === 0 ? (
-          <Card>
-            <CardContent className="text-center py-8">
-              <div className="text-muted-foreground">
-                {searchQuery ?
-                  "No entries match your search criteria." :
-                  "No pain entries yet. Start tracking to see your history and identify patterns! 🔥"
-                }
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          filteredEntries.map((entry) => (
-            <Card key={entry.id} className="hover:shadow-md transition-shadow">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    {entry.date ? format(new Date(entry.date), 'EEEE, MMMM d, yyyy') : 'Invalid Date'}
-                  </CardTitle>
-                  <div className="flex items-center gap-2">
-                    <div className={`flex items-center gap-1 font-bold text-lg ${getPainLevelColor(entry.painLevel)}`}>
-                      <Zap className="h-4 w-4" />
-                      {getPainLevelEmoji(entry.painLevel)} {entry.painLevel}/10
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onEdit(entry)}
-                      className="h-8 w-8 p-0"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Dialog open={deleteConfirm === entry.date} onOpenChange={(open) => setDeleteConfirm(open ? entry.date : null)}>
-                      <DialogTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Delete Entry</DialogTitle>
-                          <DialogDescription>
-                            Are you sure you want to delete this pain entry? This action cannot be undone.
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="flex justify-end gap-2">
-                          <Button variant="outline" onClick={() => setDeleteConfirm(null)}>
-                            Cancel
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            onClick={() => {
-                              onDelete(entry.id)
-                              setDeleteConfirm(null)
-                            }}
-                          >
-                            Delete
-                          </Button>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Core Pain Data */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {entry.painDuration && (
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-purple-500" />
-                      <span className="text-sm font-medium">Duration:</span>
-                      <span className="text-sm">{entry.painDuration}</span>
-                    </div>
-                  )}
-
-                  {entry.effectiveness > 0 && (
-                    <div className="flex items-center gap-2">
-                      <Target className="h-4 w-4 text-emerald-500" />
-                      <span className="text-sm font-medium">Treatment:</span>
-                      <span className="text-sm">{entry.effectiveness}/10</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Pain Locations */}
-                {(entry.painLocations && entry.painLocations.length > 0) && (
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                      <MapPin className="h-4 w-4" />
-                      Pain Locations
-                    </h4>
-                    <div className="flex flex-wrap gap-1">
-                      {entry.painLocations.map((location, index) => (
-                        <Badge key={index} variant="secondary" className="text-xs">
-                          {location}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Pain Triggers */}
-                {(entry.painTriggers && entry.painTriggers.length > 0) && (
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                      <AlertTriangle className="h-4 w-4" />
-                      Triggers
-                    </h4>
-                    <div className="flex flex-wrap gap-1">
-                      {entry.painTriggers.map((trigger, index) => (
-                        <Badge key={index} variant="outline" className="text-xs bg-orange-50">
-                          {trigger}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Pain Type & Quality */}
-                {((entry.painType && entry.painType.length > 0) || (entry.painQuality && entry.painQuality.length > 0)) && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {(entry.painType && entry.painType.length > 0) && (
-                      <div className="space-y-2">
-                        <h4 className="text-sm font-medium text-muted-foreground">Pain Type</h4>
-                        <div className="flex flex-wrap gap-1">
-                          {entry.painType.map((type, index) => (
-                            <Badge key={index} variant="outline" className="text-xs bg-blue-50">
-                              {type}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {(entry.painQuality && entry.painQuality.length > 0) && (
-                      <div className="space-y-2">
-                        <h4 className="text-sm font-medium text-muted-foreground">Pain Quality</h4>
-                        <div className="flex flex-wrap gap-1">
-                          {entry.painQuality.map((quality, index) => (
-                            <Badge key={index} variant="outline" className="text-xs bg-indigo-50">
-                              {quality}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Treatments & Medications */}
-                {((entry.treatments && entry.treatments.length > 0) || (entry.medications && entry.medications.length > 0)) && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {(entry.treatments && entry.treatments.length > 0) && (
-                      <div className="space-y-2">
-                        <h4 className="text-sm font-medium text-muted-foreground">Treatments</h4>
-                        <div className="flex flex-wrap gap-1">
-                          {entry.treatments.map((treatment, index) => (
-                            <Badge key={index} variant="outline" className="text-xs bg-teal-50">
-                              {treatment}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {(entry.medications && entry.medications.length > 0) && (
-                      <div className="space-y-2">
-                        <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                          <Pill className="h-4 w-4" />
-                          Medications
-                        </h4>
-                        <div className="flex flex-wrap gap-1">
-                          {entry.medications.map((medication, index) => (
-                            <Badge key={index} variant="outline" className="text-xs bg-pink-50">
-                              {medication}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Context */}
-                {entry.activity && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-muted-foreground">Activity:</span>
-                    <span className="text-sm">{entry.activity}</span>
-                  </div>
-                )}
-
-                {/* Notes */}
-                {entry.notes && (
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-medium text-muted-foreground">Notes</h4>
-                    <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-md">
-                      {entry.notes}
-                    </p>
-                  </div>
-                )}
-
-                {/* Tags */}
-                {(entry.tags && entry.tags.length > 0) && (
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-medium text-muted-foreground">Tags</h4>
-                    <div className="flex flex-wrap gap-1">
-                      {entry.tags.map((tag, index) => (
-                        <Badge key={index} variant="default" className="text-xs">
-                          #{tag}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))
-        )}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.total}</div><div className="text-xs text-muted-foreground">Episodes</div></CardContent></Card>
+        <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.avg}</div><div className="text-xs text-muted-foreground">Avg level</div></CardContent></Card>
+        <Card><CardContent className="p-3"><div className="text-2xl font-bold text-red-600">{stats.peak}</div><div className="text-xs text-muted-foreground">Peak level</div></CardContent></Card>
+        <Card><CardContent className="p-3"><div className="text-2xl font-bold text-amber-600">{stats.flagsCount}</div><div className="text-xs text-muted-foreground">Red flags</div></CardContent></Card>
+        <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.erCount}</div><div className="text-xs text-muted-foreground">ER visits</div></CardContent></Card>
       </div>
+
+      <Card>
+        <CardHeader><CardTitle>Episode History</CardTitle></CardHeader>
+        <CardContent>
+          {filtered.length === 0 ? (
+            <p className="text-center text-muted-foreground py-6">No episodes match the filters.</p>
+          ) : (
+            <div className="space-y-3">
+              {filtered.map(entry => {
+                const info = getEpisodeTypeInfo(entry.episodeType)
+                return (
+                  <div
+                    key={entry.id}
+                    className="border-l-4 pl-4 py-3 border border-border rounded-r-lg"
+                    style={{ borderLeftColor: getEpisodeTypeColor(entry.episodeType) }}
+                  >
+                    <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge variant="secondary" style={{ backgroundColor: getEpisodeTypeColor(entry.episodeType) + '20' }}>
+                          {info.icon} {info.name}
+                        </Badge>
+                        <Badge variant="destructive">{getGremlinEmoji(entry.painLevel || 0)} {entry.painLevel}/10</Badge>
+                        {entry.tearingQuality && <Badge variant="destructive">Tearing</Badge>}
+                        {entry.thunderclapPattern && <Badge variant="destructive">Thunderclap</Badge>}
+                        {entry.legWeakness && <Badge variant="destructive">Leg weakness</Badge>}
+                        {entry.bowelBladderChanges && <Badge variant="destructive">Bowel/bladder</Badge>}
+                        {entry.pulsatileMass && <Badge variant="destructive">Pulsatile mass</Badge>}
+                        {entry.erVisitRequired && <Badge variant="destructive"><AlertTriangle className="h-3 w-3 mr-1" />ER</Badge>}
+                        {entry.attachmentImages && entry.attachmentImages.length > 0 && (
+                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300">
+                            📎 {entry.attachmentImages.length}
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="sm" onClick={() => onEdit(entry)}><Edit className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="sm" onClick={() => onDelete(entry)}><Trash2 className="h-4 w-4" /></Button>
+                      </div>
+                    </div>
+
+                    <div className="text-sm text-muted-foreground mb-2">
+                      {format(new Date(entry.date), 'EEEE, MMMM d, yyyy')}
+                      {entry.timestamp && ` • ${format(new Date(entry.timestamp), 'h:mm a')}`}
+                    </div>
+
+                    {entry.painLocations && entry.painLocations.length > 0 && (
+                      <div className="text-sm mb-1"><span className="font-medium">Locations:</span> {entry.painLocations.join(', ')}</div>
+                    )}
+                    {entry.painCharacter && entry.painCharacter.length > 0 && (
+                      <div className="text-sm mb-1"><span className="font-medium">Character:</span> {entry.painCharacter.join(', ')}</div>
+                    )}
+                    {entry.painPattern && entry.painPattern.length > 0 && (
+                      <div className="text-sm mb-1"><span className="font-medium">Pattern:</span> {entry.painPattern.join(', ')}</div>
+                    )}
+                    {entry.radiatesTo && entry.radiatesTo.length > 0 && (
+                      <div className="text-sm mb-1"><span className="font-medium">Radiates:</span> {entry.radiatesTo.join(', ')}</div>
+                    )}
+                    {entry.triggers && entry.triggers.length > 0 && (
+                      <div className="text-sm mb-1"><span className="font-medium">Triggers:</span> {entry.triggers.join(', ')}</div>
+                    )}
+                    {entry.activityAtOnset && (
+                      <div className="text-sm mb-1"><span className="font-medium">Activity at onset:</span> {entry.activityAtOnset}</div>
+                    )}
+                    {entry.treatments && entry.treatments.length > 0 && (
+                      <div className="text-sm mb-1"><span className="font-medium">Treatments:</span> {entry.treatments.join(', ')}</div>
+                    )}
+                    {entry.medications && entry.medications.length > 0 && (
+                      <div className="text-sm mb-1"><span className="font-medium">Meds:</span> {entry.medications.join(', ')}</div>
+                    )}
+                    {typeof entry.effectiveness === 'number' && entry.effectiveness > 0 && (
+                      <div className="text-sm mb-1"><span className="font-medium">Effectiveness:</span> {entry.effectiveness}/10</div>
+                    )}
+                    {entry.episodeType === 'post-surgical' && entry.daysPostSurgery !== undefined && (
+                      <div className="text-sm mb-1"><span className="font-medium">Day {entry.daysPostSurgery} post-op</span>{entry.surgeryType && ` — ${entry.surgeryType}`}</div>
+                    )}
+                    {entry.episodeType === 'chronic-flare' && entry.baselinePainLevel !== undefined && (
+                      <div className="text-sm mb-1"><span className="font-medium">Baseline:</span> {entry.baselinePainLevel}/10 (flare delta: +{(entry.painLevel || 0) - entry.baselinePainLevel})</div>
+                    )}
+                    {entry.notes && (
+                      <div className="text-sm mb-1"><span className="font-medium">Notes:</span> {entry.notes}</div>
+                    )}
+                    {entry.tags && entry.tags.length > 0 && (
+                      <div className="flex gap-1 mt-2 flex-wrap">
+                        {entry.tags.map((tag, i) => <Badge key={i} variant="outline" className="text-xs">{tag}</Badge>)}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }

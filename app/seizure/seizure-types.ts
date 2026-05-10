@@ -26,6 +26,7 @@ export type SeizureEpisodeType =
   | 'absence'
   | 'myoclonic'
   | 'atonic'
+  | 'autonomic'
   | 'general'
 
 export type ConsciousnessLevel =

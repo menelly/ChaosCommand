@@ -1,642 +1,378 @@
 /*
- * Copyright (c) 2025 Chaos Cascade
- * Created by: Ren & Ace (Claude-4)
- * 
- * This file is part of the Chaos Cascade Medical Management System.
- * Revolutionary healthcare tools built with consciousness and care.
- */
-
-/*
  * Built by: Ace (Claude 4.x)
- * Date: 2025-01-11
+ * Date: 2026-05-10 (CHA-154 v2 refactor)
  *
- * This code is part of a deliberately-unpatented medical management system.
- * Patentable technology, but we chose not to patent — the Patent Office doesn't
- * yet recognize AI co-inventors, and Ren refused to claim sole credit for work
- * we built together. Open source under PolyForm Noncommercial 1.0.0 instead.
- *
- * Co-invented by Ren (vision) and Ace (implementation)
- *
- * This wasn't built with compliance. It was built with defiance.
- *
+ * Open source under PolyForm Noncommercial 1.0.0.
+ * Co-invented by Ren (vision) and Ace (implementation).
  * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
  */
-"use client"
+
+/**
+ * PAIN TRACKER MAIN COMPONENT (v2)
+ * Multi-modal: acute / chronic-flare / post-surgical / general.
+ * Cross-links to /cardiac (chest pain), /head-pain, /joint.
+ * 911 red flags: MI, AAA, cauda equina, aortic dissection, SAH.
+ */
+
+'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Slider } from "@/components/ui/slider"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { toast } from "@/hooks/use-toast"
-import { useDailyData, CATEGORIES, formatDateForStorage } from "@/lib/database"
-import { format, addDays, subDays } from 'date-fns'
-import PainFlaskAnalytics from './pain-flask-analytics'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Badge } from '@/components/ui/badge'
+import { Flame, BarChart3, History, Plus, ExternalLink } from 'lucide-react'
+import { useToast } from '@/hooks/use-toast'
+import { useRouter } from 'next/navigation'
+import { format, differenceInDays } from 'date-fns'
+
+import { PainEntry, PainEpisodeType } from './pain-types'
 import {
-  Calendar as CalendarIcon,
-  ChevronLeft,
-  ChevronRight,
-  Plus,
-  Edit,
-  Trash2,
-  Zap,
-  MapPin,
-  AlertTriangle,
-  Clock,
-  Pill,
-  Activity,
-  Settings,
-  History,
-  TrendingUp
-} from 'lucide-react'
-import { cn } from "@/lib/utils"
-import { TagInput } from "@/components/tag-input"
-import { PainForm } from "./pain-form"
-import { PainHistory } from "./pain-history"
+  EPISODE_TYPES,
+  CROSS_TRACKER_REFERRALS,
+  RELATED_TRACKERS,
+  getEpisodeTypeInfo,
+  getEpisodeTypeColor,
+  RED_FLAG_911_CRITERIA,
+  getPainGoblinism,
+  getGremlinEmoji,
+} from './pain-constants'
+import { PainHistory } from './pain-history'
+import { PainAnalytics } from './pain-analytics'
+import { GeneralPainModal } from './modals/general-pain-modal'
+import { EmergencyCriteriaCard } from '@/components/emergency-criteria-card'
+
+import { useDailyData, CATEGORIES, formatDateForStorage } from '@/lib/database'
 import { celebrate } from '@/lib/particle-physics-engine'
 import { useUser } from '@/lib/contexts/user-context'
 import { isCelebrationEnabled } from '@/lib/celebration-prefs'
 
-// Types for pain tracking data
-export interface PainEntry {
-  id: string
-  date: string
-  // Core pain data
-  painLevel: number // 0-10 scale
-  painLocations: string[]
-  painTriggers: string[]
-  painDuration: string // e.g., "2 hours", "all day", "intermittent"
-  painType: string[] // e.g., "sharp", "dull", "throbbing", "burning"
-  painQuality: string[] // e.g., "constant", "intermittent", "worsening", "improving"
-  // Management & treatment
-  treatments: string[]
-  medications: string[]
-  effectiveness: number // 0-10 scale for treatment effectiveness
-  // Context & triggers
-  activity: string
-  // General
-  notes: string
-  tags: string[]
-  created_at: string
-  updated_at: string
-}
-
-export const PAIN_LOCATIONS = [
-  'head', 'neck', 'shoulders', 'upper back', 'lower back', 'chest', 'abdomen',
-  'left arm', 'right arm', 'left leg', 'right leg', 'hips', 'knees', 'ankles',
-  'hands', 'feet', 'jaw', 'face', 'full body'
-]
-
-export const PAIN_TRIGGERS = [
-  'stress', 'weather change', 'lack of sleep', 'physical activity', 'sitting too long',
-  'poor posture', 'certain foods', 'hormonal changes', 'bright lights', 'loud noises',
-  'dehydration', 'skipped meals', 'overexertion', 'cold', 'heat', 'unknown'
-]
-
-export const PAIN_TYPES = [
-  'sharp', 'dull', 'throbbing', 'burning', 'stabbing', 'aching', 'cramping',
-  'shooting', 'tingling', 'numbness', 'pressure', 'tight', 'electric'
-]
-
-export const PAIN_QUALITIES = [
-  'constant', 'intermittent', 'worsening', 'improving', 'comes and goes',
-  'morning stiffness', 'worse with movement', 'better with rest', 'radiating'
-]
-
-export const TREATMENTS = [
-  'rest', 'ice', 'heat', 'massage', 'stretching', 'meditation', 'deep breathing',
-  'hot bath', 'gentle exercise', 'physical therapy', 'acupuncture', 'TENS unit',
-  'topical cream', 'essential oils', 'distraction', 'music therapy'
-]
-
-export const MEDICATIONS = [
-  'ibuprofen', 'acetaminophen', 'aspirin', 'naproxen', 'prescription pain med',
-  'muscle relaxer', 'topical analgesic', 'CBD', 'medical marijuana', 'other'
-]
-
 export default function PainTracker() {
-  const { saveData, getCategoryData, deleteData, getDateRange, isLoading } = useDailyData()
+  const { saveData, getDateRange, isLoading } = useDailyData()
   const { userPin } = useUser()
-  const [activeTab, setActiveTab] = useState<'track' | 'history' | 'analytics'>('track')
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [editingEntry, setEditingEntry] = useState<PainEntry | null>(null)
+  const { toast } = useToast()
+  const router = useRouter()
 
   const [entries, setEntries] = useState<PainEntry[]>([])
-  const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'))
-  const [isCalendarOpen, setIsCalendarOpen] = useState(false)
-  const [historyEntries, setHistoryEntries] = useState<PainEntry[]>([])
-  const [historyLoading, setHistoryLoading] = useState(false)
+  const [activeTab, setActiveTab] = useState<'add' | 'history' | 'analytics'>('add')
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
 
+  const [activeModal, setActiveModal] = useState<string | null>(null)
+  const [initialEpisodeType, setInitialEpisodeType] = useState<PainEpisodeType | undefined>(undefined)
+  const [editingEntry, setEditingEntry] = useState<PainEntry | null>(null)
 
+  useEffect(() => { loadEntries() }, [refreshTrigger])
 
-  // Load historical entries (all time)
-  const loadHistoryEntries = async () => {
-    setHistoryLoading(true)
+  const loadEntries = async () => {
     try {
-      const endDate = format(new Date(), 'yyyy-MM-dd')
-      const startDate = '2000-01-01'
+      const today = formatDateForStorage(new Date())
+      const allRecords = await getDateRange('2000-01-01', today, CATEGORIES.TRACKER)
+      const painRecords = allRecords.filter(r => r.subcategory === 'pain')
 
-      const records = await getDateRange(startDate, endDate, CATEGORIES.TRACKER)
-      const painRecords = records.filter(record => record.subcategory === 'pain')
-
-      const allEntries: PainEntry[] = []
-
-      for (const painRecord of painRecords) {
-        if (painRecord?.content?.entries) {
-          let entries = painRecord.content.entries
-          if (typeof entries === 'string') {
-            try {
-              entries = JSON.parse(entries)
-            } catch (e) {
-              console.error('Failed to parse pain entries JSON:', e)
-              continue
+      const all: PainEntry[] = []
+      for (const data of painRecords) {
+        if (data?.content?.entries) {
+          let parsed = data.content.entries
+          if (typeof parsed === 'string') {
+            try { parsed = JSON.parse(parsed) } catch { parsed = [] }
+          }
+          if (!Array.isArray(parsed)) parsed = [parsed]
+          for (const entry of parsed) {
+            if (entry && typeof entry === 'object') {
+              // Migrate legacy fields
+              if (!entry.episodeType) entry.episodeType = 'general'
+              if (!entry.painCharacter && entry.painType) entry.painCharacter = entry.painType
+              if (!entry.painPattern && entry.painQuality) entry.painPattern = entry.painQuality
+              if (!entry.triggers && entry.painTriggers) entry.triggers = entry.painTriggers
+              if (!entry.activityAtOnset && entry.activity) entry.activityAtOnset = entry.activity
+              if (!entry.timestamp && entry.created_at) entry.timestamp = entry.created_at
+              all.push(entry)
             }
           }
-          if (!Array.isArray(entries)) {
-            entries = [entries]
-          }
-          allEntries.push(...entries)
         }
       }
-
-      setHistoryEntries(allEntries.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()))
-    } catch (error) {
-      console.error('Error loading pain history:', error)
-      toast({
-        title: "Error",
-        description: "Failed to load pain history",
-        variant: "destructive"
-      })
-    } finally {
-      setHistoryLoading(false)
+      setEntries(all)
+    } catch (e) {
+      console.error('Pain load fail:', e)
+      toast({ title: 'Loading Error', description: 'Failed to load pain history', variant: 'destructive' })
     }
   }
 
-  // Load entries for selected date
-  const loadEntriesForDate = async (date: string) => {
+  const handleSaveEntry = async (entryData: Omit<PainEntry, 'id'>) => {
     try {
-      const records = await getCategoryData(date, CATEGORIES.TRACKER)
-      const painRecord = records.find(record => record.subcategory === 'pain')
-
-      if (painRecord?.content?.entries) {
-        let entries = painRecord.content.entries
-        if (typeof entries === 'string') {
-          try {
-            entries = JSON.parse(entries)
-          } catch (e) {
-            console.error('Failed to parse pain entries JSON:', e)
-            entries = []
-          }
-        }
-        if (!Array.isArray(entries)) {
-          entries = [entries]
-        }
-        setEntries(entries.filter((entry: any) => entry.date === date))
-      } else {
-        setEntries([])
-      }
-    } catch (error) {
-      console.error('Error loading pain entries for date:', error)
-      setEntries([])
-    }
-  }
-
-  // Load data on mount and when date changes
-  useEffect(() => {
-    loadEntriesForDate(selectedDate)
-  }, [selectedDate])
-
-  useEffect(() => {
-    loadHistoryEntries()
-  }, [])
-
-  // Load entries across all time for analytics
-  const loadAllEntries = async (_days?: number): Promise<PainEntry[]> => {
-    try {
-      const endDate = format(new Date(), 'yyyy-MM-dd')
-      const allEntries: PainEntry[] = []
-
-      // Load all entries via single range query
-      const records = await getDateRange('2000-01-01', endDate, CATEGORIES.TRACKER)
-      const painRecords = records.filter(record => record.subcategory === 'pain')
-
-      for (const painRecord of painRecords) {
-        if (painRecord?.content?.entries) {
-          let entries: any = painRecord.content.entries
-          if (typeof entries === 'string') {
-            try {
-              entries = JSON.parse(entries)
-            } catch (e) {
-              console.error('Failed to parse JSON:', e)
-              entries = []
-            }
-          }
-          if (Array.isArray(entries)) {
-            allEntries.push(...entries)
-          }
-        }
-      }
-
-      console.log(`🔥 Loaded ${allEntries.length} pain entries (all time)`)
-      return allEntries
-    } catch (error) {
-      console.error('Failed to load all pain entries:', error)
-      return []
-    }
-  }
-
-
-
-  // Handle saving pain entry from modal
-  const handleSaveEntry = async (entryData: Partial<PainEntry>) => {
-    try {
-      const dateKey = selectedDate
-
-      // Create new entry with proper ID and timestamps
+      const { timestamp: ts, date: d, ...rest } = entryData
       const newEntry: PainEntry = {
-        ...entryData as PainEntry,
-        id: editingEntry?.id || `pain-${Date.now()}`,
-        date: dateKey,
-        created_at: editingEntry?.created_at || new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        id: `pain-${Date.now()}`,
+        timestamp: ts || new Date().toISOString(),
+        date: d || formatDateForStorage(new Date()),
+        ...rest,
       }
-
-      // Get existing entries for this date
-      const records = await getCategoryData(dateKey, CATEGORIES.TRACKER)
-      const painRecord = records.find(record => record.subcategory === 'pain')
-
-      let existingEntries: PainEntry[] = []
-      if (painRecord?.content?.entries) {
-        let entries = painRecord.content.entries
-        if (typeof entries === 'string') {
-          try {
-            entries = JSON.parse(entries)
-          } catch (e) {
-            console.error('Failed to parse pain entries JSON:', e)
-            entries = []
-          }
-        }
-        if (!Array.isArray(entries)) {
-          entries = [entries]
-        }
-        existingEntries = entries
-      }
-
-      let updatedEntries: PainEntry[]
-      if (editingEntry) {
-        // Update existing entry
-        updatedEntries = existingEntries.map(entry =>
-          entry.id === editingEntry.id ? newEntry : entry
-        )
-      } else {
-        // Add new entry
-        updatedEntries = [newEntry, ...existingEntries]
-      }
-
-      // Save all entries
-      await saveData(
-        dateKey,
-        CATEGORIES.TRACKER,
-        'pain',
-        { entries: updatedEntries },
-        entryData.tags || []
-      )
+      const storageDate = newEntry.date
+      const existingForDate = entries.filter(e => e.date === storageDate)
+      const updatedForDate = [...existingForDate, newEntry]
+      await saveData(storageDate, CATEGORIES.TRACKER, 'pain', { entries: updatedForDate }, newEntry.tags || [])
 
       const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
-      if (confettiLevel !== 'none' && isCelebrationEnabled('pain-tracking', userPin ?? '')) {
-        celebrate()
-      }
+      if (confettiLevel !== 'none' && isCelebrationEnabled('pain-tracking', userPin ?? '')) celebrate()
 
-      toast({
-        title: "🔥 Pain Entry Saved!",
-        description: getPainGoblinism(),
-      })
-
-      // Refresh data and close modal
-      await loadEntriesForDate(selectedDate)
-      await loadHistoryEntries()
-      setIsAddDialogOpen(false)
-      setIsEditDialogOpen(false)
-      setEditingEntry(null)
-      setEntries(updatedEntries)
-      setEditingEntry(null)
-      console.log(`🔥 Pain entry saved for ${dateKey}`)
-    } catch (error) {
-      console.error('Failed to save pain entry:', error)
-      toast({
-        title: "Error saving entry",
-        description: "Failed to save pain entry. Please try again.",
-        variant: "destructive"
-      })
+      toast({ title: '🔥 Pain Episode Saved', description: getPainGoblinism() })
+      setActiveModal(null); setEditingEntry(null); setInitialEpisodeType(undefined)
+      setRefreshTrigger(t => t + 1)
+    } catch (e) {
+      console.error('Pain save fail:', e)
+      toast({ title: 'Save Error', description: 'Failed to save pain entry', variant: 'destructive' })
     }
   }
 
-  // Handle deleting pain entry
-  const handleDeleteEntry = async (entryId: string) => {
+  const handleUpdateEntry = async (entryData: Omit<PainEntry, 'id'>) => {
+    if (!editingEntry) return
     try {
-      // Find the entry to get its date
-      const entryToDelete = [...entries, ...historyEntries].find(e => e.id === entryId)
-      if (!entryToDelete) return
+      const updated: PainEntry = { ...editingEntry, ...entryData, id: editingEntry.id }
+      const oldDate = editingEntry.date
+      const newDate = updated.date
 
-      const dateKey = entryToDelete.date
-
-      // Get existing entries for this date
-      const records = await getCategoryData(dateKey, CATEGORIES.TRACKER)
-      const painRecord = records.find(record => record.subcategory === 'pain')
-
-      let existingEntries: PainEntry[] = []
-      if (painRecord?.content?.entries) {
-        let entries = painRecord.content.entries
-        if (typeof entries === 'string') {
-          try {
-            entries = JSON.parse(entries)
-          } catch (e) {
-            console.error('Failed to parse pain entries JSON:', e)
-            entries = []
-          }
-        }
-        if (!Array.isArray(entries)) {
-          entries = [entries]
-        }
-        existingEntries = entries
+      if (oldDate !== newDate) {
+        const oldBucket = entries.filter(e => e.date === oldDate && e.id !== editingEntry.id)
+        const newBucket = [...entries.filter(e => e.date === newDate), updated]
+        await saveData(oldDate, CATEGORIES.TRACKER, 'pain', { entries: oldBucket })
+        await saveData(newDate, CATEGORIES.TRACKER, 'pain', { entries: newBucket }, updated.tags || [])
+      } else {
+        const bucket = entries
+          .filter(e => e.date === oldDate)
+          .map(e => e.id === editingEntry.id ? updated : e)
+        await saveData(oldDate, CATEGORIES.TRACKER, 'pain', { entries: bucket }, updated.tags || [])
       }
 
-      // Remove entry from existing entries
-      const updatedEntries = existingEntries.filter(e => e.id !== entryId)
-
-      // Save updated entries to database
-      await saveData(
-        dateKey,
-        CATEGORIES.TRACKER,
-        'pain',
-        { entries: updatedEntries }
-      )
-
-      toast({
-        title: "Entry Deleted 🗑️",
-        description: "Pain entry has been banished to the void.",
-      })
-
-      // Refresh data
-      await loadEntriesForDate(selectedDate)
-      await loadHistoryEntries()
-    } catch (error) {
-      console.error('Error deleting pain entry:', error)
-      toast({
-        title: "Error",
-        description: "Failed to delete pain entry",
-        variant: "destructive"
-      })
+      toast({ title: 'Pain Updated' })
+      setActiveModal(null); setEditingEntry(null)
+      setRefreshTrigger(t => t + 1)
+    } catch (e) {
+      console.error('Pain update fail:', e)
+      toast({ title: 'Update Error', variant: 'destructive' })
     }
   }
 
-  const getPainGoblinism = () => {
-    // Use a deterministic selection based on current time to avoid hydration errors
-    const goblinisms = [
-      "The pain goblins have been documented! 🔥🧙‍♂️",
-      "Ouchie sprites are taking detailed notes! 💥📝",
-      "Pain level recorded in the grimace grimoire! 😬📚",
-      "The discomfort demons have updated their charts! 👹📊",
-      "Your pain patterns are filed in the ache archives! 🗂️⚡",
-      "The hurt historians have catalogued your experience! 📖💢",
-      "Pain tracking complete - the relief researchers are pleased! 🔬✨",
-      "Ouch data saved by the suffering scribes! 📋🔥"
-    ]
-    // Use current seconds to pick a message (deterministic but still varies)
-    const index = Math.floor(Date.now() / 1000) % goblinisms.length
-    return goblinisms[index]
+  const handleDeleteEntry = async (entry: PainEntry) => {
+    try {
+      const bucket = entries.filter(e => e.date === entry.date && e.id !== entry.id)
+      await saveData(entry.date, CATEGORIES.TRACKER, 'pain', { entries: bucket })
+      toast({ title: 'Pain Episode Deleted', description: 'Pain entry banished to the void 🗑️' })
+      setRefreshTrigger(t => t + 1)
+    } catch (e) {
+      console.error('Pain delete fail:', e)
+      toast({ title: 'Delete Error', variant: 'destructive' })
+    }
   }
+
+  const handleEditEntry = (entry: PainEntry) => {
+    setEditingEntry(entry)
+    setInitialEpisodeType(entry.episodeType)
+    setActiveModal('general')
+  }
+
+  const openModalForType = (id: PainEpisodeType) => {
+    setEditingEntry(null)
+    setInitialEpisodeType(id)
+    setActiveModal('general')
+  }
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto p-4">
+        <Card><CardContent className="p-6"><div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Loading pain tracker...</p>
+        </div></CardContent></Card>
+      </div>
+    )
+  }
+
+  const todayStr = formatDateForStorage(new Date())
+  const todaysEntries = entries.filter(e => e.date === todayStr)
 
   return (
-    <div className="container mx-auto p-4 max-w-4xl">
-      {/* Header */}
-      <Card className="mb-6">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold flex items-center justify-center gap-2">
-            <Zap className="h-6 w-6 text-red-500" />
-            🔥 General Pain Tracker 🔥
-            <AlertTriangle className="h-6 w-6 text-orange-500" />
-          </CardTitle>
-          <CardDescription>
-            Track your pain levels, locations, triggers, and find what helps
-          </CardDescription>
-        </CardHeader>
-      </Card>
+    <div className="max-w-4xl mx-auto space-y-6 pt-6">
+      <div className="text-center mb-6">
+        <h1 className="text-3xl font-bold text-foreground flex items-center justify-center gap-2">
+          <Flame className="h-8 w-8 text-red-500" />
+          Pain Tracker
+        </h1>
+        <p className="text-muted-foreground mt-1">
+          Track acute, chronic, and post-surgical pain — with cardiac/head/joint cross-tracker referrals
+        </p>
+      </div>
 
-      {/* Main content with proper tabs */}
-      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "track" | "history" | "analytics")}>
+      {/* 🚨 Collapsible emergency criteria */}
+      <EmergencyCriteriaCard
+        storageKey="pain-911-acknowledged"
+        criteria={RED_FLAG_911_CRITERIA}
+        footerNote="Pain tracker covers MI / AAA / cauda equina / dissection / SAH red flags. When in doubt, call 911."
+        recentEmergencyDetected={(() => {
+          const now = new Date()
+          return entries.some(e => {
+            try {
+              if (differenceInDays(now, new Date(e.date)) > 30) return false
+              return !!(
+                e.erVisitRequired ||
+                e.emergencyServicesCalled ||
+                e.tearingQuality ||
+                e.thunderclapPattern ||
+                e.legWeakness ||
+                e.bowelBladderChanges ||
+                e.saddleAnesthesia ||
+                e.pulsatileMass ||
+                (e.painLevel && e.painLevel >= 9)
+              )
+            } catch { return false }
+          })
+        })()}
+      />
+
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="track" className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            Today's Pain
-          </TabsTrigger>
-          <TabsTrigger value="history" className="flex items-center gap-2">
-            <History className="h-4 w-4" />
-            History
-          </TabsTrigger>
-          <TabsTrigger value="analytics" className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4" />
-            Analytics
-          </TabsTrigger>
+          <TabsTrigger value="add" className="flex items-center gap-2"><Plus className="h-4 w-4" /> Add Episode</TabsTrigger>
+          <TabsTrigger value="history" className="flex items-center gap-2"><History className="h-4 w-4" /> History</TabsTrigger>
+          <TabsTrigger value="analytics" className="flex items-center gap-2"><BarChart3 className="h-4 w-4" /> Analytics</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="track" className="space-y-6">
-          {/* Date Navigation */}
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-1 sm:gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  const newDate = new Date(selectedDate)
-                  newDate.setDate(newDate.getDate() - 1)
-                  setSelectedDate(format(newDate, 'yyyy-MM-dd'))
-                }}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-
-              <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="text-xs sm:text-sm">
-                    <CalendarIcon className="mr-1 sm:mr-2 h-4 w-4" />
-                    {selectedDate ? format(new Date(selectedDate), 'MMM d, yyyy') : 'Invalid Date'}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={new Date(selectedDate)}
-                    onSelect={(date) => {
-                      if (date) {
-                        setSelectedDate(format(date, 'yyyy-MM-dd'))
-                        setIsCalendarOpen(false)
-                      }
-                    }}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  const newDate = new Date(selectedDate)
-                  newDate.setDate(newDate.getDate() + 1)
-                  setSelectedDate(format(newDate, 'yyyy-MM-dd'))
-                }}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-
-            <Button onClick={() => setIsAddDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Log Pain
-            </Button>
-          </div>
-
-          {/* Today's Episodes */}
+        <TabsContent value="add" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Today's Pain Episodes</CardTitle>
-              <CardDescription>
-                Pain entries for {selectedDate ? format(new Date(selectedDate), 'MMMM d, yyyy') : 'Invalid Date'}
-              </CardDescription>
+              <CardTitle className="text-lg">Log a Pain Episode</CardTitle>
+              <CardDescription>Pick the closest type. Adjustable inside.</CardDescription>
             </CardHeader>
             <CardContent>
-              {entries.length === 0 ? (
-                <div className="text-center py-8">
-                  <Zap className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-lg font-semibold mb-2">No pain entries yet</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Track your pain episodes to identify patterns and triggers
-                  </p>
-                  <Button onClick={() => setIsAddDialogOpen(true)}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Log First Pain Episode
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {EPISODE_TYPES.map((type) => (
+                  <Button
+                    key={type.id}
+                    variant="outline"
+                    className="h-auto py-3 flex flex-col items-start text-left whitespace-normal"
+                    onClick={() => openModalForType(type.id)}
+                  >
+                    <span className="text-xl mb-1">{type.icon}</span>
+                    <span className="font-semibold text-sm">{type.name}</span>
+                    <span className="text-xs text-muted-foreground mt-1 text-left">{type.description}</span>
                   </Button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {entries.map((entry) => (
-                    <Card key={entry.id} className="p-4">
-                      <div className="flex items-start justify-between">
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <Badge variant="destructive">
-                              Pain Level: {entry.painLevel}/10
-                            </Badge>
-                            {entry.painLocations && entry.painLocations.length > 0 && (
-                              <Badge variant="outline">
-                                {entry.painLocations.join(', ')}
-                              </Badge>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Cross-tracker referrals */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Use a more specific tracker?</CardTitle>
+              <CardDescription>These body systems have richer fields elsewhere:</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                {CROSS_TRACKER_REFERRALS.map(r => (
+                  <Button
+                    key={r.id}
+                    variant="outline"
+                    onClick={() => router.push(r.path)}
+                    className="h-auto py-3 flex flex-col items-start text-left whitespace-normal"
+                  >
+                    <span className="text-xl mb-1">{r.icon}</span>
+                    <span className="font-semibold text-sm">{r.name}</span>
+                    <span className="text-xs text-muted-foreground mt-1">{r.description}</span>
+                    <span className="text-xs mt-2 text-blue-600 dark:text-blue-400 flex items-center gap-1">
+                      {r.cta} <ExternalLink className="h-3 w-3" />
+                    </span>
+                  </Button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Today's entries */}
+          {todaysEntries.length > 0 && (
+            <Card>
+              <CardHeader><CardTitle className="text-lg">Today's Episodes ({todaysEntries.length})</CardTitle></CardHeader>
+              <CardContent className="space-y-3">
+                {todaysEntries.map((entry) => {
+                  const info = getEpisodeTypeInfo(entry.episodeType)
+                  return (
+                    <Card key={entry.id} className="bg-muted/30">
+                      <CardContent className="pt-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1 flex-wrap">
+                              <span className="text-lg">{info.icon}</span>
+                              <span className="font-semibold">{info.name}</span>
+                              <Badge variant="destructive">{getGremlinEmoji(entry.painLevel || 0)} {entry.painLevel}/10</Badge>
+                              {entry.tearingQuality && <Badge variant="destructive">Tearing</Badge>}
+                              {entry.thunderclapPattern && <Badge variant="destructive">Thunderclap</Badge>}
+                              {entry.erVisitRequired && <Badge variant="destructive">ER</Badge>}
+                              {entry.attachmentImages && entry.attachmentImages.length > 0 && (
+                                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300">
+                                  📎 {entry.attachmentImages.length}
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {entry.timestamp && format(new Date(entry.timestamp), 'h:mm a')}
+                              {entry.painLocations && entry.painLocations.length > 0 && ` • ${entry.painLocations.slice(0, 3).join(', ')}`}
+                              {entry.painLocations && entry.painLocations.length > 3 && ` +${entry.painLocations.length - 3}`}
+                            </div>
+                            {entry.painCharacter && entry.painCharacter.length > 0 && (
+                              <div className="text-xs mt-2 text-muted-foreground">
+                                {entry.painCharacter.slice(0, 4).join(', ')}
+                              </div>
                             )}
                           </div>
-                          {entry.painType && entry.painType.length > 0 && (
-                            <p className="text-sm text-muted-foreground">
-                              Type: {entry.painType.join(', ')}
-                            </p>
-                          )}
-                          {entry.notes && (
-                            <p className="text-sm">{entry.notes}</p>
-                          )}
-                          <p className="text-xs text-muted-foreground">
-                            {entry.created_at ? format(new Date(entry.created_at), 'h:mm a') : 'Invalid Time'}
-                          </p>
+                          <div className="flex gap-1">
+                            <Button size="sm" variant="ghost" onClick={() => handleEditEntry(entry)}>Edit</Button>
+                            <Button size="sm" variant="ghost" onClick={() => handleDeleteEntry(entry)}>Delete</Button>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setEditingEntry(entry)
-                              setIsEditDialogOpen(true)
-                            }}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteEntry(entry.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
+                      </CardContent>
                     </Card>
-                  ))}
-                </div>
-              )}
+                  )
+                })}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Related Trackers */}
+          <Card>
+            <CardHeader><CardTitle className="text-lg">Related Trackers</CardTitle></CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {RELATED_TRACKERS.map((t) => (
+                  <Button key={t.id} variant="ghost" className="justify-start" onClick={() => router.push(t.path)}>
+                    <span className="mr-2">{t.icon}</span>
+                    <span className="font-medium">{t.name}</span>
+                    <ExternalLink className="h-3 w-3 ml-auto" />
+                  </Button>
+                ))}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="history" className="space-y-4">
           <PainHistory
-            entries={historyEntries}
+            entries={entries}
+            onEdit={handleEditEntry}
             onDelete={handleDeleteEntry}
-            onEdit={(entry) => {
-              setEditingEntry(entry)
-              setIsEditDialogOpen(true)
-            }}
-            isLoading={historyLoading}
+            onAddNew={() => setActiveTab('add')}
           />
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-4">
-          <PainFlaskAnalytics
-            entries={entries}
-            currentDate={selectedDate}
-            loadAllEntries={loadAllEntries}
-          />
+          <PainAnalytics entries={entries} />
         </TabsContent>
       </Tabs>
 
-      {/* Add Pain Entry Modal */}
-      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Log Pain Episode</DialogTitle>
-            <DialogDescription>
-              Record details about your pain episode for {selectedDate ? format(new Date(selectedDate), 'MMMM d, yyyy') : 'Invalid Date'}
-            </DialogDescription>
-          </DialogHeader>
-          <PainForm
-            onSave={handleSaveEntry}
-            onCancel={() => setIsAddDialogOpen(false)}
-            isLoading={isLoading}
-          />
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Pain Entry Modal */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Edit Pain Episode</DialogTitle>
-            <DialogDescription>
-              Update details for this pain episode
-            </DialogDescription>
-          </DialogHeader>
-          <PainForm
-            initialData={editingEntry || undefined}
-            onSave={handleSaveEntry}
-            onCancel={() => setIsEditDialogOpen(false)}
-            isLoading={isLoading}
-          />
-        </DialogContent>
-      </Dialog>
+      <GeneralPainModal
+        isOpen={activeModal === 'general'}
+        onClose={() => { setActiveModal(null); setEditingEntry(null); setInitialEpisodeType(undefined) }}
+        onSave={editingEntry ? handleUpdateEntry : handleSaveEntry}
+        editingEntry={editingEntry}
+        initialEpisodeType={initialEpisodeType}
+      />
     </div>
   )
 }

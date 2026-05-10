@@ -65,6 +65,13 @@ export const EPISODE_TYPES = [
     color: 'bg-orange-100 text-orange-800 border-orange-200'
   },
   {
+    id: 'autonomic' as SeizureEpisodeType,
+    name: 'Autonomic',
+    icon: '💓',
+    description: 'Sudden HR/BP/GI/sweating changes — often misdiagnosed as POTS, MCAS, or panic',
+    color: 'bg-pink-100 text-pink-800 border-pink-200'
+  },
+  {
     id: 'general' as SeizureEpisodeType,
     name: 'General / Other',
     icon: '⚡',
@@ -164,6 +171,29 @@ export const EPISODE_TYPE_SYMPTOMS: Record<SeizureEpisodeType, string[]> = {
   'atonic': [
     'Loss of Muscle Tone', 'Head Drop', 'Fall/Collapse', 'Sudden Drop', 'Brief Limpness',
   ],
+  'autonomic': [
+    // Autonomic seizures = ictal autonomic dysfunction. Often pure or near-pure
+    // autonomic features without classic motor signs, which is why they get
+    // misdiagnosed as POTS, MCAS, vasovagal, or panic disorder.
+    'Sudden HR Spike (tachycardia)',
+    'Sudden HR Drop (bradycardia)',
+    'Sudden BP Spike',
+    'Sudden BP Drop',
+    'Flushing/Sweating',
+    'Pallor (sudden paleness)',
+    'Goosebumps',
+    'Pupil Changes',
+    'Sudden Nausea / Vomiting',
+    'Abdominal Pain (sudden)',
+    'Rising Sensation (Epigastric)',
+    'Air Hunger / Hyperventilation',
+    'Sudden Urge to Urinate / Defecate',
+    'Sudden Salivation / Drooling',
+    'Lacrimation (sudden tearing)',
+    'Piloerection (hair standing up)',
+    'Confusion During',
+    'Brief Awareness Change',
+  ],
   'general': [
     ...SYMPTOM_CATEGORIES.motor_focal.symptoms,
     ...SYMPTOM_CATEGORIES.motor_generalized.symptoms,
@@ -261,8 +291,8 @@ export const RELATED_TRACKERS = [
 
 // === HELPERS ===
 export const getEpisodeTypeInfo = (episodeType?: SeizureEpisodeType | string) => {
-  if (!episodeType) return EPISODE_TYPES[6] // general
-  return EPISODE_TYPES.find(t => t.id === episodeType) || EPISODE_TYPES[6]
+  if (!episodeType) return EPISODE_TYPES[7] // general
+  return EPISODE_TYPES.find(t => t.id === episodeType) || EPISODE_TYPES[7]
 }
 
 export const getEpisodeTypeColor = (episodeType?: SeizureEpisodeType | string): string => {
@@ -273,6 +303,7 @@ export const getEpisodeTypeColor = (episodeType?: SeizureEpisodeType | string): 
     'absence': '#8b5cf6',
     'myoclonic': '#06b6d4',
     'atonic': '#f97316',
+    'autonomic': '#ec4899',
     'general': '#6b7280',
   }
   return colorMap[episodeType || 'general'] || '#6b7280'
