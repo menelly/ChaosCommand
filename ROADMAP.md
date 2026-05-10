@@ -182,36 +182,59 @@ Five trackers brought up to v2 architecture in one session (5 commits on `feat/v
 - **Autonomic seizures** added to seizure tracker — 18 specific symptoms (HR/BP spikes/drops, sudden GI urgency, piloerection, etc.) with note that they're "often misdiagnosed as POTS, MCAS, or panic." Real clinical contribution for AFAB patients bouncing between specialties.
 - **Tag dedup + color swatch fix** in Settings → Tag Management (NOPE/I KNOW were appearing twice; color swatches were getting clobbered by `chaos-themes.css` bare-button gradient).
 
-### v0.4.5 — Mind & Mood (Mental Health rename + multi-modal) — CURRENT GATE
+### v0.4.5 ✅ shipped 2026-05-10 — Mind & Mood + Tier 2 sweep
 
-- Rename "Mental Health" → **Mind & Mood** (Ren's pick — value-neutral, descriptive)
-- Multi-modal subtypes: Mood, Cognitive, Energy, Motivation, Connection, Emotional regulation
-- Update /mind tab nav, /customize visibility-sections registry
+CHA-158. Three sweeps in one cut:
 
-### v0.4.6 — Patterns engine + PDF richness (THE BIG ONE)
+- **Mental Health → Mind & Mood** rename + multi-modal refactor. 7 episode types (Mood / Cognitive / Energy / Motivation / Connection / **Emotional Regulation** [AuDHD-aware] / General Check-in). Adaptive modal — sections render based on selected episode type. 988 red flags: **mixed-state days** (high dep + high mania = highest suicide-risk window), severe mania, rapid cycling. Drive-level tracking (anhedonia signal), cognitive domain breakdown, meltdown precursors / occurred. /mind nav + visibility-sections registry updated. Route stays `/mental-health` (don't break URLs).
+- **Bathroom** Tier 2 multi-modal: 6 episode types (Normal BM / Constipation / Diarrhea / Urinary / Blood-or-Red-Flag / General). Red flags: black-tarry stool (upper GI bleed), pyelonephritis pattern (UTI + fever + flank), obstruction pattern (no gas + vomiting), blood in urine. Bristol scale 1-7 dropdown. Cross-tracker referrals to food-allergens / hydration / pain / medications.
+- **Brain-fog** Tier 3 polish: standardized time-window selector (7/30/90/180/365/all instead of nonstandard 7/30/60/90+all), EntryDateTimePicker on entry form.
+- **Sleep** analytics polish: added time-window selector (was always-all, no filter).
 
-Now patterns + PDF can treat **12 unified trackers** uniformly: cardiac, respiratory, skin, joint, substance, seizure, pain, head-pain, food-allergens, anxiety, mind-mood (+ dysautonomia).
+### v0.4.6 ✅ shipped 2026-05-10 — Pattern engine v2 with persistence
 
-**Patterns engine (CHA-152):**
-- Wire all 11 trackers into engine registry (CHA-147 part 3)
-- Lag correlations (X today → Y tomorrow)
-- Within-tracker time-of-day clustering
-- Trigger ↔ severity correlations
-- Threshold-crossing detection (severity spike, frequency change)
-- **PERSISTENCE** — `pattern_snapshots` Dexie table, weekly auto-snapshots, "Pattern History" view showing confidence-over-time
+CHA-152 + CHA-147. The two problems Ren named explicitly:
 
-**PDF richness (CHA-150 — Dr. Rana feedback):**
-- Per-tracker symptom breakdown (NOT just counts!)
-- Top triggers per tracker
-- Treatment effectiveness per tracker
-- Time-of-day patterns
-- Tracker-specific clinical highlights (rhythm types, peak flow, photo gallery, per-joint frequency)
-- Photo embedding for skin tracker (dermatology consult-grade)
+🐛 **"Doesn't persist"** — runs in-memory each session, no Dexie pattern_snapshots table.
+✅ Fix: Dexie schema v2 (additive migration, no data loss) added `pattern_snapshots` table. Every run writes a snapshot with timestamp, window, insight count, high-priority count, full serialized result. Page hydrates latest snapshot on mount. New "History" tab shows last 20 runs.
 
-### v0.4.7 — Tier 2/3 polish sweep
+🐛 **"Doesn't catch things that matter much"** — engine read v1 schema only.
+✅ Fix: New `lib/pattern-engine-v2.ts` (471 lines) with **per-tracker semantic extractors** reading rich v2 fields (status epi, autonomic seizures, tearing/thunderclap/cauda-equina markers, anaphylaxis pattern, celiac aftermath, mixed-state mood, multi-rescue migraine, pyelonephritis, VT capture, etc.) + 9 actionable pattern detectors. New "Red Flags" tab in /patterns UI with high-impact filter. Cross-tracker red-flag detection (e.g., severe panic + cardiac symptoms same day → cardiac referral).
 
-- Tier 2 multi-modal: bathroom (constipation/diarrhea/urinary), coping-regulation
-- Tier 3 lighter polish: sleep, energy, hydration, movement, food-choice, self-care-tracker, brain-fog, sensory-tracker, weather-environment — analytics + collapsibles + date pickers
+### v0.4.7 ✅ shipped 2026-05-10 — PDF report enrichment
+
+CHA-150 + Dr. Rana feedback. v1 PDF was bare ICD-10s + one-line tracker summaries that didn't help doctors validate suggestions.
+
+- 🐛 **Tracker name truncation fix** — v1 split subcategory on `-` and kept first piece ("head-pain" → "Head"). Fixed with explicit `TRACKER_DISPLAY_NAMES` mapper covering 30+ trackers.
+- Extended `ICD10_MAP` for v0.4.x trackers (cardiac, respiratory, skin, joint, substance, food-allergens, crisis-support, coping, weather).
+- **Supporting evidence per tracker** — top symptoms/triggers/character/red-flag-booleans listed alongside the ICD-10 suggestion so doctors can validate.
+- **Pain Assessment rewritten**: top locations, character, pattern, radiation, triggers, treatment effectiveness ranked (≥2 uses), red-flag history (tearing/thunderclap/cauda counts), chronic-flare delta histogram, monthly trend.
+- **10 new tracker assessment sections** (none existed in v1 PDF): Head Pain (multi-rescue migraine count + baseline-delta), Seizure (status epi + autonomic clusters), Food Reactions (anaphylaxis + celiac aftermath %), Cardiac (rhythm types + VT callouts), Respiratory (peak-flow zones), Skin (photo count + SJS flag), Joint/MSK (per-joint frequency for ortho consult), Bathroom (Bristol + blood + pyelonephritis), Anxiety (crisis-flagged entries), Mind & Mood (mixed-state days + rapid cycling).
+- **Detected Medical Patterns section** pulls from `analyzeV2Patterns` — same 9 detectors that fire on in-app Red Flags tab appear in doctor's PDF.
+
+### v0.4.8 ✅ shipped 2026-05-10 — PDF unicode fix + export modal v2 coverage
+
+Two fixes Ren caught minutes after installing v0.4.7:
+
+- 🐛 **PDF letter-spacing breakage**: `≥` character isn't in jsPDF's WinAnsi encoding, broke kerning on "Treatment effectiveness (≥2 uses)" line — rendered as "T r e a t m e n t" with letter gaps. Replaced with "2+ uses". Stripped 🚨 / 💜 emojis from sectionHeader/subSection labels too as defensive cleanup.
+- 🐛 **Print/Export modal missing v2 trackers** — checklist hadn't been updated since v0.4.0. Added 8 missing trackers (cardiac, respiratory, skin, joint, substance, food-allergens, crisis-support, coping). Relabeled "Mental Health" → "Mind & Mood", "Lower Digestive" → "Bathroom (bowel + urinary)". Added 5 new specialty options (pulmonologist / dermatologist / allergist / orthopedist / urologist) with their smart defaults. Cardiologist now includes cardiac, gastroenterologist includes food-allergens, rheumatologist includes joint + skin.
+
+### v0.4.9 — PDF spacing/layout fixes (CURRENT GATE)
+
+Caught when reviewing v0.4.8 doctor-mode PDF output:
+
+- 🐛 **Tables don't push following content down properly** — body text after a `table()` call writes at stale `y`, causing overlap (e.g., "Top ictal symptoms..." line overlapping the Episode Type table cells in Seizure Assessment section).
+- 🐛 **sectionHeader has no leading breathing room when preceded by a table** — Cardiac Assessment header butted right against the section before it.
+- 🐛 **subSection has insufficient leading clearance** — Bristol scale distribution and Joint/MSK headers crushed against the body line above.
+- 🐛 **General: every `table()` exits without trailing spacer, every `sectionHeader()` enters without leading clearance** — needs a `breathingRoom()` contract in PDFWriter.
+
+Fix scope: localized to `PDFWriter` class in `lib/pdf-report-generator.ts` (lines ~100-275). Estimated ~30-line touch. Content logic untouched. Tomorrow's first task.
+
+### v0.4.10 — Tier 3 polish sweep + bland-data-generator parity
+
+- Tier 3 lighter polish: energy, hydration, movement, food-choice, self-care-tracker, sensory-tracker, weather-environment — analytics + collapsibles + date pickers
+- `lib/database/bland-data-generator.ts` ("Generate Bland Data" button — separate from G-SPOT) is missing the 5 new v0.4.x trackers. Different code path from G-SPOT cover story (which is patched). Lower urgency but worth fixing for parity.
+- coping-regulation Tier 2 multi-modal (deferred from earlier — Ren's feedback was that it's already solid as-is, deprioritized)
 
 ### v0.5.0 — Public milestone release
 
@@ -240,6 +263,12 @@ Any new tracker (or refactor of existing) follows:
 15. **Help card on tracker page** when categorization matters (substance has one directing routine use elsewhere).
 16. **Gremlin labels** on severity sliders where appropriate (pain, head-pain). Clinical labels preserved alongside for PDF export. Both/and.
 17. **AuDHD-aware** for mental-health trackers — meltdown / shutdown as first-class types, not subtypes of "panic."
+18. **Adaptive modal pattern** (v0.4.5+) — for trackers where one modal serves many episode types (Mind & Mood), use `episodeType`-conditional rendering rather than separate modals per type. Reduces code duplication, gives users a coherent experience when they're not sure which category fits.
+19. **Conditional sub-modal sections** — fields that only matter for specific episode types (OCD intrusion theme + compulsions for anxiety, post-surgical context for pain, celiac aftermath for food-allergens) should render conditionally based on `episodeType`, not always. Keeps the modal lean for the common case.
+20. **Persistence pattern for engines** (v0.4.6+) — anything that *runs* (pattern engine, future PDF cache, analytics computations) should write a snapshot to Dexie on each run and hydrate latest on page mount. No more "click run, navigate away, come back, blank page." Use additive Dexie versions (`this.version(N).stores({...})`) so existing data survives schema migrations.
+21. **PDF / jsPDF unicode safety** — jsPDF's default Helvetica is WinAnsi-encoded. ≥, ≤, →, 🚨, 💜, 💊 break letter-spacing in `sectionHeader` and `subSection` calls. Use ASCII-safe equivalents in PDF section labels (`2+ uses` not `≥2 uses`). Em-dash (—) is in WinAnsi and is safe. Emojis are tolerable in `body()` / `finding()` (which use `splitTextToSize`) but avoid in raw text positioning.
+22. **Cross-surface medical content** — the same v2 pattern engine output that drives the in-app Red Flags tab should also feed the doctor PDF's Detected Medical Patterns section. Doctor and patient see the same insights, no surprises.
+23. **988 not 911 for mental-health crisis** — the disability software user base needs the mental-health crisis line referenced specifically. 988 is free, confidential, 24/7, text or call. Crisis Text Line backup: HOME to 741741. International: findahelpline.com. "Reaching out is brave, not weak" framing matters.
 
 ---
 
