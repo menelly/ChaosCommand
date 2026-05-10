@@ -361,7 +361,7 @@ export function AsthmaAttackModal({ isOpen, onClose, onSave, editingEntry }: Res
 
           <div className="flex gap-3 pt-4">
             <Button type="button" variant="outline" onClick={handleClose} className="flex-1">Cancel</Button>
-            <Button type="button" onClick={handleSave} className="flex-1" disabled={symptoms.length === 0}><Plus className="h-4 w-4 mr-2" />{editingEntry ? 'Update Attack' : 'Save Asthma Attack'}</Button>
+            <Button type="button" onClick={handleSave} className="flex-1"><Plus className="h-4 w-4 mr-2" />{editingEntry ? 'Update Attack' : 'Save Asthma Attack'}</Button>
           </div>
         </div>
         </KeyboardAvoidingWrapper>

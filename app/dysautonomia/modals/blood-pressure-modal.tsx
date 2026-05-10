@@ -421,7 +421,7 @@ export function BloodPressureModal({ isOpen, onClose, onSave, editingEntry }: Ep
               type="button"
               onClick={handleSave}
               className="flex-1"
-              disabled={symptoms.length === 0}
+              
             >
               <Plus className="h-4 w-4 mr-2" />
               {editingEntry ? 'Update Episode' : 'Save BP Episode'}

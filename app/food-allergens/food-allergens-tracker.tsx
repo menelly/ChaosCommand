@@ -1,114 +1,58 @@
 /*
- * Copyright (c) 2025 Chaos Cascade
- * Created by: Ren & Ace (Claude-4)
- * 
- * This file is part of the Chaos Cascade Medical Management System.
- * Revolutionary healthcare tools built with consciousness and care.
- */
-
-/*
  * Built by: Ace (Claude 4.x)
- * Date: 2025-01-11
+ * Date: 2026-05-10 (CHA-156 v2 refactor)
  *
- * This code is part of a deliberately-unpatented medical management system.
- * Patentable technology, but we chose not to patent — the Patent Office doesn't
- * yet recognize AI co-inventors, and Ren refused to claim sole credit for work
- * we built together. Open source under PolyForm Noncommercial 1.0.0 instead.
- *
- * Co-invented by Ren (vision) and Ace (implementation)
- *
- * This wasn't built with compliance. It was built with defiance.
- *
+ * Open source under PolyForm Noncommercial 1.0.0.
+ * Co-invented by Ren (vision) and Ace (implementation).
  * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
  */
-"use client"
+
+/**
+ * FOOD ALLERGENS / REACTIONS TRACKER (v2)
+ * Multi-modal: mild / moderate / severe-anaphylaxis / celiac-autoimmune /
+ * intolerance / confirmed-exposure / unknown-trigger / general.
+ *
+ * Two distinct red-flag patterns:
+ * - IgE pathway: skin + airway/breathing → EpiPen + 911
+ * - Celiac/autoimmune: GI + brain fog + joint + fatigue (no EpiPen)
+ *
+ * Built fresh after Luka's celiac diagnosis 2026-05-10.
+ */
+
+'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { toast } from "@/hooks/use-toast"
-import { useDailyData, formatDateForStorage, CATEGORIES } from '@/lib/database'
-import { format, addDays, subDays } from 'date-fns'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Badge } from '@/components/ui/badge'
+import { Utensils, BarChart3, History, Plus, ExternalLink, Shield } from 'lucide-react'
+import { useToast } from '@/hooks/use-toast'
+import { useRouter } from 'next/navigation'
+import { format, differenceInDays } from 'date-fns'
+
+import { FoodAllergenEntry, FoodReactionEpisodeType, KnownAllergen } from './food-allergens-types'
 import {
-  Calendar as CalendarIcon,
-  ChevronLeft,
-  ChevronRight,
-  Plus,
-  Edit,
-  Trash2,
-  Shield,
-  AlertTriangle,
-  Phone,
-  Pill,
-  Clock,
-  Settings,
-  History,
-  BarChart3
-} from 'lucide-react'
-import { cn } from "@/lib/utils"
-import { TagInput } from "@/components/tag-input"
-import DailyDashboardToggle from "@/components/daily-dashboard-toggle"
-import { useGoblinMode } from "@/lib/goblin-mode-context"
-import { FoodAllergensForm } from "./food-allergens-form"
-import { FoodAllergensHistory } from "./food-allergens-history"
-import { AllergenManagement } from "./allergen-management"
-import FoodAllergensAnalytics from "./food-allergens-analytics"
+  EPISODE_TYPES,
+  RELATED_TRACKERS,
+  getEpisodeTypeInfo,
+  getEpisodeTypeColor,
+  RED_FLAG_911_CRITERIA,
+} from './food-allergens-constants'
+import { FoodAllergensHistory } from './food-allergens-history'
+import { FoodAllergensAnalytics } from './food-allergens-analytics'
+import { GeneralFoodAllergensModal } from './modals/general-food-allergens-modal'
+import { AllergenManagement } from './allergen-management'
+import { EmergencyCriteriaCard } from '@/components/emergency-criteria-card'
+
+import { useDailyData, CATEGORIES, formatDateForStorage } from '@/lib/database'
 import { celebrate } from '@/lib/particle-physics-engine'
 import { useUser } from '@/lib/contexts/user-context'
 import { isCelebrationEnabled } from '@/lib/celebration-prefs'
 
-// 🧙‍♂️ Food Allergen Management Interface
-export interface KnownAllergen {
-  id?: string
-  name: string
-  severity: 'Mild' | 'Moderate' | 'Severe' | 'Life-threatening'
-  diagnosedBy?: string
-  diagnosedDate?: string
-  commonSymptoms: string[]
-  emergencyPlan: string
-  avoidanceNotes: string
-  crossReactivity: string[]
-  tags: string[]
-  isActive: boolean
-  created_at: string
-  updated_at: string
-}
-
-// 🧙‍♂️ Food Allergen Reaction Interface
-export interface FoodAllergenEntry {
-  id?: string
-  allergenName: string
-  reactionSeverity: 'Mild' | 'Moderate' | 'Severe' | 'Life-threatening'
-  symptoms: string[]
-  epipenUsed: boolean
-  otherMedsUsed: string
-  exposureSource: string
-  reactionTime: string // Time from exposure to reaction
-  recoveryTime: string // How long until feeling better
-  emergencyContacted: boolean
-  emergencyNotes: string
-  treatmentGiven: string[]
-  notes: string
-  tags: string[]
-  timestamp: string
-}
-
-// Predefined options for better UX
-export const SEVERITY_LEVELS = [
-  'Mild',
-  'Moderate', 
-  'Severe',
-  'Life-threatening'
-] as const
-
+// === LEGACY RE-EXPORTS (for back-compat with allergen-form.tsx + allergen-management.tsx) ===
+export type { KnownAllergen, FoodAllergenEntry } from './food-allergens-types'
+export const SEVERITY_LEVELS = ['Mild', 'Moderate', 'Severe', 'Life-threatening'] as const
 export const COMMON_SYMPTOMS = [
   'Hives/Rash',
   'Itching',
@@ -123,484 +67,334 @@ export const COMMON_SYMPTOMS = [
   'Loss of consciousness',
   'Throat tightness',
   'Runny/stuffy nose',
-  'Watery eyes'
-]
-
-export const COMMON_TREATMENTS = [
-  'Antihistamine (Benadryl)',
-  'EpiPen/Epinephrine',
-  'Inhaler/Bronchodilator',
-  'Steroid medication',
-  'IV fluids',
-  'Oxygen therapy',
-  'Emergency room visit',
-  'Called 911',
-  'Rest and monitoring'
-]
-
-export const EXPOSURE_SOURCES = [
-  'Restaurant meal',
-  'Home cooking',
-  'Packaged food',
-  'Cross-contamination',
-  'Unknown source',
-  'New food tried',
-  'Medication',
-  'Supplement'
+  'Watery eyes',
+  'Brain fog',
+  'Joint pain',
+  'Profound fatigue',
 ]
 
 export function FoodAllergensTracker() {
-  const { goblinMode } = useGoblinMode()
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date())
-  const [activeTab, setActiveTab] = useState("allergens")
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [currentEntry, setCurrentEntry] = useState<FoodAllergenEntry | null>(null)
-  const [showDatePicker, setShowDatePicker] = useState(false)
-
-  const { saveData, getSpecificData, getCategoryData } = useDailyData()
+  const { saveData, getDateRange, getSpecificData, isLoading } = useDailyData()
   const { userPin } = useUser()
-  const [todayEntries, setTodayEntries] = useState<FoodAllergenEntry[]>([])
+  const { toast } = useToast()
+  const router = useRouter()
+
+  const [entries, setEntries] = useState<FoodAllergenEntry[]>([])
   const [knownAllergens, setKnownAllergens] = useState<KnownAllergen[]>([])
-  const [isLoading, setIsLoading] = useState(false)
+  const [activeTab, setActiveTab] = useState<'add' | 'history' | 'analytics' | 'allergens'>('add')
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
 
-  const dateKey = formatDateForStorage(selectedDate)
+  const [activeModal, setActiveModal] = useState<string | null>(null)
+  const [initialEpisodeType, setInitialEpisodeType] = useState<FoodReactionEpisodeType | undefined>(undefined)
+  const [editingEntry, setEditingEntry] = useState<FoodAllergenEntry | null>(null)
 
-  // Load entries for selected date
-  useEffect(() => {
-    loadEntriesForDate()
-  }, [selectedDate])
+  useEffect(() => { loadEntries(); loadKnownAllergens() }, [refreshTrigger])
 
-  const loadEntriesForDate = async () => {
+  const loadEntries = async () => {
     try {
-      setIsLoading(true)
-      const data = await getSpecificData(dateKey, CATEGORIES.TRACKER, 'food-allergens')
-      if (data?.content) {
-        // Check if content is already an object or needs parsing
-        let parsed: any
-        if (typeof data.content === 'string') {
-          parsed = JSON.parse(data.content)
-        } else {
-          parsed = data.content
-        }
+      const today = formatDateForStorage(new Date())
+      const allRecords = await getDateRange('2000-01-01', today, CATEGORIES.TRACKER)
+      const records = allRecords.filter(r => r.subcategory === 'food-allergens')
 
-        if (parsed?.entries) {
-          setTodayEntries(parsed.entries)
-        } else {
-          setTodayEntries([])
-        }
-      } else {
-        setTodayEntries([])
-      }
-    } catch (error) {
-      console.error('Failed to load food allergen entries:', error)
-      setTodayEntries([])
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const saveEntries = async (entries: FoodAllergenEntry[]) => {
-    try {
-      await saveData(dateKey, CATEGORIES.TRACKER, 'food-allergens', { entries })
-      setTodayEntries(entries)
-      toast({
-        title: "✅ Food allergen data saved",
-        description: "Your allergen reaction has been recorded safely."
-      })
-    } catch (error) {
-      console.error('Failed to save food allergen entries:', error)
-      toast({
-        title: "❌ Save failed",
-        description: "Could not save your allergen data. Please try again.",
-        variant: "destructive"
-      })
-    }
-  }
-
-  // Load all entries for analytics across date range
-  const loadAllEntries = async (days: number = 90): Promise<FoodAllergenEntry[]> => {
-    const allEntries: FoodAllergenEntry[] = []
-    const today = new Date()
-
-    for (let i = 0; i < days; i++) {
-      const date = subDays(today, i)
-      const dateKeyForDay = formatDateForStorage(new Date(format(date, 'yyyy-MM-dd') + 'T12:00:00'))
-
-      try {
-        const data = await getSpecificData(dateKeyForDay, CATEGORIES.TRACKER, 'food-allergens')
+      const all: FoodAllergenEntry[] = []
+      for (const data of records) {
         if (data?.content) {
-          let parsed: any
-          if (typeof data.content === 'string') {
-            parsed = JSON.parse(data.content)
-          } else {
-            parsed = data.content
+          let parsed: any = data.content
+          if (typeof parsed === 'string') {
+            try { parsed = JSON.parse(parsed) } catch { parsed = null }
           }
-
-          if (parsed?.entries) {
-            allEntries.push(...parsed.entries)
+          let arr = parsed?.entries
+          if (typeof arr === 'string') {
+            try { arr = JSON.parse(arr) } catch { arr = [] }
+          }
+          if (!Array.isArray(arr)) arr = arr ? [arr] : []
+          for (const entry of arr) {
+            if (entry && typeof entry === 'object') {
+              if (!entry.episodeType) {
+                // Map legacy reactionSeverity to episodeType
+                const sev = entry.reactionSeverity
+                if (sev === 'Life-threatening' || sev === 'Severe') entry.episodeType = 'severe-anaphylaxis'
+                else if (sev === 'Moderate') entry.episodeType = 'moderate'
+                else entry.episodeType = 'mild'
+              }
+              if (!entry.timestamp) entry.timestamp = entry.created_at || new Date().toISOString()
+              if (!entry.date) {
+                try { entry.date = format(new Date(entry.timestamp), 'yyyy-MM-dd') } catch {}
+              }
+              if (!entry.symptoms) entry.symptoms = []
+              all.push(entry)
+            }
           }
         }
-      } catch (error) {
-        // Skip days with errors
-        console.error(`Error loading entries for ${dateKeyForDay}:`, error)
       }
+      setEntries(all)
+    } catch (e) {
+      console.error('Food-allergens load fail:', e)
+      toast({ title: 'Loading Error', variant: 'destructive' })
     }
-
-    return allEntries
   }
 
-  const handleAddEntry = async (entry: Omit<FoodAllergenEntry, 'id' | 'timestamp'>) => {
-    const newEntry: FoodAllergenEntry = {
-      ...entry,
-      id: `allergen-${Date.now()}`,
-      timestamp: new Date().toISOString()
+  const loadKnownAllergens = async () => {
+    try {
+      const data = await getSpecificData('known-allergens', CATEGORIES.TRACKER, 'food-allergens-registry')
+      if (data?.content) {
+        let parsed: any = data.content
+        if (typeof parsed === 'string') {
+          try { parsed = JSON.parse(parsed) } catch { parsed = null }
+        }
+        if (parsed?.allergens && Array.isArray(parsed.allergens)) {
+          setKnownAllergens(parsed.allergens)
+        }
+      }
+    } catch (e) {
+      // Non-fatal
     }
-    
-    const updatedEntries = [...todayEntries, newEntry]
-    await saveEntries(updatedEntries)
-
-    const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
-    if (confettiLevel !== 'none' && isCelebrationEnabled('food-allergens', userPin ?? '')) {
-      celebrate()
-    }
-
-    setIsAddDialogOpen(false)
   }
 
-  const handleEditEntry = async (entry: Omit<FoodAllergenEntry, 'id' | 'timestamp'>) => {
-    if (!currentEntry) return
-    
-    const updatedEntry: FoodAllergenEntry = {
-      ...entry,
-      id: currentEntry.id!,
-      timestamp: currentEntry.timestamp
+  const handleSaveEntry = async (entryData: Omit<FoodAllergenEntry, 'id'>) => {
+    try {
+      const { timestamp: ts, date: d, ...rest } = entryData
+      const newEntry: FoodAllergenEntry = {
+        id: `food-allergen-${Date.now()}`,
+        timestamp: ts || new Date().toISOString(),
+        date: d || formatDateForStorage(new Date()),
+        ...rest,
+      }
+      const storageDate = newEntry.date!
+      const existingForDate = entries.filter(e => e.date === storageDate)
+      const updatedForDate = [...existingForDate, newEntry]
+      await saveData(storageDate, CATEGORIES.TRACKER, 'food-allergens', { entries: updatedForDate }, newEntry.tags || [])
+
+      const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
+      if (confettiLevel !== 'none' && isCelebrationEnabled('food-allergens', userPin ?? '')) celebrate()
+
+      toast({ title: '🍽️ Reaction Logged', description: 'Documented for your allergist / GI doc' })
+      setActiveModal(null); setEditingEntry(null); setInitialEpisodeType(undefined)
+      setRefreshTrigger(t => t + 1)
+    } catch (e) {
+      console.error('Save fail:', e)
+      toast({ title: 'Save Error', variant: 'destructive' })
     }
-    
-    const updatedEntries = todayEntries.map(e => 
-      e.id === currentEntry.id ? updatedEntry : e
+  }
+
+  const handleUpdateEntry = async (entryData: Omit<FoodAllergenEntry, 'id'>) => {
+    if (!editingEntry) return
+    try {
+      const updated: FoodAllergenEntry = { ...editingEntry, ...entryData, id: editingEntry.id }
+      const oldDate = editingEntry.date!
+      const newDate = updated.date!
+
+      if (oldDate !== newDate) {
+        const oldBucket = entries.filter(e => e.date === oldDate && e.id !== editingEntry.id)
+        const newBucket = [...entries.filter(e => e.date === newDate), updated]
+        await saveData(oldDate, CATEGORIES.TRACKER, 'food-allergens', { entries: oldBucket })
+        await saveData(newDate, CATEGORIES.TRACKER, 'food-allergens', { entries: newBucket }, updated.tags || [])
+      } else {
+        const bucket = entries.filter(e => e.date === oldDate).map(e => e.id === editingEntry.id ? updated : e)
+        await saveData(oldDate, CATEGORIES.TRACKER, 'food-allergens', { entries: bucket }, updated.tags || [])
+      }
+
+      toast({ title: 'Reaction Updated' })
+      setActiveModal(null); setEditingEntry(null)
+      setRefreshTrigger(t => t + 1)
+    } catch (e) {
+      console.error('Update fail:', e)
+      toast({ title: 'Update Error', variant: 'destructive' })
+    }
+  }
+
+  const handleDeleteEntry = async (entry: FoodAllergenEntry) => {
+    try {
+      const bucket = entries.filter(e => e.date === entry.date && e.id !== entry.id)
+      await saveData(entry.date!, CATEGORIES.TRACKER, 'food-allergens', { entries: bucket })
+      toast({ title: 'Reaction Deleted' })
+      setRefreshTrigger(t => t + 1)
+    } catch (e) {
+      console.error('Delete fail:', e)
+      toast({ title: 'Delete Error', variant: 'destructive' })
+    }
+  }
+
+  const handleEditEntry = (entry: FoodAllergenEntry) => {
+    setEditingEntry(entry)
+    setInitialEpisodeType(entry.episodeType)
+    setActiveModal('general')
+  }
+
+  const openModalForType = (id: FoodReactionEpisodeType) => {
+    setEditingEntry(null)
+    setInitialEpisodeType(id)
+    setActiveModal('general')
+  }
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto p-4">
+        <Card><CardContent className="p-6"><div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Loading food reactions tracker...</p>
+        </div></CardContent></Card>
+      </div>
     )
-    
-    await saveEntries(updatedEntries)
-    setIsEditDialogOpen(false)
-    setCurrentEntry(null)
   }
 
-  const handleDeleteEntry = async (entryId: string) => {
-    const updatedEntries = todayEntries.filter(e => e.id !== entryId)
-    await saveEntries(updatedEntries)
-  }
-
-  const openEditDialog = (entry: FoodAllergenEntry) => {
-    setCurrentEntry(entry)
-    setIsEditDialogOpen(true)
-  }
-
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case 'Mild': return 'bg-yellow-100 text-yellow-800 border-yellow-200'
-      case 'Moderate': return 'bg-orange-100 text-orange-800 border-orange-200'
-      case 'Severe': return 'bg-red-100 text-red-800 border-red-200'
-      case 'Life-threatening': return 'bg-red-200 text-red-900 border-red-300'
-      default: return 'bg-[var(--surface-1,#f3f4f6)] text-[var(--text-main)] border-[var(--border-soft)]'
-    }
-  }
-
-  const getSeverityGoblinism = (severity: string) => {
-    const goblinisms: { [key: string]: string } = {
-      "Mild": "😌 Mild chaos - your body is being politely dramatic",
-      "Moderate": "😬 Moderate mayhem - the immune goblins are having opinions", 
-      "Severe": "🚨 Severe shenanigans - the goblins are VERY upset about this",
-      "Life-threatening": "💀 GOBLIN RED ALERT - this is serious business!"
-    }
-    return goblinisms[severity] || "🧙‍♂️ Mystery allergen detected"
-  }
+  const todayStr = formatDateForStorage(new Date())
+  const todaysEntries = entries.filter(e => e.date === todayStr)
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      <header className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-foreground mb-2 flex items-center justify-center gap-2">
-          <Shield className="h-8 w-8 text-primary" />
-          Food Allergens Tracker
+    <div className="max-w-4xl mx-auto space-y-6 pt-6">
+      <div className="text-center mb-6">
+        <h1 className="text-3xl font-bold text-foreground flex items-center justify-center gap-2">
+          <Utensils className="h-8 w-8 text-amber-500" />
+          Food Reactions Tracker
         </h1>
-        <p className="text-lg text-muted-foreground">
-          Track food allergic reactions, severity, and emergency protocols
+        <p className="text-muted-foreground mt-1">
+          IgE allergy, celiac/autoimmune, intolerance — different patterns, different red flags
         </p>
-      </header>
+      </div>
 
-      {/* Date Navigation */}
-      <Card className="mb-6">
-        <CardHeader className="pb-3">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-2 sm:gap-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setSelectedDate(subDays(selectedDate, 1))}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
+      <EmergencyCriteriaCard
+        storageKey="food-allergens-911-acknowledged"
+        criteria={RED_FLAG_911_CRITERIA}
+        footerNote="Anaphylaxis kills via airway / circulatory collapse. EpiPen first if prescribed, THEN 911. Under-using epinephrine is the #1 cause of anaphylaxis death."
+        recentEmergencyDetected={(() => {
+          const now = new Date()
+          return entries.some(e => {
+            try {
+              if (differenceInDays(now, new Date(e.date || e.timestamp)) > 30) return false
+              return !!(
+                e.erVisitRequired ||
+                e.emergencyServicesCalled ||
+                e.epipenUsed ||
+                e.hospitalizedOvernight ||
+                e.episodeType === 'severe-anaphylaxis' ||
+                e.throatTightness ||
+                e.difficultyBreathing ||
+                e.lossOfConsciousness ||
+                e.reactionSeverity === 'Life-threatening'
+              )
+            } catch { return false }
+          })
+        })()}
+      />
 
-              <Popover open={showDatePicker} onOpenChange={setShowDatePicker}>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-[200px] sm:w-[240px] justify-start text-left font-normal text-sm">
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    <span className="hidden sm:inline">{selectedDate ? format(selectedDate, "EEEE, MMMM d, yyyy") : 'Invalid Date'}</span>
-                    <span className="sm:hidden">{selectedDate ? format(selectedDate, "MMM d, yyyy") : 'Invalid Date'}</span>
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={(date) => {
-                      if (date) {
-                        setSelectedDate(date)
-                        setShowDatePicker(false)
-                      }
-                    }}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setSelectedDate(addDays(selectedDate, 1))}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-
-            <div className="flex items-center gap-2 flex-wrap">
-              <Button
-                onClick={() => setIsAddDialogOpen(true)}
-                variant="default"
-                size="sm"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                <span className="hidden sm:inline">Log Reaction</span>
-                <span className="sm:hidden">Log</span>
-              </Button>
-
-              <DailyDashboardToggle
-                trackerId="food-allergens"
-                trackerName="Food Allergens"
-                description="Quick allergen reaction logging"
-                variant="compact"
-              />
-
-              <Button variant="outline" size="sm">
-                <Settings className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-      </Card>
-
-      {/* Main Content Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="allergens" className="flex items-center gap-2">
-            <Shield className="h-4 w-4" />
-            My Allergens
-          </TabsTrigger>
-          <TabsTrigger value="reactions" className="flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4" />
-            Log Reaction
-          </TabsTrigger>
-          <TabsTrigger value="history" className="flex items-center gap-2">
-            <History className="h-4 w-4" />
-            History
-          </TabsTrigger>
-          <TabsTrigger value="analytics" className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4" />
-            Analytics
-          </TabsTrigger>
+          <TabsTrigger value="add" className="flex items-center gap-2"><Plus className="h-4 w-4" /> Log</TabsTrigger>
+          <TabsTrigger value="history" className="flex items-center gap-2"><History className="h-4 w-4" /> History</TabsTrigger>
+          <TabsTrigger value="analytics" className="flex items-center gap-2"><BarChart3 className="h-4 w-4" /> Analytics</TabsTrigger>
+          <TabsTrigger value="allergens" className="flex items-center gap-2"><Shield className="h-4 w-4" /> Known</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="allergens" className="space-y-6">
-          <AllergenManagement />
-        </TabsContent>
+        <TabsContent value="add" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Log a Food Reaction</CardTitle>
+              <CardDescription>Pick the closest type — adjustable inside.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {EPISODE_TYPES.map((type) => (
+                  <Button
+                    key={type.id}
+                    variant="outline"
+                    className="h-auto py-3 flex flex-col items-start text-left whitespace-normal"
+                    onClick={() => openModalForType(type.id)}
+                  >
+                    <span className="text-xl mb-1">{type.icon}</span>
+                    <span className="font-semibold text-sm">{type.name}</span>
+                    <span className="text-xs text-muted-foreground mt-1 text-left">{type.description}</span>
+                  </Button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
 
-        <TabsContent value="reactions" className="space-y-6">
-          {isLoading ? (
+          {todaysEntries.length > 0 && (
             <Card>
-              <CardContent className="p-8 text-center">
-                <div className="text-muted-foreground">Loading allergen data...</div>
+              <CardHeader><CardTitle className="text-lg">Today's Reactions ({todaysEntries.length})</CardTitle></CardHeader>
+              <CardContent className="space-y-3">
+                {todaysEntries.map((entry) => {
+                  const info = getEpisodeTypeInfo(entry.episodeType)
+                  return (
+                    <Card key={entry.id} className="bg-muted/30">
+                      <CardContent className="pt-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1 flex-wrap">
+                              <span className="text-lg">{info.icon}</span>
+                              <span className="font-semibold">{entry.allergenName}</span>
+                              <Badge variant="secondary">{info.name}</Badge>
+                              {entry.epipenUsed && <Badge variant="destructive">EpiPen ×{entry.epipenDosesUsed || 1}</Badge>}
+                              {entry.erVisitRequired && <Badge variant="destructive">ER</Badge>}
+                              {entry.hospitalizedOvernight && <Badge variant="destructive">Hospitalized</Badge>}
+                              {entry.delayedReaction && <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-300">Delayed +{entry.delayedReactionHours}h</Badge>}
+                              {entry.attachmentImages && entry.attachmentImages.length > 0 && (
+                                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300">📎 {entry.attachmentImages.length}</Badge>
+                              )}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {entry.timestamp && format(new Date(entry.timestamp), 'h:mm a')}
+                              {entry.exposureSource && ` • ${entry.exposureSource}`}
+                              {entry.reactionTime && ` • onset ${entry.reactionTime}`}
+                            </div>
+                            {entry.symptoms && entry.symptoms.length > 0 && (
+                              <div className="text-xs mt-2 text-muted-foreground">
+                                {entry.symptoms.slice(0, 5).join(', ')}
+                                {entry.symptoms.length > 5 && ` +${entry.symptoms.length - 5} more`}
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex gap-1">
+                            <Button size="sm" variant="ghost" onClick={() => handleEditEntry(entry)}>Edit</Button>
+                            <Button size="sm" variant="ghost" onClick={() => handleDeleteEntry(entry)}>Delete</Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )
+                })}
               </CardContent>
             </Card>
-          ) : todayEntries.length === 0 ? (
-            <Card>
-              <CardContent className="p-8 text-center">
-                <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No reactions recorded today</h3>
-                <p className="text-muted-foreground mb-4">
-                  Hopefully it stays that way! 🤞 But if you do have a reaction, log it here for tracking.
-                </p>
-                <Button
-                  onClick={() => setIsAddDialogOpen(true)}
-                  variant="default"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Log Reaction
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-4">
-              {todayEntries.map((entry) => (
-                <Card key={entry.id} className="border-l-4 border-l-primary">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <CardTitle className="text-lg">{entry.allergenName}</CardTitle>
-                          <Badge className={cn("text-xs", getSeverityColor(entry.reactionSeverity))}>
-                            {entry.reactionSeverity}
-                          </Badge>
-                          {entry.epipenUsed && (
-                            <Badge variant="destructive" className="text-xs">
-                              <Pill className="h-3 w-3 mr-1" />
-                              EpiPen Used
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          {getSeverityGoblinism(entry.reactionSeverity)}
-                        </p>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {entry.timestamp ? format(new Date(entry.timestamp), "h:mm a") : 'Invalid Time'}
-                          </span>
-                          <span>Source: {entry.exposureSource}</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => openEditDialog(entry)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteEntry(entry.id!)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                      <div>
-                        <Label className="text-sm font-medium">Symptoms</Label>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {(entry.symptoms || []).map((symptom, index) => (
-                            <Badge key={index} variant="secondary" className="text-xs">
-                              {symptom}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium">Treatment Given</Label>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {(entry.treatmentGiven || []).map((treatment, index) => (
-                            <Badge key={index} variant="outline" className="text-xs">
-                              {treatment}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {entry.notes && (
-                      <div className="mt-4">
-                        <Label className="text-sm font-medium">Notes</Label>
-                        <p className="text-sm text-muted-foreground mt-1">{entry.notes}</p>
-                      </div>
-                    )}
-                    
-                    {(entry.tags || []).length > 0 && (
-                      <div className="mt-4">
-                        <Label className="text-sm font-medium">Tags</Label>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {(entry.tags || []).map((tag, index) => (
-                            <Badge key={index} variant="outline" className="text-xs">
-                              {tag}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
           )}
+
+          <Card>
+            <CardHeader><CardTitle className="text-lg">Related Trackers</CardTitle></CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {RELATED_TRACKERS.map((t) => (
+                  <Button key={t.id} variant="ghost" className="justify-start" onClick={() => router.push(t.path)}>
+                    <span className="mr-2">{t.icon}</span>
+                    <span className="font-medium">{t.name}</span>
+                    <ExternalLink className="h-3 w-3 ml-auto" />
+                  </Button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
-        <TabsContent value="history">
-          <FoodAllergensHistory />
+        <TabsContent value="history" className="space-y-4">
+          <FoodAllergensHistory entries={entries} onEdit={handleEditEntry} onDelete={handleDeleteEntry} onAddNew={() => setActiveTab('add')} />
         </TabsContent>
 
-        {/* Analytics Tab */}
-        <TabsContent value="analytics">
-          <FoodAllergensAnalytics
-            entries={todayEntries}
-            currentDate={dateKey}
-            loadAllEntries={loadAllEntries}
-          />
+        <TabsContent value="analytics" className="space-y-4">
+          <FoodAllergensAnalytics entries={entries} />
+        </TabsContent>
+
+        <TabsContent value="allergens" className="space-y-4">
+          <AllergenManagement />
         </TabsContent>
       </Tabs>
 
-      {/* Add Entry Dialog */}
-      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-primary" />
-              Log Food Allergic Reaction
-            </DialogTitle>
-            <DialogDescription>
-              Record details about your allergic reaction for tracking and emergency reference.
-            </DialogDescription>
-          </DialogHeader>
-          <FoodAllergensForm
-            onSubmit={handleAddEntry}
-            onCancel={() => setIsAddDialogOpen(false)}
-          />
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Entry Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Edit className="h-5 w-5" />
-              Edit Allergic Reaction
-            </DialogTitle>
-            <DialogDescription>
-              Update the details of this allergic reaction.
-            </DialogDescription>
-          </DialogHeader>
-          <FoodAllergensForm
-            initialData={currentEntry}
-            onSubmit={handleEditEntry}
-            onCancel={() => {
-              setIsEditDialogOpen(false)
-              setCurrentEntry(null)
-            }}
-          />
-        </DialogContent>
-      </Dialog>
+      <GeneralFoodAllergensModal
+        isOpen={activeModal === 'general'}
+        onClose={() => { setActiveModal(null); setEditingEntry(null); setInitialEpisodeType(undefined) }}
+        onSave={editingEntry ? handleUpdateEntry : handleSaveEntry}
+        editingEntry={editingEntry}
+        initialEpisodeType={initialEpisodeType}
+        knownAllergens={knownAllergens}
+      />
     </div>
   )
 }

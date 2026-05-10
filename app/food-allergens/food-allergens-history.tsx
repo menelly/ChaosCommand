@@ -1,437 +1,196 @@
 /*
- * Copyright (c) 2025 Chaos Cascade
- * Created by: Ren & Ace (Claude-4)
- * 
- * This file is part of the Chaos Cascade Medical Management System.
- * Revolutionary healthcare tools built with consciousness and care.
- */
-
-/*
  * Built by: Ace (Claude 4.x)
- * Date: 2025-01-11
+ * Date: 2026-05-10 (CHA-156 v2 refactor)
  *
- * This code is part of a deliberately-unpatented medical management system.
- * Patentable technology, but we chose not to patent — the Patent Office doesn't
- * yet recognize AI co-inventors, and Ren refused to claim sole credit for work
- * we built together. Open source under PolyForm Noncommercial 1.0.0 instead.
- *
- * Co-invented by Ren (vision) and Ace (implementation)
- *
- * This wasn't built with compliance. It was built with defiance.
- *
+ * Open source under PolyForm Noncommercial 1.0.0.
+ * Co-invented by Ren (vision) and Ace (implementation).
  * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
  */
-"use client"
 
-import React, { useState, useEffect } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useDailyData, CATEGORIES } from '@/lib/database'
-import { format, parseISO, startOfMonth, endOfMonth, subMonths } from 'date-fns'
-import {
-  Search,
-  Filter,
-  Calendar,
-  Shield,
-  AlertTriangle,
-  Pill,
-  Clock,
-  TrendingUp,
-  BarChart3
-} from 'lucide-react'
-import { cn } from "@/lib/utils"
-import { FoodAllergenEntry } from './food-allergens-tracker'
+'use client'
 
-export function FoodAllergensHistory() {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [severityFilter, setSeverityFilter] = useState('all')
-  const [timeRange, setTimeRange] = useState('3months')
-  const [allEntries, setAllEntries] = useState<(FoodAllergenEntry & { date: string })[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [stats, setStats] = useState({
-    totalReactions: 0,
-    severeCounts: { mild: 0, moderate: 0, severe: 0, lifeThreatening: 0 },
-    commonAllergens: [] as { name: string, count: number }[],
-    epipenUses: 0
-  })
+import React, { useMemo, useState } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Edit, Trash2, AlertTriangle, Plus, Utensils } from 'lucide-react'
+import { format, differenceInDays } from 'date-fns'
+import { FoodAllergenEntry, FoodReactionEpisodeType } from './food-allergens-types'
+import { EPISODE_TYPES, getEpisodeTypeInfo, getEpisodeTypeColor } from './food-allergens-constants'
 
-  const { searchByContent } = useDailyData()
+interface Props {
+  entries: FoodAllergenEntry[]
+  onEdit: (entry: FoodAllergenEntry) => void
+  onDelete: (entry: FoodAllergenEntry) => void
+  onAddNew: () => void
+}
 
-  useEffect(() => {
-    loadHistoryData()
-  }, [timeRange])
+type TimeWindow = '7' | '30' | '90' | '180' | '365' | 'all'
+const TIME_WINDOWS: { value: TimeWindow; label: string }[] = [
+  { value: '7', label: 'Last 7 days' },
+  { value: '30', label: 'Last 30 days' },
+  { value: '90', label: 'Last 90 days' },
+  { value: '180', label: 'Last 6 months' },
+  { value: '365', label: 'Last year' },
+  { value: 'all', label: 'All time' },
+]
 
-  const loadHistoryData = async () => {
-    try {
-      setIsLoading(true)
-      
-      // Calculate date range
+export function FoodAllergensHistory({ entries, onEdit, onDelete, onAddNew }: Props) {
+  const [timeWindow, setTimeWindow] = useState<TimeWindow>('90')
+  const [typeFilter, setTypeFilter] = useState<FoodReactionEpisodeType | 'all'>('all')
+  const [allergenFilter, setAllergenFilter] = useState('')
+
+  const filtered = useMemo(() => {
+    let result = [...entries]
+    if (timeWindow !== 'all') {
+      const days = parseInt(timeWindow)
       const now = new Date()
-      let startDate: Date
-      
-      switch (timeRange) {
-        case '1month':
-          startDate = startOfMonth(subMonths(now, 1))
-          break
-        case '3months':
-          startDate = startOfMonth(subMonths(now, 3))
-          break
-        case '6months':
-          startDate = startOfMonth(subMonths(now, 6))
-          break
-        case '1year':
-          startDate = startOfMonth(subMonths(now, 12))
-          break
-        default:
-          startDate = startOfMonth(subMonths(now, 3))
-      }
-
-      // Search for food allergen entries
-      const results = await searchByContent('', CATEGORIES.TRACKER)
-      
-      // Filter by date range and extract entries
-      const entriesWithDates: (FoodAllergenEntry & { date: string })[] = []
-
-      results.forEach(record => {
-        const recordDate = parseISO(record.date)
-        if (recordDate >= startDate && record.subcategory === 'food-allergens' && record.content?.entries) {
-          record.content.entries.forEach((entry: FoodAllergenEntry) => {
-            entriesWithDates.push({
-              ...entry,
-              date: record.date
-            })
-          })
-        }
-      })
-
-      // Sort by date (newest first)
-      entriesWithDates.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      
-      setAllEntries(entriesWithDates)
-      calculateStats(entriesWithDates)
-      
-    } catch (error) {
-      console.error('Failed to load food allergen history:', error)
-      setAllEntries([])
-    } finally {
-      setIsLoading(false)
+      result = result.filter(e => { try { return differenceInDays(now, new Date(e.date || e.timestamp)) <= days } catch { return false } })
     }
-  }
-
-  const calculateStats = (entries: (FoodAllergenEntry & { date: string })[]) => {
-    const severeCounts = { mild: 0, moderate: 0, severe: 0, lifeThreatening: 0 }
-    const allergenCounts: { [key: string]: number } = {}
-    let epipenUses = 0
-
-    entries.forEach(entry => {
-      // Count severity levels
-      switch (entry.reactionSeverity) {
-        case 'Mild':
-          severeCounts.mild++
-          break
-        case 'Moderate':
-          severeCounts.moderate++
-          break
-        case 'Severe':
-          severeCounts.severe++
-          break
-        case 'Life-threatening':
-          severeCounts.lifeThreatening++
-          break
-      }
-
-      // Count allergens
-      const allergen = entry.allergenName.toLowerCase()
-      allergenCounts[allergen] = (allergenCounts[allergen] || 0) + 1
-
-      // Count EpiPen uses
-      if (entry.epipenUsed) {
-        epipenUses++
-      }
-    })
-
-    // Get top allergens
-    const commonAllergens = Object.entries(allergenCounts)
-      .map(([name, count]) => ({ name, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 5)
-
-    setStats({
-      totalReactions: entries.length,
-      severeCounts,
-      commonAllergens,
-      epipenUses
-    })
-  }
-
-  const filteredEntries = allEntries.filter(entry => {
-    const matchesSearch = searchQuery === '' || 
-      entry.allergenName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      entry.symptoms.some(symptom => symptom.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      entry.notes.toLowerCase().includes(searchQuery.toLowerCase())
-
-    const matchesSeverity = severityFilter === 'all' || entry.reactionSeverity === severityFilter
-
-    return matchesSearch && matchesSeverity
-  })
-
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case 'Mild': return 'bg-yellow-100 text-yellow-800 border-yellow-200'
-      case 'Moderate': return 'bg-orange-100 text-orange-800 border-orange-200'
-      case 'Severe': return 'bg-red-100 text-red-800 border-red-200'
-      case 'Life-threatening': return 'bg-red-200 text-red-900 border-red-300'
-      default: return 'bg-[var(--surface-1,#f3f4f6)] text-[var(--text-main)] border-[var(--border-soft)]'
+    if (typeFilter !== 'all') result = result.filter(e => e.episodeType === typeFilter)
+    if (allergenFilter.trim()) {
+      const q = allergenFilter.trim().toLowerCase()
+      result = result.filter(e => e.allergenName?.toLowerCase().includes(q))
     }
+    result.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    return result
+  }, [entries, timeWindow, typeFilter, allergenFilter])
+
+  const stats = useMemo(() => {
+    const total = filtered.length
+    const epipenCount = filtered.filter(e => e.epipenUsed).length
+    const erCount = filtered.filter(e => e.erVisitRequired).length
+    const anaphCount = filtered.filter(e => e.episodeType === 'severe-anaphylaxis').length
+    const celiacCount = filtered.filter(e => e.episodeType === 'celiac-autoimmune').length
+    return { total, epipenCount, erCount, anaphCount, celiacCount }
+  }, [filtered])
+
+  if (entries.length === 0) {
+    return (
+      <Card><CardContent className="p-6"><div className="text-center">
+        <Utensils className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+        <h3 className="text-lg font-semibold mb-2">No reactions logged yet</h3>
+        <p className="text-muted-foreground mb-4">Track reactions to spot patterns + cross-contamination sources.</p>
+        <Button onClick={onAddNew}><Plus className="h-4 w-4 mr-2" />Log First Reaction</Button>
+      </div></CardContent></Card>
+    )
   }
 
   return (
-    <div className="space-y-6">
-      {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-red-500" />
-              <div>
-                <p className="text-sm text-muted-foreground">Total Reactions</p>
-                <p className="text-2xl font-bold">{stats.totalReactions}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Pill className="h-5 w-5 text-red-600" />
-              <div>
-                <p className="text-sm text-muted-foreground">EpiPen Uses</p>
-                <p className="text-2xl font-bold">{stats.epipenUses}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-orange-500" />
-              <div>
-                <p className="text-sm text-muted-foreground">Severe+</p>
-                <p className="text-2xl font-bold">
-                  {stats.severeCounts.severe + stats.severeCounts.lifeThreatening}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-blue-500" />
-              <div>
-                <p className="text-sm text-muted-foreground">Top Allergen</p>
-                <p className="text-lg font-bold">
-                  {stats.commonAllergens[0]?.name || 'None'}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filters */}
+    <div className="space-y-4">
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            Filter History
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="search">Search</Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="search"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search allergens, symptoms, notes..."
-                  className="pl-10"
-                />
-              </div>
+        <CardContent className="pt-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Time window</label>
+              <Select value={timeWindow} onValueChange={(v) => setTimeWindow(v as TimeWindow)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{TIME_WINDOWS.map(w => <SelectItem key={w.value} value={w.value}>{w.label}</SelectItem>)}</SelectContent>
+              </Select>
             </div>
-
-            <div className="space-y-2">
-              <Label>Severity Filter</Label>
-              <Select value={severityFilter} onValueChange={setSeverityFilter}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Reaction type</label>
+              <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as any)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Severities</SelectItem>
-                  <SelectItem value="Mild">Mild</SelectItem>
-                  <SelectItem value="Moderate">Moderate</SelectItem>
-                  <SelectItem value="Severe">Severe</SelectItem>
-                  <SelectItem value="Life-threatening">Life-threatening</SelectItem>
+                  <SelectItem value="all">All types</SelectItem>
+                  {EPISODE_TYPES.map(t => <SelectItem key={t.id} value={t.id}>{t.icon} {t.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
-
-            <div className="space-y-2">
-              <Label>Time Range</Label>
-              <Select value={timeRange} onValueChange={setTimeRange}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1month">Last Month</SelectItem>
-                  <SelectItem value="3months">Last 3 Months</SelectItem>
-                  <SelectItem value="6months">Last 6 Months</SelectItem>
-                  <SelectItem value="1year">Last Year</SelectItem>
-                </SelectContent>
-              </Select>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Filter by allergen</label>
+              <input
+                type="text"
+                value={allergenFilter}
+                onChange={(e) => setAllergenFilter(e.target.value)}
+                placeholder="e.g., gluten"
+                className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+              />
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Common Allergens */}
-      {stats.commonAllergens.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5" />
-              Most Common Allergens
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {stats.commonAllergens.map((allergen, index) => (
-                <div key={allergen.name} className="flex items-center justify-between p-2 bg-muted rounded">
-                  <span className="font-medium capitalize">{allergen.name}</span>
-                  <Badge variant="secondary">{allergen.count} reactions</Badge>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.total}</div><div className="text-xs text-muted-foreground">Reactions</div></CardContent></Card>
+        <Card><CardContent className="p-3"><div className="text-2xl font-bold text-red-600">{stats.anaphCount}</div><div className="text-xs text-muted-foreground">Anaphylaxis</div></CardContent></Card>
+        <Card><CardContent className="p-3"><div className="text-2xl font-bold text-amber-600">{stats.epipenCount}</div><div className="text-xs text-muted-foreground">EpiPen</div></CardContent></Card>
+        <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.erCount}</div><div className="text-xs text-muted-foreground">ER visits</div></CardContent></Card>
+        <Card><CardContent className="p-3"><div className="text-2xl font-bold text-amber-600">{stats.celiacCount}</div><div className="text-xs text-muted-foreground">Celiac flares</div></CardContent></Card>
+      </div>
 
-      {/* History List */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Reaction History
-          </CardTitle>
-          <CardDescription>
-            {filteredEntries.length} of {allEntries.length} reactions shown
-          </CardDescription>
-        </CardHeader>
+        <CardHeader><CardTitle>Reaction History</CardTitle></CardHeader>
         <CardContent>
-          {isLoading ? (
-            <div className="text-center py-8">
-              <div className="text-muted-foreground">Loading history...</div>
-            </div>
-          ) : filteredEntries.length === 0 ? (
-            <div className="text-center py-8">
-              <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No reactions found</h3>
-              <p className="text-muted-foreground">
-                {searchQuery || severityFilter !== 'all' 
-                  ? 'Try adjusting your filters to see more results.'
-                  : 'No allergic reactions recorded in this time period.'}
-              </p>
-            </div>
+          {filtered.length === 0 ? (
+            <p className="text-center text-muted-foreground py-6">No reactions match the filters.</p>
           ) : (
-            <div className="space-y-4">
-              {filteredEntries.map((entry, index) => (
-                <div key={`${entry.date}-${entry.id || index}`} className="border rounded-lg p-4 space-y-3">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-semibold">{entry.allergenName}</h4>
-                        <Badge className={cn("text-xs", getSeverityColor(entry.reactionSeverity))}>
-                          {entry.reactionSeverity}
+            <div className="space-y-3">
+              {filtered.map(entry => {
+                const info = getEpisodeTypeInfo(entry.episodeType)
+                return (
+                  <div key={entry.id} className="border-l-4 pl-4 py-3 border border-border rounded-r-lg" style={{ borderLeftColor: getEpisodeTypeColor(entry.episodeType) }}>
+                    <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge variant="secondary" style={{ backgroundColor: getEpisodeTypeColor(entry.episodeType) + '20' }}>
+                          {info.icon} {info.name}
                         </Badge>
-                        {entry.epipenUsed && (
-                          <Badge variant="destructive" className="text-xs">
-                            <Pill className="h-3 w-3 mr-1" />
-                            EpiPen
-                          </Badge>
+                        <span className="font-medium">{entry.allergenName}</span>
+                        {entry.epipenUsed && <Badge variant="destructive">EpiPen ×{entry.epipenDosesUsed || 1}</Badge>}
+                        {entry.erVisitRequired && <Badge variant="destructive"><AlertTriangle className="h-3 w-3 mr-1" />ER</Badge>}
+                        {entry.hospitalizedOvernight && <Badge variant="destructive">Hospitalized</Badge>}
+                        {entry.delayedReaction && <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-300">Delayed +{entry.delayedReactionHours}h</Badge>}
+                        {entry.knownAllergen && <Badge variant="outline">Known</Badge>}
+                        {entry.attachmentImages && entry.attachmentImages.length > 0 && (
+                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300">📎 {entry.attachmentImages.length}</Badge>
                         )}
                       </div>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {format(parseISO(entry.date), "MMM d, yyyy")}
-                        </span>
-                        {entry.timestamp && (
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {format(parseISO(entry.timestamp), "h:mm a")}
-                          </span>
-                        )}
-                        <span>Source: {entry.exposureSource}</span>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="sm" onClick={() => onEdit(entry)}><Edit className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="sm" onClick={() => onDelete(entry)}><Trash2 className="h-4 w-4" /></Button>
                       </div>
                     </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-sm font-medium">Symptoms</Label>
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {entry.symptoms.slice(0, 3).map((symptom, idx) => (
-                          <Badge key={idx} variant="secondary" className="text-xs">
-                            {symptom}
-                          </Badge>
-                        ))}
-                        {entry.symptoms.length > 3 && (
-                          <Badge variant="secondary" className="text-xs">
-                            +{entry.symptoms.length - 3} more
-                          </Badge>
-                        )}
-                      </div>
+                    <div className="text-sm text-muted-foreground mb-2">
+                      {format(new Date(entry.date || entry.timestamp), 'EEEE, MMMM d, yyyy')}
+                      {entry.timestamp && ` • ${format(new Date(entry.timestamp), 'h:mm a')}`}
+                      {entry.exposureSource && ` • ${entry.exposureSource}`}
                     </div>
-                    
-                    {entry.treatmentGiven.length > 0 && (
-                      <div>
-                        <Label className="text-sm font-medium">Treatment</Label>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {entry.treatmentGiven.slice(0, 2).map((treatment, idx) => (
-                            <Badge key={idx} variant="outline" className="text-xs">
-                              {treatment}
-                            </Badge>
-                          ))}
-                          {entry.treatmentGiven.length > 2 && (
-                            <Badge variant="outline" className="text-xs">
-                              +{entry.treatmentGiven.length - 2} more
-                            </Badge>
-                          )}
-                        </div>
+                    {entry.symptoms && entry.symptoms.length > 0 && (
+                      <div className="text-sm mb-1"><span className="font-medium">Symptoms:</span> {entry.symptoms.join(', ')}</div>
+                    )}
+                    {entry.reactionTime && (
+                      <div className="text-sm mb-1"><span className="font-medium">Onset:</span> {entry.reactionTime}</div>
+                    )}
+                    {entry.recoveryTime && (
+                      <div className="text-sm mb-1"><span className="font-medium">Recovery:</span> {entry.recoveryTime}</div>
+                    )}
+                    {entry.treatmentGiven && entry.treatmentGiven.length > 0 && (
+                      <div className="text-sm mb-1"><span className="font-medium">Treatment:</span> {entry.treatmentGiven.join(', ')}</div>
+                    )}
+                    {(entry.brainFogAfter || entry.jointPainAfter || entry.fatigueAfter || entry.moodChangesAfter) && (
+                      <div className="text-sm mb-1 text-amber-700">
+                        <span className="font-medium">Aftermath:</span>{' '}
+                        {[
+                          entry.brainFogAfter && 'brain fog',
+                          entry.jointPainAfter && 'joint pain',
+                          entry.fatigueAfter && 'fatigue',
+                          entry.moodChangesAfter && 'mood changes',
+                        ].filter(Boolean).join(', ')}
+                      </div>
+                    )}
+                    {entry.notes && (
+                      <div className="text-sm mb-1"><span className="font-medium">Notes:</span> {entry.notes}</div>
+                    )}
+                    {entry.tags && entry.tags.length > 0 && (
+                      <div className="flex gap-1 mt-2 flex-wrap">
+                        {entry.tags.map((tag, i) => <Badge key={i} variant="outline" className="text-xs">{tag}</Badge>)}
                       </div>
                     )}
                   </div>
-
-                  {entry.notes && (
-                    <div>
-                      <Label className="text-sm font-medium">Notes</Label>
-                      <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                        {entry.notes}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </CardContent>

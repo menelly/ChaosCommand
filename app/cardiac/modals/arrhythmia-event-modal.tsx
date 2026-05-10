@@ -564,7 +564,7 @@ export function ArrhythmiaEventModal({ isOpen, onClose, onSave, editingEntry }: 
 
           <div className="flex gap-3 pt-4">
             <Button type="button" variant="outline" onClick={handleClose} className="flex-1">Cancel</Button>
-            <Button type="button" onClick={handleSave} className="flex-1" disabled={symptoms.length === 0}>
+            <Button type="button" onClick={handleSave} className="flex-1">
               <Plus className="h-4 w-4 mr-2" />
               {editingEntry ? 'Update Event' : 'Save Arrhythmia Event'}
             </Button>

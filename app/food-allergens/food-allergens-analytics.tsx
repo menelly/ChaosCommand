@@ -1,501 +1,262 @@
 /*
- * Copyright (c) 2025 Chaos Cascade
- * Created by: Ren & Ace (Claude-4)
- *
- * This file is part of the Chaos Cascade Medical Management System.
- * Revolutionary healthcare tools built with consciousness and care.
- */
-
-/*
  * Built by: Ace (Claude 4.x)
- * Date: 2025-01-11
+ * Date: 2026-05-10 (CHA-156 v2 refactor)
  *
- * This code is part of a deliberately-unpatented medical management system.
- * Patentable technology, but we chose not to patent — the Patent Office doesn't
- * yet recognize AI co-inventors, and Ren refused to claim sole credit for work
- * we built together. Open source under PolyForm Noncommercial 1.0.0 instead.
- *
- * Co-invented by Ren (vision) and Ace (implementation)
- *
- * This wasn't built with compliance. It was built with defiance.
- *
+ * Open source under PolyForm Noncommercial 1.0.0.
+ * Co-invented by Ren (vision) and Ace (implementation).
  * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
- */
-/**
- * FOOD ALLERGENS ANALYTICS COMPONENT 🛡️
- * Local Dexie-powered analytics with reaction pattern insights
- *
- * Tracks allergen reactions, severity patterns, and treatment effectiveness
  */
 
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Loader2, Shield, AlertTriangle, Pill, Activity, TrendingUp, Calendar, Clock, Apple } from 'lucide-react'
-import { FoodAllergenEntry } from './food-allergens-tracker'
-import { filterForAnalytics } from '@/lib/utils/analytics-filters'
+import React, { useMemo, useState } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { differenceInDays } from 'date-fns'
+import { FoodAllergenEntry } from './food-allergens-types'
+import { EPISODE_TYPES, getEpisodeTypeColor } from './food-allergens-constants'
 
-interface FoodAllergensAnalyticsProps {
-  entries: FoodAllergenEntry[]
-  currentDate: string
-  loadAllEntries?: (days: number) => Promise<FoodAllergenEntry[]>
-}
+interface Props { entries: FoodAllergenEntry[] }
 
-interface AnalyticsData {
-  summary: {
-    total_reactions: number
-    epipen_uses: number
-    emergency_contacts: number
-    avg_reactions_per_week: number
-  }
-  severity_breakdown: {
-    mild: number
-    moderate: number
-    severe: number
-    life_threatening: number
-  }
-  allergen_frequency: { name: string; count: number }[]
-  symptom_frequency: { name: string; count: number }[]
-  exposure_sources: { name: string; count: number }[]
-  treatment_frequency: { name: string; count: number }[]
-  day_of_week_pattern: { day: string; count: number }[]
-  insights: string[]
-}
+type TimeWindow = '7' | '30' | '90' | '180' | '365' | 'all'
+const TIME_WINDOWS: { value: TimeWindow; label: string }[] = [
+  { value: '7', label: 'Last 7 days' },
+  { value: '30', label: 'Last 30 days' },
+  { value: '90', label: 'Last 90 days' },
+  { value: '180', label: 'Last 6 months' },
+  { value: '365', label: 'Last year' },
+  { value: 'all', label: 'All time' },
+]
 
-export default function FoodAllergensAnalytics({ entries, currentDate, loadAllEntries }: FoodAllergensAnalyticsProps) {
-  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [dateRange, setDateRange] = useState('90')
+export function FoodAllergensAnalytics({ entries }: Props) {
+  const [timeWindow, setTimeWindow] = useState<TimeWindow>('90')
 
-  useEffect(() => {
-    loadLocalAnalytics()
-  }, [dateRange])
+  const filtered = useMemo(() => {
+    if (timeWindow === 'all') return entries
+    const days = parseInt(timeWindow)
+    const now = new Date()
+    return entries.filter(e => { try { return differenceInDays(now, new Date(e.date || e.timestamp)) <= days } catch { return false } })
+  }, [entries, timeWindow])
 
-  const loadLocalAnalytics = async () => {
-    setLoading(true)
-    setError(null)
+  const stats = useMemo(() => {
+    const total = filtered.length
+    const epipenCount = filtered.filter(e => e.epipenUsed).length
+    const erCount = filtered.filter(e => e.erVisitRequired).length
+    const emsCount = filtered.filter(e => e.emergencyServicesCalled).length
+    const hospCount = filtered.filter(e => e.hospitalizedOvernight).length
+    const anaphCount = filtered.filter(e => e.episodeType === 'severe-anaphylaxis').length
+    const celiacCount = filtered.filter(e => e.episodeType === 'celiac-autoimmune').length
+    const intoleranceCount = filtered.filter(e => e.episodeType === 'intolerance').length
 
-    try {
-      let allEntries: FoodAllergenEntry[] = entries
-      if (loadAllEntries) {
-        allEntries = await loadAllEntries(parseInt(dateRange))
+    // Type breakdown
+    const typeCount: Record<string, number> = {}
+    filtered.forEach(e => { typeCount[e.episodeType] = (typeCount[e.episodeType] || 0) + 1 })
+
+    // Top allergens
+    const allergenCount: Record<string, number> = {}
+    filtered.forEach(e => {
+      if (e.allergenName) {
+        const key = e.allergenName.trim().toLowerCase()
+        allergenCount[key] = (allergenCount[key] || 0) + 1
       }
+    })
+    const topAllergens = Object.entries(allergenCount).sort((a, b) => b[1] - a[1]).slice(0, 8)
 
-      // Filter out NOPE and I KNOW tagged entries
-      const filteredEntries = filterForAnalytics(allEntries)
-      console.log('🛡️ After tag filtering:', filteredEntries.length, '(excluded:', allEntries.length - filteredEntries.length, ')')
+    // Top exposure sources
+    const sourceCount: Record<string, number> = {}
+    filtered.forEach(e => { if (e.exposureSource) sourceCount[e.exposureSource] = (sourceCount[e.exposureSource] || 0) + 1 })
+    const topSources = Object.entries(sourceCount).sort((a, b) => b[1] - a[1]).slice(0, 6)
 
-      if (filteredEntries.length === 0) {
-        setAnalyticsData(null)
-        setLoading(false)
-        return
-      }
+    // Top symptoms
+    const symptomCount: Record<string, number> = {}
+    filtered.forEach(e => (e.symptoms || []).forEach(s => { symptomCount[s] = (symptomCount[s] || 0) + 1 }))
+    const topSymptoms = Object.entries(symptomCount).sort((a, b) => b[1] - a[1]).slice(0, 10)
 
-      console.log('🛡️ Analyzing food allergen data locally:', filteredEntries.length, 'entries')
-
-      const days = parseInt(dateRange)
-      const weeks = days / 7
-
-      // Severity breakdown
-      const severityBreakdown = {
-        mild: filteredEntries.filter(e => e.reactionSeverity === 'Mild').length,
-        moderate: filteredEntries.filter(e => e.reactionSeverity === 'Moderate').length,
-        severe: filteredEntries.filter(e => e.reactionSeverity === 'Severe').length,
-        life_threatening: filteredEntries.filter(e => e.reactionSeverity === 'Life-threatening').length
-      }
-
-      // EpiPen and emergency stats
-      const epipenUses = filteredEntries.filter(e => e.epipenUsed).length
-      const emergencyContacts = filteredEntries.filter(e => e.emergencyContacted).length
-
-      // Allergen frequency
-      const allergenCounts: Record<string, number> = {}
-      filteredEntries.forEach(e => {
-        const name = e.allergenName.toLowerCase()
-        allergenCounts[name] = (allergenCounts[name] || 0) + 1
-      })
-      const allergenFrequency = Object.entries(allergenCounts)
-        .map(([name, count]) => ({ name, count }))
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 10)
-
-      // Symptom frequency
-      const symptomCounts: Record<string, number> = {}
-      filteredEntries.forEach(e => {
-        (e.symptoms || []).forEach(symptom => {
-          symptomCounts[symptom] = (symptomCounts[symptom] || 0) + 1
-        })
-      })
-      const symptomFrequency = Object.entries(symptomCounts)
-        .map(([name, count]) => ({ name, count }))
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 10)
-
-      // Exposure source analysis
-      const sourceCounts: Record<string, number> = {}
-      filteredEntries.forEach(e => {
-        const source = e.exposureSource || 'Unknown'
-        sourceCounts[source] = (sourceCounts[source] || 0) + 1
-      })
-      const exposureSources = Object.entries(sourceCounts)
-        .map(([name, count]) => ({ name, count }))
-        .sort((a, b) => b.count - a.count)
-
-      // Treatment frequency
-      const treatmentCounts: Record<string, number> = {}
-      filteredEntries.forEach(e => {
-        (e.treatmentGiven || []).forEach(treatment => {
-          treatmentCounts[treatment] = (treatmentCounts[treatment] || 0) + 1
-        })
-      })
-      const treatmentFrequency = Object.entries(treatmentCounts)
-        .map(([name, count]) => ({ name, count }))
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 8)
-
-      // Day of week pattern
-      const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-      const dayCounts: Record<string, number> = {}
-      dayNames.forEach(day => dayCounts[day] = 0)
-
-      filteredEntries.forEach(e => {
-        if (e.timestamp) {
-          const date = new Date(e.timestamp)
-          const dayName = dayNames[date.getDay()]
-          dayCounts[dayName] = (dayCounts[dayName] || 0) + 1
-        }
-      })
-      const dayOfWeekPattern = dayNames.map(day => ({ day, count: dayCounts[day] }))
-
-      // Generate insights
-      const insights: string[] = []
-
-      insights.push(`You logged ${filteredEntries.length} allergic reactions in the last ${days} days.`)
-
-      const avgPerWeek = weeks > 0 ? parseFloat((filteredEntries.length / weeks).toFixed(1)) : 0
-      if (avgPerWeek > 0) {
-        insights.push(`Average of ${avgPerWeek} reactions per week.`)
-      }
-
-      if (allergenFrequency.length > 0) {
-        insights.push(`Most common allergen: ${allergenFrequency[0].name} (${allergenFrequency[0].count} reactions)`)
-      }
-
-      const severeCount = severityBreakdown.severe + severityBreakdown.life_threatening
-      if (severeCount > 0) {
-        insights.push(`⚠️ ${severeCount} severe/life-threatening reactions recorded.`)
-      }
-
-      if (epipenUses > 0) {
-        insights.push(`💉 EpiPen used ${epipenUses} time${epipenUses > 1 ? 's' : ''}.`)
-      }
-
-      if (emergencyContacts > 0) {
-        insights.push(`🚨 Emergency services contacted ${emergencyContacts} time${emergencyContacts > 1 ? 's' : ''}.`)
-      }
-
-      // Find high-risk day
-      const maxDayReactions = Math.max(...dayOfWeekPattern.map(d => d.count))
-      if (maxDayReactions > 0) {
-        const peakDay = dayOfWeekPattern.find(d => d.count === maxDayReactions)
-        if (peakDay && peakDay.count > avgPerWeek) {
-          insights.push(`📅 Most reactions occur on ${peakDay.day}s.`)
-        }
-      }
-
-      // Exposure source insight
-      if (exposureSources.length > 0 && exposureSources[0].count >= 2) {
-        insights.push(`🍽️ Most common exposure: ${exposureSources[0].name}`)
-      }
-
-      const data: AnalyticsData = {
-        summary: {
-          total_reactions: filteredEntries.length,
-          epipen_uses: epipenUses,
-          emergency_contacts: emergencyContacts,
-          avg_reactions_per_week: avgPerWeek
-        },
-        severity_breakdown: severityBreakdown,
-        allergen_frequency: allergenFrequency,
-        symptom_frequency: symptomFrequency,
-        exposure_sources: exposureSources,
-        treatment_frequency: treatmentFrequency,
-        day_of_week_pattern: dayOfWeekPattern,
-        insights: insights.filter(Boolean)
-      }
-
-      console.log('🎯 Food allergen analytics generated:', data)
-      setAnalyticsData(data)
-    } catch (err) {
-      console.error('Food allergen analytics error:', err)
-      setError(err instanceof Error ? err.message : 'Failed to load analytics')
-    } finally {
-      setLoading(false)
+    // CELIAC AFTERMATH PATTERN — for users who track gluten exposures, this is gold
+    const celiacEntries = filtered.filter(e => e.episodeType === 'celiac-autoimmune' || e.episodeType === 'intolerance')
+    const aftermathStats = {
+      brainFog: celiacEntries.filter(e => e.brainFogAfter).length,
+      jointPain: celiacEntries.filter(e => e.jointPainAfter).length,
+      fatigue: celiacEntries.filter(e => e.fatigueAfter).length,
+      moodChanges: celiacEntries.filter(e => e.moodChangesAfter).length,
+      delayed: celiacEntries.filter(e => e.delayedReaction).length,
+      avgDelayHours: 0,
     }
-  }
-
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case 'mild': return 'text-yellow-600'
-      case 'moderate': return 'text-orange-600'
-      case 'severe': return 'text-red-600'
-      case 'life_threatening': return 'text-red-800'
-      default: return '	ext-[var(--text-muted)]'
+    const delays = celiacEntries.filter(e => e.delayedReactionHours).map(e => e.delayedReactionHours!)
+    if (delays.length > 0) {
+      aftermathStats.avgDelayHours = Math.round((delays.reduce((a, b) => a + b, 0) / delays.length) * 10) / 10
     }
-  }
 
-  if (loading) {
+    // Time-of-day
+    const hourBins: number[] = new Array(24).fill(0)
+    filtered.forEach(e => {
+      try {
+        const h = new Date(e.timestamp).getHours()
+        if (!isNaN(h)) hourBins[h] += 1
+      } catch {}
+    })
+
+    return {
+      total, epipenCount, erCount, emsCount, hospCount,
+      anaphCount, celiacCount, intoleranceCount,
+      typeCount, topAllergens, topSources, topSymptoms,
+      celiacEntriesCount: celiacEntries.length, aftermathStats,
+      hourBins,
+    }
+  }, [filtered, timeWindow])
+
+  if (entries.length === 0) {
     return (
-      <Card>
-        <CardContent className="p-8 text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading allergen analytics...</p>
-        </CardContent>
-      </Card>
+      <Card><CardContent className="p-6 text-center">
+        <p className="text-muted-foreground">No data yet. Log a reaction to see analytics.</p>
+      </CardContent></Card>
     )
   }
 
-  if (error) {
-    return (
-      <Card>
-        <CardContent className="p-8 text-center">
-          <AlertTriangle className="h-8 w-8 text-red-500 mx-auto mb-4" />
-          <p className="text-red-600 mb-4">Analytics Error: {error}</p>
-          <Button onClick={loadLocalAnalytics} variant="outline">
-            Retry Analytics
-          </Button>
-        </CardContent>
-      </Card>
-    )
-  }
-
-  if (!analyticsData || analyticsData.summary.total_reactions === 0) {
-    return (
-      <Card>
-        <CardContent className="p-8 text-center">
-          <Shield className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-          <h3 className="text-lg font-semibold mb-2">No Allergen Data</h3>
-          <p className="text-muted-foreground">
-            Start tracking allergic reactions to see pattern analytics!
-          </p>
-        </CardContent>
-      </Card>
-    )
-  }
-
-  const { summary, severity_breakdown, allergen_frequency, symptom_frequency, exposure_sources, treatment_frequency, day_of_week_pattern, insights } = analyticsData
+  const maxHourCount = Math.max(...stats.hourBins, 1)
 
   return (
-    <div className="space-y-6">
-      {/* Header with Date Range Selector */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold flex items-center gap-2">
-          <Shield className="h-6 w-6 text-red-500" />
-          Allergen Analytics
-        </h2>
-        <Select value={dateRange} onValueChange={setDateRange}>
-          <SelectTrigger className="w-32">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="30">30 days</SelectItem>
-            <SelectItem value="90">90 days</SelectItem>
-            <SelectItem value="180">6 months</SelectItem>
-            <SelectItem value="365">1 year</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+    <div className="space-y-4">
+      <Card>
+        <CardContent className="pt-4">
+          <label className="text-xs font-medium text-muted-foreground mb-1 block">Time window</label>
+          <Select value={timeWindow} onValueChange={(v) => setTimeWindow(v as TimeWindow)}>
+            <SelectTrigger className="max-w-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>{TIME_WINDOWS.map(w => <SelectItem key={w.value} value={w.value}>{w.label}</SelectItem>)}</SelectContent>
+          </Select>
+        </CardContent>
+      </Card>
 
-      {/* Insights Cards */}
-      {insights && insights.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {insights.map((insight, index) => (
-            <Card key={index} className="border-l-4 border-l-red-500">
-              <CardContent className="p-4">
-                <p className="text-sm font-medium">{insight}</p>
+      {filtered.length === 0 ? (
+        <Card><CardContent className="p-6 text-center text-muted-foreground">No reactions in selected window.</CardContent></Card>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.total}</div><div className="text-xs text-muted-foreground">Total reactions</div></CardContent></Card>
+            <Card><CardContent className="p-3"><div className="text-2xl font-bold text-red-600">{stats.anaphCount}</div><div className="text-xs text-muted-foreground">Anaphylaxis</div></CardContent></Card>
+            <Card><CardContent className="p-3"><div className="text-2xl font-bold text-amber-600">{stats.epipenCount}</div><div className="text-xs text-muted-foreground">EpiPen used</div></CardContent></Card>
+            <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.erCount}</div><div className="text-xs text-muted-foreground">ER visits</div></CardContent></Card>
+            <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.hospCount}</div><div className="text-xs text-muted-foreground">Hospitalized</div></CardContent></Card>
+            <Card><CardContent className="p-3"><div className="text-2xl font-bold text-amber-600">{stats.celiacCount}</div><div className="text-xs text-muted-foreground">Celiac flares</div></CardContent></Card>
+            <Card><CardContent className="p-3"><div className="text-2xl font-bold text-blue-600">{stats.intoleranceCount}</div><div className="text-xs text-muted-foreground">Intolerance</div></CardContent></Card>
+            <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.emsCount}</div><div className="text-xs text-muted-foreground">911 / EMS</div></CardContent></Card>
+          </div>
+
+          <Card>
+            <CardHeader><CardTitle className="text-base">Reaction type breakdown</CardTitle></CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {EPISODE_TYPES.filter(t => stats.typeCount[t.id]).sort((a, b) => (stats.typeCount[b.id] || 0) - (stats.typeCount[a.id] || 0)).map(t => {
+                  const count = stats.typeCount[t.id] || 0
+                  const pct = stats.total > 0 ? (count / stats.total * 100) : 0
+                  return (
+                    <div key={t.id}>
+                      <div className="flex items-center justify-between text-sm mb-1">
+                        <span>{t.icon} {t.name}</span>
+                        <span className="text-muted-foreground">{count} ({Math.round(pct)}%)</span>
+                      </div>
+                      <div className="h-2 bg-muted rounded overflow-hidden">
+                        <div className="h-full" style={{ width: `${pct}%`, backgroundColor: getEpisodeTypeColor(t.id) }} />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
+          {stats.topAllergens.length > 0 && (
+            <Card>
+              <CardHeader><CardTitle className="text-base">Top triggers</CardTitle></CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {stats.topAllergens.map(([name, count]) => (
+                    <div key={name} className="flex items-center justify-between text-sm">
+                      <span className="capitalize">{name}</span>
+                      <Badge variant="secondary">{count}</Badge>
+                    </div>
+                  ))}
+                </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
-      )}
+          )}
 
-      {/* Summary Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4 text-center">
-            <Activity className="h-8 w-8 mx-auto mb-2 text-red-500" />
-            <div className="text-2xl font-bold">{summary.total_reactions}</div>
-            <div className="text-sm text-muted-foreground">Total Reactions</div>
-          </CardContent>
-        </Card>
+          {stats.topSources.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Top exposure sources</CardTitle>
+                <p className="text-xs text-muted-foreground">Where the cross-contamination is coming from.</p>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {stats.topSources.map(([s, c]) => (
+                    <div key={s} className="flex items-center justify-between text-sm">
+                      <span>{s}</span>
+                      <Badge variant="secondary">{c}</Badge>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
-        <Card>
-          <CardContent className="p-4 text-center">
-            <Pill className="h-8 w-8 mx-auto mb-2 text-purple-500" />
-            <div className="text-2xl font-bold">{summary.epipen_uses}</div>
-            <div className="text-sm text-muted-foreground">EpiPen Uses</div>
-          </CardContent>
-        </Card>
+          {stats.topSymptoms.length > 0 && (
+            <Card>
+              <CardHeader><CardTitle className="text-base">Top symptoms</CardTitle></CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {stats.topSymptoms.map(([s, c]) => (
+                    <div key={s} className="flex items-center justify-between text-sm">
+                      <span>{s}</span>
+                      <Badge variant="secondary">{c}</Badge>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
-        <Card>
-          <CardContent className="p-4 text-center">
-            <AlertTriangle className="h-8 w-8 mx-auto mb-2 text-orange-500" />
-            <div className="text-2xl font-bold">{severity_breakdown.severe + severity_breakdown.life_threatening}</div>
-            <div className="text-sm text-muted-foreground">Severe Reactions</div>
-          </CardContent>
-        </Card>
+          {/* Celiac / autoimmune aftermath patterns */}
+          {stats.celiacEntriesCount > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Celiac / autoimmune aftermath</CardTitle>
+                <p className="text-xs text-muted-foreground">
+                  Across {stats.celiacEntriesCount} celiac/intolerance episode{stats.celiacEntriesCount !== 1 ? 's' : ''}. The slow-burn signal your GI doc cares about.
+                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+                  <div><div className="text-xs text-muted-foreground">Brain fog after</div><div className="text-lg font-semibold">{stats.aftermathStats.brainFog} ({Math.round(stats.aftermathStats.brainFog / stats.celiacEntriesCount * 100)}%)</div></div>
+                  <div><div className="text-xs text-muted-foreground">Joint pain after</div><div className="text-lg font-semibold">{stats.aftermathStats.jointPain} ({Math.round(stats.aftermathStats.jointPain / stats.celiacEntriesCount * 100)}%)</div></div>
+                  <div><div className="text-xs text-muted-foreground">Fatigue after</div><div className="text-lg font-semibold">{stats.aftermathStats.fatigue} ({Math.round(stats.aftermathStats.fatigue / stats.celiacEntriesCount * 100)}%)</div></div>
+                  <div><div className="text-xs text-muted-foreground">Mood changes</div><div className="text-lg font-semibold">{stats.aftermathStats.moodChanges} ({Math.round(stats.aftermathStats.moodChanges / stats.celiacEntriesCount * 100)}%)</div></div>
+                  <div><div className="text-xs text-muted-foreground">Delayed reaction</div><div className="text-lg font-semibold">{stats.aftermathStats.delayed} ({Math.round(stats.aftermathStats.delayed / stats.celiacEntriesCount * 100)}%)</div></div>
+                  <div><div className="text-xs text-muted-foreground">Avg delay (hours)</div><div className="text-lg font-semibold">{stats.aftermathStats.avgDelayHours || '—'}</div></div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
-        <Card>
-          <CardContent className="p-4 text-center">
-            <TrendingUp className="h-8 w-8 mx-auto mb-2 text-blue-500" />
-            <div className="text-2xl font-bold">{summary.avg_reactions_per_week}</div>
-            <div className="text-sm text-muted-foreground">Avg/Week</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Detailed Analytics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Severity Breakdown */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-orange-500" />
-              Severity Breakdown
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex justify-between">
-              <span>Mild:</span>
-              <Badge variant="outline" className="bg-yellow-50 text-yellow-700">{severity_breakdown.mild}</Badge>
-            </div>
-            <div className="flex justify-between">
-              <span>Moderate:</span>
-              <Badge variant="outline" className="bg-orange-50 text-orange-700">{severity_breakdown.moderate}</Badge>
-            </div>
-            <div className="flex justify-between">
-              <span>Severe:</span>
-              <Badge variant="outline" className="bg-red-50 text-red-700">{severity_breakdown.severe}</Badge>
-            </div>
-            <div className="flex justify-between">
-              <span>Life-threatening:</span>
-              <Badge variant="outline" className="bg-red-100 text-red-900">{severity_breakdown.life_threatening}</Badge>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Top Allergens */}
-        {allergen_frequency.length > 0 && (
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5 text-red-500" />
-                Top Allergens
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {allergen_frequency.slice(0, 5).map((allergen, index) => (
-                <div key={allergen.name} className="flex justify-between items-center">
-                  <span className="capitalize text-sm">{allergen.name}</span>
-                  <Badge variant="secondary">{allergen.count}</Badge>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Common Symptoms */}
-        {symptom_frequency.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="h-5 w-5 text-blue-500" />
-                Common Symptoms
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {symptom_frequency.slice(0, 5).map((symptom, index) => (
-                <div key={symptom.name} className="flex justify-between items-center">
-                  <span className="text-sm truncate max-w-[150px]">{symptom.name}</span>
-                  <Badge variant="secondary">{symptom.count}</Badge>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Exposure Sources */}
-        {exposure_sources.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Apple className="h-5 w-5 text-green-500" />
-                Exposure Sources
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {exposure_sources.slice(0, 5).map((source, index) => (
-                <div key={source.name} className="flex justify-between items-center">
-                  <span className="text-sm">{source.name}</span>
-                  <Badge variant="secondary">{source.count}</Badge>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Treatment Patterns */}
-        {treatment_frequency.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Pill className="h-5 w-5 text-purple-500" />
-                Treatment Used
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {treatment_frequency.slice(0, 5).map((treatment, index) => (
-                <div key={treatment.name} className="flex justify-between items-center">
-                  <span className="text-sm truncate max-w-[150px]">{treatment.name}</span>
-                  <Badge variant="secondary">{treatment.count}</Badge>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Day of Week Pattern */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-indigo-500" />
-              Reactions by Day
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {day_of_week_pattern.map((day) => (
-              <div key={day.day} className="flex justify-between items-center">
-                <span className="text-sm">{day.day.slice(0, 3)}</span>
-                <div className="flex items-center gap-2">
-                  <div
-                    className="h-2 bg-indigo-500 rounded"
-                    style={{
-                      width: `${Math.max(day.count * 20, day.count > 0 ? 10 : 0)}px`,
-                      maxWidth: '80px'
-                    }}
-                  />
-                  <span className="text-sm text-muted-foreground w-6 text-right">{day.count}</span>
-                </div>
+            <CardHeader><CardTitle className="text-base">Time of day pattern</CardTitle></CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-12 gap-1 items-end h-32">
+                {stats.hourBins.map((count, hour) => {
+                  const pct = (count / maxHourCount) * 100
+                  return (
+                    <div key={hour} className="flex flex-col items-center justify-end h-full">
+                      <div className="w-full bg-amber-400 rounded-t" style={{ height: `${pct}%`, minHeight: count > 0 ? '4px' : '0' }} title={`${hour}:00 — ${count}`} />
+                      <div className="text-[10px] text-muted-foreground mt-1">{hour % 6 === 0 ? hour : ''}</div>
+                    </div>
+                  )
+                })}
               </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
+            </CardContent>
+          </Card>
+        </>
+      )}
     </div>
   )
 }
