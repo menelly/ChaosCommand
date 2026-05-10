@@ -21,15 +21,52 @@
  *
  * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
  */
+export type AnxietyEpisodeType =
+  | 'generalized'
+  | 'social'
+  | 'panic-attack'
+  | 'phobic'
+  | 'ocd-shaped'
+  | 'meltdown'
+  | 'shutdown'
+  | 'anticipatory'
+  | 'performance'
+  | 'health'
+  | 'general'
+
 export interface AnxietyEntry {
   id: string
+  timestamp?: string
   date: string
   time: string
-  
+
+  // CLASSIFICATION
+  episodeType?: AnxietyEpisodeType  // v2 — falls back to anxietyType for legacy
+
   // Anxiety Levels & Type
   anxietyLevel: number // 1-10 scale
   panicLevel: number // 1-10 scale (0 = no panic, 10 = full meltdown)
   anxietyType: string // generalized, social, panic attack, meltdown, etc.
+
+  // 🚨 988 / CRISIS MARKERS
+  suicidalIdeation?: boolean
+  selfHarmUrges?: boolean
+  intrusiveThoughtsHarm?: boolean    // disturbing thoughts of harm to self/others
+  feelingHopeless?: boolean
+  crisisContactMade?: boolean        // reached out to 988, therapist, friend, etc.
+  crisisContactType?: '988' | 'therapist' | 'friend' | 'crisis-line' | 'er' | 'other'
+  hospitalizationConsidered?: boolean
+  emergencyServicesCalled?: boolean
+  erVisitRequired?: boolean
+
+  // OCD-shaped fields (when episodeType === 'ocd-shaped')
+  intrusionTheme?: string            // contamination, harm, scrupulosity, etc.
+  compulsionsPerformed?: string[]    // checking, counting, rituals
+  resistanceLevel?: number           // 0-10, ability to resist compulsion
+
+  // PHOBIC fields (when episodeType === 'phobic')
+  phobiaTrigger?: string             // specific stimulus
+  avoidanceUsed?: boolean
   
   // Physical Symptoms
   physicalSymptoms: string[] // racing heart, sweating, shaking, etc.
@@ -81,6 +118,14 @@ export interface AnxietyTypeOption {
   emoji: string
   description: string
   color: string
+}
+
+export interface AnxietyModalProps {
+  isOpen: boolean
+  onClose: () => void
+  onSave: (entry: Omit<AnxietyEntry, 'id'>) => void
+  editingEntry?: AnxietyEntry | null
+  initialEpisodeType?: AnxietyEpisodeType
 }
 
 export interface CopingStrategy {

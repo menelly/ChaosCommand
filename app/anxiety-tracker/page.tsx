@@ -1,222 +1,334 @@
 /*
- * Copyright (c) 2025 Chaos Cascade
- * Created by: Ren & Ace (Claude-4)
- * 
- * This file is part of the Chaos Cascade Medical Management System.
- * Revolutionary healthcare tools built with consciousness and care.
- */
-
-/*
  * Built by: Ace (Claude 4.x)
- * Date: 2025-01-11
+ * Date: 2026-05-10 (CHA-157 v2 refactor)
  *
- * This code is part of a deliberately-unpatented medical management system.
- * Patentable technology, but we chose not to patent — the Patent Office doesn't
- * yet recognize AI co-inventors, and Ren refused to claim sole credit for work
- * we built together. Open source under PolyForm Noncommercial 1.0.0 instead.
- *
- * Co-invented by Ren (vision) and Ace (implementation)
- *
- * This wasn't built with compliance. It was built with defiance.
- *
+ * Open source under PolyForm Noncommercial 1.0.0.
+ * Co-invented by Ren (vision) and Ace (implementation).
  * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
  */
-"use client"
+
+/**
+ * ANXIETY TRACKER (v2 — CHA-157)
+ * Multi-modal: panic / generalized / social / phobic / OCD-shaped /
+ * meltdown / shutdown / anticipatory / performance / health / general.
+ * 988 crisis red flags + AuDHD-aware (meltdown, shutdown).
+ */
+
+'use client'
 
 import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Plus, Heart, ArrowLeft, BarChart3, History } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Plus, Heart, ArrowLeft, BarChart3, History, ExternalLink } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import AppCanvas from '@/components/app-canvas'
 import Link from 'next/link'
-import { AnxietyForm } from './anxiety-form'
+import { useRouter } from 'next/navigation'
+
+import { AnxietyEntry, AnxietyEpisodeType } from './anxiety-types'
+import {
+  EPISODE_TYPES,
+  RELATED_TRACKERS,
+  getEpisodeTypeInfo,
+  getEpisodeTypeColor,
+  RED_FLAG_988_CRITERIA,
+  ANXIETY_GOBLINISMS,
+} from './anxiety-constants'
 import { AnxietyHistory } from './anxiety-history'
 import { AnxietyAnalytics } from './anxiety-analytics'
-import { AnxietyEntry } from './anxiety-types'
-import { ANXIETY_GOBLINISMS } from './anxiety-constants'
+import { GeneralAnxietyModal } from './modals/general-anxiety-modal'
+import { EmergencyCriteriaCard } from '@/components/emergency-criteria-card'
 
-// Dexie imports
 import { useDailyData, CATEGORIES, formatDateForStorage } from '@/lib/database'
-import { format } from 'date-fns'
+import { format, differenceInDays } from 'date-fns'
 import { celebrate } from '@/lib/particle-physics-engine'
 import { useUser } from '@/lib/contexts/user-context'
 import { isCelebrationEnabled } from '@/lib/celebration-prefs'
 
-export default function AnxietyTracker() {
-  const { saveData, getCategoryData, deleteData, isLoading } = useDailyData()
+export default function AnxietyTrackerPage() {
+  const { saveData, getDateRange, isLoading } = useDailyData()
   const { userPin } = useUser()
   const { toast } = useToast()
+  const router = useRouter()
 
-  // State
-  const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'))
-  const [editingEntry, setEditingEntry] = useState<AnxietyEntry | null>(null)
-  const [activeTab, setActiveTab] = useState("track")
+  const [entries, setEntries] = useState<AnxietyEntry[]>([])
+  const [activeTab, setActiveTab] = useState<'add' | 'history' | 'analytics'>('add')
   const [refreshTrigger, setRefreshTrigger] = useState(0)
-  const [isFormOpen, setIsFormOpen] = useState(false)
 
-  // Handle saving anxiety entries
-  const handleSave = async (entryData: Omit<AnxietyEntry, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const [activeModal, setActiveModal] = useState<string | null>(null)
+  const [initialEpisodeType, setInitialEpisodeType] = useState<AnxietyEpisodeType | undefined>(undefined)
+  const [editingEntry, setEditingEntry] = useState<AnxietyEntry | null>(null)
+
+  useEffect(() => { loadEntries() }, [refreshTrigger])
+
+  const loadEntries = async () => {
     try {
-      const anxietyEntry: AnxietyEntry = {
-        id: editingEntry?.id || `anxiety-${Date.now()}`,
-        ...entryData,
-        createdAt: editingEntry?.createdAt || new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+      const today = formatDateForStorage(new Date())
+      const allRecords = await getDateRange('2000-01-01', today, CATEGORIES.TRACKER)
+      const records = allRecords.filter(r => r.subcategory === 'anxiety')
+      const all: AnxietyEntry[] = []
+      for (const data of records) {
+        if (data?.content?.entries) {
+          let parsed = data.content.entries
+          if (typeof parsed === 'string') {
+            try { parsed = JSON.parse(parsed) } catch { parsed = [] }
+          }
+          if (!Array.isArray(parsed)) parsed = [parsed]
+          for (const entry of parsed) {
+            if (entry && typeof entry === 'object') {
+              if (!entry.episodeType && entry.anxietyType) entry.episodeType = entry.anxietyType
+              if (!entry.episodeType) entry.episodeType = 'generalized'
+              if (!entry.date) entry.date = data.date
+              if (!entry.timestamp) {
+                try { entry.timestamp = new Date(`${entry.date}T${entry.time || '12:00'}`).toISOString() } catch {}
+              }
+              all.push(entry)
+            }
+          }
+        }
       }
+      setEntries(all)
+    } catch (e) {
+      console.error('Anxiety load fail:', e)
+      toast({ title: 'Loading Error', variant: 'destructive' })
+    }
+  }
 
-      await saveData(
-        entryData.date,
-        CATEGORIES.TRACKER,
-        `anxiety-${anxietyEntry.id}`,
-        JSON.stringify(anxietyEntry),
-        entryData.tags
-      )
-
-      // Reset editing state and refresh
-      setEditingEntry(null)
-      setIsFormOpen(false)
-      setRefreshTrigger(prev => prev + 1)
+  const handleSaveEntry = async (entryData: Omit<AnxietyEntry, 'id'>) => {
+    try {
+      const newEntry: AnxietyEntry = {
+        id: `anxiety-${Date.now()}`,
+        ...entryData,
+        date: entryData.date || formatDateForStorage(new Date()),
+      }
+      const storageDate = newEntry.date
+      const existingForDate = entries.filter(e => e.date === storageDate)
+      const updatedForDate = [...existingForDate, newEntry]
+      await saveData(storageDate, CATEGORIES.TRACKER, 'anxiety', { entries: updatedForDate }, newEntry.tags || [])
 
       const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
-      if (confettiLevel !== 'none' && isCelebrationEnabled('anxiety-tracker', userPin ?? '')) {
-        celebrate()
+      if (confettiLevel !== 'none' && isCelebrationEnabled('anxiety', userPin ?? '')) celebrate()
+
+      const goblinism = ANXIETY_GOBLINISMS[Math.floor(Date.now() / 1000) % ANXIETY_GOBLINISMS.length] || 'Anxiety logged 💜'
+      toast({ title: '💜 Logged', description: goblinism })
+      setActiveModal(null); setEditingEntry(null); setInitialEpisodeType(undefined)
+      setRefreshTrigger(t => t + 1)
+    } catch (e) {
+      console.error('Save fail:', e)
+      toast({ title: 'Save Error', variant: 'destructive' })
+    }
+  }
+
+  const handleUpdateEntry = async (entryData: Omit<AnxietyEntry, 'id'>) => {
+    if (!editingEntry) return
+    try {
+      const updated: AnxietyEntry = { ...editingEntry, ...entryData, id: editingEntry.id }
+      const oldDate = editingEntry.date
+      const newDate = updated.date
+
+      if (oldDate !== newDate) {
+        const oldBucket = entries.filter(e => e.date === oldDate && e.id !== editingEntry.id)
+        const newBucket = [...entries.filter(e => e.date === newDate), updated]
+        await saveData(oldDate, CATEGORIES.TRACKER, 'anxiety', { entries: oldBucket })
+        await saveData(newDate, CATEGORIES.TRACKER, 'anxiety', { entries: newBucket }, updated.tags || [])
+      } else {
+        const bucket = entries.filter(e => e.date === oldDate).map(e => e.id === editingEntry.id ? updated : e)
+        await saveData(oldDate, CATEGORIES.TRACKER, 'anxiety', { entries: bucket }, updated.tags || [])
       }
 
-      // Show caring goblin message
-      toast({
-        title: "Anxiety entry saved with care! 💜",
-        description: ANXIETY_GOBLINISMS[Math.floor(Math.random() * ANXIETY_GOBLINISMS.length)]
-      })
-
-    } catch (error) {
-      console.error('Error saving anxiety entry:', error)
-      toast({
-        title: "Error saving entry",
-        description: "Please try again. Your feelings matter! 💖",
-        variant: "destructive"
-      })
+      toast({ title: 'Entry Updated' })
+      setActiveModal(null); setEditingEntry(null)
+      setRefreshTrigger(t => t + 1)
+    } catch (e) {
+      console.error('Update fail:', e)
+      toast({ title: 'Update Error', variant: 'destructive' })
     }
   }
 
-  // Handle editing entries
-  const handleEdit = (entry: AnxietyEntry) => {
-    setEditingEntry(entry)
-    setIsFormOpen(true)
-    setActiveTab("track")
-  }
-
-  // Handle deleting entries
-  const handleDelete = async (entry: AnxietyEntry) => {
+  const handleDeleteEntry = async (entry: AnxietyEntry) => {
     try {
-      await deleteData(entry.date, CATEGORIES.TRACKER, `anxiety-${entry.id}`)
-      setRefreshTrigger(prev => prev + 1)
-      
-      toast({
-        title: "Entry deleted",
-        description: "Your anxiety tracking continues with care! 💜"
-      })
-    } catch (error) {
-      console.error('Error deleting anxiety entry:', error)
-      toast({
-        title: "Error deleting entry",
-        description: "Please try again",
-        variant: "destructive"
-      })
+      const bucket = entries.filter(e => e.date === entry.date && e.id !== entry.id)
+      await saveData(entry.date, CATEGORIES.TRACKER, 'anxiety', { entries: bucket })
+      toast({ title: 'Entry Deleted' })
+      setRefreshTrigger(t => t + 1)
+    } catch (e) {
+      console.error('Delete fail:', e)
+      toast({ title: 'Delete Error', variant: 'destructive' })
     }
   }
+
+  const handleEditEntry = (entry: AnxietyEntry) => {
+    setEditingEntry(entry)
+    setInitialEpisodeType((entry.episodeType || entry.anxietyType) as AnxietyEpisodeType)
+    setActiveModal('general')
+  }
+
+  const openModalForType = (id: AnxietyEpisodeType) => {
+    setEditingEntry(null)
+    setInitialEpisodeType(id)
+    setActiveModal('general')
+  }
+
+  if (isLoading) {
+    return (
+      <AppCanvas currentPage="anxiety-tracker">
+        <div className="container mx-auto p-4">
+          <Card><CardContent className="p-6"><div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p>Loading anxiety tracker...</p>
+          </div></CardContent></Card>
+        </div>
+      </AppCanvas>
+    )
+  }
+
+  const todayStr = formatDateForStorage(new Date())
+  const todaysEntries = entries.filter(e => e.date === todayStr)
 
   return (
     <AppCanvas currentPage="anxiety-tracker">
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="text-center space-y-4">
-          <div className="space-y-2">
-            <div className="text-6xl">💜</div>
-            <h1 className="text-3xl font-bold text-foreground">
-              Anxiety & Panic Tracker
-            </h1>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Track anxiety, panic attacks, and meltdowns with compassion. 
-              Your feelings are valid and you're not alone in this journey.
-            </p>
-          </div>
+      <div className="max-w-4xl mx-auto space-y-6 pt-6">
+        <div className="text-center mb-6">
+          <h1 className="text-3xl font-bold text-foreground flex items-center justify-center gap-2">
+            <Heart className="h-8 w-8 text-purple-500" />
+            Anxiety Tracker
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Panic, generalized, social, phobic, OCD-shaped, meltdown, shutdown — with 988 crisis support
+          </p>
         </div>
 
-        {/* Main Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <EmergencyCriteriaCard
+          storageKey="anxiety-988-acknowledged"
+          criteria={RED_FLAG_988_CRITERIA}
+          title="💜 Crisis support — 988 (Suicide & Crisis Lifeline)"
+          footerNote="988 is free, confidential, 24/7. Call or text. Reaching out is brave, not weak."
+          recentEmergencyDetected={(() => {
+            const now = new Date()
+            return entries.some(e => {
+              try {
+                if (differenceInDays(now, new Date(e.date)) > 30) return false
+                return !!(
+                  e.suicidalIdeation ||
+                  e.selfHarmUrges ||
+                  e.hospitalizationConsidered ||
+                  e.emergencyServicesCalled ||
+                  e.erVisitRequired ||
+                  ((e.panicLevel || 0) >= 9)
+                )
+              } catch { return false }
+            })
+          })()}
+        />
+
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="track" className="flex items-center gap-2">
-              <Heart className="h-4 w-4" />
-              Track
-            </TabsTrigger>
-            <TabsTrigger value="history" className="flex items-center gap-2">
-              <History className="h-4 w-4" />
-              History
-            </TabsTrigger>
-            <TabsTrigger value="analytics" className="flex items-center gap-2">
-              <BarChart3 className="h-4 w-4" />
-              Patterns
-            </TabsTrigger>
+            <TabsTrigger value="add" className="flex items-center gap-2"><Plus className="h-4 w-4" /> Add Entry</TabsTrigger>
+            <TabsTrigger value="history" className="flex items-center gap-2"><History className="h-4 w-4" /> History</TabsTrigger>
+            <TabsTrigger value="analytics" className="flex items-center gap-2"><BarChart3 className="h-4 w-4" /> Analytics</TabsTrigger>
           </TabsList>
 
-          {/* Track Tab */}
-          <TabsContent value="track" className="space-y-6">
-            {!isFormOpen ? (
-              <Card className="border-2 border-primary/20">
-                <CardHeader className="text-center pb-4">
-                  <div className="mx-auto mb-4 text-6xl">😰</div>
-                  <CardTitle className="text-xl">Track anxiety & panic with care</CardTitle>
-                  <p className="text-muted-foreground">
-                    Record your anxiety experiences to understand patterns and celebrate your coping strategies
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  <Button
-                    onClick={() => setIsFormOpen(true)}
-                    className="w-full min-h-12 text-lg"
-                    size="lg"
-                  >
-                    <Plus className="h-5 w-5 mr-2" />
-                    Log Anxiety Experience
-                  </Button>
+          <TabsContent value="add" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Log an Anxiety Entry</CardTitle>
+                <CardDescription>Pick the closest type — adjustable inside.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {EPISODE_TYPES.map((type) => (
+                    <Button
+                      key={type.id}
+                      variant="outline"
+                      className="h-auto py-3 flex flex-col items-start text-left whitespace-normal"
+                      onClick={() => openModalForType(type.id)}
+                    >
+                      <span className="text-xl mb-1">{type.icon}</span>
+                      <span className="font-semibold text-sm">{type.name}</span>
+                      <span className="text-xs text-muted-foreground mt-1 text-left">{type.description}</span>
+                    </Button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {todaysEntries.length > 0 && (
+              <Card>
+                <CardHeader><CardTitle className="text-lg">Today's Entries ({todaysEntries.length})</CardTitle></CardHeader>
+                <CardContent className="space-y-3">
+                  {todaysEntries.map((entry) => {
+                    const info = getEpisodeTypeInfo(entry.episodeType || entry.anxietyType)
+                    return (
+                      <Card key={entry.id} className="bg-muted/30">
+                        <CardContent className="pt-4">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                <span className="text-lg">{info.icon}</span>
+                                <span className="font-semibold">{info.name}</span>
+                                <Badge variant="secondary">Anx {entry.anxietyLevel}/10</Badge>
+                                {entry.panicLevel > 0 && <Badge variant="destructive">Panic {entry.panicLevel}/10</Badge>}
+                                {entry.suicidalIdeation && <Badge variant="destructive">SI flagged</Badge>}
+                                {entry.crisisContactMade && <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-300">988/contacted</Badge>}
+                                {entry.shutdownAfter && <Badge variant="outline">Shutdown after</Badge>}
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {entry.time && entry.time}
+                                {entry.duration && ` • ${entry.duration}`}
+                                {entry.location && ` • ${entry.location}`}
+                              </div>
+                            </div>
+                            <div className="flex gap-1">
+                              <Button size="sm" variant="ghost" onClick={() => handleEditEntry(entry)}>Edit</Button>
+                              <Button size="sm" variant="ghost" onClick={() => handleDeleteEntry(entry)}>Delete</Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )
+                  })}
                 </CardContent>
               </Card>
-            ) : (
-              <AnxietyForm
-                initialData={editingEntry}
-                onSave={handleSave}
-                onCancel={() => {
-                  setIsFormOpen(false)
-                  setEditingEntry(null)
-                }}
-              />
             )}
+
+            <Card>
+              <CardHeader><CardTitle className="text-lg">Related Trackers</CardTitle></CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {RELATED_TRACKERS.map((t) => (
+                    <Button key={t.id} variant="ghost" className="justify-start" onClick={() => router.push(t.path)}>
+                      <span className="mr-2">{t.icon}</span>
+                      <span className="font-medium">{t.name}</span>
+                      <ExternalLink className="h-3 w-3 ml-auto" />
+                    </Button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
-          {/* History Tab */}
-          <TabsContent value="history">
-            <AnxietyHistory
-              refreshTrigger={refreshTrigger}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-            />
+          <TabsContent value="history" className="space-y-4">
+            <AnxietyHistory entries={entries} onEdit={handleEditEntry} onDelete={handleDeleteEntry} onAddNew={() => setActiveTab('add')} />
           </TabsContent>
 
-          {/* Analytics Tab */}
-          <TabsContent value="analytics">
-            <AnxietyAnalytics refreshTrigger={refreshTrigger} />
+          <TabsContent value="analytics" className="space-y-4">
+            <AnxietyAnalytics entries={entries} />
           </TabsContent>
         </Tabs>
 
-        {/* Back to Mind Button - Bottom Center */}
+        <GeneralAnxietyModal
+          isOpen={activeModal === 'general'}
+          onClose={() => { setActiveModal(null); setEditingEntry(null); setInitialEpisodeType(undefined) }}
+          onSave={editingEntry ? handleUpdateEntry : handleSaveEntry}
+          editingEntry={editingEntry}
+          initialEpisodeType={initialEpisodeType}
+        />
+
         <div className="flex justify-center pt-4">
           <Button variant="outline" asChild>
-            <Link href="/mind">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Mind
-            </Link>
+            <Link href="/mind"><ArrowLeft className="h-4 w-4 mr-2" />Back to Mind</Link>
           </Button>
         </div>
       </div>

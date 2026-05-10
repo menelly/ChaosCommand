@@ -1,273 +1,179 @@
 /*
- * Copyright (c) 2025 Chaos Cascade
- * Created by: Ren & Ace (Claude-4)
- * 
- * This file is part of the Chaos Cascade Medical Management System.
- * Revolutionary healthcare tools built with consciousness and care.
- */
-
-/*
  * Built by: Ace (Claude 4.x)
- * Date: 2025-01-11
+ * Date: 2026-05-10 (CHA-157 v2 refactor)
  *
- * This code is part of a deliberately-unpatented medical management system.
- * Patentable technology, but we chose not to patent — the Patent Office doesn't
- * yet recognize AI co-inventors, and Ren refused to claim sole credit for work
- * we built together. Open source under PolyForm Noncommercial 1.0.0 instead.
- *
- * Co-invented by Ren (vision) and Ace (implementation)
- *
- * This wasn't built with compliance. It was built with defiance.
- *
+ * Open source under PolyForm Noncommercial 1.0.0.
+ * Co-invented by Ren (vision) and Ace (implementation).
  * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
  */
-"use client"
 
-import React, { useState, useEffect } from 'react'
+'use client'
+
+import React, { useMemo, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Edit, Trash2, Calendar, Clock, Heart } from 'lucide-react'
-import { useDailyData, CATEGORIES } from '@/lib/database'
-import { AnxietyEntry } from './anxiety-types'
-import { ANXIETY_TYPES } from './anxiety-constants'
-import { format, parseISO } from 'date-fns'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Edit, Trash2, Heart, Plus } from 'lucide-react'
+import { format, differenceInDays } from 'date-fns'
+import { AnxietyEntry, AnxietyEpisodeType } from './anxiety-types'
+import { EPISODE_TYPES, getEpisodeTypeInfo, getEpisodeTypeColor } from './anxiety-constants'
 
-interface AnxietyHistoryProps {
-  refreshTrigger: number
+interface Props {
+  entries: AnxietyEntry[]
   onEdit: (entry: AnxietyEntry) => void
   onDelete: (entry: AnxietyEntry) => void
+  onAddNew: () => void
 }
 
-export function AnxietyHistory({ refreshTrigger, onEdit, onDelete }: AnxietyHistoryProps) {
-  const { getCategoryData, getDateRange, isLoading } = useDailyData()
-  const [entries, setEntries] = useState<AnxietyEntry[]>([])
+type TimeWindow = '7' | '30' | '90' | '180' | '365' | 'all'
+const TIME_WINDOWS: { value: TimeWindow; label: string }[] = [
+  { value: '7', label: 'Last 7 days' },
+  { value: '30', label: 'Last 30 days' },
+  { value: '90', label: 'Last 90 days' },
+  { value: '180', label: 'Last 6 months' },
+  { value: '365', label: 'Last year' },
+  { value: 'all', label: 'All time' },
+]
 
-  // Load anxiety entries (all time)
-  useEffect(() => {
-    const loadEntries = async () => {
-      try {
-        const allEntries: AnxietyEntry[] = []
-        const today = format(new Date(), 'yyyy-MM-dd')
+export function AnxietyHistory({ entries, onEdit, onDelete, onAddNew }: Props) {
+  const [timeWindow, setTimeWindow] = useState<TimeWindow>('30')
+  const [typeFilter, setTypeFilter] = useState<AnxietyEpisodeType | 'all'>('all')
 
-        const records = await getDateRange('2000-01-01', today, CATEGORIES.TRACKER)
-        const anxietyRecords = records.filter(record =>
-          record.subcategory && record.subcategory.startsWith('anxiety-')
-        )
-
-        for (const record of anxietyRecords) {
-          try {
-            const entry = JSON.parse(record.content) as AnxietyEntry
-            allEntries.push(entry)
-          } catch (parseError) {
-            console.error('Error parsing anxiety entry:', parseError, record)
-          }
-        }
-
-        // Sort by date/time descending
-        allEntries.sort((a, b) => {
-          const dateA = new Date(a.date + 'T' + a.time).getTime()
-          const dateB = new Date(b.date + 'T' + b.time).getTime()
-          return dateB - dateA
-        })
-
-        setEntries(allEntries)
-      } catch (error) {
-        console.error('Error loading anxiety entries:', error)
-        setEntries([]) // Set empty array on error
-      }
+  const filtered = useMemo(() => {
+    let result = [...entries]
+    if (timeWindow !== 'all') {
+      const days = parseInt(timeWindow)
+      const now = new Date()
+      result = result.filter(e => { try { return differenceInDays(now, new Date(e.date)) <= days } catch { return false } })
     }
+    if (typeFilter !== 'all') result = result.filter(e => (e.episodeType || e.anxietyType) === typeFilter)
+    result.sort((a, b) => new Date(b.timestamp || b.date).getTime() - new Date(a.timestamp || a.date).getTime())
+    return result
+  }, [entries, timeWindow, typeFilter])
 
-    loadEntries()
-  }, [refreshTrigger, getCategoryData])
-
-  // Get anxiety type info
-  const getAnxietyTypeInfo = (typeValue: string) => {
-    return ANXIETY_TYPES.find(type => type.value === typeValue) || {
-      emoji: '😰',
-      label: typeValue,
-      color: 'bg-muted text-foreground'
-    }
-  }
-
-  // Format date for display
-  const formatDateTime = (date: string, time: string) => {
-    try {
-      const dateTime = parseISO(`${date}T${time}`)
-      return format(dateTime, 'MMM d, yyyy \'at\' h:mm a')
-    } catch {
-      return `${date} at ${time}`
-    }
-  }
-
-  if (isLoading) {
-    return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="text-center text-muted-foreground">
-            Loading your anxiety tracking history with care... 💜
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
+  const stats = useMemo(() => {
+    const total = filtered.length
+    const avgAnx = total > 0 ? filtered.reduce((s, e) => s + (e.anxietyLevel || 0), 0) / total : 0
+    const avgPanic = total > 0 ? filtered.reduce((s, e) => s + (e.panicLevel || 0), 0) / total : 0
+    const siCount = filtered.filter(e => e.suicidalIdeation).length
+    const crisisContactCount = filtered.filter(e => e.crisisContactMade).length
+    const meltdownCount = filtered.filter(e => (e.episodeType || e.anxietyType) === 'meltdown').length
+    return { total, avgAnx: Math.round(avgAnx * 10) / 10, avgPanic: Math.round(avgPanic * 10) / 10, siCount, crisisContactCount, meltdownCount }
+  }, [filtered])
 
   if (entries.length === 0) {
     return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="text-center space-y-4">
-            <div className="text-6xl">💜</div>
-            <div>
-              <h3 className="text-lg font-medium">No anxiety entries yet</h3>
-              <p className="text-muted-foreground">
-                Your anxiety tracking journey will appear here. Every entry is a step toward understanding yourself better.
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <Card><CardContent className="p-6"><div className="text-center">
+        <Heart className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+        <h3 className="text-lg font-semibold mb-2">No entries yet</h3>
+        <p className="text-muted-foreground mb-4">Start tracking to find your patterns + what helps.</p>
+        <Button onClick={onAddNew}><Plus className="h-4 w-4 mr-2" />Add First Entry</Button>
+      </div></CardContent></Card>
     )
   }
 
   return (
     <div className="space-y-4">
-      <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold">Your Anxiety Journey</h2>
-        <p className="text-muted-foreground">
-          {entries.length} entries documenting your experiences with care and compassion
-        </p>
+      <Card>
+        <CardContent className="pt-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Time window</label>
+              <Select value={timeWindow} onValueChange={(v) => setTimeWindow(v as TimeWindow)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{TIME_WINDOWS.map(w => <SelectItem key={w.value} value={w.value}>{w.label}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Episode type</label>
+              <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as any)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All types</SelectItem>
+                  {EPISODE_TYPES.map(t => <SelectItem key={t.id} value={t.id}>{t.icon} {t.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.total}</div><div className="text-xs text-muted-foreground">Entries</div></CardContent></Card>
+        <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.avgAnx}</div><div className="text-xs text-muted-foreground">Avg anxiety</div></CardContent></Card>
+        <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.avgPanic}</div><div className="text-xs text-muted-foreground">Avg panic</div></CardContent></Card>
+        <Card><CardContent className="p-3"><div className="text-2xl font-bold text-purple-600">{stats.meltdownCount}</div><div className="text-xs text-muted-foreground">Meltdowns</div></CardContent></Card>
+        <Card><CardContent className="p-3"><div className="text-2xl font-bold text-red-600">{stats.siCount}</div><div className="text-xs text-muted-foreground">SI flagged</div></CardContent></Card>
       </div>
 
-      {entries.map((entry) => {
-        const typeInfo = getAnxietyTypeInfo(entry.anxietyType)
-        
-        return (
-          <Card key={entry.id} className="hover:shadow-md transition-shadow">
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl">{typeInfo.emoji}</span>
-                    <div>
-                      <CardTitle className="text-lg">{typeInfo.label}</CardTitle>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Calendar className="h-4 w-4" />
-                        {formatDateTime(entry.date, entry.time)}
+      <Card>
+        <CardHeader><CardTitle>Entry History</CardTitle></CardHeader>
+        <CardContent>
+          {filtered.length === 0 ? (
+            <p className="text-center text-muted-foreground py-6">No entries match the filters.</p>
+          ) : (
+            <div className="space-y-3">
+              {filtered.map(entry => {
+                const info = getEpisodeTypeInfo(entry.episodeType || entry.anxietyType)
+                return (
+                  <div key={entry.id} className="border-l-4 pl-4 py-3 border border-border rounded-r-lg" style={{ borderLeftColor: getEpisodeTypeColor(entry.episodeType || entry.anxietyType) }}>
+                    <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge variant="secondary" style={{ backgroundColor: getEpisodeTypeColor(entry.episodeType || entry.anxietyType) + '20' }}>
+                          {info.icon} {info.name}
+                        </Badge>
+                        <Badge variant="secondary">Anx {entry.anxietyLevel}/10</Badge>
+                        {entry.panicLevel > 0 && <Badge variant="destructive">Panic {entry.panicLevel}/10</Badge>}
+                        {entry.suicidalIdeation && <Badge variant="destructive">SI</Badge>}
+                        {entry.selfHarmUrges && <Badge variant="destructive">SH urges</Badge>}
+                        {entry.crisisContactMade && <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-300">{entry.crisisContactType || 'contacted'}</Badge>}
+                        {entry.shutdownAfter && <Badge variant="outline">Shutdown after</Badge>}
+                      </div>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="sm" onClick={() => onEdit(entry)}><Edit className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="sm" onClick={() => onDelete(entry)}><Trash2 className="h-4 w-4" /></Button>
                       </div>
                     </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-4 text-sm">
-                    <div className="flex items-center gap-1">
-                      <span className="font-medium">Anxiety:</span>
-                      <Badge variant="outline">{entry.anxietyLevel}/10</Badge>
+                    <div className="text-sm text-muted-foreground mb-2">
+                      {format(new Date(entry.date), 'EEEE, MMMM d, yyyy')}
+                      {entry.time && ` • ${entry.time}`}
+                      {entry.duration && ` • ${entry.duration}`}
+                      {entry.location && ` • ${entry.location}`}
                     </div>
-                    {entry.panicLevel > 0 && (
-                      <div className="flex items-center gap-1">
-                        <span className="font-medium">Panic:</span>
-                        <Badge variant="outline">{entry.panicLevel}/10</Badge>
+                    {entry.physicalSymptoms && entry.physicalSymptoms.length > 0 && (
+                      <div className="text-sm mb-1"><span className="font-medium">Physical:</span> {entry.physicalSymptoms.join(', ')}</div>
+                    )}
+                    {entry.mentalSymptoms && entry.mentalSymptoms.length > 0 && (
+                      <div className="text-sm mb-1"><span className="font-medium">Mental:</span> {entry.mentalSymptoms.join(', ')}</div>
+                    )}
+                    {entry.triggers && entry.triggers.length > 0 && (
+                      <div className="text-sm mb-1"><span className="font-medium">Triggers:</span> {entry.triggers.join(', ')}</div>
+                    )}
+                    {entry.copingStrategies && entry.copingStrategies.length > 0 && (
+                      <div className="text-sm mb-1"><span className="font-medium">Coping:</span> {entry.copingStrategies.join(', ')}</div>
+                    )}
+                    {entry.intrusionTheme && (
+                      <div className="text-sm mb-1"><span className="font-medium">Intrusion theme:</span> {entry.intrusionTheme}</div>
+                    )}
+                    {entry.phobiaTrigger && (
+                      <div className="text-sm mb-1"><span className="font-medium">Phobia trigger:</span> {entry.phobiaTrigger}</div>
+                    )}
+                    {entry.notes && (
+                      <div className="text-sm mb-1"><span className="font-medium">Notes:</span> {entry.notes}</div>
+                    )}
+                    {entry.tags && entry.tags.length > 0 && (
+                      <div className="flex gap-1 mt-2 flex-wrap">
+                        {entry.tags.map((tag, i) => <Badge key={i} variant="outline" className="text-xs">{tag}</Badge>)}
                       </div>
                     )}
-                    {entry.duration && (
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-4 w-4" />
-                        {entry.duration}
-                      </div>
-                    )}
                   </div>
-                </div>
-                
-                <div className="flex gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onEdit(entry)}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onDelete(entry)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            
-            <CardContent className="pt-0">
-              {/* Symptoms */}
-              {(entry.physicalSymptoms.length > 0 || entry.mentalSymptoms.length > 0) && (
-                <div className="space-y-2 mb-4">
-                  {entry.physicalSymptoms.length > 0 && (
-                    <div>
-                      <span className="text-sm font-medium">Physical: </span>
-                      <span className="text-sm text-muted-foreground">
-                        {entry.physicalSymptoms.slice(0, 3).join(', ')}
-                        {entry.physicalSymptoms.length > 3 && ` +${entry.physicalSymptoms.length - 3} more`}
-                      </span>
-                    </div>
-                  )}
-                  {entry.mentalSymptoms.length > 0 && (
-                    <div>
-                      <span className="text-sm font-medium">Mental: </span>
-                      <span className="text-sm text-muted-foreground">
-                        {entry.mentalSymptoms.slice(0, 3).join(', ')}
-                        {entry.mentalSymptoms.length > 3 && ` +${entry.mentalSymptoms.length - 3} more`}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Triggers */}
-              {entry.triggers.length > 0 && (
-                <div className="mb-4">
-                  <span className="text-sm font-medium">Triggers: </span>
-                  <span className="text-sm text-muted-foreground">
-                    {entry.triggers.slice(0, 3).join(', ')}
-                    {entry.triggers.length > 3 && ` +${entry.triggers.length - 3} more`}
-                  </span>
-                </div>
-              )}
-
-              {/* Coping Strategies */}
-              {entry.copingStrategies.length > 0 && (
-                <div className="mb-4">
-                  <span className="text-sm font-medium">Coping strategies: </span>
-                  <span className="text-sm text-muted-foreground">
-                    {entry.copingStrategies.slice(0, 3).join(', ')}
-                    {entry.copingStrategies.length > 3 && ` +${entry.copingStrategies.length - 3} more`}
-                  </span>
-                </div>
-              )}
-
-              {/* Notes */}
-              {entry.notes && (
-                <div className="mb-4">
-                  <span className="text-sm font-medium">Notes: </span>
-                  <span className="text-sm text-muted-foreground">
-                    {entry.notes.length > 100 ? `${entry.notes.substring(0, 100)}...` : entry.notes}
-                  </span>
-                </div>
-              )}
-
-              {/* Tags */}
-              {entry.tags.length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                  {entry.tags.map((tag) => (
-                    <Badge key={tag} variant="secondary" className="text-xs">
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )
-      })}
+                )
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }
