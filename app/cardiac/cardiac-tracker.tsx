@@ -37,6 +37,8 @@ import { EPISODE_TYPES, RELATED_TRACKERS, getEpisodeTypeInfo, RED_FLAG_911_CRITE
 import { CardiacHistory } from './cardiac-history'
 import { CardiacAnalytics } from './cardiac-analytics'
 import { AlertTriangle } from 'lucide-react'
+import { EmergencyCriteriaCard } from '@/components/emergency-criteria-card'
+import { differenceInDays } from 'date-fns'
 
 // Modal imports
 import { GeneralCardiacModal } from './modals/general-cardiac-modal'
@@ -202,26 +204,27 @@ export default function CardiacTracker() {
         </p>
       </div>
 
-      {/* 🚨 911 Red-Flag Card — always visible, educational */}
-      <Card className="border-red-500 border-2 bg-red-50 dark:bg-red-950/20">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-red-700 dark:text-red-400 flex items-center gap-2 text-base">
-            <AlertTriangle className="h-5 w-5" />
-            🚨 Call 911 NOW if you have ANY of these:
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm space-y-1 text-red-900 dark:text-red-200">
-          {RED_FLAG_911_CRITERIA.map((criterion, i) => (
-            <div key={i} className="flex items-start gap-2">
-              <span className="text-red-500 font-bold mt-0.5">•</span>
-              <span>{criterion}</span>
-            </div>
-          ))}
-          <p className="pt-2 italic font-medium">
-            This tracker is for documentation, NOT for diagnosis. When in doubt, call 911. Better one false-alarm trip than a missed heart attack.
-          </p>
-        </CardContent>
-      </Card>
+      {/* 🚨 Collapsible emergency criteria — auto-re-expands on recent emergency markers */}
+      <EmergencyCriteriaCard
+        storageKey="cardiac-911-acknowledged"
+        criteria={RED_FLAG_911_CRITERIA}
+        footerNote="This tracker is for documentation, NOT for diagnosis. When in doubt, call 911. Better one false-alarm trip than a missed heart attack."
+        recentEmergencyDetected={(() => {
+          const now = new Date()
+          return entries.some(e => {
+            try {
+              if (differenceInDays(now, new Date(e.date)) > 30) return false
+              return !!(
+                e.erVisitRequired ||
+                e.episodeType === 'syncope' ||
+                e.rhythmType === 'VT' ||
+                (e.symptomSeverity && e.symptomSeverity >= 8) ||
+                (e.hrPeak && e.hrPeak >= 180)
+              )
+            } catch { return false }
+          })
+        })()}
+      />
 
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="w-full">
         <TabsList className="grid w-full grid-cols-3">

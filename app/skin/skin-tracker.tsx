@@ -10,8 +10,9 @@ import { Badge } from '@/components/ui/badge'
 import { Sparkles, BarChart3, History, Plus, ExternalLink, AlertTriangle } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { useRouter } from 'next/navigation'
-import { format, addDays, subDays } from 'date-fns'
+import { format, addDays, subDays, differenceInDays } from 'date-fns'
 import { useDailyData, CATEGORIES } from '@/lib/database'
+import { EmergencyCriteriaCard } from '@/components/emergency-criteria-card'
 import { celebrate } from '@/lib/particle-physics-engine'
 import { useUser } from '@/lib/contexts/user-context'
 import { isCelebrationEnabled } from '@/lib/celebration-prefs'
@@ -97,18 +98,25 @@ export default function SkinTracker() {
         <p className="text-muted-foreground mt-1">Rashes, hives, eczema, lesions, wounds, sunburns, contact reactions — with photo timeline</p>
       </div>
 
-      <Card className="border-red-500 border-2 bg-red-50 dark:bg-red-950/20">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-red-700 dark:text-red-400 flex items-center gap-2 text-base">
-            <AlertTriangle className="h-5 w-5" />
-            🚨 Call 911 NOW if you have ANY of these:
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm space-y-1 text-red-900 dark:text-red-200">
-          {RED_FLAG_911_CRITERIA.map((c, i) => <div key={i} className="flex items-start gap-2"><span className="text-red-500 font-bold mt-0.5">•</span><span>{c}</span></div>)}
-          <p className="pt-2 italic font-medium">Skin reactions can escalate fast. When in doubt, call 911 — especially with breathing or swallowing changes.</p>
-        </CardContent>
-      </Card>
+      {/* 🚨 Collapsible emergency criteria — auto-re-expands on recent emergency markers */}
+      <EmergencyCriteriaCard
+        storageKey="skin-911-acknowledged"
+        criteria={RED_FLAG_911_CRITERIA}
+        footerNote="Skin reactions can escalate fast. When in doubt, call 911 — especially with breathing or swallowing changes."
+        recentEmergencyDetected={(() => {
+          const now = new Date()
+          return entries.some(e => {
+            try {
+              if (differenceInDays(now, new Date(e.date)) > 30) return false
+              return !!(
+                e.erVisitRequired ||
+                e.throatTightness ||
+                e.mucousMembraneInvolvement
+              )
+            } catch { return false }
+          })
+        })()}
+      />
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
         <TabsList className="grid w-full grid-cols-3">

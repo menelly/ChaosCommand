@@ -58,7 +58,20 @@ export function TagsModal({ isOpen, onClose }: TagsModalProps) {
       const system: DisplayTag[] = []
       const custom: DisplayTag[] = []
 
-      for (const t of dbTags) {
+      // Dedupe by tag_name (case-insensitive). Past bugs created duplicate
+      // NOPE / I KNOW system tag rows; show each name once. Keep the
+      // earliest (lowest id) and clean up extras from the DB.
+      const seenNames = new Set<string>()
+      const duplicateIds: number[] = []
+      const sortedDbTags = [...dbTags].sort((a, b) => (a.id ?? 0) - (b.id ?? 0))
+
+      for (const t of sortedDbTags) {
+        const key = t.tag_name.trim().toLowerCase()
+        if (seenNames.has(key)) {
+          if (t.id != null) duplicateIds.push(t.id)
+          continue
+        }
+        seenNames.add(key)
         const tag: DisplayTag = {
           id: t.id!,
           name: t.tag_name,
@@ -70,6 +83,15 @@ export function TagsModal({ isOpen, onClose }: TagsModalProps) {
           system.push(tag)
         } else {
           custom.push(tag)
+        }
+      }
+
+      if (duplicateIds.length > 0) {
+        try {
+          await db.user_tags.bulkDelete(duplicateIds)
+          console.log(`🏷️ Removed ${duplicateIds.length} duplicate tag row(s)`)
+        } catch (e) {
+          console.error('Error cleaning up duplicate tags:', e)
         }
       }
 
@@ -242,11 +264,16 @@ export function TagsModal({ isOpen, onClose }: TagsModalProps) {
                       {TAG_COLORS.map((color) => (
                         <button
                           key={color.value}
+                          type="button"
                           onClick={() => setSelectedColor(color.value)}
                           className={`w-6 h-6 rounded-full border-2 ${
                             selectedColor === color.value ? 'border-foreground' : 'border-transparent'
                           }`}
-                          style={{ backgroundColor: color.value }}
+                          // Use `background` shorthand (not `backgroundColor`) so that
+                          // chaos-themes.css rules like `body.theme-ace button { background:
+                          // linear-gradient(...) }` don't paint a gradient on top of the
+                          // swatch. Inline `background` overrides the themed shorthand.
+                          style={{ background: color.value, backgroundImage: 'none' }}
                           title={color.name}
                         />
                       ))}

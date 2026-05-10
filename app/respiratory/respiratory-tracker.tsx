@@ -20,9 +20,10 @@ import { RespiratoryHistory } from './respiratory-history'
 import { RespiratoryAnalytics } from './respiratory-analytics'
 import { GeneralRespiratoryModal } from './modals/general-respiratory-modal'
 import { AsthmaAttackModal } from './modals/asthma-attack-modal'
+import { EmergencyCriteriaCard } from '@/components/emergency-criteria-card'
 
 import { useDailyData, CATEGORIES } from '@/lib/database'
-import { format, addDays, subDays } from 'date-fns'
+import { format, addDays, subDays, differenceInDays } from 'date-fns'
 import { celebrate } from '@/lib/particle-physics-engine'
 import { useUser } from '@/lib/contexts/user-context'
 import { isCelebrationEnabled } from '@/lib/celebration-prefs'
@@ -115,24 +116,26 @@ export default function RespiratoryTracker() {
         </p>
       </div>
 
-      {/* 911 Red flag card */}
-      <Card className="border-red-500 border-2 bg-red-50 dark:bg-red-950/20">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-red-700 dark:text-red-400 flex items-center gap-2 text-base">
-            <AlertTriangle className="h-5 w-5" />
-            🚨 Call 911 NOW if you have ANY of these:
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm space-y-1 text-red-900 dark:text-red-200">
-          {RED_FLAG_911_CRITERIA.map((c, i) => (
-            <div key={i} className="flex items-start gap-2">
-              <span className="text-red-500 font-bold mt-0.5">•</span>
-              <span>{c}</span>
-            </div>
-          ))}
-          <p className="pt-2 italic font-medium">When in doubt, call 911. Documentation can wait.</p>
-        </CardContent>
-      </Card>
+      {/* 🚨 Collapsible emergency criteria — auto-re-expands on recent emergency markers */}
+      <EmergencyCriteriaCard
+        storageKey="respiratory-911-acknowledged"
+        criteria={RED_FLAG_911_CRITERIA}
+        footerNote="When in doubt, call 911. Documentation can wait."
+        recentEmergencyDetected={(() => {
+          const now = new Date()
+          return entries.some(e => {
+            try {
+              if (differenceInDays(now, new Date(e.date)) > 30) return false
+              return !!(
+                e.erVisitRequired ||
+                e.peakFlowZone === 'red' ||
+                (e.episodeType === 'asthma-attack' && e.severity && e.severity >= 7) ||
+                (e.episodeType === 'allergic-reaction' && e.severity && e.severity >= 7)
+              )
+            } catch { return false }
+          })
+        })()}
+      />
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
         <TabsList className="grid w-full grid-cols-3">
