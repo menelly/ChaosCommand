@@ -61,8 +61,9 @@ export default function RespiratoryTracker() {
     } catch (e) { console.error('Save fail:', e); toast({ title: 'Save Error', variant: 'destructive' }) }
   }
 
-  const handleSaveEntry = async (entryData: Omit<RespiratoryEntry, 'id' | 'timestamp' | 'date'>) => {
-    const newEntry: RespiratoryEntry = { ...entryData, id: Date.now().toString(), timestamp: new Date().toISOString(), date: selectedDate }
+  const handleSaveEntry = async (entryData: Omit<RespiratoryEntry, 'id'>) => {
+    const { timestamp: ts, date: d, ...rest } = entryData
+    const newEntry: RespiratoryEntry = { id: Date.now().toString(), timestamp: ts || new Date().toISOString(), date: d || selectedDate, ...rest }
     const updatedEntries = [...entries, newEntry]
     await saveEntries(updatedEntries)
     if ((localStorage.getItem('chaos-confetti-level') || 'medium') !== 'none' && isCelebrationEnabled('respiratory', userPin ?? '')) celebrate()
@@ -76,9 +77,9 @@ export default function RespiratoryTracker() {
     setActiveModal(entry.episodeType === 'asthma-attack' ? 'asthma-attack' : 'general')
   }
 
-  const handleUpdateEntry = async (entryData: Omit<RespiratoryEntry, 'id' | 'timestamp' | 'date'>) => {
+  const handleUpdateEntry = async (entryData: Omit<RespiratoryEntry, 'id'>) => {
     if (!editingEntry) return
-    const updated: RespiratoryEntry = { ...editingEntry, ...entryData }
+    const updated: RespiratoryEntry = { ...editingEntry, ...entryData, id: editingEntry.id }
     const updatedEntries = entries.map(e => e.id === editingEntry.id ? updated : e)
     await saveEntries(updatedEntries)
     setActiveModal(null); setEditingEntry(null); setRefreshTrigger(p => p + 1)

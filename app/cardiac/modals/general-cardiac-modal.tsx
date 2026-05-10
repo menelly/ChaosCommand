@@ -49,8 +49,11 @@ import {
 import { TagInput } from '@/components/tag-input'
 import { KeyboardAvoidingWrapper } from '@/components/ui/keyboard-avoiding-wrapper'
 import { EcgStripUploader } from '../components/ecg-strip-uploader'
+import { EntryDateTimePicker, todayISO, nowTime, dateTimeToISO, isoToDateTime } from '@/components/entry-datetime-picker'
 
 export function GeneralCardiacModal({ isOpen, onClose, onSave, editingEntry }: CardiacModalProps) {
+  const [entryDate, setEntryDate] = useState(todayISO())
+  const [entryTime, setEntryTime] = useState(nowTime())
   const [episodeType, setEpisodeType] = useState<CardiacEpisodeType>('general')
   const [hrPeak, setHrPeak] = useState('')
   const [bpAtEvent, setBpAtEvent] = useState('')
@@ -69,6 +72,9 @@ export function GeneralCardiacModal({ isOpen, onClose, onSave, editingEntry }: C
 
   useEffect(() => {
     if (editingEntry) {
+      const dt = isoToDateTime(editingEntry.timestamp)
+      setEntryDate(editingEntry.date || dt.date)
+      setEntryTime(dt.time)
       setEpisodeType(editingEntry.episodeType)
       setHrPeak(editingEntry.hrPeak?.toString() || '')
       setBpAtEvent(editingEntry.bpAtEvent || '')
@@ -98,6 +104,8 @@ export function GeneralCardiacModal({ isOpen, onClose, onSave, editingEntry }: C
   }, [editingEntry, isOpen])
 
   const resetForm = () => {
+    setEntryDate(todayISO())
+    setEntryTime(nowTime())
     setEpisodeType('general')
     setHrPeak('')
     setBpAtEvent('')
@@ -120,7 +128,9 @@ export function GeneralCardiacModal({ isOpen, onClose, onSave, editingEntry }: C
   }
 
   const handleSave = () => {
-    const entryData: Omit<CardiacEntry, 'id' | 'timestamp' | 'date'> = {
+    const entryData: Omit<CardiacEntry, 'id'> = {
+      date: entryDate,
+      timestamp: dateTimeToISO(entryDate, entryTime),
       episodeType,
       hrPeak: hrPeak ? parseInt(hrPeak) : undefined,
       bpAtEvent: bpAtEvent || undefined,
@@ -212,6 +222,9 @@ export function GeneralCardiacModal({ isOpen, onClose, onSave, editingEntry }: C
               </div>
             )
           })()}
+
+          {/* Date / time picker */}
+          <EntryDateTimePicker date={entryDate} time={entryTime} onChange={(d, t) => { setEntryDate(d); setEntryTime(t) }} />
 
           {/* Episode type select */}
           <div className="space-y-3">

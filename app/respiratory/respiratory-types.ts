@@ -97,6 +97,6 @@ export interface RespiratoryEntry {
 export interface RespiratoryModalProps {
   isOpen: boolean
   onClose: () => void
-  onSave: (entry: Omit<RespiratoryEntry, 'id' | 'timestamp' | 'date'>) => void
+  onSave: (entry: Omit<RespiratoryEntry, 'id'>) => void
   editingEntry?: RespiratoryEntry | null
 }

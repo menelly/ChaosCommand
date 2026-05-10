@@ -31,7 +31,7 @@ export interface SubstanceEntry {
 export interface SubstanceModalProps {
   isOpen: boolean
   onClose: () => void
-  onSave: (entry: Omit<SubstanceEntry, 'id' | 'timestamp' | 'date'>) => void
+  onSave: (entry: Omit<SubstanceEntry, 'id'>) => void
   editingEntry?: SubstanceEntry | null
   presetType?: string | null
 }

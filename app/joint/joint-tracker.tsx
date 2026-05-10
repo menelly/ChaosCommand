@@ -19,6 +19,7 @@ import { isCelebrationEnabled } from '@/lib/celebration-prefs'
 import { JointEntry } from './joint-types'
 import { EPISODE_TYPES, RELATED_TRACKERS, getEpisodeTypeInfo } from './joint-constants'
 import { JointHistory } from './joint-history'
+import { JointAnalytics } from './joint-analytics'
 import { GeneralJointModal } from './modals/general-joint-modal'
 
 export default function JointTracker() {
@@ -54,8 +55,9 @@ export default function JointTracker() {
     catch (e) { console.error(e); toast({ title: 'Save Error', variant: 'destructive' }) }
   }
 
-  const handleSaveEntry = async (data: Omit<JointEntry, 'id' | 'timestamp' | 'date'>) => {
-    const newEntry: JointEntry = { ...data, id: Date.now().toString(), timestamp: new Date().toISOString(), date: selectedDate }
+  const handleSaveEntry = async (data: Omit<JointEntry, 'id'>) => {
+    const { timestamp: ts, date: d, ...rest } = data
+    const newEntry: JointEntry = { id: Date.now().toString(), timestamp: ts || new Date().toISOString(), date: d || selectedDate, ...rest }
     await saveEntries([...entries, newEntry])
     if ((localStorage.getItem('chaos-confetti-level') || 'medium') !== 'none' && isCelebrationEnabled('joint', userPin ?? '')) celebrate()
     setModalOpen(false); setEditingEntry(null); setPresetType(null); setRefreshTrigger(p => p + 1)
@@ -65,9 +67,9 @@ export default function JointTracker() {
 
   const handleEditEntry = (e: JointEntry) => { setEditingEntry(e); setPresetType(null); setModalOpen(true) }
 
-  const handleUpdateEntry = async (data: Omit<JointEntry, 'id' | 'timestamp' | 'date'>) => {
+  const handleUpdateEntry = async (data: Omit<JointEntry, 'id'>) => {
     if (!editingEntry) return
-    const updated: JointEntry = { ...editingEntry, ...data }
+    const updated: JointEntry = { ...editingEntry, ...data, id: editingEntry.id }
     await saveEntries(entries.map(e => e.id === editingEntry.id ? updated : e))
     setModalOpen(false); setEditingEntry(null); setPresetType(null); setRefreshTrigger(p => p + 1)
     toast({ title: 'Event Updated' })
@@ -187,11 +189,7 @@ export default function JointTracker() {
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-4">
-          <Card><CardContent className="pt-6 text-center text-muted-foreground">
-            <BarChart3 className="h-12 w-12 mx-auto mb-3 opacity-30" />
-            <p className="font-medium">Joint analytics coming in v2</p>
-            <p className="text-sm mt-2">Will include: per-joint frequency, sub/dis count, trigger correlation, ortho consult prep export.</p>
-          </CardContent></Card>
+          <JointAnalytics refreshTrigger={refreshTrigger} />
         </TabsContent>
       </Tabs>
 

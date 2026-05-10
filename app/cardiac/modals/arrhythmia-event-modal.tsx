@@ -49,8 +49,11 @@ import {
 import { TagInput } from '@/components/tag-input'
 import { KeyboardAvoidingWrapper } from '@/components/ui/keyboard-avoiding-wrapper'
 import { EcgStripUploader } from '../components/ecg-strip-uploader'
+import { EntryDateTimePicker, todayISO, nowTime, dateTimeToISO, isoToDateTime } from '@/components/entry-datetime-picker'
 
 export function ArrhythmiaEventModal({ isOpen, onClose, onSave, editingEntry }: CardiacModalProps) {
+  const [entryDate, setEntryDate] = useState(todayISO())
+  const [entryTime, setEntryTime] = useState(nowTime())
   const [rhythmType, setRhythmType] = useState<string>('unknown')
   const [hrPeak, setHrPeak] = useState('')
   const [hrAtOnset, setHrAtOnset] = useState('')
@@ -77,6 +80,9 @@ export function ArrhythmiaEventModal({ isOpen, onClose, onSave, editingEntry }: 
 
   useEffect(() => {
     if (editingEntry && editingEntry.episodeType === 'arrhythmia') {
+      const dt = isoToDateTime(editingEntry.timestamp)
+      setEntryDate(editingEntry.date || dt.date)
+      setEntryTime(dt.time)
       setRhythmType(editingEntry.rhythmType || 'unknown')
       setHrPeak(editingEntry.hrPeak?.toString() || '')
       setHrAtOnset(editingEntry.hrAtOnset?.toString() || '')
@@ -111,6 +117,8 @@ export function ArrhythmiaEventModal({ isOpen, onClose, onSave, editingEntry }: 
   }, [editingEntry, isOpen])
 
   const resetForm = () => {
+    setEntryDate(todayISO())
+    setEntryTime(nowTime())
     setRhythmType('unknown')
     setHrPeak('')
     setHrAtOnset('')
@@ -141,7 +149,9 @@ export function ArrhythmiaEventModal({ isOpen, onClose, onSave, editingEntry }: 
   }
 
   const handleSave = () => {
-    const entryData: Omit<CardiacEntry, 'id' | 'timestamp' | 'date'> = {
+    const entryData: Omit<CardiacEntry, 'id'> = {
+      date: entryDate,
+      timestamp: dateTimeToISO(entryDate, entryTime),
       episodeType: 'arrhythmia',
       rhythmType: rhythmType as RhythmType,
       hrPeak: hrPeak ? parseInt(hrPeak) : undefined,
@@ -243,6 +253,9 @@ export function ArrhythmiaEventModal({ isOpen, onClose, onSave, editingEntry }: 
               </div>
             )
           })()}
+
+          {/* Date / time picker */}
+          <EntryDateTimePicker date={entryDate} time={entryTime} onChange={(d, t) => { setEntryDate(d); setEntryTime(t) }} />
 
           {/* Rhythm classification */}
           <div className="space-y-3">

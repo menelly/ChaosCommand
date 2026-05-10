@@ -34,7 +34,7 @@ export interface JointEntry {
 export interface JointModalProps {
   isOpen: boolean
   onClose: () => void
-  onSave: (entry: Omit<JointEntry, 'id' | 'timestamp' | 'date'>) => void
+  onSave: (entry: Omit<JointEntry, 'id'>) => void
   editingEntry?: JointEntry | null
   presetType?: string | null
 }

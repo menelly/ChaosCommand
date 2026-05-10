@@ -18,8 +18,11 @@ import { SUBSTANCE_TYPES, COMMON_UNITS, METHODS, CONTEXT_WHY, COMMON_EFFECTS } f
 import { TagInput } from '@/components/tag-input'
 import { KeyboardAvoidingWrapper } from '@/components/ui/keyboard-avoiding-wrapper'
 import { AttachmentUploader } from '../components/attachment-uploader'
+import { EntryDateTimePicker, todayISO, nowTime, dateTimeToISO, isoToDateTime } from '@/components/entry-datetime-picker'
 
 export function GeneralSubstanceModal({ isOpen, onClose, onSave, editingEntry, presetType }: SubstanceModalProps) {
+  const [entryDate, setEntryDate] = useState(todayISO())
+  const [entryTime, setEntryTime] = useState(nowTime())
   const [substanceType, setSubstanceType] = useState<SubstanceType>('alcohol')
   const [substanceName, setSubstanceName] = useState('')
   const [amount, setAmount] = useState('')
@@ -36,6 +39,9 @@ export function GeneralSubstanceModal({ isOpen, onClose, onSave, editingEntry, p
 
   useEffect(() => {
     if (editingEntry) {
+      const dt = isoToDateTime(editingEntry.timestamp)
+      setEntryDate(editingEntry.date || dt.date)
+      setEntryTime(dt.time)
       setSubstanceType(editingEntry.substanceType)
       setSubstanceName(editingEntry.substanceName || '')
       setAmount(editingEntry.amount?.toString() || '')
@@ -56,6 +62,7 @@ export function GeneralSubstanceModal({ isOpen, onClose, onSave, editingEntry, p
   }, [editingEntry, isOpen, presetType])
 
   const reset = () => {
+    setEntryDate(todayISO()); setEntryTime(nowTime())
     setSubstanceType('alcohol'); setSubstanceName(''); setAmount(''); setUnit('')
     setMethodOfUse(''); setContextWhy([]); setEffectsExperienced([]); setEffectIntensity([5])
     setTimeToOnsetMin(''); setDurationOfEffectMin(''); setAttachmentImages([])
@@ -66,7 +73,9 @@ export function GeneralSubstanceModal({ isOpen, onClose, onSave, editingEntry, p
     setter(arr.includes(item) ? arr.filter(x => x !== item) : [...arr, item])
 
   const handleSave = () => {
-    const data: Omit<SubstanceEntry, 'id' | 'timestamp' | 'date'> = {
+    const data: Omit<SubstanceEntry, 'id'> = {
+      date: entryDate,
+      timestamp: dateTimeToISO(entryDate, entryTime),
       substanceType,
       substanceName: substanceName.trim() || SUBSTANCE_TYPES.find(t => t.id === substanceType)?.name || '',
       amount: amount ? parseFloat(amount) : undefined,
@@ -94,6 +103,8 @@ export function GeneralSubstanceModal({ isOpen, onClose, onSave, editingEntry, p
           <DialogTitle className="flex items-center gap-2"><Coffee className="h-5 w-5 text-purple-500" /> Substance Entry</DialogTitle>
         </DialogHeader>
         <div className="space-y-6">
+          <EntryDateTimePicker date={entryDate} time={entryTime} onChange={(d, t) => { setEntryDate(d); setEntryTime(t) }} />
+
           <div className="space-y-3">
             <Label>Type</Label>
             <Select value={substanceType} onValueChange={(v) => setSubstanceType(v as SubstanceType)}>

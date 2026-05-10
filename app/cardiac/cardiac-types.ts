@@ -127,6 +127,6 @@ export interface CardiacEntry {
 export interface CardiacModalProps {
   isOpen: boolean
   onClose: () => void
-  onSave: (entry: Omit<CardiacEntry, 'id' | 'timestamp' | 'date'>) => void
+  onSave: (entry: Omit<CardiacEntry, 'id'>) => void
   editingEntry?: CardiacEntry | null
 }

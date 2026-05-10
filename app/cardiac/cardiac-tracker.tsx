@@ -111,12 +111,13 @@ export default function CardiacTracker() {
     }
   }
 
-  const handleSaveEntry = async (entryData: Omit<CardiacEntry, 'id' | 'timestamp' | 'date'>) => {
+  const handleSaveEntry = async (entryData: Omit<CardiacEntry, 'id'>) => {
+    const { timestamp: ts, date: d, ...rest } = entryData
     const newEntry: CardiacEntry = {
-      ...entryData,
       id: Date.now().toString(),
-      timestamp: new Date().toISOString(),
-      date: selectedDate
+      timestamp: ts || new Date().toISOString(),
+      date: d || selectedDate,
+      ...rest,
     }
 
     const updatedEntries = [...entries, newEntry]
@@ -148,9 +149,9 @@ export default function CardiacTracker() {
     }
   }
 
-  const handleUpdateEntry = async (entryData: Omit<CardiacEntry, 'id' | 'timestamp' | 'date'>) => {
+  const handleUpdateEntry = async (entryData: Omit<CardiacEntry, 'id'>) => {
     if (!editingEntry) return
-    const updated: CardiacEntry = { ...editingEntry, ...entryData }
+    const updated: CardiacEntry = { ...editingEntry, ...entryData, id: editingEntry.id }
     const updatedEntries = entries.map(e => (e.id === editingEntry.id ? updated : e))
     await saveEntries(updatedEntries)
     setActiveModal(null)

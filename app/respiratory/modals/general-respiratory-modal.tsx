@@ -21,8 +21,11 @@ import { RESPIRATORY_SYMPTOMS, RESPIRATORY_TRIGGERS, EPISODE_TYPES, getSeverityL
 import { TagInput } from '@/components/tag-input'
 import { KeyboardAvoidingWrapper } from '@/components/ui/keyboard-avoiding-wrapper'
 import { AttachmentUploader } from '../components/attachment-uploader'
+import { EntryDateTimePicker, todayISO, nowTime, dateTimeToISO, isoToDateTime } from '@/components/entry-datetime-picker'
 
 export function GeneralRespiratoryModal({ isOpen, onClose, onSave, editingEntry }: RespiratoryModalProps) {
+  const [entryDate, setEntryDate] = useState(todayISO())
+  const [entryTime, setEntryTime] = useState(nowTime())
   const [episodeType, setEpisodeType] = useState<RespiratoryEpisodeType>('general')
   const [severity, setSeverity] = useState([5])
   const [breathingPattern, setBreathingPattern] = useState<string>('')
@@ -43,6 +46,9 @@ export function GeneralRespiratoryModal({ isOpen, onClose, onSave, editingEntry 
 
   useEffect(() => {
     if (editingEntry) {
+      const dt = isoToDateTime(editingEntry.timestamp)
+      setEntryDate(editingEntry.date || dt.date)
+      setEntryTime(dt.time)
       setEpisodeType(editingEntry.episodeType)
       setSeverity([editingEntry.severity || 5])
       setBreathingPattern(editingEntry.breathingPattern || '')
@@ -64,6 +70,7 @@ export function GeneralRespiratoryModal({ isOpen, onClose, onSave, editingEntry 
   }, [editingEntry, isOpen])
 
   const reset = () => {
+    setEntryDate(todayISO()); setEntryTime(nowTime())
     setEpisodeType('general'); setSeverity([5]); setBreathingPattern(''); setChestTightness([0])
     setSpo2Lowest(''); setHrAtEvent(''); setSwelling(false); setHivesPresent(false)
     setThroatTightness(false); setEpinephrineGiven(false); setSymptoms([]); setTriggers([])
@@ -75,7 +82,9 @@ export function GeneralRespiratoryModal({ isOpen, onClose, onSave, editingEntry 
     setter(arr.includes(item) ? arr.filter(x => x !== item) : [...arr, item])
 
   const handleSave = () => {
-    const data: Omit<RespiratoryEntry, 'id' | 'timestamp' | 'date'> = {
+    const data: Omit<RespiratoryEntry, 'id'> = {
+      date: entryDate,
+      timestamp: dateTimeToISO(entryDate, entryTime),
       episodeType,
       severity: severity[0],
       breathingPattern: (breathingPattern || undefined) as any,
@@ -127,6 +136,8 @@ export function GeneralRespiratoryModal({ isOpen, onClose, onSave, editingEntry 
               </div>
             )
           })()}
+
+          <EntryDateTimePicker date={entryDate} time={entryTime} onChange={(d, t) => { setEntryDate(d); setEntryTime(t) }} />
 
           <div className="space-y-3">
             <Label>Event Type</Label>

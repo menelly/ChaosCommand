@@ -19,6 +19,7 @@ import { isCelebrationEnabled } from '@/lib/celebration-prefs'
 import { SubstanceEntry } from './substance-types'
 import { SUBSTANCE_TYPES, RELATED_TRACKERS, getSubstanceTypeInfo } from './substance-constants'
 import { SubstanceHistory } from './substance-history'
+import { SubstanceAnalytics } from './substance-analytics'
 import { GeneralSubstanceModal } from './modals/general-substance-modal'
 
 export default function SubstanceTracker() {
@@ -54,8 +55,9 @@ export default function SubstanceTracker() {
     catch (e) { console.error(e); toast({ title: 'Save Error', variant: 'destructive' }) }
   }
 
-  const handleSaveEntry = async (data: Omit<SubstanceEntry, 'id' | 'timestamp' | 'date'>) => {
-    const newEntry: SubstanceEntry = { ...data, id: Date.now().toString(), timestamp: new Date().toISOString(), date: selectedDate }
+  const handleSaveEntry = async (data: Omit<SubstanceEntry, 'id'>) => {
+    const { timestamp: ts, date: d, ...rest } = data
+    const newEntry: SubstanceEntry = { id: Date.now().toString(), timestamp: ts || new Date().toISOString(), date: d || selectedDate, ...rest }
     await saveEntries([...entries, newEntry])
     if ((localStorage.getItem('chaos-confetti-level') || 'medium') !== 'none' && isCelebrationEnabled('substance', userPin ?? '')) celebrate()
     setModalOpen(false); setEditingEntry(null); setPresetType(null); setRefreshTrigger(p => p + 1)
@@ -65,9 +67,9 @@ export default function SubstanceTracker() {
 
   const handleEditEntry = (e: SubstanceEntry) => { setEditingEntry(e); setPresetType(null); setModalOpen(true) }
 
-  const handleUpdateEntry = async (data: Omit<SubstanceEntry, 'id' | 'timestamp' | 'date'>) => {
+  const handleUpdateEntry = async (data: Omit<SubstanceEntry, 'id'>) => {
     if (!editingEntry) return
-    const updated: SubstanceEntry = { ...editingEntry, ...data }
+    const updated: SubstanceEntry = { ...editingEntry, ...data, id: editingEntry.id }
     await saveEntries(entries.map(e => e.id === editingEntry.id ? updated : e))
     setModalOpen(false); setEditingEntry(null); setPresetType(null); setRefreshTrigger(p => p + 1)
     toast({ title: 'Entry Updated' })
@@ -187,11 +189,7 @@ export default function SubstanceTracker() {
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-4">
-          <Card><CardContent className="pt-6 text-center text-muted-foreground">
-            <BarChart3 className="h-12 w-12 mx-auto mb-3 opacity-30" />
-            <p className="font-medium">Substance analytics coming in v2</p>
-            <p className="text-sm mt-2">Will include: per-substance frequency, time-of-day patterns, effects-experienced histograms, cross-tracker correlations (substance ↔ migraine, sleep, mood).</p>
-          </CardContent></Card>
+          <SubstanceAnalytics refreshTrigger={refreshTrigger} />
         </TabsContent>
       </Tabs>
 

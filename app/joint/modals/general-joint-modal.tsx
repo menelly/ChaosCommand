@@ -17,8 +17,11 @@ import { EPISODE_TYPES, JOINTS, TRIGGER_ACTIVITIES, TREATMENTS, getSeverityLabel
 import { TagInput } from '@/components/tag-input'
 import { KeyboardAvoidingWrapper } from '@/components/ui/keyboard-avoiding-wrapper'
 import { AttachmentUploader } from '../components/attachment-uploader'
+import { EntryDateTimePicker, todayISO, nowTime, dateTimeToISO, isoToDateTime } from '@/components/entry-datetime-picker'
 
 export function GeneralJointModal({ isOpen, onClose, onSave, editingEntry, presetType }: JointModalProps) {
+  const [entryDate, setEntryDate] = useState(todayISO())
+  const [entryTime, setEntryTime] = useState(nowTime())
   const [episodeType, setEpisodeType] = useState<JointEpisodeType>('subluxation')
   const [jointAffected, setJointAffected] = useState<string[]>([])
   const [severity, setSeverity] = useState([5])
@@ -38,6 +41,9 @@ export function GeneralJointModal({ isOpen, onClose, onSave, editingEntry, prese
 
   useEffect(() => {
     if (editingEntry) {
+      const dt = isoToDateTime(editingEntry.timestamp)
+      setEntryDate(editingEntry.date || dt.date)
+      setEntryTime(dt.time)
       setEpisodeType(editingEntry.episodeType)
       setJointAffected(editingEntry.jointAffected || [])
       setSeverity([editingEntry.severity || 5])
@@ -61,6 +67,7 @@ export function GeneralJointModal({ isOpen, onClose, onSave, editingEntry, prese
   }, [editingEntry, isOpen, presetType])
 
   const reset = () => {
+    setEntryDate(todayISO()); setEntryTime(nowTime())
     setEpisodeType('subluxation'); setJointAffected([]); setSeverity([5])
     setSelfReducedFlag(false); setSwellingPresent(false); setSwellingScale([0]); setBruisingPresent(false)
     setRomImpactedPercent([100]); setTriggerActivity([]); setTreatmentApplied([]); setTreatmentResponse([3])
@@ -71,7 +78,9 @@ export function GeneralJointModal({ isOpen, onClose, onSave, editingEntry, prese
     setter(arr.includes(item) ? arr.filter(x => x !== item) : [...arr, item])
 
   const handleSave = () => {
-    const data: Omit<JointEntry, 'id' | 'timestamp' | 'date'> = {
+    const data: Omit<JointEntry, 'id'> = {
+      date: entryDate,
+      timestamp: dateTimeToISO(entryDate, entryTime),
       episodeType,
       jointAffected,
       severity: severity[0],
@@ -102,6 +111,8 @@ export function GeneralJointModal({ isOpen, onClose, onSave, editingEntry, prese
           <DialogTitle className="flex items-center gap-2"><Bone className="h-5 w-5 text-amber-500" /> 🦴 Joint / MSK Event</DialogTitle>
         </DialogHeader>
         <div className="space-y-6">
+          <EntryDateTimePicker date={entryDate} time={entryTime} onChange={(d, t) => { setEntryDate(d); setEntryTime(t) }} />
+
           <div className="space-y-3">
             <Label>Event Type</Label>
             <Select value={episodeType} onValueChange={(v) => setEpisodeType(v as JointEpisodeType)}>

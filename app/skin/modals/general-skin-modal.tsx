@@ -18,16 +18,19 @@ import { EPISODE_TYPES, BODY_LOCATIONS, CHARACTER_OPTIONS, SUSPECTED_TRIGGERS, T
 import { TagInput } from '@/components/tag-input'
 import { KeyboardAvoidingWrapper } from '@/components/ui/keyboard-avoiding-wrapper'
 import { AttachmentUploader } from '../components/attachment-uploader'
+import { EntryDateTimePicker, todayISO, nowTime, dateTimeToISO, isoToDateTime } from '@/components/entry-datetime-picker'
 
 interface Props {
   isOpen: boolean
   onClose: () => void
-  onSave: (entry: Omit<SkinEntry, 'id' | 'timestamp' | 'date'>) => void
+  onSave: (entry: Omit<SkinEntry, 'id'>) => void
   editingEntry?: SkinEntry | null
   presetType?: string | null
 }
 
 export function GeneralSkinModal({ isOpen, onClose, onSave, editingEntry, presetType }: Props) {
+  const [entryDate, setEntryDate] = useState(todayISO())
+  const [entryTime, setEntryTime] = useState(nowTime())
   const [episodeType, setEpisodeType] = useState<SkinEpisodeType>('rash')
   const [bodyLocation, setBodyLocation] = useState<string[]>([])
   const [characterDescription, setCharacterDescription] = useState<string[]>([])
@@ -61,6 +64,9 @@ export function GeneralSkinModal({ isOpen, onClose, onSave, editingEntry, preset
 
   useEffect(() => {
     if (editingEntry) {
+      const dt = isoToDateTime(editingEntry.timestamp)
+      setEntryDate(editingEntry.date || dt.date)
+      setEntryTime(dt.time)
       setEpisodeType(editingEntry.episodeType)
       setBodyLocation(editingEntry.bodyLocation || [])
       setCharacterDescription(editingEntry.characterDescription || [])
@@ -97,6 +103,7 @@ export function GeneralSkinModal({ isOpen, onClose, onSave, editingEntry, preset
   }, [editingEntry, isOpen, presetType])
 
   const reset = () => {
+    setEntryDate(todayISO()); setEntryTime(nowTime())
     setEpisodeType('rash'); setBodyLocation([]); setCharacterDescription([]); setSpreadingPattern('')
     setSizeDescription(''); setSeverity([5]); setItchiness([0]); setPain([0])
     setSwelling(false); setThroatTightness(false); setBreathingDifficulty(false); setHivesPresent(false); setEpinephrineGiven(false)
@@ -110,7 +117,9 @@ export function GeneralSkinModal({ isOpen, onClose, onSave, editingEntry, preset
     setter(arr.includes(item) ? arr.filter(x => x !== item) : [...arr, item])
 
   const handleSave = () => {
-    const data: Omit<SkinEntry, 'id' | 'timestamp' | 'date'> = {
+    const data: Omit<SkinEntry, 'id'> = {
+      date: entryDate,
+      timestamp: dateTimeToISO(entryDate, entryTime),
       episodeType,
       bodyLocation,
       characterDescription,
@@ -160,6 +169,8 @@ export function GeneralSkinModal({ isOpen, onClose, onSave, editingEntry, preset
               </div>
             )
           })()}
+
+          <EntryDateTimePicker date={entryDate} time={entryTime} onChange={(d, t) => { setEntryDate(d); setEntryTime(t) }} />
 
           <div className="space-y-3">
             <Label>Event Type</Label>

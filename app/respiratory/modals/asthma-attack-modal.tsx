@@ -21,8 +21,11 @@ import { RESPIRATORY_SYMPTOMS, RESPIRATORY_TRIGGERS, BREATHING_PATTERNS, PEAK_FL
 import { TagInput } from '@/components/tag-input'
 import { KeyboardAvoidingWrapper } from '@/components/ui/keyboard-avoiding-wrapper'
 import { AttachmentUploader } from '../components/attachment-uploader'
+import { EntryDateTimePicker, todayISO, nowTime, dateTimeToISO, isoToDateTime } from '@/components/entry-datetime-picker'
 
 export function AsthmaAttackModal({ isOpen, onClose, onSave, editingEntry }: RespiratoryModalProps) {
+  const [entryDate, setEntryDate] = useState(todayISO())
+  const [entryTime, setEntryTime] = useState(nowTime())
   const [severity, setSeverity] = useState([5])
   const [breathingPattern, setBreathingPattern] = useState<string>('')
   const [chestTightness, setChestTightness] = useState([0])
@@ -44,6 +47,9 @@ export function AsthmaAttackModal({ isOpen, onClose, onSave, editingEntry }: Res
 
   useEffect(() => {
     if (editingEntry && editingEntry.episodeType === 'asthma-attack') {
+      const dt = isoToDateTime(editingEntry.timestamp)
+      setEntryDate(editingEntry.date || dt.date)
+      setEntryTime(dt.time)
       setSeverity([editingEntry.severity || 5])
       setBreathingPattern(editingEntry.breathingPattern || '')
       setChestTightness([editingEntry.chestTightness || 0])
@@ -66,6 +72,7 @@ export function AsthmaAttackModal({ isOpen, onClose, onSave, editingEntry }: Res
   }, [editingEntry, isOpen])
 
   const reset = () => {
+    setEntryDate(todayISO()); setEntryTime(nowTime())
     setSeverity([5]); setBreathingPattern(''); setChestTightness([0])
     setPeakFlowReading(''); setPeakFlowZone(''); setSpo2Lowest(''); setHrAtEvent('')
     setInhalerUsed(false); setInhalerName(''); setInhalerDoses(''); setInhalerResponse([3])
@@ -77,7 +84,9 @@ export function AsthmaAttackModal({ isOpen, onClose, onSave, editingEntry }: Res
     setter(arr.includes(item) ? arr.filter(x => x !== item) : [...arr, item])
 
   const handleSave = () => {
-    const data: Omit<RespiratoryEntry, 'id' | 'timestamp' | 'date'> = {
+    const data: Omit<RespiratoryEntry, 'id'> = {
+      date: entryDate,
+      timestamp: dateTimeToISO(entryDate, entryTime),
       episodeType: 'asthma-attack',
       severity: severity[0],
       breathingPattern: (breathingPattern || undefined) as any,
@@ -133,6 +142,8 @@ export function AsthmaAttackModal({ isOpen, onClose, onSave, editingEntry }: Res
               </div>
             )
           })()}
+
+          <EntryDateTimePicker date={entryDate} time={entryTime} onChange={(d, t) => { setEntryDate(d); setEntryTime(t) }} />
 
           <div className="grid grid-cols-2 gap-3">
             <div><Label>Peak Flow Reading (L/min)</Label><Input type="number" value={peakFlowReading} onChange={(e) => setPeakFlowReading(e.target.value)} placeholder="e.g., 350" /></div>

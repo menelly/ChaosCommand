@@ -138,16 +138,58 @@ export function CardiacAnalytics({ refreshTrigger }: CardiacAnalyticsProps) {
     // ER required count
     const erCount = allEntries.filter(e => e.erVisitRequired).length
 
+    // Top symptoms breakdown
+    const symptomCounts: Record<string, number> = {}
+    for (const e of allEntries) for (const s of (e.symptoms || [])) symptomCounts[s] = (symptomCounts[s] || 0) + 1
+
+    // Position at onset breakdown
+    const positionCounts: Record<string, number> = {}
+    for (const e of allEntries) {
+      if (e.positionAtOnset) positionCounts[e.positionAtOnset] = (positionCounts[e.positionAtOnset] || 0) + 1
+    }
+
+    // Time-of-day distribution
+    const hourCounts: number[] = new Array(24).fill(0)
+    for (const e of allEntries) {
+      const h = new Date(e.timestamp).getHours()
+      hourCounts[h]++
+    }
+
+    // Pre-event context aggregates
+    const sleepValues = allEntries.map(e => e.hoursOfSleepLastNight).filter((v): v is number => typeof v === 'number')
+    const avgSleepBefore = sleepValues.length ? (sleepValues.reduce((a, b) => a + b, 0) / sleepValues.length).toFixed(1) : null
+    const lowSleepCount = sleepValues.filter(v => v < 6).length
+    const dehydrationCount = allEntries.filter(e => e.possibleDehydration).length
+    const electrolyteLossCount = allEntries.filter(e => e.possibleElectrolyteLoss).length
+    const caffeineCount = allEntries.filter(e => e.caffeineOnBoard).length
+
+    // Syncope / LOC stats
+    const locCount = allEntries.filter(e => e.locOccurred || (e.locDurationMin && e.locDurationMin > 0)).length
+    const locDurations = allEntries.map(e => e.locDurationMin).filter((v): v is number => typeof v === 'number' && v > 0)
+    const avgLocDuration = locDurations.length ? (locDurations.reduce((a, b) => a + b, 0) / locDurations.length).toFixed(1) : null
+
+    // Prodrome symptom breakdown (for syncope events)
+    const prodromeCounts: Record<string, number> = {}
+    for (const e of allEntries) for (const p of (e.prodromeSymptoms || [])) prodromeCounts[p] = (prodromeCounts[p] || 0) + 1
+
     return {
       total, last7, typeCounts, rhythmCounts, triggerCounts, resolutionCounts,
       valsalvaCount, valsalvaAvg, hrAvg, hrMax, tachyEvents, bradyEvents,
       severityBuckets, uWaveCount, erCount,
+      symptomCounts, positionCounts, hourCounts,
+      avgSleepBefore, lowSleepCount, dehydrationCount, electrolyteLossCount, caffeineCount,
+      locCount, avgLocDuration, prodromeCounts,
     }
   }, [allEntries])
 
   const sortedTriggers = Object.entries(stats.triggerCounts).sort((a, b) => b[1] - a[1]).slice(0, 8)
   const sortedResolutions = Object.entries(stats.resolutionCounts).sort((a, b) => b[1] - a[1])
   const sortedRhythms = Object.entries(stats.rhythmCounts).sort((a, b) => b[1] - a[1])
+  const sortedSymptoms = Object.entries(stats.symptomCounts).sort((a, b) => b[1] - a[1]).slice(0, 12)
+  const sortedPositions = Object.entries(stats.positionCounts).sort((a, b) => b[1] - a[1])
+  const sortedProdromes = Object.entries(stats.prodromeCounts).sort((a, b) => b[1] - a[1]).slice(0, 8)
+  const maxHourCount = Math.max(...stats.hourCounts)
+  const formatHour = (h: number) => h === 0 ? '12am' : h === 12 ? '12pm' : h < 12 ? `${h}am` : `${h - 12}pm`
 
   if (loading) {
     return <Card><CardContent className="pt-6 text-center text-muted-foreground">Loading analytics…</CardContent></Card>
@@ -367,6 +409,125 @@ export function CardiacAnalytics({ refreshTrigger }: CardiacAnalyticsProps) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Top symptoms */}
+      {sortedSymptoms.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3"><CardTitle className="text-base">Most Reported Symptoms</CardTitle></CardHeader>
+          <CardContent className="space-y-2">
+            {sortedSymptoms.map(([s, c]) => {
+              const pct = (c / stats.total) * 100
+              return (
+                <div key={s} className="space-y-1">
+                  <div className="flex items-center justify-between text-sm"><span>{s}</span><span className="text-muted-foreground">{c} events ({pct.toFixed(0)}%)</span></div>
+                  <div className="w-full bg-muted rounded-full h-2 overflow-hidden"><div className="bg-rose-400 h-2" style={{ width: `${pct}%` }} /></div>
+                </div>
+              )
+            })}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Position at onset */}
+      {sortedPositions.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3"><CardTitle className="text-base">Position at Onset</CardTitle></CardHeader>
+          <CardContent className="space-y-2">
+            {sortedPositions.map(([p, c]) => <div key={p} className="flex items-center justify-between text-sm"><span className="capitalize">{p}</span><Badge variant="secondary">{c}</Badge></div>)}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Time-of-day distribution */}
+      {stats.total > 0 && (
+        <Card>
+          <CardHeader className="pb-3"><CardTitle className="text-base">Time-of-Day Pattern</CardTitle></CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-12 gap-0.5">
+              {stats.hourCounts.map((c, h) => {
+                const pct = maxHourCount > 0 ? (c / maxHourCount) * 100 : 0
+                return (
+                  <div key={h} className="flex flex-col items-center" title={`${formatHour(h)}: ${c} ${c === 1 ? 'event' : 'events'}`}>
+                    <div className="w-full bg-muted rounded-sm overflow-hidden flex items-end" style={{ height: '60px' }}>
+                      <div className="w-full bg-red-400 transition-all" style={{ height: `${pct}%` }} />
+                    </div>
+                    <span className="text-[9px] text-muted-foreground mt-1">{h % 6 === 0 ? formatHour(h) : ''}</span>
+                  </div>
+                )
+              })}
+            </div>
+            <p className="text-xs text-muted-foreground mt-2 text-center">When events happen during the day (00-23 hour buckets).</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Pre-event context */}
+      {(stats.avgSleepBefore || stats.dehydrationCount > 0 || stats.electrolyteLossCount > 0 || stats.caffeineCount > 0) && (
+        <Card>
+          <CardHeader className="pb-3"><CardTitle className="text-base">Pre-Event Context (correlation candidates)</CardTitle></CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+              {stats.avgSleepBefore && (
+                <div>
+                  <div className="text-xs uppercase text-muted-foreground">Avg sleep night before</div>
+                  <div className="text-xl font-bold">{stats.avgSleepBefore} hr</div>
+                  {stats.lowSleepCount > 0 && <div className="text-xs text-muted-foreground">{stats.lowSleepCount} events with &lt;6h sleep</div>}
+                </div>
+              )}
+              {stats.dehydrationCount > 0 && (
+                <div>
+                  <div className="text-xs uppercase text-muted-foreground">Dehydration suspected</div>
+                  <div className="text-xl font-bold">{stats.dehydrationCount}</div>
+                  <div className="text-xs text-muted-foreground">{((stats.dehydrationCount / stats.total) * 100).toFixed(0)}% of events</div>
+                </div>
+              )}
+              {stats.electrolyteLossCount > 0 && (
+                <div>
+                  <div className="text-xs uppercase text-muted-foreground">Electrolyte loss</div>
+                  <div className="text-xl font-bold">{stats.electrolyteLossCount}</div>
+                  <div className="text-xs text-muted-foreground">{((stats.electrolyteLossCount / stats.total) * 100).toFixed(0)}% of events</div>
+                </div>
+              )}
+              {stats.caffeineCount > 0 && (
+                <div>
+                  <div className="text-xs uppercase text-muted-foreground">Caffeine on board</div>
+                  <div className="text-xl font-bold">{stats.caffeineCount}</div>
+                  <div className="text-xs text-muted-foreground">{((stats.caffeineCount / stats.total) * 100).toFixed(0)}% of events</div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* LOC / Syncope stats */}
+      {stats.locCount > 0 && (
+        <Card>
+          <CardHeader className="pb-3"><CardTitle className="text-base">Syncope / LOC Events</CardTitle></CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <div className="text-xs uppercase text-muted-foreground">LOC events</div>
+                <div className="text-2xl font-bold text-purple-600">{stats.locCount}</div>
+              </div>
+              {stats.avgLocDuration && (
+                <div>
+                  <div className="text-xs uppercase text-muted-foreground">Avg LOC duration</div>
+                  <div className="text-2xl font-bold">{stats.avgLocDuration} min</div>
+                </div>
+              )}
+            </div>
+            {sortedProdromes.length > 0 && (
+              <div className="mt-4 pt-3 border-t">
+                <div className="text-xs uppercase text-muted-foreground mb-2">Most common prodrome symptoms</div>
+                <div className="space-y-1">
+                  {sortedProdromes.map(([p, c]) => <div key={p} className="flex items-center justify-between text-sm"><span>{p}</span><Badge variant="outline">{c}</Badge></div>)}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }

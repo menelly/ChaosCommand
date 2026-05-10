@@ -55,8 +55,9 @@ export default function SkinTracker() {
     catch (e) { console.error(e); toast({ title: 'Save Error', variant: 'destructive' }) }
   }
 
-  const handleSaveEntry = async (data: Omit<SkinEntry, 'id' | 'timestamp' | 'date'>) => {
-    const newEntry: SkinEntry = { ...data, id: Date.now().toString(), timestamp: new Date().toISOString(), date: selectedDate }
+  const handleSaveEntry = async (data: Omit<SkinEntry, 'id'>) => {
+    const { timestamp: ts, date: d, ...rest } = data
+    const newEntry: SkinEntry = { id: Date.now().toString(), timestamp: ts || new Date().toISOString(), date: d || selectedDate, ...rest }
     await saveEntries([...entries, newEntry])
     if ((localStorage.getItem('chaos-confetti-level') || 'medium') !== 'none' && isCelebrationEnabled('skin', userPin ?? '')) celebrate()
     setModalOpen(false); setEditingEntry(null); setPresetType(null); setRefreshTrigger(p => p + 1)
@@ -66,9 +67,9 @@ export default function SkinTracker() {
 
   const handleEditEntry = (e: SkinEntry) => { setEditingEntry(e); setPresetType(null); setModalOpen(true) }
 
-  const handleUpdateEntry = async (data: Omit<SkinEntry, 'id' | 'timestamp' | 'date'>) => {
+  const handleUpdateEntry = async (data: Omit<SkinEntry, 'id'>) => {
     if (!editingEntry) return
-    const updated: SkinEntry = { ...editingEntry, ...data }
+    const updated: SkinEntry = { ...editingEntry, ...data, id: editingEntry.id }
     await saveEntries(entries.map(e => e.id === editingEntry.id ? updated : e))
     setModalOpen(false); setEditingEntry(null); setPresetType(null); setRefreshTrigger(p => p + 1)
     toast({ title: 'Event Updated' })
