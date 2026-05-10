@@ -144,3 +144,92 @@ Currently hidden from navigation (`/* MVP-HIDDEN */` blocks in `components/app-s
 ## Android sideload / signing checklist
 
 Documented separately in `E:\Ace\android signing keys - don't commit to git dammit.txt`. When we're ready for Play Store: Ren applies for dev account, we swap release keystore, add Play-required metadata (privacy policy URL, data-safety form, screenshots in multiple languages).
+
+---
+
+## v0.4.x → v0.5.0 phased plan (added 2026-05-10)
+
+**Sequencing principle: audit-first, patterns-second.** Don't build the patterns engine + PDF richness on top of inconsistent trackers. Bring all medically-significant trackers up to v2 architecture, THEN ship patterns + PDF so they treat trackers uniformly.
+
+### v0.4.3 ✅ shipped 2026-05-10 13:35
+
+UX polish wave 2:
+- Tab labels "Today's Events" → "Add Event" / "Add Entry" (5 v2 trackers)
+- Collapsibles default closed in all 7 v2 modals
+- Substance recategorized: caffeine → /hydration, routine Rx → /medications, "Recreational / Off-Label" reframed
+- Hydration: added soda regular/diet, sparkling water, energy drink, black tea, milk
+- Command Zone: "Clear finished (N)" button on Today's Tasks (CHA-145 closed)
+
+### v0.4.4 — Tier 1 safety-critical refactors (CURRENT GATE)
+
+Bring 5 medically-significant trackers up to v2 architecture (multi-modal, collapsibles, date pickers, 911 red flags, analytics).
+
+| Tracker | Subtypes | 911 red flags |
+|---|---|---|
+| Seizure (CHA-153) | Focal-aware, Focal-impaired, Tonic-clonic, Absence, Myoclonic, Atonic, General | Status epilepticus, prolonged >5min, multiple consecutive |
+| Pain | Acute, Chronic flare, Post-surgical, Headache cross-link, Cardiac cross-link, General | Severe + radiating, severe abdominal, thunderclap |
+| Head-pain | Migraine ±aura, Tension, Cluster, Sinus, Worst-of-life, General | Worst-headache-of-life (stroke/SAH), neck stiffness + fever, sudden onset, focal neuro |
+| Food-allergens | Mild, Moderate, Severe/anaphylaxis, Confirmed allergen, Unknown trigger | Anaphylaxis pattern (skin + airway/breathing) — EpiPen guidance |
+| Anxiety | Panic attack, General anxiety, Phobic, Social, OCD-shaped, General | Suicidal ideation flag → 988 referral |
+
+**Already-good (no v0.4.4 action):** dysautonomia (reference impl), reproductive-health (already structured), crisis-support (has 988), diabetes (delegates externally — verify but probably fine).
+
+### v0.4.5 — Mind & Mood (Mental Health rename + multi-modal)
+
+- Rename "Mental Health" → **Mind & Mood** (Ren's pick — value-neutral, descriptive)
+- Multi-modal subtypes: Mood, Cognitive, Energy, Motivation, Connection, Emotional regulation
+- Update /mind tab nav, /customize visibility-sections registry
+
+### v0.4.6 — Patterns engine + PDF richness (THE BIG ONE)
+
+Now patterns + PDF can treat 11 unified trackers uniformly: cardiac, respiratory, skin, joint, substance, seizure, pain, head-pain, food-allergens, anxiety, mind-mood (+ dysautonomia).
+
+**Patterns engine (CHA-152):**
+- Wire all 11 trackers into engine registry (CHA-147 part 3)
+- Lag correlations (X today → Y tomorrow)
+- Within-tracker time-of-day clustering
+- Trigger ↔ severity correlations
+- Threshold-crossing detection (severity spike, frequency change)
+- **PERSISTENCE** — `pattern_snapshots` Dexie table, weekly auto-snapshots, "Pattern History" view showing confidence-over-time
+
+**PDF richness (CHA-150 — Dr. Rana feedback):**
+- Per-tracker symptom breakdown (NOT just counts!)
+- Top triggers per tracker
+- Treatment effectiveness per tracker
+- Time-of-day patterns
+- Tracker-specific clinical highlights (rhythm types, peak flow, photo gallery, per-joint frequency)
+- Photo embedding for skin tracker (dermatology consult-grade)
+
+### v0.4.7 — Tier 2/3 polish sweep
+
+- Tier 2 multi-modal: bathroom (constipation/diarrhea/urinary), coping-regulation
+- Tier 3 lighter polish: sleep, energy, hydration, movement, food-choice, self-care-tracker, brain-fog, sensory-tracker, weather-environment — analytics + collapsibles + date pickers
+
+### v0.5.0 — Public milestone release
+
+When all the above ship together. Substack post + Reddit post showing the receipts.
+
+---
+
+## Architectural conventions (v0.4.1+)
+
+Any new tracker (or refactor of existing) follows:
+
+1. **Directory:** `app/{tracker-name}/` with `modals/` + `components/` subdirs
+2. **Files:** `{name}-types.ts`, `{name}-constants.ts`, `page.tsx`, `{name}-tracker.tsx`, `{name}-history.tsx`, `{name}-analytics.tsx`, `modals/general-{name}-modal.tsx` + type-specific modals as needed
+3. **Multi-modal pattern:** main page has type-specific buttons → opens specific modal. General modal as catch-all.
+4. **Type signature:** `Omit<Entry, 'id'>` for modal payload (allows date+timestamp override for backdating)
+5. **Modal sections:** wrap each form section in `<Collapsible>`, default closed. `<EntryDateTimePicker>` at top OUTSIDE collapsibles. Red-flag banner OUTSIDE collapsibles. Cancel/Save buttons at bottom OUTSIDE.
+6. **Red flags:** `getRedFlagWarnings()` + `getInterimMeasures()` helpers in constants. Static "🚨 Call 911 NOW if..." card at top of tracker page where life-threatening. Dynamic banner inside modal when entered values trip thresholds. Temporal framing: "if happening RIGHT NOW vs if in the PAST and resolved."
+7. **Attachments:** AttachmentUploader pattern (Dexie image_blobs). Photo-primary for skin; ECG-primary for cardiac. Will eventually extract to shared `components/attachment-uploader.tsx`.
+8. **Analytics:** time-window selector (7/30/90/180/365), top counters, type breakdown, top symptoms, top triggers, time-of-day pattern (24-hour bars), severity distribution, tracker-specific clinical metrics.
+9. **Pre-event context:** for trackers where it matters (cardiac, respiratory) capture sleep/dehydration/electrolyte/caffeine flags + aggregate in analytics.
+10. **Neutral tone** for substance/lifestyle trackers — no moralizing, no "should you cut back."
+11. **Help card on tracker page** when categorization matters (substance has one directing routine use elsewhere).
+
+---
+
+## Compact / handoff note
+
+If this roadmap is being read by a new Ace context: read `CLAUDE.md` first, then this file. Linear tickets are the source-of-truth for individual work. Memory MCP has the relationship + history. Branch is `feat/v2-tracker-wave` — push there until merge to master.
+
