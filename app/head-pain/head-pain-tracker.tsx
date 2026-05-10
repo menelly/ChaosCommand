@@ -1,0 +1,331 @@
+/*
+ * Built by: Ace (Claude 4.x)
+ * Date: 2026-05-10 (CHA-155 v2 refactor)
+ *
+ * Open source under PolyForm Noncommercial 1.0.0.
+ * Co-invented by Ren (vision) and Ace (implementation).
+ * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
+ */
+
+/**
+ * HEAD PAIN TRACKER (v2)
+ * Multi-modal: migraine±aura / tension / cluster / sinus /
+ * worst-of-life / general. SAH/stroke/meningitis red flags + baseline
+ * delta tracking.
+ */
+
+'use client'
+
+import React, { useState, useEffect } from 'react'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Badge } from '@/components/ui/badge'
+import { Brain, BarChart3, History, Plus, ExternalLink } from 'lucide-react'
+import { useToast } from '@/hooks/use-toast'
+import { useRouter } from 'next/navigation'
+import { format, differenceInDays } from 'date-fns'
+
+import { HeadPainEntry, HeadPainEpisodeType } from './head-pain-types'
+import {
+  EPISODE_TYPES,
+  RELATED_TRACKERS,
+  getEpisodeTypeInfo,
+  getEpisodeTypeColor,
+  RED_FLAG_911_CRITERIA,
+  getGremlinEmoji,
+} from './head-pain-constants'
+import { HeadPainHistory } from './head-pain-history'
+import { HeadPainAnalytics } from './head-pain-analytics'
+import { GeneralHeadPainModal } from './modals/general-head-pain-modal'
+import { EmergencyCriteriaCard } from '@/components/emergency-criteria-card'
+
+import { useDailyData, CATEGORIES, formatDateForStorage } from '@/lib/database'
+import { celebrate } from '@/lib/particle-physics-engine'
+import { useUser } from '@/lib/contexts/user-context'
+import { isCelebrationEnabled } from '@/lib/celebration-prefs'
+
+export function HeadPainTracker() {
+  const { saveData, getDateRange, isLoading } = useDailyData()
+  const { userPin } = useUser()
+  const { toast } = useToast()
+  const router = useRouter()
+
+  const [entries, setEntries] = useState<HeadPainEntry[]>([])
+  const [activeTab, setActiveTab] = useState<'add' | 'history' | 'analytics'>('add')
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
+
+  const [activeModal, setActiveModal] = useState<string | null>(null)
+  const [initialEpisodeType, setInitialEpisodeType] = useState<HeadPainEpisodeType | undefined>(undefined)
+  const [editingEntry, setEditingEntry] = useState<HeadPainEntry | null>(null)
+
+  useEffect(() => { loadEntries() }, [refreshTrigger])
+
+  const loadEntries = async () => {
+    try {
+      const today = formatDateForStorage(new Date())
+      const allRecords = await getDateRange('2000-01-01', today, CATEGORIES.TRACKER)
+      const headPainRecords = allRecords.filter(r => r.subcategory === 'head-pain')
+
+      const all: HeadPainEntry[] = []
+      for (const data of headPainRecords) {
+        if (data?.content?.entries) {
+          let parsed = data.content.entries
+          if (typeof parsed === 'string') {
+            try { parsed = JSON.parse(parsed) } catch { parsed = [] }
+          }
+          if (!Array.isArray(parsed)) parsed = [parsed]
+          for (const entry of parsed) {
+            if (entry && typeof entry === 'object') {
+              if (!entry.episodeType) entry.episodeType = 'general'
+              all.push(entry)
+            }
+          }
+        }
+      }
+      setEntries(all)
+    } catch (e) {
+      console.error('Head pain load fail:', e)
+      toast({ title: 'Loading Error', variant: 'destructive' })
+    }
+  }
+
+  const handleSaveEntry = async (entryData: Omit<HeadPainEntry, 'id'>) => {
+    try {
+      const { timestamp: ts, date: d, ...rest } = entryData
+      const newEntry: HeadPainEntry = {
+        id: `head-pain-${Date.now()}`,
+        timestamp: ts || new Date().toISOString(),
+        date: d || formatDateForStorage(new Date()),
+        ...rest,
+      }
+      const storageDate = newEntry.date
+      const existingForDate = entries.filter(e => e.date === storageDate)
+      const updatedForDate = [...existingForDate, newEntry]
+      await saveData(storageDate, CATEGORIES.TRACKER, 'head-pain', { entries: updatedForDate }, newEntry.tags || [])
+
+      const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
+      if (confettiLevel !== 'none' && isCelebrationEnabled('head-pain', userPin ?? '')) celebrate()
+
+      toast({ title: '🧠 Head Pain Logged', description: 'Episode recorded for your neurologist' })
+      setActiveModal(null); setEditingEntry(null); setInitialEpisodeType(undefined)
+      setRefreshTrigger(t => t + 1)
+    } catch (e) {
+      console.error('Head pain save fail:', e)
+      toast({ title: 'Save Error', variant: 'destructive' })
+    }
+  }
+
+  const handleUpdateEntry = async (entryData: Omit<HeadPainEntry, 'id'>) => {
+    if (!editingEntry) return
+    try {
+      const updated: HeadPainEntry = { ...editingEntry, ...entryData, id: editingEntry.id }
+      const oldDate = editingEntry.date
+      const newDate = updated.date
+
+      if (oldDate !== newDate) {
+        const oldBucket = entries.filter(e => e.date === oldDate && e.id !== editingEntry.id)
+        const newBucket = [...entries.filter(e => e.date === newDate), updated]
+        await saveData(oldDate, CATEGORIES.TRACKER, 'head-pain', { entries: oldBucket })
+        await saveData(newDate, CATEGORIES.TRACKER, 'head-pain', { entries: newBucket }, updated.tags || [])
+      } else {
+        const bucket = entries.filter(e => e.date === oldDate).map(e => e.id === editingEntry.id ? updated : e)
+        await saveData(oldDate, CATEGORIES.TRACKER, 'head-pain', { entries: bucket }, updated.tags || [])
+      }
+
+      toast({ title: 'Episode Updated' })
+      setActiveModal(null); setEditingEntry(null)
+      setRefreshTrigger(t => t + 1)
+    } catch (e) {
+      console.error('Head pain update fail:', e)
+      toast({ title: 'Update Error', variant: 'destructive' })
+    }
+  }
+
+  const handleDeleteEntry = async (entry: HeadPainEntry) => {
+    try {
+      const bucket = entries.filter(e => e.date === entry.date && e.id !== entry.id)
+      await saveData(entry.date, CATEGORIES.TRACKER, 'head-pain', { entries: bucket })
+      toast({ title: 'Episode Deleted' })
+      setRefreshTrigger(t => t + 1)
+    } catch (e) {
+      console.error('Head pain delete fail:', e)
+      toast({ title: 'Delete Error', variant: 'destructive' })
+    }
+  }
+
+  const handleEditEntry = (entry: HeadPainEntry) => {
+    setEditingEntry(entry)
+    setInitialEpisodeType(entry.episodeType)
+    setActiveModal('general')
+  }
+
+  const openModalForType = (id: HeadPainEpisodeType) => {
+    setEditingEntry(null)
+    setInitialEpisodeType(id)
+    setActiveModal('general')
+  }
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto p-4">
+        <Card><CardContent className="p-6"><div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Loading head pain tracker...</p>
+        </div></CardContent></Card>
+      </div>
+    )
+  }
+
+  const todayStr = formatDateForStorage(new Date())
+  const todaysEntries = entries.filter(e => e.date === todayStr)
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-6 pt-6">
+      <div className="text-center mb-6">
+        <h1 className="text-3xl font-bold text-foreground flex items-center justify-center gap-2">
+          <Brain className="h-8 w-8 text-purple-500" />
+          Head Pain Tracker
+        </h1>
+        <p className="text-muted-foreground mt-1">
+          Migraines, tension, cluster, sinus — with SAH / stroke / meningitis red flags
+        </p>
+      </div>
+
+      <EmergencyCriteriaCard
+        storageKey="head-pain-911-acknowledged"
+        criteria={RED_FLAG_911_CRITERIA}
+        footerNote="When in doubt, especially for sudden severe head pain, call 911."
+        recentEmergencyDetected={(() => {
+          const now = new Date()
+          return entries.some(e => {
+            try {
+              if (differenceInDays(now, new Date(e.date)) > 30) return false
+              return !!(
+                e.erVisitRequired ||
+                e.emergencyServicesCalled ||
+                e.worstHeadacheOfLife ||
+                e.thunderclapOnset ||
+                e.focalNeuroDeficit ||
+                e.oneSidedWeakness ||
+                e.speechDifficulty ||
+                (e.neckStiffness && e.fever) ||
+                e.episodeType === 'worst-of-life' ||
+                (e.painIntensity && e.painIntensity >= 9)
+              )
+            } catch { return false }
+          })
+        })()}
+      />
+
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="add" className="flex items-center gap-2"><Plus className="h-4 w-4" /> Add Episode</TabsTrigger>
+          <TabsTrigger value="history" className="flex items-center gap-2"><History className="h-4 w-4" /> History</TabsTrigger>
+          <TabsTrigger value="analytics" className="flex items-center gap-2"><BarChart3 className="h-4 w-4" /> Analytics</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="add" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Log a Head Pain Episode</CardTitle>
+              <CardDescription>Pick the closest type — adjustable inside.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {EPISODE_TYPES.map((type) => (
+                  <Button
+                    key={type.id}
+                    variant="outline"
+                    className="h-auto py-3 flex flex-col items-start text-left whitespace-normal"
+                    onClick={() => openModalForType(type.id)}
+                  >
+                    <span className="text-xl mb-1">{type.icon}</span>
+                    <span className="font-semibold text-sm">{type.name}</span>
+                    <span className="text-xs text-muted-foreground mt-1 text-left">{type.description}</span>
+                  </Button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {todaysEntries.length > 0 && (
+            <Card>
+              <CardHeader><CardTitle className="text-lg">Today's Episodes ({todaysEntries.length})</CardTitle></CardHeader>
+              <CardContent className="space-y-3">
+                {todaysEntries.map((entry) => {
+                  const info = getEpisodeTypeInfo(entry.episodeType)
+                  return (
+                    <Card key={entry.id} className="bg-muted/30">
+                      <CardContent className="pt-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1 flex-wrap">
+                              <span className="text-lg">{info.icon}</span>
+                              <span className="font-semibold">{info.name}</span>
+                              <Badge variant="destructive">{getGremlinEmoji(entry.painIntensity || 0)} {entry.painIntensity}/10</Badge>
+                              {entry.auraPresent && <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-300">Aura</Badge>}
+                              {entry.rescueRedosed && <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-300">Multi-rescue</Badge>}
+                              {entry.worstHeadacheOfLife && <Badge variant="destructive">WHOL</Badge>}
+                              {entry.thunderclapOnset && <Badge variant="destructive">Thunderclap</Badge>}
+                              {entry.erVisitRequired && <Badge variant="destructive">ER</Badge>}
+                              {entry.attachmentImages && entry.attachmentImages.length > 0 && (
+                                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300">
+                                  📎 {entry.attachmentImages.length}
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {entry.timestamp && format(new Date(entry.timestamp), 'h:mm a')}
+                              {entry.duration && ` • ${entry.duration}`}
+                              {entry.baselineHeadachePain !== undefined && ` • baseline ${entry.baselineHeadachePain}/10 (delta +${(entry.painIntensity || 0) - entry.baselineHeadachePain})`}
+                            </div>
+                          </div>
+                          <div className="flex gap-1">
+                            <Button size="sm" variant="ghost" onClick={() => handleEditEntry(entry)}>Edit</Button>
+                            <Button size="sm" variant="ghost" onClick={() => handleDeleteEntry(entry)}>Delete</Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )
+                })}
+              </CardContent>
+            </Card>
+          )}
+
+          <Card>
+            <CardHeader><CardTitle className="text-lg">Related Trackers</CardTitle></CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {RELATED_TRACKERS.map((t) => (
+                  <Button key={t.id} variant="ghost" className="justify-start" onClick={() => router.push(t.path)}>
+                    <span className="mr-2">{t.icon}</span>
+                    <span className="font-medium">{t.name}</span>
+                    <ExternalLink className="h-3 w-3 ml-auto" />
+                  </Button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="history" className="space-y-4">
+          <HeadPainHistory entries={entries} onEdit={handleEditEntry} onDelete={handleDeleteEntry} onAddNew={() => setActiveTab('add')} />
+        </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-4">
+          <HeadPainAnalytics entries={entries} />
+        </TabsContent>
+      </Tabs>
+
+      <GeneralHeadPainModal
+        isOpen={activeModal === 'general'}
+        onClose={() => { setActiveModal(null); setEditingEntry(null); setInitialEpisodeType(undefined) }}
+        onSave={editingEntry ? handleUpdateEntry : handleSaveEntry}
+        editingEntry={editingEntry}
+        initialEpisodeType={initialEpisodeType}
+      />
+    </div>
+  )
+}
