@@ -14,7 +14,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Slider } from '@/components/ui/slider'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Wind, Plus, AlertTriangle } from 'lucide-react'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import { Wind, Plus, AlertTriangle, ChevronDown, ChevronRight } from 'lucide-react'
 
 import { RespiratoryEntry, RespiratoryModalProps, RespiratoryEpisodeType } from '../respiratory-types'
 import { RESPIRATORY_SYMPTOMS, RESPIRATORY_TRIGGERS, EPISODE_TYPES, getSeverityLabel, getSeverityColor, getRedFlagWarnings, getInterimMeasures, BREATHING_PATTERNS } from '../respiratory-constants'
@@ -43,6 +44,21 @@ export function GeneralRespiratoryModal({ isOpen, onClose, onSave, editingEntry 
   const [attachmentImages, setAttachmentImages] = useState<string[]>([])
   const [notes, setNotes] = useState('')
   const [tags, setTags] = useState<string[]>([])
+
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
+    eventType: true,
+    vitals: true,
+    breathingPattern: true,
+    severity: true,
+    allergic: true,
+    symptoms: true,
+    triggers: true,
+    resolution: true,
+    attachments: true,
+    notes: true,
+    tags: true,
+  })
+  const toggleSection = (key: string) => setOpenSections(prev => ({ ...prev, [key]: !prev[key] }))
 
   useEffect(() => {
     if (editingEntry) {
@@ -139,70 +155,176 @@ export function GeneralRespiratoryModal({ isOpen, onClose, onSave, editingEntry 
 
           <EntryDateTimePicker date={entryDate} time={entryTime} onChange={(d, t) => { setEntryDate(d); setEntryTime(t) }} />
 
-          <div className="space-y-3">
-            <Label>Event Type</Label>
-            <Select value={episodeType} onValueChange={(v) => setEpisodeType(v as RespiratoryEpisodeType)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{EPISODE_TYPES.map(t => <SelectItem key={t.id} value={t.id} textValue={t.name}>{t.icon} {t.name}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
+          <Collapsible open={openSections.eventType} onOpenChange={() => toggleSection('eventType')}>
+            <CollapsibleTrigger asChild>
+              <Button variant="outline" className="w-full justify-between h-auto py-3">
+                <span className="font-medium">Event Type</span>
+                {openSections.eventType ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pt-3">
+              <div className="space-y-3">
+                <Select value={episodeType} onValueChange={(v) => setEpisodeType(v as RespiratoryEpisodeType)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{EPISODE_TYPES.map(t => <SelectItem key={t.id} value={t.id} textValue={t.name}>{t.icon} {t.name}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div><Label>Lowest SpO2 (%)</Label><Input type="number" value={spo2Lowest} onChange={(e) => setSpo2Lowest(e.target.value)} placeholder="e.g., 92" /></div>
-            <div><Label>HR at event (bpm)</Label><Input type="number" value={hrAtEvent} onChange={(e) => setHrAtEvent(e.target.value)} placeholder="e.g., 110" /></div>
-          </div>
+          <Collapsible open={openSections.vitals} onOpenChange={() => toggleSection('vitals')}>
+            <CollapsibleTrigger asChild>
+              <Button variant="outline" className="w-full justify-between h-auto py-3">
+                <span className="font-medium">Vitals (SpO2 / HR)</span>
+                {openSections.vitals ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pt-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label>Lowest SpO2 (%)</Label><Input type="number" value={spo2Lowest} onChange={(e) => setSpo2Lowest(e.target.value)} placeholder="e.g., 92" /></div>
+                <div><Label>HR at event (bpm)</Label><Input type="number" value={hrAtEvent} onChange={(e) => setHrAtEvent(e.target.value)} placeholder="e.g., 110" /></div>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
 
-          <div className="space-y-3">
-            <Label>Breathing Pattern</Label>
-            <Select value={breathingPattern} onValueChange={setBreathingPattern}>
-              <SelectTrigger><SelectValue placeholder="Select breathing pattern" /></SelectTrigger>
-              <SelectContent>{BREATHING_PATTERNS.map(p => <SelectItem key={p.value} value={p.value} textValue={p.label}>{p.label}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
+          <Collapsible open={openSections.breathingPattern} onOpenChange={() => toggleSection('breathingPattern')}>
+            <CollapsibleTrigger asChild>
+              <Button variant="outline" className="w-full justify-between h-auto py-3">
+                <span className="font-medium">Breathing Pattern</span>
+                {openSections.breathingPattern ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pt-3">
+              <div className="space-y-3">
+                <Select value={breathingPattern} onValueChange={setBreathingPattern}>
+                  <SelectTrigger><SelectValue placeholder="Select breathing pattern" /></SelectTrigger>
+                  <SelectContent>{BREATHING_PATTERNS.map(p => <SelectItem key={p.value} value={p.value} textValue={p.label}>{p.label}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
 
-          <div className="space-y-3">
-            <Label>Severity: {severity[0]} - <span className={getSeverityColor(severity[0])}>{getSeverityLabel(severity[0])}</span></Label>
-            <Slider value={severity} onValueChange={setSeverity} max={10} min={1} step={1} />
-          </div>
+          <Collapsible open={openSections.severity} onOpenChange={() => toggleSection('severity')}>
+            <CollapsibleTrigger asChild>
+              <Button variant="outline" className="w-full justify-between h-auto py-3">
+                <span className="font-medium">Severity</span>
+                {openSections.severity ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pt-3">
+              <div className="space-y-3">
+                <Label>Severity: {severity[0]} - <span className={getSeverityColor(severity[0])}>{getSeverityLabel(severity[0])}</span></Label>
+                <Slider value={severity} onValueChange={setSeverity} max={10} min={1} step={1} />
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
 
-          <div className="space-y-3">
-            <h4 className="font-medium">Allergic Reaction Indicators (check if present)</h4>
-            <div className="grid grid-cols-1 gap-2">
-              <div className="flex items-center space-x-2"><Checkbox id="swelling" checked={swelling} onCheckedChange={(v) => setSwelling(!!v)} /><Label htmlFor="swelling">Face / lip / tongue swelling</Label></div>
-              <div className="flex items-center space-x-2"><Checkbox id="hives" checked={hivesPresent} onCheckedChange={(v) => setHivesPresent(!!v)} /><Label htmlFor="hives">Hives / welts</Label></div>
-              <div className="flex items-center space-x-2"><Checkbox id="throat" checked={throatTightness} onCheckedChange={(v) => setThroatTightness(!!v)} /><Label htmlFor="throat">Throat tightness / voice changes</Label></div>
-              <div className="flex items-center space-x-2"><Checkbox id="epi" checked={epinephrineGiven} onCheckedChange={(v) => setEpinephrineGiven(!!v)} /><Label htmlFor="epi">EpiPen / Epinephrine given</Label></div>
-            </div>
-          </div>
+          <Collapsible open={openSections.allergic} onOpenChange={() => toggleSection('allergic')}>
+            <CollapsibleTrigger asChild>
+              <Button variant="outline" className="w-full justify-between h-auto py-3">
+                <span className="font-medium">Allergic Reaction Indicators</span>
+                {openSections.allergic ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pt-3">
+              <div className="space-y-3">
+                <h4 className="font-medium">Allergic Reaction Indicators (check if present)</h4>
+                <div className="grid grid-cols-1 gap-2">
+                  <div className="flex items-center space-x-2"><Checkbox id="swelling" checked={swelling} onCheckedChange={(v) => setSwelling(!!v)} /><Label htmlFor="swelling">Face / lip / tongue swelling</Label></div>
+                  <div className="flex items-center space-x-2"><Checkbox id="hives" checked={hivesPresent} onCheckedChange={(v) => setHivesPresent(!!v)} /><Label htmlFor="hives">Hives / welts</Label></div>
+                  <div className="flex items-center space-x-2"><Checkbox id="throat" checked={throatTightness} onCheckedChange={(v) => setThroatTightness(!!v)} /><Label htmlFor="throat">Throat tightness / voice changes</Label></div>
+                  <div className="flex items-center space-x-2"><Checkbox id="epi" checked={epinephrineGiven} onCheckedChange={(v) => setEpinephrineGiven(!!v)} /><Label htmlFor="epi">EpiPen / Epinephrine given</Label></div>
+                </div>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
 
-          <div className="space-y-3">
-            <Label>Symptoms</Label>
-            <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
-              {RESPIRATORY_SYMPTOMS.map(s => (
-                <div key={s} className="flex items-center space-x-2"><Checkbox id={`s-${s}`} checked={symptoms.includes(s)} onCheckedChange={() => toggle(symptoms, setSymptoms)(s)} /><Label htmlFor={`s-${s}`} className="text-sm">{s}</Label></div>
-              ))}
-            </div>
-          </div>
+          <Collapsible open={openSections.symptoms} onOpenChange={() => toggleSection('symptoms')}>
+            <CollapsibleTrigger asChild>
+              <Button variant="outline" className="w-full justify-between h-auto py-3">
+                <span className="font-medium">Symptoms</span>
+                {openSections.symptoms ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pt-3">
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
+                  {RESPIRATORY_SYMPTOMS.map(s => (
+                    <div key={s} className="flex items-center space-x-2"><Checkbox id={`s-${s}`} checked={symptoms.includes(s)} onCheckedChange={() => toggle(symptoms, setSymptoms)(s)} /><Label htmlFor={`s-${s}`} className="text-sm">{s}</Label></div>
+                  ))}
+                </div>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
 
-          <div className="space-y-3">
-            <Label>Triggers</Label>
-            <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
-              {RESPIRATORY_TRIGGERS.map(t => (
-                <div key={t} className="flex items-center space-x-2"><Checkbox id={`t-${t}`} checked={triggers.includes(t)} onCheckedChange={() => toggle(triggers, setTriggers)(t)} /><Label htmlFor={`t-${t}`} className="text-sm">{t}</Label></div>
-              ))}
-            </div>
-          </div>
+          <Collapsible open={openSections.triggers} onOpenChange={() => toggleSection('triggers')}>
+            <CollapsibleTrigger asChild>
+              <Button variant="outline" className="w-full justify-between h-auto py-3">
+                <span className="font-medium">Triggers</span>
+                {openSections.triggers ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pt-3">
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
+                  {RESPIRATORY_TRIGGERS.map(t => (
+                    <div key={t} className="flex items-center space-x-2"><Checkbox id={`t-${t}`} checked={triggers.includes(t)} onCheckedChange={() => toggle(triggers, setTriggers)(t)} /><Label htmlFor={`t-${t}`} className="text-sm">{t}</Label></div>
+                  ))}
+                </div>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div><Label>Time to resolution (min)</Label><Input type="number" value={timeToResolutionMin} onChange={(e) => setTimeToResolutionMin(e.target.value)} placeholder="e.g., 30" /></div>
-            <div className="flex items-end pb-2"><div className="flex items-center space-x-2"><Checkbox id="er" checked={erVisitRequired} onCheckedChange={(v) => setErVisitRequired(!!v)} /><Label htmlFor="er">ER / EMS visit required</Label></div></div>
-          </div>
+          <Collapsible open={openSections.resolution} onOpenChange={() => toggleSection('resolution')}>
+            <CollapsibleTrigger asChild>
+              <Button variant="outline" className="w-full justify-between h-auto py-3">
+                <span className="font-medium">Resolution / ER Visit</span>
+                {openSections.resolution ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pt-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label>Time to resolution (min)</Label><Input type="number" value={timeToResolutionMin} onChange={(e) => setTimeToResolutionMin(e.target.value)} placeholder="e.g., 30" /></div>
+                <div className="flex items-end pb-2"><div className="flex items-center space-x-2"><Checkbox id="er" checked={erVisitRequired} onCheckedChange={(v) => setErVisitRequired(!!v)} /><Label htmlFor="er">ER / EMS visit required</Label></div></div>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
 
-          <AttachmentUploader value={attachmentImages} onChange={setAttachmentImages} label="Attachments (Optional)" helpText="Photos of rashes, peak flow chart screenshots, lab results, etc." blobPrefix="respiratory" />
+          <Collapsible open={openSections.attachments} onOpenChange={() => toggleSection('attachments')}>
+            <CollapsibleTrigger asChild>
+              <Button variant="outline" className="w-full justify-between h-auto py-3">
+                <span className="font-medium">Attachments</span>
+                {openSections.attachments ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pt-3">
+              <AttachmentUploader value={attachmentImages} onChange={setAttachmentImages} label="Attachments (Optional)" helpText="Photos of rashes, peak flow chart screenshots, lab results, etc." blobPrefix="respiratory" />
+            </CollapsibleContent>
+          </Collapsible>
 
-          <div className="space-y-3"><Label htmlFor="notes">Notes (Optional)</Label><Textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder="Additional details..." /></div>
+          <Collapsible open={openSections.notes} onOpenChange={() => toggleSection('notes')}>
+            <CollapsibleTrigger asChild>
+              <Button variant="outline" className="w-full justify-between h-auto py-3">
+                <span className="font-medium">Notes</span>
+                {openSections.notes ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pt-3">
+              <div className="space-y-3"><Label htmlFor="notes">Notes (Optional)</Label><Textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder="Additional details..." /></div>
+            </CollapsibleContent>
+          </Collapsible>
 
-          <div className="space-y-3"><Label>Tags (Optional)</Label><TagInput value={tags} onChange={setTags} placeholder="Add tags..." /></div>
+          <Collapsible open={openSections.tags} onOpenChange={() => toggleSection('tags')}>
+            <CollapsibleTrigger asChild>
+              <Button variant="outline" className="w-full justify-between h-auto py-3">
+                <span className="font-medium">Tags</span>
+                {openSections.tags ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pt-3">
+              <div className="space-y-3"><Label>Tags (Optional)</Label><TagInput value={tags} onChange={setTags} placeholder="Add tags..." /></div>
+            </CollapsibleContent>
+          </Collapsible>
 
           <div className="flex gap-3 pt-4">
             <Button type="button" variant="outline" onClick={handleClose} className="flex-1">Cancel</Button>
