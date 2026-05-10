@@ -649,7 +649,7 @@ export function generateMedicalReport(data: ReportData): Blob {
       .slice(0, 8)
     if (txRanked.length && isDoctor) {
       w.spacer(2)
-      w.subSection('Treatment effectiveness (≥2 uses)')
+      w.subSection('Treatment effectiveness (2+ uses)')
       const rows = txRanked.map(t => [t.name, `${(t.avg).toFixed(1)}/10`, String(t.n)])
       w.table(['Treatment', 'Avg Effectiveness', 'Uses'], rows, [220, 100, 60], COLORS.painHeader)
     }
@@ -663,7 +663,7 @@ export function generateMedicalReport(data: ReportData): Blob {
     if (emsCount > 0) flagLines.push(`EMS contacted ${emsCount}×`)
     if (flagLines.length && isDoctor) {
       w.spacer(2)
-      w.subSection('🚨 Red flags from pain entries')
+      w.subSection('Red flags from pain entries')
       for (const f of flagLines) w.finding(f)
     }
 
@@ -745,7 +745,7 @@ export function generateMedicalReport(data: ReportData): Blob {
       .map(([name, s]) => ({ name, avg: s.reduce((a, b) => a + b, 0) / s.length, n: s.length }))
       .sort((a, b) => b.avg - a.avg).slice(0, 6)
     if (txRanked.length) {
-      w.subSection('Treatment effectiveness (≥2 uses)')
+      w.subSection('Treatment effectiveness (2+ uses)')
       w.table(['Treatment', 'Avg/10', 'Uses'], txRanked.map(t => [t.name, t.avg.toFixed(1), String(t.n)]), [240, 80, 60], COLORS.painHeader)
     }
   }
@@ -1012,7 +1012,7 @@ export function generateMedicalReport(data: ReportData): Blob {
       w.body(`${total} entries. Mean anxiety ${avg.toFixed(1)}/10. Panic attacks: ${panicAttacks}. Meltdowns: ${meltdowns}.`)
     }
     if (si > 0 || sh > 0) {
-      w.subSection('💜 Crisis-flagged entries')
+      w.subSection('Crisis-flagged entries')
       if (si > 0) w.finding(`Suicidal ideation flagged: ${si} entries.`)
       if (sh > 0) w.finding(`Self-harm urges flagged: ${sh} entries.`)
       if (hopeless > 0) w.finding(`Hopelessness flagged: ${hopeless} entries.`)
@@ -1065,7 +1065,7 @@ export function generateMedicalReport(data: ReportData): Blob {
       const v2 = analyzeV2Patterns(patternsByTracker, 90)
       const high = v2.insights.filter((i: any) => i.impact === 'high')
       if (high.length > 0) {
-        w.sectionHeader('🚨 Detected Medical Patterns')
+        w.sectionHeader('Detected Medical Patterns')
         w.body(`Pattern engine detected ${high.length} high-impact pattern${high.length !== 1 ? 's' : ''} in tracked data:`)
         for (const insight of high.slice(0, 12)) {
           w.subSection(insight.title)
