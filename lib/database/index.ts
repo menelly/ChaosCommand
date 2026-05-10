@@ -84,10 +84,3 @@ export type {
   ExportResult
 } from './g-spot-4.0-boring-file-steganography';
 
-// ============================================================================
-// G-SPOT 3.0 CRYPTOGRAPHIC STEGANOGRAPHY (LEGACY SUPPORT)
-// ============================================================================
-// Import G-Spot 3.0 if needed for backward compatibility
-// export { ... } from './g-spot-3.0-cryptographic-steganography';
-
-
