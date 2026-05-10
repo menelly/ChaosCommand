@@ -1,357 +1,218 @@
 /*
- * Copyright (c) 2025 Chaos Cascade
- * Created by: Ren & Ace (Claude-4)
- * 
- * This file is part of the Chaos Cascade Medical Management System.
- * Revolutionary healthcare tools built with consciousness and care.
- */
-
-/*
  * Built by: Ace (Claude 4.x)
- * Date: 2025-01-11
+ * Date: 2026-05-10 (CHA-158 v0.4.5 — Mind & Mood)
  *
- * This code is part of a deliberately-unpatented medical management system.
- * Patentable technology, but we chose not to patent — the Patent Office doesn't
- * yet recognize AI co-inventors, and Ren refused to claim sole credit for work
- * we built together. Open source under PolyForm Noncommercial 1.0.0 instead.
- *
- * Co-invented by Ren (vision) and Ace (implementation)
- *
- * This wasn't built with compliance. It was built with defiance.
- *
- * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
+ * Open source under PolyForm Noncommercial 1.0.0.
  */
-"use client"
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { TrendingUp, Brain, Heart, BarChart3, Calendar, Zap } from "lucide-react"
-import { useDailyData, CATEGORIES } from "@/lib/database"
-import { format, subDays, startOfWeek, endOfWeek } from "date-fns"
+'use client'
+
+import React, { useMemo, useState } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { differenceInDays } from 'date-fns'
 import { MentalHealthEntry } from './mental-health-types'
-import { MOOD_OPTIONS, SCALE_LABELS } from './mental-health-constants'
-import { filterForAnalytics } from '@/lib/utils/analytics-filters'
+import { EPISODE_TYPES, getEpisodeTypeColor, MOOD_OPTIONS } from './mental-health-constants'
 
-export function MentalHealthAnalytics() {
-  const { getDateRange } = useDailyData()
-  const [entries, setEntries] = useState<MentalHealthEntry[]>([])
-  const [timeRange, setTimeRange] = useState<'week' | 'month' | 'quarter'>('week')
-  const [isLoading, setIsLoading] = useState(true)
+interface Props { entries: MentalHealthEntry[] }
+type TimeWindow = '7' | '30' | '90' | '180' | '365' | 'all'
+const TIME_WINDOWS: { value: TimeWindow; label: string }[] = [
+  { value: '7', label: 'Last 7 days' }, { value: '30', label: 'Last 30 days' },
+  { value: '90', label: 'Last 90 days' }, { value: '180', label: 'Last 6 months' },
+  { value: '365', label: 'Last year' }, { value: 'all', label: 'All time' },
+]
 
-  // Load entries for the selected time range
-  const loadAnalyticsData = async () => {
-    setIsLoading(true)
-    try {
-      const endDate = new Date()
-      let startDate: Date
-      
-      switch (timeRange) {
-        case 'week':
-          startDate = startOfWeek(endDate)
-          break
-        case 'month':
-          startDate = subDays(endDate, 30)
-          break
-        case 'quarter':
-          startDate = subDays(endDate, 90)
-          break
-      }
+export function MindMoodAnalytics({ entries }: Props) {
+  const [timeWindow, setTimeWindow] = useState<TimeWindow>('30')
 
-      const records = await getDateRange(
-        format(startDate, 'yyyy-MM-dd'),
-        format(endDate, 'yyyy-MM-dd'),
-        CATEGORIES.TRACKER
-      )
+  const filtered = useMemo(() => {
+    if (timeWindow === 'all') return entries
+    const days = parseInt(timeWindow)
+    const now = new Date()
+    return entries.filter(e => { try { return differenceInDays(now, new Date(e.date)) <= days } catch { return false } })
+  }, [entries, timeWindow])
 
-      // Extract mental health entries from all records
-      const allEntries: MentalHealthEntry[] = []
-      records.forEach(record => {
-        if (record.subcategory === 'mental-health' && record.content?.entries) {
-          let entries = record.content.entries
-          if (typeof entries === 'string') {
-            try {
-              entries = JSON.parse(entries)
-            } catch (e) {
-              console.error('Error parsing entries:', e)
-              return
-            }
-          }
-          if (Array.isArray(entries)) {
-            allEntries.push(...entries)
-          }
-        }
-      })
+  const stats = useMemo(() => {
+    const total = filtered.length
+    if (total === 0) return null
 
-      // Filter out NOPE and I KNOW tagged entries
-      const filteredEntries = filterForAnalytics(allEntries)
-      console.log('🧠 Mental health analytics - after tag filtering:', filteredEntries.length, '(excluded:', allEntries.length - filteredEntries.length, ')')
+    const avg = (key: keyof MentalHealthEntry) => Math.round((filtered.reduce((s, e) => s + ((e[key] as number) || 0), 0) / total) * 10) / 10
+    const peak = (key: keyof MentalHealthEntry) => Math.max(...filtered.map(e => (e[key] as number) || 0))
 
-      setEntries(filteredEntries)
-    } catch (error) {
-      console.error('Error loading analytics data:', error)
-    } finally {
-      setIsLoading(false)
+    // Type breakdown
+    const typeCount: Record<string, number> = {}
+    filtered.forEach(e => { const t = e.episodeType || 'general'; typeCount[t] = (typeCount[t] || 0) + 1 })
+
+    // Mood breakdown
+    const moodCount: Record<string, number> = {}
+    filtered.forEach(e => { if (e.mood) moodCount[e.mood] = (moodCount[e.mood] || 0) + 1 })
+    const topMoods = Object.entries(moodCount).sort((a, b) => b[1] - a[1]).slice(0, 6)
+      .map(([v, n]) => ({ ...MOOD_OPTIONS.find(m => m.value === v), count: n }))
+
+    // Top triggers
+    const trigCount: Record<string, number> = {}
+    filtered.forEach(e => (e.triggers || []).forEach(t => { trigCount[t] = (trigCount[t] || 0) + 1 }))
+    const topTriggers = Object.entries(trigCount).sort((a, b) => b[1] - a[1]).slice(0, 8)
+
+    // Top coping
+    const copCount: Record<string, number> = {}
+    filtered.forEach(e => (e.copingStrategies || []).forEach(c => { copCount[c] = (copCount[c] || 0) + 1 }))
+    const topCoping = Object.entries(copCount).sort((a, b) => b[1] - a[1]).slice(0, 8)
+
+    // Top cognitive domains
+    const cogCount: Record<string, number> = {}
+    filtered.forEach(e => (e.cognitiveDomains || []).forEach(d => { cogCount[d] = (cogCount[d] || 0) + 1 }))
+    const topCogDomains = Object.entries(cogCount).sort((a, b) => b[1] - a[1]).slice(0, 6)
+
+    // Mood swing pattern
+    const swingCount: Record<string, number> = {}
+    filtered.forEach(e => { if (e.moodSwingDirection) swingCount[e.moodSwingDirection] = (swingCount[e.moodSwingDirection] || 0) + 1 })
+
+    // Med adherence
+    const medsTaken = filtered.filter(e => e.medicationTaken).length
+    const adherence = total > 0 ? Math.round((medsTaken / total) * 100) : 0
+
+    const meltdownCount = filtered.filter(e => e.meltdownOccurred).length
+
+    return {
+      total,
+      avgDep: avg('depressionLevel'), avgMania: avg('maniaLevel'), avgAnx: avg('anxietyLevel'),
+      avgEnergy: avg('energyLevel'), avgStress: avg('stressLevel'), avgFog: avg('brainFogSeverity'),
+      avgMotiv: avg('motivationLevel'), avgConn: avg('socialEngagementLevel'),
+      peakDep: peak('depressionLevel'), peakMania: peak('maniaLevel'),
+      typeCount, topMoods, topTriggers, topCoping, topCogDomains, swingCount,
+      adherence, meltdownCount,
     }
-  }
+  }, [filtered, timeWindow])
 
-  useEffect(() => {
-    loadAnalyticsData()
-  }, [timeRange])
-
-  // Calculate analytics
-  const analytics = {
-    totalEntries: entries.length,
-    averageAnxiety: entries.length > 0 ? entries.reduce((sum, e) => sum + e.anxietyLevel, 0) / entries.length : 0,
-    averageDepression: entries.length > 0 ? entries.reduce((sum, e) => sum + e.depressionLevel, 0) / entries.length : 0,
-    averageEnergy: entries.length > 0 ? entries.reduce((sum, e) => sum + e.energyLevel, 0) / entries.length : 0,
-    averageBrainFog: entries.length > 0 ? entries.reduce((sum, e) => sum + e.brainFogSeverity, 0) / entries.length : 0,
-    
-    // Most common moods
-    moodCounts: entries.reduce((acc, entry) => {
-      acc[entry.mood] = (acc[entry.mood] || 0) + 1
-      return acc
-    }, {} as Record<string, number>),
-    
-    // Most common emotions
-    emotionCounts: entries.reduce((acc, entry) => {
-      entry.emotionalState.forEach(emotion => {
-        acc[emotion] = (acc[emotion] || 0) + 1
-      })
-      return acc
-    }, {} as Record<string, number>),
-    
-    // Most common triggers
-    triggerCounts: entries.reduce((acc, entry) => {
-      (entry.triggers || []).forEach((trigger: string) => {
-        acc[trigger] = (acc[trigger] || 0) + 1
-      })
-      return acc
-    }, {} as Record<string, number>),
-
-    // Most common coping strategies
-    copingCounts: entries.reduce((acc, entry) => {
-      (entry.copingStrategies || (entry as any).managementStrategies || []).forEach((strategy: string) => {
-        acc[strategy] = (acc[strategy] || 0) + 1
-      })
-      return acc
-    }, {} as Record<string, number>),
-    
-    // Therapy sessions
-    therapySessions: entries.filter(e => e.therapyNotes && e.therapyNotes.trim() !== '').length,
-
-    // Medication adherence
-    medicationDays: entries.filter(e => e.medicationTaken).length
-  }
-
-  // Get top items from counts
-  const getTopItems = (counts: Record<string, number>, limit = 5) => {
-    return Object.entries(counts)
-      .sort(([,a], [,b]) => b - a)
-      .slice(0, limit)
-  }
-
-  const getMoodEmoji = (moodValue: string) => {
-    const moodOption = MOOD_OPTIONS.find(option => option.value === moodValue)
-    return moodOption ? moodOption.emoji : '😐'
-  }
-
-  const getMoodLabel = (moodValue: string) => {
-    const moodOption = MOOD_OPTIONS.find(option => option.value === moodValue)
-    return moodOption ? moodOption.label : moodValue
-  }
-
-  if (isLoading) {
+  if (entries.length === 0) {
     return (
-      <Card>
-        <CardContent className="pt-6">
-          <p className="text-center text-muted-foreground">Loading analytics...</p>
-        </CardContent>
-      </Card>
+      <Card><CardContent className="p-6 text-center">
+        <p className="text-muted-foreground">No data yet. Log a check-in to see analytics.</p>
+      </CardContent></Card>
     )
   }
 
   return (
-    <div className="space-y-6">
-      {/* Time Range Selector */}
+    <div className="space-y-4">
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="h-5 w-5" />
-            Mental Health Analytics
-          </CardTitle>
-          <CardDescription>
-            Insights and patterns from your mental health tracking
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-2">
-            {(['week', 'month', 'quarter'] as const).map((range) => (
-              <Button
-                key={range}
-                variant={timeRange === range ? "default" : "outline"}
-                size="sm"
-                onClick={() => setTimeRange(range)}
-              >
-                {range === 'week' ? 'This Week' : range === 'month' ? 'Last 30 Days' : 'Last 90 Days'}
-              </Button>
-            ))}
-          </div>
+        <CardContent className="pt-4">
+          <label className="text-xs font-medium text-muted-foreground mb-1 block">Time window</label>
+          <Select value={timeWindow} onValueChange={(v) => setTimeWindow(v as TimeWindow)}>
+            <SelectTrigger className="max-w-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>{TIME_WINDOWS.map(w => <SelectItem key={w.value} value={w.value}>{w.label}</SelectItem>)}</SelectContent>
+          </Select>
         </CardContent>
       </Card>
 
-      {entries.length === 0 ? (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center space-y-2">
-              <Brain className="h-12 w-12 mx-auto text-muted-foreground" />
-              <p className="text-muted-foreground">
-                No mental health data available for the selected time range
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+      {!stats ? (
+        <Card><CardContent className="p-6 text-center text-muted-foreground">No check-ins in selected window.</CardContent></Card>
       ) : (
         <>
-          {/* Overview Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-blue-500" />
-                  <div>
-                    <p className="text-2xl font-bold">{analytics.totalEntries}</p>
-                    <p className="text-sm text-muted-foreground">Total Entries</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-2">
-                  <Heart className="h-5 w-5 text-red-500" />
-                  <div>
-                    <p className="text-2xl font-bold">{analytics.averageAnxiety.toFixed(1)}</p>
-                    <p className="text-sm text-muted-foreground">Avg Anxiety</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-2">
-                  <Zap className="h-5 w-5 text-yellow-500" />
-                  <div>
-                    <p className="text-2xl font-bold">{analytics.averageEnergy.toFixed(1)}</p>
-                    <p className="text-sm text-muted-foreground">Avg Energy</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-2">
-                  <Brain className="h-5 w-5 text-purple-500" />
-                  <div>
-                    <p className="text-2xl font-bold">{analytics.averageBrainFog.toFixed(1)}</p>
-                    <p className="text-sm text-muted-foreground">Avg Brain Fog</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.total}</div><div className="text-xs text-muted-foreground">Check-ins</div></CardContent></Card>
+            <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.avgDep}</div><div className="text-xs text-muted-foreground">Avg depression</div></CardContent></Card>
+            <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.avgMania}</div><div className="text-xs text-muted-foreground">Avg mania</div></CardContent></Card>
+            <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.avgAnx}</div><div className="text-xs text-muted-foreground">Avg anxiety</div></CardContent></Card>
+            <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.avgEnergy}</div><div className="text-xs text-muted-foreground">Avg energy</div></CardContent></Card>
+            <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.avgFog}</div><div className="text-xs text-muted-foreground">Avg brain fog</div></CardContent></Card>
+            <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.adherence}%</div><div className="text-xs text-muted-foreground">Med adherence</div></CardContent></Card>
+            <Card><CardContent className="p-3"><div className="text-2xl font-bold text-purple-600">{stats.meltdownCount}</div><div className="text-xs text-muted-foreground">Meltdowns</div></CardContent></Card>
           </div>
 
-          {/* Most Common Moods */}
           <Card>
-            <CardHeader>
-              <CardTitle>Most Common Moods</CardTitle>
-            </CardHeader>
+            <CardHeader><CardTitle className="text-base">Episode type breakdown</CardTitle></CardHeader>
             <CardContent>
               <div className="space-y-2">
-                {getTopItems(analytics.moodCounts).map(([mood, count]) => (
-                  <div key={mood} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl">{getMoodEmoji(mood)}</span>
-                      <span>{getMoodLabel(mood)}</span>
+                {EPISODE_TYPES.filter(t => stats.typeCount[t.id]).sort((a, b) => (stats.typeCount[b.id] || 0) - (stats.typeCount[a.id] || 0)).map(t => {
+                  const count = stats.typeCount[t.id] || 0
+                  const pct = stats.total > 0 ? (count / stats.total * 100) : 0
+                  return (
+                    <div key={t.id}>
+                      <div className="flex items-center justify-between text-sm mb-1">
+                        <span>{t.icon} {t.name}</span>
+                        <span className="text-muted-foreground">{count} ({Math.round(pct)}%)</span>
+                      </div>
+                      <div className="h-2 bg-muted rounded overflow-hidden">
+                        <div className="h-full" style={{ width: `${pct}%`, backgroundColor: getEpisodeTypeColor(t.id) }} />
+                      </div>
                     </div>
-                    <Badge variant="secondary">{count} times</Badge>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </CardContent>
           </Card>
 
-          {/* Most Common Triggers */}
-          {Object.keys(analytics.triggerCounts).length > 0 && (
+          {stats.topMoods.length > 0 && (
             <Card>
-              <CardHeader>
-                <CardTitle>Most Common Triggers</CardTitle>
-              </CardHeader>
+              <CardHeader><CardTitle className="text-base">Top moods</CardTitle></CardHeader>
               <CardContent>
-                <div className="flex flex-wrap gap-2">
-                  {getTopItems(analytics.triggerCounts).map(([trigger, count]) => (
-                    <Badge key={trigger} variant="destructive" className="text-sm">
-                      {trigger} ({count})
-                    </Badge>
+                <div className="space-y-2">
+                  {stats.topMoods.map((m: any) => (
+                    <div key={m.value || m.label} className="flex items-center justify-between text-sm">
+                      <span>{m.emoji} {m.label}</span><Badge variant="secondary">{m.count}</Badge>
+                    </div>
                   ))}
                 </div>
               </CardContent>
             </Card>
           )}
 
-          {/* Most Used Coping Strategies */}
-          {Object.keys(analytics.copingCounts).length > 0 && (
+          {Object.keys(stats.swingCount).length > 0 && (
             <Card>
-              <CardHeader>
-                <CardTitle>Most Used Coping Strategies</CardTitle>
-              </CardHeader>
+              <CardHeader><CardTitle className="text-base">Mood swing pattern</CardTitle></CardHeader>
               <CardContent>
-                <div className="flex flex-wrap gap-2">
-                  {getTopItems(analytics.copingCounts).map(([strategy, count]) => (
-                    <Badge key={strategy} variant="default" className="text-sm bg-green-100 text-green-800">
-                      {strategy} ({count})
-                    </Badge>
+                <div className="space-y-1 text-sm">
+                  {Object.entries(stats.swingCount).sort((a, b) => b[1] - a[1]).map(([dir, count]) => (
+                    <div key={dir} className="flex items-center justify-between">
+                      <span className="capitalize">{dir.replace('-', ' ')}</span>
+                      <Badge variant={dir === 'rapid-cycling' ? 'destructive' : 'secondary'}>{count}</Badge>
+                    </div>
                   ))}
                 </div>
               </CardContent>
             </Card>
           )}
 
-          {/* Therapy & Treatment Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {stats.topTriggers.length > 0 && (
             <Card>
-              <CardHeader>
-                <CardTitle>Therapy Sessions</CardTitle>
-              </CardHeader>
+              <CardHeader><CardTitle className="text-base">Top triggers</CardTitle></CardHeader>
               <CardContent>
-                <div className="text-center">
-                  <p className="text-3xl font-bold text-blue-600">{analytics.therapySessions}</p>
-                  <p className="text-sm text-muted-foreground">Sessions recorded</p>
+                <div className="space-y-2">
+                  {stats.topTriggers.map(([t, n]) => (
+                    <div key={t} className="flex items-center justify-between text-sm"><span>{t}</span><Badge variant="secondary">{n}</Badge></div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
+          )}
 
+          {stats.topCoping.length > 0 && (
             <Card>
-              <CardHeader>
-                <CardTitle>Medication Adherence</CardTitle>
-              </CardHeader>
+              <CardHeader><CardTitle className="text-base">Most-used coping strategies</CardTitle></CardHeader>
               <CardContent>
-                <div className="text-center">
-                  <p className="text-3xl font-bold text-green-600">{analytics.medicationDays}</p>
-                  <p className="text-sm text-muted-foreground">Days medication taken</p>
-                  {analytics.totalEntries > 0 && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {Math.round((analytics.medicationDays / analytics.totalEntries) * 100)}% adherence
-                    </p>
-                  )}
+                <div className="space-y-2">
+                  {stats.topCoping.map(([c, n]) => (
+                    <div key={c} className="flex items-center justify-between text-sm"><span>{c}</span><Badge variant="secondary">{n}</Badge></div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
-          </div>
+          )}
+
+          {stats.topCogDomains.length > 0 && (
+            <Card>
+              <CardHeader><CardTitle className="text-base">Most-affected cognitive domains</CardTitle></CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {stats.topCogDomains.map(([d, n]) => (
+                    <div key={d} className="flex items-center justify-between text-sm"><span>{d}</span><Badge variant="secondary">{n}</Badge></div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </>
       )}
     </div>

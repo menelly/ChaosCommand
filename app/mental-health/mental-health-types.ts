@@ -21,10 +21,23 @@
  *
  * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
  */
+export type MindMoodEpisodeType =
+  | 'mood'              // emotional state, depression, mania, mood swings
+  | 'cognitive'         // brain fog, focus, processing, decision-making
+  | 'energy'            // motivation, fatigue, drive
+  | 'motivation'        // anhedonia, executive function, follow-through
+  | 'connection'        // loneliness, social engagement, intimacy
+  | 'regulation'        // emotional regulation, frustration tolerance, meltdown precursors
+  | 'general'           // catch-all check-in
+
 export interface MentalHealthEntry {
   id: string
+  timestamp?: string
   date: string
   time: string
+
+  // v2 — multi-modal classification
+  episodeType?: MindMoodEpisodeType
   
   // Mood & Emotional State
   mood: string // emoji-based mood selection
@@ -49,13 +62,32 @@ export interface MentalHealthEntry {
   medicationTaken: boolean
   medicationNotes: string
   
+  // === v2 ADDITIONS ===
+  // Type-specific extras (only relevant when episodeType matches)
+  moodSwingDirection?: 'up' | 'down' | 'mixed' | 'rapid-cycling' | 'stable'
+  cognitiveDomains?: string[]    // memory / attention / processing speed / executive function / language
+  motivationLevel?: number       // 0-10
+  drivelLevel?: number           // 0-10 — how much "want to do anything"
+  socialEngagementLevel?: number // 0-10 — how connected/isolated felt
+  regulationDifficulty?: number  // 0-10 — how hard was it to manage emotions
+  meltdownPrecursorsPresent?: boolean
+  meltdownOccurred?: boolean
+
   // General
   notes: string
   tags: string[]
-  
+
   // Metadata
   createdAt: string
   updatedAt: string
+}
+
+export interface MindMoodModalProps {
+  isOpen: boolean
+  onClose: () => void
+  onSave: (entry: Omit<MentalHealthEntry, 'id'>) => void
+  editingEntry?: MentalHealthEntry | null
+  initialEpisodeType?: MindMoodEpisodeType
 }
 
 export interface MoodOption {

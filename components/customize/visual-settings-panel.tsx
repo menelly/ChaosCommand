@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { Slider } from "@/components/ui/slider"
 import { Label } from "@/components/ui/label"
+import { AVAILABLE_EMOJIS, type ChosenEmoji } from "@/lib/sparkle-celebration"
 
 const themes = [
   { id: 'theme-phosphor', name: '💚 Phosphor', description: 'Terminal CRT green-on-black (default) — for nerds and tired eyes' },
@@ -46,7 +47,8 @@ export default function VisualSettingsPanel() {
   const [animatedEffects, setAnimatedEffects] = useState(true)
   const [bounceIntensity, setBounceIntensity] = useState(10)
   const [confettiLevel, setConfettiLevel] = useState<'none' | 'low' | 'medium' | 'high'>('medium')
-  const [celebrationStyle, setCelebrationStyle] = useState<'default' | 'penguin' | 'octopus' | 'random'>('default')
+  const [celebrationStyle, setCelebrationStyle] = useState<'sparkle' | 'survival'>('sparkle')
+  const [chosenEmoji, setChosenEmojiState] = useState<ChosenEmoji | null>(null)
 
   const applyTheme = (themeId: string) => {
     const oldTheme = document.querySelector('link[data-theme]')
@@ -116,7 +118,13 @@ export default function VisualSettingsPanel() {
     const savedAnimations = localStorage.getItem('chaos-animations') !== 'false'
     const savedIntensity = parseInt(localStorage.getItem('chaos-bounce-intensity') || '10')
     const savedConfetti = (localStorage.getItem('chaos-confetti-level') as any) || 'medium'
-    const savedStyle = (localStorage.getItem('chaos-celebration-style') as any) || 'default'
+    const rawStyle = localStorage.getItem('chaos-celebration-style')
+    const savedStyle: 'sparkle' | 'survival' = rawStyle === 'survival' ? 'survival' : 'sparkle'
+    const rawEmoji = localStorage.getItem('chaos-celebration-emoji')
+    const savedEmoji: ChosenEmoji | null =
+      rawEmoji && (AVAILABLE_EMOJIS as readonly string[]).includes(rawEmoji)
+        ? (rawEmoji as ChosenEmoji)
+        : null
 
     setCurrentTheme(savedTheme)
     setCurrentFont(savedFont)
@@ -124,6 +132,7 @@ export default function VisualSettingsPanel() {
     setBounceIntensity(savedIntensity)
     setConfettiLevel(savedConfetti)
     setCelebrationStyle(savedStyle)
+    setChosenEmojiState(savedEmoji)
 
     applyTheme(savedTheme)
     fonts.forEach(font => document.body.classList.remove(font.id))
@@ -227,12 +236,10 @@ export default function VisualSettingsPanel() {
 
           <div className="pt-2 border-t">
             <p className="text-xs font-medium mb-2">Confetti Style</p>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               {([
-                { value: 'default', label: 'Classic', emoji: '🎊' },
-                { value: 'penguin', label: 'Penguin', emoji: '🐧' },
-                { value: 'octopus', label: 'Octopus', emoji: '🐙' },
-                { value: 'random', label: 'Random', emoji: '🎲' },
+                { value: 'sparkle', label: 'Sparkle', emoji: '✨' },
+                { value: 'survival', label: 'Survival Box', emoji: '📦' },
               ] as const).map(opt => (
                 <Button
                   key={opt.value}
@@ -247,6 +254,44 @@ export default function VisualSettingsPanel() {
                 >
                   <span>{opt.emoji}</span>
                   <span className="text-xs">{opt.label}</span>
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          <div className="pt-2 border-t">
+            <p className="text-xs font-medium mb-1">Your Emoji</p>
+            <p className="text-[11px] text-muted-foreground mb-2">
+              Pick one and it shows up most in your sparkle celebrations. Skip
+              for a neutral mix.
+            </p>
+            <div className="grid grid-cols-5 gap-2">
+              <Button
+                variant={chosenEmoji === null ? 'default' : 'outline'}
+                size="sm"
+                className="h-auto py-2 flex flex-col"
+                disabled={confettiLevel === 'none' || celebrationStyle === 'survival'}
+                onClick={() => {
+                  setChosenEmojiState(null)
+                  localStorage.removeItem('chaos-celebration-emoji')
+                }}
+              >
+                <span className="text-base">🎲</span>
+                <span className="text-[10px]">Mix</span>
+              </Button>
+              {AVAILABLE_EMOJIS.map(em => (
+                <Button
+                  key={em}
+                  variant={chosenEmoji === em ? 'default' : 'outline'}
+                  size="sm"
+                  className="h-auto py-2 flex flex-col"
+                  disabled={confettiLevel === 'none' || celebrationStyle === 'survival'}
+                  onClick={() => {
+                    setChosenEmojiState(em)
+                    localStorage.setItem('chaos-celebration-emoji', em)
+                  }}
+                >
+                  <span className="text-base">{em}</span>
                 </Button>
               ))}
             </div>

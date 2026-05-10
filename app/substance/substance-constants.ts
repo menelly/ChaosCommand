@@ -99,4 +99,9 @@ export const RELATED_TRACKERS = [
   { id: 'pain', name: 'Pain', icon: '🤕', description: 'Pain management correlation', path: '/pain' },
 ]
 
-export const getSubstanceTypeInfo = (id: string) => SUBSTANCE_TYPES.find(t => t.id === id) || SUBSTANCE_TYPES[6]
+export const getSubstanceTypeInfo = (id: string) => {
+  const found = SUBSTANCE_TYPES.find(t => t.id === id)
+  if (found) return found
+  // Fallback for legacy data (e.g., entries with removed types like 'caffeine' or 'prescribed-controlled')
+  return SUBSTANCE_TYPES[SUBSTANCE_TYPES.length - 1] // 'other' is last
+}

@@ -28,7 +28,7 @@ export const EPISODE_TYPES = [
   { id: 'panic-attack' as AnxietyEpisodeType, name: 'Panic Attack', icon: '😱', description: 'Intense fear with physical symptoms', color: 'bg-red-100 text-red-800 border-red-200' },
   { id: 'generalized' as AnxietyEpisodeType, name: 'Generalized', icon: '😰', description: 'General worry / unease', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
   { id: 'social' as AnxietyEpisodeType, name: 'Social', icon: '😳', description: 'Anxiety around people / social situations', color: 'bg-blue-100 text-blue-800 border-blue-200' },
-  { id: 'phobic' as AnxietyEpisodeType, name: 'Phobic', icon: '🕷️', description: 'Specific trigger / stimulus', color: 'bg-violet-100 text-violet-800 border-violet-200' },
+  { id: 'phobic' as AnxietyEpisodeType, name: 'Phobic', icon: '⚠️', description: 'Specific trigger / stimulus', color: 'bg-violet-100 text-violet-800 border-violet-200' },
   { id: 'ocd-shaped' as AnxietyEpisodeType, name: 'OCD-shaped', icon: '🔁', description: 'Intrusive thoughts + compulsion urges', color: 'bg-cyan-100 text-cyan-800 border-cyan-200' },
   { id: 'meltdown' as AnxietyEpisodeType, name: 'Meltdown', icon: '🌪️', description: 'Sensory / emotional overload (AuDHD)', color: 'bg-purple-100 text-purple-800 border-purple-200' },
   { id: 'shutdown' as AnxietyEpisodeType, name: 'Shutdown', icon: '🔇', description: 'Withdrawal / inability to function (AuDHD)', color: 'bg-gray-100 text-gray-800 border-gray-200' },

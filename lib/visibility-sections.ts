@@ -51,7 +51,7 @@ const BODY_TRACKERS: VisibilityTracker[] = [
 // Mirrors app/mind/page.tsx allTrackers
 const MIND_TRACKERS: VisibilityTracker[] = [
   { id: 'brain-fog', name: 'Brain Fog & Cognitive' },
-  { id: 'mental-health-general', name: 'Mental Health Overview' },
+  { id: 'mental-health-general', name: 'Mind & Mood' },
   { id: 'anxiety-tracker', name: 'Anxiety & Panic Tracker' },
   { id: 'self-care-tracker', name: 'Self-Care Tracker' },
   { id: 'sensory-tracker', name: 'Sensory Processing Tracker' },
