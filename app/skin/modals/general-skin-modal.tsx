@@ -64,22 +64,22 @@ export function GeneralSkinModal({ isOpen, onClose, onSave, editingEntry, preset
   const [tags, setTags] = useState<string[]>([])
 
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-    eventType: true,
-    bodyLocation: true,
-    appearance: true,
-    spreading: true,
-    severity: true,
-    itchPain: true,
-    anaphylaxis: true,
-    sjs: true,
-    abcde: true,
-    trigger: true,
-    treatment: true,
-    treatmentResponse: true,
-    duration: true,
-    photos: true,
-    notes: true,
-    tags: true,
+    eventType: false,
+    bodyLocation: false,
+    appearance: false,
+    spreading: false,
+    severity: false,
+    itchPain: false,
+    anaphylaxis: false,
+    sjs: false,
+    abcde: false,
+    trigger: false,
+    treatment: false,
+    treatmentResponse: false,
+    duration: false,
+    photos: false,
+    notes: false,
+    tags: false,
   })
   const toggleSection = (key: string) => setOpenSections(prev => ({ ...prev, [key]: !prev[key] }))
 

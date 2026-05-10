@@ -46,17 +46,17 @@ export function GeneralRespiratoryModal({ isOpen, onClose, onSave, editingEntry 
   const [tags, setTags] = useState<string[]>([])
 
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-    eventType: true,
-    vitals: true,
-    breathingPattern: true,
-    severity: true,
-    allergic: true,
-    symptoms: true,
-    triggers: true,
-    resolution: true,
-    attachments: true,
-    notes: true,
-    tags: true,
+    eventType: false,
+    vitals: false,
+    breathingPattern: false,
+    severity: false,
+    allergic: false,
+    symptoms: false,
+    triggers: false,
+    resolution: false,
+    attachments: false,
+    notes: false,
+    tags: false,
   })
   const toggleSection = (key: string) => setOpenSections(prev => ({ ...prev, [key]: !prev[key] }))
 

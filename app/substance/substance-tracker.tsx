@@ -91,12 +91,25 @@ export default function SubstanceTracker() {
           <Coffee className="h-8 w-8 text-purple-500" />
           Substance Use
         </h1>
-        <p className="text-muted-foreground mt-1">Neutral logging for alcohol, caffeine, cannabis, tobacco, prescribed controlled, and other recreational use</p>
+        <p className="text-muted-foreground mt-1">Neutral logging for alcohol, cannabis, tobacco, recreational, and off-label medication use</p>
       </div>
+
+      {/* Categorization help — what belongs here vs other trackers */}
+      <Card className="bg-muted/30 border-dashed">
+        <CardContent className="pt-4 pb-4 text-sm text-muted-foreground">
+          <p className="font-medium mb-2">📌 What belongs here?</p>
+          <ul className="space-y-1 ml-4 list-disc">
+            <li><strong>Caffeine</strong> (coffee, tea, soda, energy drinks) → log in <a href="/hydration" className="text-purple-600 underline">Hydration</a> with the beverage type</li>
+            <li><strong>Prescribed medications taken as directed</strong> → log in <a href="/medications" className="text-purple-600 underline">Medications</a> (under Manage)</li>
+            <li><strong>Off-label medication use</strong> (extra dose, different route, someone else's prescription) → use this tracker, "Recreational / Off-Label"</li>
+            <li><strong>Alcohol, cannabis, tobacco, recreational</strong> → use this tracker</li>
+          </ul>
+        </CardContent>
+      </Card>
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="episodes" className="flex items-center gap-2"><Plus className="h-4 w-4" /> Today's Entries</TabsTrigger>
+          <TabsTrigger value="episodes" className="flex items-center gap-2"><Plus className="h-4 w-4" /> Add Entry</TabsTrigger>
           <TabsTrigger value="history" className="flex items-center gap-2"><History className="h-4 w-4" /> History</TabsTrigger>
           <TabsTrigger value="analytics" className="flex items-center gap-2"><BarChart3 className="h-4 w-4" /> Analytics</TabsTrigger>
         </TabsList>

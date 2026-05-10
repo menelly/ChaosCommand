@@ -112,7 +112,7 @@ export default function SkinTracker() {
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="episodes" className="flex items-center gap-2"><Plus className="h-4 w-4" /> Today's Events</TabsTrigger>
+          <TabsTrigger value="episodes" className="flex items-center gap-2"><Plus className="h-4 w-4" /> Add Event</TabsTrigger>
           <TabsTrigger value="history" className="flex items-center gap-2"><History className="h-4 w-4" /> History</TabsTrigger>
           <TabsTrigger value="analytics" className="flex items-center gap-2"><BarChart3 className="h-4 w-4" /> Analytics</TabsTrigger>
         </TabsList>

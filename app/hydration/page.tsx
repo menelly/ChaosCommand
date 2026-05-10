@@ -64,14 +64,20 @@ interface DailyHydrationGoal {
 
 const DRINK_TYPES = [
   { value: "water", label: "💧 Water", emoji: "💧", multiplier: 1 },
+  { value: "sparkling-water", label: "🫧 Sparkling Water", emoji: "🫧", multiplier: 1 },
   { value: "herbal-tea", label: "🍵 Herbal Tea", emoji: "🍵", multiplier: 1 },
   { value: "green-tea", label: "🍃 Green Tea", emoji: "🍃", multiplier: 0.8 },
+  { value: "black-tea", label: "🫖 Black Tea", emoji: "🫖", multiplier: 0.85 },
   { value: "coffee", label: "☕ Coffee", emoji: "☕", multiplier: 0.85 },
   { value: "juice", label: "🧃 Juice", emoji: "🧃", multiplier: 0.7 },
   { value: "smoothie", label: "🥤 Smoothie", emoji: "🥤", multiplier: 0.8 },
   { value: "sports-drink", label: "⚡ Sports Drink", emoji: "⚡", multiplier: 0.9 },
   { value: "coconut-water", label: "🥥 Coconut Water", emoji: "🥥", multiplier: 1.1 },
-  { value: "other", label: "🥛 Other", emoji: "🥛", multiplier: 0.8 }
+  { value: "soda-regular", label: "🥤 Soda (regular)", emoji: "🥤", multiplier: 0.7 },
+  { value: "soda-diet", label: "🧊 Soda (diet)", emoji: "🧊", multiplier: 0.8 },
+  { value: "energy-drink", label: "⚡ Energy Drink", emoji: "⚡", multiplier: 0.7 },
+  { value: "milk", label: "🥛 Milk", emoji: "🥛", multiplier: 0.9 },
+  { value: "other", label: "🍶 Other", emoji: "🍶", multiplier: 0.8 }
 ]
 
 const COMMON_AMOUNTS = [

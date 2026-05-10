@@ -2,11 +2,9 @@
 
 export type SubstanceType =
   | 'alcohol'
-  | 'caffeine'
   | 'tobacco'
   | 'cannabis'
   | 'recreational'
-  | 'prescribed-controlled'
   | 'other'
 
 export interface SubstanceEntry {

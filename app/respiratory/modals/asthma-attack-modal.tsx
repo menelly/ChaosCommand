@@ -47,18 +47,18 @@ export function AsthmaAttackModal({ isOpen, onClose, onSave, editingEntry }: Res
   const [tags, setTags] = useState<string[]>([])
 
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-    peakFlow: true,
-    vitals: true,
-    breathingPattern: true,
-    severity: true,
-    chestTightness: true,
-    inhaler: true,
-    symptoms: true,
-    triggers: true,
-    resolution: true,
-    attachments: true,
-    notes: true,
-    tags: true,
+    peakFlow: false,
+    vitals: false,
+    breathingPattern: false,
+    severity: false,
+    chestTightness: false,
+    inhaler: false,
+    symptoms: false,
+    triggers: false,
+    resolution: false,
+    attachments: false,
+    notes: false,
+    tags: false,
   })
   const toggleSection = (key: string) => setOpenSections(prev => ({ ...prev, [key]: !prev[key] }))
 

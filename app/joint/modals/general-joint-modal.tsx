@@ -41,19 +41,19 @@ export function GeneralJointModal({ isOpen, onClose, onSave, editingEntry, prese
   const [tags, setTags] = useState<string[]>([])
 
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-    eventType: true,
-    joints: true,
-    severity: true,
-    selfReduced: true,
-    physical: true,
-    rom: true,
-    trigger: true,
-    treatment: true,
-    treatmentResponse: true,
-    duration: true,
-    attachments: true,
-    notes: true,
-    tags: true,
+    eventType: false,
+    joints: false,
+    severity: false,
+    selfReduced: false,
+    physical: false,
+    rom: false,
+    trigger: false,
+    treatment: false,
+    treatmentResponse: false,
+    duration: false,
+    attachments: false,
+    notes: false,
+    tags: false,
   })
   const toggleSection = (key: string) => setOpenSections(prev => ({ ...prev, [key]: !prev[key] }))
 

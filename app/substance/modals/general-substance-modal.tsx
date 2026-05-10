@@ -39,17 +39,17 @@ export function GeneralSubstanceModal({ isOpen, onClose, onSave, editingEntry, p
   const [tags, setTags] = useState<string[]>([])
 
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-    type: true,
-    name: true,
-    amount: true,
-    method: true,
-    context: true,
-    effects: true,
-    intensity: true,
-    onset: true,
-    attachments: true,
-    notes: true,
-    tags: true,
+    type: false,
+    name: false,
+    amount: false,
+    method: false,
+    context: false,
+    effects: false,
+    intensity: false,
+    onset: false,
+    attachments: false,
+    notes: false,
+    tags: false,
   })
   const toggleSection = (key: string) => setOpenSections(prev => ({ ...prev, [key]: !prev[key] }))
 

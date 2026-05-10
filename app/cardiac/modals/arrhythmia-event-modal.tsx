@@ -80,20 +80,20 @@ export function ArrhythmiaEventModal({ isOpen, onClose, onSave, editingEntry }: 
   const [tags, setTags] = useState<string[]>([])
 
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-    rhythm: true,
-    hr: true,
-    bpSpo2: true,
-    ecgFindings: true,
-    symptoms: true,
-    severity: true,
-    preEvent: true,
-    triggers: true,
-    position: true,
-    resolution: true,
-    duration: true,
-    ecg: true,
-    notes: true,
-    tags: true,
+    rhythm: false,
+    hr: false,
+    bpSpo2: false,
+    ecgFindings: false,
+    symptoms: false,
+    severity: false,
+    preEvent: false,
+    triggers: false,
+    position: false,
+    resolution: false,
+    duration: false,
+    ecg: false,
+    notes: false,
+    tags: false,
   })
   const toggleSection = (key: string) => setOpenSections(prev => ({ ...prev, [key]: !prev[key] }))
 

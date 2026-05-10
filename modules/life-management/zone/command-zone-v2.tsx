@@ -495,6 +495,15 @@ export default function CommandZone() {
     saveTasks(updatedTasks)
   }
 
+  const clearCompletedTasks = () => {
+    const completedCount = dailyTasks.filter(t => t.completed).length
+    if (completedCount === 0) return
+    if (completedCount > 5 && !window.confirm(`Clear ${completedCount} completed tasks?`)) return
+    const remaining = dailyTasks.filter(t => !t.completed)
+    setDailyTasks(remaining)
+    saveTasks(remaining)
+  }
+
   const toggleTask = (taskId: string) => {
     const updatedTasks = dailyTasks.map(task => {
       if (task.id === taskId) {
@@ -706,6 +715,16 @@ export default function CommandZone() {
               <Button onClick={addTask} size="sm">
                 <Plus className="h-4 w-4" />
               </Button>
+              {dailyTasks.some(t => t.completed) && (
+                <Button
+                  onClick={clearCompletedTasks}
+                  size="sm"
+                  variant="outline"
+                  title="Clear all completed tasks"
+                >
+                  Clear finished ({dailyTasks.filter(t => t.completed).length})
+                </Button>
+              )}
             </div>
             
             <div className="space-y-2 max-h-64 overflow-y-auto">

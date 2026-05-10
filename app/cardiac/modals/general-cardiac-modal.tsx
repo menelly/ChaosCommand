@@ -72,18 +72,18 @@ export function GeneralCardiacModal({ isOpen, onClose, onSave, editingEntry }: C
   const [tags, setTags] = useState<string[]>([])
 
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-    eventType: true,
-    vitals: true,
-    symptoms: true,
-    severity: true,
-    triggers: true,
-    position: true,
-    resolution: true,
-    duration: true,
-    er: true,
-    ecg: true,
-    notes: true,
-    tags: true,
+    eventType: false,
+    vitals: false,
+    symptoms: false,
+    severity: false,
+    triggers: false,
+    position: false,
+    resolution: false,
+    duration: false,
+    er: false,
+    ecg: false,
+    notes: false,
+    tags: false,
   })
   const toggleSection = (key: string) => setOpenSections(prev => ({ ...prev, [key]: !prev[key] }))
 

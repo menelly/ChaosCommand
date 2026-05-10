@@ -7,11 +7,9 @@
 
 export const SUBSTANCE_TYPES = [
   { id: 'alcohol', name: 'Alcohol', icon: '🍷', description: 'Beer, wine, spirits, cocktails', color: 'bg-purple-100 text-purple-800 border-purple-200' },
-  { id: 'caffeine', name: 'Caffeine', icon: '☕', description: 'Coffee, tea, energy drinks, soda', color: 'bg-amber-100 text-amber-800 border-amber-200' },
   { id: 'cannabis', name: 'Cannabis', icon: '🌿', description: 'Flower, edibles, concentrates, tinctures', color: 'bg-green-100 text-green-800 border-green-200' },
   { id: 'tobacco', name: 'Tobacco / Nicotine', icon: '🚬', description: 'Cigarettes, vape, cigar, dip, patch', color: 'bg-stone-100 text-stone-800 border-stone-200' },
-  { id: 'prescribed-controlled', name: 'Prescribed Controlled', icon: '💊', description: 'Adderall, Xanax, opioids, etc. — your prescribed regimen', color: 'bg-blue-100 text-blue-800 border-blue-200' },
-  { id: 'recreational', name: 'Recreational Other', icon: '✨', description: 'Anything else recreational', color: 'bg-pink-100 text-pink-800 border-pink-200' },
+  { id: 'recreational', name: 'Recreational / Off-Label', icon: '✨', description: 'Recreational substances OR controlled medications used outside their prescribed pattern (e.g., extra dose, snorted, someone else\'s)', color: 'bg-pink-100 text-pink-800 border-pink-200' },
   { id: 'other', name: 'Other', icon: '📋', description: 'Anything not listed above', color: 'bg-gray-100 text-gray-800 border-gray-200' },
 ] as const
 

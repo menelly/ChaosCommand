@@ -227,7 +227,7 @@ export default function CardiacTracker() {
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="episodes" className="flex items-center gap-2">
             <Plus className="h-4 w-4" />
-            Today's Events
+            Add Event
           </TabsTrigger>
           <TabsTrigger value="history" className="flex items-center gap-2">
             <History className="h-4 w-4" />
