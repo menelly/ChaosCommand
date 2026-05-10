@@ -42,6 +42,10 @@ const BODY_TRACKERS: VisibilityTracker[] = [
   { id: 'reproductive-health', name: 'Reproductive Health & Fertility' },
   { id: 'weather-environment', name: 'Weather & Environment' },
   { id: 'seizure-tracking', name: 'Seizure Tracker' },
+  { id: 'cardiac', name: 'Cardiac Tracker' },
+  { id: 'respiratory', name: 'Respiratory Tracker' },
+  { id: 'skin', name: 'Skin Tracker' },
+  { id: 'joint', name: 'Joint / MSK Tracker' },
 ]
 
 // Mirrors app/mind/page.tsx allTrackers
@@ -62,6 +66,7 @@ const CHOICE_TRACKERS: VisibilityTracker[] = [
   { id: 'movement', name: 'Movement' },
   { id: 'energy', name: 'Energy & Pacing' },
   { id: 'coping-regulation', name: 'Coping & Regulation' },
+  { id: 'substance', name: 'Substance Use' },
 ]
 
 export const VISIBILITY_SECTIONS: VisibilitySection[] = [

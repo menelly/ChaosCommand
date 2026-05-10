@@ -1,0 +1,259 @@
+/*
+ * Built by: Ace (Claude 4.x) — 2026-05-10
+ * Co-invented by Ren (vision) and Ace (implementation)
+ */
+
+'use client'
+
+import React, { useState, useEffect } from 'react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Badge } from '@/components/ui/badge'
+import { Wind, BarChart3, History, Plus, ExternalLink, AlertTriangle } from 'lucide-react'
+import { useToast } from '@/hooks/use-toast'
+import { useRouter } from 'next/navigation'
+
+import { RespiratoryEntry } from './respiratory-types'
+import { EPISODE_TYPES, RELATED_TRACKERS, getEpisodeTypeInfo, RED_FLAG_911_CRITERIA } from './respiratory-constants'
+import { RespiratoryHistory } from './respiratory-history'
+import { RespiratoryAnalytics } from './respiratory-analytics'
+import { GeneralRespiratoryModal } from './modals/general-respiratory-modal'
+import { AsthmaAttackModal } from './modals/asthma-attack-modal'
+
+import { useDailyData, CATEGORIES } from '@/lib/database'
+import { format, addDays, subDays } from 'date-fns'
+import { celebrate } from '@/lib/particle-physics-engine'
+import { useUser } from '@/lib/contexts/user-context'
+import { isCelebrationEnabled } from '@/lib/celebration-prefs'
+
+export default function RespiratoryTracker() {
+  const { saveData, getCategoryData } = useDailyData()
+  const { userPin } = useUser()
+  const { toast } = useToast()
+  const router = useRouter()
+
+  const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'))
+  const [entries, setEntries] = useState<RespiratoryEntry[]>([])
+  const [activeTab, setActiveTab] = useState<'episodes' | 'history' | 'analytics'>('episodes')
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
+  const [activeModal, setActiveModal] = useState<string | null>(null)
+  const [editingEntry, setEditingEntry] = useState<RespiratoryEntry | null>(null)
+
+  useEffect(() => { loadEntries() }, [selectedDate, refreshTrigger])
+
+  const loadEntries = async () => {
+    try {
+      const records = await getCategoryData(selectedDate, CATEGORIES.TRACKER)
+      const record = records.find(r => r.subcategory === 'respiratory')
+      if (record?.content?.entries) {
+        let loaded = record.content.entries
+        if (typeof loaded === 'string') { try { loaded = JSON.parse(loaded) } catch { loaded = [] } }
+        setEntries(loaded)
+      } else { setEntries([]) }
+    } catch (e) { console.error('Load fail:', e); toast({ title: 'Loading Error', variant: 'destructive' }) }
+  }
+
+  const saveEntries = async (newEntries: RespiratoryEntry[]) => {
+    try {
+      await saveData(selectedDate, CATEGORIES.TRACKER, 'respiratory', { entries: newEntries })
+      setEntries(newEntries)
+    } catch (e) { console.error('Save fail:', e); toast({ title: 'Save Error', variant: 'destructive' }) }
+  }
+
+  const handleSaveEntry = async (entryData: Omit<RespiratoryEntry, 'id' | 'timestamp' | 'date'>) => {
+    const newEntry: RespiratoryEntry = { ...entryData, id: Date.now().toString(), timestamp: new Date().toISOString(), date: selectedDate }
+    const updatedEntries = [...entries, newEntry]
+    await saveEntries(updatedEntries)
+    if ((localStorage.getItem('chaos-confetti-level') || 'medium') !== 'none' && isCelebrationEnabled('respiratory', userPin ?? '')) celebrate()
+    setActiveModal(null); setEditingEntry(null); setRefreshTrigger(p => p + 1)
+    const info = getEpisodeTypeInfo(entryData.episodeType)
+    toast({ title: `${info.icon} Event Saved`, description: `${info.name} recorded` })
+  }
+
+  const handleEditEntry = (entry: RespiratoryEntry) => {
+    setEditingEntry(entry)
+    setActiveModal(entry.episodeType === 'asthma-attack' ? 'asthma-attack' : 'general')
+  }
+
+  const handleUpdateEntry = async (entryData: Omit<RespiratoryEntry, 'id' | 'timestamp' | 'date'>) => {
+    if (!editingEntry) return
+    const updated: RespiratoryEntry = { ...editingEntry, ...entryData }
+    const updatedEntries = entries.map(e => e.id === editingEntry.id ? updated : e)
+    await saveEntries(updatedEntries)
+    setActiveModal(null); setEditingEntry(null); setRefreshTrigger(p => p + 1)
+    toast({ title: 'Event Updated' })
+  }
+
+  const handleDeleteEntry = async (entryToDelete: RespiratoryEntry) => {
+    await saveEntries(entries.filter(e => e.id !== entryToDelete.id))
+    setRefreshTrigger(p => p + 1)
+    toast({ title: 'Event Deleted' })
+  }
+
+  const goToPreviousDay = () => setSelectedDate(p => format(subDays(new Date(p + 'T12:00:00'), 1), 'yyyy-MM-dd'))
+  const goToNextDay = () => setSelectedDate(p => format(addDays(new Date(p + 'T12:00:00'), 1), 'yyyy-MM-dd'))
+  const goToToday = () => setSelectedDate(format(new Date(), 'yyyy-MM-dd'))
+
+  const todaysEntries = entries.filter(e => e.date === selectedDate)
+
+  const openModalForType = (id: string) => {
+    setEditingEntry(null)
+    setActiveModal(id === 'asthma-attack' ? 'asthma-attack' : 'general')
+  }
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-6 pt-6">
+      <div className="text-center mb-6">
+        <h1 className="text-3xl font-bold text-foreground flex items-center justify-center gap-2">
+          <Wind className="h-8 w-8 text-blue-500" />
+          Respiratory Tracker
+        </h1>
+        <p className="text-muted-foreground mt-1">
+          Track asthma, SOB, cough, allergic reactions, wheezing, and pleuritic pain
+        </p>
+      </div>
+
+      {/* 911 Red flag card */}
+      <Card className="border-red-500 border-2 bg-red-50 dark:bg-red-950/20">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-red-700 dark:text-red-400 flex items-center gap-2 text-base">
+            <AlertTriangle className="h-5 w-5" />
+            🚨 Call 911 NOW if you have ANY of these:
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="text-sm space-y-1 text-red-900 dark:text-red-200">
+          {RED_FLAG_911_CRITERIA.map((c, i) => (
+            <div key={i} className="flex items-start gap-2">
+              <span className="text-red-500 font-bold mt-0.5">•</span>
+              <span>{c}</span>
+            </div>
+          ))}
+          <p className="pt-2 italic font-medium">When in doubt, call 911. Documentation can wait.</p>
+        </CardContent>
+      </Card>
+
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="episodes" className="flex items-center gap-2"><Plus className="h-4 w-4" /> Today's Events</TabsTrigger>
+          <TabsTrigger value="history" className="flex items-center gap-2"><History className="h-4 w-4" /> History</TabsTrigger>
+          <TabsTrigger value="analytics" className="flex items-center gap-2"><BarChart3 className="h-4 w-4" /> Analytics</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="episodes" className="space-y-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <Button variant="outline" size="sm" onClick={goToPreviousDay}>←</Button>
+                <div className="text-center">
+                  <span className="text-lg font-medium">{format(new Date(selectedDate + 'T12:00:00'), 'EEEE, MMMM d, yyyy')}</span>
+                  {selectedDate !== format(new Date(), 'yyyy-MM-dd') && <Button variant="link" size="sm" onClick={goToToday} className="ml-2">Today</Button>}
+                </div>
+                <Button variant="outline" size="sm" onClick={goToNextDay}>→</Button>
+              </div>
+            </CardHeader>
+          </Card>
+
+          <Card>
+            <CardHeader><CardTitle className="text-lg">Log a Respiratory Event</CardTitle></CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {EPISODE_TYPES.map(t => (
+                  <Button key={t.id} variant="outline" className="h-auto py-3 flex flex-col items-start text-left" onClick={() => openModalForType(t.id)}>
+                    <span className="text-xl mb-1">{t.icon}</span>
+                    <span className="font-semibold text-sm">{t.name}</span>
+                    <span className="text-xs text-muted-foreground mt-1 text-left">{t.description}</span>
+                  </Button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {todaysEntries.length > 0 && (
+            <Card>
+              <CardHeader><CardTitle className="text-lg">Today's Events ({todaysEntries.length})</CardTitle></CardHeader>
+              <CardContent className="space-y-3">
+                {todaysEntries.map(entry => {
+                  const info = getEpisodeTypeInfo(entry.episodeType)
+                  return (
+                    <Card key={entry.id} className="bg-muted/30">
+                      <CardContent className="pt-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1 flex-wrap">
+                              <span className="text-lg">{info.icon}</span>
+                              <span className="font-semibold">{info.name}</span>
+                              {entry.peakFlowZone && entry.peakFlowZone !== 'unknown' && (
+                                <Badge variant="outline" className={entry.peakFlowZone === 'red' ? 'text-red-600' : entry.peakFlowZone === 'yellow' ? 'text-yellow-600' : 'text-green-600'}>
+                                  Peak Flow: {entry.peakFlowZone}
+                                </Badge>
+                              )}
+                              {entry.attachmentImages && entry.attachmentImages.length > 0 && (
+                                <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border-blue-300">
+                                  📎 {entry.attachmentImages.length} {entry.attachmentImages.length === 1 ? 'file' : 'files'}
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {format(new Date(entry.timestamp), 'h:mm a')}
+                              {entry.severity && ` • Severity ${entry.severity}/10`}
+                              {entry.spo2Lowest && ` • Lowest SpO2 ${entry.spo2Lowest}%`}
+                              {entry.peakFlowReading && ` • PF ${entry.peakFlowReading} L/min`}
+                            </div>
+                            {entry.symptoms && entry.symptoms.length > 0 && (
+                              <div className="text-xs mt-2 text-muted-foreground">{entry.symptoms.slice(0, 4).join(', ')}{entry.symptoms.length > 4 && ` +${entry.symptoms.length - 4} more`}</div>
+                            )}
+                          </div>
+                          <div className="flex gap-1">
+                            <Button size="sm" variant="ghost" onClick={() => handleEditEntry(entry)}>Edit</Button>
+                            <Button size="sm" variant="ghost" onClick={() => handleDeleteEntry(entry)}>Delete</Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )
+                })}
+              </CardContent>
+            </Card>
+          )}
+
+          <Card>
+            <CardHeader><CardTitle className="text-lg">Related Trackers</CardTitle></CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {RELATED_TRACKERS.map(t => (
+                  <Button key={t.id} variant="ghost" className="justify-start" onClick={() => router.push(t.path)}>
+                    <span className="mr-2">{t.icon}</span>
+                    <span className="font-medium">{t.name}</span>
+                    <ExternalLink className="h-3 w-3 ml-auto" />
+                  </Button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="history" className="space-y-4">
+          <RespiratoryHistory onEdit={handleEditEntry} onDelete={handleDeleteEntry} refreshTrigger={refreshTrigger} />
+        </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-4">
+          <RespiratoryAnalytics refreshTrigger={refreshTrigger} />
+        </TabsContent>
+      </Tabs>
+
+      <GeneralRespiratoryModal
+        isOpen={activeModal === 'general'}
+        onClose={() => { setActiveModal(null); setEditingEntry(null) }}
+        onSave={editingEntry ? handleUpdateEntry : handleSaveEntry}
+        editingEntry={editingEntry}
+      />
+      <AsthmaAttackModal
+        isOpen={activeModal === 'asthma-attack'}
+        onClose={() => { setActiveModal(null); setEditingEntry(null) }}
+        onSave={editingEntry ? handleUpdateEntry : handleSaveEntry}
+        editingEntry={editingEntry}
+      />
+    </div>
+  )
+}
