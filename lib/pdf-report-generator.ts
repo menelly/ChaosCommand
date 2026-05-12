@@ -119,7 +119,9 @@ const TRACKER_DISPLAY_NAMES: Record<string, string> = {
 const displayName = (sub: string): string => {
   if (TRACKER_DISPLAY_NAMES[sub]) return TRACKER_DISPLAY_NAMES[sub]
   // Fallback: prettify the slug WITHOUT splitting on hyphen (the v1 bug)
-  return sub.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+  // and strip duplicate-word artifacts like "Hydration Hydration" → "Hydration"
+  const dedup = sub.replace(/^(\w+(?:[-\s]\w+)*)\s+\1$/i, '$1')
+  return dedup.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 }
 
 // Colors
@@ -214,27 +216,33 @@ class PDFWriter {
   }
 
   sectionHeader(text: string) {
-    this.checkPage(30)
-    this.y += 8
-    this.doc.setFontSize(13)
+    this.checkPage(35)
+    this.y += 12 // more breathing room above section headers
+    this.doc.setFontSize(14)
     this.doc.setTextColor(COLORS.section)
     this.doc.setFont('helvetica', 'bold')
     this.doc.text(text, this.marginLeft, this.y)
-    this.y += 4
+    this.y += 5
+    // Purple accent line (short, colored) + hairline rest of width for elegance
+    this.doc.setDrawColor(COLORS.purple)
+    this.doc.setLineWidth(1.2)
+    this.doc.line(this.marginLeft, this.y, this.marginLeft + 36, this.y)
     this.doc.setDrawColor(COLORS.gridLine)
     this.doc.setLineWidth(0.3)
-    this.doc.line(this.marginLeft, this.y, this.pageWidth - this.marginRight, this.y)
-    this.y += 8
+    this.doc.line(this.marginLeft + 38, this.y, this.pageWidth - this.marginRight, this.y)
+    this.y += 10
   }
 
   subSection(text: string) {
-    this.checkPage(20)
-    this.y += 4
-    this.doc.setFontSize(11)
+    this.checkPage(22)
+    this.y += 6
+    this.doc.setFontSize(10.5)
     this.doc.setTextColor(COLORS.subsection)
     this.doc.setFont('helvetica', 'bold')
-    this.doc.text(text, this.marginLeft, this.y)
-    this.y += 7
+    this.doc.text(text.toUpperCase(), this.marginLeft, this.y)
+    // Letter-spacing approximation: jsPDF doesn't have it directly, so we just use
+    // uppercase + bold to distinguish from h2 and body
+    this.y += 8
   }
 
   body(text: string) {
@@ -244,7 +252,39 @@ class PDFWriter {
     this.doc.setFont('helvetica', 'normal')
     const lines = this.doc.splitTextToSize(text, this.contentWidth - 10)
     this.doc.text(lines, this.marginLeft + 5, this.y)
-    this.y += lines.length * 4.5 + 3
+    this.y += lines.length * 5 + 4 // was * 4.5 + 3 — more breathing room
+  }
+
+  bulletBody(label: string, value: string) {
+    // Indented bullet with bold label + body-color value, wraps gracefully.
+    this.checkPage(15)
+    const bulletX = this.marginLeft + 5
+    const labelX = this.marginLeft + 11
+    this.doc.setFontSize(9)
+    // Purple bullet
+    this.doc.setTextColor(COLORS.purple)
+    this.doc.setFont('helvetica', 'bold')
+    this.doc.text('•', bulletX, this.y)
+    // Bold label
+    this.doc.setTextColor(COLORS.section)
+    this.doc.setFont('helvetica', 'bold')
+    const labelText = `${label}:`
+    this.doc.text(labelText, labelX, this.y)
+    const labelWidth = this.doc.getTextWidth(labelText)
+    // Body-color value
+    this.doc.setTextColor(COLORS.body)
+    this.doc.setFont('helvetica', 'normal')
+    const valueX = labelX + labelWidth + 3
+    const valueWidth = this.contentWidth - (valueX - this.marginLeft) - 5
+    const lines = this.doc.splitTextToSize(value, valueWidth)
+    this.doc.text(lines, valueX, this.y)
+    // Hanging indent for subsequent lines (if value wraps)
+    if (lines.length > 1) {
+      // Re-render with proper hanging indent — first line at valueX, rest at labelX
+      // Actually jsPDF rendered them all starting at valueX. For multi-line values,
+      // we accept that wraps continue from the same x. Acceptable.
+    }
+    this.y += Math.max(1, lines.length) * 5 + 2
   }
 
   finding(text: string) {
@@ -486,15 +526,23 @@ export function generateMedicalReport(data: ReportData): Blob {
 
   // === TRACKED CONDITIONS (ICD-10 for doctor mode) ===
   // Fix: keep FULL subcategory (don't split on hyphen — that turned head-pain → "Head")
+  // Fix v0.4.9: collapse duplicate tracker rows by display name so "hydration",
+  // "Hydration", and "Hydration Hydration" all merge into one "Hydration" row.
   const trackerCounts: Record<string, number> = {}
   const trackerDayCounts: Record<string, Set<string>> = {}
+  const displayToKey: Record<string, string> = {} // remember a canonical key for ICD lookup
 
   for (const r of trackerData) {
     const sub = r.subcategory || ''
     if (!sub) continue
-    trackerCounts[sub] = (trackerCounts[sub] || 0) + 1
-    if (!trackerDayCounts[sub]) trackerDayCounts[sub] = new Set()
-    if (r.date) trackerDayCounts[sub].add(r.date)
+    const display = displayName(sub)
+    trackerCounts[display] = (trackerCounts[display] || 0) + 1
+    if (!trackerDayCounts[display]) trackerDayCounts[display] = new Set()
+    if (r.date) trackerDayCounts[display].add(r.date)
+    // Prefer a key that maps to ICD10_MAP if any
+    if (!displayToKey[display] || (ICD10_MAP[sub] && !ICD10_MAP[displayToKey[display]])) {
+      displayToKey[display] = sub
+    }
   }
 
   // Helper: pull top symptom/trigger evidence for a given tracker so doctors
@@ -539,30 +587,34 @@ export function generateMedicalReport(data: ReportData): Blob {
   if (isDoctor) {
     w.sectionHeader('Tracked Conditions (ICD-10)')
     const sorted = Object.entries(trackerCounts).sort((a, b) => b[1] - a[1])
-    const rows = sorted.map(([id, count]) => [
-      displayName(id),
-      ICD10_MAP[id] || '—',
-      String(trackerDayCounts[id]?.size || 0),
-      String(count),
-    ])
+    const rows = sorted.map(([display, count]) => {
+      const canonicalKey = displayToKey[display]
+      return [
+        display,
+        ICD10_MAP[canonicalKey] || '—',
+        String(trackerDayCounts[display]?.size || 0),
+        String(count),
+      ]
+    })
     w.table(['Condition', 'ICD-10 Code', 'Days', 'Entries'], rows, [110, 230, 50, 50])
     w.note('ICD-10 codes shown are suggestions based on tracked symptoms and may not match official diagnoses. Supporting evidence below.')
 
     // Supporting evidence subsection — key signals that validate each ICD suggestion
     w.spacer(4)
     w.subSection('Supporting evidence (top symptoms/triggers per tracker)')
-    for (const [id] of sorted) {
-      const evidence = collectEvidence(id)
+    for (const [display] of sorted) {
+      const canonicalKey = displayToKey[display]
+      const evidence = collectEvidence(canonicalKey)
       if (evidence) {
-        w.body(`${displayName(id)}: ${evidence}`)
+        w.bulletBody(display, evidence)
       }
     }
     w.spacer(6)
   } else {
     w.sectionHeader('What Was Tracked')
     const sorted = Object.entries(trackerCounts).sort((a, b) => b[1] - a[1])
-    for (const [id, count] of sorted) {
-      w.body(`${displayName(id)}: ${count} entries`)
+    for (const [display, count] of sorted) {
+      w.bulletBody(display, `${count} entries`)
     }
   }
 
