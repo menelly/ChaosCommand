@@ -74,7 +74,7 @@ fi
 
 # 7. Regenerate changelog
 echo "→ Regenerating CHANGELOG"
-python3 scripts/gen_changelog.py --out-dir docs
+python scripts/gen_changelog.py --out-dir docs
 
 # 8. Push (optional — comment out if you want to push manually)
 echo "→ Pushing commits and tag"
