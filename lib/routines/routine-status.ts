@@ -118,6 +118,25 @@ export function buildStatusMap(
   return out
 }
 
+/** Most-recent-EVER log time (epoch ms) per tracker, across all history — for
+ *  the "last logged …" hint on pending cards (so you know if Copy last is worth
+ *  it). Pass ALL records (not just today's). null = never logged. */
+export function buildLastLoggedMap(
+  allRecords: DailyDataRecord[],
+  trackables: { id: string; subcategory: string; subcategoryPrefix?: string }[]
+): Record<string, number | null> {
+  const out: Record<string, number | null> = {}
+  for (const t of trackables) {
+    const matches = (t.subcategoryPrefix
+      ? allRecords.filter(r => typeof r.subcategory === 'string' && r.subcategory.startsWith(t.subcategoryPrefix!))
+      : allRecords.filter(r => r.subcategory === t.subcategory)
+    ).filter(r => recordHasLog(r))
+    const ms = matches.map(r => latestEntryMs(r)).filter((x): x is number => x !== null).sort((a, b) => b - a)[0]
+    out[t.id] = ms ?? null
+  }
+  return out
+}
+
 /** True when every tracker in the routine has been logged today. */
 export function allLogged(statusMap: Record<string, TrackerLoggedStatus>): boolean {
   const vals = Object.values(statusMap)

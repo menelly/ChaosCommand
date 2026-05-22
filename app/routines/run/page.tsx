@@ -26,11 +26,22 @@ import { useDailyData, formatDateForStorage } from "@/lib/database"
 import { getRoutine, type Routine } from "@/lib/routines/routines-config"
 import { type TrackableTracker } from "@/lib/routines/trackable-registry"
 import { loadAllTrackables, indexTrackables } from "@/lib/routines/load-trackables"
-import { buildStatusMap, type TrackerLoggedStatus } from "@/lib/routines/routine-status"
+import { buildStatusMap, buildLastLoggedMap, type TrackerLoggedStatus } from "@/lib/routines/routine-status"
 import { getClearedTrackers, markNothingToLog, unmarkNothingToLog } from "@/lib/routines/routine-cleared"
 import { getSkippedTrackers, markSkipped, unmarkSkipped } from "@/lib/routines/routine-skipped"
 import { getRunStart } from "@/lib/routines/routine-session"
 import { copyLastEntryToToday } from "@/lib/routines/copy-last-entry"
+
+/** "today 3:14 PM" / "yesterday 9:02 AM" / "May 20, 3:14 PM" */
+function formatLastLogged(ms: number): string {
+  const d = new Date(ms)
+  const now = new Date()
+  const time = d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })
+  if (d.toDateString() === now.toDateString()) return `today ${time}`
+  const yest = new Date(now); yest.setDate(now.getDate() - 1)
+  if (d.toDateString() === yest.toDateString()) return `yesterday ${time}`
+  return `${d.toLocaleDateString(undefined, { month: "short", day: "numeric" })}, ${time}`
+}
 
 function RoutineRun() {
   const router = useRouter()
@@ -47,6 +58,7 @@ function RoutineRun() {
   const [status, setStatus] = useState<Record<string, TrackerLoggedStatus>>({})
   const [cleared, setCleared] = useState<Set<string>>(new Set()) // "nothing to log today" — persisted
   const [skipped, setSkipped] = useState<Set<string>>(new Set())  // "hide for now" — session only
+  const [lastLogged, setLastLogged] = useState<Record<string, number | null>>({}) // most-recent-ever per tracker
 
   useEffect(() => {
     if (pin && routineId) setRoutine(getRoutine(pin, routineId))
@@ -69,12 +81,17 @@ function RoutineRun() {
 
   const loadStatus = useCallback(async () => {
     if (!routine || resolved.length === 0) return
-    // No category filter — custom trackers store under body/mind/custom, not 'tracker'.
-    const records = await getDateRange(today, today)
+    // Fetch all history (no category filter — custom trackers store under
+    // body/mind/custom, not 'tracker'). today's slice drives status; the full
+    // set drives the "last logged …" hint.
+    const allRecords = await getDateRange("2000-01-01", today)
+    const records = allRecords.filter(r => r.date === today)
+    const trackerKeys = resolved.map(t => ({ id: t.id, subcategory: t.subcategory, subcategoryPrefix: t.subcategoryPrefix }))
     // Scope "done" to the current run (since you tapped Run) so a routine can be
     // run multiple times a day. No run stamped (direct nav) → null → today-view.
     const since = getRunStart(pin, routineId)
-    setStatus(buildStatusMap(records, resolved.map(t => ({ id: t.id, subcategory: t.subcategory, subcategoryPrefix: t.subcategoryPrefix })), since))
+    setStatus(buildStatusMap(records, trackerKeys, since))
+    setLastLogged(buildLastLoggedMap(allRecords, trackerKeys))
     setCleared(getClearedTrackers(pin, routineId, today))
     setSkipped(getSkippedTrackers(pin, routineId, today))
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -196,7 +213,10 @@ function RoutineRun() {
                       </div>
                     ) : (
                       <div className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Circle className="h-3.5 w-3.5" /> Not logged today
+                        <Circle className="h-3.5 w-3.5" />
+                        {lastLogged[t.id]
+                          ? `Last logged ${formatLastLogged(lastLogged[t.id]!)}`
+                          : "Not logged yet"}
                       </div>
                     )}
                   </div>
