@@ -17,9 +17,10 @@ import AppCanvas from "@/components/app-canvas"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle2, Circle, ArrowLeft, ChevronRight, EyeOff, Eye, MinusCircle, Undo2 } from "lucide-react"
+import { CheckCircle2, Circle, ArrowLeft, ChevronRight, EyeOff, Eye, MinusCircle, Undo2, CopyPlus } from "lucide-react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
+import { useToast } from "@/hooks/use-toast"
 import { useUser } from "@/lib/contexts/user-context"
 import { useDailyData, formatDateForStorage } from "@/lib/database"
 import { getRoutine, type Routine } from "@/lib/routines/routines-config"
@@ -27,6 +28,7 @@ import { type TrackableTracker } from "@/lib/routines/trackable-registry"
 import { loadAllTrackables, indexTrackables } from "@/lib/routines/load-trackables"
 import { buildStatusMap, type TrackerLoggedStatus } from "@/lib/routines/routine-status"
 import { getClearedTrackers, markNothingToLog, unmarkNothingToLog } from "@/lib/routines/routine-cleared"
+import { copyLastEntryToToday } from "@/lib/routines/copy-last-entry"
 
 function RoutineRun() {
   const router = useRouter()
@@ -34,7 +36,8 @@ function RoutineRun() {
   const routineId = params.get("id") ?? ""
   const { userPin } = useUser()
   const pin = userPin ?? ""
-  const { getDateRange, getAllCategoryData } = useDailyData()
+  const { getDateRange, getAllCategoryData, saveData } = useDailyData()
+  const { toast } = useToast()
 
   const today = formatDateForStorage(new Date())
   const [routine, setRoutine] = useState<Routine | null>(null)
@@ -114,6 +117,17 @@ function RoutineRun() {
     unmarkNothingToLog(pin, today, id)
     setCleared(prev => { const n = new Set(prev); n.delete(id); return n })
   }
+  const copyYesterday = async (t: TrackableTracker) => {
+    const res = await copyLastEntryToToday(t, today, getDateRange, saveData)
+    if (res.ok) {
+      toast({ title: `${t.emoji} ${t.label} — copied`, description: `Cloned your entry from ${res.srcDate}. Tweak or remove it on the tracker's Edit/Delete.` })
+      loadStatus()
+    } else if (res.reason === "no-prior") {
+      toast({ title: "Nothing to copy yet", description: `No earlier ${t.label} entry to copy from.`, variant: "destructive" })
+    } else {
+      toast({ title: "Couldn't copy", description: `Open ${t.label} and log it directly.`, variant: "destructive" })
+    }
+  }
 
   return (
     <AppCanvas currentPage="routines">
@@ -169,9 +183,14 @@ function RoutineRun() {
                     )}
                   </div>
 
-                  {/* Pending: log it, mark nothing-to-log, or skip (all reversible) */}
+                  {/* Pending: copy yesterday, log it, mark nothing-to-log, or skip */}
                   {isPending && (
-                    <>
+                    <div className="flex flex-wrap items-center justify-end gap-1.5 shrink-0">
+                      <Button size="sm" variant="ghost" className="gap-1 text-muted-foreground"
+                        title="Copy your last entry into today — then tweak/remove it via the tracker's Edit/Delete"
+                        onClick={() => copyYesterday(t)}>
+                        <CopyPlus className="h-4 w-4" /> Copy yest.
+                      </Button>
                       <Button size="sm" variant="ghost" className="gap-1 text-muted-foreground"
                         title="I checked — nothing to report today. Counts as done."
                         onClick={() => nothingToLog(t.id)}>
@@ -184,7 +203,7 @@ function RoutineRun() {
                       <Button size="sm" className="gap-1" onClick={() => logNow(t.href)}>
                         Log now <ChevronRight className="h-4 w-4" />
                       </Button>
-                    </>
+                    </div>
                   )}
 
                   {/* Nothing-to-log: undo, or log after all */}
