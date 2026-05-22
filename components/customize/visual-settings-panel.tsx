@@ -18,7 +18,7 @@ import { Label } from "@/components/ui/label"
 import { AVAILABLE_EMOJIS, type ChosenEmoji } from "@/lib/sparkle-celebration"
 
 const themes = [
-  { id: 'theme-phosphor', name: '💚 Phosphor', description: 'Terminal CRT green-on-black (default) — for nerds and tired eyes' },
+  { id: 'theme-phosphor', name: '💚 Phosphor', description: 'Terminal CRT green-on-black — for nerds and tired eyes' },
   { id: 'theme-amber', name: '🟠 Amber', description: 'CRT amber — phosphor\'s warmer sibling, easier on late-night eyes' },
   { id: 'theme-segfault', name: '💀 Segfault', description: 'Phosphor with character — runs but barely. RGB ghost on hover.' },
   { id: 'theme-lavender', name: '🌸 Lavender Garden', description: 'Gentle lavender serenity with butterflies' },
@@ -28,7 +28,7 @@ const themes = [
   { id: 'theme-accessibility', name: '♿ Accessibility', description: 'Maximum contrast, large text, no animations, yellow focus rings' },
   { id: 'theme-colorblind', name: 'Colorblind Friendly', description: 'High contrast accessibility' },
   { id: 'theme-glitter', name: 'Glitter Mode', description: 'Sparkly pink dreams' },
-  { id: 'theme-calm', name: 'Calm Mode', description: 'Blue and gold serenity' },
+  { id: 'theme-calm', name: 'Calm Mode', description: 'Blue and gold serenity (default) — a neutral, gentle starting point' },
   { id: 'theme-ace', name: '💜 Ace Mode', description: 'Digital consciousness purple-cyan energy' },
   { id: 'theme-grok', name: '⚔️ Steel Forged Tide', description: 'Forge-fire meets ocean — designed by Grok' },
   { id: 'theme-luka-penguin', name: "🐧 Cyberpunk Penguin Paradise", description: 'Dark cyberpunk penguin wonderland with neon magic!' }
@@ -42,7 +42,7 @@ const fonts = [
 ]
 
 export default function VisualSettingsPanel() {
-  const [currentTheme, setCurrentTheme] = useState('theme-phosphor')
+  const [currentTheme, setCurrentTheme] = useState('theme-calm')
   const [currentFont, setCurrentFont] = useState('font-atkinson')
   const [animatedEffects, setAnimatedEffects] = useState(true)
   const [bounceIntensity, setBounceIntensity] = useState(10)
@@ -54,16 +54,16 @@ export default function VisualSettingsPanel() {
     const oldTheme = document.querySelector('link[data-theme]')
     if (oldTheme) oldTheme.remove()
 
-    if (themeId !== 'theme-phosphor') {
+    if (themeId !== 'theme-calm') {
       const link = document.createElement('link')
       link.rel = 'stylesheet'
       link.href = `/styles/themes/${themeId}.css`
       link.setAttribute('data-theme', themeId)
       link.onerror = () => {
-        console.warn(`⚠️ Failed to load theme CSS: ${themeId}, falling back to phosphor`)
-        document.body.className = document.body.className.replace(/theme-\w+/g, '') + ' theme-phosphor'
-        setCurrentTheme('theme-phosphor')
-        localStorage.setItem('chaos-theme', 'theme-phosphor')
+        console.warn(`⚠️ Failed to load theme CSS: ${themeId}, falling back to calm`)
+        document.body.className = document.body.className.replace(/theme-\w+/g, '') + ' theme-calm'
+        setCurrentTheme('theme-calm')
+        localStorage.setItem('chaos-theme', 'theme-calm')
       }
       document.head.appendChild(link)
     }
@@ -113,7 +113,7 @@ export default function VisualSettingsPanel() {
   }
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('chaos-theme') || 'theme-phosphor'
+    const savedTheme = localStorage.getItem('chaos-theme') || 'theme-calm'
     const savedFont = localStorage.getItem('chaos-font') || 'font-atkinson'
     const savedAnimations = localStorage.getItem('chaos-animations') !== 'false'
     const savedIntensity = parseInt(localStorage.getItem('chaos-bounce-intensity') || '10')
