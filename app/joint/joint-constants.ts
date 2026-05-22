@@ -50,6 +50,7 @@ export const MUSCLES = [
   'Distal (hands & feet)',
   // Head & neck
   'Neck / cervical',
+  'Coat hanger (neck & shoulders)',
   'Jaw / masseter',
   // Shoulder girdle & upper back
   'Trapezius (left)', 'Trapezius (right)',
