@@ -266,29 +266,6 @@ export const MODULE_REGISTRY: ModuleMetadata[] = [
     editions: ['companion', 'command']
   },
 
-  // 📅 PLANNING HUB (existing implementation)
-  {
-    id: 'planning-hub',
-    name: 'planning',
-    displayName: 'Planning Hub',
-    description: 'Central planning dashboard with calendar integration and task management',
-    category: 'planning-calendar',
-    status: 'available',
-    compatibility: {
-      pwa: 'full',
-      pdf: 'full',
-      notes: 'Planning layouts work great in both digital and print formats'
-    },
-    showInWebsite: true,
-    isPopular: true,
-    suggestedWith: ['calendar-monthly', 'journal-unified'],
-    allowCustomTitle: true,
-    defaultTitle: 'Planning Hub',
-    alternativeTitles: ['Planning Center', 'Task Management', 'Daily Planning'],
-    icon: 'Calendar',
-    route: '/planning',
-    editions: ['companion', 'command']
-  },
   
   // 🧠 MENTAL HEALTH MODULES
   {

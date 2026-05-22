@@ -72,16 +72,6 @@ export default function AppSidebar() {
       isVisible: true,
       buttonClass: "sidebar-btn-3"
     },
-    /* MVP-HIDDEN: Planning Section - Nothing implemented yet
-    {
-      id: "planning",
-      text: "Plan",
-      emoji: "📅",
-      targetPageId: "planning",
-      isVisible: true,
-      buttonClass: "sidebar-btn-2"
-    },
-    */
     {
       id: "manage",
       text: "Manage",
@@ -128,13 +118,6 @@ export default function AppSidebar() {
       { id: 'brain-fog', name: 'Brain Fog', icon: '🧠' },
       { id: 'anxiety-tracker', name: 'Anxiety', icon: '😰' },
     ],
-    /* MVP-HIDDEN: Planning submenu items
-    'planning': [
-      { id: 'monthly-calendar', name: 'Monthly Calendar', icon: '📆' },
-      { id: 'task-lists', name: 'Task Lists', icon: '✅' },
-      { id: 'goals-tracker', name: 'Goals', icon: '🎯' },
-    ],
-    */
     'manage': [
       { id: 'medications', name: 'Medications & Supplements', icon: '💊', href: '/medications' },
       { id: 'providers', name: 'Healthcare Providers', icon: '👩‍⚕️', href: '/providers' },
