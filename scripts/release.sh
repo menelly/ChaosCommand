@@ -48,17 +48,28 @@ if [ -f src-tauri/Cargo.toml ]; then
     rm -f src-tauri/Cargo.toml.bak
 fi
 
+# 3b. Bump lib/app-version.ts APP_VERSION — the in-app version the update-check
+#     reports about ITSELF. If this lags, the app compares its stale version
+#     against the (newer) manifest and nags "update available" forever, even on
+#     the newest binary. THE EASY MISS. Bump it in lockstep with the rest.
+if [ -f lib/app-version.ts ]; then
+    echo "→ Updating lib/app-version.ts APP_VERSION"
+    sed -i.bak -E "s/(APP_VERSION = ')[^']+(')/\\1$NEW_VERSION\\2/" lib/app-version.ts
+    rm -f lib/app-version.ts.bak
+fi
+
 # 4. Verify all versions match
 echo ""
 echo "🔍 Verifying versions:"
-echo -n "  package.json: "; grep -m1 '"version"' package.json
-echo -n "  tauri.conf:    "; grep -m1 '"version"' src-tauri/tauri.conf.json 2>/dev/null || echo "(none)"
-echo -n "  Cargo.toml:    "; grep -m1 '^version' src-tauri/Cargo.toml 2>/dev/null || echo "(none)"
+echo -n "  package.json:    "; grep -m1 '"version"' package.json
+echo -n "  tauri.conf:      "; grep -m1 '"version"' src-tauri/tauri.conf.json 2>/dev/null || echo "(none)"
+echo -n "  Cargo.toml:      "; grep -m1 '^version' src-tauri/Cargo.toml 2>/dev/null || echo "(none)"
+echo -n "  app-version.ts:  "; grep -m1 'APP_VERSION' lib/app-version.ts 2>/dev/null || echo "(none)"
 
 # 5. Stage + commit
 echo ""
 echo "→ Committing version bump + release commit"
-git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml 2>/dev/null || true
+git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml lib/app-version.ts 2>/dev/null || true
 git commit -m "$COMMIT_MSG
 
 🤖 Generated with release.sh
