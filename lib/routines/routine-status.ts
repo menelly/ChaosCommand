@@ -54,14 +54,25 @@ function latestEntryMs(record: DailyDataRecord): number | null {
   return best
 }
 
-/** Did this record capture a log? Built-ins use content.entries[]; custom
- *  (Forge) trackers use a single content.values object. */
+/** Did this record capture a log today? Trackers store wildly different content
+ *  shapes — content.entries[] (most), a flat object (energy), a raw array
+ *  (weather), content.values{} (custom Forge), or a JSON string. So: any record
+ *  that exists for the subcategory today with non-empty content counts as logged.
+ *  (Trackers only write a record when there's data, so this is safe.) */
 function recordHasLog(record: DailyDataRecord | undefined): boolean {
   if (!record) return false
-  const entries = record.content?.entries
-  if (Array.isArray(entries)) return entries.length > 0
-  const values = record.content?.values
-  return typeof values === 'object' && values !== null && Object.keys(values).length > 0
+  const c = record.content as unknown
+  if (c == null) return false
+  if (Array.isArray(c)) return c.length > 0                       // weather: raw array
+  if (typeof c === 'string') return c.trim().length > 0           // missed-work: JSON string
+  if (typeof c === 'object') {
+    const obj = c as Record<string, unknown>
+    if (Array.isArray(obj.entries)) return obj.entries.length > 0
+    if (Array.isArray(obj.activities)) return (obj.activities as unknown[]).length > 0  // energy
+    if (obj.values && typeof obj.values === 'object') return Object.keys(obj.values as object).length > 0
+    return Object.keys(obj).length > 0                            // energy flat object + fallback
+  }
+  return false
 }
 
 function formatTime(ms: number): string {

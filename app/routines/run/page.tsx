@@ -17,7 +17,7 @@ import AppCanvas from "@/components/app-canvas"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle2, Circle, ArrowLeft, ChevronRight, EyeOff, Eye, MinusCircle, Undo2, CopyPlus } from "lucide-react"
+import { CheckCircle2, Circle, ArrowLeft, ChevronRight, EyeOff, Eye, MinusCircle, Undo2, CopyPlus, NotebookPen } from "lucide-react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
@@ -251,6 +251,16 @@ function RoutineRun() {
               </Card>
             )
           })}
+        </div>
+
+        {/* End-of-routine: hop to the journal if you want to write it out */}
+        <div className="mt-6 flex justify-center">
+          <Button asChild variant={complete ? "default" : "outline"} className="gap-2">
+            <Link href="/journal">
+              <NotebookPen className="h-4 w-4" />
+              {complete ? "All done — open Journal" : "Open Journal"}
+            </Link>
+          </Button>
         </div>
       </div>
     </AppCanvas>

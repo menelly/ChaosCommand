@@ -51,8 +51,11 @@ export interface TrackableTracker {
   statusUnsupported?: boolean
 }
 
+// Categories mirror the app's real sections (app/body, app/mind, app/choice).
+// statusUnsupported = bespoke storage we haven't taught the status query yet
+// (nav + "nothing today" work; "logged ✓" / copy-yest don't) → see CHA-192.
 export const TRACKABLE_TRACKERS: readonly TrackableTracker[] = [
-  // Body
+  // ── Body ──
   { id: 'pain', label: 'Pain', emoji: '🤕', href: '/pain', subcategory: 'pain', category: 'body' },
   { id: 'head-pain', label: 'Head Pain', emoji: '🤯', href: '/head-pain', subcategory: 'head-pain', category: 'body' },
   { id: 'cardiac', label: 'Heart Drama', emoji: '❤️', href: '/cardiac', subcategory: 'cardiac', category: 'body' },
@@ -60,22 +63,30 @@ export const TRACKABLE_TRACKERS: readonly TrackableTracker[] = [
   { id: 'respiratory', label: 'Respiratory', emoji: '🫁', href: '/respiratory', subcategory: 'respiratory', category: 'body' },
   { id: 'seizure', label: 'Seizure', emoji: '⚡', href: '/seizure', subcategory: 'seizure', category: 'body' },
   { id: 'joint', label: 'Joint & MSK', emoji: '🦴', href: '/joint', subcategory: 'joint', category: 'body' },
-  { id: 'energy', label: 'Energy & Pacing', emoji: '⚡', href: '/energy', subcategory: 'energy', category: 'body' },
   { id: 'bathroom', label: 'Potty Talk', emoji: '🚽', href: '/bathroom', subcategory: 'bathroom', category: 'body' },
   { id: 'upper-digestive', label: 'Upper Digestive', emoji: '🤢', href: '/upper-digestive', subcategory: 'upper-digestive', category: 'body' },
   { id: 'skin', label: 'Skin', emoji: '🩹', href: '/skin', subcategory: 'skin', category: 'body' },
-  { id: 'food-allergens', label: 'Food Allergens', emoji: '⚠️', href: '/food-allergens', subcategory: 'food-allergens', category: 'body' },
   { id: 'reproductive-health', label: 'Reproductive Health', emoji: '🩸', href: '/reproductive-health', subcategory: 'reproductive-health', category: 'body' },
+  { id: 'food-allergens', label: 'Food Allergens', emoji: '⚠️', href: '/food-allergens', subcategory: 'food-allergens', category: 'body' },
   { id: 'weather', label: 'Weather & Environment', emoji: '🌦️', href: '/weather-environment', subcategory: 'weather', category: 'body' },
-  // Mind
+  { id: 'diabetes', label: 'Diabetes', emoji: '💉', href: '/diabetes', subcategory: 'diabetes', category: 'body', statusUnsupported: true },
+  { id: 'vitals', label: 'Vitals', emoji: '🩺', href: '/vitals', subcategory: 'vitals', category: 'body', statusUnsupported: true },
+  // ── Mind ──
   { id: 'brain-fog', label: 'Brain Fog', emoji: '🌫️', href: '/brain-fog', subcategory: 'brain-fog', category: 'mind' },
-  { id: 'anxiety', label: 'Anxiety', emoji: '😰', href: '/anxiety-tracker', subcategory: 'anxiety', category: 'mind' }, // route slug ≠ storage key
   { id: 'mental-health', label: 'Mind & Mood', emoji: '🧠', href: '/mental-health', subcategory: 'mental-health', category: 'mind' },
-  // Choice
+  { id: 'anxiety', label: 'Anxiety', emoji: '😰', href: '/anxiety-tracker', subcategory: 'anxiety', category: 'mind' }, // route slug ≠ storage key
+  { id: 'self-care', label: 'Self-Care', emoji: '🛁', href: '/self-care-tracker', subcategory: 'self-care', category: 'mind', statusUnsupported: true },
+  { id: 'sensory', label: 'Sensory', emoji: '🌈', href: '/sensory-tracker', subcategory: 'sensory', category: 'mind', statusUnsupported: true },
+  // (Crisis Support is intentionally NOT a routine item — it's an emergency tool, not a daily batch log.)
+  // ── Choice ──
   { id: 'food-choice', label: 'Food', emoji: '🍽️', href: '/food-choice', subcategory: 'food-choice', category: 'choice' },
   { id: 'substance', label: 'Substances', emoji: '🧪', href: '/substance', subcategory: 'substance', category: 'choice' },
-  // Manage — daily-loggable only. Non-standard storage: nav + "nothing today"
-  // work; "logged ✓" / copy-yest don't yet (status integration is a follow-up).
+  { id: 'energy', label: 'Energy & Pacing', emoji: '⚡', href: '/energy', subcategory: 'energy', category: 'choice' },
+  { id: 'hydration', label: 'Hydration', emoji: '💧', href: '/hydration', subcategory: 'hydration', category: 'choice', statusUnsupported: true },
+  { id: 'sleep', label: 'Sleep', emoji: '🛌', href: '/sleep', subcategory: 'sleep', category: 'choice', statusUnsupported: true },
+  { id: 'movement', label: 'Movement', emoji: '🏃', href: '/movement', subcategory: 'movement', category: 'choice', statusUnsupported: true },
+  { id: 'coping-regulation', label: 'Coping & Regulation', emoji: '🧘', href: '/coping-regulation', subcategory: 'coping-regulation', category: 'choice', statusUnsupported: true },
+  // ── Manage (daily-loggable only) ──
   { id: 'medications', label: 'Medications', emoji: '💊', href: '/medications', subcategory: 'medications', category: 'manage', statusUnsupported: true },
   { id: 'missed-work', label: 'Missed Work', emoji: '💼', href: '/work-disability', subcategory: 'missed-work', category: 'manage', statusUnsupported: true },
 ]
