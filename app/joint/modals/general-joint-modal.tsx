@@ -334,7 +334,7 @@ export function GeneralJointModal({ isOpen, onClose, onSave, editingEntry, prese
 
           <div className="flex gap-3 pt-4">
             <Button type="button" variant="outline" onClick={handleClose} className="flex-1">Cancel</Button>
-            <Button type="button" onClick={handleSave} className="flex-1" disabled={jointAffected.length === 0}><Plus className="h-4 w-4 mr-2" />{editingEntry ? 'Update Event' : 'Save Joint Event'}</Button>
+            <Button type="button" onClick={handleSave} className="flex-1" disabled={muscleMode ? musclesAffected.length === 0 : jointAffected.length === 0}><Plus className="h-4 w-4 mr-2" />{editingEntry ? 'Update Event' : 'Save Joint Event'}</Button>
           </div>
         </div>
         </KeyboardAvoidingWrapper>

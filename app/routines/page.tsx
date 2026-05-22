@@ -12,7 +12,7 @@
 import { useEffect, useState, useCallback } from "react"
 import AppCanvas from "@/components/app-canvas"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Plus, Play, Pencil, Trash2, ListChecks } from "lucide-react"
 import Link from "next/link"
@@ -93,10 +93,12 @@ export default function RoutinesHub() {
                     <span className="text-2xl">{r.emoji}</span>
                     {r.name}
                   </CardTitle>
-                  <CardDescription className="flex items-center gap-2">
+                  {/* div, not CardDescription (<p>): Badge renders a <div>, which is
+                      invalid inside <p> and causes a hydration error. */}
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
                     <Badge variant="outline" className="text-xs">{WINDOW_LABEL[r.timeWindow]}</Badge>
                     <span>{r.trackers.length} tracker{r.trackers.length === 1 ? "" : "s"}</span>
-                  </CardDescription>
+                  </div>
                 </CardHeader>
                 <CardContent className="flex gap-2">
                   <Button asChild className="flex-1 gap-2" disabled={r.trackers.length === 0}>
