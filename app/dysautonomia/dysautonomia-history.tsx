@@ -146,7 +146,7 @@ export function DysautonomiaHistory({ onEdit, onDelete, refreshTrigger }: Dysaut
           <CardContent className="p-4">
             <div className="text-2xl font-bold text-foreground">
               {historyEntries.filter(e => {
-                const entryDate = new Date(e.date)
+                const entryDate = new Date(e.date + 'T00:00:00') // local parse, not UTC
                 const weekAgo = new Date()
                 weekAgo.setDate(weekAgo.getDate() - 7)
                 return entryDate >= weekAgo
@@ -193,7 +193,7 @@ export function DysautonomiaHistory({ onEdit, onDelete, refreshTrigger }: Dysaut
               <div key={date} className="border rounded-lg p-4">
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="font-medium text-foreground">
-                    {format(new Date(date), 'EEEE, MMMM d, yyyy')}
+                    {format(new Date(date + 'T00:00:00'), 'EEEE, MMMM d, yyyy')}
                   </h4>
                   <Badge variant="outline">
                     {dayEntries.length} episode{dayEntries.length !== 1 ? 's' : ''}
