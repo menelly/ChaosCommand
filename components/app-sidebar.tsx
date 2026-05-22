@@ -73,6 +73,14 @@ export default function AppSidebar() {
       buttonClass: "sidebar-btn-3"
     },
     {
+      id: "routines",
+      text: "Routines",
+      emoji: "📋",
+      targetPageId: "routines",
+      isVisible: true,
+      buttonClass: "sidebar-btn-2"
+    },
+    {
       id: "manage",
       text: "Manage",
       emoji: "📋",
