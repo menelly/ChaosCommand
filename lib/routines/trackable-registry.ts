@@ -28,8 +28,10 @@ export interface TrackableTracker {
   emoji: string
   /** Route the "Log now" button navigates to. */
   href: string
-  /** daily_data subcategory (category is always CATEGORIES.TRACKER). */
+  /** daily_data subcategory (category is CATEGORIES.TRACKER for built-ins). */
   subcategory: string
+  /** True for user-built Forge trackers (different content shape + category). */
+  isCustom?: boolean
 }
 
 export const TRACKABLE_TRACKERS: readonly TrackableTracker[] = [

@@ -21,9 +21,10 @@ import { CheckCircle2, Circle, ArrowLeft, ChevronRight, EyeOff } from "lucide-re
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useUser } from "@/lib/contexts/user-context"
-import { useDailyData, CATEGORIES, formatDateForStorage } from "@/lib/database"
+import { useDailyData, formatDateForStorage } from "@/lib/database"
 import { getRoutine, type Routine } from "@/lib/routines/routines-config"
-import { resolveTrackables } from "@/lib/routines/trackable-registry"
+import { type TrackableTracker } from "@/lib/routines/trackable-registry"
+import { loadAllTrackables, indexTrackables } from "@/lib/routines/load-trackables"
 import { buildStatusMap, allLogged, type TrackerLoggedStatus } from "@/lib/routines/routine-status"
 
 function RoutineRun() {
@@ -32,9 +33,10 @@ function RoutineRun() {
   const routineId = params.get("id") ?? ""
   const { userPin } = useUser()
   const pin = userPin ?? ""
-  const { getDateRange } = useDailyData()
+  const { getDateRange, getAllCategoryData } = useDailyData()
 
   const [routine, setRoutine] = useState<Routine | null>(null)
+  const [trackables, setTrackables] = useState<TrackableTracker[]>([])
   const [status, setStatus] = useState<Record<string, TrackerLoggedStatus>>({})
   const [skipped, setSkipped] = useState<Set<string>>(new Set())
 
@@ -42,12 +44,29 @@ function RoutineRun() {
     if (pin && routineId) setRoutine(getRoutine(pin, routineId))
   }, [pin, routineId])
 
+  // Load the full tracker set (built-in + custom) so custom routine members resolve.
+  useEffect(() => {
+    let alive = true
+    loadAllTrackables(getAllCategoryData).then(list => { if (alive) setTrackables(list) })
+    return () => { alive = false }
+  }, [getAllCategoryData])
+
+  // Resolve this routine's members (preserving order, dropping unknowns).
+  const trackableById = indexTrackables(trackables)
+  const resolved = routine
+    ? routine.trackers
+        .map(t => trackableById.get(t.trackerId))
+        .filter((t): t is TrackableTracker => t !== undefined)
+    : []
+
   const loadStatus = useCallback(async () => {
-    if (!routine) return
+    if (!routine || resolved.length === 0) return
     const today = formatDateForStorage(new Date())
-    const records = await getDateRange(today, today, CATEGORIES.TRACKER)
-    setStatus(buildStatusMap(records, routine.trackers.map(t => t.trackerId)))
-  }, [routine, getDateRange])
+    // No category filter — custom trackers store under body/mind/custom, not 'tracker'.
+    const records = await getDateRange(today, today)
+    setStatus(buildStatusMap(records, resolved.map(t => ({ id: t.id, subcategory: t.subcategory }))))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routine, trackables, getDateRange])
 
   useEffect(() => { loadStatus() }, [loadStatus])
 
@@ -73,7 +92,7 @@ function RoutineRun() {
     )
   }
 
-  const trackers = resolveTrackables(routine.trackers.map(t => t.trackerId))
+  const trackers = resolved
   const complete = allLogged(status)
 
   const logNow = (href: string) =>

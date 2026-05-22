@@ -19,7 +19,9 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Plus, ArrowUp, ArrowDown, X, Info } from "lucide-react"
-import { TRACKABLE_TRACKERS, getTrackable } from "@/lib/routines/trackable-registry"
+import { useDailyData } from "@/lib/database"
+import { type TrackableTracker } from "@/lib/routines/trackable-registry"
+import { loadAllTrackables, indexTrackables } from "@/lib/routines/load-trackables"
 import {
   type Routine, type RoutineTimeWindow, type RoutineTracker,
   createRoutine, updateRoutine, setRoutineTrackers,
@@ -35,10 +37,23 @@ interface Props {
 }
 
 export default function RoutineBuilderDialog({ open, onClose, pin, routine, onSaved }: Props) {
+  const { getAllCategoryData } = useDailyData()
   const [name, setName] = useState("")
   const [emoji, setEmoji] = useState("📋")
   const [timeWindow, setTimeWindow] = useState<RoutineTimeWindow>("morning")
   const [members, setMembers] = useState<RoutineTracker[]>([])
+  const [trackables, setTrackables] = useState<TrackableTracker[]>([])
+
+  // Load the user's full tracker set (built-in + custom Forge trackers) on open.
+  useEffect(() => {
+    if (!open) return
+    let alive = true
+    loadAllTrackables(getAllCategoryData).then(list => { if (alive) setTrackables(list) })
+    return () => { alive = false }
+  }, [open, getAllCategoryData])
+
+  const trackableById = indexTrackables(trackables)
+  const getTrackable = (id: string) => trackableById.get(id)
 
   // Hydrate from the routine being edited (or reset for a fresh create).
   useEffect(() => {
@@ -57,7 +72,7 @@ export default function RoutineBuilderDialog({ open, onClose, pin, routine, onSa
   }, [open, routine])
 
   const memberIds = new Set(members.map(m => m.trackerId))
-  const available = TRACKABLE_TRACKERS.filter(t => !memberIds.has(t.id))
+  const available = trackables.filter(t => !memberIds.has(t.id))
 
   const addTracker = (id: string) =>
     setMembers(prev => [...prev, { trackerId: id, autofill: false }])

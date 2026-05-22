@@ -13,7 +13,6 @@
  */
 
 import type { DailyDataRecord } from '@/lib/database/dexie-db'
-import { getTrackable } from './trackable-registry'
 
 export interface TrackerLoggedStatus {
   loggedToday: boolean
@@ -35,8 +34,8 @@ function parseMs(value: unknown): number | null {
   return null
 }
 
-/** Best-effort most-recent timestamp (ms) across a day's entries, with the
- *  record's metadata.updated_at as the fallback. */
+/** Best-effort most-recent timestamp (ms) for a day's record. Scans built-in
+ *  entry arrays, then the custom-tracker savedAt, then record metadata. */
 function latestEntryMs(record: DailyDataRecord): number | null {
   const entries: unknown = record.content?.entries
   let best: number | null = null
@@ -49,8 +48,20 @@ function latestEntryMs(record: DailyDataRecord): number | null {
       }
     }
   }
+  // Custom (Forge) trackers store one object per day: { values, savedAt }.
+  if (best === null) best = parseMs(record.content?.savedAt)
   if (best === null) best = parseMs(record.metadata?.updated_at) ?? parseMs(record.metadata?.created_at)
   return best
+}
+
+/** Did this record capture a log? Built-ins use content.entries[]; custom
+ *  (Forge) trackers use a single content.values object. */
+function recordHasLog(record: DailyDataRecord | undefined): boolean {
+  if (!record) return false
+  const entries = record.content?.entries
+  if (Array.isArray(entries)) return entries.length > 0
+  const values = record.content?.values
+  return typeof values === 'object' && values !== null && Object.keys(values).length > 0
 }
 
 function formatTime(ms: number): string {
@@ -63,24 +74,20 @@ export function computeTrackerStatus(
   subcategory: string
 ): TrackerLoggedStatus {
   const record = todayRecords.find(r => r.subcategory === subcategory)
-  const entries = record?.content?.entries
-  const loggedToday = Array.isArray(entries) && entries.length > 0
-  if (!loggedToday || !record) return { loggedToday: false, lastLoggedLabel: null }
+  if (!recordHasLog(record) || !record) return { loggedToday: false, lastLoggedLabel: null }
   const ms = latestEntryMs(record)
   return { loggedToday: true, lastLoggedLabel: ms !== null ? formatTime(ms) : null }
 }
 
-/** Status for every tracker id in a routine, keyed by tracker id. */
+/** Status for every tracker in a routine, keyed by tracker id. Pass the
+ *  resolved trackables (built-in + custom) so custom subcategories work too. */
 export function buildStatusMap(
   todayRecords: DailyDataRecord[],
-  trackerIds: string[]
+  trackables: { id: string; subcategory: string }[]
 ): Record<string, TrackerLoggedStatus> {
   const out: Record<string, TrackerLoggedStatus> = {}
-  for (const id of trackerIds) {
-    const t = getTrackable(id)
-    out[id] = t
-      ? computeTrackerStatus(todayRecords, t.subcategory)
-      : { loggedToday: false, lastLoggedLabel: null }
+  for (const t of trackables) {
+    out[t.id] = computeTrackerStatus(todayRecords, t.subcategory)
   }
   return out
 }
