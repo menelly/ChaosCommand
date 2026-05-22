@@ -190,6 +190,11 @@ export const CARDIAC_TRIGGERS = [
   'Menstrual Cycle (Day 1-3)',
   'Hormonal Shift',
 
+  // Environmental / thermal
+  'Heat / Hot Environment',
+  'Hot Shower / Bath',
+  'Hot Weather / Sun Exposure',
+
   // Unknown
   'No Identifiable Trigger'
 ]
