@@ -20,8 +20,9 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { usePathname, useSearchParams } from "next/navigation"
-import { ArrowLeft, ChevronRight, CheckCircle2 } from "lucide-react"
+import { usePathname, useSearchParams, useRouter } from "next/navigation"
+import { ArrowLeft, ChevronRight, CheckCircle2, EyeOff, CopyPlus } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 import { useUser } from "@/lib/contexts/user-context"
 import { useDailyData, formatDateForStorage } from "@/lib/database"
 import { getRoutine, type Routine } from "@/lib/routines/routines-config"
@@ -29,6 +30,8 @@ import { type TrackableTracker } from "@/lib/routines/trackable-registry"
 import { loadAllTrackables, indexTrackables } from "@/lib/routines/load-trackables"
 import { buildStatusMap } from "@/lib/routines/routine-status"
 import { getClearedTrackers } from "@/lib/routines/routine-cleared"
+import { getSkippedTrackers, markSkipped } from "@/lib/routines/routine-skipped"
+import { copyLastEntryToToday } from "@/lib/routines/copy-last-entry"
 
 // Normalize trailing slashes — next.config has trailingSlash:true, so
 // usePathname() yields "/cardiac/" while tracker hrefs are "/cardiac".
@@ -40,7 +43,9 @@ export default function RoutineFlowBar() {
   const routineId = params.get("routine") ?? ""
   const { userPin } = useUser()
   const pin = userPin ?? ""
-  const { getAllCategoryData, getDateRange } = useDailyData()
+  const { getAllCategoryData, getDateRange, saveData } = useDailyData()
+  const router = useRouter()
+  const { toast } = useToast()
 
   const [routine, setRoutine] = useState<Routine | null>(null)
   const [trackables, setTrackables] = useState<TrackableTracker[]>([])
@@ -57,8 +62,9 @@ export default function RoutineFlowBar() {
     return () => { alive = false }
   }, [routineId, getAllCategoryData])
 
-  // Track which routine members are "done" today (logged OR nothing-to-log) so
-  // "Next" can skip them and land on the next thing you actually need to do.
+  // Track which routine members are "handled" today (logged OR nothing-to-log OR
+  // skipped) so "Next" skips them and lands on the next thing actually needing
+  // attention — and doesn't loop back to one you just skipped.
   useEffect(() => {
     if (!pin || !routine) return
     const idx = indexTrackables(trackables)
@@ -72,9 +78,12 @@ export default function RoutineFlowBar() {
       if (!alive) return
       const status = buildStatusMap(records, resolved.map(t => ({ id: t.id, subcategory: t.subcategory })))
       const cleared = getClearedTrackers(pin, today)
-      const done = new Set<string>()
-      resolved.forEach(t => { if (status[t.id]?.loggedToday || cleared.has(t.id)) done.add(t.id) })
-      setDoneIds(done)
+      const skipped = getSkippedTrackers(pin, today)
+      const handled = new Set<string>()
+      resolved.forEach(t => {
+        if (status[t.id]?.loggedToday || cleared.has(t.id) || skipped.has(t.id)) handled.add(t.id)
+      })
+      setDoneIds(handled)
     })
     return () => { alive = false }
   }, [pin, routine, trackables, getDateRange])
@@ -112,6 +121,26 @@ export default function RoutineFlowBar() {
     ? `${next.href}${next.href.includes("?") ? "&" : "?"}routine=${encodeURIComponent(routineId)}`
     : runHref
 
+  // Current-tracker actions on the bar (then advance), mirroring the run list.
+  const today = formatDateForStorage(new Date())
+  const goNext = () => router.push(nextHref)
+  const skipCurrent = () => {
+    if (currentTracker) markSkipped(pin, today, currentTracker.id)
+    goNext()
+  }
+  const setYesterday = async () => {
+    if (!currentTracker) return
+    const res = await copyLastEntryToToday(currentTracker, today, getDateRange, saveData)
+    if (res.ok) {
+      toast({ title: `${currentTracker.emoji} ${currentTracker.label} — copied`, description: `From ${res.srcDate}. Edit on the tracker if needed.` })
+      goNext()
+    } else if (res.reason === "no-prior") {
+      toast({ title: "Nothing to copy yet", description: `No earlier ${currentTracker.label} entry.`, variant: "destructive" })
+    } else {
+      toast({ title: "Couldn't copy", variant: "destructive" })
+    }
+  }
+
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
       <div className="max-w-3xl mx-auto flex items-center justify-between gap-2 px-3 py-2">
@@ -127,19 +156,35 @@ export default function RoutineFlowBar() {
           </span>
         )}
 
-        <Link href={nextHref}
-          className="flex items-center gap-1.5 rounded-md bg-primary text-primary-foreground px-3 py-1.5 text-sm font-medium hover:opacity-90 shrink-0">
-          {next ? (
+        <div className="flex items-center gap-1 shrink-0">
+          {currentTracker && (
             <>
-              <span className="truncate max-w-[9rem]">Next: {next.emoji} {next.label}</span>
-              <ChevronRight className="h-4 w-4 shrink-0" />
-            </>
-          ) : (
-            <>
-              <CheckCircle2 className="h-4 w-4" /> Done — back to routine
+              <button type="button" onClick={setYesterday}
+                title="Copy this tracker's last entry into today, then advance"
+                className="flex items-center gap-1 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-muted">
+                <CopyPlus className="h-4 w-4" /> <span className="hidden sm:inline">Set yest.</span>
+              </button>
+              <button type="button" onClick={skipCurrent}
+                title="Skip this one for now and move on (you can unskip in the routine)"
+                className="flex items-center gap-1 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-muted">
+                <EyeOff className="h-4 w-4" /> <span className="hidden sm:inline">Skip</span>
+              </button>
             </>
           )}
-        </Link>
+          <Link href={nextHref}
+            className="flex items-center gap-1.5 rounded-md bg-primary text-primary-foreground px-3 py-1.5 text-sm font-medium hover:opacity-90">
+            {next ? (
+              <>
+                <span className="truncate max-w-[7rem] sm:max-w-[9rem]">Next: {next.emoji} {next.label}</span>
+                <ChevronRight className="h-4 w-4 shrink-0" />
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="h-4 w-4" /> <span className="truncate">Done — back to routine</span>
+              </>
+            )}
+          </Link>
+        </div>
       </div>
     </div>
   )

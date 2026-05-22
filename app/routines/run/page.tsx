@@ -28,6 +28,7 @@ import { type TrackableTracker } from "@/lib/routines/trackable-registry"
 import { loadAllTrackables, indexTrackables } from "@/lib/routines/load-trackables"
 import { buildStatusMap, type TrackerLoggedStatus } from "@/lib/routines/routine-status"
 import { getClearedTrackers, markNothingToLog, unmarkNothingToLog } from "@/lib/routines/routine-cleared"
+import { getSkippedTrackers, markSkipped, unmarkSkipped } from "@/lib/routines/routine-skipped"
 import { copyLastEntryToToday } from "@/lib/routines/copy-last-entry"
 
 function RoutineRun() {
@@ -71,6 +72,7 @@ function RoutineRun() {
     const records = await getDateRange(today, today)
     setStatus(buildStatusMap(records, resolved.map(t => ({ id: t.id, subcategory: t.subcategory }))))
     setCleared(getClearedTrackers(pin, today))
+    setSkipped(getSkippedTrackers(pin, today))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [routine, trackables, getDateRange, pin, today])
 
@@ -105,12 +107,18 @@ function RoutineRun() {
 
   const logNow = (href: string) =>
     router.push(`${href}?routine=${encodeURIComponent(routine.id)}`)
-  const skip = (id: string) => setSkipped(prev => new Set(prev).add(id))
-  const unskip = (id: string) =>
+  const skip = (id: string) => {
+    markSkipped(pin, today, id)
+    setSkipped(prev => new Set(prev).add(id))
+  }
+  const unskip = (id: string) => {
+    unmarkSkipped(pin, today, id)
     setSkipped(prev => { const n = new Set(prev); n.delete(id); return n })
+  }
   const nothingToLog = (id: string) => {
     markNothingToLog(pin, today, id)
     setCleared(prev => new Set(prev).add(id))
+    unmarkSkipped(pin, today, id)
     setSkipped(prev => { const n = new Set(prev); n.delete(id); return n })
   }
   const undoNothing = (id: string) => {
