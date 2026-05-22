@@ -32,7 +32,7 @@ import { buildStatusMap } from "@/lib/routines/routine-status"
 import { getClearedTrackers } from "@/lib/routines/routine-cleared"
 import { getSkippedTrackers, markSkipped } from "@/lib/routines/routine-skipped"
 import { getRunStart } from "@/lib/routines/routine-session"
-import { copyLastEntryToToday } from "@/lib/routines/copy-last-entry"
+import { copyLastEntryToToday, buildCopyableMap } from "@/lib/routines/copy-last-entry"
 
 // Normalize trailing slashes — next.config has trailingSlash:true, so
 // usePathname() yields "/cardiac/" while tracker hrefs are "/cardiac".
@@ -51,6 +51,7 @@ export default function RoutineFlowBar() {
   const [routine, setRoutine] = useState<Routine | null>(null)
   const [trackables, setTrackables] = useState<TrackableTracker[]>([])
   const [doneIds, setDoneIds] = useState<Set<string>>(new Set())
+  const [copyableIds, setCopyableIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     setRoutine(pin && routineId ? getRoutine(pin, routineId) : null)
@@ -75,10 +76,12 @@ export default function RoutineFlowBar() {
     if (resolved.length === 0) { setDoneIds(new Set()); return }
     let alive = true
     const today = formatDateForStorage(new Date())
-    getDateRange(today, today).then(records => {
+    const keys = resolved.map(t => ({ id: t.id, subcategory: t.subcategory, subcategoryPrefix: t.subcategoryPrefix }))
+    getDateRange("2000-01-01", today).then(allRecords => {
       if (!alive) return
+      const records = allRecords.filter(r => r.date === today)
       const since = getRunStart(pin, routineId)
-      const status = buildStatusMap(records, resolved.map(t => ({ id: t.id, subcategory: t.subcategory, subcategoryPrefix: t.subcategoryPrefix })), since)
+      const status = buildStatusMap(records, keys, since)
       const cleared = getClearedTrackers(pin, routineId, today)
       const skipped = getSkippedTrackers(pin, routineId, today)
       const handled = new Set<string>()
@@ -86,6 +89,8 @@ export default function RoutineFlowBar() {
         if (status[t.id]?.loggedToday || cleared.has(t.id) || skipped.has(t.id)) handled.add(t.id)
       })
       setDoneIds(handled)
+      const copyMap = buildCopyableMap(allRecords, keys)
+      setCopyableIds(new Set(Object.keys(copyMap).filter(id => copyMap[id])))
     })
     return () => { alive = false }
   }, [pin, routine, trackables, getDateRange])
@@ -161,7 +166,7 @@ export default function RoutineFlowBar() {
         <div className="flex items-center gap-1 shrink-0">
           {currentTracker && (
             <>
-              {!currentTracker.statusUnsupported && !currentTracker.copyUnsupported && (
+              {!currentTracker.statusUnsupported && !currentTracker.copyUnsupported && copyableIds.has(currentTracker.id) && (
                 <button type="button" onClick={setYesterday}
                   title="Copy this tracker's last entry into today, then advance"
                   className="flex items-center gap-1 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-muted">

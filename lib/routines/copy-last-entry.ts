@@ -29,6 +29,29 @@ export interface CopyResult {
   reason?: "no-prior" | "unknown-shape"
 }
 
+// A record we can actually clone: standard content.entries[] (non-empty) or a
+// custom content.values{} object. Weather (raw array) / food-choice (other shape)
+// don't qualify — so we hide their Copy-last button rather than fail on click.
+function isCloneable(r: { content?: { entries?: unknown; values?: unknown } }): boolean {
+  return (
+    (Array.isArray(r.content?.entries) && (r.content.entries as unknown[]).length > 0) ||
+    (r.content?.values != null && typeof r.content.values === "object")
+  )
+}
+
+/** Per-tracker: is there a most-recent record we could actually Copy-last from?
+ *  Pass ALL records. Used to show/hide the Copy-last button. */
+export function buildCopyableMap(
+  allRecords: DailyDataRecord[],
+  trackables: { id: string; subcategory: string }[]
+): Record<string, boolean> {
+  const out: Record<string, boolean> = {}
+  for (const t of trackables) {
+    out[t.id] = allRecords.some(r => r.subcategory === t.subcategory && isCloneable(r))
+  }
+  return out
+}
+
 // Re-stamp a cloned entry's time fields to NOW so the copy reads as a fresh log
 // (HH:MM fields get current HH:MM; ISO/date fields get a current ISO string).
 function stampNow(entry: Record<string, unknown>): void {
@@ -58,8 +81,7 @@ export async function copyLastEntryToToday(
   // Most recent record with something to clone — INCLUDING earlier today (you log
   // multiple times a day now, so "last" is usually this morning, not yesterday).
   const src = records
-    .filter(r => r.subcategory === tracker.subcategory)
-    .filter(r => (Array.isArray(r.content?.entries) && r.content.entries.length > 0) || (r.content?.values && typeof r.content.values === "object"))
+    .filter(r => r.subcategory === tracker.subcategory && isCloneable(r))
     .sort((a, b) => b.date.localeCompare(a.date))[0]
   if (!src) return { ok: false, reason: "no-prior" }
 

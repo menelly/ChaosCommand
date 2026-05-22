@@ -30,7 +30,7 @@ import { buildStatusMap, buildLastLoggedMap, type TrackerLoggedStatus } from "@/
 import { getClearedTrackers, markNothingToLog, unmarkNothingToLog } from "@/lib/routines/routine-cleared"
 import { getSkippedTrackers, markSkipped, unmarkSkipped } from "@/lib/routines/routine-skipped"
 import { getRunStart } from "@/lib/routines/routine-session"
-import { copyLastEntryToToday } from "@/lib/routines/copy-last-entry"
+import { copyLastEntryToToday, buildCopyableMap } from "@/lib/routines/copy-last-entry"
 
 /** "today 3:14 PM" / "yesterday 9:02 AM" / "May 20, 3:14 PM" */
 function formatLastLogged(ms: number): string {
@@ -59,6 +59,7 @@ function RoutineRun() {
   const [cleared, setCleared] = useState<Set<string>>(new Set()) // "nothing to log today" — persisted
   const [skipped, setSkipped] = useState<Set<string>>(new Set())  // "hide for now" — session only
   const [lastLogged, setLastLogged] = useState<Record<string, number | null>>({}) // most-recent-ever per tracker
+  const [copyable, setCopyable] = useState<Record<string, boolean>>({}) // has a clone-able prior entry
 
   useEffect(() => {
     if (pin && routineId) setRoutine(getRoutine(pin, routineId))
@@ -92,6 +93,7 @@ function RoutineRun() {
     const since = getRunStart(pin, routineId)
     setStatus(buildStatusMap(records, trackerKeys, since))
     setLastLogged(buildLastLoggedMap(allRecords, trackerKeys))
+    setCopyable(buildCopyableMap(allRecords, trackerKeys))
     setCleared(getClearedTrackers(pin, routineId, today))
     setSkipped(getSkippedTrackers(pin, routineId, today))
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -224,7 +226,7 @@ function RoutineRun() {
                   {/* Pending: copy yesterday, log it, mark nothing-to-log, or skip */}
                   {isPending && (
                     <div className="flex flex-wrap items-center justify-end gap-1.5 shrink-0">
-                      {!t.statusUnsupported && !t.copyUnsupported && (
+                      {!t.statusUnsupported && !t.copyUnsupported && copyable[t.id] && (
                         <Button size="sm" variant="ghost" className="gap-1 text-muted-foreground"
                           title="Copy your last entry into today — then tweak/remove it via the tracker's Edit/Delete"
                           onClick={() => copyYesterday(t)}>
