@@ -504,7 +504,7 @@ export default function WorkDisabilityPage() {
                           className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-sm border transition-all ${
                             missedForm.workType === wt.value
                               ? 'bg-[var(--accent-primary)] text-[var(--text-main)] border-[var(--accent-primary)] font-medium'
-                              : 'bg-[var(--bg-card)] text-[var(--text-muted)] border-[var(--border-soft)]'
+                              : 'bg-[var(--bg-card)] text-[var(--text-main)] border-[var(--border-soft)]'
                           }`}
                         >
                           {wt.icon} {wt.label}
@@ -535,7 +535,7 @@ export default function WorkDisabilityPage() {
                           className={`px-3 py-2 rounded-lg text-sm text-left border transition-all ${
                             missedForm.impactLevel === il.value
                               ? il.color + ' font-medium'
-                              : 'bg-[var(--bg-card)] text-[var(--text-muted)] border-[var(--border-soft)] opacity-60'
+                              : 'bg-[var(--bg-card)] text-[var(--text-main)] border-[var(--border-soft)]'
                           }`}
                         >
                           {il.label}
@@ -556,7 +556,7 @@ export default function WorkDisabilityPage() {
                             className={`flex-1 px-3 py-2 rounded-lg text-sm border transition-all ${
                               missedForm.duration === d
                                 ? 'bg-[var(--accent-primary)] text-[var(--text-main)] border-[var(--accent-primary)] font-medium'
-                                : 'bg-[var(--bg-card)] text-[var(--text-muted)] border-[var(--border-soft)]'
+                                : 'bg-[var(--bg-card)] text-[var(--text-main)] border-[var(--border-soft)]'
                             }`}
                                                       >
                             {d === "full" ? "Full Day" : "Partial Day"}
@@ -895,7 +895,7 @@ export default function WorkDisabilityPage() {
                             className={`px-3 py-1 rounded-full text-sm border transition-all ${
                               appForm.applicationType === t
                                 ? 'bg-[var(--accent-primary)] text-[var(--text-main)] border-[var(--accent-primary)] font-medium'
-                                : 'bg-[var(--bg-card)] text-[var(--text-muted)] border-[var(--border-soft)]'
+                                : 'bg-[var(--bg-card)] text-[var(--text-main)] border-[var(--border-soft)]'
                             }`}
                                                       >{t}</button>
                         ))}
@@ -910,7 +910,7 @@ export default function WorkDisabilityPage() {
                             className={`px-3 py-1 rounded-full text-sm border transition-all ${
                               appForm.status === s
                                 ? (STATUS_COLORS[s] || '') + ' font-medium'
-                                : 'bg-[var(--bg-card)] text-[var(--text-muted)] border-[var(--border-soft)] opacity-60'
+                                : 'bg-[var(--bg-card)] text-[var(--text-main)] border-[var(--border-soft)]'
                             }`}
                           >{s}</button>
                         ))}
