@@ -14,7 +14,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Bone, Plus, ChevronDown, ChevronRight } from 'lucide-react'
 
 import { JointEntry, JointEpisodeType, JointModalProps } from '../joint-types'
-import { EPISODE_TYPES, JOINTS, TRIGGER_ACTIVITIES, TREATMENTS, getSeverityLabel, getSeverityColor } from '../joint-constants'
+import { EPISODE_TYPES, JOINTS, MUSCLES, isMuscleEpisode, TRIGGER_ACTIVITIES, TREATMENTS, getSeverityLabel, getSeverityColor } from '../joint-constants'
 import { TagInput } from '@/components/tag-input'
 import { KeyboardAvoidingWrapper } from '@/components/ui/keyboard-avoiding-wrapper'
 import { AttachmentUploader } from '../components/attachment-uploader'
@@ -25,6 +25,7 @@ export function GeneralJointModal({ isOpen, onClose, onSave, editingEntry, prese
   const [entryTime, setEntryTime] = useState(nowTime())
   const [episodeType, setEpisodeType] = useState<JointEpisodeType>('subluxation')
   const [jointAffected, setJointAffected] = useState<string[]>([])
+  const [musclesAffected, setMusclesAffected] = useState<string[]>([])
   const [severity, setSeverity] = useState([5])
   const [selfReducedFlag, setSelfReducedFlag] = useState(false)
   const [swellingPresent, setSwellingPresent] = useState(false)
@@ -64,6 +65,7 @@ export function GeneralJointModal({ isOpen, onClose, onSave, editingEntry, prese
       setEntryTime(dt.time)
       setEpisodeType(editingEntry.episodeType)
       setJointAffected(editingEntry.jointAffected || [])
+      setMusclesAffected(editingEntry.musclesAffected || [])
       setSeverity([editingEntry.severity || 5])
       setSelfReducedFlag(editingEntry.selfReducedFlag || false)
       setSwellingPresent(editingEntry.swellingPresent || false)
@@ -86,7 +88,7 @@ export function GeneralJointModal({ isOpen, onClose, onSave, editingEntry, prese
 
   const reset = () => {
     setEntryDate(todayISO()); setEntryTime(nowTime())
-    setEpisodeType('subluxation'); setJointAffected([]); setSeverity([5])
+    setEpisodeType('subluxation'); setJointAffected([]); setMusclesAffected([]); setSeverity([5])
     setSelfReducedFlag(false); setSwellingPresent(false); setSwellingScale([0]); setBruisingPresent(false)
     setRomImpactedPercent([100]); setTriggerActivity([]); setTreatmentApplied([]); setTreatmentResponse([3])
     setDuration(''); setErVisitRequired(false); setAttachmentImages([]); setNotes(''); setTags([])
@@ -101,6 +103,7 @@ export function GeneralJointModal({ isOpen, onClose, onSave, editingEntry, prese
       timestamp: dateTimeToISO(entryDate, entryTime),
       episodeType,
       jointAffected,
+      musclesAffected: musclesAffected.length > 0 ? musclesAffected : undefined,
       severity: severity[0],
       selfReducedFlag,
       swellingPresent,
@@ -120,6 +123,9 @@ export function GeneralJointModal({ isOpen, onClose, onSave, editingEntry, prese
   }
 
   const handleClose = () => { reset(); onClose() }
+
+  // Muscle event types show a muscle menu instead of the joint checklist.
+  const muscleMode = isMuscleEpisode(episodeType)
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -149,15 +155,19 @@ export function GeneralJointModal({ isOpen, onClose, onSave, editingEntry, prese
           <Collapsible open={openSections.joints} onOpenChange={() => toggleSection('joints')}>
             <CollapsibleTrigger asChild>
               <Button variant="outline" className="w-full justify-between h-auto py-3">
-                <span className="font-medium">Joint(s) Affected</span>
+                <span className="font-medium">{muscleMode ? '💪 Muscle(s) Affected' : 'Joint(s) Affected'}</span>
                 {openSections.joints ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
               </Button>
             </CollapsibleTrigger>
             <CollapsibleContent className="pt-3">
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-60 overflow-y-auto">
-                {JOINTS.map(j => (
-                  <div key={j} className="flex items-center space-x-2"><Checkbox id={`j-${j}`} checked={jointAffected.includes(j)} onCheckedChange={() => toggle(jointAffected, setJointAffected)(j)} /><Label htmlFor={`j-${j}`} className="text-sm">{j}</Label></div>
-                ))}
+                {(muscleMode ? MUSCLES : JOINTS).map(item => {
+                  const list = muscleMode ? musclesAffected : jointAffected
+                  const setList = muscleMode ? setMusclesAffected : setJointAffected
+                  return (
+                    <div key={item} className="flex items-center space-x-2"><Checkbox id={`a-${item}`} checked={list.includes(item)} onCheckedChange={() => toggle(list, setList)(item)} /><Label htmlFor={`a-${item}`} className="text-sm">{item}</Label></div>
+                  )
+                })}
               </div>
             </CollapsibleContent>
           </Collapsible>

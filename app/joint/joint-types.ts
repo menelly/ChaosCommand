@@ -19,6 +19,9 @@ export interface JointEntry {
   date: string
   episodeType: JointEpisodeType
   jointAffected: string[]
+  /** Muscle groups affected — populated instead of jointAffected for muscle
+   *  event types (weakness / cramping / fasciculations / muscle tightness). */
+  musclesAffected?: string[]
   severity: number
   selfReducedFlag?: boolean
   swellingPresent?: boolean

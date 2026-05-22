@@ -39,6 +39,52 @@ export const JOINTS = [
   'Toes (left)', 'Toes (right)',
 ]
 
+// Muscle groups — shown instead of JOINTS when the event is a muscle symptom
+// (weakness / cramping / fasciculations / muscle tightness). The distribution
+// options up top matter clinically: proximal weakness reads myopathy, distal
+// reads neuropathy, generalized is its own pattern.
+export const MUSCLES = [
+  // Distribution / pattern
+  'Generalized (whole body)',
+  'Proximal (shoulders & hips)',
+  'Distal (hands & feet)',
+  // Head & neck
+  'Neck / cervical',
+  'Jaw / masseter',
+  // Shoulder girdle & upper back
+  'Trapezius (left)', 'Trapezius (right)',
+  'Deltoid / shoulder (left)', 'Deltoid / shoulder (right)',
+  'Rhomboids / mid-back (left)', 'Rhomboids / mid-back (right)',
+  // Upper arm
+  'Biceps (left)', 'Biceps (right)',
+  'Triceps (left)', 'Triceps (right)',
+  // Forearm & hand
+  'Forearm (left)', 'Forearm (right)',
+  'Hand / intrinsics (left)', 'Hand / intrinsics (right)',
+  // Trunk
+  'Chest / pectoral',
+  'Abdominals / core',
+  'Lower back / paraspinals',
+  // Hip & glute
+  'Hip flexors (left)', 'Hip flexors (right)',
+  'Glutes (left)', 'Glutes (right)',
+  // Thigh
+  'Quadriceps (left)', 'Quadriceps (right)',
+  'Hamstrings (left)', 'Hamstrings (right)',
+  'Adductors / inner thigh (left)', 'Adductors / inner thigh (right)',
+  // Lower leg & foot
+  'Calf / gastrocnemius (left)', 'Calf / gastrocnemius (right)',
+  'Shin / tibialis (left)', 'Shin / tibialis (right)',
+  'Foot / intrinsics (left)', 'Foot / intrinsics (right)',
+]
+
+// Which event types are muscle (vs joint) — drives the affected-area selector.
+export const MUSCLE_EPISODE_TYPES = ['weakness', 'cramping', 'fasciculations', 'muscle-tightness'] as const
+
+export function isMuscleEpisode(episodeType: string): boolean {
+  return (MUSCLE_EPISODE_TYPES as readonly string[]).includes(episodeType)
+}
+
 export const TRIGGER_ACTIVITIES = [
   'Reaching overhead',
   'Lifting',

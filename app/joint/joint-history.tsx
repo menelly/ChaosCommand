@@ -68,6 +68,7 @@ export function JointHistory({ onEdit, onDelete, refreshTrigger }: { onEdit: (e:
                         <div className="text-xs text-muted-foreground">
                           {format(new Date(entry.timestamp), 'h:mm a')}
                           {entry.jointAffected && entry.jointAffected.length > 0 && ` • ${entry.jointAffected.join(', ')}`}
+                          {entry.musclesAffected && entry.musclesAffected.length > 0 && ` • ${entry.musclesAffected.join(', ')}`}
                           {entry.swellingPresent && ` • Swelling`}
                           {entry.bruisingPresent && ` • Bruising`}
                           {entry.romImpactedPercent !== undefined && ` • ROM ${entry.romImpactedPercent}%`}
