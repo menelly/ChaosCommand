@@ -85,28 +85,35 @@ function formatTime(ms: number): string {
 export function computeTrackerStatus(
   todayRecords: DailyDataRecord[],
   subcategory: string,
-  subcategoryPrefix?: string
+  subcategoryPrefix?: string,
+  since?: number | null
 ): TrackerLoggedStatus {
-  const matches = subcategoryPrefix
+  const matches = (subcategoryPrefix
     ? todayRecords.filter(r => typeof r.subcategory === 'string' && r.subcategory.startsWith(subcategoryPrefix))
     : todayRecords.filter(r => r.subcategory === subcategory)
-  if (!matches.some(r => recordHasLog(r))) return { loggedToday: false, lastLoggedLabel: null }
+  ).filter(r => recordHasLog(r))
+  if (matches.length === 0) return { loggedToday: false, lastLoggedLabel: null }
   const ms = matches
     .map(r => latestEntryMs(r))
     .filter((x): x is number => x !== null)
     .sort((a, b) => b - a)[0]
+  // Per-run scoping: only "done" if the most-recent log is at/after this run's
+  // start. Lets a routine be run multiple times a day (every meal, 5x hydration).
+  if (since != null && (ms == null || ms < since)) return { loggedToday: false, lastLoggedLabel: null }
   return { loggedToday: true, lastLoggedLabel: ms != null ? formatTime(ms) : null }
 }
 
 /** Status for every tracker in a routine, keyed by tracker id. Pass the
- *  resolved trackables (built-in + custom) so custom subcategories work too. */
+ *  resolved trackables (built-in + custom) so custom subcategories work too, and
+ *  `since` (this run's start) to scope completion to the current run. */
 export function buildStatusMap(
   todayRecords: DailyDataRecord[],
-  trackables: { id: string; subcategory: string; subcategoryPrefix?: string }[]
+  trackables: { id: string; subcategory: string; subcategoryPrefix?: string }[],
+  since?: number | null
 ): Record<string, TrackerLoggedStatus> {
   const out: Record<string, TrackerLoggedStatus> = {}
   for (const t of trackables) {
-    out[t.id] = computeTrackerStatus(todayRecords, t.subcategory, t.subcategoryPrefix)
+    out[t.id] = computeTrackerStatus(todayRecords, t.subcategory, t.subcategoryPrefix, since)
   }
   return out
 }

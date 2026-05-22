@@ -29,6 +29,7 @@ import { loadAllTrackables, indexTrackables } from "@/lib/routines/load-trackabl
 import { buildStatusMap, type TrackerLoggedStatus } from "@/lib/routines/routine-status"
 import { getClearedTrackers, markNothingToLog, unmarkNothingToLog } from "@/lib/routines/routine-cleared"
 import { getSkippedTrackers, markSkipped, unmarkSkipped } from "@/lib/routines/routine-skipped"
+import { getRunStart } from "@/lib/routines/routine-session"
 import { copyLastEntryToToday } from "@/lib/routines/copy-last-entry"
 
 function RoutineRun() {
@@ -70,7 +71,10 @@ function RoutineRun() {
     if (!routine || resolved.length === 0) return
     // No category filter — custom trackers store under body/mind/custom, not 'tracker'.
     const records = await getDateRange(today, today)
-    setStatus(buildStatusMap(records, resolved.map(t => ({ id: t.id, subcategory: t.subcategory, subcategoryPrefix: t.subcategoryPrefix }))))
+    // Scope "done" to the current run (since you tapped Run) so a routine can be
+    // run multiple times a day. No run stamped (direct nav) → null → today-view.
+    const since = getRunStart(pin, routineId)
+    setStatus(buildStatusMap(records, resolved.map(t => ({ id: t.id, subcategory: t.subcategory, subcategoryPrefix: t.subcategoryPrefix })), since))
     setCleared(getClearedTrackers(pin, today))
     setSkipped(getSkippedTrackers(pin, today))
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -257,11 +261,10 @@ function RoutineRun() {
 
         {/* End-of-routine: hop to the journal if you want to write it out */}
         <div className="mt-6 flex justify-center">
-          <Button asChild variant={complete ? "default" : "outline"} className="gap-2">
-            <Link href="/journal">
-              <NotebookPen className="h-4 w-4" />
-              {complete ? "All done — open Journal" : "Open Journal"}
-            </Link>
+          <Button variant={complete ? "default" : "outline"} className="gap-2"
+            onClick={() => router.push("/journal")}>
+            <NotebookPen className="h-4 w-4" />
+            {complete ? "All done — open Journal" : "Open Journal"}
           </Button>
         </div>
       </div>

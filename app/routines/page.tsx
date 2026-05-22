@@ -15,9 +15,10 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Plus, Play, Pencil, Trash2, ListChecks } from "lucide-react"
-import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useUser } from "@/lib/contexts/user-context"
 import { listRoutines, deleteRoutine, type Routine } from "@/lib/routines/routines-config"
+import { startRun } from "@/lib/routines/routine-session"
 import RoutineBuilderDialog from "@/components/routines/routine-builder-dialog"
 
 const WINDOW_LABEL: Record<Routine["timeWindow"], string> = {
@@ -29,6 +30,11 @@ const WINDOW_LABEL: Record<Routine["timeWindow"], string> = {
 export default function RoutinesHub() {
   const { userPin } = useUser()
   const pin = userPin ?? ""
+  const router = useRouter()
+  const runRoutine = (id: string) => {
+    startRun(pin, id) // stamp a fresh run so completion scopes to THIS run
+    router.push(`/routines/run?id=${encodeURIComponent(id)}`)
+  }
   const [routines, setRoutines] = useState<Routine[]>([])
   const [builderOpen, setBuilderOpen] = useState(false)
   const [editing, setEditing] = useState<Routine | null>(null)
@@ -101,10 +107,9 @@ export default function RoutinesHub() {
                   </div>
                 </CardHeader>
                 <CardContent className="flex gap-2">
-                  <Button asChild className="flex-1 gap-2" disabled={r.trackers.length === 0}>
-                    <Link href={`/routines/run?id=${encodeURIComponent(r.id)}`}>
-                      <Play className="h-4 w-4" /> Run
-                    </Link>
+                  <Button className="flex-1 gap-2" disabled={r.trackers.length === 0}
+                    onClick={() => runRoutine(r.id)}>
+                    <Play className="h-4 w-4" /> Run
                   </Button>
                   <Button variant="outline" size="icon" aria-label="Edit" onClick={() => openEdit(r)}>
                     <Pencil className="h-4 w-4" />

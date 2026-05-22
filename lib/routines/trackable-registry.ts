@@ -84,6 +84,7 @@ export const TRACKABLE_TRACKERS: readonly TrackableTracker[] = [
   { id: 'anxiety', label: 'Anxiety', emoji: '😰', href: '/anxiety-tracker', subcategory: 'anxiety', category: 'mind' }, // route slug ≠ storage key
   { id: 'self-care', label: 'Self-Care', emoji: '🛁', href: '/self-care-tracker', subcategory: 'self-care', category: 'mind', statusUnsupported: true },
   { id: 'sensory', label: 'Sensory', emoji: '🌈', href: '/sensory-tracker', subcategory: 'sensory', category: 'mind', statusUnsupported: true },
+  { id: 'journal', label: 'Journal', emoji: '📝', href: '/journal', subcategory: 'journal', category: 'mind', statusUnsupported: true },
   // (Crisis Support is intentionally NOT a routine item — it's an emergency tool, not a daily batch log.)
   // ── Choice ──
   { id: 'food-choice', label: 'Food', emoji: '🍽️', href: '/food-choice', subcategory: 'food-choice', category: 'choice' },

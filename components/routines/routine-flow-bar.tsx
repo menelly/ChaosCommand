@@ -31,6 +31,7 @@ import { loadAllTrackables, indexTrackables } from "@/lib/routines/load-trackabl
 import { buildStatusMap } from "@/lib/routines/routine-status"
 import { getClearedTrackers } from "@/lib/routines/routine-cleared"
 import { getSkippedTrackers, markSkipped } from "@/lib/routines/routine-skipped"
+import { getRunStart } from "@/lib/routines/routine-session"
 import { copyLastEntryToToday } from "@/lib/routines/copy-last-entry"
 
 // Normalize trailing slashes — next.config has trailingSlash:true, so
@@ -76,7 +77,8 @@ export default function RoutineFlowBar() {
     const today = formatDateForStorage(new Date())
     getDateRange(today, today).then(records => {
       if (!alive) return
-      const status = buildStatusMap(records, resolved.map(t => ({ id: t.id, subcategory: t.subcategory, subcategoryPrefix: t.subcategoryPrefix })))
+      const since = getRunStart(pin, routineId)
+      const status = buildStatusMap(records, resolved.map(t => ({ id: t.id, subcategory: t.subcategory, subcategoryPrefix: t.subcategoryPrefix })), since)
       const cleared = getClearedTrackers(pin, today)
       const skipped = getSkippedTrackers(pin, today)
       const handled = new Set<string>()
