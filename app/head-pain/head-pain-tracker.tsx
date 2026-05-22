@@ -185,10 +185,10 @@ export function HeadPainTracker() {
       <div className="text-center mb-6">
         <h1 className="text-3xl font-bold text-foreground flex items-center justify-center gap-2">
           <Brain className="h-8 w-8 text-purple-500" />
-          Head Pain Tracker
+          🧠 Skull Says No
         </h1>
         <p className="text-muted-foreground mt-1">
-          Migraines, tension, cluster, sinus — with SAH / stroke / meningitis red flags
+          Migraines, tension, cluster, sinus — and the "worst headache ever" that needs eyes on it
         </p>
       </div>
 
@@ -228,8 +228,8 @@ export function HeadPainTracker() {
         <TabsContent value="add" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Log a Head Pain Episode</CardTitle>
-              <CardDescription>Pick the closest type — adjustable inside.</CardDescription>
+              <CardTitle className="text-lg">What's the skull doing?</CardTitle>
+              <CardDescription>Pick the closest vibe — we'll dig into details inside.</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">

@@ -177,10 +177,10 @@ export default function MindMoodPage() {
         <div className="text-center mb-6">
           <h1 className="text-3xl font-bold text-foreground flex items-center justify-center gap-2">
             <Heart className="h-8 w-8 text-purple-500" />
-            Mind & Mood
+            💜 Mind & Mood
           </h1>
           <p className="text-muted-foreground mt-1">
-            Mood, cognitive, energy, motivation, connection, regulation — all valid check-ins
+            Mood, cognitive, energy, motivation, connection, regulation — all valid check-ins, no wrong answers
           </p>
         </div>
 
@@ -216,8 +216,8 @@ export default function MindMoodPage() {
           <TabsContent value="add" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Mind & Mood check-in</CardTitle>
-                <CardDescription>Pick what's most relevant — adjustable inside.</CardDescription>
+                <CardTitle className="text-lg">How's the inner weather?</CardTitle>
+                <CardDescription>Pick what's most relevant — we'll dig into details inside.</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

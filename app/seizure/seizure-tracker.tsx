@@ -228,10 +228,10 @@ export function SeizureTracker() {
       <div className="text-center mb-6">
         <h1 className="text-3xl font-bold text-foreground flex items-center justify-center gap-2">
           <Zap className="h-8 w-8 text-yellow-500" />
-          Seizure Tracker
+          ⚡ Seizure Log
         </h1>
         <p className="text-muted-foreground mt-1">
-          Medical-grade seizure tracking — focal, generalized, status epilepticus
+          Focal, generalized, status epilepticus — medical-grade logging for your neuro team
         </p>
       </div>
 
@@ -271,9 +271,9 @@ export function SeizureTracker() {
         <TabsContent value="add" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Log a Seizure Event</CardTitle>
+              <CardTitle className="text-lg">What kind of seizure?</CardTitle>
               <p className="text-sm text-muted-foreground">
-                Pick the closest type. You can still adjust the classification inside.
+                Pick the closest vibe — you can still adjust the classification inside.
               </p>
             </CardHeader>
             <CardContent>

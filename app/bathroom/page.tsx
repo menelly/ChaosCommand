@@ -206,9 +206,9 @@ export default function BathroomPage() {
         <div className="text-center mb-6">
           <h1 className="text-3xl font-bold text-foreground flex items-center justify-center gap-2">
             <Droplet className="h-8 w-8 text-amber-600" />
-            Bathroom Tracker
+            <span>🚽 Potty Talk</span>
           </h1>
-          <p className="text-muted-foreground mt-1">Bowel + urinary patterns with red-flag detection</p>
+          <p className="text-muted-foreground mt-1">Your digestive adventures — logged for science and your doctor</p>
         </div>
 
         <EmergencyCriteriaCard
@@ -242,8 +242,8 @@ export default function BathroomPage() {
           <TabsContent value="add" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Log a bathroom event</CardTitle>
-                <CardDescription>Pick the closest type — adjustable inside.</CardDescription>
+                <CardTitle className="text-lg">What happened?</CardTitle>
+                <CardDescription>Pick the closest vibe — we'll dig into details inside.</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">

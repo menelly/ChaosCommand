@@ -195,10 +195,10 @@ export default function PainTracker() {
       <div className="text-center mb-6">
         <h1 className="text-3xl font-bold text-foreground flex items-center justify-center gap-2">
           <Flame className="h-8 w-8 text-red-500" />
-          Pain Tracker
+          🔥 Owie HQ
         </h1>
         <p className="text-muted-foreground mt-1">
-          Track acute, chronic, and post-surgical pain — with cardiac/head/joint cross-tracker referrals
+          Acute, chronic, post-surgical — we track it, your other trackers chip in when needed
         </p>
       </div>
 
@@ -238,8 +238,8 @@ export default function PainTracker() {
         <TabsContent value="add" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Log a Pain Episode</CardTitle>
-              <CardDescription>Pick the closest type. Adjustable inside.</CardDescription>
+              <CardTitle className="text-lg">What's hurting?</CardTitle>
+              <CardDescription>Pick the closest vibe — we'll dig into details inside.</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

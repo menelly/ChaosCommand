@@ -6,6 +6,10 @@ export type JointEpisodeType =
   | 'joint-pain'
   | 'swelling'
   | 'instability'
+  | 'weakness'
+  | 'cramping'
+  | 'fasciculations'
+  | 'muscle-tightness'
   | 'rom-restriction'
   | 'general'
 

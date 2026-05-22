@@ -607,10 +607,10 @@ export default function BrainFogTracker() {
         <div className="text-center space-y-2">
           <div className="flex items-center justify-center gap-3">
             <Cloud className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold">Brain Fog & Cognitive</h1>
+            <h1 className="text-3xl font-bold">☁️ Brain Fog HQ</h1>
           </div>
           <p className="text-muted-foreground">
-            Record your cognitive symptoms and brain fog levels
+            Where your cognitive symptoms get logged so the fog doesn't get gaslit
           </p>
         </div>
 

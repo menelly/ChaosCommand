@@ -89,9 +89,9 @@ export default function JointTracker() {
       <div className="text-center mb-6">
         <h1 className="text-3xl font-bold text-foreground flex items-center justify-center gap-2">
           <Bone className="h-8 w-8 text-amber-500" />
-          Joint / MSK Tracker
+          🦴 Joint Shenanigans
         </h1>
-        <p className="text-muted-foreground mt-1">Subluxations, dislocations, joint pain, swelling, instability, range of motion</p>
+        <p className="text-muted-foreground mt-1">Subluxations, dislocations, pain, swelling, instability, weakness, cramping, fasciculations, the "massage therapists quit" kind of tightness — EDS + neuropathy + myopathy friendly logging</p>
       </div>
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
@@ -116,7 +116,7 @@ export default function JointTracker() {
           </Card>
 
           <Card>
-            <CardHeader><CardTitle className="text-lg">Log a Joint / MSK Event</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-lg">Which joint is misbehaving?</CardTitle></CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {EPISODE_TYPES.map(t => (

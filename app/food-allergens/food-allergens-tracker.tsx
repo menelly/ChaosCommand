@@ -246,10 +246,10 @@ export function FoodAllergensTracker() {
       <div className="text-center mb-6">
         <h1 className="text-3xl font-bold text-foreground flex items-center justify-center gap-2">
           <Utensils className="h-8 w-8 text-amber-500" />
-          Food Reactions Tracker
+          🍽️🚫 Food Drama
         </h1>
         <p className="text-muted-foreground mt-1">
-          IgE allergy, celiac/autoimmune, intolerance — different patterns, different red flags
+          IgE allergy, celiac/autoimmune, intolerance — different patterns, different red flags, all logged
         </p>
       </div>
 
@@ -289,8 +289,8 @@ export function FoodAllergensTracker() {
         <TabsContent value="add" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Log a Food Reaction</CardTitle>
-              <CardDescription>Pick the closest type — adjustable inside.</CardDescription>
+              <CardTitle className="text-lg">What did food do this time?</CardTitle>
+              <CardDescription>Pick the closest vibe — we'll dig into details inside.</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

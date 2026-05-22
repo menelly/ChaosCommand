@@ -6,12 +6,12 @@
 import { BathroomEpisodeType } from './bathroom-types'
 
 export const EPISODE_TYPES = [
-  { id: 'normal-bm' as BathroomEpisodeType, name: 'Normal BM', icon: '💩', description: 'Everything went smoothly', color: 'bg-green-100 text-green-800 border-green-200' },
-  { id: 'constipation' as BathroomEpisodeType, name: 'Constipation', icon: '🪨', description: 'Hard, infrequent, painful, or didn\'t go', color: 'bg-amber-100 text-amber-800 border-amber-200' },
-  { id: 'diarrhea' as BathroomEpisodeType, name: 'Diarrhea', icon: '💦', description: 'Loose, frequent, urgent, watery', color: 'bg-blue-100 text-blue-800 border-blue-200' },
-  { id: 'urinary' as BathroomEpisodeType, name: 'Urinary', icon: '🚽', description: 'Pee-related — frequency, urgency, pain, leakage', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
-  { id: 'blood-or-red-flag' as BathroomEpisodeType, name: '🚨 Blood / Red flag', icon: '🩸', description: 'Blood in stool/urine, severe pain, obstruction signs', color: 'bg-red-100 text-red-800 border-red-200' },
-  { id: 'general' as BathroomEpisodeType, name: 'General', icon: '🧻', description: 'Other bathroom event', color: 'bg-gray-100 text-gray-800 border-gray-200' },
+  { id: 'normal-bm' as BathroomEpisodeType, name: 'Normal', icon: '💩', description: 'Everything went smoothly! 🎉', color: 'bg-green-100 text-green-800 border-green-200' },
+  { id: 'constipation' as BathroomEpisodeType, name: 'Stuck', icon: '🪨', description: "Didn't go, hard, infrequent, or made you regret breakfast choices", color: 'bg-amber-100 text-amber-800 border-amber-200' },
+  { id: 'diarrhea' as BathroomEpisodeType, name: 'Too much', icon: '💦', description: "Loose, urgent, or 'oh god where's a bathroom'", color: 'bg-blue-100 text-blue-800 border-blue-200' },
+  { id: 'urinary' as BathroomEpisodeType, name: 'Urinary', icon: '🚽', description: 'Pee-related — frequency, urgency, burning, leakage', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
+  { id: 'blood-or-red-flag' as BathroomEpisodeType, name: '🚨 Red flag', icon: '🩸', description: 'Blood, severe pain, obstruction signs — call your doctor', color: 'bg-red-100 text-red-800 border-red-200' },
+  { id: 'general' as BathroomEpisodeType, name: 'Mystery Chaos', icon: '💀', description: 'Something weird happened and you want to remember it', color: 'bg-gray-100 text-gray-800 border-gray-200' },
 ] as const
 
 export const getEpisodeTypeInfo = (id?: string) => EPISODE_TYPES.find(t => t.id === id) || EPISODE_TYPES[5]
@@ -24,31 +24,31 @@ export const getEpisodeTypeColor = (id?: string): string => {
 }
 
 export const BRISTOL_SCALE = [
-  { value: '1', label: 'Type 1 — Hard lumps (very constipated)' },
-  { value: '2', label: 'Type 2 — Lumpy sausage (slightly constipated)' },
-  { value: '3', label: 'Type 3 — Sausage with cracks (normal)' },
-  { value: '4', label: 'Type 4 — Smooth soft sausage (ideal)' },
-  { value: '5', label: 'Type 5 — Soft blobs (lacking fiber)' },
-  { value: '6', label: 'Type 6 — Mushy ragged (mild diarrhea)' },
-  { value: '7', label: 'Type 7 — Liquid (severe diarrhea)' },
+  { value: '1', label: 'Type 1 — Hard lumps (constipation rock garden)' },
+  { value: '2', label: 'Type 2 — Lumpy sausage (still pretty rocky)' },
+  { value: '3', label: 'Type 3 — Sausage with cracks (basically normal)' },
+  { value: '4', label: 'Type 4 — Smooth sausage (Goldilocks zone)' },
+  { value: '5', label: "Type 5 — Soft blobs (fiber's calling)" },
+  { value: '6', label: 'Type 6 — Mushy ragged (slip-n-slide territory)' },
+  { value: '7', label: 'Type 7 — Liquid (full faucet mode)' },
 ]
 
 export const PAIN_LEVELS = [
-  { value: 'None', emoji: '😌', label: 'None' },
-  { value: 'Mild', emoji: '😐', label: 'Mild' },
-  { value: 'Moderate', emoji: '😣', label: 'Moderate' },
-  { value: 'Severe', emoji: '😫', label: 'Severe' },
-  { value: 'WHY', emoji: '😱', label: 'WHY (extreme)' },
+  { value: 'None', emoji: '😌', label: 'None — No Gremlin Detected' },
+  { value: 'Mild', emoji: '😐', label: 'Mild — Mildly Annoying' },
+  { value: 'Moderate', emoji: '😣', label: 'Moderate — Rude but Tolerable' },
+  { value: 'Severe', emoji: '😫', label: 'Severe — Persistent Nuisance' },
+  { value: 'WHY', emoji: '😱', label: 'WHY — BUTT WHY!!' },
 ]
 
 export const URINARY_TYPES = [
   { value: 'normal', label: 'Normal' },
-  { value: 'frequent', label: 'Frequent (more than usual)' },
-  { value: 'urgency', label: 'Urgency (had to go NOW)' },
-  { value: 'painful', label: 'Painful / burning' },
+  { value: 'frequent', label: 'Frequent (peeing like a champ)' },
+  { value: 'urgency', label: 'Urgency (had to go RIGHT NOW)' },
+  { value: 'painful', label: 'Painful / burning (ouch)' },
   { value: 'blood', label: '🚨 Blood in urine' },
   { value: 'leakage', label: 'Leakage / incontinence' },
-  { value: 'retention', label: 'Retention (couldn\'t go)' },
+  { value: 'retention', label: "Retention (couldn't go)" },
 ]
 
 export const BLOOD_COLORS = [

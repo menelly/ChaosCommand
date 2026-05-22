@@ -165,10 +165,10 @@ export default function MentalHealthIndex() {
         <header className="text-center mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2 flex items-center justify-center gap-2">
             <Brain className="h-8 w-8 text-purple-500" />
-            Mind
+            🧠 Mind
           </h1>
           <p className="text-lg text-muted-foreground">
-            Mental wellness and emotional support tracking
+            Mental wellness, emotional weather, regulation tools — pick a tracker
           </p>
         </header>
 

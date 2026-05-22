@@ -197,10 +197,10 @@ export default function CardiacTracker() {
       <div className="text-center mb-6">
         <h1 className="text-3xl font-bold text-foreground flex items-center justify-center gap-2">
           <Heart className="h-8 w-8 text-red-500" />
-          Cardiac Tracker
+          ❤️ Heart Drama
         </h1>
         <p className="text-muted-foreground mt-1">
-          Track arrhythmias, chest pain, syncope, presyncope, palpitations
+          Arrhythmias, chest pain, syncope, palpitations — documentation, not diagnosis
         </p>
       </div>
 
@@ -265,7 +265,7 @@ export default function CardiacTracker() {
           {/* Episode Type Picker */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Log a Cardiac Event</CardTitle>
+              <CardTitle className="text-lg">What's the heart doing?</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">

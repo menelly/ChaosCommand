@@ -193,10 +193,10 @@ export default function AnxietyTrackerPage() {
         <div className="text-center mb-6">
           <h1 className="text-3xl font-bold text-foreground flex items-center justify-center gap-2">
             <Heart className="h-8 w-8 text-purple-500" />
-            Anxiety Tracker
+            💜 Brain Weather
           </h1>
           <p className="text-muted-foreground mt-1">
-            Panic, generalized, social, phobic, OCD-shaped, meltdown, shutdown — with 988 crisis support
+            Panic, generalized, social, OCD-shaped, meltdown, shutdown — and 988 in your pocket if you need it
           </p>
         </div>
 
@@ -233,8 +233,8 @@ export default function AnxietyTrackerPage() {
           <TabsContent value="add" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Log an Anxiety Entry</CardTitle>
-                <CardDescription>Pick the closest type — adjustable inside.</CardDescription>
+                <CardTitle className="text-lg">What's brain doing?</CardTitle>
+                <CardDescription>Pick the closest vibe — we'll dig into details inside.</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">

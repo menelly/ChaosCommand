@@ -183,7 +183,7 @@ export function GeneralBathroomModal({ isOpen, onClose, onSave, editingEntry, in
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Droplet className="h-5 w-5 text-amber-600" />
-              🚽 Bathroom Entry
+              🚽 Log a Potty Adventure
             </DialogTitle>
           </DialogHeader>
 
@@ -213,7 +213,7 @@ export function GeneralBathroomModal({ isOpen, onClose, onSave, editingEntry, in
             <Collapsible open={openSections.eventType} onOpenChange={() => toggleSection('eventType')}>
               <CollapsibleTrigger asChild>
                 <Button variant="outline" className="w-full justify-between h-auto py-3">
-                  <span className="font-medium">Episode type</span>
+                  <span className="font-medium">What happened?</span>
                   {openSections.eventType ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                 </Button>
               </CollapsibleTrigger>
@@ -233,13 +233,13 @@ export function GeneralBathroomModal({ isOpen, onClose, onSave, editingEntry, in
               <Collapsible open={openSections.bowel} onOpenChange={() => toggleSection('bowel')}>
                 <CollapsibleTrigger asChild>
                   <Button variant="outline" className="w-full justify-between h-auto py-3">
-                    <span className="font-medium">Bowel detail</span>
+                    <span className="font-medium">💩 Bowel detail</span>
                     {openSections.bowel ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                   </Button>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="pt-3 space-y-3">
                   <div>
-                    <Label>Bristol scale (Optional)</Label>
+                    <Label>Bristol scale — closest match (Optional)</Label>
                     <Select value={bristolScale} onValueChange={setBristolScale}>
                       <SelectTrigger><SelectValue placeholder="Pick the closest" /></SelectTrigger>
                       <SelectContent>
@@ -258,7 +258,7 @@ export function GeneralBathroomModal({ isOpen, onClose, onSave, editingEntry, in
                     </div>
                   )}
                   <div>
-                    <Label>Pain level</Label>
+                    <Label>Pain level (Gremlin Detection)</Label>
                     <Select value={painLevel} onValueChange={setPainLevel}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
@@ -267,7 +267,7 @@ export function GeneralBathroomModal({ isOpen, onClose, onSave, editingEntry, in
                     </Select>
                   </div>
                   <div>
-                    <Label>Pain score (Optional): {painScore[0]}/10</Label>
+                    <Label>How rude was it? {painScore[0]}/10 (Optional)</Label>
                     <Slider value={painScore} onValueChange={setPainScore} max={10} min={0} step={1} className="mt-2" />
                   </div>
                   <div className="flex items-center space-x-2">
@@ -294,7 +294,7 @@ export function GeneralBathroomModal({ isOpen, onClose, onSave, editingEntry, in
               <Collapsible open={openSections.urinary} onOpenChange={() => toggleSection('urinary')}>
                 <CollapsibleTrigger asChild>
                   <Button variant="outline" className="w-full justify-between h-auto py-3">
-                    <span className="font-medium">Urinary detail</span>
+                    <span className="font-medium">🚽 Urinary detail</span>
                     {openSections.urinary ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                   </Button>
                 </CollapsibleTrigger>
@@ -340,7 +340,7 @@ export function GeneralBathroomModal({ isOpen, onClose, onSave, editingEntry, in
             <Collapsible open={openSections.severity} onOpenChange={() => toggleSection('severity')}>
               <CollapsibleTrigger asChild>
                 <Button variant="outline" className="w-full justify-between h-auto py-3">
-                  <span className="font-medium">Severity / red flags (Optional)</span>
+                  <span className="font-medium">🚨 Severity / red flags (Optional)</span>
                   {openSections.severity ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                 </Button>
               </CollapsibleTrigger>
@@ -355,7 +355,7 @@ export function GeneralBathroomModal({ isOpen, onClose, onSave, editingEntry, in
             <Collapsible open={openSections.triggers} onOpenChange={() => toggleSection('triggers')}>
               <CollapsibleTrigger asChild>
                 <Button variant="outline" className="w-full justify-between h-auto py-3">
-                  <span className="font-medium">Triggers / context (Optional)</span>
+                  <span className="font-medium">What might've caused it? (Optional)</span>
                   {openSections.triggers ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                 </Button>
               </CollapsibleTrigger>
@@ -388,7 +388,7 @@ export function GeneralBathroomModal({ isOpen, onClose, onSave, editingEntry, in
             <Collapsible open={openSections.photos} onOpenChange={() => toggleSection('photos')}>
               <CollapsibleTrigger asChild>
                 <Button variant="outline" className="w-full justify-between h-auto py-3">
-                  <span className="font-medium">Photos / docs (Optional)</span>
+                  <span className="font-medium">📸 Photos / docs (Optional)</span>
                   {openSections.photos ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                 </Button>
               </CollapsibleTrigger>
@@ -406,7 +406,7 @@ export function GeneralBathroomModal({ isOpen, onClose, onSave, editingEntry, in
             <Collapsible open={openSections.outcome} onOpenChange={() => toggleSection('outcome')}>
               <CollapsibleTrigger asChild>
                 <Button variant="outline" className="w-full justify-between h-auto py-3">
-                  <span className="font-medium">Outcome (Optional)</span>
+                  <span className="font-medium">How'd it end? (Optional)</span>
                   {openSections.outcome ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                 </Button>
               </CollapsibleTrigger>
@@ -420,7 +420,7 @@ export function GeneralBathroomModal({ isOpen, onClose, onSave, editingEntry, in
             <Collapsible open={openSections.notes} onOpenChange={() => toggleSection('notes')}>
               <CollapsibleTrigger asChild>
                 <Button variant="outline" className="w-full justify-between h-auto py-3">
-                  <span className="font-medium">Notes (Optional)</span>
+                  <span className="font-medium">Anything else? (Optional)</span>
                   {openSections.notes ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                 </Button>
               </CollapsibleTrigger>

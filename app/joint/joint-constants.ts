@@ -5,7 +5,11 @@ export const EPISODE_TYPES = [
   { id: 'dislocation', name: 'Dislocation', icon: '⚠️', description: 'Full dislocation requiring reduction', color: 'bg-red-100 text-red-800 border-red-200' },
   { id: 'joint-pain', name: 'Joint Pain', icon: '😣', description: 'Pain without dislocation', color: 'bg-orange-100 text-orange-800 border-orange-200' },
   { id: 'swelling', name: 'Swelling', icon: '🎈', description: 'Joint swelling / effusion', color: 'bg-blue-100 text-blue-800 border-blue-200' },
-  { id: 'instability', name: 'Instability', icon: '🌀', description: 'Joint feels loose / giving way', color: 'bg-purple-100 text-purple-800 border-purple-200' },
+  { id: 'instability', name: 'Instability', icon: '🌀', description: 'Joint feels loose / giving way (ligamentous)', color: 'bg-purple-100 text-purple-800 border-purple-200' },
+  { id: 'weakness', name: 'Weakness', icon: '💪', description: 'Muscle weakness — proximal, distal, focal, or generalized (HMSN, polymyositis, myopathy, anti-synthetase)', color: 'bg-rose-100 text-rose-800 border-rose-200' },
+  { id: 'cramping', name: 'Cramping', icon: '🪢', description: 'Muscle cramps / spasms — acute painful contractions (electrolyte, neuropathic, exertion)', color: 'bg-orange-100 text-orange-800 border-orange-200' },
+  { id: 'fasciculations', name: 'Fasciculations', icon: '🌊', description: 'Visible twitching under skin / fine wormy movements (HMSN, motor neuron involvement)', color: 'bg-teal-100 text-teal-800 border-teal-200' },
+  { id: 'muscle-tightness', name: 'Muscle Tightness', icon: '🔒', description: "Sustained muscle tightness, hypertonicity, knots that won't release (the \"massage therapists give up\" kind)", color: 'bg-fuchsia-100 text-fuchsia-800 border-fuchsia-200' },
   { id: 'rom-restriction', name: 'ROM Restriction', icon: '🚧', description: 'Limited range of motion', color: 'bg-gray-100 text-gray-800 border-gray-200' },
   { id: 'general', name: 'General Joint Event', icon: '🦴', description: 'Mixed or other joint event', color: 'bg-stone-100 text-stone-800 border-stone-200' },
 ] as const

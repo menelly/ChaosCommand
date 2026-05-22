@@ -731,10 +731,10 @@ export default function CopingRegulationPage() {
         <header className="text-center mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2 flex items-center justify-center gap-2">
             <Heart className="h-8 w-8 text-pink-500" />
-            Coping & Regulation
+            🫂 Coping & Regulation
           </h1>
           <p className="text-lg text-muted-foreground">
-            Tools and techniques to help you regulate and cope
+            Tools, techniques, and grounding tricks — for when brain or body needs a hand
           </p>
         </header>
 

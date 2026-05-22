@@ -8,6 +8,12 @@ Each release ships fixes, new trackers, and accessibility improvements.
 Want to know exactly what changed? Every commit is public:
 [github.com/menelly/ChaosCommand](https://github.com/menelly/ChaosCommand)
 
+## v0.4.9 — 2026-05-12
+
+### ✨ New
+- PDF polish — bullet evidence, purple accents, dedup + changelog tooling 📋✨
+- version bump for PDF polish + changelog tooling release
+
 ## v0.4.8 — 2026-05-10
 
 ### ✨ New
