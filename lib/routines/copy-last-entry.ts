@@ -29,9 +29,23 @@ export interface CopyResult {
   reason?: "no-prior" | "unknown-shape"
 }
 
+// Re-stamp a cloned entry's time fields to NOW so the copy reads as a fresh log
+// (HH:MM fields get current HH:MM; ISO/date fields get a current ISO string).
+function stampNow(entry: Record<string, unknown>): void {
+  const now = new Date()
+  const iso = now.toISOString()
+  const hhmm = now.toTimeString().slice(0, 5) // "16:45"
+  for (const f of ["time", "timestamp", "datetime", "dateTime", "loggedAt", "entryTime", "createdAt", "updatedAt"]) {
+    if (f in entry) {
+      const v = entry[f]
+      entry[f] = typeof v === "string" && /^\d{1,2}:\d{2}(:\d{2})?$/.test(v) ? hhmm : iso
+    }
+  }
+}
+
 /**
- * Clone a tracker's most recent entry from before today into today.
- * Returns { ok:false, reason:'no-prior' } if there's nothing earlier to copy.
+ * Clone a tracker's most recent entry (including earlier today) into today,
+ * re-stamped to now. Returns { ok:false, reason:'no-prior' } if nothing to copy.
  */
 export async function copyLastEntryToToday(
   tracker: TrackableTracker,
@@ -41,22 +55,26 @@ export async function copyLastEntryToToday(
 ): Promise<CopyResult> {
   // All categories — custom trackers live under body/mind/custom, not 'tracker'.
   const records = await getDateRange("2000-01-01", today)
-  const mine = records.filter(r => r.subcategory === tracker.subcategory)
-  const src = mine
-    .filter(r => r.date < today)
+  // Most recent record with something to clone — INCLUDING earlier today (you log
+  // multiple times a day now, so "last" is usually this morning, not yesterday).
+  const src = records
+    .filter(r => r.subcategory === tracker.subcategory)
+    .filter(r => (Array.isArray(r.content?.entries) && r.content.entries.length > 0) || (r.content?.values && typeof r.content.values === "object"))
     .sort((a, b) => b.date.localeCompare(a.date))[0]
   if (!src) return { ok: false, reason: "no-prior" }
 
   const category = src.category
   const entries = src.content?.entries
 
-  // Standard tracker: clone the most recent entry, append to today's bucket.
+  // Standard tracker: clone the most recent entry, re-stamp to NOW (so it counts
+  // as logged THIS run), append to today's bucket.
   if (Array.isArray(entries) && entries.length > 0) {
     const last = entries[entries.length - 1]
     const clone = JSON.parse(JSON.stringify(last)) as Record<string, unknown>
     clone.date = today
     if ("id" in clone) clone.id = typeof clone.id === "number" ? Date.now() : String(Date.now())
-    const todayRec = mine.find(r => r.date === today)
+    stampNow(clone)
+    const todayRec = records.find(r => r.subcategory === tracker.subcategory && r.date === today)
     const todayEntries = Array.isArray(todayRec?.content?.entries) ? todayRec!.content.entries : []
     await saveData(today, category, tracker.subcategory, { entries: [...todayEntries, clone] }, todayRec?.tags ?? src.tags ?? [])
     return { ok: true, srcDate: src.date }
