@@ -79,26 +79,34 @@ function formatTime(ms: number): string {
   return new Date(ms).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
 }
 
-/** Status for one subcategory given today's already-fetched tracker records. */
+/** Status for one tracker given today's already-fetched records. With
+ *  subcategoryPrefix, "logged today" matches ANY record whose subcategory starts
+ *  with it (hydration-/sleep-/missed-work- store one record per entry). */
 export function computeTrackerStatus(
   todayRecords: DailyDataRecord[],
-  subcategory: string
+  subcategory: string,
+  subcategoryPrefix?: string
 ): TrackerLoggedStatus {
-  const record = todayRecords.find(r => r.subcategory === subcategory)
-  if (!recordHasLog(record) || !record) return { loggedToday: false, lastLoggedLabel: null }
-  const ms = latestEntryMs(record)
-  return { loggedToday: true, lastLoggedLabel: ms !== null ? formatTime(ms) : null }
+  const matches = subcategoryPrefix
+    ? todayRecords.filter(r => typeof r.subcategory === 'string' && r.subcategory.startsWith(subcategoryPrefix))
+    : todayRecords.filter(r => r.subcategory === subcategory)
+  if (!matches.some(r => recordHasLog(r))) return { loggedToday: false, lastLoggedLabel: null }
+  const ms = matches
+    .map(r => latestEntryMs(r))
+    .filter((x): x is number => x !== null)
+    .sort((a, b) => b - a)[0]
+  return { loggedToday: true, lastLoggedLabel: ms != null ? formatTime(ms) : null }
 }
 
 /** Status for every tracker in a routine, keyed by tracker id. Pass the
  *  resolved trackables (built-in + custom) so custom subcategories work too. */
 export function buildStatusMap(
   todayRecords: DailyDataRecord[],
-  trackables: { id: string; subcategory: string }[]
+  trackables: { id: string; subcategory: string; subcategoryPrefix?: string }[]
 ): Record<string, TrackerLoggedStatus> {
   const out: Record<string, TrackerLoggedStatus> = {}
   for (const t of trackables) {
-    out[t.id] = computeTrackerStatus(todayRecords, t.subcategory)
+    out[t.id] = computeTrackerStatus(todayRecords, t.subcategory, t.subcategoryPrefix)
   }
   return out
 }

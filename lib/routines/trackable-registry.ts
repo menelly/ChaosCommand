@@ -42,13 +42,20 @@ export interface TrackableTracker {
   href: string
   /** daily_data subcategory (category is CATEGORIES.TRACKER for built-ins). */
   subcategory: string
+  /** Some trackers store ONE record PER entry under `name-<id>` subcategories
+   *  (hydration-, sleep-, missed-work-). When set, "logged today" matches any
+   *  record whose subcategory STARTS WITH this, instead of an exact match. */
+  subcategoryPrefix?: string
   /** Group in the builder's collapsible add-tracker list. */
   category: TrackableCategory
   /** True for user-built Forge trackers (different content shape + category). */
   isCustom?: boolean
-  /** Non-standard storage (e.g. Manage trackers) — "logged today ✓" / copy-yest
-   *  don't work yet; nav + "nothing today" do. Status integration is a follow-up. */
+  /** "logged today ✓" doesn't work yet (bespoke storage we haven't wired) — nav
+   *  + "nothing today" still do. Shown as "status coming soon". See CHA-192. */
   statusUnsupported?: boolean
+  /** "Copy last" doesn't work for this tracker (per-entry JSON records are messy
+   *  to clone) — hide the copy buttons even though status works. */
+  copyUnsupported?: boolean
 }
 
 // Categories mirror the app's real sections (app/body, app/mind, app/choice).
@@ -82,13 +89,13 @@ export const TRACKABLE_TRACKERS: readonly TrackableTracker[] = [
   { id: 'food-choice', label: 'Food', emoji: '🍽️', href: '/food-choice', subcategory: 'food-choice', category: 'choice' },
   { id: 'substance', label: 'Substances', emoji: '🧪', href: '/substance', subcategory: 'substance', category: 'choice' },
   { id: 'energy', label: 'Energy & Pacing', emoji: '⚡', href: '/energy', subcategory: 'energy', category: 'choice' },
-  { id: 'hydration', label: 'Hydration', emoji: '💧', href: '/hydration', subcategory: 'hydration', category: 'choice', statusUnsupported: true },
-  { id: 'sleep', label: 'Sleep', emoji: '🛌', href: '/sleep', subcategory: 'sleep', category: 'choice', statusUnsupported: true },
+  { id: 'hydration', label: 'Hydration', emoji: '💧', href: '/hydration', subcategory: 'hydration', subcategoryPrefix: 'hydration-', category: 'choice', copyUnsupported: true },
+  { id: 'sleep', label: 'Sleep', emoji: '🛌', href: '/sleep', subcategory: 'sleep', subcategoryPrefix: 'sleep-', category: 'choice', copyUnsupported: true },
   { id: 'movement', label: 'Movement', emoji: '🏃', href: '/movement', subcategory: 'movement', category: 'choice', statusUnsupported: true },
   { id: 'coping-regulation', label: 'Coping & Regulation', emoji: '🧘', href: '/coping-regulation', subcategory: 'coping-regulation', category: 'choice', statusUnsupported: true },
   // ── Manage (daily-loggable only) ──
   { id: 'medications', label: 'Medications', emoji: '💊', href: '/medications', subcategory: 'medications', category: 'manage', statusUnsupported: true },
-  { id: 'missed-work', label: 'Missed Work', emoji: '💼', href: '/work-disability', subcategory: 'missed-work', category: 'manage', statusUnsupported: true },
+  { id: 'missed-work', label: 'Missed Work', emoji: '💼', href: '/work-disability', subcategory: 'missed-work', subcategoryPrefix: 'missed-work-', category: 'manage', copyUnsupported: true },
 ]
 
 const BY_ID = new Map(TRACKABLE_TRACKERS.map(t => [t.id, t]))

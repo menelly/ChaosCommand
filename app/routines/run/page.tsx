@@ -70,7 +70,7 @@ function RoutineRun() {
     if (!routine || resolved.length === 0) return
     // No category filter — custom trackers store under body/mind/custom, not 'tracker'.
     const records = await getDateRange(today, today)
-    setStatus(buildStatusMap(records, resolved.map(t => ({ id: t.id, subcategory: t.subcategory }))))
+    setStatus(buildStatusMap(records, resolved.map(t => ({ id: t.id, subcategory: t.subcategory, subcategoryPrefix: t.subcategoryPrefix }))))
     setCleared(getClearedTrackers(pin, today))
     setSkipped(getSkippedTrackers(pin, today))
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -106,7 +106,9 @@ function RoutineRun() {
   const complete = trackers.length > 0 && doneCount === trackers.length
 
   const logNow = (href: string) =>
-    router.push(`${href}?routine=${encodeURIComponent(routine.id)}`)
+    // href may already carry a query (custom trackers: /custom-tracker?id=X) —
+    // use & not ? so we don't make an invalid double-? URL ("Tracker Not Found").
+    router.push(`${href}${href.includes("?") ? "&" : "?"}routine=${encodeURIComponent(routine.id)}`)
   const skip = (id: string) => {
     markSkipped(pin, today, id)
     setSkipped(prev => new Set(prev).add(id))
@@ -198,7 +200,7 @@ function RoutineRun() {
                   {/* Pending: copy yesterday, log it, mark nothing-to-log, or skip */}
                   {isPending && (
                     <div className="flex flex-wrap items-center justify-end gap-1.5 shrink-0">
-                      {!t.statusUnsupported && (
+                      {!t.statusUnsupported && !t.copyUnsupported && (
                         <Button size="sm" variant="ghost" className="gap-1 text-muted-foreground"
                           title="Copy your last entry into today — then tweak/remove it via the tracker's Edit/Delete"
                           onClick={() => copyYesterday(t)}>

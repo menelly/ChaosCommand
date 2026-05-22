@@ -76,7 +76,7 @@ export default function RoutineFlowBar() {
     const today = formatDateForStorage(new Date())
     getDateRange(today, today).then(records => {
       if (!alive) return
-      const status = buildStatusMap(records, resolved.map(t => ({ id: t.id, subcategory: t.subcategory })))
+      const status = buildStatusMap(records, resolved.map(t => ({ id: t.id, subcategory: t.subcategory, subcategoryPrefix: t.subcategoryPrefix })))
       const cleared = getClearedTrackers(pin, today)
       const skipped = getSkippedTrackers(pin, today)
       const handled = new Set<string>()
@@ -159,7 +159,7 @@ export default function RoutineFlowBar() {
         <div className="flex items-center gap-1 shrink-0">
           {currentTracker && (
             <>
-              {!currentTracker.statusUnsupported && (
+              {!currentTracker.statusUnsupported && !currentTracker.copyUnsupported && (
                 <button type="button" onClick={setYesterday}
                   title="Copy this tracker's last entry into today, then advance"
                   className="flex items-center gap-1 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-muted">
