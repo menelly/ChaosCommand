@@ -163,7 +163,7 @@ export default function RoutineFlowBar() {
                 <button type="button" onClick={setYesterday}
                   title="Copy this tracker's last entry into today, then advance"
                   className="flex items-center gap-1 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-muted">
-                  <CopyPlus className="h-4 w-4" /> <span className="hidden sm:inline">Set yest.</span>
+                  <CopyPlus className="h-4 w-4" /> <span className="hidden sm:inline">Copy last</span>
                 </button>
               )}
               <button type="button" onClick={skipCurrent}

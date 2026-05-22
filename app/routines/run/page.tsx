@@ -202,7 +202,7 @@ function RoutineRun() {
                         <Button size="sm" variant="ghost" className="gap-1 text-muted-foreground"
                           title="Copy your last entry into today — then tweak/remove it via the tracker's Edit/Delete"
                           onClick={() => copyYesterday(t)}>
-                          <CopyPlus className="h-4 w-4" /> Copy yest.
+                          <CopyPlus className="h-4 w-4" /> Copy last
                         </Button>
                       )}
                       <Button size="sm" variant="ghost" className="gap-1 text-muted-foreground"

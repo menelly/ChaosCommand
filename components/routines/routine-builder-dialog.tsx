@@ -29,7 +29,7 @@ import { loadAllTrackables, indexTrackables } from "@/lib/routines/load-trackabl
 const EMOJI_CHOICES = ['📋', '🌅', '🌙', '☀️', '🌧️', '💊', '🍽️', '💧', '🧠', '❤️', '💪', '⚡', '🛌', '🚿', '🦴', '✅', '🌀', '🌿']
 import {
   type Routine, type RoutineTimeWindow, type RoutineTracker,
-  createRoutine, updateRoutine, setRoutineTrackers,
+  listRoutines, createRoutine, updateRoutine, setRoutineTrackers,
 } from "@/lib/routines/routines-config"
 
 interface Props {
@@ -51,6 +51,18 @@ export default function RoutineBuilderDialog({ open, onClose, pin, routine, onSa
   const [openCats, setOpenCats] = useState<Set<TrackableCategory>>(new Set(['body']))
   const toggleCat = (c: TrackableCategory) =>
     setOpenCats(prev => { const n = new Set(prev); n.has(c) ? n.delete(c) : n.add(c); return n })
+  // Existing routines you can clone trackers from when creating a new one.
+  const [existing, setExisting] = useState<Routine[]>([])
+  useEffect(() => {
+    if (open && !routine && pin) setExisting(listRoutines(pin))
+  }, [open, routine, pin])
+  const copyFrom = (id: string) => {
+    const src = existing.find(r => r.id === id)
+    if (!src) return
+    setMembers(src.trackers.map(t => ({ ...t })))
+    setTimeWindow(src.timeWindow)
+    if (!emoji || emoji === "📋") setEmoji(src.emoji)
+  }
 
   // Load the user's full tracker set (built-in + custom Forge trackers) on open.
   useEffect(() => {
@@ -121,6 +133,24 @@ export default function RoutineBuilderDialog({ open, onClose, pin, routine, onSa
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+          {/* Copy from an existing routine (create mode only) */}
+          {!routine && existing.length > 0 && (
+            <div>
+              <Label className="text-xs">Copy trackers from (optional)</Label>
+              <Select onValueChange={copyFrom}>
+                <SelectTrigger><SelectValue placeholder="Start blank, or clone an existing routine…" /></SelectTrigger>
+                <SelectContent>
+                  {existing.map(r => (
+                    <SelectItem key={r.id} value={r.id}>{r.emoji} {r.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Pulls in that routine's trackers + time of day — handy for making Night from Morning. You still name it.
+              </p>
+            </div>
+          )}
+
           {/* Identity */}
           <div>
             <Label htmlFor="routine-name" className="text-xs">Name</Label>
