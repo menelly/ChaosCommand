@@ -123,9 +123,6 @@ export default function AppSidebar() {
       { id: 'providers', name: 'Healthcare Providers', icon: '👩‍⚕️', href: '/providers' },
       { id: 'timeline', name: 'Diagnoses & Timeline', icon: '📋', href: '/timeline' },
       { id: 'missed-work', name: 'Missed Work', icon: '💼' },
-      /* MVP-HIDDEN: Chore Chart - Adulting features for later release
-      { id: 'chore-chart', name: 'Chore Chart', icon: '🏠' },
-      */
     ],
     'patterns': [
       { id: 'symptom-correlations', name: 'Symptom Correlations', icon: '📈' },
@@ -276,17 +273,6 @@ export default function AppSidebar() {
               className="mx-auto drop-shadow-lg rounded-lg"
             />
           </Link>
-
-          {/* Calendar buttons — disabled until notifications/calendar rework
-          <Link
-            href={getHref('calendar')}
-            className="mb-1 rounded text-xs font-medium transition-all py-1.5 px-1 hover:opacity-80 block text-center bg-card text-foreground border border-border"
-            title="Calendar - This Month"
-          >
-            📅 Month
-          </Link>
-          */}
-
 
 
           {/* Trackers section */}
