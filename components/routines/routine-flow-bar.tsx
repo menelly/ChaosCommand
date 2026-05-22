@@ -23,10 +23,16 @@ import Link from "next/link"
 import { usePathname, useSearchParams } from "next/navigation"
 import { ArrowLeft, ChevronRight, CheckCircle2 } from "lucide-react"
 import { useUser } from "@/lib/contexts/user-context"
-import { useDailyData } from "@/lib/database"
+import { useDailyData, formatDateForStorage } from "@/lib/database"
 import { getRoutine, type Routine } from "@/lib/routines/routines-config"
 import { type TrackableTracker } from "@/lib/routines/trackable-registry"
 import { loadAllTrackables, indexTrackables } from "@/lib/routines/load-trackables"
+import { buildStatusMap } from "@/lib/routines/routine-status"
+import { getClearedTrackers } from "@/lib/routines/routine-cleared"
+
+// Normalize trailing slashes — next.config has trailingSlash:true, so
+// usePathname() yields "/cardiac/" while tracker hrefs are "/cardiac".
+const normPath = (p: string) => p.replace(/\/+$/, "") || "/"
 
 export default function RoutineFlowBar() {
   const params = useSearchParams()
@@ -34,10 +40,11 @@ export default function RoutineFlowBar() {
   const routineId = params.get("routine") ?? ""
   const { userPin } = useUser()
   const pin = userPin ?? ""
-  const { getAllCategoryData } = useDailyData()
+  const { getAllCategoryData, getDateRange } = useDailyData()
 
   const [routine, setRoutine] = useState<Routine | null>(null)
   const [trackables, setTrackables] = useState<TrackableTracker[]>([])
+  const [doneIds, setDoneIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     setRoutine(pin && routineId ? getRoutine(pin, routineId) : null)
@@ -50,6 +57,28 @@ export default function RoutineFlowBar() {
     return () => { alive = false }
   }, [routineId, getAllCategoryData])
 
+  // Track which routine members are "done" today (logged OR nothing-to-log) so
+  // "Next" can skip them and land on the next thing you actually need to do.
+  useEffect(() => {
+    if (!pin || !routine) return
+    const idx = indexTrackables(trackables)
+    const resolved = routine.trackers
+      .map(t => idx.get(t.trackerId))
+      .filter((t): t is TrackableTracker => t !== undefined)
+    if (resolved.length === 0) { setDoneIds(new Set()); return }
+    let alive = true
+    const today = formatDateForStorage(new Date())
+    getDateRange(today, today).then(records => {
+      if (!alive) return
+      const status = buildStatusMap(records, resolved.map(t => ({ id: t.id, subcategory: t.subcategory })))
+      const cleared = getClearedTrackers(pin, today)
+      const done = new Set<string>()
+      resolved.forEach(t => { if (status[t.id]?.loggedToday || cleared.has(t.id)) done.add(t.id) })
+      setDoneIds(done)
+    })
+    return () => { alive = false }
+  }, [pin, routine, trackables, getDateRange])
+
   // Not in a routine → render nothing.
   if (!routineId || !routine) return null
 
@@ -58,17 +87,27 @@ export default function RoutineFlowBar() {
     .map(t => byId.get(t.trackerId))
     .filter((t): t is TrackableTracker => t !== undefined)
 
-  // Which routine member is this page? Match href path (+ id for custom trackers).
+  // Which routine member is this page? Match href path (+ id for custom trackers),
+  // normalizing trailing slashes so /cardiac/ matches /cardiac.
   const currentId = params.get("id")
+  const here = normPath(pathname)
   const currentIndex = ordered.findIndex(t => {
     const [path, query] = t.href.split("?")
-    if (path !== pathname) return false
+    if (normPath(path) !== here) return false
     if (query) return new URLSearchParams(query).get("id") === currentId
     return true
   })
 
+  // "Next" = next NOT-done tracker — prefer one after the current card, else the
+  // first not-done anywhere, else null (everything done → "back to routine").
+  const currentTracker = currentIndex >= 0 ? ordered[currentIndex] : undefined
+  const notDone = ordered.filter(t => !doneIds.has(t.id) && t.id !== currentTracker?.id)
+  const next =
+    (currentIndex >= 0 ? notDone.find(t => ordered.indexOf(t) > currentIndex) : undefined) ??
+    notDone[0] ??
+    null
+
   const runHref = `/routines/run?id=${encodeURIComponent(routineId)}`
-  const next = currentIndex >= 0 && currentIndex < ordered.length - 1 ? ordered[currentIndex + 1] : null
   const nextHref = next
     ? `${next.href}${next.href.includes("?") ? "&" : "?"}routine=${encodeURIComponent(routineId)}`
     : runHref
