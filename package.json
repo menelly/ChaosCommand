@@ -9,8 +9,7 @@
     "start": "next start",
     "lint": "next lint",
     "tauri": "tauri",
-    "flask": "cd backend && python app.py",
-    "tauri:dev": "concurrently \"npm run flask\" \"tauri dev\"",
+    "tauri:dev": "tauri dev",
     "tauri:build": "tauri build"
   },
   "dependencies": {
@@ -73,7 +72,6 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/uuid": "^10.0.0",
-    "concurrently": "^9.2.0",
     "eslint": "^9.0.0",
     "eslint-config-next": "15.0.0",
     "postcss": "^8.5",
