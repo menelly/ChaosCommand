@@ -43,6 +43,7 @@ export async function loadCustomTrackables(
         emoji: '🔧',
         href: `/custom-tracker?id=${encodeURIComponent(t.id)}`,
         subcategory: `custom-${t.id}`,
+        category: 'custom' as const,
         isCustom: true,
       }))
   } catch {

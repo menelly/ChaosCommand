@@ -184,6 +184,10 @@ function RoutineRun() {
                       <div className="text-xs text-muted-foreground flex items-center gap-1">
                         <EyeOff className="h-3.5 w-3.5" /> Skipped — hidden for now
                       </div>
+                    ) : t.statusUnsupported ? (
+                      <div className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Circle className="h-3.5 w-3.5" /> Log on the tracker · ✓ status coming soon
+                      </div>
                     ) : (
                       <div className="text-xs text-muted-foreground flex items-center gap-1">
                         <Circle className="h-3.5 w-3.5" /> Not logged today
@@ -194,11 +198,13 @@ function RoutineRun() {
                   {/* Pending: copy yesterday, log it, mark nothing-to-log, or skip */}
                   {isPending && (
                     <div className="flex flex-wrap items-center justify-end gap-1.5 shrink-0">
-                      <Button size="sm" variant="ghost" className="gap-1 text-muted-foreground"
-                        title="Copy your last entry into today — then tweak/remove it via the tracker's Edit/Delete"
-                        onClick={() => copyYesterday(t)}>
-                        <CopyPlus className="h-4 w-4" /> Copy yest.
-                      </Button>
+                      {!t.statusUnsupported && (
+                        <Button size="sm" variant="ghost" className="gap-1 text-muted-foreground"
+                          title="Copy your last entry into today — then tweak/remove it via the tracker's Edit/Delete"
+                          onClick={() => copyYesterday(t)}>
+                          <CopyPlus className="h-4 w-4" /> Copy yest.
+                        </Button>
+                      )}
                       <Button size="sm" variant="ghost" className="gap-1 text-muted-foreground"
                         title="I checked — nothing to report today. Counts as done."
                         onClick={() => nothingToLog(t.id)}>

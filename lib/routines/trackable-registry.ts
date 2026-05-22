@@ -21,6 +21,18 @@
  * autofill is the first follow-up after the run page lands.
  */
 
+export type TrackableCategory = 'body' | 'mind' | 'choice' | 'manage' | 'custom'
+
+/** Display order + labels for the builder's grouped (collapsible) tracker list. */
+export const TRACKABLE_CATEGORY_ORDER: TrackableCategory[] = ['body', 'mind', 'choice', 'manage', 'custom']
+export const TRACKABLE_CATEGORY_LABELS: Record<TrackableCategory, string> = {
+  body: '🫀 Body',
+  mind: '🧠 Mind',
+  choice: '👍 Choice',
+  manage: '📋 Manage',
+  custom: '🔧 Custom',
+}
+
 export interface TrackableTracker {
   /** Stable id used in routine config. Equal to subcategory unless noted. */
   id: string
@@ -30,31 +42,42 @@ export interface TrackableTracker {
   href: string
   /** daily_data subcategory (category is CATEGORIES.TRACKER for built-ins). */
   subcategory: string
+  /** Group in the builder's collapsible add-tracker list. */
+  category: TrackableCategory
   /** True for user-built Forge trackers (different content shape + category). */
   isCustom?: boolean
+  /** Non-standard storage (e.g. Manage trackers) — "logged today ✓" / copy-yest
+   *  don't work yet; nav + "nothing today" do. Status integration is a follow-up. */
+  statusUnsupported?: boolean
 }
 
 export const TRACKABLE_TRACKERS: readonly TrackableTracker[] = [
-  { id: 'pain', label: 'Pain', emoji: '🤕', href: '/pain', subcategory: 'pain' },
-  { id: 'head-pain', label: 'Head Pain', emoji: '🤯', href: '/head-pain', subcategory: 'head-pain' },
-  { id: 'cardiac', label: 'Heart Drama', emoji: '❤️', href: '/cardiac', subcategory: 'cardiac' },
-  { id: 'dysautonomia', label: 'Autonomic Shenanigans', emoji: '🌀', href: '/dysautonomia', subcategory: 'dysautonomia' },
-  { id: 'respiratory', label: 'Respiratory', emoji: '🫁', href: '/respiratory', subcategory: 'respiratory' },
-  { id: 'seizure', label: 'Seizure', emoji: '⚡', href: '/seizure', subcategory: 'seizure' },
-  { id: 'joint', label: 'Joint & MSK', emoji: '🦴', href: '/joint', subcategory: 'joint' },
-  { id: 'brain-fog', label: 'Brain Fog', emoji: '🌫️', href: '/brain-fog', subcategory: 'brain-fog' },
-  { id: 'energy', label: 'Energy & Pacing', emoji: '⚡', href: '/energy', subcategory: 'energy' },
-  { id: 'bathroom', label: 'Potty Talk', emoji: '🚽', href: '/bathroom', subcategory: 'bathroom' },
-  { id: 'upper-digestive', label: 'Upper Digestive', emoji: '🤢', href: '/upper-digestive', subcategory: 'upper-digestive' },
-  { id: 'skin', label: 'Skin', emoji: '🩹', href: '/skin', subcategory: 'skin' },
-  { id: 'substance', label: 'Substances', emoji: '🧪', href: '/substance', subcategory: 'substance' },
-  { id: 'food-choice', label: 'Food', emoji: '🍽️', href: '/food-choice', subcategory: 'food-choice' },
-  { id: 'food-allergens', label: 'Food Allergens', emoji: '⚠️', href: '/food-allergens', subcategory: 'food-allergens' },
-  { id: 'reproductive-health', label: 'Reproductive Health', emoji: '🩸', href: '/reproductive-health', subcategory: 'reproductive-health' },
-  // route slug ≠ storage key:
-  { id: 'anxiety', label: 'Anxiety', emoji: '😰', href: '/anxiety-tracker', subcategory: 'anxiety' },
-  { id: 'mental-health', label: 'Mind & Mood', emoji: '🧠', href: '/mental-health', subcategory: 'mental-health' },
-  { id: 'weather', label: 'Weather & Environment', emoji: '🌦️', href: '/weather-environment', subcategory: 'weather' },
+  // Body
+  { id: 'pain', label: 'Pain', emoji: '🤕', href: '/pain', subcategory: 'pain', category: 'body' },
+  { id: 'head-pain', label: 'Head Pain', emoji: '🤯', href: '/head-pain', subcategory: 'head-pain', category: 'body' },
+  { id: 'cardiac', label: 'Heart Drama', emoji: '❤️', href: '/cardiac', subcategory: 'cardiac', category: 'body' },
+  { id: 'dysautonomia', label: 'Autonomic Shenanigans', emoji: '🌀', href: '/dysautonomia', subcategory: 'dysautonomia', category: 'body' },
+  { id: 'respiratory', label: 'Respiratory', emoji: '🫁', href: '/respiratory', subcategory: 'respiratory', category: 'body' },
+  { id: 'seizure', label: 'Seizure', emoji: '⚡', href: '/seizure', subcategory: 'seizure', category: 'body' },
+  { id: 'joint', label: 'Joint & MSK', emoji: '🦴', href: '/joint', subcategory: 'joint', category: 'body' },
+  { id: 'energy', label: 'Energy & Pacing', emoji: '⚡', href: '/energy', subcategory: 'energy', category: 'body' },
+  { id: 'bathroom', label: 'Potty Talk', emoji: '🚽', href: '/bathroom', subcategory: 'bathroom', category: 'body' },
+  { id: 'upper-digestive', label: 'Upper Digestive', emoji: '🤢', href: '/upper-digestive', subcategory: 'upper-digestive', category: 'body' },
+  { id: 'skin', label: 'Skin', emoji: '🩹', href: '/skin', subcategory: 'skin', category: 'body' },
+  { id: 'food-allergens', label: 'Food Allergens', emoji: '⚠️', href: '/food-allergens', subcategory: 'food-allergens', category: 'body' },
+  { id: 'reproductive-health', label: 'Reproductive Health', emoji: '🩸', href: '/reproductive-health', subcategory: 'reproductive-health', category: 'body' },
+  { id: 'weather', label: 'Weather & Environment', emoji: '🌦️', href: '/weather-environment', subcategory: 'weather', category: 'body' },
+  // Mind
+  { id: 'brain-fog', label: 'Brain Fog', emoji: '🌫️', href: '/brain-fog', subcategory: 'brain-fog', category: 'mind' },
+  { id: 'anxiety', label: 'Anxiety', emoji: '😰', href: '/anxiety-tracker', subcategory: 'anxiety', category: 'mind' }, // route slug ≠ storage key
+  { id: 'mental-health', label: 'Mind & Mood', emoji: '🧠', href: '/mental-health', subcategory: 'mental-health', category: 'mind' },
+  // Choice
+  { id: 'food-choice', label: 'Food', emoji: '🍽️', href: '/food-choice', subcategory: 'food-choice', category: 'choice' },
+  { id: 'substance', label: 'Substances', emoji: '🧪', href: '/substance', subcategory: 'substance', category: 'choice' },
+  // Manage — daily-loggable only. Non-standard storage: nav + "nothing today"
+  // work; "logged ✓" / copy-yest don't yet (status integration is a follow-up).
+  { id: 'medications', label: 'Medications', emoji: '💊', href: '/medications', subcategory: 'medications', category: 'manage', statusUnsupported: true },
+  { id: 'missed-work', label: 'Missed Work', emoji: '💼', href: '/work-disability', subcategory: 'missed-work', category: 'manage', statusUnsupported: true },
 ]
 
 const BY_ID = new Map(TRACKABLE_TRACKERS.map(t => [t.id, t]))

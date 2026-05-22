@@ -16,12 +16,17 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, ArrowUp, ArrowDown, X, Info } from "lucide-react"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { Plus, ArrowUp, ArrowDown, X, ChevronDown, ChevronRight } from "lucide-react"
 import { useDailyData } from "@/lib/database"
-import { type TrackableTracker } from "@/lib/routines/trackable-registry"
+import {
+  type TrackableTracker, type TrackableCategory,
+  TRACKABLE_CATEGORY_ORDER, TRACKABLE_CATEGORY_LABELS,
+} from "@/lib/routines/trackable-registry"
 import { loadAllTrackables, indexTrackables } from "@/lib/routines/load-trackables"
+
+const EMOJI_CHOICES = ['📋', '🌅', '🌙', '☀️', '🌧️', '💊', '🍽️', '💧', '🧠', '❤️', '💪', '⚡', '🛌', '🚿', '🦴', '✅', '🌀', '🌿']
 import {
   type Routine, type RoutineTimeWindow, type RoutineTracker,
   createRoutine, updateRoutine, setRoutineTrackers,
@@ -43,6 +48,9 @@ export default function RoutineBuilderDialog({ open, onClose, pin, routine, onSa
   const [timeWindow, setTimeWindow] = useState<RoutineTimeWindow>("morning")
   const [members, setMembers] = useState<RoutineTracker[]>([])
   const [trackables, setTrackables] = useState<TrackableTracker[]>([])
+  const [openCats, setOpenCats] = useState<Set<TrackableCategory>>(new Set(['body']))
+  const toggleCat = (c: TrackableCategory) =>
+    setOpenCats(prev => { const n = new Set(prev); n.has(c) ? n.delete(c) : n.add(c); return n })
 
   // Load the user's full tracker set (built-in + custom Forge trackers) on open.
   useEffect(() => {
@@ -78,8 +86,6 @@ export default function RoutineBuilderDialog({ open, onClose, pin, routine, onSa
     setMembers(prev => [...prev, { trackerId: id, autofill: false }])
   const removeTracker = (id: string) =>
     setMembers(prev => prev.filter(m => m.trackerId !== id))
-  const toggleAutofill = (id: string, autofill: boolean) =>
-    setMembers(prev => prev.map(m => (m.trackerId === id ? { ...m, autofill } : m)))
   const move = (index: number, dir: -1 | 1) =>
     setMembers(prev => {
       const next = [...prev]
@@ -116,30 +122,30 @@ export default function RoutineBuilderDialog({ open, onClose, pin, routine, onSa
 
         <div className="flex-1 overflow-y-auto space-y-4 pr-1">
           {/* Identity */}
-          <div className="flex gap-2">
-            <div className="w-16">
-              <Label htmlFor="routine-emoji" className="text-xs">Emoji</Label>
-              <Input
-                id="routine-emoji"
-                value={emoji}
-                onChange={(e) => setEmoji(e.target.value)}
-                className="text-center text-lg"
-                maxLength={4}
-              />
-            </div>
-            <div className="flex-1">
-              <Label htmlFor="routine-name" className="text-xs">Name</Label>
-              <Input
-                id="routine-name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Morning, Night, Pre-Meal…"
-              />
+          <div>
+            <Label htmlFor="routine-name" className="text-xs">Name</Label>
+            <Input
+              id="routine-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Morning, Night, Pre-Meal…"
+            />
+          </div>
+          <div>
+            <Label className="text-xs">Emoji <span className="font-mono text-base">{emoji}</span></Label>
+            <div className="flex flex-wrap gap-1 mt-1">
+              {EMOJI_CHOICES.map(e => (
+                <button key={e} type="button" onClick={() => setEmoji(e)}
+                  aria-label={`Use ${e}`}
+                  className={`text-xl rounded-md p-1.5 leading-none hover:bg-muted ${emoji === e ? "ring-2 ring-primary bg-muted" : ""}`}>
+                  {e}
+                </button>
+              ))}
             </div>
           </div>
 
           <div>
-            <Label className="text-xs">Time of day (used for autofill matching)</Label>
+            <Label className="text-xs">Time of day</Label>
             <Select value={timeWindow} onValueChange={(v) => setTimeWindow(v as RoutineTimeWindow)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -170,10 +176,6 @@ export default function RoutineBuilderDialog({ open, onClose, pin, routine, onSa
                       </div>
                       <span className="text-lg">{t.emoji}</span>
                       <span className="flex-1 text-sm">{t.label}</span>
-                      <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer" title="Pre-fill this tracker's form from your last entry in this time window. Off by default.">
-                        autofill
-                        <Switch checked={m.autofill} onCheckedChange={(c) => toggleAutofill(m.trackerId, c)} />
-                      </label>
                       <button type="button" aria-label="Remove" onClick={() => removeTracker(m.trackerId)}
                         className="text-muted-foreground hover:text-destructive"><X className="h-4 w-4" /></button>
                     </div>
@@ -183,29 +185,44 @@ export default function RoutineBuilderDialog({ open, onClose, pin, routine, onSa
             )}
           </div>
 
-          {/* Autofill explainer */}
-          <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
-            <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-            Autofill is great for stable values (same daily meds, hydration goal). It never
-            pre-fills pain, mood, or free-text symptoms — those are always fresh, and you
-            always hit Save yourself.
-          </p>
-
-          {/* Add */}
+          {/* Add trackers — grouped into collapsible categories */}
           {available.length > 0 && (
             <div>
               <Label className="text-xs">Add trackers</Label>
-              <div className="h-40 mt-1 rounded border border-border overflow-y-auto">
-                <div className="p-1 space-y-0.5">
-                  {available.map(t => (
-                    <button key={t.id} type="button" onClick={() => addTracker(t.id)}
-                      className="w-full flex items-center gap-2 rounded p-2 text-sm hover:bg-muted text-left">
-                      <Plus className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                      <span className="text-lg">{t.emoji}</span>
-                      <span>{t.label}</span>
-                    </button>
-                  ))}
-                </div>
+              <div className="mt-1 space-y-1">
+                {TRACKABLE_CATEGORY_ORDER.map(cat => {
+                  const items = available.filter(t => t.category === cat)
+                  if (items.length === 0) return null
+                  const isOpen = openCats.has(cat)
+                  return (
+                    <Collapsible key={cat} open={isOpen} onOpenChange={() => toggleCat(cat)}>
+                      <CollapsibleTrigger asChild>
+                        <Button type="button" variant="outline" className="w-full justify-between h-auto py-2">
+                          <span className="font-medium text-sm">
+                            {TRACKABLE_CATEGORY_LABELS[cat]}{" "}
+                            <span className="text-muted-foreground font-normal">({items.length})</span>
+                          </span>
+                          {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                        </Button>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="pt-1">
+                        <div className="space-y-0.5 max-h-52 overflow-y-auto">
+                          {items.map(t => (
+                            <button key={t.id} type="button" onClick={() => addTracker(t.id)}
+                              className="w-full flex items-center gap-2 rounded p-2 text-sm hover:bg-muted text-left">
+                              <Plus className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                              <span className="text-lg">{t.emoji}</span>
+                              <span className="flex-1">{t.label}</span>
+                              {t.statusUnsupported && (
+                                <span className="text-[10px] uppercase tracking-wide text-muted-foreground">log-only</span>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      </CollapsibleContent>
+                    </Collapsible>
+                  )
+                })}
               </div>
             </div>
           )}

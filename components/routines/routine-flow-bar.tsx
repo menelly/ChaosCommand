@@ -159,11 +159,13 @@ export default function RoutineFlowBar() {
         <div className="flex items-center gap-1 shrink-0">
           {currentTracker && (
             <>
-              <button type="button" onClick={setYesterday}
-                title="Copy this tracker's last entry into today, then advance"
-                className="flex items-center gap-1 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-muted">
-                <CopyPlus className="h-4 w-4" /> <span className="hidden sm:inline">Set yest.</span>
-              </button>
+              {!currentTracker.statusUnsupported && (
+                <button type="button" onClick={setYesterday}
+                  title="Copy this tracker's last entry into today, then advance"
+                  className="flex items-center gap-1 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-muted">
+                  <CopyPlus className="h-4 w-4" /> <span className="hidden sm:inline">Set yest.</span>
+                </button>
+              )}
               <button type="button" onClick={skipCurrent}
                 title="Skip this one for now and move on (you can unskip in the routine)"
                 className="flex items-center gap-1 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-muted">
