@@ -1,0 +1,6 @@
+{
+  "version": "0.5.0",
+  "released": "2026-05-22",
+  "url": "https://chaoscommand.center/download",
+  "notes": "Routines! Build named sets of trackers (Morning, Night, Pre-Meal…) and log them in one flow instead of opening each separately. Pick from every tracker grouped by section, copy one routine into another, set a time of day, and run it as a checklist with logged-today indicators, 'nothing to log today', reversible skip, 'copy last entry', and a Next-on-routine bar that chains you through. Plus: default theme is now Calm (gentler first run), the false 'update available' nag is fixed, the Joint/MSK tracker shows a MUSCLE menu (with coat-hanger + proximal/distal) for muscle events instead of joints, heat is now a cardiac trigger, and a big dead-code cleanup under the hood. Some Manage/Choice trackers (meds, hydration, sleep…) are addable to routines now with full status tracking coming soon."
+}
