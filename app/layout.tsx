@@ -23,6 +23,7 @@
  */
 
 import type React from "react"
+import { Suspense } from "react"
 import "./globals.css"
 import "../styles/chaos-themes.css"
 // theme-calm is the default (Ace, 2026-05-22) — neutral blue/gold, a softer first
@@ -38,6 +39,7 @@ import { GoblinModeProvider } from "@/lib/goblin-mode-context"
 import AppSidebar from "@/components/app-sidebar"
 import { Toaster } from "@/components/ui/toaster"
 import { AppWrapper } from "@/components/app-wrapper"
+import RoutineFlowBar from "@/components/routines/routine-flow-bar"
 // import AddyChatBubble from "@/components/addy-chat-bubble" // Commented out - AI module for later
 
 export const metadata = {
@@ -91,6 +93,9 @@ export default function RootLayout({
               </div>
               <AppSidebar />
             </div>
+            <Suspense fallback={null}>
+              <RoutineFlowBar />
+            </Suspense>
             <Toaster />
             {/* <AddyChatBubble /> */} {/* Commented out - AI module for later */}
           </GoblinModeProvider>

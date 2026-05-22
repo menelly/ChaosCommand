@@ -17,7 +17,7 @@ import AppCanvas from "@/components/app-canvas"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle2, Circle, ArrowLeft, ChevronRight, EyeOff } from "lucide-react"
+import { CheckCircle2, Circle, ArrowLeft, ChevronRight, EyeOff, Eye, MinusCircle, Undo2 } from "lucide-react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useUser } from "@/lib/contexts/user-context"
@@ -25,7 +25,8 @@ import { useDailyData, formatDateForStorage } from "@/lib/database"
 import { getRoutine, type Routine } from "@/lib/routines/routines-config"
 import { type TrackableTracker } from "@/lib/routines/trackable-registry"
 import { loadAllTrackables, indexTrackables } from "@/lib/routines/load-trackables"
-import { buildStatusMap, allLogged, type TrackerLoggedStatus } from "@/lib/routines/routine-status"
+import { buildStatusMap, type TrackerLoggedStatus } from "@/lib/routines/routine-status"
+import { getClearedTrackers, markNothingToLog, unmarkNothingToLog } from "@/lib/routines/routine-cleared"
 
 function RoutineRun() {
   const router = useRouter()
@@ -35,10 +36,12 @@ function RoutineRun() {
   const pin = userPin ?? ""
   const { getDateRange, getAllCategoryData } = useDailyData()
 
+  const today = formatDateForStorage(new Date())
   const [routine, setRoutine] = useState<Routine | null>(null)
   const [trackables, setTrackables] = useState<TrackableTracker[]>([])
   const [status, setStatus] = useState<Record<string, TrackerLoggedStatus>>({})
-  const [skipped, setSkipped] = useState<Set<string>>(new Set())
+  const [cleared, setCleared] = useState<Set<string>>(new Set()) // "nothing to log today" — persisted
+  const [skipped, setSkipped] = useState<Set<string>>(new Set())  // "hide for now" — session only
 
   useEffect(() => {
     if (pin && routineId) setRoutine(getRoutine(pin, routineId))
@@ -61,12 +64,12 @@ function RoutineRun() {
 
   const loadStatus = useCallback(async () => {
     if (!routine || resolved.length === 0) return
-    const today = formatDateForStorage(new Date())
     // No category filter — custom trackers store under body/mind/custom, not 'tracker'.
     const records = await getDateRange(today, today)
     setStatus(buildStatusMap(records, resolved.map(t => ({ id: t.id, subcategory: t.subcategory }))))
+    setCleared(getClearedTrackers(pin, today))
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [routine, trackables, getDateRange])
+  }, [routine, trackables, getDateRange, pin, today])
 
   useEffect(() => { loadStatus() }, [loadStatus])
 
@@ -93,12 +96,24 @@ function RoutineRun() {
   }
 
   const trackers = resolved
-  const complete = allLogged(status)
+  // "Done" = either logged real data OR consciously marked "nothing to log today".
+  const doneCount = trackers.filter(t => status[t.id]?.loggedToday || cleared.has(t.id)).length
+  const complete = trackers.length > 0 && doneCount === trackers.length
 
   const logNow = (href: string) =>
     router.push(`${href}?routine=${encodeURIComponent(routine.id)}`)
-  const skip = (id: string) =>
-    setSkipped(prev => new Set(prev).add(id))
+  const skip = (id: string) => setSkipped(prev => new Set(prev).add(id))
+  const unskip = (id: string) =>
+    setSkipped(prev => { const n = new Set(prev); n.delete(id); return n })
+  const nothingToLog = (id: string) => {
+    markNothingToLog(pin, today, id)
+    setCleared(prev => new Set(prev).add(id))
+    setSkipped(prev => { const n = new Set(prev); n.delete(id); return n })
+  }
+  const undoNothing = (id: string) => {
+    unmarkNothingToLog(pin, today, id)
+    setCleared(prev => { const n = new Set(prev); n.delete(id); return n })
+  }
 
   return (
     <AppCanvas currentPage="routines">
@@ -115,21 +130,21 @@ function RoutineRun() {
           </h1>
           {complete ? (
             <Badge className="bg-green-600 hover:bg-green-600 gap-1 mt-2">
-              <CheckCircle2 className="h-4 w-4" /> All logged ✓
+              <CheckCircle2 className="h-4 w-4" /> All done ✓
             </Badge>
           ) : (
-            <p className="text-muted-foreground">
-              {Object.values(status).filter(s => s.loggedToday).length} of {trackers.length} logged today
-            </p>
+            <p className="text-muted-foreground">{doneCount} of {trackers.length} done today</p>
           )}
         </header>
 
         <div className="space-y-2">
           {trackers.map(t => {
             const s = status[t.id] ?? { loggedToday: false, lastLoggedLabel: null }
-            const isSkipped = skipped.has(t.id)
+            const isNothing = cleared.has(t.id)
+            const isSkipped = !s.loggedToday && !isNothing && skipped.has(t.id)
+            const isPending = !s.loggedToday && !isNothing && !isSkipped
             return (
-              <Card key={t.id} className={isSkipped ? "opacity-50" : ""}>
+              <Card key={t.id} className={isSkipped ? "opacity-60" : ""}>
                 <CardContent className="flex items-center gap-3 py-3">
                   <span className="text-2xl shrink-0">{t.emoji}</span>
                   <div className="flex-1 min-w-0">
@@ -139,17 +154,31 @@ function RoutineRun() {
                         <CheckCircle2 className="h-3.5 w-3.5" />
                         Logged today{s.lastLoggedLabel ? `: ${s.lastLoggedLabel}` : ""}
                       </div>
+                    ) : isNothing ? (
+                      <div className="text-xs text-green-600 flex items-center gap-1">
+                        <CheckCircle2 className="h-3.5 w-3.5" /> Nothing to log today
+                      </div>
                     ) : isSkipped ? (
-                      <div className="text-xs text-muted-foreground">Skipped</div>
+                      <div className="text-xs text-muted-foreground flex items-center gap-1">
+                        <EyeOff className="h-3.5 w-3.5" /> Skipped — hidden for now
+                      </div>
                     ) : (
                       <div className="text-xs text-muted-foreground flex items-center gap-1">
                         <Circle className="h-3.5 w-3.5" /> Not logged today
                       </div>
                     )}
                   </div>
-                  {!s.loggedToday && !isSkipped && (
+
+                  {/* Pending: log it, mark nothing-to-log, or skip (all reversible) */}
+                  {isPending && (
                     <>
-                      <Button size="sm" variant="ghost" className="text-muted-foreground" onClick={() => skip(t.id)}>
+                      <Button size="sm" variant="ghost" className="gap-1 text-muted-foreground"
+                        title="I checked — nothing to report today. Counts as done."
+                        onClick={() => nothingToLog(t.id)}>
+                        <MinusCircle className="h-4 w-4" /> Nothing today
+                      </Button>
+                      <Button size="sm" variant="ghost" className="text-muted-foreground"
+                        title="Hide for now — doesn't count, you can unskip" onClick={() => skip(t.id)}>
                         <EyeOff className="h-4 w-4" />
                       </Button>
                       <Button size="sm" className="gap-1" onClick={() => logNow(t.href)}>
@@ -157,9 +186,32 @@ function RoutineRun() {
                       </Button>
                     </>
                   )}
-                  {(s.loggedToday || isSkipped) && (
+
+                  {/* Nothing-to-log: undo, or log after all */}
+                  {isNothing && (
+                    <>
+                      <Button size="sm" variant="ghost" className="gap-1 text-muted-foreground"
+                        title="Undo — I do have something to log" onClick={() => undoNothing(t.id)}>
+                        <Undo2 className="h-4 w-4" /> Undo
+                      </Button>
+                      <Button size="sm" variant="outline" className="gap-1" onClick={() => logNow(t.href)}>
+                        Log <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </>
+                  )}
+
+                  {/* Skipped: clear, undo-skip, or log */}
+                  {isSkipped && (
+                    <Button size="sm" variant="outline" className="gap-1"
+                      title="Bring this back" onClick={() => unskip(t.id)}>
+                      <Eye className="h-4 w-4" /> Unskip
+                    </Button>
+                  )}
+
+                  {/* Logged: log again */}
+                  {s.loggedToday && (
                     <Button size="sm" variant="outline" className="gap-1" onClick={() => logNow(t.href)}>
-                      {s.loggedToday ? "Log again" : "Log"} <ChevronRight className="h-4 w-4" />
+                      Log again <ChevronRight className="h-4 w-4" />
                     </Button>
                   )}
                 </CardContent>
