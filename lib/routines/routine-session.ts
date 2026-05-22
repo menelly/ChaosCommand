@@ -18,6 +18,10 @@
  * (flow bar's "← routine") does NOT re-stamp — only the explicit Run button does.
  */
 
+import { formatDateForStorage } from '@/lib/database'
+import { clearAllSkipped } from './routine-skipped'
+import { clearAllCleared } from './routine-cleared'
+
 const KEY_PREFIX = 'chaos-routine-run-'
 
 function storageKey(pin: string, routineId: string): string {
@@ -44,6 +48,11 @@ export function startRun(pin: string, routineId: string): number {
   if (typeof window === 'undefined' || !pin || !routineId) return now
   try {
     localStorage.setItem(storageKey(pin, routineId), String(now))
+    // Fresh run = clean slate: wipe this routine's skips + "nothing" marks too,
+    // so re-running gives a fully fresh checklist (not just reset logged status).
+    const date = formatDateForStorage(new Date())
+    clearAllSkipped(pin, routineId, date)
+    clearAllCleared(pin, routineId, date)
   } catch (e) {
     console.error('Failed to start routine run:', e)
   }

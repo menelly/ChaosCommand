@@ -79,8 +79,8 @@ export default function RoutineFlowBar() {
       if (!alive) return
       const since = getRunStart(pin, routineId)
       const status = buildStatusMap(records, resolved.map(t => ({ id: t.id, subcategory: t.subcategory, subcategoryPrefix: t.subcategoryPrefix })), since)
-      const cleared = getClearedTrackers(pin, today)
-      const skipped = getSkippedTrackers(pin, today)
+      const cleared = getClearedTrackers(pin, routineId, today)
+      const skipped = getSkippedTrackers(pin, routineId, today)
       const handled = new Set<string>()
       resolved.forEach(t => {
         if (status[t.id]?.loggedToday || cleared.has(t.id) || skipped.has(t.id)) handled.add(t.id)
@@ -127,7 +127,7 @@ export default function RoutineFlowBar() {
   const today = formatDateForStorage(new Date())
   const goNext = () => router.push(nextHref)
   const skipCurrent = () => {
-    if (currentTracker) markSkipped(pin, today, currentTracker.id)
+    if (currentTracker) markSkipped(pin, routineId, today, currentTracker.id)
     goNext()
   }
   const setYesterday = async () => {

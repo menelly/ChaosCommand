@@ -75,8 +75,8 @@ function RoutineRun() {
     // run multiple times a day. No run stamped (direct nav) → null → today-view.
     const since = getRunStart(pin, routineId)
     setStatus(buildStatusMap(records, resolved.map(t => ({ id: t.id, subcategory: t.subcategory, subcategoryPrefix: t.subcategoryPrefix })), since))
-    setCleared(getClearedTrackers(pin, today))
-    setSkipped(getSkippedTrackers(pin, today))
+    setCleared(getClearedTrackers(pin, routineId, today))
+    setSkipped(getSkippedTrackers(pin, routineId, today))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [routine, trackables, getDateRange, pin, today])
 
@@ -114,21 +114,21 @@ function RoutineRun() {
     // use & not ? so we don't make an invalid double-? URL ("Tracker Not Found").
     router.push(`${href}${href.includes("?") ? "&" : "?"}routine=${encodeURIComponent(routine.id)}`)
   const skip = (id: string) => {
-    markSkipped(pin, today, id)
+    markSkipped(pin, routineId, today, id)
     setSkipped(prev => new Set(prev).add(id))
   }
   const unskip = (id: string) => {
-    unmarkSkipped(pin, today, id)
+    unmarkSkipped(pin, routineId, today, id)
     setSkipped(prev => { const n = new Set(prev); n.delete(id); return n })
   }
   const nothingToLog = (id: string) => {
-    markNothingToLog(pin, today, id)
+    markNothingToLog(pin, routineId, today, id)
     setCleared(prev => new Set(prev).add(id))
-    unmarkSkipped(pin, today, id)
+    unmarkSkipped(pin, routineId, today, id)
     setSkipped(prev => { const n = new Set(prev); n.delete(id); return n })
   }
   const undoNothing = (id: string) => {
-    unmarkNothingToLog(pin, today, id)
+    unmarkNothingToLog(pin, routineId, today, id)
     setCleared(prev => { const n = new Set(prev); n.delete(id); return n })
   }
   const copyYesterday = async (t: TrackableTracker) => {
