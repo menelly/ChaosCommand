@@ -199,30 +199,6 @@ export const MODULE_REGISTRY: ModuleMetadata[] = [
   
   // 📅 PLANNING & CALENDAR MODULES
   {
-    id: 'calendar-monthly',
-    name: 'modern-monthly',
-    displayName: 'Monthly Calendar',
-    description: 'Full month view with events, appointments, and daily planning',
-    category: 'planning-calendar',
-    status: 'available',
-    compatibility: {
-      pwa: 'full',
-      pdf: 'full',
-      notes: 'Perfect for both digital and print planning'
-    },
-    showInWebsite: true,
-    isPopular: true,
-    suggestedWith: ['weekly-planner', 'daily-schedule'],
-    allowCustomTitle: true,
-    defaultTitle: 'Monthly Calendar',
-    alternativeTitles: ['Month View', 'Monthly Planner', 'Calendar Grid'],
-    icon: 'Calendar',
-    route: '/calendar',
-    componentPath: 'components/modules/monthly-calendar',
-    editions: ['companion', 'command']
-  },
-  
-  {
     id: 'weekly-planner',
     name: 'modern-weekly',
     displayName: 'Weekly Planner',
