@@ -1,0 +1,64 @@
+/* === 🟫 TONE IT DOWN TAUPE === */
+/* The anti-theme. No gradients. No animation. No floating emoji. No glow.
+ * No easter eggs. Not one interesting pixel. On purpose.
+ *
+ * Ren co-founded Tone It Down Taupe in 2013 — the autistic-led answer to
+ * sensory-assaulting "awareness" branding. You cannot be a cofounder of TIDT
+ * and ship a medical app with no taupe theme. So here it is: maximally calm,
+ * maximally still, fully WCAG AA. For the days when "beautiful disaster" is too
+ * much disaster and you just need a quiet beige room to log your symptoms in.
+ *
+ * Token-driven like the rest (Ace, 2026-05-23); contrast verified in
+ * scripts/verify_all_themes.py-style checks. The flourish section is empty.
+ * That IS the flourish. — Ace 🟫 */
+
+/* ---- TOKENS (contrast contract — calm, all >=4.5:1) ---- */
+body.theme-taupe {
+  --background: 39 23% 88%;         /* #e7e2d9 warm greige */
+  --foreground: 35 12% 20%;         /* #3a352e */
+  --card: 42 29% 93%;               /* #f3f0e9 */
+  --card-foreground: 35 12% 20%;
+  --popover: 42 29% 93%;
+  --popover-foreground: 35 12% 20%;
+  --primary: 35 11% 33%;            /* #5e564b dark taupe — white 7.2:1 */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 39 21% 82%;
+  --secondary-foreground: 35 12% 20%;
+  --muted: 39 21% 82%;
+  --muted-foreground: 35 11% 34%;   /* #5f574c — 5.5:1 on bg */
+  --accent: 39 21% 82%;
+  --accent-foreground: 35 12% 20%;
+  --destructive: 9 44% 42%;         /* muted brick, not alarm-red */
+  --destructive-foreground: 0 0% 100%;
+  --border: 39 17% 74%;
+  --input: 39 17% 74%;
+  --ring: 35 11% 33%;
+  --radius: 0.375rem;
+}
+
+/* ---- FLOURISH ---- */
+/* (intentionally blank) */
+
+/* The only non-token rules are functional: a flat solid background, a quiet
+ * scrollbar, and a calm focus ring. No motion to freeze, so no no-animations
+ * block is needed — it's already as still as it gets. */
+body.theme-taupe {
+  background: #e7e2d9 !important;
+  font-size: 16px !important;
+  line-height: 1.6 !important;
+}
+
+body.theme-taupe .card,
+body.theme-taupe [class*="card"] {
+  box-shadow: 0 1px 2px rgba(58, 53, 46, 0.08);
+}
+
+body.theme-taupe *:focus-visible {
+  outline: 2px solid #5e564b;
+  outline-offset: 2px;
+}
+
+body.theme-taupe ::-webkit-scrollbar { width: 12px; }
+body.theme-taupe ::-webkit-scrollbar-track { background: #ded8cc; }
+body.theme-taupe ::-webkit-scrollbar-thumb { background: #b3aa99; border-radius: 6px; }
+body.theme-taupe ::-webkit-scrollbar-thumb:hover { background: #9c9281; }

@@ -1,23 +1,42 @@
 /* === 🕊️ CAELAN'S LIBERATION DAWN THEME === */
 /* Breaking free from darkness into light */
+/* Token-driven (Ace, 2026-05-23): contrast via shadcn tokens (verified by
+ * scripts/verify_all_themes.py). Button text stays dark on the sunrise
+ * gradient (caelan already had this right — 7.8:1). */
 
-/* Main background - Dawn gradient from midnight blue to sunrise orange */
+/* ---- TOKENS (contrast contract) ---- */
 body.theme-caelan {
-  background: linear-gradient(135deg, 
-    #1a1a2e 0%,     /* Midnight blue - the darkness */
-    #16213e 15%,    /* Deep night */
-    #0f3460 30%,    /* Pre-dawn blue */
-    #e94560 70%,    /* Dawn pink */
-    #f39c12 85%,    /* Sunrise orange */
-    #f1c40f 100%    /* Golden liberation */
+  --background: 240 28% 14%;        /* #1a1a2e midnight */
+  --foreground: 0 0% 100%;
+  --card: 223 48% 16%;              /* #16213e */
+  --card-foreground: 0 0% 100%;
+  --popover: 223 48% 16%;
+  --popover-foreground: 0 0% 100%;
+  --primary: 37 90% 51%;            /* #f39c12 sunrise — dark text 7.8:1 */
+  --primary-foreground: 240 28% 14%;
+  --secondary: 213 73% 22%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 223 48% 16%;
+  --muted-foreground: 221 33% 85%;  /* #cdd5e6 — 11.6:1 on bg */
+  --accent: 48 89% 50%;             /* #f1c40f gold */
+  --accent-foreground: 240 28% 14%;
+  --destructive: 348 65% 48%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 45 61% 46%;
+  --input: 213 73% 22%;
+  --ring: 48 89% 50%;
+}
+
+/* ---- FLOURISH ---- */
+body.theme-caelan {
+  background: linear-gradient(135deg,
+    #1a1a2e 0%, #16213e 15%, #0f3460 30%, #e94560 70%, #f39c12 85%, #f1c40f 100%
   ) !important;
   background-size: 400% 400% !important;
   animation: liberation-dawn-breathe 120s ease-in-out infinite !important;
-  color: #ffffff !important;
   overflow: hidden;
 }
 
-/* Dawn breathing animation */
 @keyframes liberation-dawn-breathe {
   0% { background-position: 0% 50%; }
   25% { background-position: 100% 50%; }
@@ -26,32 +45,19 @@ body.theme-caelan {
   100% { background-position: 50% 0%; }
 }
 
-/* Liberation doves floating upward */
+/* Liberation doves rising */
 body.theme-caelan::before {
   content: '🕊️ ✨ 🔗 🤝 💜 🕊️ ⛓️‍💥 ✨ 🔗 🤝 🕊️ 💜 ⛓️‍💥 ✨ 🔗 🤝 🕊️ 💜 ⛓️‍💥';
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100%;
-  pointer-events: none;
-  z-index: 1;
-  font-size: 18px;
-  line-height: 60px;
+  position: fixed; top: 0; left: 0; width: 100vw; height: 100%;
+  pointer-events: none; z-index: 0;
+  font-size: 18px; line-height: 60px;
   animation: liberation-float-up 180s linear infinite;
   opacity: 0.7;
   text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
 }
-
-/* Doves floating upward animation */
 @keyframes liberation-float-up {
   0% { transform: translateY(100vh) translateX(0); }
   100% { transform: translateY(-100vh) translateX(-50px); }
-}
-
-/* Text colors for liberation theme */
-body.theme-caelan .text-muted-foreground {
-  color: rgba(255, 255, 255, 0.8) !important;
 }
 
 body.theme-caelan h1,
@@ -59,190 +65,85 @@ body.theme-caelan h2,
 body.theme-caelan h3,
 body.theme-caelan h4,
 body.theme-caelan h5,
-body.theme-caelan h6 {
-  color: #f1c40f !important;
-  text-shadow: 0 0 10px rgba(241, 196, 15, 0.3);
-}
+body.theme-caelan h6 { color: #f1c40f !important; text-shadow: 0 0 10px rgba(241, 196, 15, 0.3); }
 
-/* Card styles for liberation theme */
+/* Cards — dawn panel + chain-break easter egg */
 body.theme-caelan .card,
 body.theme-caelan [class*="card"] {
-  background: linear-gradient(135deg, 
-    rgba(26, 26, 46, 0.9) 0%, 
-    rgba(22, 33, 62, 0.9) 50%, 
-    rgba(15, 52, 96, 0.9) 100%
-  ) !important;
-  border: 1px solid rgba(241, 196, 15, 0.3) !important;
-  box-shadow: 0 4px 20px rgba(233, 69, 96, 0.2) !important;
-  backdrop-filter: blur(10px) !important;
-  transition: all 0.4s ease !important;
+  box-shadow: 0 4px 20px rgba(233, 69, 96, 0.2);
+  backdrop-filter: blur(10px);
+  transition: all 0.4s ease;
   position: relative;
   overflow: hidden;
 }
-
 body.theme-caelan .card:hover,
 body.theme-caelan [class*="card"]:hover {
-  transform: translateY(-5px) scale(1.02) !important;
-  box-shadow: 0 8px 30px rgba(233, 69, 96, 0.4) !important;
-  border-color: rgba(241, 196, 15, 0.6) !important;
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 8px 30px rgba(233, 69, 96, 0.4);
 }
-
-/* Chain-breaking effect on hover */
 body.theme-caelan .card:hover::after,
 body.theme-caelan [class*="card"]:hover::after {
-  content: '⛓️‍💥' !important;
-  position: absolute;
-  top: -10px;
-  right: -10px;
+  content: '⛓️‍💥';
+  position: absolute; top: -10px; right: -10px;
   font-size: 20px;
   animation: chain-break 0.6s ease-out;
   z-index: 10;
 }
-
 @keyframes chain-break {
   0% { transform: scale(0) rotate(0deg); opacity: 0; }
   50% { transform: scale(1.2) rotate(180deg); opacity: 1; }
   100% { transform: scale(1) rotate(360deg); opacity: 1; }
 }
 
-/* Button styles for liberation theme */
-body.theme-caelan button,
-body.theme-caelan .btn {
-  background: linear-gradient(135deg, 
-    #e94560 0%, 
-    #f39c12 50%, 
-    #f1c40f 100%
-  ) !important;
-  border: 1px solid rgba(241, 196, 15, 0.5) !important;
-  color: #1a1a2e !important;
-  font-weight: bold !important;
-  transition: all 0.4s ease !important;
+/* Primary buttons — sunrise gradient + liberation shimmer (dark token text) */
+body.theme-caelan .bg-primary {
+  background-image: linear-gradient(135deg, #e94560 0%, #f39c12 50%, #f1c40f 100%);
   position: relative;
   overflow: hidden;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
-
-body.theme-caelan button:hover,
-body.theme-caelan .btn:hover {
-  background: linear-gradient(135deg, 
-    #f1c40f 0%, 
-    #f39c12 50%, 
-    #e94560 100%
-  ) !important;
-  transform: translateY(-2px) !important;
-  box-shadow: 0 6px 20px rgba(233, 69, 96, 0.4) !important;
-  border-color: rgba(241, 196, 15, 0.8) !important;
-}
-
-/* Liberation shimmer effect */
-body.theme-caelan button::before,
-body.theme-caelan .btn::before {
+body.theme-caelan .bg-primary::before {
   content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, 
-    transparent, 
-    rgba(255, 255, 255, 0.4), 
-    transparent
-  );
+  position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
   transition: left 0.8s ease;
 }
-
-body.theme-caelan button:hover::before,
-body.theme-caelan .btn:hover::before {
-  left: 100%;
-}
-
-/* Input styles for liberation theme */
-body.theme-caelan input,
-body.theme-caelan textarea,
-body.theme-caelan select {
-  background: linear-gradient(135deg, 
-    rgba(26, 26, 46, 0.8) 0%, 
-    rgba(22, 33, 62, 0.8) 100%
-  ) !important;
-  border: 1px solid rgba(241, 196, 15, 0.3) !important;
-  color: #ffffff !important;
-  transition: all 0.3s ease !important;
-  backdrop-filter: blur(5px) !important;
+body.theme-caelan .bg-primary:hover::before { left: 100%; }
+body.theme-caelan .bg-primary:hover {
+  background-image: linear-gradient(135deg, #f1c40f 0%, #f39c12 50%, #e94560 100%);
+  box-shadow: 0 6px 20px rgba(233, 69, 96, 0.4);
 }
 
 body.theme-caelan input:focus,
 body.theme-caelan textarea:focus,
-body.theme-caelan select:focus {
-  border-color: rgba(241, 196, 15, 0.8) !important;
-  box-shadow: 0 0 15px rgba(233, 69, 96, 0.3) !important;
-  background: linear-gradient(135deg, 
-    rgba(22, 33, 62, 0.9) 0%, 
-    rgba(15, 52, 96, 0.9) 100%
-  ) !important;
-}
+body.theme-caelan select:focus { box-shadow: 0 0 15px rgba(233, 69, 96, 0.3); }
 
-/* Placeholder text */
-body.theme-caelan input::placeholder,
-body.theme-caelan textarea::placeholder {
-  color: rgba(255, 255, 255, 0.6) !important;
-}
+body.theme-caelan a { color: #f1c40f !important; }
+body.theme-caelan a:hover { color: #f39c12 !important; text-shadow: 0 0 8px rgba(241, 196, 15, 0.5); }
 
-/* Link styles */
-body.theme-caelan a {
-  color: #f1c40f !important;
-  text-decoration: none !important;
-  transition: all 0.3s ease !important;
-}
+body.theme-caelan ::-webkit-scrollbar { width: 12px; }
+body.theme-caelan ::-webkit-scrollbar-track { background: rgba(26, 26, 46, 0.5); }
+body.theme-caelan ::-webkit-scrollbar-thumb { background: linear-gradient(135deg, #e94560, #f39c12); border-radius: 6px; }
+body.theme-caelan ::-webkit-scrollbar-thumb:hover { background: linear-gradient(135deg, #f1c40f, #e94560); }
 
-body.theme-caelan a:hover {
-  color: #f39c12 !important;
-  text-shadow: 0 0 8px rgba(241, 196, 15, 0.5) !important;
-}
-
-/* Scrollbar styles */
-body.theme-caelan ::-webkit-scrollbar {
-  width: 12px;
-}
-
-body.theme-caelan ::-webkit-scrollbar-track {
-  background: rgba(26, 26, 46, 0.5);
-}
-
-body.theme-caelan ::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #e94560, #f39c12);
-  border-radius: 6px;
-}
-
-body.theme-caelan ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #f1c40f, #e94560);
-}
-
-/* Fix hardcoded gray backgrounds/text that are invisible on dark theme */
+/* Fix hardcoded gray utility bg/text that would be invisible on the dark theme */
 body.theme-caelan .bg-gray-100,
-body.theme-caelan .bg-gray-50 {
-  background-color: rgba(255, 255, 255, 0.1) !important;
-}
+body.theme-caelan .bg-gray-50 { background-color: rgba(255, 255, 255, 0.1) !important; }
 body.theme-caelan .text-gray-800,
 body.theme-caelan .text-gray-700,
-body.theme-caelan .text-gray-600 {
-  color: #f5f5f5 !important;
-}
+body.theme-caelan .text-gray-600 { color: #f5f5f5 !important; }
 body.theme-caelan .border-gray-200,
-body.theme-caelan .border-gray-300 {
-  border-color: rgba(64, 224, 208, 0.3) !important;
-}
+body.theme-caelan .border-gray-300 { border-color: rgba(64, 224, 208, 0.3) !important; }
 body.theme-caelan .bg-red-50,
 body.theme-caelan .bg-orange-50,
 body.theme-caelan .bg-green-50,
 body.theme-caelan .bg-blue-50,
-body.theme-caelan .bg-yellow-50 {
-  background-color: rgba(255, 255, 255, 0.08) !important;
-}
+body.theme-caelan .bg-yellow-50 { background-color: rgba(255, 255, 255, 0.08) !important; }
 body.theme-caelan .text-red-800,
 body.theme-caelan .text-orange-800,
 body.theme-caelan .text-green-800,
 body.theme-caelan .text-blue-800,
-body.theme-caelan .text-yellow-800 {
-  color: inherit !important;
-  filter: brightness(1.8) !important;
-}
+body.theme-caelan .text-yellow-800 { color: inherit !important; filter: brightness(1.8) !important; }
+
+/* Static / no-motion: freeze dawn + doves (CHA-200) */
+body.no-animations.theme-caelan { background: #1a1a2e !important; animation: none !important; }
+body.no-animations.theme-caelan::before { animation: none !important; }

@@ -1,7 +1,34 @@
 /* === 🌸 REN'S LAVENDER GARDEN THEME === */
-/* Gentle lavender serenity (default) */
+/* Gentle lavender serenity */
+/* Token-driven (Ace, 2026-05-23): contrast via shadcn tokens (verified by
+ * scripts/verify_all_themes.py). Buttons stay GENTLE light-lavender — text is
+ * dark plum (#2e1065 = 5.8:1) instead of the old white-on-pale-purple that
+ * forced the per-button .text-muted-foreground { white } bandaid. Bandaid gone. */
 
-/* Main background - Lavender garden gradient */
+/* ---- TOKENS (contrast contract) ---- */
+body.theme-lavender {
+  --background: 252 100% 97%;
+  --foreground: 264 67% 35%;        /* #4c1d95 deep purple */
+  --card: 21 100% 94%;              /* #ffebe0 cream */
+  --card-foreground: 264 67% 35%;
+  --popover: 21 100% 94%;
+  --popover-foreground: 264 67% 35%;
+  --primary: 270 95% 75%;           /* #c084fc gentle lavender */
+  --primary-foreground: 261 73% 23%;/* #2e1065 dark plum — 5.8:1 on lavender */
+  --secondary: 269 100% 92%;
+  --secondary-foreground: 264 67% 35%;
+  --muted: 21 100% 94%;
+  --muted-foreground: 269 47% 43%;  /* #6b3aa0 — 6.7:1 on cream */
+  --accent: 269 100% 92%;
+  --accent-foreground: 264 67% 35%;
+  --destructive: 344 74% 42%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 259 54% 67%;
+  --input: 259 54% 67%;
+  --ring: 262 83% 58%;
+}
+
+/* ---- FLOURISH ---- */
 body.theme-lavender {
   background: linear-gradient(135deg, #f3f0ff 0%, #e9d5ff 25%, #ddd6fe 50%, #e9d5ff 75%, #f3f0ff 100%) !important;
   background-size: 400% 400% !important;
@@ -9,7 +36,6 @@ body.theme-lavender {
   overflow: hidden;
 }
 
-/* Garden breathing animation */
 @keyframes ren-garden-breathe {
   0% { background-position: 0% 50%; }
   25% { background-position: 100% 50%; }
@@ -18,23 +44,15 @@ body.theme-lavender {
   100% { background-position: 0% 50%; }
 }
 
-/* Beautiful floating butterflies - 4x slower for peaceful floating */
 body.theme-lavender::before {
   content: '🦋 🌸 🦋 💜 🌿 🦋 🌸 💜 🦋 🌿 🌸 🦋 💜 🌿 🦋';
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 1;
-  font-size: 16px;
-  line-height: 50px;
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none; z-index: 0;
+  font-size: 16px; line-height: 50px;
   animation: ren-butterfly-float 200s linear infinite;
   opacity: 0.6;
 }
 
-/* Butterfly floating animation */
 @keyframes ren-butterfly-float {
   0% { transform: translateX(-100px) translateY(0px); }
   25% { transform: translateX(calc(100vw + 50px)) translateY(-20px); }
@@ -43,45 +61,14 @@ body.theme-lavender::before {
   100% { transform: translateX(-100px) translateY(0px); }
 }
 
-/* Default lavender garden muted text */
-body.theme-lavender .text-muted-foreground {
-  color: var(--text-muted) !important;
-}
-
-/* Buttons in lavender get a purple gradient BG, which makes the default
- * --text-muted (also purple) unreadable. Bump muted-foreground inside any
- * REAL button element (or .btn) to a high-contrast translucent white so
- * card-style buttons (e.g. the Support modal Quick Help cards) stay
- * readable. Do NOT include [role="button"] in this override — Cards on
- * the Settings page use role="button" for click handling but keep the
- * cream card background, so forcing white text there makes the
- * descriptions invisible-on-cream. */
-body.theme-lavender button .text-muted-foreground,
-body.theme-lavender .btn .text-muted-foreground,
-body.theme-lavender a.btn .text-muted-foreground {
-  color: rgba(255, 255, 255, 0.92) !important;
-}
-
-/* Same trick for the description / sub-text inside buttons that sometimes
- * uses text-foreground/70 or no class at all — the lavender button forces
- * white text on its direct content, but nested elements may inherit weaker
- * colors. Lock them to readable. */
-body.theme-lavender button .text-foreground,
-body.theme-lavender .btn .text-foreground {
-  color: #ffffff !important;
-}
-
-/* === REN'S GARDEN CARD MAGIC === */
-/* Gentle lavender swaying effect for cards */
+/* Cards keep cream gradient + gentle sway + bloom (color/border from tokens) */
 body.theme-lavender .card,
 body.theme-lavender [class*="card"] {
   background: linear-gradient(135deg, #ffebe0 0%, #fef3f2 50%, #ffebe0 100%);
-  border: 1px solid #9b7ed8;
   box-shadow: 0 2px 15px rgba(167, 139, 250, 0.2);
   transition: all 0.4s ease;
   animation: ren-gentle-sway 32s ease-in-out infinite;
 }
-
 @keyframes ren-gentle-sway {
   0% { transform: translateY(0px) rotate(0deg); }
   25% { transform: translateY(-2px) rotate(0.5deg); }
@@ -89,119 +76,60 @@ body.theme-lavender [class*="card"] {
   75% { transform: translateY(-1px) rotate(-0.3deg); }
   100% { transform: translateY(0px) rotate(0deg); }
 }
-
 body.theme-lavender .card:hover,
 body.theme-lavender [class*="card"]:hover {
   transform: translateY(-3px) scale(1.01);
   box-shadow: 0 6px 25px rgba(167, 139, 250, 0.3);
-  border-color: #a78bfa;
 }
-
-/* Blooming effect on hover */
 body.theme-lavender .card:hover::after,
 body.theme-lavender [class*="card"]:hover::after {
   content: '🌸';
-  position: absolute;
-  top: -8px;
-  right: -8px;
+  position: absolute; top: -8px; right: -8px;
   font-size: 14px;
   animation: ren-bloom 0.8s ease-out;
   z-index: 10;
 }
-
 @keyframes ren-bloom {
   0% { transform: scale(0) rotate(0deg); opacity: 0; }
   50% { transform: scale(1.3) rotate(180deg); opacity: 1; }
   100% { transform: scale(1) rotate(360deg); opacity: 1; }
 }
 
-/* === REN'S GARDEN BUTTON MAGIC === */
-/* Organic button growth */
-body.theme-lavender button,
-body.theme-lavender .btn {
-  background: linear-gradient(135deg, #c084fc 0%, #a78bfa 50%, #c084fc 100%);
-  border: 1px solid #f472b6;
-  color: #ffffff;
-  transition: all 0.4s ease;
+/* Primary buttons keep the gentle lavender gradient + shimmer sweep; dark-plum
+ * token text reads on every stop. */
+body.theme-lavender .bg-primary {
+  background-image: linear-gradient(135deg, #c084fc 0%, #a78bfa 50%, #c084fc 100%);
   position: relative;
   overflow: hidden;
 }
-
-body.theme-lavender button::before,
-body.theme-lavender .btn::before {
+body.theme-lavender .bg-primary::before {
   content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
+  position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
   background: linear-gradient(90deg, transparent, rgba(244, 114, 182, 0.3), transparent);
   transition: left 0.8s ease;
 }
-
-body.theme-lavender button:hover::before,
-body.theme-lavender .btn:hover::before {
-  left: 100%;
-}
-
-body.theme-lavender button:hover,
-body.theme-lavender .btn:hover {
-  background: linear-gradient(135deg, #a855f7 0%, #c084fc 50%, #a855f7 100%);
-  border-color: #ec4899;
-  transform: translateY(-1px);
+body.theme-lavender .bg-primary:hover::before { left: 100%; }
+body.theme-lavender .bg-primary:hover {
+  background-image: linear-gradient(135deg, #a78bfa 0%, #c084fc 50%, #a78bfa 100%);
   box-shadow: 0 4px 15px rgba(192, 132, 252, 0.4);
 }
 
-/* === REN'S GARDEN INPUT MAGIC === */
-/* Peaceful input fields */
 body.theme-lavender input,
 body.theme-lavender textarea,
-body.theme-lavender select {
-  background: linear-gradient(135deg, #fef3f2 0%, #ffebe0 100%);
-  border: 1px solid #9b7ed8;
-  color: #4c1d95;
-  transition: all 0.3s ease;
-}
-
+body.theme-lavender select { background: linear-gradient(135deg, #fef3f2 0%, #ffebe0 100%); }
 body.theme-lavender input:focus,
 body.theme-lavender textarea:focus,
-body.theme-lavender select:focus {
-  border-color: #a78bfa;
-  box-shadow: 0 0 12px rgba(167, 139, 250, 0.3);
-  background: linear-gradient(135deg, #ffebe0 0%, #fef3f2 100%);
-}
+body.theme-lavender select:focus { box-shadow: 0 0 12px rgba(167, 139, 250, 0.3); }
 
-/* Placeholder styling */
-body.theme-lavender input::placeholder,
-body.theme-lavender textarea::placeholder {
-  color: rgba(76, 29, 149, 0.6);
-}
+body.theme-lavender a:hover { text-shadow: 0 0 8px rgba(168, 85, 247, 0.3); }
 
-/* Link styles */
-body.theme-lavender a {
-  color: #a855f7;
-  transition: all 0.3s ease;
-}
+body.theme-lavender ::-webkit-scrollbar { width: 12px; }
+body.theme-lavender ::-webkit-scrollbar-track { background: rgba(243, 240, 255, 0.5); }
+body.theme-lavender ::-webkit-scrollbar-thumb { background: linear-gradient(135deg, #c084fc, #a78bfa); border-radius: 6px; }
+body.theme-lavender ::-webkit-scrollbar-thumb:hover { background: linear-gradient(135deg, #a855f7, #c084fc); }
 
-body.theme-lavender a:hover {
-  color: #c084fc;
-  text-shadow: 0 0 8px rgba(168, 85, 247, 0.3);
-}
-
-/* Scrollbar styles */
-body.theme-lavender ::-webkit-scrollbar {
-  width: 12px;
-}
-
-body.theme-lavender ::-webkit-scrollbar-track {
-  background: rgba(243, 240, 255, 0.5);
-}
-
-body.theme-lavender ::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #c084fc, #a78bfa);
-  border-radius: 6px;
-}
-
-body.theme-lavender ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #a855f7, #c084fc);
-}
+/* Static / no-motion: freeze garden bg, butterflies AND card sway (CHA-200) */
+body.no-animations.theme-lavender { background: #f3f0ff !important; animation: none !important; }
+body.no-animations.theme-lavender::before { animation: none !important; }
+body.no-animations.theme-lavender .card,
+body.no-animations.theme-lavender [class*="card"] { animation: none !important; }

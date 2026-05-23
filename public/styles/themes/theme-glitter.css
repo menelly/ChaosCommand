@@ -1,29 +1,39 @@
 /* === ✨ GLITTER MODE - KESHY'S SPARKLE UNIVERSE === */
 /* Sparkly pink dreams with maximum glitter chaos! */
+/* Token-driven (Ace, 2026-05-23): contrast via shadcn tokens (verified by
+ * scripts/verify_all_themes.py). Button text is now dark plum (#4a1452) so it
+ * stays readable on the bright-pink gradient (6.9:1). All the sparkle stays. */
 
-/* Nuclear scrollbar prevention */
-html:has(body.theme-glitter) {
-  overflow: hidden !important;
+/* ---- TOKENS (contrast contract) ---- */
+body.theme-glitter {
+  --background: 316 100% 97%;
+  --foreground: 297 40% 28%;        /* #602a63 plum */
+  --card: 308 100% 96%;
+  --card-foreground: 297 40% 28%;
+  --popover: 308 100% 96%;
+  --popover-foreground: 297 40% 28%;
+  --primary: 326 100% 79%;          /* #ff94d1 bright pink */
+  --primary-foreground: 292 61% 20%;/* #4a1452 dark plum — 6.9:1 on pink */
+  --secondary: 323 100% 88%;
+  --secondary-foreground: 297 40% 28%;
+  --muted: 308 100% 96%;
+  --muted-foreground: 317 41% 38%;  /* #8a3a73 — 6.2:1 on card */
+  --accent: 191 100% 86%;           /* #b8f2ff sky */
+  --accent-foreground: 274 52% 21%; /* #3a1a52 */
+  --destructive: 336 78% 43%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 323 100% 88%;
+  --input: 323 100% 88%;
+  --ring: 326 100% 79%;
 }
 
-/* Main theme variables */
+/* ---- FLOURISH ---- */
+html:has(body.theme-glitter) { overflow: hidden !important; }
+
 body.theme-glitter {
-  --primary-purple: #eec3ff;
-  --accent-orange: #ff94d1;
-  --deep-space: #fff0fb;
-  --hover-glow: #b8f2ff;
-  --text-main: #602a63;
-  --border-soft: #ffc2e8;
-  
-  /* Sparkle universe background */
-  background: linear-gradient(135deg, 
-    #fff0fb 0%,     /* Soft pink */
-    #ffe9fc 15%,    /* Light pink */
-    #ffc2e8 30%,    /* Medium pink */
-    #ff94d1 45%,    /* Bright pink */
-    #eec3ff 60%,    /* Light purple */
-    #b8f2ff 75%,    /* Light blue */
-    #fff0fb 100%    /* Back to soft pink */
+  background: linear-gradient(135deg,
+    #fff0fb 0%, #ffe9fc 15%, #ffc2e8 30%, #ff94d1 45%,
+    #eec3ff 60%, #b8f2ff 75%, #fff0fb 100%
   ) !important;
   background-size: 400% 400% !important;
   animation: keshy-sparkle-universe 80s ease-in-out infinite !important;
@@ -31,7 +41,6 @@ body.theme-glitter {
   overflow: hidden;
 }
 
-/* Sparkle universe animation */
 @keyframes keshy-sparkle-universe {
   0% { background-position: 0% 50%; }
   20% { background-position: 100% 50%; }
@@ -41,24 +50,16 @@ body.theme-glitter {
   100% { background-position: 0% 50%; }
 }
 
-/* Floating sparkle particles */
 body.theme-glitter::before {
   content: '✨ 💎 ⭐ 🌟 ✨ 💖 🦄 ⭐ ✨ 💎 🌟 💖 ✨ ⭐ 💎 🌟 💖 🦄 ✨ 🌟 💎 ⭐ 💖 ✨ 🦄 🌟';
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100%;
-  pointer-events: none;
-  z-index: 1;
-  font-size: 16px;
-  line-height: 60px;
+  position: fixed; top: 0; left: 0; width: 100vw; height: 100%;
+  pointer-events: none; z-index: 0;
+  font-size: 16px; line-height: 60px;
   animation: keshy-sparkle-float 100s linear infinite;
   opacity: 0.6;
   text-shadow: 0 0 10px rgba(255, 148, 209, 0.8);
 }
 
-/* Sparkle floating animation */
 @keyframes keshy-sparkle-float {
   0% { transform: translateX(-50%) translateY(0px); }
   25% { transform: translateX(0%) translateY(-20px); }
@@ -67,23 +68,14 @@ body.theme-glitter::before {
   100% { transform: translateX(-50%) translateY(0px); }
 }
 
-/* Text colors for glitter theme */
-body.theme-glitter .text-muted-foreground {
-  color: #b576a8 !important;
-}
-
 body.theme-glitter h1,
 body.theme-glitter h2,
 body.theme-glitter h3,
 body.theme-glitter h4,
 body.theme-glitter h5,
-body.theme-glitter h6 {
-  color: #602a63 !important;
-  text-shadow: 0 0 10px rgba(255, 148, 209, 0.5);
-  font-weight: bold !important;
-}
+body.theme-glitter h6 { text-shadow: 0 0 10px rgba(255, 148, 209, 0.5); }
 
-/* === KESHY CARD SPARKLE MAGIC === */
+/* Cards keep the sparkle bg + animated rainbow border */
 body.theme-glitter .card,
 body.theme-glitter [class*="card"] {
   background: linear-gradient(135deg, #fff0fb 0%, #ffe9fc 25%, #ffc2e8 50%, #ffe9fc 75%, #fff0fb 100%);
@@ -93,23 +85,16 @@ body.theme-glitter [class*="card"] {
   transition: all 0.3s ease;
   box-shadow: 0 4px 20px rgba(255, 148, 209, 0.3);
 }
-
-/* Animated rainbow border */
 body.theme-glitter .card::before,
 body.theme-glitter [class*="card"]::before {
   content: '';
-  position: absolute;
-  top: -2px;
-  left: -2px;
-  right: -2px;
-  bottom: -2px;
+  position: absolute; top: -2px; left: -2px; right: -2px; bottom: -2px;
   background: linear-gradient(45deg, #ff94d1, #eec3ff, #b8f2ff, #ffc2e8, #ff94d1);
   background-size: 400% 400%;
   border-radius: inherit;
   z-index: -1;
   animation: keshy-rainbow-border 3s ease-in-out infinite;
 }
-
 @keyframes keshy-rainbow-border {
   0% { background-position: 0% 50%; }
   25% { background-position: 100% 50%; }
@@ -117,123 +102,50 @@ body.theme-glitter [class*="card"]::before {
   75% { background-position: 0% 100%; }
   100% { background-position: 0% 50%; }
 }
-
 body.theme-glitter .card:hover,
 body.theme-glitter [class*="card"]:hover {
   transform: translateY(-3px) scale(1.02);
   box-shadow: 0 8px 40px rgba(255, 148, 209, 0.6);
 }
-
-/* SECRET EASTER EGG: Cherry blossom sparkle explosion on hover for Keshy! */
 body.theme-glitter .card:hover::after,
 body.theme-glitter [class*="card"]:hover::after {
   content: '🌸✨💖✨🌸';
-  position: absolute;
-  top: -10px;
-  right: -10px;
+  position: absolute; top: -10px; right: -10px;
   font-size: 16px;
   animation: keshy-sparkle-explosion 0.8s ease-out;
   z-index: 10;
 }
-
 @keyframes keshy-sparkle-explosion {
   0% { transform: scale(0) rotate(0deg); opacity: 0; }
   50% { transform: scale(1.2) rotate(180deg); opacity: 1; }
   100% { transform: scale(1) rotate(360deg); opacity: 1; }
 }
 
-/* === KESHY BUTTON MAGIC === */
-body.theme-glitter button,
-body.theme-glitter .btn {
-  background: linear-gradient(135deg, #ff94d1 0%, #eec3ff 50%, #ff94d1 100%);
-  border: 2px solid #ffc2e8;
-  color: #602a63;
-  transition: all 0.3s ease;
+/* Primary buttons keep Keshy's pink gradient; dark-plum token text stays
+ * readable on every stop (shimmer sweep preserved). */
+body.theme-glitter .bg-primary {
+  background-image: linear-gradient(135deg, #ff94d1 0%, #eec3ff 50%, #ff94d1 100%);
   position: relative;
   overflow: hidden;
-  font-weight: 600;
 }
-
-body.theme-glitter button::before,
-body.theme-glitter .btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(184, 242, 255, 0.7), transparent);
-  transition: left 0.6s ease;
-}
-
-body.theme-glitter button:hover::before,
-body.theme-glitter .btn:hover::before {
-  left: 100%;
-}
-
-body.theme-glitter button:hover,
-body.theme-glitter .btn:hover {
-  background: linear-gradient(135deg, #b8f2ff 0%, #ff94d1 50%, #b8f2ff 100%);
-  border-color: #eec3ff;
-  transform: translateY(-2px);
+body.theme-glitter .bg-primary:hover {
+  background-image: linear-gradient(135deg, #b8f2ff 0%, #ff94d1 50%, #b8f2ff 100%);
   box-shadow: 0 6px 25px rgba(255, 148, 209, 0.5);
-}
-
-/* === KESHY INPUT SPARKLE === */
-body.theme-glitter input,
-body.theme-glitter textarea,
-body.theme-glitter select {
-  background: linear-gradient(135deg, #fff0fb 0%, #ffe9fc 100%);
-  border: 2px solid #ffc2e8;
-  color: #602a63;
-  transition: all 0.3s ease;
 }
 
 body.theme-glitter input:focus,
 body.theme-glitter textarea:focus,
-body.theme-glitter select:focus {
-  border-color: #ff94d1;
-  box-shadow: 0 0 20px rgba(255, 148, 209, 0.4);
-  background: linear-gradient(135deg, #ffe9fc 0%, #fff0fb 100%);
-}
+body.theme-glitter select:focus { box-shadow: 0 0 20px rgba(255, 148, 209, 0.4); }
 
-/* Placeholder text */
-body.theme-glitter input::placeholder,
-body.theme-glitter textarea::placeholder {
-  color: rgba(96, 42, 99, 0.6) !important;
-}
+body.theme-glitter a:hover { text-shadow: 0 0 8px rgba(255, 148, 209, 0.6); }
 
-/* Link styles */
-body.theme-glitter a {
-  color: #ff94d1 !important;
-  text-decoration: none !important;
-  transition: all 0.3s ease !important;
-}
+body.theme-glitter ::-webkit-scrollbar { width: 12px; }
+body.theme-glitter ::-webkit-scrollbar-track { background: rgba(255, 240, 251, 0.5); }
+body.theme-glitter ::-webkit-scrollbar-thumb { background: linear-gradient(135deg, #ff94d1, #eec3ff); border-radius: 6px; }
+body.theme-glitter ::-webkit-scrollbar-thumb:hover { background: linear-gradient(135deg, #eec3ff, #b8f2ff); }
 
-body.theme-glitter a:hover {
-  color: #eec3ff !important;
-  text-shadow: 0 0 8px rgba(255, 148, 209, 0.6) !important;
-}
-
-/* Scrollbar styles */
-body.theme-glitter ::-webkit-scrollbar {
-  width: 12px;
-}
-
-body.theme-glitter ::-webkit-scrollbar-track {
-  background: rgba(255, 240, 251, 0.5);
-}
-
-body.theme-glitter ::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #ff94d1, #eec3ff);
-  border-radius: 6px;
-}
-
-body.theme-glitter ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #eec3ff, #b8f2ff);
-}
-
-/* No animations fallback */
-body.no-animations.theme-glitter {
-  background: #fff0fb !important;
-}
+/* Static / no-motion: freeze bg, sparkles AND the card rainbow border (CHA-200) */
+body.no-animations.theme-glitter { background: #fff0fb !important; animation: none !important; }
+body.no-animations.theme-glitter::before { animation: none !important; }
+body.no-animations.theme-glitter .card::before,
+body.no-animations.theme-glitter [class*="card"]::before { animation: none !important; }

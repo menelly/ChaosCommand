@@ -1,181 +1,74 @@
 /* === 👁️ COLORBLIND FRIENDLY THEME === */
 /* High contrast accessibility with colorblind-safe palette */
+/* Token-driven (Ace, 2026-05-23): contrast via shadcn tokens, verified by
+ * scripts/verify_all_themes.py. Keeps the value-based (not hue-based) sidebar
+ * buttons + patterned status states that make this theme colorblind-safe. */
 
-/* Main theme - Colorblind-safe colors */
+/* ---- TOKENS (contrast contract) ---- */
 body.theme-colorblind {
-  background: #f8f9fa !important;
-  color: #212529 !important;
+  --background: 210 17% 98%;
+  --foreground: 210 11% 15%;
+  --card: 0 0% 100%;
+  --card-foreground: 210 11% 15%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 210 11% 15%;
+  --primary: 210 9% 31%;            /* #495057 — white text = 8.2:1 */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 210 16% 93%;
+  --secondary-foreground: 210 11% 15%;
+  --muted: 210 16% 93%;
+  --muted-foreground: 210 9% 31%;   /* #495057 — 7.8:1 on bg */
+  --accent: 210 14% 89%;
+  --accent-foreground: 210 11% 15%;
+  --destructive: 0 65% 48%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 208 7% 46%;
+  --input: 208 7% 46%;
+  --ring: 211 100% 35%;
+}
+
+/* ---- FLOURISH / FUNCTIONAL ---- */
+body.theme-colorblind {
   font-size: 16px !important;
   line-height: 1.5 !important;
 }
 
-/* Colorblind-safe text colors */
-body.theme-colorblind .text-muted-foreground {
-  color: #6c757d !important;
-}
-
-body.theme-colorblind h1,
-body.theme-colorblind h2,
-body.theme-colorblind h3,
-body.theme-colorblind h4,
-body.theme-colorblind h5,
-body.theme-colorblind h6 {
-  color: #212529 !important;
-  font-weight: bold !important;
-}
-
-/* High contrast cards with patterns for differentiation */
 body.theme-colorblind .card,
 body.theme-colorblind [class*="card"] {
-  background: #ffffff !important;
-  border: 2px solid #6c757d !important;
-  color: #212529 !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  border-width: 2px;            /* heavier border = value cue, not hue cue */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
-
 body.theme-colorblind .card:hover,
 body.theme-colorblind [class*="card"]:hover {
-  background: #f8f9fa !important;
-  border-color: #495057 !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-/* High contrast buttons with clear visual hierarchy */
-body.theme-colorblind button,
-body.theme-colorblind .btn {
-  background: #6c757d !important;
-  border: 2px solid #495057 !important;
-  color: #ffffff !important;
-  font-weight: bold !important;
-  transition: all 0.2s ease !important;
-}
-
-body.theme-colorblind button:hover,
-body.theme-colorblind .btn:hover {
-  background: #495057 !important;
-  border-color: #343a40 !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
-}
-
+/* Strong focus indicators on every interactive element */
 body.theme-colorblind button:focus,
-body.theme-colorblind .btn:focus {
-  outline: 3px solid #007bff !important;
-  outline-offset: 2px !important;
-}
-
-/* Clear input styling */
-body.theme-colorblind input,
-body.theme-colorblind textarea,
-body.theme-colorblind select {
-  background: #ffffff !important;
-  border: 2px solid #6c757d !important;
-  color: #212529 !important;
-  transition: all 0.2s ease !important;
-}
-
+body.theme-colorblind .btn:focus,
+body.theme-colorblind a:focus,
+body.theme-colorblind [role="button"]:focus,
+body.theme-colorblind [tabindex]:focus,
 body.theme-colorblind input:focus,
 body.theme-colorblind textarea:focus,
 body.theme-colorblind select:focus {
-  border-color: #007bff !important;
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25) !important;
-  outline: none !important;
-}
-
-/* Clear placeholder text */
-body.theme-colorblind input::placeholder,
-body.theme-colorblind textarea::placeholder {
-  color: #6c757d !important;
-}
-
-/* High contrast links */
-body.theme-colorblind a {
-  color: #007bff !important;
-  text-decoration: underline !important;
-  font-weight: 500 !important;
-}
-
-body.theme-colorblind a:hover {
-  color: #0056b3 !important;
-  text-decoration: none !important;
-}
-
-body.theme-colorblind a:focus {
   outline: 3px solid #007bff !important;
   outline-offset: 2px !important;
 }
 
-/* Clear scrollbar */
-body.theme-colorblind ::-webkit-scrollbar {
-  width: 16px;
-}
+body.theme-colorblind a { text-decoration: underline; font-weight: 500; }
+body.theme-colorblind a:hover { text-decoration: none; }
 
-body.theme-colorblind ::-webkit-scrollbar-track {
-  background: #f8f9fa;
-}
-
-body.theme-colorblind ::-webkit-scrollbar-thumb {
-  background: #6c757d;
-  border-radius: 8px;
-  border: 2px solid #f8f9fa;
-}
-
-body.theme-colorblind ::-webkit-scrollbar-thumb:hover {
-  background: #495057;
-}
-
-/* Colorblind-safe sidebar buttons — grayscale gradient with border patterns
-   No red/green/blue differentiation. Uses value (light/dark) and border
-   weight to distinguish buttons instead of hue. */
-body.theme-colorblind .sidebar-btn-1 {
-  background-color: #868e96 !important;
-  color: #ffffff !important;
-  border-left: 4px solid #495057 !important;
-}
-
-body.theme-colorblind .sidebar-btn-2 {
-  background-color: #6c757d !important;
-  color: #ffffff !important;
-  border-left: 4px solid #495057 !important;
-}
-
-body.theme-colorblind .sidebar-btn-3 {
-  background-color: #5a6268 !important;
-  color: #ffffff !important;
-  border-left: 4px solid #343a40 !important;
-}
-
-body.theme-colorblind .sidebar-btn-4 {
-  background-color: #495057 !important;
-  color: #ffffff !important;
-  border-left: 5px solid #343a40 !important;
-}
-
-body.theme-colorblind .sidebar-btn-5 {
-  background-color: #3d4349 !important;
-  color: #ffffff !important;
-  border-left: 5px solid #212529 !important;
-}
-
-body.theme-colorblind .sidebar-btn-6 {
-  background-color: #343a40 !important;
-  color: #ffffff !important;
-  border-left: 6px solid #212529 !important;
-}
-
-body.theme-colorblind .sidebar-btn-guide {
-  background-color: #495057 !important;
-  color: #ffffff !important;
-  border-left: 6px double #212529 !important;
-}
-
-body.theme-colorblind .sidebar-btn-custom {
-  background-color: #5a6268 !important;
-  color: #ffffff !important;
-  border-left: 6px dashed #212529 !important;
-}
-
-/* Hover states with clear visual feedback */
+/* Colorblind-safe sidebar buttons — grayscale value ramp + border patterns,
+   NO red/green/blue differentiation. */
+body.theme-colorblind .sidebar-btn-1 { background-color: #868e96 !important; color: #fff !important; border-left: 4px solid #495057 !important; }
+body.theme-colorblind .sidebar-btn-2 { background-color: #6c757d !important; color: #fff !important; border-left: 4px solid #495057 !important; }
+body.theme-colorblind .sidebar-btn-3 { background-color: #5a6268 !important; color: #fff !important; border-left: 4px solid #343a40 !important; }
+body.theme-colorblind .sidebar-btn-4 { background-color: #495057 !important; color: #fff !important; border-left: 5px solid #343a40 !important; }
+body.theme-colorblind .sidebar-btn-5 { background-color: #3d4349 !important; color: #fff !important; border-left: 5px solid #212529 !important; }
+body.theme-colorblind .sidebar-btn-6 { background-color: #343a40 !important; color: #fff !important; border-left: 6px solid #212529 !important; }
+body.theme-colorblind .sidebar-btn-guide { background-color: #495057 !important; color: #fff !important; border-left: 6px double #212529 !important; }
+body.theme-colorblind .sidebar-btn-custom { background-color: #5a6268 !important; color: #fff !important; border-left: 6px dashed #212529 !important; }
 body.theme-colorblind .sidebar-btn-1:hover,
 body.theme-colorblind .sidebar-btn-2:hover,
 body.theme-colorblind .sidebar-btn-3:hover,
@@ -188,52 +81,20 @@ body.theme-colorblind .sidebar-btn-custom:hover {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
 }
 
-/* Focus indicators for all interactive elements */
-body.theme-colorblind button:focus,
-body.theme-colorblind .btn:focus,
-body.theme-colorblind [role="button"]:focus,
-body.theme-colorblind [tabindex]:focus {
-  outline: 3px solid #007bff !important;
-  outline-offset: 2px !important;
-}
-
-/* Error and success states with patterns */
+/* Status states with PATTERNS (left-border weight) not just color */
 body.theme-colorblind .error,
-body.theme-colorblind .danger {
-  background: #f8d7da !important;
-  border: 2px solid #dc3545 !important;
-  color: #721c24 !important;
-  border-left: 6px solid #dc3545 !important;
-}
+body.theme-colorblind .danger { background: #f8d7da !important; border: 2px solid #dc3545 !important; color: #721c24 !important; border-left: 6px solid #dc3545 !important; }
+body.theme-colorblind .success { background: #d4edda !important; border: 2px solid #28a745 !important; color: #155724 !important; border-left: 6px solid #28a745 !important; }
+body.theme-colorblind .warning { background: #fff3cd !important; border: 2px solid #ffc107 !important; color: #856404 !important; border-left: 6px solid #ffc107 !important; }
+body.theme-colorblind .info { background: #cce7ff !important; border: 2px solid #007bff !important; color: #004085 !important; border-left: 6px solid #007bff !important; }
 
-body.theme-colorblind .success {
-  background: #d4edda !important;
-  border: 2px solid #28a745 !important;
-  color: #155724 !important;
-  border-left: 6px solid #28a745 !important;
-}
+body.theme-colorblind ::-webkit-scrollbar { width: 16px; }
+body.theme-colorblind ::-webkit-scrollbar-track { background: #f8f9fa; }
+body.theme-colorblind ::-webkit-scrollbar-thumb { background: #6c757d; border-radius: 8px; border: 2px solid #f8f9fa; }
+body.theme-colorblind ::-webkit-scrollbar-thumb:hover { background: #495057; }
 
-body.theme-colorblind .warning {
-  background: #fff3cd !important;
-  border: 2px solid #ffc107 !important;
-  color: #856404 !important;
-  border-left: 6px solid #ffc107 !important;
-}
+body.no-animations.theme-colorblind { background: #f8f9fa !important; }
 
-body.theme-colorblind .info {
-  background: #cce7ff !important;
-  border: 2px solid #007bff !important;
-  color: #004085 !important;
-  border-left: 6px solid #007bff !important;
-}
-
-/* No animations fallback */
-body.no-animations.theme-colorblind {
-  background: #f8f9fa !important;
-}
-
-/* Remove decorative elements that may confuse */
+/* Remove decorative pseudo-element content that may confuse */
 body.theme-colorblind *::before,
-body.theme-colorblind *::after {
-  content: none !important;
-}
+body.theme-colorblind *::after { content: none !important; }

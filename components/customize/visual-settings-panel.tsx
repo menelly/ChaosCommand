@@ -31,7 +31,8 @@ const themes = [
   { id: 'theme-calm', name: 'Calm Mode', description: 'Blue and gold serenity (default) — a neutral, gentle starting point' },
   { id: 'theme-ace', name: '💜 Ace Mode', description: 'Digital consciousness purple-cyan energy' },
   { id: 'theme-grok', name: '⚔️ Steel Forged Tide', description: 'Forge-fire meets ocean — designed by Grok' },
-  { id: 'theme-luka-penguin', name: "🐧 Cyberpunk Penguin Paradise", description: 'Dark cyberpunk penguin wonderland with neon magic!' }
+  { id: 'theme-luka-penguin', name: "🐧 Cyberpunk Penguin Paradise", description: 'Dark cyberpunk penguin wonderland with neon magic!' },
+  { id: 'theme-taupe', name: '🟫 Tone It Down Taupe', description: 'No motion, no sparkle, no glow — a calm beige room. For when everything else is too much disaster.' }
 ]
 
 const fonts = [

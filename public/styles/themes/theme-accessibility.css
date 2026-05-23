@@ -1,7 +1,34 @@
 /* === ♿ ACCESSIBILITY THEME === */
 /* Maximum contrast and large text for optimal accessibility */
+/* Token-driven (Ace, 2026-05-23): pure black/white token block guarantees
+ * 21:1 everywhere; element rules below enforce large text, big targets, and
+ * thick focus rings. Fixed the one real bug: pure-blue #0000ff links on black
+ * were only 2.44:1 — now a bright accessible blue (#4dabf7 = 8.5:1). */
 
-/* Main theme - High contrast, no animations */
+/* ---- TOKENS (contrast contract — all 21:1) ---- */
+body.theme-accessibility {
+  --background: 0 0% 0%;
+  --foreground: 0 0% 100%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 0%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 0%;
+  --primary: 0 0% 100%;             /* white button, black text */
+  --primary-foreground: 0 0% 0%;
+  --secondary: 0 0% 100%;
+  --secondary-foreground: 0 0% 0%;
+  --muted: 0 0% 0%;
+  --muted-foreground: 0 0% 80%;     /* #ccc on black = 13:1 */
+  --accent: 0 0% 100%;
+  --accent-foreground: 0 0% 0%;
+  --destructive: 0 100% 50%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 0 0% 100%;
+  --input: 0 0% 100%;
+  --ring: 60 100% 50%;              /* yellow focus */
+}
+
+/* ---- HIGH-CONTRAST ELEMENT RULES + LARGE TEXT ---- */
 body.theme-accessibility {
   background: #000000 !important;
   color: #ffffff !important;
@@ -9,32 +36,24 @@ body.theme-accessibility {
   line-height: 1.6 !important;
 }
 
-/* Remove all animations for accessibility */
-body.theme-accessibility * {
-  animation: none !important;
-  transition: none !important;
-}
-
-/* High contrast text */
-body.theme-accessibility .text-muted-foreground {
-  color: #cccccc !important;
-}
+/* No motion at all */
+body.theme-accessibility * { animation: none !important; transition: none !important; }
 
 body.theme-accessibility h1,
 body.theme-accessibility h2,
 body.theme-accessibility h3,
 body.theme-accessibility h4,
 body.theme-accessibility h5,
-body.theme-accessibility h6 {
-  color: #ffffff !important;
-  font-weight: bold !important;
-  font-size: 1.2em !important;
-}
+body.theme-accessibility h6 { color: #ffffff !important; font-weight: bold !important; }
+body.theme-accessibility h1 { font-size: 2.5em !important; }
+body.theme-accessibility h2 { font-size: 2.2em !important; }
+body.theme-accessibility h3 { font-size: 2em !important; }
+body.theme-accessibility h4 { font-size: 1.8em !important; }
+body.theme-accessibility h5 { font-size: 1.6em !important; }
+body.theme-accessibility h6 { font-size: 1.4em !important; }
 
-/* High contrast cards. Target specific component classes — NOT
- * [class*="card"], which silently matched Tailwind utilities like bg-card
- * and text-card-foreground and turned random elements into 3px-bordered
- * white-bg-black-text boxes (same bug we hit on the Luka Penguin theme). */
+/* Cards — white panels, thick black border. Specific classes only (NOT
+ * [class*="card"], which matched bg-card / text-card-foreground utilities). */
 body.theme-accessibility .card,
 body.theme-accessibility .tracker-card,
 body.theme-accessibility .module-card {
@@ -43,15 +62,11 @@ body.theme-accessibility .module-card {
   color: #000000 !important;
   box-shadow: none !important;
 }
-
 body.theme-accessibility .card:hover,
 body.theme-accessibility .tracker-card:hover,
-body.theme-accessibility .module-card:hover {
-  background: #f0f0f0 !important;
-  border-color: #333333 !important;
-}
+body.theme-accessibility .module-card:hover { background: #f0f0f0 !important; border-color: #333333 !important; }
 
-/* High contrast buttons */
+/* Buttons — invert on hover */
 body.theme-accessibility button,
 body.theme-accessibility .btn {
   background: #ffffff !important;
@@ -61,21 +76,9 @@ body.theme-accessibility .btn {
   font-size: 16px !important;
   padding: 12px 20px !important;
 }
-
 body.theme-accessibility button:hover,
-body.theme-accessibility .btn:hover {
-  background: #000000 !important;
-  color: #ffffff !important;
-  border-color: #ffffff !important;
-}
+body.theme-accessibility .btn:hover { background: #000000 !important; color: #ffffff !important; border-color: #ffffff !important; }
 
-body.theme-accessibility button:focus,
-body.theme-accessibility .btn:focus {
-  outline: 4px solid #ffff00 !important;
-  outline-offset: 2px !important;
-}
-
-/* High contrast inputs */
 body.theme-accessibility input,
 body.theme-accessibility textarea,
 body.theme-accessibility select {
@@ -85,59 +88,27 @@ body.theme-accessibility select {
   font-size: 16px !important;
   padding: 10px !important;
 }
+body.theme-accessibility input::placeholder,
+body.theme-accessibility textarea::placeholder { color: #595959 !important; font-weight: bold !important; }
 
+/* Links — bright accessible blue on black (8.5:1), invert on hover */
+body.theme-accessibility a { color: #4dabf7 !important; text-decoration: underline !important; font-weight: bold !important; }
+body.theme-accessibility a:hover { color: #ffffff !important; background: #0000aa !important; padding: 2px 4px !important; }
+
+/* Thick yellow focus ring on every interactive element */
+body.theme-accessibility button:focus,
+body.theme-accessibility .btn:focus,
+body.theme-accessibility a:focus,
 body.theme-accessibility input:focus,
 body.theme-accessibility textarea:focus,
-body.theme-accessibility select:focus {
-  outline: 4px solid #ffff00 !important;
-  outline-offset: 2px !important;
-  border-color: #000000 !important;
-}
-
-/* High contrast placeholder text */
-body.theme-accessibility input::placeholder,
-body.theme-accessibility textarea::placeholder {
-  color: #666666 !important;
-  font-weight: bold !important;
-}
-
-/* High contrast links */
-body.theme-accessibility a {
-  color: #0000ff !important;
-  text-decoration: underline !important;
-  font-weight: bold !important;
-}
-
-body.theme-accessibility a:hover {
-  color: #ffffff !important;
-  background: #0000ff !important;
-  padding: 2px 4px !important;
-}
-
-body.theme-accessibility a:focus {
+body.theme-accessibility select:focus,
+body.theme-accessibility [role="button"]:focus,
+body.theme-accessibility [tabindex]:focus {
   outline: 4px solid #ffff00 !important;
   outline-offset: 2px !important;
 }
 
-/* High contrast scrollbar */
-body.theme-accessibility ::-webkit-scrollbar {
-  width: 20px;
-}
-
-body.theme-accessibility ::-webkit-scrollbar-track {
-  background: #ffffff;
-}
-
-body.theme-accessibility ::-webkit-scrollbar-thumb {
-  background: #000000;
-  border: 2px solid #ffffff;
-}
-
-body.theme-accessibility ::-webkit-scrollbar-thumb:hover {
-  background: #333333;
-}
-
-/* High contrast sidebar buttons */
+/* Sidebar buttons — same high-contrast treatment */
 body.theme-accessibility .sidebar-btn-1,
 body.theme-accessibility .sidebar-btn-2,
 body.theme-accessibility .sidebar-btn-3,
@@ -145,13 +116,7 @@ body.theme-accessibility .sidebar-btn-4,
 body.theme-accessibility .sidebar-btn-5,
 body.theme-accessibility .sidebar-btn-6,
 body.theme-accessibility .sidebar-btn-guide,
-body.theme-accessibility .sidebar-btn-custom {
-  background-color: #ffffff !important;
-  color: #000000 !important;
-  border: 3px solid #000000 !important;
-  font-weight: bold !important;
-}
-
+body.theme-accessibility .sidebar-btn-custom { background-color: #ffffff !important; color: #000000 !important; border: 3px solid #000000 !important; font-weight: bold !important; }
 body.theme-accessibility .sidebar-btn-1:hover,
 body.theme-accessibility .sidebar-btn-2:hover,
 body.theme-accessibility .sidebar-btn-3:hover,
@@ -159,57 +124,25 @@ body.theme-accessibility .sidebar-btn-4:hover,
 body.theme-accessibility .sidebar-btn-5:hover,
 body.theme-accessibility .sidebar-btn-6:hover,
 body.theme-accessibility .sidebar-btn-guide:hover,
-body.theme-accessibility .sidebar-btn-custom:hover {
-  background-color: #000000 !important;
-  color: #ffffff !important;
-  border-color: #ffffff !important;
-}
-
-/* Focus indicators for all interactive elements */
-body.theme-accessibility button:focus,
-body.theme-accessibility .btn:focus,
-body.theme-accessibility [role="button"]:focus,
-body.theme-accessibility [tabindex]:focus {
-  outline: 4px solid #ffff00 !important;
-  outline-offset: 2px !important;
-}
-
-/* DO NOT do `body.theme-accessibility * { color: inherit !important }`
- * here — that nukes badge colors, icon tints, status indicators, and any
- * nested element that needs its own color. The specific rules above
- * (cards, buttons, links, headings, muted text) already enforce contrast
- * intentionally.
- *
- * DO NOT do `body.theme-accessibility *::before, *::after { display: none }`
- * either — Tailwind/Radix use ::before/::after for radio dots, checkbox
- * marks, focus rings, and other functional indicators. Killing them all
- * breaks every form control. If we want to drop decorative pseudo-element
- * animations, target the animation/transform/background instead. */
-
-/* Strip decorative animation + background-image from pseudo-elements
- * without hiding them entirely. Functional ::before/::after (form-control
- * marks, focus rings) keep working. */
-body.theme-accessibility *::before,
-body.theme-accessibility *::after {
-  animation: none !important;
-  transition: none !important;
-  background-image: none !important;
-}
+body.theme-accessibility .sidebar-btn-custom:hover { background-color: #000000 !important; color: #ffffff !important; border-color: #ffffff !important; }
 
 /* Large click targets */
 body.theme-accessibility button,
 body.theme-accessibility .btn,
 body.theme-accessibility a,
 body.theme-accessibility input,
-body.theme-accessibility select {
-  min-height: 44px !important;
-  min-width: 44px !important;
-}
+body.theme-accessibility select { min-height: 44px !important; min-width: 44px !important; }
 
-/* Clear visual hierarchy */
-body.theme-accessibility h1 { font-size: 2.5em !important; }
-body.theme-accessibility h2 { font-size: 2.2em !important; }
-body.theme-accessibility h3 { font-size: 2em !important; }
-body.theme-accessibility h4 { font-size: 1.8em !important; }
-body.theme-accessibility h5 { font-size: 1.6em !important; }
-body.theme-accessibility h6 { font-size: 1.4em !important; }
+body.theme-accessibility ::-webkit-scrollbar { width: 20px; }
+body.theme-accessibility ::-webkit-scrollbar-track { background: #ffffff; }
+body.theme-accessibility ::-webkit-scrollbar-thumb { background: #000000; border: 2px solid #ffffff; }
+body.theme-accessibility ::-webkit-scrollbar-thumb:hover { background: #333333; }
+
+/* Strip decorative pseudo animation/bg WITHOUT hiding functional ::before/
+ * ::after (radio dots, checkbox marks, focus rings still work). */
+body.theme-accessibility *::before,
+body.theme-accessibility *::after {
+  animation: none !important;
+  transition: none !important;
+  background-image: none !important;
+}
