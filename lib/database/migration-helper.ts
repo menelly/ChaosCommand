@@ -337,19 +337,46 @@ export async function importData(jsonData: string): Promise<void> {
         // skip standalone processing so we don't clobber the linked logic.
         if (key.startsWith('survivalChecked_')) continue;
 
-        // Dated daily-state keys: incoming wins for date-overlap, union
-        // for date-distinct. Implementation: just write incoming since
-        // each date key is independent (no merge across dates needed).
+        // Dated TASK list: merge the two task arrays BY ID (union), so tasks
+        // added on EITHER device survive. The old string-length heuristic
+        // silently dropped the "shorter" device's tasks — that's why tasks
+        // appeared not to sync. Incoming wins on a same-id conflict (matches
+        // the item/routine merge below). (CHA-207)
+        if (key.startsWith('daily-tasks-')) {
+          const localVal = localStorage.getItem(key);
+          try {
+            const incoming = JSON.parse(value);
+            const local = localVal ? JSON.parse(localVal) : [];
+            if (Array.isArray(incoming) && Array.isArray(local)) {
+              const byId = new Map<string, any>();
+              for (const t of local) if (t && t.id != null) byId.set(String(t.id), t);
+              for (const t of incoming) if (t && t.id != null) byId.set(String(t.id), t);
+              const mergedStr = JSON.stringify(Array.from(byId.values()));
+              if (mergedStr !== localVal) {
+                localStorage.setItem(key, mergedStr);
+                lsImported++;
+              }
+              continue;
+            }
+          } catch {
+            /* malformed JSON — fall through to the length heuristic below */
+          }
+          if (!localVal || value.length >= localVal.length) {
+            if (localVal !== value) {
+              localStorage.setItem(key, value);
+              lsImported++;
+            }
+          }
+          continue;
+        }
+
+        // Other dated daily-state keys (checkbox/state maps, not id'd arrays):
+        // incoming wins unless local has strictly more content. Heuristic, but
+        // safe-ish for state maps. (Improving these is a follow-up.)
         if (
           key.startsWith('selfcare-state-') ||
-          key.startsWith('gear-check-') ||
-          key.startsWith('daily-tasks-')
+          key.startsWith('gear-check-')
         ) {
-          // For a same-date overlap, prefer incoming UNLESS local has
-          // strictly more content (rough heuristic — if local string is
-          // longer, it likely has additional items the sender hadn't
-          // seen yet). This isn't bulletproof but errs on the side of
-          // not deleting the user's work.
           const localVal = localStorage.getItem(key);
           if (!localVal || value.length >= localVal.length) {
             if (localVal !== value) {
