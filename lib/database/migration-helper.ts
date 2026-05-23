@@ -107,6 +107,11 @@ const SYNCABLE_LS_SINGLETONS = (pin: string) => [
   // Per-tracker celebration opt-out (JSON array of tracker ids that suppress
   // confetti on save). LWW across devices.
   `chaos-celebration-disabled-${pin}`,
+  // Routines (0.5.2): named sets of trackers, JSON array of {id,...}. Were
+  // device-local before this — a routine built on the desktop never reached
+  // the phone. Merged by id like the item-definition lists below (union, so no
+  // routine is ever lost across devices).
+  `chaos-routines-${pin}`,
 ];
 
 const SYNCABLE_LS_DATED_PREFIXES = (pin: string) => [
@@ -355,8 +360,12 @@ export async function importData(jsonData: string): Promise<void> {
           continue;
         }
 
-        // Item-definition lists: merge by id
-        if (key.startsWith('selfcare-items-') || key.startsWith('gear-items-')) {
+        // Item-definition lists + Routines (0.5.2): merge by id. Union — a
+        // routine/item built on either device survives; incoming wins on a
+        // same-id conflict. (Known limitation, same as hidden-trackers below:
+        // a routine deleted on one device can resurrect on next sync from a
+        // device that still has it. Acceptable — errs toward never losing work.)
+        if (key.startsWith('selfcare-items-') || key.startsWith('gear-items-') || key.startsWith('chaos-routines-')) {
           try {
             const localRaw = localStorage.getItem(key);
             const localArr = localRaw ? JSON.parse(localRaw) : [];
