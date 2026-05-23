@@ -1,0 +1,6 @@
+{
+  "version": "0.5.1",
+  "released": "2026-05-22",
+  "url": "https://chaoscommand.center/download",
+  "notes": "Accessibility fixes. Tracker event-card descriptions now stay readable in EVERY theme — they were vanishing entirely in Colorblind (grey-on-grey) and washing out in Light, because the description text used a fixed muted-grey on cards the themes recolor. Now the descriptions inherit each card's own readable text color, across all 12 affected trackers, so it can't break in future themes either. Plus: contrast fixes on the Missed Work options and a few other faint spots (removed text-dimming that hurt readability on light themes). Also fixed a date off-by-one that made dysautonomia, food, and BBT history show entries a day early, and the creator credit now reads 'Prior Navy ET'. Same Routines + everything from 0.5.0."
+}
