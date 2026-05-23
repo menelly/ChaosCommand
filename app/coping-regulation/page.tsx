@@ -35,6 +35,7 @@ import { Slider } from '@/components/ui/slider'
 import { celebrate } from '@/lib/particle-physics-engine'
 import { useUser } from '@/lib/contexts/user-context'
 import { isCelebrationEnabled } from '@/lib/celebration-prefs'
+import { pinStorage } from '@/lib/pin-storage' // per-PIN: coping data must not leak across identities (CHA-206)
 import {
   Heart,
   Wind,
@@ -303,12 +304,12 @@ export default function CopingRegulationPage() {
 
   // Load sessions and custom techniques from localStorage
   useEffect(() => {
-    const savedSessions = localStorage.getItem('coping-sessions')
+    const savedSessions = pinStorage.getItem('coping-sessions')
     if (savedSessions) {
       setSessions(JSON.parse(savedSessions))
     }
 
-    const savedCustom = localStorage.getItem('custom-techniques')
+    const savedCustom = pinStorage.getItem('custom-techniques')
     if (savedCustom) {
       setCustomTechniques(JSON.parse(savedCustom))
     }
@@ -412,7 +413,7 @@ export default function CopingRegulationPage() {
 
       const updatedSessions = [...sessions, completedSession]
       setSessions(updatedSessions)
-      localStorage.setItem('coping-sessions', JSON.stringify(updatedSessions))
+      pinStorage.setItem('coping-sessions', JSON.stringify(updatedSessions))
 
       const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
       if (confettiLevel !== 'none' && isCelebrationEnabled('coping-regulation', userPin ?? '')) {
@@ -477,7 +478,7 @@ export default function CopingRegulationPage() {
 
       const updatedCustom = [...customTechniques, technique]
       setCustomTechniques(updatedCustom)
-      localStorage.setItem('custom-techniques', JSON.stringify(updatedCustom))
+      pinStorage.setItem('custom-techniques', JSON.stringify(updatedCustom))
 
       setNewTechnique({ name: '', description: '', steps: [''] })
       setShowAddCustom(false)
