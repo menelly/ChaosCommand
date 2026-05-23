@@ -192,89 +192,94 @@ function RoutineRun() {
             const isPending = !s.loggedToday && !isNothing && !isSkipped
             return (
               <Card key={t.id} className={isSkipped ? "opacity-60" : ""}>
-                <CardContent className="flex items-center gap-3 py-3">
-                  <span className="text-2xl shrink-0">{t.emoji}</span>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium">{t.label}</div>
-                    {s.loggedToday ? (
-                      <div className="text-xs text-green-600 flex items-center gap-1">
-                        <CheckCircle2 className="h-3.5 w-3.5" />
-                        Logged today{s.lastLoggedLabel ? `: ${s.lastLoggedLabel}` : ""}
-                      </div>
-                    ) : isNothing ? (
-                      <div className="text-xs text-green-600 flex items-center gap-1">
-                        <CheckCircle2 className="h-3.5 w-3.5" /> Nothing to log today
-                      </div>
-                    ) : isSkipped ? (
-                      <div className="text-xs text-muted-foreground flex items-center gap-1">
-                        <EyeOff className="h-3.5 w-3.5" /> Skipped — hidden for now
-                      </div>
-                    ) : t.statusUnsupported ? (
-                      <div className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Circle className="h-3.5 w-3.5" /> Log on the tracker · ✓ status coming soon
-                      </div>
-                    ) : (
-                      <div className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Circle className="h-3.5 w-3.5" />
-                        {lastLogged[t.id]
-                          ? `Last logged ${formatLastLogged(lastLogged[t.id]!)}`
-                          : "Not logged yet"}
-                      </div>
-                    )}
+                <CardContent className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:gap-3">
+                  <div className="flex items-center gap-3 min-w-0 sm:flex-1">
+                    <span className="text-2xl shrink-0">{t.emoji}</span>
+                    <div className="min-w-0">
+                      <div className="font-medium">{t.label}</div>
+                      {s.loggedToday ? (
+                        <div className="text-xs text-green-600 flex items-center gap-1">
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          Logged today{s.lastLoggedLabel ? `: ${s.lastLoggedLabel}` : ""}
+                        </div>
+                      ) : isNothing ? (
+                        <div className="text-xs text-green-600 flex items-center gap-1">
+                          <CheckCircle2 className="h-3.5 w-3.5" /> Nothing to log today
+                        </div>
+                      ) : isSkipped ? (
+                        <div className="text-xs text-muted-foreground flex items-center gap-1">
+                          <EyeOff className="h-3.5 w-3.5" /> Skipped — hidden for now
+                        </div>
+                      ) : t.statusUnsupported ? (
+                        <div className="text-xs text-muted-foreground flex items-center gap-1">
+                          <Circle className="h-3.5 w-3.5" /> Log on the tracker · ✓ status coming soon
+                        </div>
+                      ) : (
+                        <div className="text-xs text-muted-foreground flex items-center gap-1">
+                          <Circle className="h-3.5 w-3.5" />
+                          {lastLogged[t.id]
+                            ? `Last logged ${formatLastLogged(lastLogged[t.id]!)}`
+                            : "Not logged yet"}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
-                  {/* Pending: copy yesterday, log it, mark nothing-to-log, or skip */}
-                  {isPending && (
-                    <div className="flex flex-wrap items-center justify-end gap-1.5 shrink-0">
-                      {!t.statusUnsupported && !t.copyUnsupported && copyable[t.id] && (
+                  {/* Actions — wrap full-width below the name on mobile, sit to the right on desktop */}
+                  <div className="flex flex-wrap items-center gap-1.5 sm:justify-end sm:shrink-0">
+                    {/* Pending: copy yesterday, log it, mark nothing-to-log, or skip */}
+                    {isPending && (
+                      <>
+                        {!t.statusUnsupported && !t.copyUnsupported && copyable[t.id] && (
+                          <Button size="sm" variant="ghost" className="gap-1 text-muted-foreground"
+                            title="Copy your last entry into today — then tweak/remove it via the tracker's Edit/Delete"
+                            onClick={() => copyYesterday(t)}>
+                            <CopyPlus className="h-4 w-4" /> Copy last
+                          </Button>
+                        )}
                         <Button size="sm" variant="ghost" className="gap-1 text-muted-foreground"
-                          title="Copy your last entry into today — then tweak/remove it via the tracker's Edit/Delete"
-                          onClick={() => copyYesterday(t)}>
-                          <CopyPlus className="h-4 w-4" /> Copy last
+                          title="I checked — nothing to report today. Counts as done."
+                          onClick={() => nothingToLog(t.id)}>
+                          <MinusCircle className="h-4 w-4" /> Nothing today
                         </Button>
-                      )}
-                      <Button size="sm" variant="ghost" className="gap-1 text-muted-foreground"
-                        title="I checked — nothing to report today. Counts as done."
-                        onClick={() => nothingToLog(t.id)}>
-                        <MinusCircle className="h-4 w-4" /> Nothing today
-                      </Button>
-                      <Button size="sm" variant="ghost" className="text-muted-foreground"
-                        title="Hide for now — doesn't count, you can unskip" onClick={() => skip(t.id)}>
-                        <EyeOff className="h-4 w-4" />
-                      </Button>
-                      <Button size="sm" className="gap-1" onClick={() => logNow(t.href)}>
-                        Log now <ChevronRight className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
+                        <Button size="sm" variant="ghost" className="text-muted-foreground"
+                          title="Hide for now — doesn't count, you can unskip" onClick={() => skip(t.id)}>
+                          <EyeOff className="h-4 w-4" />
+                        </Button>
+                        <Button size="sm" className="gap-1" onClick={() => logNow(t.href)}>
+                          Log now <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </>
+                    )}
 
-                  {/* Nothing-to-log: undo, or log after all */}
-                  {isNothing && (
-                    <>
-                      <Button size="sm" variant="ghost" className="gap-1 text-muted-foreground"
-                        title="Undo — I do have something to log" onClick={() => undoNothing(t.id)}>
-                        <Undo2 className="h-4 w-4" /> Undo
+                    {/* Nothing-to-log: undo, or log after all */}
+                    {isNothing && (
+                      <>
+                        <Button size="sm" variant="ghost" className="gap-1 text-muted-foreground"
+                          title="Undo — I do have something to log" onClick={() => undoNothing(t.id)}>
+                          <Undo2 className="h-4 w-4" /> Undo
+                        </Button>
+                        <Button size="sm" variant="outline" className="gap-1" onClick={() => logNow(t.href)}>
+                          Log <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </>
+                    )}
+
+                    {/* Skipped: bring it back */}
+                    {isSkipped && (
+                      <Button size="sm" variant="outline" className="gap-1"
+                        title="Bring this back" onClick={() => unskip(t.id)}>
+                        <Eye className="h-4 w-4" /> Unskip
                       </Button>
+                    )}
+
+                    {/* Logged: log again */}
+                    {s.loggedToday && (
                       <Button size="sm" variant="outline" className="gap-1" onClick={() => logNow(t.href)}>
-                        Log <ChevronRight className="h-4 w-4" />
+                        Log again <ChevronRight className="h-4 w-4" />
                       </Button>
-                    </>
-                  )}
-
-                  {/* Skipped: clear, undo-skip, or log */}
-                  {isSkipped && (
-                    <Button size="sm" variant="outline" className="gap-1"
-                      title="Bring this back" onClick={() => unskip(t.id)}>
-                      <Eye className="h-4 w-4" /> Unskip
-                    </Button>
-                  )}
-
-                  {/* Logged: log again */}
-                  {s.loggedToday && (
-                    <Button size="sm" variant="outline" className="gap-1" onClick={() => logNow(t.href)}>
-                      Log again <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  )}
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             )
