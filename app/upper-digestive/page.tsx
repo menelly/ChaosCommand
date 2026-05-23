@@ -638,7 +638,7 @@ export default function UpperDigestiveTracker() {
                       <span className="mr-2">{symptom.emoji}</span>
                       <div className="text-left">
                         <div className="font-medium">{symptom.value.replace('_', ' ')}</div>
-                        <div className="text-xs opacity-70">{symptom.description}</div>
+                        <div className="text-xs">{symptom.description}</div>
                       </div>
                     </Button>
                   ))}
