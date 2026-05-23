@@ -137,7 +137,14 @@ export default function ProvidersPage() {
   const [editingAppointment, setEditingAppointment] = useState<AppointmentPlan | null>(null);
   const [editingReview, setEditingReview] = useState<AppointmentReview | null>(null);
 
-  const { saveData, getCategoryData, deleteData, isLoading } = useDailyData();
+  const { saveData, getAllCategoryData, deleteData, isLoading } = useDailyData();
+
+  // USER-category records (providers/appointments/reviews) are NOT day-scoped, but were
+  // historically written under formatDateForStorage(new Date()) and loaded with only
+  // "today" — so they vanished from view the next day, and edits/deletes of older ones
+  // silently missed. Fix: load ALL user records regardless of date, migrate any
+  // stragglers onto one stable key, and write new ones under that key. (CHA-202)
+  const PROVIDER_STORE_DATE = '2000-01-01';
 
   // Load providers and appointments from storage on mount
   useEffect(() => {
@@ -145,8 +152,9 @@ export default function ProvidersPage() {
       if (isLoading) return; // Wait for database to be ready
 
       try {
-        // Get all USER category records
-        const records = await getCategoryData(formatDateForStorage(new Date()), CATEGORIES.USER);
+        // Get all USER category records — across ALL dates, not just today, so records
+        // created on previous days still load (this is the "disappearing doctors" fix).
+        const records = await getAllCategoryData(CATEGORIES.USER);
         const providerList: Provider[] = [];
         const appointmentList: AppointmentPlan[] = [];
         const reviewList: AppointmentReview[] = [];
@@ -179,12 +187,30 @@ export default function ProvidersPage() {
         setProviders(providerList);
         setAppointments(appointmentList);
         setAppointmentReviews(reviewList);
+
+        // One-time migration: move any records saved under a real date onto the stable
+        // key, so future edits/deletes (which use PROVIDER_STORE_DATE) hit the same row.
+        // Save-new-then-delete-old ordering means a mid-failure leaves a duplicate, never
+        // a data loss.
+        for (const rec of records) {
+          if (rec.content && rec.date !== PROVIDER_STORE_DATE && (
+                rec.subcategory.startsWith(`${SUBCATEGORIES.PROVIDERS}-`) ||
+                rec.subcategory.startsWith('appointment-plan-') ||
+                rec.subcategory.startsWith('appointment-review-'))) {
+            try {
+              await saveData(PROVIDER_STORE_DATE, CATEGORIES.USER, rec.subcategory, rec.content);
+              if (rec.date) await deleteData(rec.date, CATEGORIES.USER, rec.subcategory);
+            } catch (e) {
+              console.warn('Provider record migration skipped:', rec.subcategory, e);
+            }
+          }
+        }
       } catch (error) {
         console.error('Failed to load data:', error);
       }
     };
     loadData();
-  }, [getCategoryData, isLoading]);
+  }, [getAllCategoryData, saveData, deleteData, isLoading]);
   
   // Form state
   const [formData, setFormData] = useState<Partial<Provider>>({
@@ -253,7 +279,7 @@ export default function ProvidersPage() {
     try {
       // Save to WatermelonDB using provider ID as subcategory
       await saveData(
-        formatDateForStorage(new Date()), // Use current date
+        PROVIDER_STORE_DATE, // stable key — these records aren't day-scoped (CHA-202)
         CATEGORIES.USER,
         `${SUBCATEGORIES.PROVIDERS}-${newProvider.id}`,
         JSON.stringify(newProvider)
@@ -295,7 +321,7 @@ export default function ProvidersPage() {
     try {
       // Update in WatermelonDB using provider ID as subcategory
       await saveData(
-        formatDateForStorage(new Date()), // Use current date
+        PROVIDER_STORE_DATE, // stable key — these records aren't day-scoped (CHA-202)
         CATEGORIES.USER,
         `${SUBCATEGORIES.PROVIDERS}-${editingProvider.id}`,
         JSON.stringify(updatedProvider)
@@ -316,7 +342,7 @@ export default function ProvidersPage() {
     try {
       // Delete from WatermelonDB by setting content to empty
       await saveData(
-        formatDateForStorage(new Date()), // Use current date
+        PROVIDER_STORE_DATE, // stable key — these records aren't day-scoped (CHA-202)
         CATEGORIES.USER,
         `${SUBCATEGORIES.PROVIDERS}-${id}`,
         '' // Empty content effectively deletes the record
@@ -362,7 +388,7 @@ export default function ProvidersPage() {
     try {
       // Save appointment to database
       await saveData(
-        formatDateForStorage(new Date()),
+        PROVIDER_STORE_DATE,
         CATEGORIES.USER,
         `appointment-plan-${appointment.id}`,
         JSON.stringify(appointment)
@@ -397,7 +423,7 @@ export default function ProvidersPage() {
   const handleSaveReview = async (review: AppointmentReview) => {
     try {
       await saveData(
-        formatDateForStorage(new Date()),
+        PROVIDER_STORE_DATE,
         CATEGORIES.USER,
         `appointment-review-${review.id}`,
         JSON.stringify(review)
@@ -516,7 +542,7 @@ export default function ProvidersPage() {
 
       // Delete the appointment record
       await deleteData(
-        formatDateForStorage(new Date()),
+        PROVIDER_STORE_DATE,
         CATEGORIES.USER,
         `appointment-plan-${appointmentId}`
       );
@@ -574,7 +600,7 @@ export default function ProvidersPage() {
     try {
       // Delete the review record
       await deleteData(
-        formatDateForStorage(new Date()),
+        PROVIDER_STORE_DATE,
         CATEGORIES.USER,
         `appointment-review-${reviewId}`
       );
