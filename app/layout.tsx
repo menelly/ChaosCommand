@@ -23,11 +23,13 @@
  */
 
 import type React from "react"
+import { Suspense } from "react"
 import "./globals.css"
 import "../styles/chaos-themes.css"
-// theme-phosphor is the new default (Ace, 2026-04-22) — bundled so first paint
-// matches without dynamic CSS load. Other themes loaded dynamically by ThemeLoader.
-import "../styles/themes/theme-phosphor.css"
+// theme-calm is the default (Ace, 2026-05-22) — neutral blue/gold, a softer first
+// run than the CRT-green phosphor. Bundled so first paint matches without a dynamic
+// CSS load. Phosphor + all other themes load dynamically by ThemeLoader.
+import "../styles/themes/theme-calm.css"
 import ThemeLoader from "@/components/theme-loader"
 
 import { GoblinModeProvider } from "@/lib/goblin-mode-context"
@@ -37,6 +39,7 @@ import { GoblinModeProvider } from "@/lib/goblin-mode-context"
 import AppSidebar from "@/components/app-sidebar"
 import { Toaster } from "@/components/ui/toaster"
 import { AppWrapper } from "@/components/app-wrapper"
+import RoutineFlowBar from "@/components/routines/routine-flow-bar"
 // import AddyChatBubble from "@/components/addy-chat-bubble" // Commented out - AI module for later
 
 export const metadata = {
@@ -90,6 +93,9 @@ export default function RootLayout({
               </div>
               <AppSidebar />
             </div>
+            <Suspense fallback={null}>
+              <RoutineFlowBar />
+            </Suspense>
             <Toaster />
             {/* <AddyChatBubble /> */} {/* Commented out - AI module for later */}
           </GoblinModeProvider>
@@ -101,9 +107,9 @@ export default function RootLayout({
               // Load theme immediately to prevent color flash
               (function() {
                 try {
-                  // Default theme: theme-phosphor (terminal CRT). Replaces lavender as
-                  // starter for itch.io distribution + general "for nerds" positioning.
-                  const savedTheme = localStorage.getItem('chaos-theme') || 'theme-phosphor';
+                  // Default theme: theme-calm (neutral blue/gold) — a softer first run
+                  // than CRT-green phosphor. Saved themes (incl. phosphor) are honored.
+                  const savedTheme = localStorage.getItem('chaos-theme') || 'theme-calm';
                   const savedFont = localStorage.getItem('chaos-font') || 'font-atkinson';
                   const savedAnimations = localStorage.getItem('chaos-animations') !== 'false'; // default to true
 

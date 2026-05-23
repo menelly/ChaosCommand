@@ -43,6 +43,7 @@ import { format } from "date-fns"
 import { celebrate } from '@/lib/particle-physics-engine'
 import { useUser } from '@/lib/contexts/user-context'
 import { isCelebrationEnabled } from '@/lib/celebration-prefs'
+import { EntryDateTimePicker } from '@/components/entry-datetime-picker'
 
 interface BrainFogEntry {
   id: string
@@ -184,26 +185,23 @@ function BrainFogAnalytics({
 
   return (
     <div className="space-y-6">
-      {/* Time Range Selector */}
-      <div className="flex justify-center gap-2">
-        {[7, 30, 60, 90].map((days) => (
-          <Button
-            key={days}
-            variant={timeRange === days ? "default" : "outline"}
-            size="sm"
-            onClick={() => setTimeRange(days)}
-          >
-            {days} Days
-          </Button>
-        ))}
-        <Button
-          variant={timeRange === 99999 ? "default" : "outline"}
-          size="sm"
-          onClick={() => setTimeRange(99999)}
-        >
-          All Time
-        </Button>
-      </div>
+      {/* Time Range Selector — standardized 7/30/90/180/365/all */}
+      <Card>
+        <CardContent className="pt-4">
+          <label className="text-xs font-medium text-muted-foreground mb-1 block">Time window</label>
+          <Select value={timeRange.toString()} onValueChange={(v) => setTimeRange(parseInt(v))}>
+            <SelectTrigger className="max-w-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="7">Last 7 days</SelectItem>
+              <SelectItem value="30">Last 30 days</SelectItem>
+              <SelectItem value="90">Last 90 days</SelectItem>
+              <SelectItem value="180">Last 6 months</SelectItem>
+              <SelectItem value="365">Last year</SelectItem>
+              <SelectItem value="99999">All time</SelectItem>
+            </SelectContent>
+          </Select>
+        </CardContent>
+      </Card>
 
       {/* Summary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -609,10 +607,10 @@ export default function BrainFogTracker() {
         <div className="text-center space-y-2">
           <div className="flex items-center justify-center gap-3">
             <Cloud className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold">Brain Fog & Cognitive</h1>
+            <h1 className="text-3xl font-bold">☁️ Brain Fog HQ</h1>
           </div>
           <p className="text-muted-foreground">
-            Record your cognitive symptoms and brain fog levels
+            Where your cognitive symptoms get logged so the fog doesn't get gaslit
           </p>
         </div>
 
@@ -807,16 +805,14 @@ export default function BrainFogTracker() {
             </DialogHeader>
 
             <div className="space-y-6">
-              {/* Time */}
-              <div className="space-y-2">
-                <Label htmlFor="time">Time</Label>
-                <Input
-                  id="time"
-                  type="time"
-                  value={time}
-                  onChange={(e) => setTime(e.target.value)}
-                />
-              </div>
+              {/* Date + Time picker — backdating supported */}
+              <EntryDateTimePicker
+                date={selectedDate}
+                time={time}
+                onChange={(d, t) => { setSelectedDate(d); setTime(t) }}
+              />
+            </div>
+            <div className="space-y-6">
 
               {/* Severity */}
               <div className="space-y-3">

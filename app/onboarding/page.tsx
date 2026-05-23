@@ -532,7 +532,7 @@ export default function OnboardingPage() {
                   }}
                 >
                   <span className="text-sm font-medium">{theme.emoji} {theme.name}</span>
-                  <span className="text-xs opacity-70">{theme.description}</span>
+                  <span className="text-xs">{theme.description}</span>
                 </Button>
               ))}
             </div>

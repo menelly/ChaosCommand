@@ -100,9 +100,9 @@ export default function MentalHealthIndex() {
     },
     {
       id: 'mental-health-general',
-      name: 'Mental Health Overview',
-      shortDescription: 'Mood, anxiety, depression, therapy notes',
-      helpContent: 'Comprehensive mental health tracking including mood patterns, anxiety levels, depression symptoms, and therapy session notes. Integrates with other mental health trackers for a complete picture.',
+      name: 'Mind & Mood',
+      shortDescription: 'Mood, cognitive, energy, motivation, connection, regulation — all valid check-ins',
+      helpContent: 'Multi-modal mental wellness tracking: mood (depression / mania / mood swings), cognitive (brain fog, focus, processing), energy (mental fatigue, drive), motivation (anhedonia, executive function), connection (loneliness, social engagement), and regulation (frustration tolerance, meltdown precursors — AuDHD-aware). Includes 988 crisis support and pattern detection for mixed-state and rapid-cycling.',
       icon: <Brain className="h-5 w-5" />,
       status: 'available',
       href: '/mental-health'
@@ -165,10 +165,10 @@ export default function MentalHealthIndex() {
         <header className="text-center mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2 flex items-center justify-center gap-2">
             <Brain className="h-8 w-8 text-purple-500" />
-            Mind
+            🧠 Mind
           </h1>
           <p className="text-lg text-muted-foreground">
-            Mental wellness and emotional support tracking
+            Mental wellness, emotional weather, regulation tools — pick a tracker
           </p>
         </header>
 

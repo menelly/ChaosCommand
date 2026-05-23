@@ -40,7 +40,19 @@ interface SleepAnalyticsProps {
 
 export function SleepAnalytics({ refreshTrigger }: SleepAnalyticsProps) {
   const { getCategoryData, getDateRange, isLoading } = useDailyData()
-  const [entries, setEntries] = useState<SleepEntry[]>([])
+  const [allEntries, setAllEntries] = useState<SleepEntry[]>([])
+  const [timeWindow, setTimeWindow] = useState<string>('90')
+
+  // Filter entries by time window
+  const entries = useMemo(() => {
+    if (timeWindow === 'all') return allEntries
+    const days = parseInt(timeWindow)
+    const cutoff = new Date()
+    cutoff.setDate(cutoff.getDate() - days)
+    return allEntries.filter(e => {
+      try { return new Date(e.date) >= cutoff } catch { return false }
+    })
+  }, [allEntries, timeWindow])
 
   // Load sleep entries (all time)
   useEffect(() => {
@@ -85,10 +97,10 @@ export function SleepAnalytics({ refreshTrigger }: SleepAnalyticsProps) {
         const filteredEntries = filterForAnalytics(allEntries)
         console.log('🌙 Sleep analytics - after tag filtering:', filteredEntries.length, '(excluded:', allEntries.length - filteredEntries.length, ')')
 
-        setEntries(filteredEntries)
+        setAllEntries(filteredEntries)
       } catch (error) {
         console.error('Error loading sleep entries:', error)
-        setEntries([])
+        setAllEntries([])
       }
     }
 
@@ -289,9 +301,27 @@ export function SleepAnalytics({ refreshTrigger }: SleepAnalyticsProps) {
           Your Sleep Patterns
         </h2>
         <p className="text-muted-foreground">
-          Insights from all your sleep data
+          {timeWindow === 'all' ? 'All-time sleep data' : `Last ${timeWindow} days`}
         </p>
       </div>
+
+      <Card>
+        <CardContent className="pt-4">
+          <label className="text-xs font-medium text-muted-foreground mb-1 block">Time window</label>
+          <select
+            value={timeWindow}
+            onChange={(e) => setTimeWindow(e.target.value)}
+            className="w-full max-w-xs h-10 px-3 rounded-md border border-input bg-background text-sm"
+          >
+            <option value="7">Last 7 days</option>
+            <option value="30">Last 30 days</option>
+            <option value="90">Last 90 days</option>
+            <option value="180">Last 6 months</option>
+            <option value="365">Last year</option>
+            <option value="all">All time</option>
+          </select>
+        </CardContent>
+      </Card>
 
       {/* Overview Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

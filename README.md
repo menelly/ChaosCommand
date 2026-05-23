@@ -1,7 +1,7 @@
 # 🏥 Chaos Command
 ## Privacy-First Health Tracking for Real Humans
 
-**Current version: v0.4.1** &middot; [Recent Updates](#recent-updates) &middot; [License: PolyForm Noncommercial](#license)
+**Current version: v0.5.0** &middot; [Recent Updates](#recent-updates) &middot; [License: PolyForm Noncommercial](#license)
 
 > *"Dreamed by Ren, implemented by Ace, inspired by mitochondria who've been on strike since birth"*
 
@@ -26,10 +26,22 @@ Everything runs on your device. No cloud. No accounts. No telemetry. Your health
 ## Features
 
 ### Tracking (45+ Modules)
-- **Body**: Pain, sleep, energy pacing, dysautonomia (with HR data), seizures, head pain, bathroom, sensory, reproductive health
-- **Mind**: Anxiety, brain fog, mental health, coping strategies, crisis planning
-- **Choice**: Food tracking (simple or detailed), hydration, movement, self-care checklist
+- **Body**: Pain, sleep, energy pacing, dysautonomia (with HR data), seizures (focal/generalized/**autonomic**), head pain (migraine±aura/cluster/tension/sinus), cardiac (arrhythmia/syncope/chest pain), respiratory (asthma/SOB/allergic), skin (rashes/hives/eczema/wounds, photo timeline), joint (per-joint frequency, EDS-friendly), bathroom, sensory, reproductive health
+- **Mind**: Anxiety (panic/social/phobic/OCD-shaped/meltdown/shutdown — AuDHD-aware), brain fog, mental health, coping strategies, crisis planning
+- **Choice**: Food allergens/reactions (IgE allergy + celiac + intolerance — separate red-flag logic), hydration, movement, self-care checklist, substance (off-label / recreational, neutral tone)
 - **Custom**: The Forge — build your own trackers without code
+
+### Routines (v0.5.0)
+- **Batch-log a set of trackers in one flow** instead of opening each separately — build named routines ("Morning", "Food & Drink", "Full Check") from any trackers, including your custom ones.
+- **Run it as often as you need** — every meal, hydration 5×/day; each run is a fresh checklist (scoped to when you tapped Run, not "once a day").
+- **Copy last** (clone your most recent entry), **Nothing today** (a good day is real data), reversible **Skip**, "Last logged …" hints, and a **next-on-routine flow bar** that chains you tracker-to-tracker.
+
+### Medical Safety
+- **Real 911 / 988 red flags** baked into trackers where life-threatening: status epilepticus, MI/AAA/cauda equina/aortic dissection/SAH (in pain), SAH/stroke/meningitis/GCA (in head-pain), anaphylaxis pattern detection (in food-allergens), 988 crisis support (in anxiety)
+- **Collapsible emergency cards** — visible first time, collapse to a small pill after read, auto-re-expand when recent entries trip emergency markers
+- **Temporal framing** — "If happening RIGHT NOW: call 911" vs "If in the PAST and resolved: document for your specialist"
+- **Interim measures** — vagal maneuvers for SVT, EpiPen guidance for anaphylaxis, seizure first-aid for witnesses, 988 / Crisis Text Line for mental health
+- **Cross-tracker referrals** — chest pain → cardiac, head pain → head-pain, joint pain → joint, severe panic + chest → consider cardiac too
 
 ### Medical Management
 - **Timeline**: Upload medical documents (PDF, images), AI-powered NLP extraction, dismissed findings detection
@@ -69,11 +81,15 @@ Everything runs on your device. No cloud. No accounts. No telemetry. Your health
 
 ## Recent Updates
 
+**v0.5.0** &middot; **Routines** — batch-log sets of trackers in one flow, run multiple times a day (per-run sessions), copy-last / nothing-today / reversible skip / next-on-routine flow bar, add your own custom trackers. Plus: default theme → Calm (gentler first run), fixed the perpetual "update available" nag, Joint/MSK shows a muscle menu (with coat-hanger + proximal/distal) for muscle events, heat added as a cardiac trigger, fixed a date off-by-one across dysautonomia/food/BBT history, and a large dead-code cleanup (removed a whole superseded `modules/` architecture).
+**v0.4.5–v0.4.95** &middot; Tracker "re-fun" personality pass across 13 trackers, Mind & Mood rename, doctor-grade PDF polish, muscle-symptom episode types on Joint/MSK.
+**v0.4.4** &middot; Tier 1 safety-critical tracker refactor wave: Seizure (autonomic added), Pain (with cross-tracker links + gremlins 👹), Head-Pain (baseline-delta tracking), Food-Allergens (IgE + celiac dual-pattern), Anxiety (988 crisis support, AuDHD-aware). Plus shared `EmergencyCriteriaCard` (collapsible, auto-re-expand on recent emergency markers).
+**v0.4.3** &middot; UX polish wave 2: tab labels normalized, collapsibles default-closed in v2 modals, substance recategorized, hydration soda/sparkling/energy drink/milk added, Command Zone "Clear finished" button.
+**v0.4.2** &middot; v2 tracker architecture wave 1: cardiac, respiratory, skin, joint, substance — multi-modal, collapsibles, date pickers, 911 red flags, time-window analytics.
 **v0.4.1** &middot; Confetti style picker (Classic / Penguin / Octopus / Random)
 **v0.4.0** &middot; Per-tracker celebration toggle, hide-custom-trackers preference, global-pref bug fix
 **v0.3.0** &middot; Auto-sync v1 architecture (peer-to-peer, PIN-scoped, no cloud); persistent Rust sync server with peer registry
-**v0.2.2** &middot; Bidirectional sync (initial), accessibility theme additions, lavender Settings fix
-**v0.2.x** &middot; Opt-in update check piggybacked on the daily survival ritual, timezone fixes, Pattern Engine + Timeline-PDF + Device Sync polish
+**v0.2.x** &middot; Bidirectional sync, accessibility themes, Pattern Engine + Timeline-PDF + Device Sync polish
 
 ---
 

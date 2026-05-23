@@ -412,7 +412,7 @@ export default function GaslightGaragePage() {
                       className={`px-3 py-1 rounded-full text-sm border transition-all ${
                         tags.includes(qt.tag)
                           ? qt.color + ' font-medium'
-                          : 'bg-card text-muted-foreground border-border opacity-60 hover:opacity-100'
+                          : 'bg-card text-foreground border-border hover:bg-muted'
                       }`}
                     >
                       {qt.label}

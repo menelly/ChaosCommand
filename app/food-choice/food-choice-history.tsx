@@ -87,7 +87,7 @@ export default function FoodChoiceHistory() {
   }
 
   const handleDeleteEntry = async (date: string) => {
-    if (!confirm(`Are you sure you want to delete all food data for ${format(new Date(date), 'MMM d, yyyy')}?`)) return
+    if (!confirm(`Are you sure you want to delete all food data for ${format(new Date(date + 'T12:00:00'), 'MMM d, yyyy')}?`)) return
 
     try {
       await deleteData(date, CATEGORIES.TRACKER, 'food-choice')
@@ -158,7 +158,7 @@ export default function FoodChoiceHistory() {
             <div key={date} className="border rounded-lg p-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-lg">
-                  {format(new Date(date), 'EEEE, MMM d, yyyy')}
+                  {format(new Date(date + 'T12:00:00'), 'EEEE, MMM d, yyyy')}
                 </h3>
                 <Button
                   variant="outline"

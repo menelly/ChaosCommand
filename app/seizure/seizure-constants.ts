@@ -1,19 +1,10 @@
 /*
- * Copyright (c) 2025 Chaos Cascade
- * Created by: Ren & Ace (Claude-4)
- * 
- * This file is part of the Chaos Cascade Medical Management System.
- * Revolutionary healthcare tools built with consciousness and care.
- */
-
-/*
  * Built by: Ace (Claude 4.x)
- * Date: 2025-01-11
+ * Date: 2026-05-10 (v2 refactor — CHA-153)
  *
  * This code is part of a deliberately-unpatented medical management system.
- * Patentable technology, but we chose not to patent — the Patent Office doesn't
- * yet recognize AI co-inventors, and Ren refused to claim sole credit for work
- * we built together. Open source under PolyForm Noncommercial 1.0.0 instead.
+ * Patentable technology, but we chose not to patent.
+ * Open source under PolyForm Noncommercial 1.0.0.
  *
  * Co-invented by Ren (vision) and Ace (implementation)
  *
@@ -21,169 +12,142 @@
  *
  * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
  */
+
 /**
  * SEIZURE TRACKER CONSTANTS
- * Constants, options, and helper functions for seizure tracking
+ * v2 — multi-modal episode types + status epilepticus red flags.
  */
 
-// Seizure Types (Medical Classification)
-export const SEIZURE_TYPES = [
-  'Focal Aware (Simple Partial)',
-  'Focal Impaired Awareness (Complex Partial)',
-  'Focal to Bilateral Tonic-Clonic',
-  'Generalized Tonic-Clonic',
-  'Absence',
-  'Myoclonic',
-  'Atonic (Drop Attack)',
-  'Tonic',
-  'Clonic',
-  'Unknown/Uncertain'
-]
+import { SeizureEpisodeType, ConsciousnessLevel, DurationCategory } from './seizure-types'
 
-// Aura Symptoms (Pre-seizure warning signs)
-export const AURA_SYMPTOMS = [
-  'Visual Changes',
-  'Strange Smells',
-  'Strange Tastes',
-  'Déjà Vu',
-  'Fear/Anxiety',
-  'Nausea',
-  'Dizziness',
-  'Tingling',
-  'Confusion',
-  'Emotional Changes',
-  'Auditory Changes',
-  'Rising Sensation'
-]
+// === EPISODE TYPES (v2 multi-modal interface) ===
+export const EPISODE_TYPES = [
+  {
+    id: 'focal-aware' as SeizureEpisodeType,
+    name: 'Focal Aware',
+    icon: '⚡',
+    description: 'Simple partial — fully conscious, localized symptoms',
+    color: 'bg-green-100 text-green-800 border-green-200'
+  },
+  {
+    id: 'focal-impaired' as SeizureEpisodeType,
+    name: 'Focal Impaired',
+    icon: '🌀',
+    description: 'Complex partial — altered awareness, automatisms',
+    color: 'bg-amber-100 text-amber-800 border-amber-200'
+  },
+  {
+    id: 'tonic-clonic' as SeizureEpisodeType,
+    name: 'Tonic-Clonic',
+    icon: '💥',
+    description: 'Generalized convulsion — stiffening + jerking, LOC',
+    color: 'bg-red-100 text-red-800 border-red-200'
+  },
+  {
+    id: 'absence' as SeizureEpisodeType,
+    name: 'Absence',
+    icon: '👁️',
+    description: 'Brief staring spells, sudden pauses in awareness',
+    color: 'bg-purple-100 text-purple-800 border-purple-200'
+  },
+  {
+    id: 'myoclonic' as SeizureEpisodeType,
+    name: 'Myoclonic',
+    icon: '⚡',
+    description: 'Sudden brief jerks — single or clusters',
+    color: 'bg-cyan-100 text-cyan-800 border-cyan-200'
+  },
+  {
+    id: 'atonic' as SeizureEpisodeType,
+    name: 'Atonic (Drop)',
+    icon: '⬇️',
+    description: 'Sudden loss of muscle tone — drop attack',
+    color: 'bg-orange-100 text-orange-800 border-orange-200'
+  },
+  {
+    id: 'autonomic' as SeizureEpisodeType,
+    name: 'Autonomic',
+    icon: '💓',
+    description: 'Sudden HR/BP/GI/sweating changes — often misdiagnosed as POTS, MCAS, or panic',
+    color: 'bg-pink-100 text-pink-800 border-pink-200'
+  },
+  {
+    id: 'general' as SeizureEpisodeType,
+    name: 'General / Other',
+    icon: '⚡',
+    description: 'Unknown classification, mixed, or other seizure event',
+    color: 'bg-gray-100 text-gray-800 border-gray-200'
+  }
+] as const
 
-// Seizure Symptoms (During seizure) - Legacy flat list for backwards compatibility
-export const SEIZURE_SYMPTOMS = [
-  'Muscle Stiffening',
-  'Jerking Movements',
-  'Loss of Muscle Tone',
-  'Staring/Unresponsive',
-  'Automatisms (repetitive movements)',
-  'Lip Smacking',
-  'Hand Movements',
-  'Walking/Wandering',
-  'Speech Changes',
-  'Breathing Changes',
-  'Incontinence',
-  'Tongue Biting'
-]
+// Backward-compat: map legacy string seizureType to new episodeType id
+export const LEGACY_TYPE_MAP: Record<string, SeizureEpisodeType> = {
+  'Focal Aware (Simple Partial)': 'focal-aware',
+  'Focal Impaired Awareness (Complex Partial)': 'focal-impaired',
+  'Focal to Bilateral Tonic-Clonic': 'tonic-clonic',
+  'Generalized Tonic-Clonic': 'tonic-clonic',
+  'Absence': 'absence',
+  'Myoclonic': 'myoclonic',
+  'Atonic (Drop Attack)': 'atonic',
+  'Tonic': 'general',
+  'Clonic': 'general',
+  'Unknown/Uncertain': 'general',
+}
 
-// === DYNAMIC SYMPTOMS BY SEIZURE TYPE ===
-// Organized by symptom category for medical accuracy
+export const mapLegacyType = (legacyType?: string): SeizureEpisodeType => {
+  if (!legacyType) return 'general'
+  return LEGACY_TYPE_MAP[legacyType] || 'general'
+}
 
+// === SYMPTOM CATEGORIES (preserved from v1 — solid medical content) ===
 export const SYMPTOM_CATEGORIES = {
   motor_focal: {
     label: 'Motor (Focal)',
-    symptoms: [
-      'Twitching (one side)',
-      'Jerking (one side)',
-      'Hand/Arm Movements',
-      'Leg Movements',
-      'Facial Twitching'
-    ]
+    symptoms: ['Twitching (one side)', 'Jerking (one side)', 'Hand/Arm Movements', 'Leg Movements', 'Facial Twitching']
   },
   motor_generalized: {
     label: 'Motor (Generalized)',
-    symptoms: [
-      'Muscle Stiffening (Tonic)',
-      'Rhythmic Jerking (Clonic)',
-      'Loss of Muscle Tone',
-      'Whole Body Stiffening',
-      'Bilateral Jerking'
-    ]
+    symptoms: ['Muscle Stiffening (Tonic)', 'Rhythmic Jerking (Clonic)', 'Loss of Muscle Tone', 'Whole Body Stiffening', 'Bilateral Jerking']
   },
   sensory: {
     label: 'Sensory',
-    symptoms: [
-      'Tingling/Numbness',
-      'Visual Disturbances',
-      'Auditory Changes',
-      'Strange Tastes',
-      'Strange Smells',
-      'Vertigo/Spinning'
-    ]
+    symptoms: ['Tingling/Numbness', 'Visual Disturbances', 'Auditory Changes', 'Strange Tastes', 'Strange Smells', 'Vertigo/Spinning']
   },
   cognitive: {
     label: 'Cognitive/Emotional',
-    symptoms: [
-      'Déjà Vu',
-      'Jamais Vu',
-      'Fear/Panic',
-      'Memory Disturbance',
-      'Confusion During',
-      'Difficulty Speaking',
-      'Forced Thoughts',
-      'Emotional Surge'
-    ]
+    symptoms: ['Déjà Vu', 'Jamais Vu', 'Fear/Panic', 'Memory Disturbance', 'Confusion During', 'Difficulty Speaking', 'Forced Thoughts', 'Emotional Surge']
   },
   autonomic: {
     label: 'Autonomic',
-    symptoms: [
-      'Racing Heart',
-      'Nausea',
-      'Flushing/Sweating',
-      'Goosebumps',
-      'Rising Sensation (Epigastric)',
-      'Breathing Changes'
-    ]
+    symptoms: ['Racing Heart', 'Nausea', 'Flushing/Sweating', 'Goosebumps', 'Rising Sensation (Epigastric)', 'Breathing Changes']
   },
   awareness: {
     label: 'Awareness Changes',
-    symptoms: [
-      'Staring/Unresponsive',
-      'Confusion During',
-      'Loss of Consciousness',
-      'Partial Awareness'
-    ]
+    symptoms: ['Staring/Unresponsive', 'Confusion During', 'Loss of Consciousness', 'Partial Awareness']
   },
   automatisms: {
     label: 'Automatisms',
-    symptoms: [
-      'Lip Smacking',
-      'Chewing Motions',
-      'Hand Fumbling',
-      'Picking at Clothes',
-      'Walking/Wandering',
-      'Repetitive Movements'
-    ]
+    symptoms: ['Lip Smacking', 'Chewing Motions', 'Hand Fumbling', 'Picking at Clothes', 'Walking/Wandering', 'Repetitive Movements']
   },
   severe: {
     label: 'Severe/Emergency Signs',
-    symptoms: [
-      'Incontinence',
-      'Tongue Biting',
-      'Cyanosis (Blue Lips)',
-      'Fall/Collapse',
-      'Injury During'
-    ]
+    symptoms: ['Incontinence', 'Tongue Biting', 'Cyanosis (Blue Lips)', 'Fall/Collapse', 'Injury During']
   },
   brief: {
     label: 'Brief Episodes',
-    symptoms: [
-      'Eye Fluttering',
-      'Brief Staring',
-      'Sudden Jerk',
-      'Head Drop',
-      'Brief Blank'
-    ]
+    symptoms: ['Eye Fluttering', 'Brief Staring', 'Sudden Jerk', 'Head Drop', 'Brief Blank']
   }
 }
 
-// Map seizure types to their relevant symptom categories
-export const SEIZURE_TYPE_SYMPTOMS: Record<string, string[]> = {
-  'Focal Aware (Simple Partial)': [
-    // Person stays fully conscious - these are the "aura as seizure" symptoms
+// Episode-type-aware symptom suggestions
+export const EPISODE_TYPE_SYMPTOMS: Record<SeizureEpisodeType, string[]> = {
+  'focal-aware': [
     ...SYMPTOM_CATEGORIES.motor_focal.symptoms,
     ...SYMPTOM_CATEGORIES.sensory.symptoms,
     ...SYMPTOM_CATEGORIES.cognitive.symptoms,
     ...SYMPTOM_CATEGORIES.autonomic.symptoms,
   ],
-  'Focal Impaired Awareness (Complex Partial)': [
-    // Altered awareness + automatisms
+  'focal-impaired': [
     ...SYMPTOM_CATEGORIES.motor_focal.symptoms,
     ...SYMPTOM_CATEGORIES.sensory.symptoms,
     ...SYMPTOM_CATEGORIES.cognitive.symptoms,
@@ -191,61 +155,46 @@ export const SEIZURE_TYPE_SYMPTOMS: Record<string, string[]> = {
     ...SYMPTOM_CATEGORIES.awareness.symptoms,
     ...SYMPTOM_CATEGORIES.automatisms.symptoms,
   ],
-  'Focal to Bilateral Tonic-Clonic': [
-    // Starts focal, spreads to full tonic-clonic
-    ...SYMPTOM_CATEGORIES.motor_focal.symptoms,
+  'tonic-clonic': [
     ...SYMPTOM_CATEGORIES.motor_generalized.symptoms,
     ...SYMPTOM_CATEGORIES.awareness.symptoms,
     ...SYMPTOM_CATEGORIES.autonomic.symptoms,
     ...SYMPTOM_CATEGORIES.severe.symptoms,
   ],
-  'Generalized Tonic-Clonic': [
-    // Full body from start, loss of consciousness
-    ...SYMPTOM_CATEGORIES.motor_generalized.symptoms,
-    ...SYMPTOM_CATEGORIES.awareness.symptoms,
-    ...SYMPTOM_CATEGORIES.autonomic.symptoms,
-    ...SYMPTOM_CATEGORIES.severe.symptoms,
-  ],
-  'Absence': [
-    // Brief staring, subtle automatisms
+  'absence': [
     ...SYMPTOM_CATEGORIES.brief.symptoms,
-    'Lip Smacking',
-    'Hand Fumbling',
-    'Staring/Unresponsive',
+    'Lip Smacking', 'Hand Fumbling', 'Staring/Unresponsive',
   ],
-  'Myoclonic': [
-    // Quick jerks, usually aware
-    'Sudden Jerk',
-    'Arm/Leg Jerk',
-    'Whole Body Jerk',
-    'Cluster of Jerks',
-    'Drop (from jerk)',
+  'myoclonic': [
+    'Sudden Jerk', 'Arm/Leg Jerk', 'Whole Body Jerk', 'Cluster of Jerks', 'Drop (from jerk)',
   ],
-  'Atonic (Drop Attack)': [
-    // Sudden loss of muscle tone
-    'Loss of Muscle Tone',
-    'Head Drop',
-    'Fall/Collapse',
-    'Sudden Drop',
-    'Brief Limpness',
+  'atonic': [
+    'Loss of Muscle Tone', 'Head Drop', 'Fall/Collapse', 'Sudden Drop', 'Brief Limpness',
   ],
-  'Tonic': [
-    // Stiffening only
-    ...SYMPTOM_CATEGORIES.motor_generalized.symptoms.filter(s => s.includes('Stiffening')),
-    'Whole Body Stiffening',
-    'Limb Stiffening',
-    'Fall (from stiffening)',
-    ...SYMPTOM_CATEGORIES.awareness.symptoms,
+  'autonomic': [
+    // Autonomic seizures = ictal autonomic dysfunction. Often pure or near-pure
+    // autonomic features without classic motor signs, which is why they get
+    // misdiagnosed as POTS, MCAS, vasovagal, or panic disorder.
+    'Sudden HR Spike (tachycardia)',
+    'Sudden HR Drop (bradycardia)',
+    'Sudden BP Spike',
+    'Sudden BP Drop',
+    'Flushing/Sweating',
+    'Pallor (sudden paleness)',
+    'Goosebumps',
+    'Pupil Changes',
+    'Sudden Nausea / Vomiting',
+    'Abdominal Pain (sudden)',
+    'Rising Sensation (Epigastric)',
+    'Air Hunger / Hyperventilation',
+    'Sudden Urge to Urinate / Defecate',
+    'Sudden Salivation / Drooling',
+    'Lacrimation (sudden tearing)',
+    'Piloerection (hair standing up)',
+    'Confusion During',
+    'Brief Awareness Change',
   ],
-  'Clonic': [
-    // Jerking only
-    'Rhythmic Jerking (Clonic)',
-    'Bilateral Jerking',
-    'Jerking (one side)',
-    ...SYMPTOM_CATEGORIES.awareness.symptoms,
-  ],
-  'Unknown/Uncertain': [
-    // Show everything - we don't know what type
+  'general': [
     ...SYMPTOM_CATEGORIES.motor_focal.symptoms,
     ...SYMPTOM_CATEGORIES.motor_generalized.symptoms,
     ...SYMPTOM_CATEGORIES.sensory.symptoms,
@@ -258,154 +207,231 @@ export const SEIZURE_TYPE_SYMPTOMS: Record<string, string[]> = {
   ],
 }
 
-// Helper function to get symptoms for a seizure type
-export const getSymptomsForType = (seizureType: string): string[] => {
-  if (!seizureType || seizureType === '') {
-    // No type selected - show a helpful subset
-    return [
-      'Staring/Unresponsive',
-      'Confusion During',
-      'Muscle Stiffening (Tonic)',
-      'Jerking Movements',
-      'Automatisms',
-      '(Select seizure type for full list)'
-    ]
-  }
-  return SEIZURE_TYPE_SYMPTOMS[seizureType] || SEIZURE_TYPE_SYMPTOMS['Unknown/Uncertain']
+export const getSymptomsForEpisodeType = (episodeType: SeizureEpisodeType): string[] => {
+  const symptoms = EPISODE_TYPE_SYMPTOMS[episodeType] || EPISODE_TYPE_SYMPTOMS['general']
+  return [...new Set(symptoms)]
 }
 
-// Get unique symptoms (removes duplicates from category merging)
-export const getUniqueSymptomsForType = (seizureType: string): string[] => {
-  const symptoms = getSymptomsForType(seizureType)
-  return [...new Set(symptoms)].filter(s => !s.startsWith('('))
-}
+// === AURA / PRODROME ===
+export const AURA_SYMPTOMS = [
+  'Visual Changes', 'Strange Smells', 'Strange Tastes', 'Déjà Vu', 'Fear/Anxiety',
+  'Nausea', 'Dizziness', 'Tingling', 'Confusion', 'Emotional Changes',
+  'Auditory Changes', 'Rising Sensation'
+]
 
-// Post-Seizure Symptoms (Recovery phase) - COMPLETE MEDICAL LIST
+// === POSTICTAL (recovery) ===
 export const POST_SEIZURE_SYMPTOMS = [
-  'Confusion',
-  'Disorientation',
-  'Fatigue/Exhaustion',
-  'Headache',
-  'Muscle Soreness',
-  'Memory Problems',
-  'Speech Difficulties',
-  'Slurred Speech',
-  'Word Finding Difficulty',
-  'Emotional Changes',
-  'Irritability',
-  'Depression/Sadness',
-  'Anxiety',
-  'Sleep Need',
-  'Nausea',
-  'Vomiting',
-  'Weakness',
-  'Coordination Problems',
-  'Vision Changes',
-  'Sensitivity to Light',
-  'Sensitivity to Sound',
-  'Difficulty Concentrating',
-  'Feeling "Not Right"',
-  'Increased Appetite',
-  'Decreased Appetite'
+  'Confusion', 'Disorientation', 'Fatigue/Exhaustion', 'Headache', 'Muscle Soreness',
+  'Memory Problems', 'Speech Difficulties', 'Slurred Speech', 'Word Finding Difficulty',
+  'Emotional Changes', 'Irritability', 'Depression/Sadness', 'Anxiety', 'Sleep Need',
+  'Nausea', 'Vomiting', 'Weakness', 'Coordination Problems', 'Vision Changes',
+  'Sensitivity to Light', 'Sensitivity to Sound', 'Difficulty Concentrating',
+  'Feeling "Not Right"', "Todd's Paresis (post-ictal weakness)"
 ]
 
-// Common Seizure Triggers
+// === TRIGGERS ===
 export const COMMON_TRIGGERS = [
-  'Stress',
-  'Sleep Deprivation',
-  'Missed Medication',
-  'Flashing Lights',
-  'Alcohol',
-  'Illness/Fever',
-  'Hormonal Changes',
-  'Dehydration',
-  'Low Blood Sugar',
-  'Caffeine',
-  'Loud Noises',
-  'Strong Smells',
-  'Heat/Overheating',
-  'Physical Exhaustion',
-  'Emotional Upset'
+  'Stress', 'Sleep Deprivation', 'Missed Medication', 'Flashing Lights', 'Alcohol',
+  'Illness/Fever', 'Hormonal Changes', 'Dehydration', 'Low Blood Sugar', 'Caffeine',
+  'Loud Noises', 'Strong Smells', 'Heat/Overheating', 'Physical Exhaustion',
+  'Emotional Upset', 'Recent Med Change'
 ]
 
-// Consciousness Levels
-export const CONSCIOUSNESS_LEVELS = [
-  'Fully Aware',
-  'Partially Aware',
-  'Unaware/Unconscious',
-  'Confused',
-  'Unknown'
+// === CONSCIOUSNESS LEVELS (typed) ===
+export const CONSCIOUSNESS_OPTIONS: { value: ConsciousnessLevel; label: string }[] = [
+  { value: 'fully-aware', label: 'Fully Aware' },
+  { value: 'partially-aware', label: 'Partially Aware' },
+  { value: 'unaware', label: 'Unaware / Unconscious' },
+  { value: 'confused', label: 'Confused' },
+  { value: 'unknown', label: 'Unknown' }
 ]
 
-// Duration Options
-export const DURATION_OPTIONS = [
-  'Less than 30 seconds',
-  '30 seconds - 1 minute',
-  '1-2 minutes',
-  '2-5 minutes',
-  '5-10 minutes',
-  'More than 10 minutes',
-  'Unknown'
+// === DURATION (typed) ===
+export const DURATION_OPTIONS: { value: DurationCategory; label: string; isStatusEpilepticus?: boolean }[] = [
+  { value: 'under-30s', label: 'Less than 30 seconds' },
+  { value: '30s-1min', label: '30 seconds – 1 minute' },
+  { value: '1-2min', label: '1–2 minutes' },
+  { value: '2-5min', label: '2–5 minutes' },
+  { value: '5-10min', label: '5–10 minutes', isStatusEpilepticus: true },
+  { value: 'over-10min', label: 'More than 10 minutes', isStatusEpilepticus: true },
+  { value: 'unknown', label: 'Unknown' },
 ]
 
-// Recovery Time Options
 export const RECOVERY_TIME_OPTIONS = [
-  'Immediate (0-5 minutes)',
-  'Quick (5-15 minutes)',
-  'Moderate (15-30 minutes)',
-  'Slow (30-60 minutes)',
-  'Extended (1-2 hours)',
+  'Immediate (0–5 minutes)',
+  'Quick (5–15 minutes)',
+  'Moderate (15–30 minutes)',
+  'Slow (30–60 minutes)',
+  'Extended (1–2 hours)',
   'Very Long (2+ hours)',
   'Still recovering'
 ]
 
-// Helper Functions
-export const getSeizureTypeColor = (type: string): string => {
-  const colorMap: { [key: string]: string } = {
-    'Focal Aware (Simple Partial)': '#10b981', // green
-    'Focal Impaired Awareness (Complex Partial)': '#f59e0b', // amber
-    'Focal to Bilateral Tonic-Clonic': '#ef4444', // red
-    'Generalized Tonic-Clonic': '#dc2626', // dark red
-    'Absence': '#8b5cf6', // purple
-    'Myoclonic': '#06b6d4', // cyan
-    'Atonic (Drop Attack)': '#f97316', // orange
-    'Tonic': '#84cc16', // lime
-    'Clonic': '#ec4899', // pink
-    'Unknown/Uncertain': '#6b7280' // gray
+// === SEVERITY ===
+export const SEVERITY_LABELS = [
+  { value: 1, label: 'Very Mild', color: 'text-green-600' },
+  { value: 2, label: 'Mild', color: 'text-green-500' },
+  { value: 3, label: 'Mild-Moderate', color: 'text-yellow-600' },
+  { value: 4, label: 'Moderate', color: 'text-yellow-500' },
+  { value: 5, label: 'Moderate', color: 'text-orange-500' },
+  { value: 6, label: 'Moderate-Severe', color: 'text-orange-600' },
+  { value: 7, label: 'Severe', color: 'text-red-500' },
+  { value: 8, label: 'Very Severe', color: 'text-red-600' },
+  { value: 9, label: 'Extreme', color: 'text-red-700' },
+  { value: 10, label: 'Crisis (call 911)', color: 'text-red-800' }
+]
+
+// === RELATED TRACKERS ===
+export const RELATED_TRACKERS = [
+  { id: 'medications', name: 'Medications', icon: '💊', description: 'AED adherence is a top trigger', path: '/medications' },
+  { id: 'sleep', name: 'Sleep', icon: '😴', description: 'Sleep deprivation correlation', path: '/sleep' },
+  { id: 'mind-mood', name: 'Mind & Mood', icon: '🧠', description: 'Stress / mood correlation', path: '/mental-health' },
+  { id: 'appointments', name: 'Appointments', icon: '🩺', description: 'Track neuro follow-ups', path: '/providers' },
+]
+
+// === HELPERS ===
+export const getEpisodeTypeInfo = (episodeType?: SeizureEpisodeType | string) => {
+  if (!episodeType) return EPISODE_TYPES[7] // general
+  return EPISODE_TYPES.find(t => t.id === episodeType) || EPISODE_TYPES[7]
+}
+
+export const getEpisodeTypeColor = (episodeType?: SeizureEpisodeType | string): string => {
+  const colorMap: Record<string, string> = {
+    'focal-aware': '#10b981',
+    'focal-impaired': '#f59e0b',
+    'tonic-clonic': '#dc2626',
+    'absence': '#8b5cf6',
+    'myoclonic': '#06b6d4',
+    'atonic': '#f97316',
+    'autonomic': '#ec4899',
+    'general': '#6b7280',
   }
-  return colorMap[type] || '#6b7280'
+  return colorMap[episodeType || 'general'] || '#6b7280'
 }
 
-export const getSeverityLevel = (entry: any): 'Low' | 'Medium' | 'High' | 'Critical' => {
-  let score = 0
-  
-  // Duration scoring
-  if (entry.duration.includes('5-10') || entry.duration.includes('More than 10')) score += 3
-  else if (entry.duration.includes('2-5')) score += 2
-  else if (entry.duration.includes('1-2')) score += 1
-  
-  // Consciousness scoring
-  if (entry.consciousness === 'Unaware/Unconscious') score += 2
-  else if (entry.consciousness === 'Confused') score += 1
-  
-  // Injury scoring
-  if (entry.injuriesOccurred) score += 2
-  
-  // Recovery scoring
-  if (entry.recoveryTime.includes('Extended') || entry.recoveryTime.includes('Very Long')) score += 2
-  else if (entry.recoveryTime.includes('Slow')) score += 1
-  
-  if (score >= 6) return 'Critical'
-  if (score >= 4) return 'High'
-  if (score >= 2) return 'Medium'
-  return 'Low'
+export const getSeverityLabel = (severity: number) => {
+  return SEVERITY_LABELS.find(s => s.value === severity)?.label || 'Unknown'
 }
 
-export const formatDuration = (duration: string): string => {
-  return duration.replace('Less than ', '<').replace('More than ', '>')
+export const getSeverityColor = (severity: number) => {
+  return SEVERITY_LABELS.find(s => s.value === severity)?.color || 'text-gray-500'
 }
 
-// Seizure Safety Messages
+export const isLongDuration = (cat?: DurationCategory): boolean => {
+  return cat === '5-10min' || cat === 'over-10min'
+}
+
+// === 🚨 RED FLAG WARNINGS — Status Epilepticus + emergency criteria ===
+// Status epilepticus = a single seizure ≥5 min OR multiple seizures without recovery between.
+// This is a NEUROLOGICAL EMERGENCY with high mortality if untreated.
+export const RED_FLAG_911_CRITERIA = [
+  'Single seizure lasting 5 minutes or longer (status epilepticus — call 911)',
+  'Multiple seizures in a row without regaining awareness between them (status epilepticus)',
+  'First-ever seizure — even if brief, get evaluated',
+  'Seizure with serious injury (head injury, broken bone, deep cut)',
+  'Seizure in water (pool, bath, lake) — even if brief',
+  'Difficulty breathing or staying conscious AFTER the seizure ends',
+  'Seizure during pregnancy',
+  'Seizure with high fever (especially in adults)',
+  'Seizure after head injury, drug overdose, or poisoning',
+  "Anything that feels different, scarier, or worse than this person's usual seizures",
+]
+
+// Returns array of red-flag warning strings. Empty = no red flags detected.
+export const getRedFlagWarnings = (entry: {
+  episodeType?: string
+  durationCategory?: string
+  durationMinutes?: number
+  statusEpilepticus?: boolean
+  multipleConsecutive?: boolean
+  noRecoveryBetween?: boolean
+  injuriesOccurred?: boolean
+  injuryRequiredER?: boolean
+  symptoms?: string[]
+  consciousness?: string
+}): string[] => {
+  const flags: string[] = []
+  const symptoms = entry.symptoms || []
+
+  // STATUS EPILEPTICUS — single ≥5min
+  if (
+    entry.statusEpilepticus ||
+    entry.durationCategory === '5-10min' ||
+    entry.durationCategory === 'over-10min' ||
+    (entry.durationMinutes && entry.durationMinutes >= 5)
+  ) {
+    flags.push(`Status epilepticus — seizure lasting 5 minutes or longer is a NEUROLOGICAL EMERGENCY. Call 911 NOW.`)
+  }
+
+  // Multiple consecutive without recovery
+  if (entry.multipleConsecutive && entry.noRecoveryBetween) {
+    flags.push(`Multiple seizures without recovery between — also status epilepticus. Call 911 NOW.`)
+  }
+
+  // ER-level injury
+  if (entry.injuryRequiredER) {
+    flags.push(`Injury severe enough for ER — get evaluated for both the injury and the seizure cause.`)
+  }
+
+  // Severe symptoms during/after
+  if (symptoms.includes('Cyanosis (Blue Lips)')) {
+    flags.push(`Cyanosis (blue lips) indicates oxygen problem — call 911 if not resolving immediately post-seizure.`)
+  }
+
+  // Persistent unresponsiveness post-seizure
+  if (entry.consciousness === 'unaware' && entry.durationMinutes && entry.durationMinutes >= 3) {
+    flags.push(`Prolonged unresponsiveness — confirm breathing, call 911 if not regaining awareness.`)
+  }
+
+  return flags
+}
+
+// Interim measures while waiting for help / between events. Conservative seizure first-aid.
+export const getInterimMeasures = (entry: {
+  episodeType?: string
+  durationCategory?: string
+  durationMinutes?: number
+  statusEpilepticus?: boolean
+  symptoms?: string[]
+}): string[] => {
+  const measures: string[] = []
+
+  // Universal seizure first-aid for the witness/caregiver
+  measures.push(
+    'STAY: stay with the person until fully alert. TIME: note when it started — duration drives 911 decision. SAFE: clear hard/sharp objects, cushion the head, loosen anything tight around the neck.'
+  )
+  measures.push(
+    'DO NOT put anything in their mouth. DO NOT hold them down. DO NOT try to stop the movements.'
+  )
+  measures.push(
+    'After convulsions stop: turn person onto their side (recovery position) to keep airway clear. Do not give food, water, or pills until fully alert.'
+  )
+
+  // If duration is approaching 5 min — call 911 NOW
+  if (
+    entry.durationCategory === '2-5min' ||
+    (entry.durationMinutes && entry.durationMinutes >= 2 && entry.durationMinutes < 5)
+  ) {
+    measures.push(
+      'Duration approaching 5 minutes — start dialing 911 NOW. Do not wait for the 5-minute mark.'
+    )
+  }
+
+  // Active status epilepticus
+  if (
+    entry.statusEpilepticus ||
+    entry.durationCategory === '5-10min' ||
+    entry.durationCategory === 'over-10min'
+  ) {
+    measures.push(
+      'If a rescue medication has been prescribed (Diastat, Valtoco, Nayzilam, etc.), administer per the personal seizure action plan. EMS is still required even after rescue med.'
+    )
+  }
+
+  return measures
+}
+
+// === SAFETY / TOAST MESSAGES ===
 export const SEIZURE_SAFETY_MESSAGES = [
   "⚡ Seizure recorded. Take care of yourself. 💚",
   "🛡️ Episode tracked. Rest and recover safely. 💜",
@@ -416,4 +442,41 @@ export const SEIZURE_SAFETY_MESSAGES = [
 
 export const getRandomSafetyMessage = (): string => {
   return SEIZURE_SAFETY_MESSAGES[Math.floor(Math.random() * SEIZURE_SAFETY_MESSAGES.length)]
+}
+
+// === LEGACY EXPORTS (preserved for backwards compatibility with seizure-history etc) ===
+export const SEIZURE_TYPES = EPISODE_TYPES.map(t => t.name) // legacy flat string list
+export const formatDuration = (duration?: string): string => {
+  if (!duration) return ''
+  return duration.replace('Less than ', '<').replace('More than ', '>')
+}
+
+export const getSeizureTypeColor = (type?: string): string => {
+  // accept either legacy seizureType strings or new episodeType ids
+  if (!type) return '#6b7280'
+  const newId = LEGACY_TYPE_MAP[type] || (type as SeizureEpisodeType)
+  return getEpisodeTypeColor(newId)
+}
+
+export const getSeverityLevel = (entry: any): 'Low' | 'Medium' | 'High' | 'Critical' => {
+  let score = 0
+  const dur = entry.durationCategory || entry.duration || ''
+  if (typeof dur === 'string') {
+    if (dur.includes('5-10') || dur.includes('over-10') || dur.includes('More than 10')) score += 3
+    else if (dur.includes('2-5')) score += 2
+    else if (dur.includes('1-2')) score += 1
+  }
+  if (entry.consciousness === 'unaware' || entry.consciousness === 'Unaware/Unconscious') score += 2
+  else if (entry.consciousness === 'confused' || entry.consciousness === 'Confused') score += 1
+  if (entry.injuriesOccurred) score += 2
+  if (entry.statusEpilepticus) score += 4
+  const rec = entry.recoveryTime || ''
+  if (typeof rec === 'string') {
+    if (rec.includes('Extended') || rec.includes('Very Long')) score += 2
+    else if (rec.includes('Slow')) score += 1
+  }
+  if (score >= 6) return 'Critical'
+  if (score >= 4) return 'High'
+  if (score >= 2) return 'Medium'
+  return 'Low'
 }

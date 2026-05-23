@@ -83,6 +83,18 @@ export interface ImageBlob {
 // DEXIE DATABASE CLASS
 // ============================================================================
 
+// Pattern snapshot — persisted output of pattern engine runs
+export interface PatternSnapshot {
+  id?: number
+  run_at: string  // ISO timestamp
+  window_days: number  // analysis window
+  insight_count: number
+  high_priority_count: number
+  snapshot_json: string  // serialized AnalysisResult — the full run output
+  summary: string  // human-readable one-liner
+  is_auto: boolean  // auto-snapshot vs user-triggered
+}
+
 export class ChaosCommandCenterDB extends Dexie {
   // Main data table - everything organized by date first
   daily_data!: Table<DailyDataRecord>;
@@ -93,20 +105,31 @@ export class ChaosCommandCenterDB extends Dexie {
   // Image blob storage
   image_blobs!: Table<ImageBlob>;
 
+  // Pattern engine snapshots (v0.4.6+ — persistence + history view)
+  pattern_snapshots!: Table<PatternSnapshot>;
+
   constructor(userPin?: string) {
     // Use PIN-based database name for multi-user support
     const dbName = userPin ? `ChaosCommand_${userPin}` : 'ChaosCommandCenterDB';
     super(dbName);
-    
+
     this.version(1).stores({
       // Main data table with compound indexes for efficient queries
       daily_data: '++id, date, [date+category], [date+category+subcategory], category, subcategory, *tags, metadata.created_at',
-      
+
       // User tag management
       user_tags: '++id, tag_name, *category_restrictions, is_hidden, created_at',
-      
+
       // Image blob storage
       image_blobs: '++id, blob_key, mime_type, size, created_at, *linked_records'
+    });
+
+    // v2: add pattern_snapshots table (Dexie migrates additively — no data loss)
+    this.version(2).stores({
+      daily_data: '++id, date, [date+category], [date+category+subcategory], category, subcategory, *tags, metadata.created_at',
+      user_tags: '++id, tag_name, *category_restrictions, is_hidden, created_at',
+      image_blobs: '++id, blob_key, mime_type, size, created_at, *linked_records',
+      pattern_snapshots: '++id, run_at, window_days, is_auto'
     });
   }
 }

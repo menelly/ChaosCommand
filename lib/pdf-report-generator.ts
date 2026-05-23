@@ -47,18 +47,81 @@ const ICD10_MAP: Record<string, string> = {
   'pain': 'R52 — Pain, unspecified',
   'head-pain': 'G43.909 — Migraine, unspecified',
   'dysautonomia': 'G90.9 — Disorder of autonomic nervous system, unspecified',
-  'seizure': 'R56.9 — Unspecified convulsions',
+  'seizure': 'R56.9 — Unspecified convulsions / G40.901 — Epilepsy, unspecified',
   'brain-fog': 'R41.82 — Altered mental status, unspecified',
   'upper-digestive': 'K30 — Functional dyspepsia',
-  'bathroom': 'R19.7 — Diarrhea, unspecified / K59.00 — Constipation',
+  'bathroom': 'R19.7 — Diarrhea / K59.00 — Constipation / N39.0 — UTI',
   'anxiety': 'F41.9 — Anxiety disorder, unspecified',
+  'anxiety-tracker': 'F41.9 — Anxiety disorder, unspecified',
   'mental-health': 'F39 — Unspecified mood [affective] disorder',
   'sleep': 'G47.9 — Sleep disorder, unspecified',
   'energy': 'R53.83 — Other fatigue',
-  'sensory': 'R44.8 — Other symptoms involving sensations and perceptions',
+  'sensory': 'R44.8 — Sensory perception disturbance',
+  'sensory-tracker': 'R44.8 — Sensory perception disturbance',
   'reproductive-health': 'N94.6 — Dysmenorrhea, unspecified',
   'diabetes': 'E11.9 — Type 2 diabetes mellitus without complications',
   'food-choice': 'Z71.3 — Dietary counseling and surveillance',
+  // v0.4.x tracker additions
+  'cardiac': 'R00.2 — Palpitations / I49.9 — Cardiac arrhythmia, unspecified',
+  'respiratory': 'R06.02 — Shortness of breath / J45.909 — Asthma, unspecified',
+  'skin': 'L29.9 — Pruritus / L50.9 — Urticaria, unspecified',
+  'joint': 'M25.50 — Pain in unspecified joint',
+  'substance': 'Z72.0 — Tobacco use / F10.10 — Alcohol use, unspecified',
+  'food-allergens': 'T78.40XA — Allergy, unspecified, initial encounter / K90.0 — Celiac disease',
+  'self-care': 'Z73.6 — Limitation of activities due to disability',
+  'self-care-tracker': 'Z73.6 — Limitation of activities due to disability',
+  'movement': 'Z71.82 — Exercise counseling',
+  'hydration': 'E86.0 — Dehydration (when applicable)',
+  'crisis-support': 'Z65.8 — Other specified problems related to psychosocial circumstances',
+  'coping': 'Z73.3 — Stress, not elsewhere classified',
+  'weather': 'Z77.119 — Contact with environmental factor, unspecified',
+  'weather-environment': 'Z77.119 — Contact with environmental factor, unspecified',
+}
+
+// Display names — fixes the "head-pain" → "Head" truncation bug
+const TRACKER_DISPLAY_NAMES: Record<string, string> = {
+  'pain': 'Pain',
+  'head-pain': 'Head Pain',
+  'dysautonomia': 'Dysautonomia',
+  'seizure': 'Seizure',
+  'brain-fog': 'Brain Fog',
+  'upper-digestive': 'Upper Digestive',
+  'bathroom': 'Bathroom',
+  'anxiety': 'Anxiety',
+  'anxiety-tracker': 'Anxiety',
+  'mental-health': 'Mind & Mood',
+  'sleep': 'Sleep',
+  'energy': 'Energy',
+  'sensory': 'Sensory',
+  'sensory-tracker': 'Sensory',
+  'reproductive-health': 'Reproductive Health',
+  'diabetes': 'Diabetes',
+  'food-choice': 'Food Choice',
+  'cardiac': 'Cardiac',
+  'respiratory': 'Respiratory',
+  'skin': 'Skin',
+  'joint': 'Joint / MSK',
+  'substance': 'Substance',
+  'food-allergens': 'Food Reactions / Allergens',
+  'self-care': 'Self-Care',
+  'self-care-tracker': 'Self-Care',
+  'movement': 'Movement',
+  'hydration': 'Hydration',
+  'crisis-support': 'Crisis Support',
+  'coping': 'Coping',
+  'weather': 'Weather / Environment',
+  'weather-environment': 'Weather / Environment',
+  'medications': 'Medications',
+  'main': 'Journal',
+  'daily-prompts': 'Daily Prompts',
+}
+
+const displayName = (sub: string): string => {
+  if (TRACKER_DISPLAY_NAMES[sub]) return TRACKER_DISPLAY_NAMES[sub]
+  // Fallback: prettify the slug WITHOUT splitting on hyphen (the v1 bug)
+  // and strip duplicate-word artifacts like "Hydration Hydration" → "Hydration"
+  const dedup = sub.replace(/^(\w+(?:[-\s]\w+)*)\s+\1$/i, '$1')
+  return dedup.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 }
 
 // Colors
@@ -153,27 +216,33 @@ class PDFWriter {
   }
 
   sectionHeader(text: string) {
-    this.checkPage(30)
-    this.y += 8
-    this.doc.setFontSize(13)
+    this.checkPage(35)
+    this.y += 12 // more breathing room above section headers
+    this.doc.setFontSize(14)
     this.doc.setTextColor(COLORS.section)
     this.doc.setFont('helvetica', 'bold')
     this.doc.text(text, this.marginLeft, this.y)
-    this.y += 4
+    this.y += 5
+    // Purple accent line (short, colored) + hairline rest of width for elegance
+    this.doc.setDrawColor(COLORS.purple)
+    this.doc.setLineWidth(1.2)
+    this.doc.line(this.marginLeft, this.y, this.marginLeft + 36, this.y)
     this.doc.setDrawColor(COLORS.gridLine)
     this.doc.setLineWidth(0.3)
-    this.doc.line(this.marginLeft, this.y, this.pageWidth - this.marginRight, this.y)
-    this.y += 8
+    this.doc.line(this.marginLeft + 38, this.y, this.pageWidth - this.marginRight, this.y)
+    this.y += 10
   }
 
   subSection(text: string) {
-    this.checkPage(20)
-    this.y += 4
-    this.doc.setFontSize(11)
+    this.checkPage(22)
+    this.y += 6
+    this.doc.setFontSize(10.5)
     this.doc.setTextColor(COLORS.subsection)
     this.doc.setFont('helvetica', 'bold')
-    this.doc.text(text, this.marginLeft, this.y)
-    this.y += 7
+    this.doc.text(text.toUpperCase(), this.marginLeft, this.y)
+    // Letter-spacing approximation: jsPDF doesn't have it directly, so we just use
+    // uppercase + bold to distinguish from h2 and body
+    this.y += 8
   }
 
   body(text: string) {
@@ -183,7 +252,39 @@ class PDFWriter {
     this.doc.setFont('helvetica', 'normal')
     const lines = this.doc.splitTextToSize(text, this.contentWidth - 10)
     this.doc.text(lines, this.marginLeft + 5, this.y)
-    this.y += lines.length * 4.5 + 3
+    this.y += lines.length * 5 + 4 // was * 4.5 + 3 — more breathing room
+  }
+
+  bulletBody(label: string, value: string) {
+    // Indented bullet with bold label + body-color value, wraps gracefully.
+    this.checkPage(15)
+    const bulletX = this.marginLeft + 5
+    const labelX = this.marginLeft + 11
+    this.doc.setFontSize(9)
+    // Purple bullet
+    this.doc.setTextColor(COLORS.purple)
+    this.doc.setFont('helvetica', 'bold')
+    this.doc.text('•', bulletX, this.y)
+    // Bold label
+    this.doc.setTextColor(COLORS.section)
+    this.doc.setFont('helvetica', 'bold')
+    const labelText = `${label}:`
+    this.doc.text(labelText, labelX, this.y)
+    const labelWidth = this.doc.getTextWidth(labelText)
+    // Body-color value
+    this.doc.setTextColor(COLORS.body)
+    this.doc.setFont('helvetica', 'normal')
+    const valueX = labelX + labelWidth + 3
+    const valueWidth = this.contentWidth - (valueX - this.marginLeft) - 5
+    const lines = this.doc.splitTextToSize(value, valueWidth)
+    this.doc.text(lines, valueX, this.y)
+    // Hanging indent for subsequent lines (if value wraps)
+    if (lines.length > 1) {
+      // Re-render with proper hanging indent — first line at valueX, rest at labelX
+      // Actually jsPDF rendered them all starting at valueX. For multi-line values,
+      // we accept that wraps continue from the same x. Acceptable.
+    }
+    this.y += Math.max(1, lines.length) * 5 + 2
   }
 
   finding(text: string) {
@@ -424,44 +525,114 @@ export function generateMedicalReport(data: ReportData): Blob {
   }
 
   // === TRACKED CONDITIONS (ICD-10 for doctor mode) ===
+  // Fix: keep FULL subcategory (don't split on hyphen — that turned head-pain → "Head")
+  // Fix v0.4.9: collapse duplicate tracker rows by display name so "hydration",
+  // "Hydration", and "Hydration Hydration" all merge into one "Hydration" row.
   const trackerCounts: Record<string, number> = {}
   const trackerDayCounts: Record<string, Set<string>> = {}
+  const displayToKey: Record<string, string> = {} // remember a canonical key for ICD lookup
 
   for (const r of trackerData) {
     const sub = r.subcategory || ''
-    const base = sub.includes('-') ? sub.split('-')[0] : sub
-    trackerCounts[base] = (trackerCounts[base] || 0) + 1
-    if (!trackerDayCounts[base]) trackerDayCounts[base] = new Set()
-    if (r.date) trackerDayCounts[base].add(r.date)
+    if (!sub) continue
+    const display = displayName(sub)
+    trackerCounts[display] = (trackerCounts[display] || 0) + 1
+    if (!trackerDayCounts[display]) trackerDayCounts[display] = new Set()
+    if (r.date) trackerDayCounts[display].add(r.date)
+    // Prefer a key that maps to ICD10_MAP if any
+    if (!displayToKey[display] || (ICD10_MAP[sub] && !ICD10_MAP[displayToKey[display]])) {
+      displayToKey[display] = sub
+    }
+  }
+
+  // Helper: pull top symptom/trigger evidence for a given tracker so doctors
+  // can validate the ICD-10 suggestion against actual tracked content.
+  const collectEvidence = (sub: string): string => {
+    const records = trackerData.filter((r: any) => r.subcategory === sub)
+    const counts: Record<string, number> = {}
+    for (const r of records) {
+      const c = r.content || {}
+      const entries = Array.isArray(c.entries) ? c.entries : [c]
+      for (const e of entries) {
+        const items = [
+          ...(e.symptoms || []),
+          ...(e.physicalSymptoms || []),
+          ...(e.painLocations || e.painLocation || []),
+          ...(e.painCharacter || e.painType || []),
+          ...(e.triggers || []),
+          ...(e.auraSymptoms || []),
+          ...(e.associatedSymptoms || []),
+        ]
+        for (const item of items) {
+          if (typeof item === 'string') counts[item] = (counts[item] || 0) + 1
+        }
+        // Boolean red flags get listed as evidence too
+        const flags: [boolean, string][] = [
+          [!!e.statusEpilepticus, 'status epilepticus'],
+          [!!e.tearingQuality, 'tearing pain'],
+          [!!e.thunderclapPattern || !!e.thunderclapOnset, 'thunderclap onset'],
+          [!!e.worstHeadacheOfLife, 'worst headache of life'],
+          [!!e.epipenUsed, 'EpiPen used'],
+          [!!e.suicidalIdeation, 'suicidal ideation flagged'],
+        ]
+        for (const [present, label] of flags) {
+          if (present) counts[label] = (counts[label] || 0) + 1
+        }
+      }
+    }
+    const top = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 4)
+    return top.length > 0 ? top.map(([k, v]) => `${k} (${v}×)`).join(', ') : ''
   }
 
   if (isDoctor) {
     w.sectionHeader('Tracked Conditions (ICD-10)')
     const sorted = Object.entries(trackerCounts).sort((a, b) => b[1] - a[1])
-    const rows = sorted.map(([id, count]) => [
-      id.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
-      ICD10_MAP[id] || '—',
-      String(trackerDayCounts[id]?.size || 0),
-      String(count),
-    ])
-    w.table(['Condition', 'ICD-10 Code', 'Days', 'Entries'], rows, [100, 200, 60, 60])
-    w.note('ICD-10 codes shown are suggestions based on tracked symptoms and may not match official diagnoses.')
+    const rows = sorted.map(([display, count]) => {
+      const canonicalKey = displayToKey[display]
+      return [
+        display,
+        ICD10_MAP[canonicalKey] || '—',
+        String(trackerDayCounts[display]?.size || 0),
+        String(count),
+      ]
+    })
+    w.table(['Condition', 'ICD-10 Code', 'Days', 'Entries'], rows, [110, 230, 50, 50])
+    w.note('ICD-10 codes shown are suggestions based on tracked symptoms and may not match official diagnoses. Supporting evidence below.')
+
+    // Supporting evidence subsection — key signals that validate each ICD suggestion
+    w.spacer(4)
+    w.subSection('Supporting evidence (top symptoms/triggers per tracker)')
+    for (const [display] of sorted) {
+      const canonicalKey = displayToKey[display]
+      const evidence = collectEvidence(canonicalKey)
+      if (evidence) {
+        w.bulletBody(display, evidence)
+      }
+    }
     w.spacer(6)
   } else {
     w.sectionHeader('What Was Tracked')
     const sorted = Object.entries(trackerCounts).sort((a, b) => b[1] - a[1])
-    for (const [id, count] of sorted) {
-      const label = id.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
-      w.body(`${label}: ${count} entries`)
+    for (const [display, count] of sorted) {
+      w.bulletBody(display, `${count} entries`)
     }
   }
 
-  // === PAIN SUMMARY ===
+  // === PAIN ASSESSMENT — rich for doctors ===
   const painEntries = trackerData.filter(r => r.subcategory === 'pain')
   if (painEntries.length) {
     w.sectionHeader(isDoctor ? 'Pain Assessment' : 'Pain Summary')
     const painLevels: number[] = []
     const weeklyPain: Record<string, number[]> = {}
+    const locations: Record<string, number> = {}
+    const characters: Record<string, number> = {}
+    const patterns: Record<string, number> = {}
+    const triggers: Record<string, number> = {}
+    const treatmentEff: Record<string, number[]> = {}
+    let tearingCount = 0, thunderclapCount = 0, cardaCount = 0
+    let erCount = 0, emsCount = 0
+    const flareDeltas: number[] = []
+    const radiation: Record<string, number> = {}
 
     for (const r of painEntries) {
       const content = r.content || {}
@@ -473,6 +644,30 @@ export function generateMedicalReport(data: ReportData): Blob {
           if (!weeklyPain[week]) weeklyPain[week] = []
           weeklyPain[week].push(Number(e.painLevel))
         }
+        ;(e.painLocations || e.painLocation || []).forEach((l: string) => { locations[l] = (locations[l] || 0) + 1 })
+        ;(e.painCharacter || e.painType || []).forEach((c: string) => { characters[c] = (characters[c] || 0) + 1 })
+        ;(e.painPattern || e.painQuality || []).forEach((p: string) => { patterns[p] = (patterns[p] || 0) + 1 })
+        ;(e.triggers || e.painTriggers || []).forEach((t: string) => { triggers[t] = (triggers[t] || 0) + 1 })
+        ;(e.radiatesTo || []).forEach((r: string) => { radiation[r] = (radiation[r] || 0) + 1 })
+        if (typeof e.effectiveness === 'number') {
+          ;(e.treatments || []).forEach((t: string) => {
+            if (!treatmentEff[t]) treatmentEff[t] = []
+            treatmentEff[t].push(e.effectiveness)
+          })
+          ;(e.medications || []).forEach((m: string) => {
+            const key = `💊 ${m}`
+            if (!treatmentEff[key]) treatmentEff[key] = []
+            treatmentEff[key].push(e.effectiveness)
+          })
+        }
+        if (e.tearingQuality) tearingCount++
+        if (e.thunderclapPattern) thunderclapCount++
+        if (e.legWeakness && e.bowelBladderChanges) cardaCount++
+        if (e.erVisitRequired) erCount++
+        if (e.emergencyServicesCalled) emsCount++
+        if (e.episodeType === 'chronic-flare' && typeof e.baselinePainLevel === 'number' && typeof e.painLevel === 'number') {
+          flareDeltas.push(e.painLevel - e.baselinePainLevel)
+        }
       }
     }
 
@@ -480,21 +675,459 @@ export function generateMedicalReport(data: ReportData): Blob {
       const avg = painLevels.reduce((a, b) => a + b, 0) / painLevels.length
       const maxP = Math.max(...painLevels)
       const minP = Math.min(...painLevels)
+      w.body(isDoctor
+        ? `Mean pain severity: ${avg.toFixed(1)}/10 (range ${minP}-${maxP}, n=${painLevels.length} entries)`
+        : `Average pain level: ${avg.toFixed(1)}/10 (worst: ${maxP}, best: ${minP}, ${painLevels.length} entries)`)
+    }
 
-      if (isDoctor) {
-        w.body(`Mean pain severity: ${avg.toFixed(1)}/10 (range ${minP}-${maxP}, n=${painLevels.length})`)
-      } else {
-        w.body(`Average pain level: ${avg.toFixed(1)} out of 10 (worst: ${maxP}, best: ${minP}, over ${painLevels.length} entries)`)
-      }
+    // Top locations / character / pattern
+    const topN = (obj: Record<string, number>, n = 6) =>
+      Object.entries(obj).sort((a, b) => b[1] - a[1]).slice(0, n).map(([k, v]) => `${k} (${v}×)`).join(', ')
+    if (Object.keys(locations).length) w.body(`Top locations: ${topN(locations)}`)
+    if (Object.keys(characters).length) w.body(`Pain character: ${topN(characters)}`)
+    if (Object.keys(patterns).length) w.body(`Pain pattern: ${topN(patterns)}`)
+    if (Object.keys(radiation).length) w.body(`Radiation pattern: ${topN(radiation)}`)
+    if (Object.keys(triggers).length) w.body(`Top triggers: ${topN(triggers)}`)
 
-      const weeks = Object.keys(weeklyPain).sort()
-      if (weeks.length >= 2) {
-        const rows = weeks.map(wk => {
-          const vals = weeklyPain[wk]
-          return [wk, (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1), String(vals.length)]
-        })
-        w.table(['Month', 'Avg Pain', 'Entries'], rows, [100, 80, 60], COLORS.painHeader)
+    // Treatment effectiveness — only treatments used 2+ times
+    const txRanked = Object.entries(treatmentEff)
+      .filter(([, scores]) => scores.length >= 2)
+      .map(([name, scores]) => ({
+        name,
+        avg: scores.reduce((a, b) => a + b, 0) / scores.length,
+        n: scores.length,
+      }))
+      .sort((a, b) => b.avg - a.avg)
+      .slice(0, 8)
+    if (txRanked.length && isDoctor) {
+      w.spacer(2)
+      w.subSection('Treatment effectiveness (2+ uses)')
+      const rows = txRanked.map(t => [t.name, `${(t.avg).toFixed(1)}/10`, String(t.n)])
+      w.table(['Treatment', 'Avg Effectiveness', 'Uses'], rows, [220, 100, 60], COLORS.painHeader)
+    }
+
+    // 🚨 Red flag history — clinically significant
+    const flagLines: string[] = []
+    if (tearingCount > 0) flagLines.push(`Tearing-quality pain reported ${tearingCount}× — aortic dissection differential`)
+    if (thunderclapCount > 0) flagLines.push(`Thunderclap onset reported ${thunderclapCount}× — SAH/RCVS differential`)
+    if (cardaCount > 0) flagLines.push(`Cauda equina pattern (back + leg weakness + bowel/bladder) ${cardaCount}× — surgical-window emergency`)
+    if (erCount > 0) flagLines.push(`ER visit required ${erCount}×`)
+    if (emsCount > 0) flagLines.push(`EMS contacted ${emsCount}×`)
+    if (flagLines.length && isDoctor) {
+      w.spacer(2)
+      w.subSection('Red flags from pain entries')
+      for (const f of flagLines) w.finding(f)
+    }
+
+    // Chronic flare delta — Ren's idea, doctors care about this
+    if (flareDeltas.length >= 2 && isDoctor) {
+      const avgDelta = flareDeltas.reduce((a, b) => a + b, 0) / flareDeltas.length
+      const extreme = flareDeltas.filter(d => d >= 6).length
+      w.spacer(2)
+      w.subSection('Chronic-pain flare delta from baseline')
+      w.body(`${flareDeltas.length} flare events tracked with baseline reference. Average flare: +${avgDelta.toFixed(1)} above baseline. ${extreme} were "extreme" flares (+6 above baseline) — those are the days requiring multi-modal intervention.`)
+    }
+
+    // Monthly trend
+    const weeks = Object.keys(weeklyPain).sort()
+    if (weeks.length >= 2) {
+      w.spacer(2)
+      w.subSection('Pain trend by month')
+      const rows = weeks.map(wk => {
+        const vals = weeklyPain[wk]
+        return [wk, (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1), String(vals.length)]
+      })
+      w.table(['Month', 'Avg Pain', 'Entries'], rows, [100, 80, 60], COLORS.painHeader)
+    }
+  }
+
+  // === HEAD PAIN — multi-rescue + baseline-delta + aura ===
+  const headPainEntries = trackerData.filter(r => r.subcategory === 'head-pain')
+  if (headPainEntries.length && isDoctor) {
+    w.sectionHeader('Head Pain Assessment')
+    let total = 0, multiRescue = 0, withAura = 0, whol = 0, thunderclap = 0
+    const intensities: number[] = []
+    const flareDeltas: number[] = []
+    const types: Record<string, number> = {}
+    const triggers: Record<string, number> = {}
+    const treatmentEff: Record<string, number[]> = {}
+    for (const r of headPainEntries) {
+      const entries = Array.isArray(r.content?.entries) ? r.content.entries : []
+      for (const e of entries) {
+        total++
+        if (typeof e.painIntensity === 'number') intensities.push(e.painIntensity)
+        if (e.rescueRedosed || (Array.isArray(e.rescueMedicationsTaken) && e.rescueMedicationsTaken.length >= 2)) multiRescue++
+        if (e.auraPresent) withAura++
+        if (e.worstHeadacheOfLife || e.episodeType === 'worst-of-life') whol++
+        if (e.thunderclapOnset) thunderclap++
+        if (e.episodeType) types[e.episodeType] = (types[e.episodeType] || 0) + 1
+        ;(e.triggers || []).forEach((t: string) => { triggers[t] = (triggers[t] || 0) + 1 })
+        if (typeof e.baselineHeadachePain === 'number' && typeof e.painIntensity === 'number') {
+          flareDeltas.push(e.painIntensity - e.baselineHeadachePain)
+        }
+        if (typeof e.treatmentEffectiveness === 'number') {
+          ;(e.treatments || []).forEach((t: string) => {
+            if (!treatmentEff[t]) treatmentEff[t] = []
+            treatmentEff[t].push(e.treatmentEffectiveness)
+          })
+        }
       }
+    }
+    if (intensities.length) {
+      const avg = intensities.reduce((a, b) => a + b, 0) / intensities.length
+      w.body(`${total} episodes. Mean intensity ${avg.toFixed(1)}/10. With aura: ${withAura} (${Math.round(withAura/total*100)}%).`)
+    }
+    if (whol > 0) w.finding(`🚨 "Worst headache of life" reported ${whol}× — SAH workup if not yet done.`)
+    if (thunderclap > 0) w.finding(`🚨 Thunderclap onset reported ${thunderclap}× — SAH/RCVS differential.`)
+    if (multiRescue > 0) w.body(`Multi-rescue migraine days (Nurtec + Imitrex etc.): ${multiRescue} — suggests acute regimen may be undertreated; preventive escalation discussion warranted.`)
+    if (flareDeltas.length >= 2) {
+      const avgD = flareDeltas.reduce((a, b) => a + b, 0) / flareDeltas.length
+      const extreme = flareDeltas.filter(d => d >= 5).length
+      w.body(`Baseline-delta tracking: average +${avgD.toFixed(1)} above patient's typical-headache-day baseline (n=${flareDeltas.length}). ${extreme} extreme flares (+5).`)
+    }
+    const typeRows = Object.entries(types).sort((a, b) => b[1] - a[1]).map(([t, c]) => [t, String(c)])
+    if (typeRows.length) {
+      w.subSection('Episode type distribution')
+      w.table(['Type', 'Count'], typeRows, [200, 60])
+    }
+    const trigEntries = Object.entries(triggers).sort((a, b) => b[1] - a[1]).slice(0, 6)
+    if (trigEntries.length) w.body(`Top triggers: ${trigEntries.map(([t, c]) => `${t} (${c}×)`).join(', ')}`)
+    const txRanked = Object.entries(treatmentEff)
+      .filter(([, s]) => s.length >= 2)
+      .map(([name, s]) => ({ name, avg: s.reduce((a, b) => a + b, 0) / s.length, n: s.length }))
+      .sort((a, b) => b.avg - a.avg).slice(0, 6)
+    if (txRanked.length) {
+      w.subSection('Treatment effectiveness (2+ uses)')
+      w.table(['Treatment', 'Avg/10', 'Uses'], txRanked.map(t => [t.name, t.avg.toFixed(1), String(t.n)]), [240, 80, 60], COLORS.painHeader)
+    }
+  }
+
+  // === SEIZURE — status epi, autonomic, rescue meds ===
+  const seizureEntries = trackerData.filter(r => r.subcategory === 'seizure')
+  if (seizureEntries.length && isDoctor) {
+    w.sectionHeader('Seizure Assessment')
+    let total = 0, statusEpi = 0, autonomic = 0, withAura = 0, rescueUsed = 0, ems = 0, injuries = 0
+    const types: Record<string, number> = {}
+    const triggers: Record<string, number> = {}
+    const symptoms: Record<string, number> = {}
+    for (const r of seizureEntries) {
+      const entries = Array.isArray(r.content?.entries) ? r.content.entries : [r.content]
+      for (const e of entries) {
+        if (!e) continue
+        total++
+        if (e.statusEpilepticus) statusEpi++
+        if (e.episodeType === 'autonomic') autonomic++
+        if (e.auraPresent) withAura++
+        if (e.rescueMedicationUsed) rescueUsed++
+        if (e.emergencyServicesCalled) ems++
+        if (e.injuriesOccurred) injuries++
+        const t = e.episodeType || e.seizureType
+        if (t) types[t] = (types[t] || 0) + 1
+        ;(e.triggers || []).forEach((tr: string) => { triggers[tr] = (triggers[tr] || 0) + 1 })
+        ;(e.symptoms || e.seizureSymptoms || []).forEach((s: string) => { symptoms[s] = (symptoms[s] || 0) + 1 })
+      }
+    }
+    w.body(`${total} seizure events recorded. Aura present in ${withAura} (${total ? Math.round(withAura/total*100) : 0}%). Rescue med used: ${rescueUsed}×. EMS: ${ems}×. Injuries: ${injuries}×.`)
+    if (statusEpi > 0) w.finding(`🚨 Status epilepticus events: ${statusEpi} — neurological emergency, neurology follow-up indicated.`)
+    if (autonomic >= 3) w.finding(`Autonomic seizure pattern: ${autonomic} events — often misdiagnosed as POTS/MCAS/panic; consider EEG with autonomic monitoring.`)
+    const typeRows = Object.entries(types).sort((a, b) => b[1] - a[1]).map(([t, c]) => [String(t), String(c)])
+    if (typeRows.length) {
+      w.subSection('Episode type distribution')
+      w.table(['Type', 'Count'], typeRows, [240, 60])
+    }
+    const symRows = Object.entries(symptoms).sort((a, b) => b[1] - a[1]).slice(0, 8)
+    if (symRows.length) w.body(`Top ictal symptoms: ${symRows.map(([s, c]) => `${s} (${c}×)`).join(', ')}`)
+    const trigRows = Object.entries(triggers).sort((a, b) => b[1] - a[1]).slice(0, 6)
+    if (trigRows.length) w.body(`Top triggers: ${trigRows.map(([s, c]) => `${s} (${c}×)`).join(', ')}`)
+  }
+
+  // === FOOD REACTIONS / ALLERGENS ===
+  const foodEntries = trackerData.filter(r => r.subcategory === 'food-allergens')
+  if (foodEntries.length && isDoctor) {
+    w.sectionHeader('Food Reactions / Allergen Assessment')
+    let total = 0, anaphylaxis = 0, celiac = 0, intolerance = 0, epipen = 0, er = 0, hosp = 0
+    let aftermathBrainFog = 0, aftermathJoint = 0, aftermathFatigue = 0, aftermathMood = 0, delayed = 0
+    const allergens: Record<string, number> = {}
+    const sources: Record<string, number> = {}
+    const delays: number[] = []
+    for (const r of foodEntries) {
+      const entries = Array.isArray(r.content?.entries) ? r.content.entries : [r.content]
+      for (const e of entries) {
+        if (!e) continue
+        total++
+        if (e.episodeType === 'severe-anaphylaxis' || e.epipenUsed) anaphylaxis++
+        if (e.episodeType === 'celiac-autoimmune') celiac++
+        if (e.episodeType === 'intolerance') intolerance++
+        if (e.epipenUsed) epipen++
+        if (e.erVisitRequired) er++
+        if (e.hospitalizedOvernight) hosp++
+        if (e.brainFogAfter) aftermathBrainFog++
+        if (e.jointPainAfter) aftermathJoint++
+        if (e.fatigueAfter) aftermathFatigue++
+        if (e.moodChangesAfter) aftermathMood++
+        if (e.delayedReaction) delayed++
+        if (typeof e.delayedReactionHours === 'number') delays.push(e.delayedReactionHours)
+        if (e.allergenName) allergens[e.allergenName.toLowerCase()] = (allergens[e.allergenName.toLowerCase()] || 0) + 1
+        if (e.exposureSource) sources[e.exposureSource] = (sources[e.exposureSource] || 0) + 1
+      }
+    }
+    w.body(`${total} reactions tracked. Anaphylaxis: ${anaphylaxis} (EpiPen used ${epipen}×). Celiac/autoimmune: ${celiac}. Intolerance: ${intolerance}. ER: ${er}. Hospitalized: ${hosp}.`)
+    if (anaphylaxis > 0) w.finding(`🚨 Anaphylaxis events: ${anaphylaxis} — allergy/immunology referral + EpiPen Rx renewal indicated.`)
+    if (celiac + intolerance >= 4) {
+      const ce = celiac + intolerance
+      w.subSection('Celiac/intolerance aftermath pattern')
+      w.body(`Across ${ce} celiac/intolerance events: brain fog after ${aftermathBrainFog} (${Math.round(aftermathBrainFog/ce*100)}%), joint pain after ${aftermathJoint} (${Math.round(aftermathJoint/ce*100)}%), fatigue after ${aftermathFatigue} (${Math.round(aftermathFatigue/ce*100)}%), mood changes ${aftermathMood} (${Math.round(aftermathMood/ce*100)}%). Delayed-reaction reported in ${delayed}.`)
+      if (delays.length >= 2) {
+        const avgDelay = delays.reduce((a, b) => a + b, 0) / delays.length
+        w.body(`Average delay from exposure to first symptom: ${avgDelay.toFixed(1)} hours (n=${delays.length}).`)
+      }
+    }
+    const allRows = Object.entries(allergens).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([a, c]) => [a, String(c)])
+    if (allRows.length) {
+      w.subSection('Top reported triggers')
+      w.table(['Allergen / trigger', 'Reactions'], allRows, [240, 80])
+    }
+    const srcRows = Object.entries(sources).sort((a, b) => b[1] - a[1]).slice(0, 6)
+    if (srcRows.length) w.body(`Top exposure sources: ${srcRows.map(([s, c]) => `${s} (${c}×)`).join(', ')}`)
+  }
+
+  // === CARDIAC — rhythm types, syncope, HR ===
+  const cardEntries = trackerData.filter(r => r.subcategory === 'cardiac')
+  if (cardEntries.length && isDoctor) {
+    w.sectionHeader('Cardiac Assessment')
+    let total = 0, syncope = 0, vt = 0, er = 0, ecgFiles = 0
+    const types: Record<string, number> = {}
+    const rhythms: Record<string, number> = {}
+    const hrPeaks: number[] = []
+    for (const r of cardEntries) {
+      const entries = Array.isArray(r.content?.entries) ? r.content.entries : [r.content]
+      for (const e of entries) {
+        if (!e) continue
+        total++
+        if (e.episodeType === 'syncope' || e.locOccurred) syncope++
+        if (e.rhythmType === 'VT') vt++
+        if (e.erVisitRequired) er++
+        if (Array.isArray(e.ecgStripImages) && e.ecgStripImages.length) ecgFiles += e.ecgStripImages.length
+        if (e.episodeType) types[e.episodeType] = (types[e.episodeType] || 0) + 1
+        if (e.rhythmType) rhythms[e.rhythmType] = (rhythms[e.rhythmType] || 0) + 1
+        if (typeof e.hrPeak === 'number') hrPeaks.push(e.hrPeak)
+      }
+    }
+    w.body(`${total} cardiac events. Syncope (full LOC): ${syncope}. ER required: ${er}. ECG strips uploaded: ${ecgFiles}.`)
+    if (vt > 0) w.finding(`🚨 Ventricular tachycardia captured ${vt}× — urgent cardiology / EP consult.`)
+    if (syncope >= 2) w.finding(`Recurrent syncope (${syncope}×) — tilt-table or extended Holter indicated.`)
+    if (hrPeaks.length) {
+      const max = Math.max(...hrPeaks), min = Math.min(...hrPeaks)
+      const avg = hrPeaks.reduce((a, b) => a + b, 0) / hrPeaks.length
+      w.body(`Heart rate peaks: range ${min}-${max}, avg ${avg.toFixed(0)} bpm (n=${hrPeaks.length} events).`)
+    }
+    const rhythmRows = Object.entries(rhythms).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([r, c]) => [r, String(c)])
+    if (rhythmRows.length) {
+      w.subSection('Captured rhythm types')
+      w.table(['Rhythm', 'Count'], rhythmRows, [240, 80])
+    }
+  }
+
+  // === RESPIRATORY ===
+  const respEntries = trackerData.filter(r => r.subcategory === 'respiratory')
+  if (respEntries.length && isDoctor) {
+    w.sectionHeader('Respiratory Assessment')
+    let total = 0, redZone = 0, asthma = 0, allergic = 0, er = 0
+    const types: Record<string, number> = {}
+    for (const r of respEntries) {
+      const entries = Array.isArray(r.content?.entries) ? r.content.entries : [r.content]
+      for (const e of entries) {
+        if (!e) continue
+        total++
+        if (e.peakFlowZone === 'red') redZone++
+        if (e.episodeType === 'asthma-attack') asthma++
+        if (e.episodeType === 'allergic-reaction') allergic++
+        if (e.erVisitRequired) er++
+        if (e.episodeType) types[e.episodeType] = (types[e.episodeType] || 0) + 1
+      }
+    }
+    w.body(`${total} respiratory events. Asthma attacks: ${asthma}. Allergic reactions: ${allergic}. Red-zone peak flow: ${redZone}. ER: ${er}.`)
+    if (redZone >= 1) w.finding(`Red-zone peak flow recorded ${redZone}× — uncontrolled asthma / step-up therapy discussion.`)
+    const typeRows = Object.entries(types).sort((a, b) => b[1] - a[1]).map(([t, c]) => [t, String(c)])
+    if (typeRows.length) w.table(['Episode type', 'Count'], typeRows, [240, 80])
+  }
+
+  // === SKIN ===
+  const skinEntries = trackerData.filter(r => r.subcategory === 'skin')
+  if (skinEntries.length && isDoctor) {
+    w.sectionHeader('Skin Assessment')
+    let total = 0, photos = 0, throatTight = 0, mucous = 0, er = 0
+    const types: Record<string, number> = {}
+    for (const r of skinEntries) {
+      const entries = Array.isArray(r.content?.entries) ? r.content.entries : [r.content]
+      for (const e of entries) {
+        if (!e) continue
+        total++
+        if (Array.isArray(e.photos)) photos += e.photos.length
+        if (e.throatTightness) throatTight++
+        if (e.mucousMembraneInvolvement) mucous++
+        if (e.erVisitRequired) er++
+        if (e.episodeType) types[e.episodeType] = (types[e.episodeType] || 0) + 1
+      }
+    }
+    w.body(`${total} skin events. Photos captured: ${photos} (available in app for dermatology consult). ER: ${er}.`)
+    if (throatTight > 0) w.finding(`Throat tightness with skin reaction reported ${throatTight}× — anaphylaxis pattern.`)
+    if (mucous > 0) w.finding(`Mucous membrane involvement ${mucous}× — SJS/TEN differential if drug-related.`)
+    const typeRows = Object.entries(types).sort((a, b) => b[1] - a[1]).map(([t, c]) => [t, String(c)])
+    if (typeRows.length) w.table(['Lesion type', 'Count'], typeRows, [240, 80])
+    if (photos > 0) w.note(`Skin photos are stored locally in the app and excluded from this PDF for privacy. Dermatology can request a screen-share or in-clinic photo review.`)
+  }
+
+  // === JOINT ===
+  const jointEntries = trackerData.filter(r => r.subcategory === 'joint')
+  if (jointEntries.length && isDoctor) {
+    w.sectionHeader('Joint / MSK Assessment')
+    const jointFreq: Record<string, number> = {}
+    let total = 0, subluxations = 0, selfReduced = 0
+    for (const r of jointEntries) {
+      const entries = Array.isArray(r.content?.entries) ? r.content.entries : [r.content]
+      for (const e of entries) {
+        if (!e) continue
+        total++
+        ;(e.jointsAffected || []).forEach((j: string) => { jointFreq[j] = (jointFreq[j] || 0) + 1 })
+        if (e.subluxationOccurred || e.episodeType === 'subluxation') subluxations++
+        if (e.selfReduced) selfReduced++
+      }
+    }
+    w.body(`${total} joint events. Subluxations: ${subluxations} (${selfReduced} self-reduced — EDS-pattern signal).`)
+    const jointRows = Object.entries(jointFreq).sort((a, b) => b[1] - a[1]).slice(0, 12).map(([j, c]) => [j, String(c)])
+    if (jointRows.length) {
+      w.subSection('Per-joint frequency (for orthopedic consult)')
+      w.table(['Joint', 'Events'], jointRows, [240, 80])
+    }
+  }
+
+  // === BATHROOM — Bristol distribution + red flags ===
+  const bathEntries = trackerData.filter(r => r.subcategory === 'bathroom')
+  if (bathEntries.length && isDoctor) {
+    w.sectionHeader('Bathroom Assessment')
+    const bristolDist: Record<string, number> = {}
+    let total = 0, blackTarry = 0, bloodUrine = 0, pyelo = 0, obstruction = 0
+    const types: Record<string, number> = {}
+    for (const r of bathEntries) {
+      const entries = Array.isArray(r.content?.entries) ? r.content.entries : [r.content]
+      for (const e of entries) {
+        if (!e) continue
+        total++
+        if (e.bristolScale) bristolDist[e.bristolScale] = (bristolDist[e.bristolScale] || 0) + 1
+        if (e.bloodColor === 'black-tarry') blackTarry++
+        if (e.bloodInUrine) bloodUrine++
+        if (e.feverWithUrinary && e.flankPain) pyelo++
+        if (e.cantPassGas && e.vomiting) obstruction++
+        if (e.episodeType) types[e.episodeType] = (types[e.episodeType] || 0) + 1
+      }
+    }
+    w.body(`${total} entries. Constipation: ${types['constipation'] || 0}. Diarrhea: ${types['diarrhea'] || 0}. Urinary: ${types['urinary'] || 0}.`)
+    if (blackTarry > 0) w.finding(`🚨 Black tarry stool reported ${blackTarry}× — upper GI bleed differential, GI eval indicated.`)
+    if (pyelo > 0) w.finding(`Pyelonephritis pattern (UTI + fever + flank) ${pyelo}× — recurrent suggests urology workup for structural cause.`)
+    if (obstruction > 0) w.finding(`Obstruction pattern (no gas + vomiting) ${obstruction}× — surgical evaluation if recent and unevaluated.`)
+    if (bloodUrine > 0) w.finding(`Blood in urine ${bloodUrine}× — needs evaluation if no clear source.`)
+    const bristolRows = ['1','2','3','4','5','6','7'].filter(t => bristolDist[t]).map(t => [`Type ${t}`, String(bristolDist[t])])
+    if (bristolRows.length) {
+      w.subSection('Bristol scale distribution')
+      w.table(['Type', 'Count'], bristolRows, [200, 60])
+    }
+  }
+
+  // === ANXIETY ===
+  const anxEntries = trackerData.filter(r => r.subcategory === 'anxiety')
+  if (anxEntries.length && isDoctor) {
+    w.sectionHeader('Anxiety Assessment')
+    let total = 0, si = 0, sh = 0, hopeless = 0, crisisContact = 0, hospConsidered = 0, meltdowns = 0, panicAttacks = 0
+    const anxLevels: number[] = [], panicLevels: number[] = []
+    const types: Record<string, number> = {}
+    for (const r of anxEntries) {
+      const entries = Array.isArray(r.content?.entries) ? r.content.entries : [r.content]
+      for (const e of entries) {
+        if (!e) continue
+        total++
+        if (e.suicidalIdeation) si++
+        if (e.selfHarmUrges) sh++
+        if (e.feelingHopeless) hopeless++
+        if (e.crisisContactMade) crisisContact++
+        if (e.hospitalizationConsidered) hospConsidered++
+        if ((e.episodeType || e.anxietyType) === 'meltdown') meltdowns++
+        if ((e.episodeType || e.anxietyType) === 'panic-attack') panicAttacks++
+        if (typeof e.anxietyLevel === 'number') anxLevels.push(e.anxietyLevel)
+        if (typeof e.panicLevel === 'number' && e.panicLevel > 0) panicLevels.push(e.panicLevel)
+        const t = e.episodeType || e.anxietyType
+        if (t) types[t] = (types[t] || 0) + 1
+      }
+    }
+    if (anxLevels.length) {
+      const avg = anxLevels.reduce((a, b) => a + b, 0) / anxLevels.length
+      w.body(`${total} entries. Mean anxiety ${avg.toFixed(1)}/10. Panic attacks: ${panicAttacks}. Meltdowns: ${meltdowns}.`)
+    }
+    if (si > 0 || sh > 0) {
+      w.subSection('Crisis-flagged entries')
+      if (si > 0) w.finding(`Suicidal ideation flagged: ${si} entries.`)
+      if (sh > 0) w.finding(`Self-harm urges flagged: ${sh} entries.`)
+      if (hopeless > 0) w.finding(`Hopelessness flagged: ${hopeless} entries.`)
+      if (crisisContact > 0) w.body(`Patient reached out for crisis support: ${crisisContact}× (988 / therapist / etc.) — protective factor documented.`)
+      if (hospConsidered > 0) w.finding(`Hospitalization considered: ${hospConsidered}×.`)
+    }
+    const typeRows = Object.entries(types).sort((a, b) => b[1] - a[1]).map(([t, c]) => [t, String(c)])
+    if (typeRows.length) w.table(['Episode type', 'Count'], typeRows, [240, 80])
+  }
+
+  // === MIND & MOOD — mixed states, rapid cycling, mania levels ===
+  const mmEntries = trackerData.filter(r => r.subcategory === 'mental-health')
+  if (mmEntries.length && isDoctor) {
+    w.sectionHeader('Mind & Mood Assessment')
+    let total = 0, mixedState = 0, rapidCycling = 0
+    const depLevels: number[] = [], maniaLevels: number[] = [], energyLevels: number[] = [], fogLevels: number[] = []
+    const types: Record<string, number> = {}
+    for (const r of mmEntries) {
+      const entries = Array.isArray(r.content?.entries) ? r.content.entries : [r.content]
+      for (const e of entries) {
+        if (!e) continue
+        total++
+        if (typeof e.depressionLevel === 'number') depLevels.push(e.depressionLevel)
+        if (typeof e.maniaLevel === 'number') maniaLevels.push(e.maniaLevel)
+        if (typeof e.energyLevel === 'number') energyLevels.push(e.energyLevel)
+        if (typeof e.brainFogSeverity === 'number') fogLevels.push(e.brainFogSeverity)
+        if ((e.depressionLevel || 0) >= 7 && (e.maniaLevel || 0) >= 6) mixedState++
+        if (e.moodSwingDirection === 'rapid-cycling') rapidCycling++
+        if (e.episodeType) types[e.episodeType] = (types[e.episodeType] || 0) + 1
+      }
+    }
+    const avg = (arr: number[]) => arr.length ? (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1) : '—'
+    w.body(`${total} check-ins. Mean depression ${avg(depLevels)}/10. Mean mania ${avg(maniaLevels)}/10. Mean energy ${avg(energyLevels)}/10. Mean brain fog ${avg(fogLevels)}/10.`)
+    if (mixedState > 0) w.finding(`🚨 Mixed-state days (high dep + high mania): ${mixedState} — highest suicide-risk window in mood disorders.`)
+    if (rapidCycling > 0) w.finding(`Rapid cycling reported ${rapidCycling}× — affects medication choice; consider discussing with prescriber.`)
+    const typeRows = Object.entries(types).sort((a, b) => b[1] - a[1]).map(([t, c]) => [t, String(c)])
+    if (typeRows.length) w.table(['Check-in focus', 'Count'], typeRows, [240, 80])
+  }
+
+  // === DETECTED PATTERNS (v2 engine) ===
+  if (isDoctor) {
+    try {
+      const { analyzeV2Patterns } = require('@/lib/pattern-engine-v2')
+      const patternsByTracker: Record<string, any[]> = {}
+      for (const r of trackerData) {
+        if (!r.subcategory) continue
+        if (!patternsByTracker[r.subcategory]) patternsByTracker[r.subcategory] = []
+        patternsByTracker[r.subcategory].push(r)
+      }
+      const v2 = analyzeV2Patterns(patternsByTracker, 90)
+      const high = v2.insights.filter((i: any) => i.impact === 'high')
+      if (high.length > 0) {
+        w.sectionHeader('Detected Medical Patterns')
+        w.body(`Pattern engine detected ${high.length} high-impact pattern${high.length !== 1 ? 's' : ''} in tracked data:`)
+        for (const insight of high.slice(0, 12)) {
+          w.subSection(insight.title)
+          w.body(insight.description)
+        }
+        if (high.length > 12) w.note(`(${high.length - 12} additional high-impact patterns shown in app's Patterns → Red Flags tab)`)
+      }
+    } catch (err) {
+      // Pattern engine load failed — non-fatal, just skip the section
+      console.error('Pattern engine v2 failed in PDF:', err)
     }
   }
 

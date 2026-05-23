@@ -39,7 +39,8 @@ import {
   Battery,
   Heart,
   ArrowRight,
-  Settings2
+  Settings2,
+  Coffee
 } from 'lucide-react'
 
 const HIDDEN_TRACKERS_KEY = 'chaos-choice-hidden-trackers'
@@ -127,6 +128,14 @@ export default function ChoicePage() {
       icon: Heart,
       color: "bg-pink-500",
       route: "/coping-regulation"
+    },
+    {
+      id: "substance",
+      title: "Substance Use",
+      description: "Neutral logging for alcohol, caffeine, cannabis, tobacco, prescribed controlled, and other recreational use",
+      icon: Coffee,
+      color: "bg-purple-500",
+      route: "/substance"
     }
   ]
 

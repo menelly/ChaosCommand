@@ -299,6 +299,107 @@ export function generateStarterData(endDate: Date = new Date()): Omit<DailyDataR
       })
     }
 
+    // === v0.4.x trackers — wrapped in `entries` array shape (matches v2 loaders) ===
+
+    // Cardiac — rare events (once every ~21 days), benign-ish
+    if (daysBack % 21 === 0 && daysBack > 0) {
+      records.push({
+        date, category: CAT.TRACKER, subcategory: 'cardiac',
+        content: {
+          entries: [{
+            id: `seed-cardiac-${daysBack}`,
+            timestamp: `${date}T14:00:00.000Z`,
+            date,
+            episodeType: 'palpitations',
+            symptoms: ['Awareness of Heartbeat'],
+            symptomSeverity: 2,
+            triggers: ['Caffeine'],
+            notes: ''
+          }]
+        },
+        metadata: meta
+      })
+    }
+
+    // Respiratory — occasional mild events (every ~10 days)
+    if (daysBack % 10 === 0 && daysBack > 0) {
+      records.push({
+        date, category: CAT.TRACKER, subcategory: 'respiratory',
+        content: {
+          entries: [{
+            id: `seed-resp-${daysBack}`,
+            timestamp: `${date}T08:30:00.000Z`,
+            date,
+            episodeType: 'cough',
+            symptoms: ['Dry cough'],
+            severity: 2,
+            triggers: ['Cold air'],
+            notes: ''
+          }]
+        },
+        metadata: meta
+      })
+    }
+
+    // Skin — occasional minor (every ~9 days)
+    if (daysBack % 9 === 0 && daysBack > 0) {
+      records.push({
+        date, category: CAT.TRACKER, subcategory: 'skin',
+        content: {
+          entries: [{
+            id: `seed-skin-${daysBack}`,
+            timestamp: `${date}T19:00:00.000Z`,
+            date,
+            episodeType: 'rash',
+            location: 'forearm',
+            symptoms: ['mild redness'],
+            severity: 2,
+            notes: ''
+          }]
+        },
+        metadata: meta
+      })
+    }
+
+    // Joint — about twice a week, mild stiffness
+    if (dayOfWeek === 1 || dayOfWeek === 4) {
+      records.push({
+        date, category: CAT.TRACKER, subcategory: 'joint',
+        content: {
+          entries: [{
+            id: `seed-joint-${daysBack}-${dayOfWeek}`,
+            timestamp: `${date}T07:30:00.000Z`,
+            date,
+            episodeType: 'stiffness',
+            jointsAffected: ['knees'],
+            painLevel: 3,
+            notes: ''
+          }]
+        },
+        metadata: meta
+      })
+    }
+
+    // Substance — occasional caffeine entry (every ~5 days, neutral)
+    if (daysBack % 5 === 0) {
+      records.push({
+        date, category: CAT.TRACKER, subcategory: 'substance',
+        content: {
+          entries: [{
+            id: `seed-subst-${daysBack}`,
+            timestamp: `${date}T08:00:00.000Z`,
+            date,
+            substanceType: 'alcohol',
+            amount: '1 drink',
+            context: ['Social'],
+            effects: ['Relaxation'],
+            notes: ''
+          }]
+        },
+        metadata: meta
+      })
+    }
+
     // Journal — sparse (about twice a week, very short)
     if (dayOfWeek === 0 || dayOfWeek === 4) {
       const entries = [
@@ -347,6 +448,8 @@ export const STARTER_DATA_TRACKERS = [
   'upper-digestive', 'dysautonomia', 'head-pain', 'mental-health',
   'anxiety', 'brain-fog', 'self-care', 'weather', 'sensory', 'bathroom',
   'seizure', 'reproductive', 'food-allergens', 'coping',
+  // v0.4.x trackers — required for G-SPOT cover story to hold
+  'cardiac', 'respiratory', 'skin', 'joint', 'substance',
   'main', 'daily-prompts'
 ] as const
 

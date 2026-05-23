@@ -199,30 +199,6 @@ export const MODULE_REGISTRY: ModuleMetadata[] = [
   
   // 📅 PLANNING & CALENDAR MODULES
   {
-    id: 'calendar-monthly',
-    name: 'modern-monthly',
-    displayName: 'Monthly Calendar',
-    description: 'Full month view with events, appointments, and daily planning',
-    category: 'planning-calendar',
-    status: 'available',
-    compatibility: {
-      pwa: 'full',
-      pdf: 'full',
-      notes: 'Perfect for both digital and print planning'
-    },
-    showInWebsite: true,
-    isPopular: true,
-    suggestedWith: ['weekly-planner', 'daily-schedule'],
-    allowCustomTitle: true,
-    defaultTitle: 'Monthly Calendar',
-    alternativeTitles: ['Month View', 'Monthly Planner', 'Calendar Grid'],
-    icon: 'Calendar',
-    route: '/calendar',
-    componentPath: 'components/modules/monthly-calendar',
-    editions: ['companion', 'command']
-  },
-  
-  {
     id: 'weekly-planner',
     name: 'modern-weekly',
     displayName: 'Weekly Planner',
@@ -266,29 +242,6 @@ export const MODULE_REGISTRY: ModuleMetadata[] = [
     editions: ['companion', 'command']
   },
 
-  // 📅 PLANNING HUB (existing implementation)
-  {
-    id: 'planning-hub',
-    name: 'planning',
-    displayName: 'Planning Hub',
-    description: 'Central planning dashboard with calendar integration and task management',
-    category: 'planning-calendar',
-    status: 'available',
-    compatibility: {
-      pwa: 'full',
-      pdf: 'full',
-      notes: 'Planning layouts work great in both digital and print formats'
-    },
-    showInWebsite: true,
-    isPopular: true,
-    suggestedWith: ['calendar-monthly', 'journal-unified'],
-    allowCustomTitle: true,
-    defaultTitle: 'Planning Hub',
-    alternativeTitles: ['Planning Center', 'Task Management', 'Daily Planning'],
-    icon: 'Calendar',
-    route: '/planning',
-    editions: ['companion', 'command']
-  },
   
   // 🧠 MENTAL HEALTH MODULES
   {

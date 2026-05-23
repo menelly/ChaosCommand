@@ -36,9 +36,9 @@ export default function ThemeLoader() {
       oldTheme.remove();
     }
 
-    // theme-phosphor is bundled into layout.tsx so it's available immediately
-    // (it's the new default, no flash-of-unstyled). All other themes load dynamically.
-    if (themeId !== 'theme-phosphor') {
+    // theme-calm is bundled into layout.tsx so it's available immediately
+    // (it's the default, no flash-of-unstyled). All other themes load dynamically.
+    if (themeId !== 'theme-calm') {
       const link = document.createElement('link');
       link.rel = 'stylesheet';
       link.href = `/styles/themes/${themeId}.css`;
@@ -47,8 +47,8 @@ export default function ThemeLoader() {
         console.log(`🎨 Theme CSS loaded: ${themeId}`);
       };
       link.onerror = () => {
-        console.warn(`⚠️ Failed to load theme CSS: ${themeId}, falling back to phosphor`);
-        document.body.className = document.body.className.replace(/theme-\w+/g, '') + ' theme-phosphor';
+        console.warn(`⚠️ Failed to load theme CSS: ${themeId}, falling back to calm`);
+        document.body.className = document.body.className.replace(/theme-\w+/g, '') + ' theme-calm';
       };
       document.head.appendChild(link);
     }
@@ -59,9 +59,9 @@ export default function ThemeLoader() {
 
   useEffect(() => {
     // Load saved theme, font, and animations from localStorage
-    // Default is now theme-phosphor (terminal CRT) — replaces lavender as starter.
-    // Lavender + all other themes still available; users who'd saved lavender keep it.
-    const savedTheme = localStorage.getItem('chaos-theme') || 'theme-phosphor'
+    // Default is now theme-calm (neutral blue/gold) — softer first run than phosphor.
+    // Phosphor + all other themes still available; saved choices are honored.
+    const savedTheme = localStorage.getItem('chaos-theme') || 'theme-calm'
     const savedFont = localStorage.getItem('chaos-font') || 'font-atkinson'
     const savedAnimations = localStorage.getItem('chaos-animations') !== 'false' // default to true
 

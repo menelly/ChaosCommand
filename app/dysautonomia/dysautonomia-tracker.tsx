@@ -255,10 +255,10 @@ export default function DysautonomiaTracker() {
       <div className="text-center mb-6">
         <h1 className="text-3xl font-bold text-foreground flex items-center justify-center gap-2">
           <Heart className="h-8 w-8 text-red-500" />
-          Dysautonomia Tracker
+          ⚡ Autonomic Shenanigans
         </h1>
         <p className="text-muted-foreground mt-1">
-          Track POTS, orthostatic symptoms, and autonomic episodes
+          Orthostatic chaos, syncope, autonomic episodes — your body's standing-up rebellion logged
         </p>
       </div>
 

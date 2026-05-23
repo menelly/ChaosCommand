@@ -122,7 +122,7 @@ export function BBTChart({ entries, className }: BBTChartProps) {
             <XAxis
               dataKey="date"
               tick={{ fontSize: 12 }}
-              tickFormatter={(date) => format(new Date(date), 'MM/dd')}
+              tickFormatter={(date) => format(new Date(date + 'T12:00:00'), 'MM/dd')}
             />
             <YAxis
               domain={['dataMin - 0.5', 'dataMax + 0.5']}

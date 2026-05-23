@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -29,21 +29,58 @@ import { useToast } from '@/hooks/use-toast'
 import AppCanvas from '@/components/app-canvas'
 import { useDailyData } from '@/lib/database'
 import { analyzeAllPatterns, PatternInsight } from '@/lib/pattern-engine'
+import { analyzeV2Patterns } from '@/lib/pattern-engine-v2'
+import { db, PatternSnapshot } from '@/lib/database/dexie-db'
 
 const TRACKER_SUBCATEGORIES = [
   'upper-digestive', 'pain', 'sleep', 'mental-health', 'brain-fog',
   'movement', 'hydration', 'energy', 'anxiety', 'sensory', 'self-care',
   'weather', 'food-choice', 'dysautonomia', 'seizure', 'reproductive',
-  'food-allergens', 'bathroom', 'head-pain', 'crisis', 'coping', 'other'
+  'food-allergens', 'bathroom', 'head-pain', 'crisis', 'coping',
+  // v0.4.x trackers
+  'cardiac', 'respiratory', 'skin', 'joint', 'substance',
+  'other'
 ] as const
 
 export default function PatternsPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [lastSync, setLastSync] = useState<Date | null>(null)
   const [results, setResults] = useState<ReturnType<typeof analyzeAllPatterns> | null>(null)
+  const [v2Insights, setV2Insights] = useState<PatternInsight[]>([])
+  const [v2HighPriorityCount, setV2HighPriorityCount] = useState(0)
+  const [snapshots, setSnapshots] = useState<PatternSnapshot[]>([])
+  const [showHighPriorityOnly, setShowHighPriorityOnly] = useState(false)
   const [activeTab, setActiveTab] = useState('overview')
   const { toast } = useToast()
   const { getDateRange } = useDailyData()
+
+  // === Hydrate latest snapshot on mount (the persistence fix) ===
+  useEffect(() => {
+    const hydrate = async () => {
+      try {
+        const all = await db.pattern_snapshots.orderBy('run_at').reverse().limit(20).toArray()
+        setSnapshots(all)
+        const latest = all[0]
+        if (latest) {
+          try {
+            const parsed = JSON.parse(latest.snapshot_json)
+            if (parsed.v1) setResults(parsed.v1)
+            if (parsed.v2) {
+              setV2Insights(parsed.v2.insights || [])
+              setV2HighPriorityCount(parsed.v2.highPriorityCount || 0)
+            }
+            setLastSync(new Date(latest.run_at))
+          } catch (e) {
+            console.error('Failed to parse snapshot:', e)
+          }
+        }
+      } catch (e) {
+        // Table may not exist yet on first run with old DB version — ignore
+        console.log('No existing snapshots found:', e)
+      }
+    }
+    hydrate()
+  }, [])
 
   const syncAndAnalyze = async () => {
     setIsLoading(true)
@@ -67,13 +104,39 @@ export default function PatternsPage() {
         )
       })
 
-      const analysisResults = analyzeAllPatterns(trackerData)
-      setResults(analysisResults)
-      setLastSync(new Date())
+      // Run BOTH engines — v1 for cross-tracker correlations + v2 for semantic red flags
+      const v1Results = analyzeAllPatterns(trackerData)
+      const v2Results = analyzeV2Patterns(trackerData, 90)
+
+      setResults(v1Results)
+      setV2Insights(v2Results.insights)
+      setV2HighPriorityCount(v2Results.highPriorityCount)
+      const now = new Date()
+      setLastSync(now)
+
+      // === Persist snapshot to Dexie ===
+      try {
+        const totalInsights = (v1Results.summary.insightCount || 0) + v2Results.insights.length
+        const summary = `${totalInsights} insight${totalInsights !== 1 ? 's' : ''} (${v2Results.highPriorityCount} high-priority)`
+        await db.pattern_snapshots.add({
+          run_at: now.toISOString(),
+          window_days: 90,
+          insight_count: totalInsights,
+          high_priority_count: v2Results.highPriorityCount,
+          snapshot_json: JSON.stringify({ v1: v1Results, v2: v2Results }),
+          summary,
+          is_auto: false,
+        })
+        // Refresh snapshot list
+        const all = await db.pattern_snapshots.orderBy('run_at').reverse().limit(20).toArray()
+        setSnapshots(all)
+      } catch (e) {
+        console.error('Failed to persist snapshot:', e)
+      }
 
       toast({
         title: "✨ Analysis Complete!",
-        description: `Found ${analysisResults.summary.insightCount} patterns across ${analysisResults.summary.activeTrackers} trackers!`,
+        description: `Found ${v1Results.summary.insightCount + v2Results.insights.length} patterns — ${v2Results.highPriorityCount} high-priority.`,
       })
     } catch (error) {
       console.error('Pattern analysis error:', error)
@@ -190,11 +253,16 @@ export default function PatternsPage() {
 
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 h-auto gap-1 p-1">
+          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-7 h-auto gap-1 p-1">
             <TabsTrigger value="overview" className="flex items-center gap-1 text-xs sm:text-sm">
               <TrendingUp className="h-4 w-4 shrink-0" />
-              <span className="hidden sm:inline">Overview</span>
-              <span className="sm:hidden">Overview</span>
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="redflags" className="flex items-center gap-1 text-xs sm:text-sm">
+              <AlertTriangle className="h-4 w-4 shrink-0 text-red-500" />
+              <span className="hidden sm:inline">Red Flags</span>
+              <span className="sm:hidden">🚨</span>
+              {v2HighPriorityCount > 0 && <Badge variant="destructive" className="text-[10px] h-4 ml-1">{v2HighPriorityCount}</Badge>}
             </TabsTrigger>
             <TabsTrigger value="correlations" className="flex items-center gap-1 text-xs sm:text-sm">
               <Network className="h-4 w-4 shrink-0" />
@@ -214,7 +282,97 @@ export default function PatternsPage() {
               <BarChart3 className="h-4 w-4 shrink-0" />
               Trends
             </TabsTrigger>
+            <TabsTrigger value="history" className="flex items-center gap-1 text-xs sm:text-sm">
+              <Clock className="h-4 w-4 shrink-0" />
+              <span className="hidden sm:inline">History</span>
+              <span className="sm:hidden">Hist.</span>
+            </TabsTrigger>
           </TabsList>
+
+          {/* RED FLAGS TAB — v2 semantic patterns */}
+          <TabsContent value="redflags" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-red-700 dark:text-red-400">
+                  <AlertTriangle className="h-5 w-5" />
+                  Medical red-flag patterns (v2 engine)
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Detects status epilepticus, anaphylaxis, mixed-state mood days, multi-rescue migraines, celiac aftermath, dissection/SAH/cauda equina/MI markers, autonomic seizure clusters, and more. Reads the rich v2 fields the original engine doesn't see.
+                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2 mb-4">
+                  <Button
+                    variant={showHighPriorityOnly ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setShowHighPriorityOnly(!showHighPriorityOnly)}
+                  >
+                    {showHighPriorityOnly ? '✓ ' : ''}High-impact only ({v2HighPriorityCount})
+                  </Button>
+                  <span className="text-xs text-muted-foreground">
+                    Total: {v2Insights.length} insight{v2Insights.length !== 1 ? 's' : ''}
+                  </span>
+                </div>
+                {v2Insights.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Sparkles className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                    <p className="text-muted-foreground">
+                      No v2 patterns yet — hit "Find Patterns" to analyze. Or, if you just did and got nothing, that's good news: no medical red-flag patterns detected in your tracked data.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {v2Insights
+                      .filter(i => !showHighPriorityOnly || i.impact === 'high')
+                      .map(renderInsightCard)}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* HISTORY TAB — pattern snapshots over time */}
+          <TabsContent value="history" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="h-5 w-5" />
+                  Pattern snapshot history
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Every "Find Patterns" run is saved. Use this to see how your patterns shift over weeks — confidence on a correlation rising over time is itself a signal.
+                </p>
+              </CardHeader>
+              <CardContent>
+                {snapshots.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-6">
+                    No snapshots yet. Run analysis to build history over time.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {snapshots.map((s) => (
+                      <div key={s.id} className="flex items-center justify-between border rounded-lg p-3">
+                        <div>
+                          <div className="font-medium text-sm">
+                            {new Date(s.run_at).toLocaleString()}
+                            {s.is_auto && <Badge variant="outline" className="ml-2 text-[10px]">auto</Badge>}
+                          </div>
+                          <div className="text-xs text-muted-foreground">{s.summary}</div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {s.high_priority_count > 0 && (
+                            <Badge variant="destructive">{s.high_priority_count} high</Badge>
+                          )}
+                          <Badge variant="secondary">{s.insight_count} total</Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           {/* OVERVIEW TAB */}
           <TabsContent value="overview" className="space-y-6">

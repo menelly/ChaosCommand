@@ -246,7 +246,7 @@ export function SupportModal({ isOpen, onClose }: SupportModalProps) {
                       Ren Martin — Creator & Principal Investigator
                     </h4>
                     <p className="text-sm text-muted-foreground leading-relaxed mb-3">
-                      Navy Electronics Technician • Disability Advocate • Parent of 5 •
+                      Prior Navy Electronics Technician • Disability Advocate • Parent of 5 •
                       Managing complex chronic illness while building tools that should already exist
                     </p>
                     <div className="space-y-2 text-xs text-muted-foreground">

@@ -40,7 +40,11 @@ import {
   HelpCircle,
   Zap,
   Brain,
-  Settings2
+  Settings2,
+  Wind,
+  Sparkles,
+  Bone,
+  Activity
 } from "lucide-react"
 
 interface TrackerButton {
@@ -195,6 +199,38 @@ export default function PhysicalHealthIndex() {
       icon: <Zap className="h-5 w-5" />,
       edition: 'cares'
     },
+    {
+      id: 'cardiac',
+      name: 'Cardiac Tracker',
+      shortDescription: 'Arrhythmias, chest pain, syncope, palpitations',
+      helpContent: 'Track cardiac events including arrhythmias (PAC, PVC, SVT, AFib), chest pain, syncope/presyncope, and palpitations. Captures rhythm classification, ECG strip uploads, vitals, triggers, and resolution methods. Includes 911 red-flag detection and Valsalva-style interim measures.',
+      icon: <Activity className="h-5 w-5" />,
+      edition: 'cares'
+    },
+    {
+      id: 'respiratory',
+      name: 'Respiratory Tracker',
+      shortDescription: 'Asthma, SOB, cough, allergic reactions, peak flow',
+      helpContent: 'Track asthma attacks, shortness of breath, cough episodes, allergic reactions, and pleuritic pain. Captures peak flow readings, SpO2, inhaler use and response, and breathing patterns. Includes anaphylaxis detection.',
+      icon: <Wind className="h-5 w-5" />,
+      edition: 'cares'
+    },
+    {
+      id: 'skin',
+      name: 'Skin Tracker',
+      shortDescription: 'Rashes, hives, eczema, lesions with photo timeline',
+      helpContent: 'Track skin events including rashes, hives, eczema flares, mole/lesion monitoring, wounds, sunburns, and contact reactions. Photo upload is primary — invaluable for dermatology consults. Includes ABCDE mole screening and SJS/anaphylaxis red flags.',
+      icon: <Sparkles className="h-5 w-5" />,
+      edition: 'cares'
+    },
+    {
+      id: 'joint',
+      name: 'Joint / MSK Tracker',
+      shortDescription: 'Subluxations, dislocations, swelling, ROM',
+      helpContent: 'Track joint and musculoskeletal events including subluxations, dislocations, joint pain, swelling, instability, and range-of-motion restrictions. Detailed joint anatomy picker. Especially valuable for EDS / hypermobile-spectrum patients.',
+      icon: <Bone className="h-5 w-5" />,
+      edition: 'cares'
+    },
   ]
 
   // Filter trackers based on user's edition AND hidden preferences
@@ -219,6 +255,10 @@ export default function PhysicalHealthIndex() {
       case 'seizure-tracking': return '/seizure'
       case 'diabetes-tracker': return '/diabetes'
       case 'vitals': return '/vitals'
+      case 'cardiac': return '/cardiac'
+      case 'respiratory': return '/respiratory'
+      case 'skin': return '/skin'
+      case 'joint': return '/joint'
       default: return '#' // TODO: Implement navigation to other trackers
     }
   }

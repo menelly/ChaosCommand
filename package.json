@@ -1,6 +1,6 @@
 {
   "name": "command",
-  "version": "0.4.1",
+  "version": "0.5.1",
   "private": true,
   "description": "Chaos Command Center - Desktop app with Dexie.js unified database for date-first hierarchical storage",
   "scripts": {
@@ -9,8 +9,7 @@
     "start": "next start",
     "lint": "next lint",
     "tauri": "tauri",
-    "flask": "cd backend && python app.py",
-    "tauri:dev": "concurrently \"npm run flask\" \"tauri dev\"",
+    "tauri:dev": "tauri dev",
     "tauri:build": "tauri build"
   },
   "dependencies": {
@@ -36,7 +35,7 @@
     "@radix-ui/react-tabs": "^1.1.12",
     "@radix-ui/react-toast": "^1.2.0",
     "@radix-ui/react-tooltip": "^1.2.7",
-    "@tauri-apps/api": "^2.8.0",
+    "@tauri-apps/api": "^2.11.0",
     "@tauri-apps/plugin-http": "^2.5.7",
     "@tauri-apps/plugin-notification": "^2.3.3",
     "@tauri-apps/plugin-opener": "^2.5.3",
@@ -73,7 +72,6 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/uuid": "^10.0.0",
-    "concurrently": "^9.2.0",
     "eslint": "^9.0.0",
     "eslint-config-next": "15.0.0",
     "postcss": "^8.5",

@@ -422,7 +422,7 @@ export function TemperatureModal({ isOpen, onClose, onSave, editingEntry }: Epis
               type="button"
               onClick={handleSave}
               className="flex-1"
-              disabled={symptoms.length === 0}
+              
             >
               <Plus className="h-4 w-4 mr-2" />
               {editingEntry ? 'Update Episode' : 'Save Temp Episode'}
