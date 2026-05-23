@@ -251,7 +251,7 @@ export default function BathroomPage() {
                     <Button key={type.id} variant="outline" className="h-auto py-3 flex flex-col items-start text-left whitespace-normal" onClick={() => openModalForType(type.id)}>
                       <span className="text-xl mb-1">{type.icon}</span>
                       <span className="font-semibold text-sm">{type.name}</span>
-                      <span className="text-xs text-muted-foreground mt-1 text-left">{type.description}</span>
+                      <span className="text-xs mt-1 text-left">{type.description}</span>
                     </Button>
                   ))}
                 </div>

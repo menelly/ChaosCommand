@@ -166,7 +166,7 @@ export default function RespiratoryTracker() {
                   <Button key={t.id} variant="outline" className="h-auto py-3 flex flex-col items-start text-left" onClick={() => openModalForType(t.id)}>
                     <span className="text-xl mb-1">{t.icon}</span>
                     <span className="font-semibold text-sm">{t.name}</span>
-                    <span className="text-xs text-muted-foreground mt-1 text-left">{t.description}</span>
+                    <span className="text-xs mt-1 text-left">{t.description}</span>
                   </Button>
                 ))}
               </div>

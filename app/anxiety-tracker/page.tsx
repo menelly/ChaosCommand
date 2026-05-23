@@ -247,7 +247,7 @@ export default function AnxietyTrackerPage() {
                     >
                       <span className="text-xl mb-1">{type.icon}</span>
                       <span className="font-semibold text-sm">{type.name}</span>
-                      <span className="text-xs text-muted-foreground mt-1 text-left">{type.description}</span>
+                      <span className="text-xs mt-1 text-left">{type.description}</span>
                     </Button>
                   ))}
                 </div>
