@@ -1,0 +1,6 @@
+{
+  "version": "0.5.2",
+  "released": "2026-05-23",
+  "url": "https://chaoscommand.center/download",
+  "notes": "Routines now sync between your devices. Build a routine on your desktop and it shows up on your phone — and the other way around — riding the same private, PIN-scoped, device-to-device sync your tracker data already uses (still no cloud, ever). Before this, routine configs were stuck on whichever device created them, so you'd lie down with your phone for a bedtime routine and find nothing there. Merged by id, so a routine built on either device is kept and never lost. Everything from 0.5.0 + 0.5.1 included."
+}
