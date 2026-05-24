@@ -27,7 +27,7 @@ import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { DEMO_PIN, ensureDemoSeeded } from '@/lib/database/demo-profile'
+import { DEMO_PIN, ensureDemoSeeded, resetDemo } from '@/lib/database/demo-profile'
 
 interface PinLoginProps {
   onPinEntered: (pin: string) => void
@@ -41,11 +41,12 @@ export default function PinLogin({ onPinEntered }: PinLoginProps) {
   // Entering the public demo PIN seeds its sample data FIRST (awaited), so the demo profile
   // is populated the instant the app loads — no empty-on-first-view race. Works whether the
   // demo is reached via the button or by typing 1111 by hand.
-  const enterPin = async (p: string) => {
+  const enterPin = async (p: string, fresh = false) => {
     if (p === DEMO_PIN) {
       try {
         setBusy(true)
-        await ensureDemoSeeded()
+        // "See the demo" button → fresh pristine demo; manual 1111 entry → seed only if empty
+        await (fresh ? resetDemo() : ensureDemoSeeded())
       } catch (err) {
         console.error('Demo seeding failed:', err)
       } finally {
@@ -113,7 +114,7 @@ export default function PinLogin({ onPinEntered }: PinLoginProps) {
               className="w-full"
               size="lg"
               disabled={busy}
-              onClick={() => enterPin(DEMO_PIN)}
+              onClick={() => enterPin(DEMO_PIN, true)}
             >
               {busy ? '✨ Loading demo…' : '👀 See the demo (no account needed)'}
             </Button>

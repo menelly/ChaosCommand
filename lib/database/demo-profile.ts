@@ -25,7 +25,7 @@
  */
 
 import { getDB, initializeDatabase } from './dexie-db'
-import { generateStarterData } from './starter-data'
+import { generateInterestingData } from './interesting-data'
 
 /**
  * The public demo profile PIN. Documented openly. RESERVED — `isDemoPin` lets the
@@ -39,30 +39,43 @@ export function isDemoPin(pin: string): boolean {
 }
 
 /**
- * Ensure the demo profile (PIN 1111) is populated. Idempotent: only seeds when the demo
- * DB is empty, so a visitor poking around never wipes it on the next visit. Returns the
- * record count present after the call. Only ever touches the demo DB.
+ * Open the demo DB *coherently*. The catch: initializeDatabase() → ensureDefaultTags() uses
+ * the localStorage-driven `db` proxy (it reads 'chaos-user-pin'), while we open with the
+ * explicit getDB(DEMO_PIN). PRE-LOGIN no pin is set, so the proxy points at the null-pin DB
+ * while getDB points at the demo DB — and the single global Dexie handle thrashes open/close
+ * between the two and HANGS (that was the "See demo doesn't click on first start" bug).
+ * Pointing 'chaos-user-pin' at the demo first keeps the whole stack on one DB. login(DEMO_PIN)
+ * sets the same key again immediately after — harmless.
+ */
+async function openDemoDb() {
+  try { localStorage.setItem('chaos-user-pin', DEMO_PIN) } catch { /* SSR / Safari private */ }
+  await initializeDatabase(DEMO_PIN)
+  return getDB(DEMO_PIN)
+}
+
+/**
+ * Ensure the demo profile (PIN 1111) is populated. Idempotent: only seeds when the demo DB
+ * is empty, so a visitor poking around isn't wiped on the next visit. Returns the record
+ * count present after the call. Only ever touches the demo DB. Used by a manual 1111 login.
  */
 export async function ensureDemoSeeded(): Promise<number> {
-  await initializeDatabase(DEMO_PIN)
-  const db = getDB(DEMO_PIN)
+  const db = await openDemoDb()
   const existing = await db.daily_data.count()
   if (existing > 0) return existing
-  const records = generateStarterData()
+  const records = generateInterestingData() // rich 90-day arc — a demo that shows analytics off
   await db.daily_data.bulkAdd(records as any)
   return records.length
 }
 
 /**
- * Reset the demo profile back to pristine sample data — e.g. after a visitor scribbles in
- * it, or to refresh the dates. Clears 1111's data and re-lays the starter set. Only ever
- * touches the demo DB; never the user's real profiles.
+ * Reset the demo to a pristine, fully-populated 90-day sample. Used by the explicit
+ * "See the demo" button so every visit gets a robust, freshly-dated demo (and any stray
+ * pokes from a previous visitor are cleared). Only ever touches the demo DB.
  */
 export async function resetDemo(): Promise<number> {
-  await initializeDatabase(DEMO_PIN)
-  const db = getDB(DEMO_PIN)
+  const db = await openDemoDb()
   await db.daily_data.clear()
-  const records = generateStarterData()
+  const records = generateInterestingData()
   await db.daily_data.bulkAdd(records as any)
   return records.length
 }
