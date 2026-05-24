@@ -32,7 +32,6 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { exportAllData, importData } from "@/lib/database/migration-helper"
 import { encryptBackup, decryptBackup, downloadBackup } from "@/lib/database/encrypted-export"
-import { useUser } from "@/lib/contexts/user-context"
 import TestPinManagerComponent from "@/components/test-pin-manager"
 import { KeyboardAvoidingWrapper } from '@/components/ui/keyboard-avoiding-wrapper'
 
@@ -45,15 +44,11 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
   const [hasPin, setHasPin] = useState(false)
   const [pinInput, setPinInput] = useState("")
   const [confirmPinInput, setConfirmPinInput] = useState("")
-  const [showGSpotExplanation, setShowGSpotExplanation] = useState(false)
-  const [isExecutingGSpot, setIsExecutingGSpot] = useState(false)
   const [showImportDialog, setShowImportDialog] = useState(false)
   const [importPin, setImportPin] = useState("1234")            // backup-file password (visible, weak default)
   const [exportPassword, setExportPassword] = useState("1234")  // encrypt-export password (visible, weak default)
   const [importFile, setImportFile] = useState<File | null>(null)
 
-  // The G-Spot is now an emergency logout → the logged-out screen.
-  const { logout } = useUser()
 
   // Check if PIN is set on component mount
   useEffect(() => {
@@ -61,15 +56,8 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
     setHasPin(!!savedPin)
   }, [])
 
-  // The G-Spot — emergency logout. One tap, you're at the logged-out screen.
-  // No confirm, no PIN gate: friction is the enemy when someone's walking up. Logout is
-  // non-destructive (every profile's data stays in its own DB), so there's nothing to
-  // confirm and nothing to undo. The app-wrapper redirects to login the instant the
-  // session clears. (Replaces the old destructive "overwrite with bland data" protocol —
-  // which couldn't reliably cover custom Forge trackers and read as data-hiding to stores.)
-  const executeEmergencyLogout = () => {
-    logout()
-  }
+  // (The G-Spot's exit lived here briefly; it's now the sidebar Logout + the reproductive
+  // modal's scoped nuke. This modal no longer owns any G-Spot behavior.)
 
   // Encrypted backup export — boring, honest AES-256-GCM. No disguise, no time-keys.
   const handleGSpotExport = async () => {
@@ -128,7 +116,7 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
     alert('✅ Security PIN has been set!')
   }
 
-  // (Emergency logout needs no PIN gate or confirmation — see executeEmergencyLogout.)
+  // (Emergency exit is the sidebar Logout now; this modal has no panic action.)
 
   if (!isOpen) return null
   
@@ -331,44 +319,8 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
               </div>
             </div>
 
-            {/* The G-Spot — emergency logout (undramatic by design; boring is camouflage) */}
-            <div className="p-4 border rounded-lg">
-              <div className="flex items-center gap-2 mb-3">
-                <Zap className="h-4 w-4" />
-                <Label className="text-sm font-medium">The G-Spot</Label>
-              </div>
-
-              <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">
-                  One tap, you're logged out. It's the G-Spot. It does the thing. 🤷
-                  <button
-                    onClick={() => setShowGSpotExplanation(!showGSpotExplanation)}
-                    className="underline ml-1"
-                  >
-                    what&apos;s this?
-                  </button>
-                </p>
-
-                {showGSpotExplanation && (
-                  <div className="text-xs text-muted-foreground bg-muted/60 p-3 rounded">
-                    <p>
-                      Instantly drops you to the logged-out screen — same as logging out and back
-                      into a different profile, just faster. Your data stays exactly where it is,
-                      untouched, in its own profile. Why&apos;s it called the G-Spot? Don&apos;t worry about it. 😏
-                    </p>
-                  </div>
-                )}
-
-                <Button
-                  onClick={executeEmergencyLogout}
-                  variant="outline"
-                  className="w-full"
-                >
-                  <Zap className="h-4 w-4 mr-2" />
-                  Go to the G-Spot
-                </Button>
-              </div>
-            </div>
+            {/* The G-Spot moved to the reproductive modal (scoped data nuke). The emergency
+                exit is now the big sidebar Logout. Nothing G-Spot lives in this modal. */}
           </TabsContent>
 
           {/* Test PINs tab hidden for ship — uncomment for dev
