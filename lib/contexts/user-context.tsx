@@ -25,6 +25,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { closeDB, initializeDatabase } from '@/lib/database/dexie-db'
+import { isDemoPin, ensureDemoSeeded } from '@/lib/database/demo-profile'
 
 interface UserContextType {
   userPin: string | null
@@ -62,8 +63,14 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('chaos-user-pin', pin) // Database key
     localStorage.setItem('isLoggedIn', 'true')
 
-    // Force initialize the new user's database
-    initializeDatabase(pin).catch(console.error)
+    // Force initialize the new user's database.
+    if (isDemoPin(pin)) {
+      // The public demo profile (1111): seed sample data on first view, so logging in with
+      // the openly-documented demo PIN always lands on a populated, mild example dataset.
+      ensureDemoSeeded().catch(console.error)
+    } else {
+      initializeDatabase(pin).catch(console.error)
+    }
 
     console.log(`🔐 Database isolated for PIN: ${pin.replace(/./g, '*')}`)
   }

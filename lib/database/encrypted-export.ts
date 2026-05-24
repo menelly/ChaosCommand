@@ -21,8 +21,6 @@
  * "this is an encrypted backup; you need the password to read it."
  */
 
-import { DailyDataRecord } from './dexie-db'
-
 const FORMAT_TAG = 'chaoscommand-encrypted-backup'
 const FORMAT_VERSION = 1
 const PBKDF2_ITERATIONS = 210_000 // OWASP 2023 floor for PBKDF2-HMAC-SHA256
@@ -80,11 +78,13 @@ async function deriveAesKey(password: string, salt: Uint8Array): Promise<CryptoK
 // --- public API -----------------------------------------------------------
 
 /**
- * Encrypt health records into a labeled, password-protected backup envelope.
- * Returns the JSON string to write to a file and a suggested filename.
+ * Encrypt a full data export (the JSON string from exportAllData() — daily_data +
+ * tags + image blobs) into a labeled, password-protected backup envelope, so an
+ * import round-trips everything importData() can restore. Returns the file content
+ * + a suggested filename.
  */
 export async function encryptBackup(
-  records: DailyDataRecord[],
+  payloadJson: string,
   password: string
 ): Promise<{ filename: string; content: string }> {
   if (!password) throw new Error('A password is required to encrypt the backup.')
@@ -93,10 +93,14 @@ export async function encryptBackup(
   const iv = crypto.getRandomValues(new Uint8Array(IV_BYTES))
   const key = await deriveAesKey(password, salt)
 
-  const plaintext = new TextEncoder().encode(JSON.stringify(records))
+  const plaintext = new TextEncoder().encode(payloadJson)
   const ciphertext = new Uint8Array(
     await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, plaintext)
   )
+
+  // best-effort record count for the (cosmetic) envelope field
+  let recordCount = 0
+  try { recordCount = JSON.parse(payloadJson)?.daily_data?.length ?? 0 } catch { /* leave 0 */ }
 
   const envelope: EncryptedBackupEnvelope = {
     format: FORMAT_TAG,
@@ -108,7 +112,7 @@ export async function encryptBackup(
     salt: bytesToBase64(salt),
     iv: bytesToBase64(iv),
     data: bytesToBase64(ciphertext),
-    record_count: records.length,
+    record_count: recordCount,
   }
 
   const date = new Date().toISOString().slice(0, 10)
@@ -119,13 +123,14 @@ export async function encryptBackup(
 }
 
 /**
- * Decrypt a backup envelope back into health records. Throws on a wrong
- * password (AES-GCM tag mismatch) or a malformed/foreign file.
+ * Decrypt a backup envelope back into the export JSON string (feed straight to
+ * importData()). Throws on a wrong password (AES-GCM tag mismatch) or a
+ * malformed/foreign file.
  */
 export async function decryptBackup(
   fileContent: string,
   password: string
-): Promise<DailyDataRecord[]> {
+): Promise<string> {
   if (!password) throw new Error('A password is required to open the backup.')
 
   let env: EncryptedBackupEnvelope
@@ -151,11 +156,8 @@ export async function decryptBackup(
     throw new Error('Could not decrypt — wrong password, or the file was modified.')
   }
 
-  const records = JSON.parse(new TextDecoder().decode(plaintext))
-  if (!Array.isArray(records)) {
-    throw new Error('Backup decrypted but its contents were not in the expected format.')
-  }
-  return records as DailyDataRecord[]
+  // Return the decrypted export JSON string; the caller hands it to importData().
+  return new TextDecoder().decode(plaintext)
 }
 
 /** Trigger a browser download of the encrypted backup file. */

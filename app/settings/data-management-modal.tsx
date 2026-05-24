@@ -30,12 +30,10 @@ import { Label } from "@/components/ui/label"
 import { Database, Download, Upload, Shield, Zap, Beaker, RefreshCw, QrCode } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useDailyData } from "@/lib/database/hooks/use-daily-data"
-import { GSpot4BoringFileExporter, BoringFileType } from "@/lib/database/g-spot-4.0-boring-file-steganography"
-import { exportAllData } from "@/lib/database/migration-helper"
+import { exportAllData, importData } from "@/lib/database/migration-helper"
+import { encryptBackup, decryptBackup, downloadBackup } from "@/lib/database/encrypted-export"
+import { useUser } from "@/lib/contexts/user-context"
 import TestPinManagerComponent from "@/components/test-pin-manager"
-import { generateStarterData, STARTER_DATA_TRACKERS } from "@/lib/database/starter-data"
-import { generateInterestingData } from "@/lib/database/interesting-data"
 import { KeyboardAvoidingWrapper } from '@/components/ui/keyboard-avoiding-wrapper'
 
 interface DataManagementModalProps {
@@ -50,13 +48,12 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
   const [showGSpotExplanation, setShowGSpotExplanation] = useState(false)
   const [isExecutingGSpot, setIsExecutingGSpot] = useState(false)
   const [showImportDialog, setShowImportDialog] = useState(false)
-  const [importPin, setImportPin] = useState("")
-  const [importHour, setImportHour] = useState("")
+  const [importPin, setImportPin] = useState("1234")            // backup-file password (visible, weak default)
+  const [exportPassword, setExportPassword] = useState("1234")  // encrypt-export password (visible, weak default)
   const [importFile, setImportFile] = useState<File | null>(null)
 
-  // Database hook for G-Spot protocol
-  // Testing if IDE autocomplete demon has been exorcised! 🔥
-  const { secureOverwriteAllData, generateBlandData } = useDailyData()
+  // The G-Spot is now an emergency logout → the logged-out screen.
+  const { logout } = useUser()
 
   // Check if PIN is set on component mount
   useEffect(() => {
@@ -64,115 +61,52 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
     setHasPin(!!savedPin)
   }, [])
 
-  // G-Spot Protocol v5 — Starter Data Overwrite
-  const executeGSpotProtocol = async () => {
-    try {
-      setIsExecutingGSpot(true)
-
-      // Generate deterministic starter data (90 days, all trackers)
-      console.log('🔥 G-SPOT v5: Generating starter data...')
-      const starterData = generateStarterData()
-
-      // Execute secure overwrite with starter data
-      console.log(`🔥 G-SPOT v5: Overwriting with ${starterData.length} starter records across ${STARTER_DATA_TRACKERS.length} trackers...`)
-      await secureOverwriteAllData(starterData as any)
-
-      alert(`✅ Data Reset to Starter Content\n\n${starterData.length} records across ${STARTER_DATA_TRACKERS.length} trackers.\n\nYour data now looks like default demo content that came with the app.`)
-
-      onClose()
-
-    } catch (error) {
-      console.error('G-Spot Protocol failed:', error)
-      alert(`❌ Data Reset Failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
-    } finally {
-      setIsExecutingGSpot(false)
-    }
+  // The G-Spot — emergency logout. One tap, you're at the logged-out screen.
+  // No confirm, no PIN gate: friction is the enemy when someone's walking up. Logout is
+  // non-destructive (every profile's data stays in its own DB), so there's nothing to
+  // confirm and nothing to undo. The app-wrapper redirects to login the instant the
+  // session clears. (Replaces the old destructive "overwrite with bland data" protocol —
+  // which couldn't reliably cover custom Forge trackers and read as data-hiding to stores.)
+  const executeEmergencyLogout = () => {
+    logout()
   }
 
-  // Handle G-Spot Export with proper encryption
+  // Encrypted backup export — boring, honest AES-256-GCM. No disguise, no time-keys.
   const handleGSpotExport = async () => {
-    if (!hasPin) {
-      alert("Please set a PIN first for secure data export")
+    if (!exportPassword) {
+      alert('Enter a password to encrypt the backup.')
       return
     }
-
     try {
-      const pin = localStorage.getItem('chaos-data-pin')
-      if (!pin) {
-        alert("PIN not found. Please set a PIN first.")
-        return
-      }
-
-      // Get all health data
-      const allDataString = await exportAllData()
-      const allData = JSON.parse(allDataString)
-
-      // Export with G-Spot 4.0 BORING FILE encryption! 🔥
-      const result = await GSpot4BoringFileExporter.exportMedicalData(
-        allData.daily_data,
-        pin,
-        BoringFileType.COSTCO_RECEIPT // Default to Costco receipt - perfectly boring!
-      )
-
-      if (result.success) {
-        // Download the boring file
-        const file = result.files[0]
-        const blob = new Blob([file.content], { type: 'application/json' })
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = file.filename
-        document.body.appendChild(a)
-        a.click()
-        document.body.removeChild(a)
-        URL.revokeObjectURL(url)
-
-        alert(`🔐 G-Spot 4.0 Export Complete!\n\nFile: ${file.filename}\n\n${result.message}\n\nYour medical data is now disguised as a perfectly boring household document!`)
-      } else {
-        throw new Error(result.message)
-      }
-
+      const payloadJson = await exportAllData() // full export: daily_data + tags + image blobs
+      const { filename, content } = await encryptBackup(payloadJson, exportPassword)
+      downloadBackup(filename, content)
+      alert(`🔐 Encrypted backup saved: ${filename}\n\nKeep the password — it's the only way to open this file. The default (1234) is weak on purpose; set your own for anything you'll store or share.`)
     } catch (error) {
-      console.error('G-Spot export failed:', error)
-      alert(`❌ Export Failed!\n\nError: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      console.error('Encrypted export failed:', error)
+      alert(`❌ Export failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 
-  // Handle G-Spot Import
+  // Encrypted backup import — decrypt, then merge via importData (non-destructive: it
+  // merges into existing data rather than wiping it, so a restore can't clobber a profile).
   const handleGSpotImport = async () => {
-    if (!importFile || !importPin || !importHour) {
-      alert('Please provide all required fields')
+    if (!importFile || !importPin) {
+      alert('Choose a backup file and enter its password.')
       return
     }
-
     try {
-      // Read the file
       const fileContent = await importFile.text()
-
-      // Import and decrypt with G-Spot 4.0
-      const importResult = await GSpot4BoringFileExporter.importMedicalData([{
-        filename: importFile.name,
-        content: fileContent
-      }], importPin)
-
-      // Confirm before overwriting
-      if (importResult.success && confirm(`🔓 G-Spot 4.0 Import Ready!\n\nFound medical data in boring file.\n\nThis will COMPLETELY REPLACE your current data. Continue?`)) {
-        // Overwrite with imported data
-        await secureOverwriteAllData(importResult.data)
-
-        alert(`✅ G-Spot Import Complete!\n\nRecords restored successfully!`)
-
-        // Reset import form
-        setImportFile(null)
-        setImportPin("")
-        setImportHour("")
-        setShowImportDialog(false)
-        onClose()
-      }
-
+      const restoredJson = await decryptBackup(fileContent, importPin)
+      await importData(restoredJson)
+      alert('✅ Backup restored.')
+      setImportFile(null)
+      setImportPin('1234')
+      setShowImportDialog(false)
+      onClose()
     } catch (error) {
-      console.error('G-Spot import failed:', error)
-      alert(`❌ G-Spot Import Failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      console.error('Encrypted import failed:', error)
+      alert(`❌ Import failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 
@@ -194,20 +128,7 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
     alert('✅ Security PIN has been set!')
   }
 
-  // Handle G-Spot Protocol with PIN verification
-  const handleGSpotWithPin = () => {
-    const enteredPin = prompt("⚠️ DANGER ZONE ⚠️\n\nEnter your security PIN to proceed with G-Spot Protocol:")
-    if (!enteredPin) return
-
-    const savedPin = localStorage.getItem('chaos-data-pin')
-    if (enteredPin === savedPin) {
-      if (confirm("⚠️ NUCLEAR OPTION ⚠️\n\nThis will COMPLETELY ERASE all your health data and replace it with bland starter backup data. This action CANNOT be undone.\n\nAre you absolutely sure?")) {
-        executeGSpotProtocol()
-      }
-    } else {
-      alert("Incorrect PIN")
-    }
-  }
+  // (Emergency logout needs no PIN gate or confirmation — see executeEmergencyLogout.)
 
   if (!isOpen) return null
   
@@ -249,7 +170,7 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
               {!hasPin ? (
                 <div className="space-y-3">
                   <p className="text-sm text-muted-foreground">
-                    Set a security PIN to protect dangerous operations like G-Spot Protocol
+                    Set an optional security PIN for sensitive actions.
                   </p>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
@@ -291,22 +212,37 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
               </div>
               
               <div className="space-y-3">
-                <Button 
+                <Button
                   onClick={() => exportAllData()}
-                  variant="outline" 
+                  variant="outline"
                   className="w-full"
                 >
                   <Download className="h-4 w-4 mr-2" />
                   Export All Data (JSON)
                 </Button>
-                
+
+                <div>
+                  <Label htmlFor="export-password" className="text-xs">Backup password</Label>
+                  <Input
+                    id="export-password"
+                    type="text"
+                    value={exportPassword}
+                    onChange={(e) => setExportPassword(e.target.value)}
+                    placeholder="Password to encrypt the file"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Encrypts your backup (AES-256). <code>1234</code> is a convenience default —
+                    set your own before you store or share this anywhere that matters.
+                  </p>
+                </div>
+
                 <Button
                   onClick={handleGSpotExport}
                   variant="outline"
                   className="w-full"
                 >
-                  <Zap className="h-4 w-4 mr-2" />
-                  G-Spot Export (Encrypted)
+                  <Download className="h-4 w-4 mr-2" />
+                  G-Spot Export (Encrypted) 😏
                 </Button>
               </div>
             </div>
@@ -352,53 +288,38 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
                 ) : (
                   <div className="space-y-3 p-3 border rounded bg-muted/50">
                     <div>
-                      <Label htmlFor="import-file">G-Spot File</Label>
+                      <Label htmlFor="import-file">Backup file</Label>
                       <Input
                         id="import-file"
                         type="file"
-                        accept=".json"
+                        accept=".ccbackup,.json"
                         onChange={(e) => setImportFile(e.target.files?.[0] || null)}
                       />
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <Label htmlFor="import-pin">PIN</Label>
-                        <Input
-                          id="import-pin"
-                          type="password"
-                          value={importPin}
-                          onChange={(e) => setImportPin(e.target.value)}
-                          placeholder="Enter PIN"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="import-hour">Hour of Detonation</Label>
-                        <Input
-                          id="import-hour"
-                          type="number"
-                          min="0"
-                          max="23"
-                          value={importHour}
-                          onChange={(e) => setImportHour(e.target.value)}
-                          placeholder="0-23"
-                        />
-                      </div>
+                    <div>
+                      <Label htmlFor="import-pin">Backup password</Label>
+                      <Input
+                        id="import-pin"
+                        type="text"
+                        value={importPin}
+                        onChange={(e) => setImportPin(e.target.value)}
+                        placeholder="The password this backup was saved with"
+                      />
                     </div>
                     <div className="flex gap-2">
                       <Button
                         onClick={handleGSpotImport}
                         className="flex-1"
-                        disabled={!importFile || !importPin || !importHour}
+                        disabled={!importFile || !importPin}
                       >
                         <Upload className="h-4 w-4 mr-2" />
-                        Import Data
+                        Restore Backup
                       </Button>
                       <Button
                         onClick={() => {
                           setShowImportDialog(false)
                           setImportFile(null)
-                          setImportPin("")
-                          setImportHour("")
+                          setImportPin("1234")
                         }}
                         variant="outline"
                       >
@@ -410,73 +331,42 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
               </div>
             </div>
 
-            {/* G-Spot Protocol Section */}
-            <div className="p-4 border-2 border-red-200 rounded-lg bg-red-50">
+            {/* The G-Spot — emergency logout (undramatic by design; boring is camouflage) */}
+            <div className="p-4 border rounded-lg">
               <div className="flex items-center gap-2 mb-3">
-                <Zap className="h-4 w-4 text-red-600" />
-                <Label className="text-sm font-medium text-red-800">G-Spot Protocol</Label>
-                <Badge variant="destructive">DANGER</Badge>
+                <Zap className="h-4 w-4" />
+                <Label className="text-sm font-medium">The G-Spot</Label>
               </div>
-              
+
               <div className="space-y-3">
-                <p className="text-sm text-red-700">
-                  Emergency data replacement with bland, unremarkable patterns. 
-                  <button 
+                <p className="text-sm text-muted-foreground">
+                  One tap, you're logged out. It's the G-Spot. It does the thing. 🤷
+                  <button
                     onClick={() => setShowGSpotExplanation(!showGSpotExplanation)}
-                    className="text-red-600 underline ml-1"
+                    className="underline ml-1"
                   >
-                    Learn more
+                    what&apos;s this?
                   </button>
                 </p>
-                
+
                 {showGSpotExplanation && (
-                  <div className="text-xs text-red-600 bg-red-100 p-3 rounded">
-                    <p className="font-medium mb-2">What is G-Spot Protocol?</p>
+                  <div className="text-xs text-muted-foreground bg-muted/60 p-3 rounded">
                     <p>
-                      A nuclear option that completely replaces your health data with algorithmically generated
-                      "bland" patterns that appear normal but contain no real personal information.
-                      Use this if you need to quickly sanitize your data for privacy reasons.
-                    </p>
-                    <p className="text-xs italic mt-2 text-red-500">
-                      They can't find it if they don't think it exists anyways. 😏
+                      Instantly drops you to the logged-out screen — same as logging out and back
+                      into a different profile, just faster. Your data stays exactly where it is,
+                      untouched, in its own profile. Why&apos;s it called the G-Spot? Don&apos;t worry about it. 😏
                     </p>
                   </div>
                 )}
-                
-                <Button
-                  onClick={hasPin ? handleGSpotWithPin : executeGSpotProtocol}
-                  variant="destructive"
-                  className="w-full"
-                  disabled={isExecutingGSpot}
-                >
-                  <Zap className="h-4 w-4 mr-2" />
-                  {isExecutingGSpot ? 'Executing...' : 'Execute G-Spot Protocol (Bland)'}
-                </Button>
 
-                {/* Demo data loader hidden for ship — uncomment for dev/testing
                 <Button
-                  onClick={async () => {
-                    if (!confirm('Load 90 days of realistic chronic illness demo data?')) return
-                    try {
-                      setIsExecutingGSpot(true)
-                      const data = generateInterestingData()
-                      await secureOverwriteAllData(data as any)
-                      alert(`Loaded ${data.length} records of interesting demo data!`)
-                      onClose()
-                    } catch (e) {
-                      alert(`Failed: ${e instanceof Error ? e.message : 'Unknown error'}`)
-                    } finally {
-                      setIsExecutingGSpot(false)
-                    }
-                  }}
+                  onClick={executeEmergencyLogout}
                   variant="outline"
                   className="w-full"
-                  disabled={isExecutingGSpot}
                 >
-                  <Beaker className="h-4 w-4 mr-2" />
-                  Load Interesting Demo Data (For Testing)
+                  <Zap className="h-4 w-4 mr-2" />
+                  Go to the G-Spot
                 </Button>
-                */}
               </div>
             </div>
           </TabsContent>
