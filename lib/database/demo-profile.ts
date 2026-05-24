@@ -88,26 +88,100 @@ const DEMO_FIXTURE_VERSION_KEY = 'chaos-demo-fixture-version'
 const FIXTURE_BUILT_AT: string = (demoFixture as any).built_at || 'unknown'
 
 /**
- * Ensure the demo profile (PIN 1111) is populated AND current. Seeds when empty; ALSO force-resets
- * when the stored demo predates the current fixture build (stale/old-shaped data from a prior
- * version — the cause of the "1111 crashes on Pain All-time" bug, where old generator data lingered
- * in IndexedDB across reinstalls). Same-session pokes by a visitor share the current version stamp,
- * so they're not wiped. Returns the record count present after the call. Only touches the demo DB.
+ * What's currently sitting under PIN 1111, by PROVENANCE — this is the safety gate that stops us
+ * from ever wiping a real human's data.
+ *
+ *   'empty'      — nothing there; safe to seed the demo.
+ *   'current'    — our demo, current fixture build; use as-is.
+ *   'ours-stale' — our demo from an OLDER fixture (stamp present but mismatched); safe to refresh
+ *                  (this is the self-heal path for the old crashy demo data).
+ *   'foreign'    — data with NO stamp at all. We did NOT seed this. It could be a real person who
+ *                  used 1111 as their actual PIN back when it was selectable (≤0.5.3). NEVER wipe
+ *                  it silently — the caller must ask the human what to do.
+ *
+ * The stamp is the discriminator: only our own seeding writes DEMO_FIXTURE_VERSION_KEY, so unstamped
+ * data is by definition not ours.
  */
-export async function ensureDemoSeeded(): Promise<number> {
+export type DemoPinState = 'empty' | 'current' | 'ours-stale' | 'foreign'
+
+export async function inspectDemoPin(): Promise<DemoPinState> {
   const db = await openDemoDb()
   const existing = await db.daily_data.count()
+  if (existing === 0) return 'empty'
   let storedVersion: string | null = null
   try { storedVersion = localStorage.getItem(DEMO_FIXTURE_VERSION_KEY) } catch { /* SSR */ }
+  if (storedVersion === FIXTURE_BUILT_AT) return 'current'
+  if (storedVersion) return 'ours-stale'   // we seeded it in a prior version → safe to refresh
+  return 'foreign'                          // unstamped → unknown origin → ASK, never wipe
+}
 
-  // Up-to-date and populated → leave it alone.
-  if (existing > 0 && storedVersion === FIXTURE_BUILT_AT) return existing
+/**
+ * Ensure the demo profile (PIN 1111) is populated AND current — WITHOUT ever destroying data we
+ * didn't create. Seeds when empty; refreshes our own stale demo (self-heal for the old "crashes on
+ * Pain All-time" data); leaves a current demo alone; and on FOREIGN (unstamped, possibly-real) data
+ * it does NOTHING and returns the existing count — the caller is responsible for inspecting first
+ * (via inspectDemoPin) and asking the human before anything is wiped. Returns the record count
+ * present after the call. Only touches the demo DB.
+ */
+export async function ensureDemoSeeded(): Promise<number> {
+  const state = await inspectDemoPin()
+  const db = await openDemoDb()
 
-  // Empty OR stale (old build / pre-stamp data) → lay down the current fixture fresh.
-  if (existing > 0) await db.daily_data.clear()   // wipe stale/old-shaped data that may crash views
+  // Don't touch foreign data, and don't re-seed a current demo.
+  if (state === 'foreign' || state === 'current') return db.daily_data.count()
+
+  // Empty (fresh) or our own stale demo → (re)lay the current fixture.
+  if (state === 'ours-stale') await db.daily_data.clear()
   const records = fixtureRecords()
   await db.daily_data.bulkAdd(records as any)
   try { localStorage.setItem(DEMO_FIXTURE_VERSION_KEY, FIXTURE_BUILT_AT) } catch { /* SSR */ }
+  return records.length
+}
+
+/**
+ * MIGRATE the data currently under PIN 1111 to a brand-new PIN, then hand 1111 back to the demo.
+ * For the upgrade case: a real person used 1111 for their actual records (back when it was a valid
+ * PIN), and now needs that data preserved under a different PIN before 1111 becomes the public demo.
+ *
+ * Copies daily_data, user_tags, and image_blobs verbatim (ids preserved — the destination must be
+ * unused, so there are no collisions and all internal links stay intact). REFUSES if the target PIN
+ * already holds data, so we never clobber or silently merge into someone else's profile. After a
+ * successful copy it resets 1111 to the demo and points the session at the new PIN. Returns the
+ * number of data records moved.
+ */
+export async function migrateDemoToNewPin(newPin: string): Promise<number> {
+  const np = newPin.trim()
+  if (np.length < 4) throw new Error('PIN must be at least 4 characters.')
+  if (np === DEMO_PIN) throw new Error('Choose a PIN other than 1111 — that one is the public demo.')
+
+  // 1) Read everything currently under 1111.
+  await initializeDatabase(DEMO_PIN)
+  const srcDb = getDB(DEMO_PIN)
+  const records = await srcDb.daily_data.toArray()
+  const tags = await srcDb.user_tags.toArray()
+  const blobs = await srcDb.image_blobs.toArray()
+
+  // 2) Open the destination PIN; refuse if it already holds data (never clobber/merge).
+  await initializeDatabase(np)
+  const destDb = getDB(np)
+  if ((await destDb.daily_data.count()) > 0) {
+    throw new Error(`PIN ${np} is already in use. Pick a PIN that hasn't been set up yet.`)
+  }
+
+  // 3) Copy verbatim (ids preserved — dest is empty, so links stay intact).
+  if (records.length) await destDb.daily_data.bulkAdd(records as any)
+  if (tags.length) await destDb.user_tags.bulkAdd(tags as any)
+  if (blobs.length) await destDb.image_blobs.bulkAdd(blobs as any)
+
+  // 4) Only now is it safe to reset 1111 to the public demo.
+  await initializeDatabase(DEMO_PIN)
+  const demoDb = getDB(DEMO_PIN)
+  await demoDb.daily_data.clear()
+  await demoDb.daily_data.bulkAdd(fixtureRecords() as any)
+  try { localStorage.setItem(DEMO_FIXTURE_VERSION_KEY, FIXTURE_BUILT_AT) } catch { /* SSR */ }
+
+  // 5) Point the session at the user's new PIN so they land in their preserved data.
+  try { localStorage.setItem('chaos-user-pin', np) } catch { /* SSR */ }
   return records.length
 }
 
