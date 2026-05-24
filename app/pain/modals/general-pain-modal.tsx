@@ -206,11 +206,12 @@ export function GeneralPainModal({ isOpen, onClose, onSave, editingEntry, initia
   const toggleArr = (arr: string[], setter: (v: string[]) => void) => (item: string) =>
     setter(arr.includes(item) ? arr.filter(x => x !== item) : [...arr, item])
 
-  // Auto-flip dependent flags from pattern/character selections
-  useEffect(() => {
-    if (painCharacter.some(c => /tearing|ripping/i.test(c)) && !tearingQuality) setTearingQuality(true)
-    if (painPattern.some(p => /thunderclap/i.test(p)) && !thunderclapPattern) setThunderclapPattern(true)
-  }, [painCharacter, painPattern])
+  // NOTE: we deliberately do NOT auto-set the dissection (tearingQuality) or SAH
+  // (thunderclapPattern) red-flag fields from the descriptor word. "Tearing" describes
+  // plenty of non-emergency pain (a pulled muscle, skin) — inferring a 911 emergency from
+  // a casual word both nagged the user (the emergency card re-surfaced and wouldn't stay
+  // collapsed) and polluted the data/reports with false emergency markers. These red flags
+  // are set ONLY via their explicit checkboxes, where the user marks them on purpose.
 
   const handleSave = () => {
     const entryData: Omit<PainEntry, 'id'> = {
