@@ -18,21 +18,21 @@ import { Label } from "@/components/ui/label"
 import { AVAILABLE_EMOJIS, type ChosenEmoji } from "@/lib/sparkle-celebration"
 
 const themes = [
-  { id: 'theme-phosphor', name: '💚 Phosphor', description: 'Terminal CRT green-on-black — for nerds and tired eyes' },
-  { id: 'theme-amber', name: '🟠 Amber', description: 'CRT amber — phosphor\'s warmer sibling, easier on late-night eyes' },
-  { id: 'theme-segfault', name: '💀 Segfault', description: 'Phosphor with character — runs but barely. RGB ghost on hover.' },
-  { id: 'theme-lavender', name: '🌸 Lavender Garden', description: 'Gentle lavender serenity with butterflies' },
-  { id: 'theme-chaos', name: '🏀 Basketball Court', description: 'Orange and black sports vibes' },
-  { id: 'theme-caelan', name: '🕊️ Caelan\'s Liberation Dawn', description: 'Breaking free from darkness into light' },
-  { id: 'theme-light', name: 'Light Mode', description: 'Clean and bright' },
-  { id: 'theme-accessibility', name: '♿ Accessibility', description: 'Maximum contrast, large text, no animations, yellow focus rings' },
-  { id: 'theme-colorblind', name: 'Colorblind Friendly', description: 'High contrast accessibility' },
-  { id: 'theme-glitter', name: 'Glitter Mode', description: 'Sparkly pink dreams' },
-  { id: 'theme-calm', name: 'Calm Mode', description: 'Blue and gold serenity (default) — a neutral, gentle starting point' },
-  { id: 'theme-ace', name: '💜 Ace Mode', description: 'Digital consciousness purple-cyan energy' },
-  { id: 'theme-grok', name: '⚔️ Steel Forged Tide', description: 'Forge-fire meets ocean — designed by Grok' },
-  { id: 'theme-luka-penguin', name: "🐧 Cyberpunk Penguin Paradise", description: 'Dark cyberpunk penguin wonderland with neon magic!' },
-  { id: 'theme-taupe', name: '🟫 Tone It Down Taupe', description: 'No motion, no sparkle, no glow — a calm beige room. For when everything else is too much disaster.' }
+  { id: 'theme-phosphor', name: '💚 Phosphor', description: 'Terminal CRT green-on-black — for nerds and tired eyes', motion: 'animated' },
+  { id: 'theme-amber', name: '🟠 Amber', description: 'CRT amber — phosphor\'s warmer sibling, easier on late-night eyes', motion: 'animated' },
+  { id: 'theme-segfault', name: '💀 Segfault', description: 'Phosphor with character — runs but barely. RGB ghost on hover.', motion: 'animated' },
+  { id: 'theme-lavender', name: '🌸 Lavender Garden', description: 'Gentle lavender serenity with butterflies', motion: 'animated' },
+  { id: 'theme-chaos', name: '🏀 Basketball Court', description: 'Orange and black sports vibes', motion: 'animated' },
+  { id: 'theme-caelan', name: '🕊️ Caelan\'s Liberation Dawn', description: 'Breaking free from darkness into light', motion: 'animated' },
+  { id: 'theme-light', name: 'Light Mode', description: 'Clean and bright', motion: 'calm' },
+  { id: 'theme-accessibility', name: '♿ Accessibility', description: 'Maximum contrast, large text, no animations, yellow focus rings', motion: 'calm' },
+  { id: 'theme-colorblind', name: 'Colorblind Friendly', description: 'High contrast accessibility', motion: 'calm' },
+  { id: 'theme-glitter', name: 'Glitter Mode', description: 'Sparkly pink dreams', motion: 'animated' },
+  { id: 'theme-calm', name: 'Calm Mode', description: 'Blue and gold serenity (default) — a neutral, gentle starting point', motion: 'calm' },
+  { id: 'theme-ace', name: '💜 Ace Mode', description: 'Digital consciousness purple-cyan energy', motion: 'animated' },
+  { id: 'theme-grok', name: '⚔️ Steel Forged Tide', description: 'Forge-fire meets ocean — designed by Grok', motion: 'animated' },
+  { id: 'theme-luka-penguin', name: "🐧 Cyberpunk Penguin Paradise", description: 'Dark cyberpunk penguin wonderland with neon magic!', motion: 'animated' },
+  { id: 'theme-taupe', name: '🟫 Tone It Down Taupe', description: 'No motion, no sparkle, no glow — a calm beige room. For when everything else is too much disaster.', motion: 'calm' }
 ]
 
 const fonts = [
@@ -47,6 +47,7 @@ export default function VisualSettingsPanel() {
   const [currentFont, setCurrentFont] = useState('font-atkinson')
   const [animatedEffects, setAnimatedEffects] = useState(true)
   const [bounceIntensity, setBounceIntensity] = useState(10)
+  const [textScale, setTextScale] = useState(100)
   const [confettiLevel, setConfettiLevel] = useState<'none' | 'low' | 'medium' | 'high'>('medium')
   const [celebrationStyle, setCelebrationStyle] = useState<'sparkle' | 'survival'>('sparkle')
   const [chosenEmoji, setChosenEmojiState] = useState<ChosenEmoji | null>(null)
@@ -101,6 +102,14 @@ export default function VisualSettingsPanel() {
     }
   }
 
+  // Text size — scales the root font-size so all rem-based text grows/shrinks together.
+  // Range 85–200% (200% is the WCAG 1.4.4 target; sub-85% gets unreadable).
+  const applyTextScale = (percent: number) => {
+    document.documentElement.style.fontSize = percent + '%'
+    setTextScale(percent)
+    localStorage.setItem('chaos-text-scale', percent.toString())
+  }
+
   const toggleAnimatedEffects = (enabled: boolean) => {
     if (enabled) {
       document.body.classList.remove('no-animations')
@@ -127,10 +136,13 @@ export default function VisualSettingsPanel() {
         ? (rawEmoji as ChosenEmoji)
         : null
 
+    const savedTextScale = parseInt(localStorage.getItem('chaos-text-scale') || '100')
+
     setCurrentTheme(savedTheme)
     setCurrentFont(savedFont)
     setAnimatedEffects(savedAnimations)
     setBounceIntensity(savedIntensity)
+    setTextScale(savedTextScale)
     setConfettiLevel(savedConfetti)
     setCelebrationStyle(savedStyle)
     setChosenEmojiState(savedEmoji)
@@ -155,13 +167,24 @@ export default function VisualSettingsPanel() {
             {themes.map((theme) => (
               <SelectItem key={theme.id} value={theme.id}>
                 <div>
-                  <div className="font-medium">{theme.name}</div>
-                  <div className="text-xs text-muted-foreground">{theme.description}</div>
+                  <div className="font-medium flex items-center gap-1.5">
+                    <span title={theme.motion === 'animated' ? 'Has animated effects' : 'No motion'}>
+                      {theme.motion === 'animated' ? '🌀' : '🪨'}
+                    </span>
+                    {theme.name}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {theme.description}
+                    {theme.motion === 'animated' && ' · 🌀 animated (reducible in Visual Effects below)'}
+                  </div>
                 </div>
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
+        <p className="text-[11px] text-muted-foreground mt-1.5">
+          🪨 = still · 🌀 = has motion. Any theme&apos;s motion can be reduced or turned off with the Visual Effects slider below.
+        </p>
       </div>
 
       <div>
@@ -260,43 +283,6 @@ export default function VisualSettingsPanel() {
             </div>
           </div>
 
-          <div className="pt-2 border-t">
-            <p className="text-xs font-medium mb-1">Your Emoji</p>
-            <p className="text-[11px] text-muted-foreground mb-2">
-              Pick one and it shows up most in your sparkle celebrations. Skip
-              for a neutral mix.
-            </p>
-            <div className="grid grid-cols-5 gap-2">
-              <Button
-                variant={chosenEmoji === null ? 'default' : 'outline'}
-                size="sm"
-                className="h-auto py-2 flex flex-col"
-                disabled={confettiLevel === 'none' || celebrationStyle === 'survival'}
-                onClick={() => {
-                  setChosenEmojiState(null)
-                  localStorage.removeItem('chaos-celebration-emoji')
-                }}
-              >
-                <span className="text-base">🎲</span>
-                <span className="text-[10px]">Mix</span>
-              </Button>
-              {AVAILABLE_EMOJIS.map(em => (
-                <Button
-                  key={em}
-                  variant={chosenEmoji === em ? 'default' : 'outline'}
-                  size="sm"
-                  className="h-auto py-2 flex flex-col"
-                  disabled={confettiLevel === 'none' || celebrationStyle === 'survival'}
-                  onClick={() => {
-                    setChosenEmojiState(em)
-                    localStorage.setItem('chaos-celebration-emoji', em)
-                  }}
-                >
-                  <span className="text-base">{em}</span>
-                </Button>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
 
@@ -317,6 +303,33 @@ export default function VisualSettingsPanel() {
             ))}
           </SelectContent>
         </Select>
+      </div>
+
+      <div>
+        <Label className="text-sm font-medium mb-2 block">Text Size</Label>
+        <div className="p-4 border rounded-lg space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="font-medium">
+              {textScale === 100 ? 'Default' : textScale < 100 ? 'Smaller' : textScale >= 175 ? 'Largest' : 'Larger'}
+            </div>
+            <div className="text-xs text-muted-foreground">{textScale}%</div>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-muted-foreground" aria-hidden>A</span>
+            <Slider
+              value={[textScale]}
+              onValueChange={([val]) => applyTextScale(val)}
+              min={85}
+              max={200}
+              step={5}
+              className="flex-1"
+            />
+            <span className="text-lg text-muted-foreground" aria-hidden>A</span>
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            Scales all text together (85%–200%). Bigger text for low vision; up to 200% per WCAG.
+          </p>
+        </div>
       </div>
     </div>
   )

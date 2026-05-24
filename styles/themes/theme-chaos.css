@@ -60,7 +60,7 @@ body.theme-chaos::before {
 
 /* Text colors for basketball theme */
 body.theme-chaos .text-muted-foreground {
-  color: #a18ac7 !important;
+  color: #5a4520 !important; /* dark wood brown (was #a18ac7 purple — leftover from another theme; unreadable/off on hardwood) */
 }
 
 body.theme-chaos h1,
@@ -77,10 +77,12 @@ body.theme-chaos h6 {
 /* Card styles for basketball theme */
 body.theme-chaos .card,
 body.theme-chaos [class*="card"] {
-  background: linear-gradient(135deg, 
-    rgba(26, 26, 26, 0.9) 0%, 
-    rgba(139, 69, 19, 0.8) 50%, 
-    rgba(26, 26, 26, 0.9) 100%
+  /* Light hardwood cards to match the court (was a near-black gradient — that was the
+     "it went dark" Luka saw; the page bg can be tan but every card read as black). */
+  background: linear-gradient(135deg,
+    rgba(245, 230, 211, 0.96) 0%,
+    rgba(232, 213, 196, 0.92) 50%,
+    rgba(245, 230, 211, 0.96) 100%
   ) !important;
   border: 2px solid #ff8c00 !important;
   box-shadow: 0 4px 20px rgba(255, 140, 0, 0.3) !important;

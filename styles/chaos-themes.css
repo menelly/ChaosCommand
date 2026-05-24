@@ -557,26 +557,29 @@ body.theme-chaos {
   --surface-1: #f5e6d3; /* Light hardwood surface */
   --surface-2: #e8d5c4; /* Darker court wood surface */
 
-  /* Tailwind CSS variable mappings for BASKETBALL COURT! */
-  --background: 44 35 76; /* Hardwood court background #f4e4bc */
-  --foreground: 0 0 10; /* Court black text */
-  --card: 44 28 85; /* Light wood cards #f5e6d3 */
-  --card-foreground: 0 0 10;
-  --popover: 44 28 85; /* Light wood popover */
-  --popover-foreground: 0 0 10;
-  --primary: 28 100 50; /* Basketball orange #ff8c00 */
-  --primary-foreground: 0 0 100; /* White text on orange */
-  --secondary: 44 22 80; /* Medium wood secondary */
-  --secondary-foreground: 0 0 20;
-  --muted: 44 22 80; /* Medium wood muted */
-  --muted-foreground: 30 75 21; /* Dark wood brown — passes AA on hardwood bg */
-  --accent: 28 100 50; /* Basketball orange accent */
-  --accent-foreground: 0 0 100;
-  --destructive: 0 84 60; /* Keep red for errors */
-  --destructive-foreground: 0 0 100;
-  --border: 30 65 55; /* Wood brown borders */
-  --input: 44 28 85; /* Light wood inputs */
-  --ring: 28 100 50; /* Orange focus ring */
+  /* Tailwind CSS variable mappings for BASKETBALL COURT!
+     NOTE: these MUST carry % units on S/L — `hsl(var(--x))` silently fails without
+     them and the theme falls through to a dark default (that was Luka's "it went dark"
+     bug). Background corrected to the real hardwood tan #f4e4bc = 43 72% 85%. */
+  --background: 43 72% 85%; /* Hardwood court background #f4e4bc */
+  --foreground: 0 0% 10%; /* Court black text */
+  --card: 44 28% 85%; /* Light wood cards #f5e6d3 */
+  --card-foreground: 0 0% 10%;
+  --popover: 44 28% 85%; /* Light wood popover */
+  --popover-foreground: 0 0% 10%;
+  --primary: 28 100% 50%; /* Basketball orange #ff8c00 */
+  --primary-foreground: 0 0% 100%; /* White text on orange */
+  --secondary: 44 22% 80%; /* Medium wood secondary */
+  --secondary-foreground: 0 0% 20%;
+  --muted: 44 22% 80%; /* Medium wood muted */
+  --muted-foreground: 30 75% 21%; /* Dark wood brown — passes AA on hardwood bg */
+  --accent: 28 100% 50%; /* Basketball orange accent */
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 84% 60%; /* Keep red for errors */
+  --destructive-foreground: 0 0% 100%;
+  --border: 30 65% 55%; /* Wood brown borders */
+  --input: 44 28% 85%; /* Light wood inputs */
+  --ring: 28 100% 50%; /* Orange focus ring */
 }
 
 /* === THEME: Colorblind Mode === */

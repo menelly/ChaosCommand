@@ -64,6 +64,12 @@ export default function ThemeLoader() {
     const savedTheme = localStorage.getItem('chaos-theme') || 'theme-calm'
     const savedFont = localStorage.getItem('chaos-font') || 'font-atkinson'
     const savedAnimations = localStorage.getItem('chaos-animations') !== 'false' // default to true
+    const savedTextScale = localStorage.getItem('chaos-text-scale') // text-size slider (85–200%)
+
+    // Apply saved text size app-wide (scales all rem-based text). Default 100% = untouched.
+    if (savedTextScale && savedTextScale !== '100') {
+      document.documentElement.style.fontSize = savedTextScale + '%'
+    }
 
     // Available themes and fonts
     const themes = [
