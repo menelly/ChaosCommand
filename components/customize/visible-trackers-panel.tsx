@@ -26,6 +26,11 @@ import {
   type VisibilitySection,
 } from "@/lib/visibility-sections"
 
+// Shared with /body's Customize + the reproductive tracker: hide ONLY fertility/ovulation/BBT
+// while KEEPING menstrual-cycle tracking. (You may want to know when you bleed without
+// planning ovulation — post-partum, perimenopause, not TTC, etc.) Same key = both surfaces sync.
+const HIDE_FERTILITY_KEY = 'chaos-hide-fertility-features'
+
 interface Props {
   /** When set, render only that section's toggles (no tabs). Used by the
    *  per-page customize dialog on /manage. Omit for the unified hub. */
@@ -53,6 +58,7 @@ interface SectionToggleListProps {
 
 function SectionToggleList({ section, onChange }: SectionToggleListProps) {
   const [hidden, setHidden] = useState<string[]>([])
+  const [hideFertility, setHideFertility] = useState(false)
   const trackers = resolveTrackers(section)
 
   useEffect(() => {
@@ -63,7 +69,22 @@ function SectionToggleList({ section, onChange }: SectionToggleListProps) {
     } catch (e) {
       console.error(`Failed to load ${section.storageKey}:`, e)
     }
+    try {
+      const fertPref = localStorage.getItem(HIDE_FERTILITY_KEY)
+      setHideFertility(fertPref ? JSON.parse(fertPref) : false)
+    } catch (e) {
+      console.error('Failed to load fertility preference:', e)
+    }
   }, [section.storageKey])
+
+  const toggleFertility = (hide: boolean) => {
+    setHideFertility(hide)
+    try {
+      localStorage.setItem(HIDE_FERTILITY_KEY, JSON.stringify(hide))
+    } catch (e) {
+      console.error('Failed to save fertility preference:', e)
+    }
+  }
 
   const persist = (next: string[]) => {
     setHidden(next)
@@ -93,15 +114,40 @@ function SectionToggleList({ section, onChange }: SectionToggleListProps) {
       ) : (
         <div className="space-y-3">
           {trackers.map(tracker => (
-            <div key={tracker.id} className="flex items-center justify-between gap-3">
-              <Label htmlFor={`vt-${section.id}-${tracker.id}`} className="cursor-pointer truncate">
-                {tracker.name}
-              </Label>
-              <Switch
-                id={`vt-${section.id}-${tracker.id}`}
-                checked={!hidden.includes(tracker.id)}
-                onCheckedChange={() => toggle(tracker.id)}
-              />
+            <div key={tracker.id}>
+              <div className="flex items-center justify-between gap-3">
+                <Label htmlFor={`vt-${section.id}-${tracker.id}`} className="cursor-pointer truncate">
+                  {tracker.name}
+                </Label>
+                <Switch
+                  id={`vt-${section.id}-${tracker.id}`}
+                  checked={!hidden.includes(tracker.id)}
+                  onCheckedChange={() => toggle(tracker.id)}
+                />
+              </div>
+
+              {/* Scoped sub-option: hide ONLY fertility/ovulation, keep menstrual tracking.
+                  Mirrors /body's Customize; shown when Reproductive Health is visible. */}
+              {section.id === 'body' && tracker.id === 'reproductive-health' && !hidden.includes('reproductive-health') && (
+                <div className="ml-6 mt-2 p-3 bg-muted/50 rounded-lg border border-border/50">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <Label htmlFor="vt-hide-fertility" className="text-sm font-medium cursor-pointer">
+                        Hide Fertility & Ovulation
+                      </Label>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Hides BBT, ovulation tracking, and fertility predictions — keeps menstrual-cycle
+                        tracking. For post-menopause, post-surgery, not trying to conceive, or just don&apos;t need it.
+                      </p>
+                    </div>
+                    <Switch
+                      id="vt-hide-fertility"
+                      checked={hideFertility}
+                      onCheckedChange={toggleFertility}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
