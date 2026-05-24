@@ -31,6 +31,8 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
   const [exportPassword, setExportPassword] = useState("1234")  // encrypt-export password (visible, weak default)
   const [importFile, setImportFile] = useState<File | null>(null)
   const [deleteArmed, setDeleteArmed] = useState(false)   // two-step arming for the permanent wipe
+  const [deleteConfirmPin, setDeleteConfirmPin] = useState('')  // must re-type the logged-in PIN to delete
+  const [deletePinError, setDeletePinError] = useState('')
   const [showAdvancedExport, setShowAdvancedExport] = useState(false)  // hide unencrypted JSON behind intent
 
   // Plain JSON export — unencrypted, human-readable. Warn first (it's medical data in the
@@ -102,6 +104,20 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
   // Permanent wipe — ONLY the currently-logged-in PIN's data. Other profiles on this device
   // (e.g. a kid's PIN) are never touched. Honest, labeled, two-step armed, per-device warned.
   const handleDeleteProfile = async () => {
+    // PIN GATE: you must re-type the PIN you're logged in with. This proves you know WHOSE data
+    // you're deleting — so you can't nuke a kid's/partner's profile thinking it's yours.
+    let currentPin: string | null = null
+    try { currentPin = localStorage.getItem('chaos-user-pin') } catch { /* ignore */ }
+    if (!currentPin) {
+      setDeletePinError('No profile is logged in — nothing to delete.')
+      return
+    }
+    if (deleteConfirmPin.trim() !== currentPin) {
+      setDeletePinError("That PIN doesn't match the profile you're logged into. Delete cancelled — check whose profile this is.")
+      return
+    }
+    setDeletePinError('')
+
     const ok = confirm(
       '⚠️ DELETE THIS PROFILE\'S DATA — PERMANENT\n\n' +
       'This erases everything saved under the PIN you\'re logged in with right now — every ' +
@@ -113,7 +129,7 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
       'with each other, not through us, so we can\'t reach the other one for you.\n\n' +
       'Are you absolutely sure you want to permanently delete this profile\'s data?'
     )
-    if (!ok) { setDeleteArmed(false); return }
+    if (!ok) { setDeleteArmed(false); setDeleteConfirmPin(''); return }
     try {
       const dbName = await deleteCurrentProfile()
       // Drop the session hint so the app reopens at the locked screen, not this profile.
@@ -133,6 +149,7 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
       console.error('Delete-profile failed:', error)
       alert(`❌ Delete failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
       setDeleteArmed(false)
+      setDeleteConfirmPin('')
     }
   }
 
@@ -285,14 +302,30 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
               ) : (
                 <div className="space-y-2">
                   <p className="text-xs font-medium text-destructive">
-                    This cannot be undone. Permanently delete this profile&apos;s data?
+                    This cannot be undone. To confirm <strong>whose</strong> data you&apos;re deleting,
+                    re-type the PIN you&apos;re logged in with:
                   </p>
+                  <Input
+                    type="password"
+                    placeholder="Re-enter this profile's PIN"
+                    value={deleteConfirmPin}
+                    onChange={(e) => { setDeleteConfirmPin(e.target.value); if (deletePinError) setDeletePinError('') }}
+                    className="text-center tracking-widest"
+                    maxLength={20}
+                    autoFocus
+                  />
+                  {deletePinError && <p className="text-xs text-destructive">{deletePinError}</p>}
                   <div className="flex gap-2">
-                    <Button onClick={handleDeleteProfile} variant="destructive" className="flex-1">
+                    <Button
+                      onClick={handleDeleteProfile}
+                      variant="destructive"
+                      className="flex-1"
+                      disabled={deleteConfirmPin.trim().length < 4}
+                    >
                       <Trash2 className="h-4 w-4 mr-2" />
                       Yes, delete permanently
                     </Button>
-                    <Button onClick={() => setDeleteArmed(false)} variant="outline">
+                    <Button onClick={() => { setDeleteArmed(false); setDeleteConfirmPin(''); setDeletePinError('') }} variant="outline">
                       Cancel
                     </Button>
                   </div>
