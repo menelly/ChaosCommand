@@ -17,7 +17,10 @@ body.theme-accessibility * {
 
 /* High contrast text */
 body.theme-accessibility .text-muted-foreground {
-  color: #cccccc !important;
+  /* #767676 clears AA (~4.5:1) on BOTH the black body AND the forced-white cards.
+     Was #cccccc — fine on the black body but invisible (1.6:1) on white cards, which is
+     where most muted text actually lives (e.g. the whole Customize panel). */
+  color: #767676 !important;
 }
 
 body.theme-accessibility h1,
