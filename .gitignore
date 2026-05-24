@@ -83,3 +83,4 @@ src-tauri/binaries/
 # contact names, in-progress thoughts, etc.). Store at E:\Ace\ instead.
 HANDOFF*.md
 HANDOFF*.txt
+a11y-report.md

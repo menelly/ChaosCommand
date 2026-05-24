@@ -255,14 +255,14 @@ export default function DailyPrompts() {
 
   if (isDismissed) {
     return (
-      <Card className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 border-purple-200 dark:border-purple-800">
+      <Card className="bg-card border-border">
         <CardContent className="p-4 text-center">
           <p className="text-sm text-muted-foreground mb-2">Daily prompt dismissed</p>
           <Button 
             variant="ghost" 
             size="sm" 
             onClick={handleUndismiss}
-            className="text-purple-600 hover:text-purple-700"
+            className="text-primary hover:text-primary/80"
           >
             <RotateCcw className="h-4 w-4 mr-1" />
             Show prompt
@@ -273,11 +273,11 @@ export default function DailyPrompts() {
   }
 
   return (
-    <Card className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 border-purple-200 dark:border-purple-800">
+    <Card className="bg-card border-border">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg flex items-center gap-2">
-            <Heart className="h-5 w-5 text-purple-500" />
+            <Heart className="h-5 w-5 text-primary" />
             Daily Reflection
           </CardTitle>
           <div className="flex items-center gap-2">
@@ -296,7 +296,7 @@ export default function DailyPrompts() {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <p className="text-sm text-purple-700 dark:text-purple-300 leading-relaxed">
+        <p className="text-sm text-foreground leading-relaxed">
           {currentPrompt.text}
         </p>
         
@@ -305,7 +305,7 @@ export default function DailyPrompts() {
             variant="outline"
             size="sm"
             onClick={() => setIsEditing(true)}
-            className="w-full border-purple-200 text-purple-600 hover:bg-purple-50"
+            className="w-full border-border text-primary hover:bg-accent"
           >
             <Edit3 className="h-4 w-4 mr-2" />
             Reflect on this
@@ -314,14 +314,14 @@ export default function DailyPrompts() {
 
         {!isEditing && savedResponse && (
           <div className="space-y-2">
-            <div className="p-3 bg-white/50 dark:bg-black/20 rounded-lg border border-purple-100 dark:border-purple-800">
+            <div className="p-3 bg-muted rounded-lg border border-border">
               <p className="text-sm text-foreground whitespace-pre-wrap">{savedResponse}</p>
             </div>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setIsEditing(true)}
-              className="text-purple-600 hover:text-purple-700"
+              className="text-primary hover:text-primary/80"
             >
               <Edit3 className="h-4 w-4 mr-1" />
               Edit reflection
@@ -335,13 +335,13 @@ export default function DailyPrompts() {
               placeholder="Take a moment to reflect... (optional)"
               value={response}
               onChange={(e) => setResponse(e.target.value)}
-              className="min-h-[80px] border-purple-200 focus:border-purple-400"
+              className="min-h-[80px] border-border focus:border-ring"
             />
             <div className="flex gap-2">
               <Button
                 size="sm"
                 onClick={handleSaveResponse}
-                className="bg-purple-500 hover:bg-purple-600"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
               >
                 <Save className="h-4 w-4 mr-1" />
                 Save
@@ -413,7 +413,7 @@ export default function DailyPrompts() {
                       </div>
                       {/* Focused reflection card */}
                       {entry && (
-                        <div className="p-3 bg-white/30 dark:bg-black/10 rounded-lg border border-[var(--border-soft)]">
+                        <div className="p-3 bg-muted rounded-lg border border-border">
                           <div className="flex items-center justify-between mb-1">
                             <span className="text-xs font-medium text-[var(--text-main)]">
                               {new Date(entry.date + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}

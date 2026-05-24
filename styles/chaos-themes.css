@@ -1398,7 +1398,7 @@ body.theme-light .text-muted-foreground {
 }
 
 body.theme-colorblind .text-muted-foreground {
-  color: #cccccc !important;
+  color: #5c636a !important; /* was #cccccc = 1.6:1 invisible on the near-white colorblind bg; #5c636a ≈ 6:1 PASS */
 }
 
 body.theme-glitter .text-muted-foreground {
@@ -1426,7 +1426,7 @@ body.theme-light .text-muted-foreground {
 }
 
 body.theme-colorblind .text-muted-foreground {
-  color: #cccccc !important;
+  color: #5c636a !important; /* was #cccccc = 1.6:1 invisible on the near-white colorblind bg; #5c636a ≈ 6:1 PASS */
 }
 
 body.theme-glitter .text-muted-foreground {

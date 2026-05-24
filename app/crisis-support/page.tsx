@@ -226,7 +226,7 @@ export default function CrisisSupport() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Button
                 onClick={() => handleEmergencyCall('988')}
-                className="h-auto py-4 flex flex-col items-center gap-1 bg-red-500 hover:bg-red-600 text-white"
+                className="crisis-emergency-btn crisis-emergency-988 h-auto py-4 flex flex-col items-center gap-1 bg-red-500 hover:bg-red-600 text-white"
               >
                 <Phone className="h-6 w-6" />
                 <span className="font-semibold">988 Crisis Line</span>
@@ -236,7 +236,7 @@ export default function CrisisSupport() {
               <Button
                 onClick={() => handleEmergencyCall('741741')}
                 variant="outline"
-                className="h-auto py-4 flex flex-col items-center gap-1 border-orange-500 text-orange-600 hover:bg-orange-500 hover:text-white"
+                className="crisis-emergency-btn crisis-emergency-text h-auto py-4 flex flex-col items-center gap-1 border-orange-500 text-orange-600 hover:bg-orange-500 hover:text-white"
               >
                 <MessageSquare className="h-6 w-6" />
                 <span className="font-semibold">Text HOME to 741741</span>
@@ -246,7 +246,7 @@ export default function CrisisSupport() {
               <Button
                 onClick={() => handleEmergencyCall('911')}
                 variant="outline"
-                className="h-auto py-4 flex flex-col items-center gap-1 border-purple-500 text-purple-600 hover:bg-purple-500 hover:text-white"
+                className="crisis-emergency-btn crisis-emergency-911 h-auto py-4 flex flex-col items-center gap-1 border-purple-500 text-purple-600 hover:bg-purple-500 hover:text-white"
               >
                 <AlertTriangle className="h-6 w-6" />
                 <span className="font-semibold">911 Emergency</span>

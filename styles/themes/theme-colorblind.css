@@ -299,3 +299,24 @@ body.theme-colorblind *::before,
 body.theme-colorblind *::after {
   content: none !important;
 }
+
+/* ── Crisis emergency buttons — LIFE-SAFETY legibility guarantee (v0.5.5) ──
+   The blanket button/link overrides above can strand these. Force readable
+   contrast + colorblind-safe danger emphasis (988 = dark w/ orange alert border,
+   distinguishable by value+border, not hue). */
+body.theme-colorblind .crisis-emergency-988 {
+  background: #212529 !important;
+  color: #ffffff !important;
+  border: 3px solid #d55e00 !important;
+}
+body.theme-colorblind .crisis-emergency-text,
+body.theme-colorblind .crisis-emergency-911 {
+  background: #ffffff !important;
+  color: #212529 !important;
+  border: 2px solid #6c757d !important;
+}
+body.theme-colorblind .crisis-emergency-btn,
+body.theme-colorblind .crisis-emergency-btn * {
+  color: inherit !important;
+  opacity: 1 !important;
+}

@@ -101,9 +101,9 @@ body.theme-accessibility textarea::placeholder {
   font-weight: bold !important;
 }
 
-/* High contrast links */
+/* High contrast links — light blue (#66b3ff ≈ 9.6:1 on black; pure #0000ff was 2.44:1 FAIL) */
 body.theme-accessibility a {
-  color: #0000ff !important;
+  color: #66b3ff !important;
   text-decoration: underline !important;
   font-weight: bold !important;
 }
@@ -213,3 +213,24 @@ body.theme-accessibility h3 { font-size: 2em !important; }
 body.theme-accessibility h4 { font-size: 1.8em !important; }
 body.theme-accessibility h5 { font-size: 1.6em !important; }
 body.theme-accessibility h6 { font-size: 1.4em !important; }
+
+/* ── Crisis emergency buttons — LIFE-SAFETY legibility guarantee (v0.5.5) ──
+   The blanket button override above flattens these and can strand their text.
+   Force max contrast AND preserve the danger hierarchy: 988 stays unmistakably
+   the primary crisis line (solid red on black), the other two are clear bordered. */
+body.theme-accessibility .crisis-emergency-988 {
+  background: #cc0000 !important;
+  color: #ffffff !important;
+  border: 3px solid #ffffff !important;
+}
+body.theme-accessibility .crisis-emergency-text,
+body.theme-accessibility .crisis-emergency-911 {
+  background: #000000 !important;
+  color: #ffffff !important;
+  border: 3px solid #ffffff !important;
+}
+body.theme-accessibility .crisis-emergency-btn,
+body.theme-accessibility .crisis-emergency-btn * {
+  color: inherit !important;
+  opacity: 1 !important;
+}
