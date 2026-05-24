@@ -27,6 +27,7 @@ import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { DEMO_PIN, ensureDemoSeeded } from '@/lib/database/demo-profile'
 
 interface PinLoginProps {
   onPinEntered: (pin: string) => void
@@ -35,22 +36,40 @@ interface PinLoginProps {
 export default function PinLogin({ onPinEntered }: PinLoginProps) {
   const [pin, setPin] = useState('')
   const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Entering the public demo PIN seeds its sample data FIRST (awaited), so the demo profile
+  // is populated the instant the app loads — no empty-on-first-view race. Works whether the
+  // demo is reached via the button or by typing 1111 by hand.
+  const enterPin = async (p: string) => {
+    if (p === DEMO_PIN) {
+      try {
+        setBusy(true)
+        await ensureDemoSeeded()
+      } catch (err) {
+        console.error('Demo seeding failed:', err)
+      } finally {
+        setBusy(false)
+      }
+    }
+    onPinEntered(p)
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!pin.trim()) {
       setError('Please enter a PIN')
       return
     }
 
-    if (pin.length < 4) {
+    if (pin.trim().length < 4) {
       setError('PIN must be at least 4 characters')
       return
     }
 
     setError('')
-    onPinEntered(pin.trim())
+    await enterPin(pin.trim())
   }
 
   const handlePinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -84,12 +103,24 @@ export default function PinLogin({ onPinEntered }: PinLoginProps) {
               )}
             </div>
             
-            <Button type="submit" className="w-full" size="lg">
+            <Button type="submit" className="w-full" size="lg" disabled={busy}>
               🚀 Launch Command Center
             </Button>
-            
+
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              size="lg"
+              disabled={busy}
+              onClick={() => enterPin(DEMO_PIN)}
+            >
+              {busy ? '✨ Loading demo…' : '👀 See the demo (no account needed)'}
+            </Button>
+
             <div className="text-xs text-muted-foreground text-center space-y-1 mt-4">
-              <p>💡 Make sure your PIN is unique - family members all need different PINs</p>
+              <p>💡 Make sure your PIN is unique — family members all need different PINs.</p>
+              <p>👀 PIN <strong>1111</strong> is the public demo (sample data). Pick something else for your real data.</p>
             </div>
           </form>
         </CardContent>
