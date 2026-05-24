@@ -212,6 +212,10 @@ export default function PainTracker() {
           return entries.some(e => {
             try {
               if (differenceInDays(now, new Date(e.date)) > 30) return false
+              // NOTE: raw painLevel >= 9 is intentionally NOT a trigger. High pain is not a
+              // 911 emergency (chronic-pain folks live at 7-9 daily) and it was force-keeping
+              // the "Call 911" card permanently expanded ("collapse won't work"). Only true
+              // red flags re-surface it.
               return !!(
                 e.erVisitRequired ||
                 e.emergencyServicesCalled ||
@@ -220,8 +224,7 @@ export default function PainTracker() {
                 e.legWeakness ||
                 e.bowelBladderChanges ||
                 e.saddleAnesthesia ||
-                e.pulsatileMass ||
-                (e.painLevel && e.painLevel >= 9)
+                e.pulsatileMass
               )
             } catch { return false }
           })
