@@ -47,6 +47,10 @@ export function EmergencyCriteriaCard({
 }: Props) {
   const [acknowledged, setAcknowledged] = useState(false)
   const [hydrated, setHydrated] = useState(false)
+  // Explicit "Got it — collapse" this session. ALWAYS wins, so the user can dismiss the card
+  // even when a recent emergency re-surfaced it. (Previously recentEmergencyDetected force-held
+  // it open forever, so "collapse won't work" the moment any red-flag entry existed.)
+  const [dismissed, setDismissed] = useState(false)
 
   useEffect(() => {
     try {
@@ -58,17 +62,20 @@ export function EmergencyCriteriaCard({
 
   const handleAck = () => {
     setAcknowledged(true)
+    setDismissed(true)
     try { localStorage.setItem(storageKey, 'true') } catch { /* no-op */ }
   }
 
   const handleReopen = () => {
     setAcknowledged(false)
+    setDismissed(false)
     try { localStorage.removeItem(storageKey) } catch { /* no-op */ }
   }
 
-  // Default expanded if user hasn't ack'd OR if we've detected a recent emergency
-  // (force-expansion overrides ack to make sure they see it again)
-  const expanded = !hydrated ? true : !acknowledged || recentEmergencyDetected
+  // Default expanded until acknowledged, and a recent emergency re-surfaces it on load — but an
+  // explicit collapse this session ALWAYS wins (re-surfacing is a reminder, not a permanent lock).
+  // On the next visit a still-present emergency will surface it again, and the user can dismiss again.
+  const expanded = !hydrated ? true : dismissed ? false : (!acknowledged || recentEmergencyDetected)
 
   if (!expanded) {
     // Collapsed pill — small, tappable, stays visible but out of the way
