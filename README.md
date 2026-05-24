@@ -74,7 +74,7 @@ Everything runs on your device. No cloud. No accounts. No telemetry. Your health
 - **Open source**: Audit our code
 
 ### Accessibility
-- **10 themes**: Lavender, Glitter, Ace Mode, Steel Forged Tide (Grok), Caelan's Dawn, Basketball Court/Cyberpunk Penguin, Calm, Light, Colorblind, High Contrast
+- **15 themes**: Calm (default), Lavender Garden, Glitter, Ace Mode, Steel Forged Tide (Grok), Caelan's Liberation Dawn, Basketball Court, Cyberpunk Penguin Paradise, Phosphor, Amber, Segfault, Light, Colorblind, Accessibility (max-contrast), and Tone It Down Taupe (TIDT — no motion, no sparkle, no glow). Themes apply to the whole app and use proper WCAG-checked design tokens.
 - **Bounce intensity slider**: 0% static to 100% full sparkle — migraine-safe customization
 - **4 font options**: Atkinson Hyperlegible, Poppins, Lexend, System
 - **Chaos-positive design**: Goblin affirmations, survival checkbox with cheerleader familiars, "I KNOW" tags for intentional choices
