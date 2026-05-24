@@ -32,8 +32,9 @@ interface Props {
   /** Footer note (e.g., "Status epilepticus is a neurological emergency.") */
   footerNote?: string
   /**
-   * If true, force-expand regardless of acknowledgement. Pass true when
-   * recent entries show emergency markers (status epi, EMS called, etc.).
+   * @deprecated No longer used. The card is read-once-then-collapsed; live emergency
+   * warning lives in the in-modal red-flag banner, not here. Kept so existing callers
+   * still compile; caller plumbing removal is tracked separately.
    */
   recentEmergencyDetected?: boolean
 }
@@ -43,14 +44,9 @@ export function EmergencyCriteriaCard({
   criteria,
   title = '🚨 Call 911 NOW if any of these:',
   footerNote = 'This tracker is for documentation, NOT diagnosis. When in doubt, call 911.',
-  recentEmergencyDetected = false,
 }: Props) {
   const [acknowledged, setAcknowledged] = useState(false)
   const [hydrated, setHydrated] = useState(false)
-  // Explicit "Got it — collapse" this session. ALWAYS wins, so the user can dismiss the card
-  // even when a recent emergency re-surfaced it. (Previously recentEmergencyDetected force-held
-  // it open forever, so "collapse won't work" the moment any red-flag entry existed.)
-  const [dismissed, setDismissed] = useState(false)
 
   useEffect(() => {
     try {
@@ -62,20 +58,20 @@ export function EmergencyCriteriaCard({
 
   const handleAck = () => {
     setAcknowledged(true)
-    setDismissed(true)
     try { localStorage.setItem(storageKey, 'true') } catch { /* no-op */ }
   }
 
   const handleReopen = () => {
     setAcknowledged(false)
-    setDismissed(false)
     try { localStorage.removeItem(storageKey) } catch { /* no-op */ }
   }
 
-  // Default expanded until acknowledged, and a recent emergency re-surfaces it on load — but an
-  // explicit collapse this session ALWAYS wins (re-surfacing is a reminder, not a permanent lock).
-  // On the next visit a still-present emergency will surface it again, and the user can dismiss again.
-  const expanded = !hydrated ? true : dismissed ? false : (!acknowledged || recentEmergencyDetected)
+  // Read-once, then collapsed for good (until the user taps the pill to reopen it). We deliberately
+  // do NOT re-surface from history: the in-MODAL live red-flag banner warns the moment an emergency
+  // value is actually entered — THAT is the safety net. Re-nagging about a past event isn't safety,
+  // it's not trusting the user. Warn when it's real, then respect that they navigated it.
+  // (recentEmergencyDetected prop is kept but ignored — caller plumbing removal tracked separately.)
+  const expanded = !hydrated ? true : !acknowledged
 
   if (!expanded) {
     // Collapsed pill — small, tappable, stays visible but out of the way
@@ -101,11 +97,6 @@ export function EmergencyCriteriaCard({
           <AlertTriangle className="h-5 w-5" />
           {title}
         </CardTitle>
-        {recentEmergencyDetected && (
-          <p className="text-xs text-red-700 dark:text-red-300 mt-1">
-            ⚠ Re-surfaced because recent tracked events show emergency markers.
-          </p>
-        )}
       </CardHeader>
       <CardContent className="text-sm space-y-1 text-red-900 dark:text-red-200">
         {criteria.map((criterion, i) => (
