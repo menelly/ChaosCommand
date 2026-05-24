@@ -25,7 +25,32 @@
  */
 
 import { getDB, initializeDatabase } from './dexie-db'
-import { generateInterestingData } from './interesting-data'
+import demoFixture from './demo-fixture.json'
+
+/**
+ * The demo dataset is a SANITIZED export of real data (CHA-224) — shipped as a fixture so it
+ * always matches the app's real save shapes (no generator drift, no crashes). PII/free-text/
+ * images were stripped at build time (scripts/build-demo-fixture.js). Here we only re-base the
+ * dates so the demo always ends at the viewer's "today," however long after build they open it.
+ */
+function fixtureRecords(): any[] {
+  const recs: any[] = ((demoFixture as any).daily_data || [])
+  const dates = recs.map(r => r.date).filter(Boolean).sort()
+  if (!dates.length) return recs
+  const toDay = (s: string) => Math.floor(new Date(s + 'T12:00:00').getTime() / 86400000)
+  const delta = Math.floor(Date.now() / 86400000) - toDay(dates[dates.length - 1])
+  const ISO = /^\d{4}-\d{2}-\d{2}/
+  const shift = (v: any): any => {
+    if (typeof v === 'string' && ISO.test(v)) {
+      const d = new Date(v)
+      if (!isNaN(d.getTime())) { d.setDate(d.getDate() + delta); return v.length === 10 ? d.toISOString().slice(0, 10) : d.toISOString() }
+    }
+    if (Array.isArray(v)) return v.map(shift)
+    if (v && typeof v === 'object') { const o: any = {}; for (const k in v) o[k] = shift(v[k]); return o }
+    return v
+  }
+  return recs.map(r => ({ date: r.date ? shift(r.date) : r.date, category: r.category, subcategory: r.subcategory, content: shift(r.content), metadata: r.metadata || {} }))
+}
 
 /**
  * The public demo profile PIN. Documented openly. RESERVED — `isDemoPin` lets the
@@ -62,7 +87,7 @@ export async function ensureDemoSeeded(): Promise<number> {
   const db = await openDemoDb()
   const existing = await db.daily_data.count()
   if (existing > 0) return existing
-  const records = generateInterestingData() // rich 90-day arc — a demo that shows analytics off
+  const records = fixtureRecords() // rich 90-day arc — a demo that shows analytics off
   await db.daily_data.bulkAdd(records as any)
   return records.length
 }
@@ -75,7 +100,7 @@ export async function ensureDemoSeeded(): Promise<number> {
 export async function resetDemo(): Promise<number> {
   const db = await openDemoDb()
   await db.daily_data.clear()
-  const records = generateInterestingData()
+  const records = fixtureRecords()
   await db.daily_data.bulkAdd(records as any)
   return records.length
 }

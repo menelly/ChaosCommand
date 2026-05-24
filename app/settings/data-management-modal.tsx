@@ -30,12 +30,27 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
   const [exportPassword, setExportPassword] = useState("1234")  // encrypt-export password (visible, weak default)
   const [importFile, setImportFile] = useState<File | null>(null)
 
-  // Plain JSON export — unencrypted, human-readable. (Encrypted backup is the option below.)
+  // Plain JSON export — unencrypted, human-readable. Warn first (it's medical data in the
+  // clear) and confirm where it saved (otherwise it lands silently in Downloads).
   const handleExportJson = async () => {
+    const ok = confirm(
+      '⚠️ This export is NOT encrypted.\n\n' +
+      'Anyone who opens the file can read all your medical data, and it saves to your ' +
+      'Downloads folder in plain text.\n\n' +
+      'For a protected copy, use "Export Encrypted Backup" instead.\n\n' +
+      'Export unencrypted anyway?'
+    )
+    if (!ok) return
     try {
       const json = await exportAllData()
       const date = new Date().toISOString().slice(0, 10)
-      downloadBackup(`chaos-command-data-${date}.json`, json)
+      const filename = `chaos-command-data-${date}.json`
+      downloadBackup(filename, json)
+      alert(
+        `✅ Saved: ${filename}\n\n` +
+        'It\'s in your Downloads folder and is NOT encrypted — anyone with the file can read ' +
+        'it. Move it somewhere safe or delete it when you\'re done.'
+      )
     } catch (error) {
       console.error('JSON export failed:', error)
       alert(`Export failed: ${error instanceof Error ? error.message : 'Unknown error'}`)

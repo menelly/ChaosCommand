@@ -1,0 +1,4249 @@
+{
+  "format": "chaos-command-demo-fixture",
+  "built_at": "2026-05-24T14:19:18.918Z",
+  "source": "sanitized export of real data (CHA-224); PII/free-text/images stripped",
+  "daily_data": [
+    {
+      "date": "2026-04-08",
+      "category": "tracker",
+      "subcategory": "upper-digestive",
+      "content": {
+        "entries": [
+          {
+            "id": "upper-digestive-1775706039298",
+            "date": "2026-04-08",
+            "time": "23:40",
+            "symptoms": [
+              "nausea"
+            ],
+            "severity": "severe",
+            "triggers": [],
+            "treatments": [
+              "Deep breathing"
+            ],
+            "notes": "",
+            "tags": [],
+            "createdAt": "2026-04-09T03:40:39.298Z",
+            "updatedAt": "2026-04-09T03:40:39.298Z"
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-04-09T03:40:39.299Z",
+        "updated_at": "2026-04-09T03:40:39.299Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-04-09",
+      "category": "tracker",
+      "subcategory": "self-care",
+      "content": {
+        "items": [
+          {
+            "id": "wash",
+            "label": "Washed the important bits",
+            "checked": false
+          },
+          {
+            "id": "teeth",
+            "label": "Brushed teeth",
+            "checked": false
+          },
+          {
+            "id": "hair",
+            "label": "Took care of hair",
+            "checked": false
+          },
+          {
+            "id": "meds",
+            "label": "Took medications",
+            "checked": false
+          },
+          {
+            "id": "water",
+            "label": "Drank water",
+            "checked": false
+          },
+          {
+            "id": "food",
+            "label": "Fed the flesh suit",
+            "checked": false
+          },
+          {
+            "id": "moved",
+            "label": "Moved your body (any amount)",
+            "checked": false
+          }
+        ],
+        "completedCount": 0,
+        "totalCount": 7
+      },
+      "metadata": {
+        "created_at": "2026-04-09T12:40:25.193Z",
+        "updated_at": "2026-04-09T12:40:25.911Z",
+        "user_id": "default-user",
+        "version": 2
+      }
+    },
+    {
+      "date": "2026-04-09",
+      "category": "tracker",
+      "subcategory": "upper-digestive",
+      "content": {
+        "entries": [
+          {
+            "id": "upper-digestive-1775747896466",
+            "date": "2026-04-09",
+            "time": "01:30",
+            "symptoms": [
+              "heartburn"
+            ],
+            "severity": "moderate",
+            "triggers": [
+              "Spicy food",
+              "Dairy",
+              "Eating too fast"
+            ],
+            "treatments": [
+              "Rest",
+              "Deep breathing"
+            ],
+            "notes": "",
+            "tags": [],
+            "createdAt": "2026-04-09T15:18:16.466Z",
+            "updatedAt": "2026-04-09T15:18:16.466Z"
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-04-09T15:18:16.467Z",
+        "updated_at": "2026-04-09T15:18:16.467Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-04-09",
+      "category": "tracker",
+      "subcategory": "seizure",
+      "content": {
+        "entries": [
+          {
+            "id": "1775769406125",
+            "timestamp": "2026-04-09T21:16:15.893Z",
+            "date": "2026-04-09",
+            "seizureType": "Focal Aware (Simple Partial)",
+            "duration": "30 seconds - 1 minute",
+            "consciousness": "Fully Aware",
+            "auraSymptoms": [
+              "Tingling"
+            ],
+            "seizureSymptoms": [
+              "Vertigo/Spinning",
+              "Emotional Surge",
+              "Strange Smells",
+              "Strange Tastes"
+            ],
+            "recoveryTime": "Moderate (15-30 minutes)",
+            "postSeizureSymptoms": [
+              "Confusion",
+              "Anxiety",
+              "Difficulty Concentrating",
+              "Disorientation",
+              "Fatigue/Exhaustion"
+            ],
+            "triggers": [],
+            "location": "",
+            "witnessPresent": true,
+            "injuriesOccurred": false,
+            "medicationTaken": false,
+            "medicationMissed": false
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-04-09T21:16:46.125Z",
+        "updated_at": "2026-04-09T21:16:46.125Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-04-18",
+      "category": "tracker",
+      "subcategory": "self-care",
+      "content": {
+        "items": [
+          {
+            "id": "wash",
+            "label": "Washed the important bits",
+            "checked": true
+          },
+          {
+            "id": "hair",
+            "label": "Took care of hair",
+            "checked": true
+          },
+          {
+            "id": "meds",
+            "label": "Took medications",
+            "checked": true
+          },
+          {
+            "id": "water",
+            "label": "Drank water",
+            "checked": false
+          },
+          {
+            "id": "food",
+            "label": "Fed the flesh suit",
+            "checked": true
+          },
+          {
+            "id": "moved",
+            "label": "Moved your body (any amount)",
+            "checked": true
+          }
+        ],
+        "completedCount": 5,
+        "totalCount": 6
+      },
+      "metadata": {
+        "created_at": "2026-04-18T19:08:55.886Z",
+        "updated_at": "2026-04-18T19:48:54.077Z",
+        "user_id": "default-user",
+        "version": 6
+      }
+    },
+    {
+      "date": "2026-04-19",
+      "category": "tracker",
+      "subcategory": "self-care",
+      "content": {
+        "items": [
+          {
+            "id": "wash",
+            "label": "Washed the important bits",
+            "checked": false
+          },
+          {
+            "id": "hair",
+            "label": "Took care of hair",
+            "checked": false
+          },
+          {
+            "id": "meds",
+            "label": "Took medications",
+            "checked": false
+          },
+          {
+            "id": "water",
+            "label": "Drank water",
+            "checked": false
+          },
+          {
+            "id": "food",
+            "label": "Fed the flesh suit",
+            "checked": false
+          },
+          {
+            "id": "1776640700149",
+            "label": "Took a nap",
+            "checked": true
+          }
+        ],
+        "completedCount": 1,
+        "totalCount": 6
+      },
+      "metadata": {
+        "created_at": "2026-04-19T23:18:20.149Z",
+        "updated_at": "2026-04-19T23:18:58.339Z",
+        "user_id": "default-user",
+        "version": 5
+      }
+    },
+    {
+      "date": "2026-04-24",
+      "category": "tracker",
+      "subcategory": "seizure",
+      "content": {
+        "entries": [
+          {
+            "id": "1777048917398",
+            "timestamp": "2026-04-23T04:00:00.000Z",
+            "date": "2026-04-23",
+            "seizureType": "Focal Aware (Simple Partial)",
+            "duration": "30 seconds - 1 minute",
+            "consciousness": "Fully Aware",
+            "auraSymptoms": [
+              "Nausea",
+              "Strange Tastes"
+            ],
+            "seizureSymptoms": [
+              "Twitching (one side)",
+              "Strange Tastes",
+              "Strange Smells",
+              "Jamais Vu",
+              "Confusion During",
+              "Rising Sensation (Epigastric)",
+              "Goosebumps"
+            ],
+            "recoveryTime": "Quick (5-15 minutes)",
+            "postSeizureSymptoms": [
+              "Disorientation",
+              "Sleep Need"
+            ],
+            "triggers": [],
+            "location": "",
+            "witnessPresent": false,
+            "injuriesOccurred": false,
+            "medicationTaken": false,
+            "medicationMissed": false
+          },
+          {
+            "id": "1775769406125",
+            "timestamp": "2026-04-09T21:16:15.893Z",
+            "date": "2026-04-09",
+            "seizureType": "Focal Aware (Simple Partial)",
+            "duration": "30 seconds - 1 minute",
+            "consciousness": "Fully Aware",
+            "auraSymptoms": [
+              "Tingling"
+            ],
+            "seizureSymptoms": [
+              "Vertigo/Spinning",
+              "Emotional Surge",
+              "Strange Smells",
+              "Strange Tastes"
+            ],
+            "recoveryTime": "Moderate (15-30 minutes)",
+            "postSeizureSymptoms": [
+              "Confusion",
+              "Anxiety",
+              "Difficulty Concentrating",
+              "Disorientation",
+              "Fatigue/Exhaustion"
+            ],
+            "triggers": [],
+            "location": "",
+            "witnessPresent": true,
+            "injuriesOccurred": false,
+            "medicationTaken": false,
+            "medicationMissed": false
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-04-24T16:41:57.399Z",
+        "updated_at": "2026-04-24T16:41:57.399Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-01",
+      "category": "tracker",
+      "subcategory": "self-care",
+      "content": {
+        "items": [
+          {
+            "id": "wash",
+            "label": "Washed the important bits",
+            "checked": false
+          },
+          {
+            "id": "hair",
+            "label": "Took care of hair",
+            "checked": true
+          },
+          {
+            "id": "meds",
+            "label": "Took medications",
+            "checked": false
+          },
+          {
+            "id": "water",
+            "label": "Drank water",
+            "checked": true
+          },
+          {
+            "id": "food",
+            "label": "Fed the flesh suit",
+            "checked": false
+          },
+          {
+            "id": "1776640700149",
+            "label": "Took a nap",
+            "checked": false
+          }
+        ],
+        "completedCount": 2,
+        "totalCount": 6
+      },
+      "metadata": {
+        "created_at": "2026-05-01T13:29:33.492Z",
+        "updated_at": "2026-05-01T13:29:37.558Z",
+        "user_id": "default-user",
+        "version": 2
+      }
+    },
+    {
+      "date": "2026-05-01",
+      "category": "tracker",
+      "subcategory": "energy",
+      "content": {
+        "date": "2026-05-01",
+        "morningSpoons": 8,
+        "activities": [
+          {
+            "id": "activity-1777669322937",
+            "activityId": "meal-out",
+            "activityName": "Eating Out",
+            "timestamp": "2026-05-01T21:02:02.937Z",
+            "spoonCost": 3,
+            "notes": ""
+          }
+        ],
+        "restPeriods": [],
+        "totalSpent": 3,
+        "totalRestored": 0,
+        "tags": []
+      },
+      "metadata": {
+        "created_at": "2026-05-01T21:01:49.521Z",
+        "updated_at": "2026-05-01T21:02:02.937Z",
+        "user_id": "default-user",
+        "version": 2
+      }
+    },
+    {
+      "date": "2026-05-02",
+      "category": "tracker",
+      "subcategory": "head-pain",
+      "content": {
+        "entries": [
+          {
+            "id": "1777770723140",
+            "timestamp": "2026-05-02T16:00:00.000Z",
+            "date": "2026-05-02",
+            "painIntensity": 2,
+            "painLocation": [
+              "neck",
+              "back-of-head"
+            ],
+            "painType": [
+              "dull-ache",
+              "pressure"
+            ],
+            "auraPresent": false,
+            "auraSymptoms": [],
+            "associatedSymptoms": [],
+            "triggers": [],
+            "duration": "3 hours",
+            "treatments": [
+              "ibuprofen",
+              "acetaminophen"
+            ],
+            "treatmentEffectiveness": 3,
+            "residualSymptoms": [],
+            "functionalImpact": "mild"
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-05-03T01:12:03.141Z",
+        "updated_at": "2026-05-03T01:12:03.141Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-04-16",
+      "category": "tracker",
+      "subcategory": "self-care",
+      "content": {
+        "items": [
+          {
+            "id": "wash",
+            "label": "Washed the important bits",
+            "checked": true
+          },
+          {
+            "id": "teeth",
+            "label": "Brushed teeth",
+            "checked": false
+          },
+          {
+            "id": "hair",
+            "label": "Took care of hair",
+            "checked": false
+          },
+          {
+            "id": "meds",
+            "label": "Took medications",
+            "checked": true
+          },
+          {
+            "id": "water",
+            "label": "Drank water",
+            "checked": true
+          },
+          {
+            "id": "food",
+            "label": "Fed the flesh suit",
+            "checked": true
+          },
+          {
+            "id": "moved",
+            "label": "Moved your body (any amount)",
+            "checked": false
+          }
+        ],
+        "completedCount": 4,
+        "totalCount": 7
+      },
+      "metadata": {
+        "created_at": "2026-04-16T01:56:58.141Z",
+        "updated_at": "2026-04-16T02:06:11.248Z",
+        "user_id": "default-user",
+        "version": 4
+      }
+    },
+    {
+      "date": "2026-04-18",
+      "category": "tracker",
+      "subcategory": "pain",
+      "content": {
+        "entries": [
+          {
+            "painLevel": 3,
+            "painLocations": [],
+            "painTriggers": [],
+            "painDuration": "",
+            "painType": [],
+            "painQuality": [
+              "worsening"
+            ],
+            "treatments": [],
+            "medications": [],
+            "effectiveness": 5,
+            "activity": "",
+            "notes": "",
+            "tags": [],
+            "id": "pain-1776548179743",
+            "date": "2026-04-18",
+            "created_at": "2026-04-18T21:36:19.743Z",
+            "updated_at": "2026-04-18T21:36:19.743Z"
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-04-18T21:36:19.750Z",
+        "updated_at": "2026-04-18T21:36:19.750Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-04-22",
+      "category": "tracker",
+      "subcategory": "self-care",
+      "content": {
+        "items": [
+          {
+            "id": "wash",
+            "label": "Washed the important bits",
+            "checked": false
+          },
+          {
+            "id": "teeth",
+            "label": "Brushed teeth",
+            "checked": false
+          },
+          {
+            "id": "hair",
+            "label": "Took care of hair",
+            "checked": false
+          },
+          {
+            "id": "meds",
+            "label": "Took medications",
+            "checked": true
+          },
+          {
+            "id": "water",
+            "label": "Drank water",
+            "checked": false
+          },
+          {
+            "id": "food",
+            "label": "Fed the flesh suit",
+            "checked": true
+          },
+          {
+            "id": "moved",
+            "label": "Moved your body (any amount)",
+            "checked": false
+          }
+        ],
+        "completedCount": 2,
+        "totalCount": 7
+      },
+      "metadata": {
+        "created_at": "2026-04-22T23:54:49.418Z",
+        "updated_at": "2026-04-22T23:54:52.408Z",
+        "user_id": "default-user",
+        "version": 2
+      }
+    },
+    {
+      "date": "2026-04-22",
+      "category": "tracker",
+      "subcategory": "mental-health",
+      "content": {
+        "entries": [
+          {
+            "id": "mental-health-1776902188479",
+            "date": "2026-04-22",
+            "time": "19:55",
+            "mood": "good",
+            "moodIntensity": 7,
+            "emotionalState": [
+              "hopeful",
+              "overwhelmed"
+            ],
+            "anxietyLevel": 0,
+            "depressionLevel": 0,
+            "maniaLevel": 0,
+            "energyLevel": 5,
+            "stressLevel": 7,
+            "brainFogSeverity": 0,
+            "triggers": [],
+            "cognitiveSymptoms": [],
+            "copingStrategies": [],
+            "therapyNotes": "",
+            "medicationTaken": false,
+            "medicationNotes": "",
+            "notes": "",
+            "tags": [],
+            "createdAt": "2026-04-22T23:56:28.479Z",
+            "updatedAt": "2026-04-22T23:56:28.479Z"
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-04-22T23:56:28.479Z",
+        "updated_at": "2026-04-22T23:56:28.479Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-04-22",
+      "category": "tracker",
+      "subcategory": "seizure",
+      "content": {
+        "entries": [
+          {
+            "id": "1776902296438",
+            "timestamp": "2026-04-22T23:57:15.179Z",
+            "date": "2026-04-22",
+            "seizureType": "",
+            "duration": "2-5 minutes",
+            "consciousness": "Partially Aware",
+            "auraSymptoms": [
+              "Strange Smells",
+              "Strange Tastes",
+              "Nausea",
+              "Tingling"
+            ],
+            "seizureSymptoms": [
+              "Hand/Arm Movements",
+              "Strange Smells",
+              "Strange Tastes",
+              "Vertigo/Spinning",
+              "Confusion During",
+              "Emotional Surge",
+              "Nausea",
+              "Rising Sensation (Epigastric)",
+              "Partial Awareness",
+              "Repetitive Movements"
+            ],
+            "recoveryTime": "Moderate (15-30 minutes)",
+            "postSeizureSymptoms": [
+              "Fatigue/Exhaustion",
+              "Sleep Need"
+            ],
+            "triggers": [],
+            "location": "",
+            "witnessPresent": false,
+            "injuriesOccurred": false,
+            "medicationTaken": true,
+            "medicationMissed": false
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-04-22T23:58:16.439Z",
+        "updated_at": "2026-04-22T23:58:16.439Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-04-22",
+      "category": "tracker",
+      "subcategory": "upper-digestive",
+      "content": {
+        "entries": [
+          {
+            "id": "upper-digestive-1776903036796",
+            "date": "2026-04-22",
+            "time": "20:10",
+            "symptoms": [
+              "bloating"
+            ],
+            "severity": "mild",
+            "triggers": [
+              "Stress",
+              "Large meals",
+              "Eating too fast"
+            ],
+            "treatments": [],
+            "notes": "",
+            "tags": [],
+            "createdAt": "2026-04-23T00:10:36.797Z",
+            "updatedAt": "2026-04-23T00:10:36.797Z"
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-04-23T00:10:36.800Z",
+        "updated_at": "2026-04-23T00:10:36.800Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-04-23",
+      "category": "tracker",
+      "subcategory": "self-care",
+      "content": {
+        "items": [
+          {
+            "id": "wash",
+            "label": "Washed the important bits",
+            "checked": true
+          },
+          {
+            "id": "teeth",
+            "label": "Brushed teeth",
+            "checked": true
+          },
+          {
+            "id": "hair",
+            "label": "Took care of hair",
+            "checked": true
+          },
+          {
+            "id": "meds",
+            "label": "Took medications",
+            "checked": true
+          },
+          {
+            "id": "water",
+            "label": "Drank water",
+            "checked": true
+          },
+          {
+            "id": "food",
+            "label": "Fed the flesh suit",
+            "checked": true
+          },
+          {
+            "id": "moved",
+            "label": "Moved your body (any amount)",
+            "checked": true
+          }
+        ],
+        "completedCount": 7,
+        "totalCount": 7
+      },
+      "metadata": {
+        "created_at": "2026-04-23T03:49:37.776Z",
+        "updated_at": "2026-04-23T03:49:52.978Z",
+        "user_id": "default-user",
+        "version": 5
+      }
+    },
+    {
+      "date": "2026-04-30",
+      "category": "tracker",
+      "subcategory": "self-care",
+      "content": {
+        "items": [
+          {
+            "id": "wash",
+            "label": "Washed the important bits",
+            "checked": false
+          },
+          {
+            "id": "teeth",
+            "label": "Brushed teeth",
+            "checked": true
+          },
+          {
+            "id": "hair",
+            "label": "Took care of hair",
+            "checked": false
+          },
+          {
+            "id": "meds",
+            "label": "Took medications",
+            "checked": true
+          },
+          {
+            "id": "water",
+            "label": "Drank water",
+            "checked": true
+          },
+          {
+            "id": "food",
+            "label": "Fed the flesh suit",
+            "checked": true
+          },
+          {
+            "id": "moved",
+            "label": "Moved your body (any amount)",
+            "checked": false
+          }
+        ],
+        "completedCount": 4,
+        "totalCount": 7
+      },
+      "metadata": {
+        "created_at": "2026-04-30T18:30:13.569Z",
+        "updated_at": "2026-04-30T18:30:34.846Z",
+        "user_id": "default-user",
+        "version": 4
+      }
+    },
+    {
+      "date": "2026-05-02",
+      "category": "tracker",
+      "subcategory": "weather",
+      "content": [
+        {
+          "weatherTypes": [
+            "Windy",
+            "Stormy",
+            "Rainy",
+            "Pressure Hell"
+          ],
+          "impact": "A little",
+          "description": "",
+          "tags": [],
+          "timestamp": "2026-05-02T22:44:37.789Z"
+        }
+      ],
+      "metadata": {
+        "created_at": "2026-05-02T22:44:37.800Z",
+        "updated_at": "2026-05-02T22:44:37.800Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-02",
+      "category": "tracker",
+      "subcategory": "brain-fog",
+      "content": {
+        "entries": [
+          {
+            "id": "1777761911916",
+            "date": "2026-05-02",
+            "time": "18:44",
+            "symptoms": [
+              "concentration",
+              "mental_fatigue",
+              "mental_cloudiness",
+              "organizing_thoughts"
+            ],
+            "severity": "4",
+            "triggers": [
+              "Poor sleep",
+              "Stress"
+            ],
+            "treatments": [
+              "Rest"
+            ],
+            "notes": "",
+            "tags": [],
+            "createdAt": "2026-05-02T22:45:11.916Z",
+            "updatedAt": "2026-05-02T22:45:11.916Z"
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-05-02T22:45:11.924Z",
+        "updated_at": "2026-05-02T22:45:11.924Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-02",
+      "category": "tracker",
+      "subcategory": "mental-health",
+      "content": {
+        "entries": [
+          {
+            "id": "mental-health-1777761948509",
+            "date": "2026-05-02",
+            "time": "18:45",
+            "mood": "good",
+            "moodIntensity": 5,
+            "emotionalState": [
+              "grateful",
+              "hopeful",
+              "tired"
+            ],
+            "anxietyLevel": 1,
+            "depressionLevel": 0,
+            "maniaLevel": 0,
+            "energyLevel": 1,
+            "stressLevel": 3,
+            "brainFogSeverity": 0,
+            "triggers": [],
+            "cognitiveSymptoms": [],
+            "copingStrategies": [],
+            "therapyNotes": "",
+            "medicationTaken": true,
+            "medicationNotes": "",
+            "notes": "",
+            "tags": [],
+            "createdAt": "2026-05-02T22:45:48.509Z",
+            "updatedAt": "2026-05-02T22:46:12.709Z"
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-05-02T22:45:48.509Z",
+        "updated_at": "2026-05-02T22:46:12.709Z",
+        "user_id": "default-user",
+        "version": 2
+      }
+    },
+    {
+      "date": "2026-05-02",
+      "category": "tracker",
+      "subcategory": "bathroom",
+      "content": {
+        "entries": [
+          {
+            "id": "bathroom-1777762474349",
+            "date": "2026-05-02",
+            "time": "16:54",
+            "status": "❗ Painful / Strained",
+            "bristolScale": "2",
+            "painLevel": "Mild",
+            "notes": "",
+            "count": 1,
+            "tags": [],
+            "createdAt": "2026-05-02T22:54:34.349Z",
+            "updatedAt": "2026-05-02T22:54:34.349Z"
+          },
+          {
+            "id": "bathroom-1777773166405",
+            "date": "2026-05-02",
+            "time": "21:52",
+            "status": "❗ Painful / Strained",
+            "bristolScale": "2",
+            "painLevel": "Mild",
+            "notes": "",
+            "count": 1,
+            "tags": [],
+            "createdAt": "2026-05-03T01:52:46.405Z",
+            "updatedAt": "2026-05-03T01:52:46.405Z"
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-05-02T22:54:34.349Z",
+        "updated_at": "2026-05-03T01:52:46.405Z",
+        "user_id": "default-user",
+        "version": 2
+      }
+    },
+    {
+      "date": "2026-05-02",
+      "category": "tracker",
+      "subcategory": "upper-digestive",
+      "content": {
+        "entries": [
+          {
+            "id": "upper-digestive-1777777672979",
+            "date": "2026-05-02",
+            "time": "23:07",
+            "symptoms": [
+              "heartburn"
+            ],
+            "severity": "mild",
+            "triggers": [
+              "Spicy food",
+              "Caffeine"
+            ],
+            "treatments": [
+              "Medications"
+            ],
+            "notes": "",
+            "tags": [],
+            "createdAt": "2026-05-03T03:07:52.979Z",
+            "updatedAt": "2026-05-03T03:07:52.979Z"
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-05-03T03:07:52.985Z",
+        "updated_at": "2026-05-03T03:07:52.985Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-02",
+      "category": "tracker",
+      "subcategory": "pain",
+      "content": {
+        "entries": [
+          {
+            "painLevel": 4,
+            "painLocations": [
+              "head",
+              "neck",
+              "shoulders",
+              "upper back"
+            ],
+            "painTriggers": [],
+            "painDuration": "",
+            "painType": [
+              "sharp",
+              "dull",
+              "aching"
+            ],
+            "painQuality": [],
+            "treatments": [],
+            "medications": [],
+            "effectiveness": 0,
+            "activity": "",
+            "notes": "",
+            "tags": [],
+            "id": "pain-1777777728312",
+            "date": "2026-05-02",
+            "created_at": "2026-05-03T03:08:48.312Z",
+            "updated_at": "2026-05-03T03:08:48.312Z"
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-05-03T03:08:48.315Z",
+        "updated_at": "2026-05-03T03:08:48.315Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-02",
+      "category": "tracker",
+      "subcategory": "sleep-sleep-1777777896914",
+      "content": "",
+      "metadata": {
+        "created_at": "2026-05-03T03:11:36.914Z",
+        "updated_at": "2026-05-03T03:11:36.914Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-03",
+      "category": "tracker",
+      "subcategory": "bathroom",
+      "content": {
+        "entries": [
+          {
+            "id": "bathroom-1777819210182",
+            "date": "2026-05-03",
+            "time": "10:39",
+            "status": "💥 Too much",
+            "bristolScale": "4",
+            "painLevel": "None",
+            "notes": "",
+            "count": 1,
+            "tags": [],
+            "createdAt": "2026-05-03T14:40:10.182Z",
+            "updatedAt": "2026-05-03T14:40:10.182Z"
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-05-03T14:40:10.183Z",
+        "updated_at": "2026-05-03T14:40:10.183Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-03",
+      "category": "health",
+      "subcategory": "diabetes",
+      "content": [
+        {
+          "id": "timer-restart-1777820716301",
+          "user_id": "default",
+          "entry_date": "2026-05-03",
+          "entry_time": "11:05",
+          "notes": "",
+          "tags": [
+            "timer-restart"
+          ],
+          "created_at": "2026-05-03T15:05:16.301Z",
+          "updated_at": "2026-05-03T15:05:16.301Z"
+        },
+        {
+          "id": "timer-restart-1777820735819",
+          "user_id": "default",
+          "entry_date": "2026-05-03",
+          "entry_time": "11:05",
+          "notes": "",
+          "tags": [
+            "timer-restart"
+          ],
+          "created_at": "2026-05-03T15:05:35.820Z",
+          "updated_at": "2026-05-03T15:05:35.820Z"
+        }
+      ],
+      "metadata": {
+        "created_at": "2026-05-03T15:05:35.820Z",
+        "updated_at": "2026-05-03T15:05:35.820Z",
+        "user_id": "default"
+      }
+    },
+    {
+      "date": "2026-05-03",
+      "category": "health",
+      "subcategory": "diabetes_timers",
+      "content": [],
+      "metadata": {
+        "created_at": "2026-05-09T11:17:10.942Z",
+        "updated_at": "2026-05-09T11:17:10.942Z",
+        "user_id": "default"
+      }
+    },
+    {
+      "date": "2026-05-03",
+      "category": "health",
+      "subcategory": "diabetes",
+      "content": [
+        {
+          "id": "timer-restart-1777820716301",
+          "user_id": "default",
+          "entry_date": "2026-05-03",
+          "entry_time": "11:05",
+          "notes": "",
+          "tags": [
+            "timer-restart"
+          ],
+          "created_at": "2026-05-03T15:05:16.301Z",
+          "updated_at": "2026-05-03T15:05:16.301Z"
+        },
+        {
+          "id": "timer-restart-1777820735819",
+          "user_id": "default",
+          "entry_date": "2026-05-03",
+          "entry_time": "11:05",
+          "notes": "",
+          "tags": [
+            "timer-restart"
+          ],
+          "created_at": "2026-05-03T15:05:35.820Z",
+          "updated_at": "2026-05-03T15:05:35.820Z"
+        }
+      ],
+      "metadata": {
+        "created_at": "2026-05-03T15:05:35.820Z",
+        "updated_at": "2026-05-03T15:05:35.820Z",
+        "user_id": "default"
+      }
+    },
+    {
+      "date": "2026-05-03",
+      "category": "tracker",
+      "subcategory": "sleep-sleep-1777821043175",
+      "content": "",
+      "metadata": {
+        "created_at": "2026-05-03T15:10:43.175Z",
+        "updated_at": "2026-05-03T15:10:43.175Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-03",
+      "category": "tracker",
+      "subcategory": "hydration-hydration-1777821136207",
+      "content": "",
+      "metadata": {
+        "created_at": "2026-05-03T15:12:16.207Z",
+        "updated_at": "2026-05-03T15:12:16.207Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-03",
+      "category": "tracker",
+      "subcategory": "hydration-hydration-1777821148951",
+      "content": "",
+      "metadata": {
+        "created_at": "2026-05-03T15:12:28.951Z",
+        "updated_at": "2026-05-03T15:12:28.951Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-04",
+      "category": "tracker",
+      "subcategory": "energy",
+      "content": {
+        "date": "2026-05-04",
+        "morningSpoons": 6,
+        "activities": [],
+        "restPeriods": [],
+        "totalSpent": 0,
+        "totalRestored": 0,
+        "tags": []
+      },
+      "metadata": {
+        "created_at": "2026-05-04T12:55:35.008Z",
+        "updated_at": "2026-05-04T12:56:01.496Z",
+        "user_id": "default-user",
+        "version": 5
+      }
+    },
+    {
+      "date": "2026-05-03",
+      "category": "tracker",
+      "subcategory": "upper-digestive",
+      "content": {
+        "entries": [
+          {
+            "id": "upper-digestive-1777791311416",
+            "date": "2026-05-03",
+            "time": "02:54",
+            "symptoms": [
+              "bloating",
+              "stomach_pain"
+            ],
+            "severity": "moderate",
+            "triggers": [
+              "Large meals"
+            ],
+            "treatments": [
+              "Other"
+            ],
+            "notes": "",
+            "tags": [],
+            "createdAt": "2026-05-03T06:55:11.416Z",
+            "updatedAt": "2026-05-03T06:55:11.416Z"
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-05-03T06:55:11.421Z",
+        "updated_at": "2026-05-03T06:55:11.421Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-03",
+      "category": "tracker",
+      "subcategory": "food-choice",
+      "content": {
+        "simpleEntries": [
+          {
+            "id": "simple-1777791348162",
+            "timestamp": "2026-05-03T06:55:48.162Z",
+            "didEat": true,
+            "mealType": "dinner",
+            "mood": "good",
+            "tags": []
+          }
+        ],
+        "detailedEntries": [],
+        "generalNotes": "",
+        "tags": []
+      },
+      "metadata": {
+        "created_at": "2026-05-03T06:55:48.162Z",
+        "updated_at": "2026-05-03T06:55:48.162Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-03",
+      "category": "tracker",
+      "subcategory": "self-care",
+      "content": {
+        "items": [
+          {
+            "id": "wash",
+            "label": "Washed the important bits",
+            "checked": false
+          },
+          {
+            "id": "teeth",
+            "label": "Brushed teeth",
+            "checked": true
+          },
+          {
+            "id": "hair",
+            "label": "Took care of hair",
+            "checked": false
+          },
+          {
+            "id": "meds",
+            "label": "Took medications",
+            "checked": true
+          },
+          {
+            "id": "water",
+            "label": "Drank water",
+            "checked": true
+          },
+          {
+            "id": "food",
+            "label": "Fed the flesh suit",
+            "checked": true
+          },
+          {
+            "id": "moved",
+            "label": "Moved your body (any amount)",
+            "checked": false
+          }
+        ],
+        "completedCount": 4,
+        "totalCount": 7
+      },
+      "metadata": {
+        "created_at": "2026-05-03T17:27:28.934Z",
+        "updated_at": "2026-05-03T17:27:35.214Z",
+        "user_id": "default-user",
+        "version": 4
+      }
+    },
+    {
+      "date": "2026-05-03",
+      "category": "tracker",
+      "subcategory": "head-pain",
+      "content": {
+        "entries": [
+          {
+            "id": "1777829288637",
+            "timestamp": "2026-05-03T16:00:00.000Z",
+            "date": "2026-05-03",
+            "painIntensity": 2,
+            "painLocation": [
+              "back-of-head",
+              "neck"
+            ],
+            "painType": [
+              "dull-ache",
+              "tight-band",
+              "pressure"
+            ],
+            "auraPresent": false,
+            "auraSymptoms": [],
+            "associatedSymptoms": [],
+            "triggers": [],
+            "duration": "2 hours",
+            "treatments": [],
+            "residualSymptoms": [],
+            "functionalImpact": "mild"
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-05-03T17:28:08.637Z",
+        "updated_at": "2026-05-03T17:28:08.637Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-05",
+      "category": "tracker",
+      "subcategory": "head-pain",
+      "content": {
+        "entries": [
+          {
+            "id": "1777988437018",
+            "timestamp": "2026-05-05T16:00:00.000Z",
+            "date": "2026-05-05",
+            "painIntensity": 2,
+            "painLocation": [
+              "back-of-head",
+              "neck"
+            ],
+            "painType": [],
+            "auraPresent": false,
+            "auraSymptoms": [],
+            "associatedSymptoms": [],
+            "triggers": [],
+            "duration": "",
+            "treatments": [],
+            "residualSymptoms": [],
+            "functionalImpact": "mild"
+          },
+          {
+            "id": "1778032789369",
+            "timestamp": "2026-05-05T16:00:00.000Z",
+            "date": "2026-05-05",
+            "painIntensity": 6,
+            "painLocation": [
+              "temples",
+              "one-side",
+              "around-eyes"
+            ],
+            "painType": [
+              "ice-pick",
+              "sharp"
+            ],
+            "auraPresent": false,
+            "auraSymptoms": [],
+            "associatedSymptoms": [
+              "sound-sensitivity",
+              "light-sensitivity"
+            ],
+            "triggers": [],
+            "duration": "1 hours",
+            "treatments": [
+              "rimegepant",
+              "sleep",
+              "caffeine"
+            ],
+            "treatmentEffectiveness": 4,
+            "residualSymptoms": [
+              "fatigue"
+            ],
+            "functionalImpact": "moderate"
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-05-05T13:40:37.018Z",
+        "updated_at": "2026-05-06T01:59:49.369Z",
+        "user_id": "default-user",
+        "version": 2
+      }
+    },
+    {
+      "date": "2026-05-05",
+      "category": "tracker",
+      "subcategory": "weather",
+      "content": [
+        {
+          "weatherTypes": [
+            "Sunny",
+            "Humid"
+          ],
+          "impact": "A little",
+          "description": "",
+          "tags": [],
+          "timestamp": "2026-05-05T13:41:16.274Z"
+        }
+      ],
+      "metadata": {
+        "created_at": "2026-05-05T13:41:16.282Z",
+        "updated_at": "2026-05-05T13:41:16.282Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-05",
+      "category": "tracker",
+      "subcategory": "bathroom",
+      "content": {
+        "entries": [
+          {
+            "id": "bathroom-1777994074376",
+            "date": "2026-05-05",
+            "time": "11:14",
+            "status": "💩 Normal",
+            "bristolScale": "",
+            "painLevel": "Mild",
+            "notes": "",
+            "count": 1,
+            "tags": [],
+            "createdAt": "2026-05-05T15:14:34.376Z",
+            "updatedAt": "2026-05-05T15:14:34.376Z"
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-05-05T15:14:34.376Z",
+        "updated_at": "2026-05-05T15:14:34.376Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-05",
+      "category": "tracker",
+      "subcategory": "self-care",
+      "content": {
+        "items": [
+          {
+            "id": "wash",
+            "label": "Washed the important bits",
+            "checked": false
+          },
+          {
+            "id": "teeth",
+            "label": "Brushed teeth",
+            "checked": true
+          },
+          {
+            "id": "hair",
+            "label": "Took care of hair",
+            "checked": false
+          },
+          {
+            "id": "meds",
+            "label": "Took medications",
+            "checked": false
+          },
+          {
+            "id": "water",
+            "label": "Drank water",
+            "checked": false
+          },
+          {
+            "id": "food",
+            "label": "Fed the flesh suit",
+            "checked": false
+          },
+          {
+            "id": "moved",
+            "label": "Moved your body (any amount)",
+            "checked": false
+          },
+          {
+            "id": "1776640700149",
+            "label": "Took a nap",
+            "checked": false
+          }
+        ],
+        "completedCount": 1,
+        "totalCount": 8
+      },
+      "metadata": {
+        "created_at": "2026-05-05T15:15:42.051Z",
+        "updated_at": "2026-05-05T15:15:58.416Z",
+        "user_id": "default-user",
+        "version": 3
+      }
+    },
+    {
+      "date": "2026-05-05",
+      "category": "tracker",
+      "subcategory": "dysautonomia",
+      "content": {
+        "entries": [
+          {
+            "episodeType": "general",
+            "symptoms": [
+              "Fainting/Near Fainting",
+              "Excessive Sweating",
+              "Flushing/Hot Flashes",
+              "Nausea",
+              "Temperature Dysregulation"
+            ],
+            "severity": 8,
+            "triggers": [],
+            "positionChange": "sitting-to-standing",
+            "duration": "3 minutes",
+            "interventions": [],
+            "notes": "",
+            "id": "1778034467047",
+            "timestamp": "2026-05-06T02:27:47.047Z",
+            "date": "2026-05-05"
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-05-06T02:27:47.048Z",
+        "updated_at": "2026-05-06T02:27:47.048Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-08",
+      "category": "tracker",
+      "subcategory": "weather",
+      "content": [
+        {
+          "weatherTypes": [
+            "Cloudy",
+            "Windy",
+            "Pressure Hell",
+            "Humid"
+          ],
+          "impact": "A little",
+          "description": "",
+          "tags": [],
+          "timestamp": "2026-05-08T16:23:30.313Z"
+        }
+      ],
+      "metadata": {
+        "created_at": "2026-05-08T16:23:30.322Z",
+        "updated_at": "2026-05-08T16:23:30.322Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-08",
+      "category": "tracker",
+      "subcategory": "head-pain",
+      "content": {
+        "entries": [
+          {
+            "id": "1778263087863",
+            "timestamp": "2026-05-07T04:00:00.000Z",
+            "date": "2026-05-07",
+            "painIntensity": 6,
+            "painLocation": [
+              "back-of-head"
+            ],
+            "painType": [
+              "ice-pick"
+            ],
+            "auraPresent": false,
+            "auraSymptoms": [],
+            "associatedSymptoms": [],
+            "triggers": [],
+            "duration": ".5 hours",
+            "treatments": [
+              "naproxen",
+              "acetaminophen"
+            ],
+            "treatmentEffectiveness": 4,
+            "residualSymptoms": [],
+            "functionalImpact": "mild"
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-05-08T17:58:07.863Z",
+        "updated_at": "2026-05-08T17:58:07.863Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-08",
+      "category": "health",
+      "subcategory": "diabetes",
+      "content": [
+        {
+          "id": "timer-restart-1778216161974",
+          "user_id": "default",
+          "entry_date": "2026-05-08",
+          "entry_time": "00:56",
+          "notes": "",
+          "tags": [
+            "timer-restart"
+          ],
+          "created_at": "2026-05-08T04:56:01.974Z",
+          "updated_at": "2026-05-08T04:56:01.974Z"
+        }
+      ],
+      "metadata": {
+        "created_at": "2026-05-08T04:56:01.975Z",
+        "updated_at": "2026-05-08T04:56:01.975Z",
+        "user_id": "default"
+      }
+    },
+    {
+      "date": "2026-05-08",
+      "category": "tracker",
+      "subcategory": "pain",
+      "content": {
+        "entries": [
+          {
+            "painLevel": 4,
+            "painLocations": [
+              "feet"
+            ],
+            "painTriggers": [],
+            "painDuration": "2 hours",
+            "painType": [
+              "cramping",
+              "sharp",
+              "tingling"
+            ],
+            "painQuality": [
+              "worse with movement",
+              "improving"
+            ],
+            "treatments": [
+              "rest",
+              "topical cream",
+              "distraction"
+            ],
+            "medications": [],
+            "effectiveness": 4,
+            "activity": "",
+            "notes": "",
+            "tags": [],
+            "id": "pain-1778216273275",
+            "date": "2026-05-08",
+            "created_at": "2026-05-08T04:57:53.275Z",
+            "updated_at": "2026-05-08T04:57:53.275Z"
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-05-08T04:57:53.279Z",
+        "updated_at": "2026-05-08T04:57:53.279Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-08",
+      "category": "tracker",
+      "subcategory": "self-care",
+      "content": {
+        "items": [
+          {
+            "id": "wash",
+            "label": "Washed the important bits",
+            "checked": true
+          },
+          {
+            "id": "teeth",
+            "label": "Brushed teeth",
+            "checked": false
+          },
+          {
+            "id": "hair",
+            "label": "Took care of hair",
+            "checked": true
+          },
+          {
+            "id": "meds",
+            "label": "Took medications",
+            "checked": true
+          },
+          {
+            "id": "water",
+            "label": "Drank water",
+            "checked": false
+          },
+          {
+            "id": "food",
+            "label": "Fed the flesh suit",
+            "checked": false
+          },
+          {
+            "id": "moved",
+            "label": "Moved your body (any amount)",
+            "checked": false
+          },
+          {
+            "id": "1776640700149",
+            "label": "Took a nap",
+            "checked": true
+          }
+        ],
+        "completedCount": 4,
+        "totalCount": 8
+      },
+      "metadata": {
+        "created_at": "2026-05-08T21:00:11.173Z",
+        "updated_at": "2026-05-08T21:00:24.179Z",
+        "user_id": "default-user",
+        "version": 4
+      }
+    },
+    {
+      "date": "2026-05-08",
+      "category": "tracker",
+      "subcategory": "hydration-hydration-1778274094746",
+      "content": "",
+      "metadata": {
+        "created_at": "2026-05-08T21:01:34.746Z",
+        "updated_at": "2026-05-08T21:01:34.746Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-09",
+      "category": "tracker",
+      "subcategory": "sleep-sleep-1778323436448",
+      "content": "",
+      "metadata": {
+        "created_at": "2026-05-09T10:43:56.448Z",
+        "updated_at": "2026-05-09T10:43:56.448Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-03",
+      "category": "health",
+      "subcategory": "diabetes_timers",
+      "content": [],
+      "metadata": {
+        "created_at": "2026-05-09T11:17:10.942Z",
+        "updated_at": "2026-05-09T11:17:10.942Z",
+        "user_id": "default"
+      }
+    },
+    {
+      "date": "2026-05-09",
+      "category": "health",
+      "subcategory": "diabetes",
+      "content": [
+        {
+          "id": "timer-restart-1778325430945",
+          "user_id": "default",
+          "entry_date": "2026-05-09",
+          "entry_time": "07:17",
+          "notes": "",
+          "tags": [
+            "timer-restart"
+          ],
+          "created_at": "2026-05-09T11:17:10.945Z",
+          "updated_at": "2026-05-09T11:17:10.945Z"
+        }
+      ],
+      "metadata": {
+        "created_at": "2026-05-09T11:17:10.946Z",
+        "updated_at": "2026-05-09T11:17:10.946Z",
+        "user_id": "default"
+      }
+    },
+    {
+      "date": "2026-05-10",
+      "category": "tracker",
+      "subcategory": "self-care",
+      "content": {
+        "items": [
+          {
+            "id": "wash",
+            "label": "Washed the important bits",
+            "checked": false
+          },
+          {
+            "id": "hair",
+            "label": "Took care of hair",
+            "checked": true
+          },
+          {
+            "id": "meds",
+            "label": "Took medications",
+            "checked": false
+          },
+          {
+            "id": "water",
+            "label": "Drank water",
+            "checked": false
+          },
+          {
+            "id": "food",
+            "label": "Fed the flesh suit",
+            "checked": true
+          },
+          {
+            "id": "1776640700149",
+            "label": "Took a nap",
+            "checked": false
+          },
+          {
+            "id": "teeth",
+            "label": "Brushed teeth",
+            "checked": false
+          },
+          {
+            "id": "moved",
+            "label": "Moved your body (any amount)",
+            "checked": false
+          }
+        ],
+        "completedCount": 2,
+        "totalCount": 8
+      },
+      "metadata": {
+        "created_at": "2026-05-10T05:06:34.027Z",
+        "updated_at": "2026-05-10T16:24:14.162Z",
+        "user_id": "default-user",
+        "version": 2
+      }
+    },
+    {
+      "date": "2026-05-10",
+      "category": "tracker",
+      "subcategory": "joint",
+      "content": {
+        "entries": [
+          {
+            "episodeType": "subluxation",
+            "jointAffected": [
+              "Shoulder (right)"
+            ],
+            "severity": 5,
+            "selfReducedFlag": false,
+            "swellingPresent": false,
+            "bruisingPresent": false,
+            "romImpactedPercent": 50,
+            "triggerActivity": [
+              "Spontaneous (no clear cause)"
+            ],
+            "treatmentApplied": [],
+            "erVisitRequired": false,
+            "id": "1778430914294",
+            "timestamp": "2026-05-10T16:35:14.294Z",
+            "date": "2026-05-10"
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-05-10T16:35:14.294Z",
+        "updated_at": "2026-05-10T16:35:14.294Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-09",
+      "category": "tracker",
+      "subcategory": "cardiac",
+      "content": {
+        "entries": [
+          {
+            "episodeType": "arrhythmia",
+            "rhythmType": "unknown",
+            "hrPeak": 99,
+            "hrAtOnset": 85,
+            "hrAtResolution": 85,
+            "uWavesNoted": true,
+            "stChanges": false,
+            "symptoms": [
+              "Heart Pounding",
+              "Heart Fluttering",
+              "Heart Skipping Beats",
+              "Awareness of Heartbeat",
+              "Dizziness"
+            ],
+            "symptomSeverity": 5,
+            "triggers": [],
+            "resolutionMethod": "valsalva",
+            "valsalvaSuccessSeconds": 30,
+            "possibleDehydration": false,
+            "possibleElectrolyteLoss": false,
+            "caffeineOnBoard": false,
+            "id": "1778431137228",
+            "timestamp": "2026-05-10T16:38:57.228Z",
+            "date": "2026-05-09"
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-05-10T16:38:57.228Z",
+        "updated_at": "2026-05-10T16:38:57.228Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-04-19",
+      "category": "tracker",
+      "subcategory": "cardiac",
+      "content": {
+        "entries": [
+          {
+            "episodeType": "general",
+            "symptoms": [
+              "Chest Pressure",
+              "Dizziness",
+              "Lightheadedness",
+              "Tunnel Vision",
+              "Syncope (full faint)",
+              "Sweating",
+              "Nausea"
+            ],
+            "symptomSeverity": 9,
+            "triggers": [],
+            "positionAtOnset": "standing",
+            "resolutionMethod": "other",
+            "duration": "4 minutes",
+            "erVisitRequired": false,
+            "notes": "",
+            "id": "1778431435204",
+            "timestamp": "2026-05-10T16:43:55.204Z",
+            "date": "2026-04-19"
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-05-10T16:43:55.204Z",
+        "updated_at": "2026-05-10T16:43:55.204Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-10",
+      "category": "tracker",
+      "subcategory": "hydration-hydration-1778432461281",
+      "content": "",
+      "metadata": {
+        "created_at": "2026-05-10T17:01:01.281Z",
+        "updated_at": "2026-05-10T17:01:01.281Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-10",
+      "category": "tracker",
+      "subcategory": "hydration-hydration-1778432474556",
+      "content": "",
+      "metadata": {
+        "created_at": "2026-05-10T17:01:14.556Z",
+        "updated_at": "2026-05-10T17:01:14.556Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-10",
+      "category": "tracker",
+      "subcategory": "cardiac",
+      "content": {
+        "entries": []
+      },
+      "metadata": {
+        "created_at": "2026-05-10T17:21:52.757Z",
+        "updated_at": "2026-05-10T17:21:52.757Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-04-26",
+      "category": "health",
+      "subcategory": "diabetes_timers",
+      "content": [
+        {
+          "id": "timer-1777777775974",
+          "type": "cgm",
+          "name": "Dex",
+          "inserted_at": "2026-04-26T15:09:00.000Z",
+          "expires_at": "2026-05-06T15:09:00.000Z",
+          "user_id": "default"
+        }
+      ],
+      "metadata": {
+        "created_at": "2026-05-03T15:05:16.299Z",
+        "updated_at": "2026-05-03T15:05:16.299Z",
+        "user_id": "default"
+      }
+    },
+    {
+      "date": "2026-05-11",
+      "category": "tracker",
+      "subcategory": "pain",
+      "content": {
+        "entries": [
+          {
+            "id": "pain-1778557935072",
+            "timestamp": "2026-05-12T03:50:00.000Z",
+            "date": "2026-05-11",
+            "episodeType": "chronic-flare",
+            "painLevel": 4,
+            "painLocations": [
+              "Neck",
+              "Shoulders (left)",
+              "Shoulders (right)",
+              "Upper back",
+              "Whole body"
+            ],
+            "painCharacter": [
+              "Dull",
+              "Burning",
+              "Aching",
+              "Tight / Squeezing"
+            ],
+            "painPattern": [
+              "Constant"
+            ],
+            "triggers": [
+              "Sitting too long"
+            ],
+            "treatments": [
+              "Rest"
+            ],
+            "medications": [
+              "Other"
+            ],
+            "effectiveness": 1,
+            "baselinePainLevel": 2
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-05-12T03:52:15.073Z",
+        "updated_at": "2026-05-12T03:52:15.073Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-11",
+      "category": "tracker",
+      "subcategory": "head-pain",
+      "content": {
+        "entries": [
+          {
+            "id": "head-pain-1778558043463",
+            "timestamp": "2026-05-12T03:52:00.000Z",
+            "date": "2026-05-11",
+            "episodeType": "migraine-with-aura",
+            "painIntensity": 6,
+            "painLocation": [
+              "temples",
+              "behind-eyes",
+              "one-side"
+            ],
+            "painType": [
+              "sharp",
+              "electric"
+            ],
+            "baselineHeadachePain": 2,
+            "suddenOnset": true,
+            "auraPresent": false,
+            "auraSymptoms": [],
+            "associatedSymptoms": [
+              "light-sensitivity",
+              "sound-sensitivity",
+              "brain-fog"
+            ],
+            "triggers": [],
+            "treatments": [
+              "rimegepant",
+              "sumatriptan"
+            ],
+            "treatmentEffectiveness": 5,
+            "rescueMedicationsTaken": [
+              "rimegepant",
+              "sumatriptan"
+            ],
+            "rescueRedosed": true,
+            "residualSymptoms": [
+              "fatigue",
+              "brain-fog",
+              "neck-stiffness"
+            ],
+            "functionalImpact": "moderate"
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-05-12T03:54:03.463Z",
+        "updated_at": "2026-05-12T03:54:03.463Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-11",
+      "category": "tracker",
+      "subcategory": "weather",
+      "content": [
+        {
+          "weatherTypes": [
+            "Sunny",
+            "Rainy",
+            "Humid",
+            "Pressure Hell"
+          ],
+          "impact": "A little",
+          "description": "",
+          "tags": [],
+          "timestamp": "2026-05-12T03:54:42.405Z"
+        }
+      ],
+      "metadata": {
+        "created_at": "2026-05-12T03:54:42.423Z",
+        "updated_at": "2026-05-12T03:54:42.423Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-11",
+      "category": "tracker",
+      "subcategory": "brain-fog",
+      "content": {
+        "entries": [
+          {
+            "id": "1778558140364",
+            "date": "2026-05-11",
+            "time": "23:55",
+            "symptoms": [
+              "memory_issues",
+              "word_finding",
+              "concentration",
+              "mental_fatigue",
+              "confusion",
+              "slow_processing",
+              "conversation_trouble",
+              "reading_difficulty",
+              "multitasking",
+              "mental_cloudiness"
+            ],
+            "severity": "6",
+            "triggers": [
+              "Stress",
+              "Poor sleep",
+              "Screen time"
+            ],
+            "treatments": [
+              "Rest",
+              "Sleep"
+            ],
+            "notes": "",
+            "tags": [],
+            "createdAt": "2026-05-12T03:55:40.364Z",
+            "updatedAt": "2026-05-12T03:55:40.365Z"
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-05-12T03:55:40.368Z",
+        "updated_at": "2026-05-12T03:55:40.368Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-11",
+      "category": "tracker",
+      "subcategory": "sleep-sleep-1778558203296",
+      "content": "",
+      "metadata": {
+        "created_at": "2026-05-12T03:56:43.297Z",
+        "updated_at": "2026-05-12T03:56:43.297Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-12",
+      "category": "tracker",
+      "subcategory": "self-care",
+      "content": {
+        "items": [
+          {
+            "id": "wash",
+            "label": "Washed the important bits",
+            "checked": false
+          },
+          {
+            "id": "teeth",
+            "label": "Brushed teeth",
+            "checked": true
+          },
+          {
+            "id": "hair",
+            "label": "Took care of hair",
+            "checked": true
+          },
+          {
+            "id": "meds",
+            "label": "Took medications",
+            "checked": true
+          },
+          {
+            "id": "water",
+            "label": "Drank water",
+            "checked": true
+          },
+          {
+            "id": "food",
+            "label": "Fed the flesh suit",
+            "checked": false
+          },
+          {
+            "id": "moved",
+            "label": "Moved your body (any amount)",
+            "checked": true
+          },
+          {
+            "id": "1776640700149",
+            "label": "Took a nap",
+            "checked": true
+          }
+        ],
+        "completedCount": 6,
+        "totalCount": 8
+      },
+      "metadata": {
+        "created_at": "2026-05-12T03:57:10.786Z",
+        "updated_at": "2026-05-12T03:57:21.922Z",
+        "user_id": "default-user",
+        "version": 6
+      }
+    },
+    {
+      "date": "2026-05-11",
+      "category": "tracker",
+      "subcategory": "hydration-hydration-1778558273520",
+      "content": "",
+      "metadata": {
+        "created_at": "2026-05-12T03:57:53.520Z",
+        "updated_at": "2026-05-12T03:57:53.520Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-11",
+      "category": "tracker",
+      "subcategory": "hydration-hydration-1778558291543",
+      "content": "",
+      "metadata": {
+        "created_at": "2026-05-12T03:58:11.543Z",
+        "updated_at": "2026-05-12T03:58:11.543Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-11",
+      "category": "tracker",
+      "subcategory": "hydration-hydration-1778558305222",
+      "content": "",
+      "metadata": {
+        "created_at": "2026-05-12T03:58:25.222Z",
+        "updated_at": "2026-05-12T03:58:25.222Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-11",
+      "category": "tracker",
+      "subcategory": "food-choice",
+      "content": {
+        "simpleEntries": [
+          {
+            "id": "simple-1778558324431",
+            "timestamp": "2026-05-12T03:58:44.431Z",
+            "didEat": true,
+            "mealType": "dinner",
+            "mood": "struggled",
+            "tags": []
+          }
+        ],
+        "detailedEntries": [],
+        "generalNotes": "",
+        "tags": []
+      },
+      "metadata": {
+        "created_at": "2026-05-12T03:58:44.431Z",
+        "updated_at": "2026-05-12T03:58:44.431Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-11",
+      "category": "tracker",
+      "subcategory": "movement-movement-1778558350836",
+      "content": "",
+      "metadata": {
+        "created_at": "2026-05-12T03:59:10.837Z",
+        "updated_at": "2026-05-12T03:59:10.837Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-12",
+      "category": "tracker",
+      "subcategory": "seizure",
+      "content": {
+        "entries": [
+          {
+            "id": "1778635966929",
+            "timestamp": "2026-05-13T01:32:00.000Z",
+            "date": "2026-05-12",
+            "episodeType": "focal-aware",
+            "durationMinutes": 3,
+            "consciousness": "fully-aware",
+            "auraPresent": true,
+            "auraSymptoms": [
+              "Strange Smells",
+              "Nausea"
+            ],
+            "symptoms": [
+              "Strange Smells",
+              "Strange Tastes",
+              "Vertigo/Spinning",
+              "Rising Sensation (Epigastric)",
+              "Nausea"
+            ],
+            "symptomSeverity": 5
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-05-13T01:32:46.929Z",
+        "updated_at": "2026-05-13T01:32:46.929Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-12",
+      "category": "tracker",
+      "subcategory": "hydration-hydration-1778636071593",
+      "content": "",
+      "metadata": {
+        "created_at": "2026-05-13T01:34:31.593Z",
+        "updated_at": "2026-05-13T01:34:31.593Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-12",
+      "category": "tracker",
+      "subcategory": "hydration-hydration-1778636104913",
+      "content": "",
+      "metadata": {
+        "created_at": "2026-05-13T01:35:04.913Z",
+        "updated_at": "2026-05-13T01:35:04.913Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-12",
+      "category": "tracker",
+      "subcategory": "hydration-hydration-1778636116200",
+      "content": "",
+      "metadata": {
+        "created_at": "2026-05-13T01:35:16.200Z",
+        "updated_at": "2026-05-13T01:35:16.200Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-12",
+      "category": "tracker",
+      "subcategory": "joint",
+      "content": {
+        "entries": [
+          {
+            "id": "1778637639976",
+            "timestamp": "2026-05-13T01:35:00.000Z",
+            "date": "2026-05-12",
+            "episodeType": "subluxation",
+            "jointAffected": [
+              "Shoulder (right)"
+            ],
+            "severity": 4,
+            "selfReducedFlag": false,
+            "swellingPresent": false,
+            "bruisingPresent": false,
+            "romImpactedPercent": 40,
+            "triggerActivity": [],
+            "treatmentApplied": [
+              "Manual reduction (someone helped)"
+            ],
+            "treatmentResponse": 3,
+            "erVisitRequired": false
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-05-13T02:00:39.976Z",
+        "updated_at": "2026-05-13T02:00:39.976Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-13",
+      "category": "tracker",
+      "subcategory": "self-care",
+      "content": {
+        "items": [
+          {
+            "id": "wash",
+            "label": "Washed the important bits",
+            "checked": true
+          },
+          {
+            "id": "teeth",
+            "label": "Brushed teeth",
+            "checked": true
+          },
+          {
+            "id": "hair",
+            "label": "Took care of hair",
+            "checked": false
+          },
+          {
+            "id": "meds",
+            "label": "Took medications",
+            "checked": false
+          },
+          {
+            "id": "water",
+            "label": "Drank water",
+            "checked": false
+          },
+          {
+            "id": "food",
+            "label": "Fed the flesh suit",
+            "checked": false
+          },
+          {
+            "id": "moved",
+            "label": "Moved your body (any amount)",
+            "checked": false
+          },
+          {
+            "id": "1776640700149",
+            "label": "Took a nap",
+            "checked": true
+          }
+        ],
+        "completedCount": 3,
+        "totalCount": 8
+      },
+      "metadata": {
+        "created_at": "2026-05-13T21:16:05.790Z",
+        "updated_at": "2026-05-13T21:18:43.990Z",
+        "user_id": "default-user",
+        "version": 3
+      }
+    },
+    {
+      "date": "2026-05-15",
+      "category": "tracker",
+      "subcategory": "bathroom",
+      "content": {
+        "entries": []
+      },
+      "metadata": {
+        "created_at": "2026-05-15T10:55:06.234Z",
+        "updated_at": "2026-05-15T10:55:23.990Z",
+        "user_id": "default-user",
+        "version": 2
+      }
+    },
+    {
+      "date": "2026-05-14",
+      "category": "tracker",
+      "subcategory": "bathroom",
+      "content": {
+        "entries": [
+          {
+            "id": "bathroom-1778842506233",
+            "timestamp": "2026-05-14T10:54:00.000Z",
+            "date": "2026-05-14",
+            "time": "06:54",
+            "episodeType": "diarrhea",
+            "bristolScale": "6",
+            "bowelCount": 1,
+            "painLevel": "Moderate",
+            "painScore": 3,
+            "hydrationLevel": "good",
+            "createdAt": "2026-05-15T10:55:06.233Z",
+            "updatedAt": "2026-05-15T10:55:23.989Z"
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-05-15T10:55:24.008Z",
+        "updated_at": "2026-05-15T10:55:24.008Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-16",
+      "category": "tracker",
+      "subcategory": "bathroom",
+      "content": {
+        "entries": [
+          {
+            "id": "bathroom-1778942076462",
+            "timestamp": "2026-05-16T14:34:00.000Z",
+            "date": "2026-05-16",
+            "time": "10:34",
+            "episodeType": "constipation",
+            "bristolScale": "2",
+            "bowelCount": 1,
+            "painLevel": "None",
+            "painScore": 4,
+            "hydrationLevel": "good",
+            "createdAt": "2026-05-16T14:34:36.461Z",
+            "updatedAt": "2026-05-16T14:34:36.461Z"
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-05-16T14:34:36.462Z",
+        "updated_at": "2026-05-16T14:34:36.462Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-16",
+      "category": "tracker",
+      "subcategory": "head-pain",
+      "content": {
+        "entries": [
+          {
+            "id": "head-pain-1778942161581",
+            "timestamp": "2026-05-16T09:00:00.000Z",
+            "date": "2026-05-16",
+            "episodeType": "tension",
+            "painIntensity": 5,
+            "painLocation": [
+              "back-of-head",
+              "neck"
+            ],
+            "painType": [
+              "dull-ache",
+              "pressure",
+              "tight-band"
+            ],
+            "baselineHeadachePain": 2,
+            "auraPresent": false,
+            "auraSymptoms": [],
+            "associatedSymptoms": [
+              "neck-stiffness"
+            ],
+            "triggers": [],
+            "treatments": [
+              "ibuprofen",
+              "acetaminophen",
+              "caffeine"
+            ],
+            "treatmentEffectiveness": 9,
+            "rescueMedicationsTaken": [
+              "ibuprofen",
+              "acetaminophen"
+            ],
+            "rescueRedosed": true,
+            "residualSymptoms": [],
+            "functionalImpact": "moderate"
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-05-16T14:36:01.581Z",
+        "updated_at": "2026-05-16T14:36:01.581Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-17",
+      "category": "tracker",
+      "subcategory": "hydration-hydration-1779015220744",
+      "content": "",
+      "metadata": {
+        "created_at": "2026-05-17T10:53:40.744Z",
+        "updated_at": "2026-05-17T10:53:40.744Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-18",
+      "category": "tracker",
+      "subcategory": "self-care",
+      "content": {
+        "items": [
+          {
+            "id": "wash",
+            "label": "Washed the important bits",
+            "checked": true
+          },
+          {
+            "id": "teeth",
+            "label": "Brushed teeth",
+            "checked": false
+          },
+          {
+            "id": "hair",
+            "label": "Took care of hair",
+            "checked": false
+          },
+          {
+            "id": "meds",
+            "label": "Took medications",
+            "checked": true
+          },
+          {
+            "id": "water",
+            "label": "Drank water",
+            "checked": true
+          },
+          {
+            "id": "food",
+            "label": "Fed the flesh suit",
+            "checked": true
+          },
+          {
+            "id": "moved",
+            "label": "Moved your body (any amount)",
+            "checked": false
+          },
+          {
+            "id": "1776640700149",
+            "label": "Took a nap",
+            "checked": false
+          }
+        ],
+        "completedCount": 4,
+        "totalCount": 8
+      },
+      "metadata": {
+        "created_at": "2026-05-18T12:37:49.751Z",
+        "updated_at": "2026-05-18T12:37:53.274Z",
+        "user_id": "default-user",
+        "version": 4
+      }
+    },
+    {
+      "date": "2026-05-19",
+      "category": "tracker",
+      "subcategory": "bathroom",
+      "content": {
+        "entries": [
+          {
+            "id": "bathroom-1779208185182",
+            "timestamp": "2026-05-19T16:29:00.000Z",
+            "date": "2026-05-19",
+            "time": "12:29",
+            "episodeType": "diarrhea",
+            "bristolScale": "6",
+            "bowelCount": 1,
+            "painLevel": "Moderate",
+            "painScore": 3,
+            "triggers": [
+              "Travel"
+            ],
+            "hydrationLevel": "good",
+            "createdAt": "2026-05-19T16:29:45.182Z",
+            "updatedAt": "2026-05-19T16:29:45.182Z"
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-05-19T16:29:45.183Z",
+        "updated_at": "2026-05-19T16:29:45.183Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-22",
+      "category": "tracker",
+      "subcategory": "pain",
+      "content": {
+        "entries": [
+          {
+            "id": "pain-1779479006071",
+            "timestamp": "2026-05-22T19:43:00.000Z",
+            "date": "2026-05-22",
+            "episodeType": "general",
+            "painLevel": 3,
+            "painLocations": [
+              "Whole body"
+            ],
+            "painCharacter": [
+              "Dull"
+            ],
+            "painPattern": [
+              "Constant"
+            ]
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-05-22T19:43:26.071Z",
+        "updated_at": "2026-05-22T22:07:46.958Z",
+        "user_id": "default-user",
+        "version": 3
+      }
+    },
+    {
+      "date": "2026-05-22",
+      "category": "tracker",
+      "subcategory": "head-pain",
+      "content": {
+        "entries": [
+          {
+            "id": "head-pain-1779479037983",
+            "timestamp": "2026-05-22T19:43:00.000Z",
+            "date": "2026-05-22",
+            "episodeType": "tension",
+            "painIntensity": 4,
+            "painLocation": [
+              "back-of-head"
+            ],
+            "painType": [
+              "dull-ache",
+              "pressure"
+            ],
+            "baselineHeadachePain": 2,
+            "auraPresent": false,
+            "auraSymptoms": [],
+            "associatedSymptoms": [],
+            "triggers": [],
+            "treatments": [],
+            "residualSymptoms": [],
+            "functionalImpact": "mild"
+          },
+          {
+            "id": "1779484539311",
+            "timestamp": "2026-05-22T21:15:39.311Z",
+            "date": "2026-05-22",
+            "episodeType": "tension",
+            "painIntensity": 4,
+            "painLocation": [
+              "back-of-head"
+            ],
+            "painType": [
+              "dull-ache",
+              "pressure"
+            ],
+            "baselineHeadachePain": 2,
+            "auraPresent": false,
+            "auraSymptoms": [],
+            "associatedSymptoms": [],
+            "triggers": [],
+            "treatments": [],
+            "residualSymptoms": [],
+            "functionalImpact": "mild"
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-05-22T19:43:57.983Z",
+        "updated_at": "2026-05-22T21:15:39.311Z",
+        "user_id": "default-user",
+        "version": 2
+      }
+    },
+    {
+      "date": "2026-05-22",
+      "category": "tracker",
+      "subcategory": "cardiac",
+      "content": {
+        "entries": [
+          {
+            "id": "1779479115202",
+            "timestamp": "2026-05-22T19:44:00.000Z",
+            "date": "2026-05-22",
+            "episodeType": "general",
+            "symptoms": [
+              "Pre-syncope (near-faint)",
+              "Dizziness"
+            ],
+            "symptomSeverity": 3,
+            "triggers": [
+              "Heat / Hot Environment",
+              "Hot Weather / Sun Exposure"
+            ],
+            "positionAtOnset": "standing",
+            "resolutionMethod": "spontaneous",
+            "duration": "10 minutes",
+            "erVisitRequired": false
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-05-22T19:45:15.202Z",
+        "updated_at": "2026-05-22T19:45:15.202Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-22",
+      "category": "tracker",
+      "subcategory": "joint",
+      "content": {
+        "entries": [
+          {
+            "id": "1779479187320",
+            "timestamp": "2026-05-22T19:45:00.000Z",
+            "date": "2026-05-22",
+            "episodeType": "muscle-tightness",
+            "jointAffected": [],
+            "musclesAffected": [
+              "Coat hanger (neck & shoulders)"
+            ],
+            "severity": 6,
+            "selfReducedFlag": false,
+            "swellingPresent": false,
+            "bruisingPresent": false,
+            "romImpactedPercent": 70,
+            "triggerActivity": [],
+            "treatmentApplied": [],
+            "erVisitRequired": false
+          },
+          {
+            "id": "1779479316580",
+            "timestamp": "2026-05-22T19:48:00.000Z",
+            "date": "2026-05-22",
+            "episodeType": "weakness",
+            "jointAffected": [],
+            "musclesAffected": [
+              "Proximal (shoulders & hips)"
+            ],
+            "severity": 8,
+            "selfReducedFlag": false,
+            "swellingPresent": false,
+            "bruisingPresent": false,
+            "romImpactedPercent": 70,
+            "triggerActivity": [
+              "Reaching overhead",
+              "Lifting"
+            ],
+            "treatmentApplied": [],
+            "erVisitRequired": false
+          },
+          {
+            "id": "1779484582562",
+            "timestamp": "2026-05-22T21:16:22.562Z",
+            "date": "2026-05-22",
+            "episodeType": "weakness",
+            "jointAffected": [],
+            "musclesAffected": [
+              "Proximal (shoulders & hips)"
+            ],
+            "severity": 8,
+            "selfReducedFlag": false,
+            "swellingPresent": false,
+            "bruisingPresent": false,
+            "romImpactedPercent": 70,
+            "triggerActivity": [
+              "Reaching overhead",
+              "Lifting"
+            ],
+            "treatmentApplied": [],
+            "erVisitRequired": false
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-05-22T19:46:27.320Z",
+        "updated_at": "2026-05-22T21:16:22.562Z",
+        "user_id": "default-user",
+        "version": 3
+      }
+    },
+    {
+      "date": "2026-05-22",
+      "category": "tracker",
+      "subcategory": "bathroom",
+      "content": {
+        "entries": [
+          {
+            "id": "bathroom-1779479399026",
+            "timestamp": "2026-05-22T19:48:00.000Z",
+            "date": "2026-05-22",
+            "time": "15:48",
+            "episodeType": "normal-bm",
+            "bristolScale": "4",
+            "bowelCount": 1,
+            "painLevel": "None",
+            "hydrationLevel": "good",
+            "createdAt": "2026-05-22T19:49:59.026Z",
+            "updatedAt": "2026-05-22T19:49:59.026Z"
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-05-22T19:49:59.026Z",
+        "updated_at": "2026-05-22T19:49:59.026Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-22",
+      "category": "tracker",
+      "subcategory": "weather",
+      "content": [
+        {
+          "weatherTypes": [
+            "Cloudy",
+            "Rainy",
+            "Stormy",
+            "Pressure Hell",
+            "Humid"
+          ],
+          "impact": "A little",
+          "description": "",
+          "tags": [],
+          "timestamp": "2026-05-22T19:50:11.192Z"
+        }
+      ],
+      "metadata": {
+        "created_at": "2026-05-22T19:50:11.204Z",
+        "updated_at": "2026-05-22T19:50:11.204Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-22",
+      "category": "tracker",
+      "subcategory": "brain-fog",
+      "content": {
+        "entries": [
+          {
+            "id": "1779479440276",
+            "date": "2026-05-22",
+            "time": "15:50",
+            "symptoms": [
+              "mental_fatigue",
+              "memory_issues",
+              "word_finding",
+              "slow_processing"
+            ],
+            "severity": "4",
+            "triggers": [
+              "Stress",
+              "Poor sleep"
+            ],
+            "treatments": [
+              "Hydration"
+            ],
+            "notes": "",
+            "tags": [],
+            "createdAt": "2026-05-22T19:50:40.276Z",
+            "updatedAt": "2026-05-22T19:50:40.276Z"
+          },
+          {
+            "id": "1779484611279",
+            "date": "2026-05-22",
+            "time": "17:16",
+            "symptoms": [
+              "mental_fatigue",
+              "memory_issues",
+              "word_finding",
+              "slow_processing"
+            ],
+            "severity": "4",
+            "triggers": [
+              "Stress",
+              "Poor sleep"
+            ],
+            "treatments": [
+              "Hydration"
+            ],
+            "notes": "",
+            "tags": [],
+            "createdAt": "2026-05-22T21:16:51.279Z",
+            "updatedAt": "2026-05-22T21:16:51.279Z"
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-05-22T19:50:40.278Z",
+        "updated_at": "2026-05-22T21:16:51.279Z",
+        "user_id": "default-user",
+        "version": 2
+      }
+    },
+    {
+      "date": "2026-05-22",
+      "category": "tracker",
+      "subcategory": "mental-health",
+      "content": {
+        "entries": [
+          {
+            "id": "mind-mood-1779479449875",
+            "timestamp": "2026-05-22T19:50:00.000Z",
+            "date": "2026-05-22",
+            "time": "15:50",
+            "episodeType": "general",
+            "mood": "good",
+            "moodIntensity": 5,
+            "emotionalState": [],
+            "anxietyLevel": 0,
+            "depressionLevel": 0,
+            "maniaLevel": 0,
+            "energyLevel": 5,
+            "stressLevel": 5,
+            "brainFogSeverity": 0,
+            "motivationLevel": 5,
+            "drivelLevel": 5,
+            "socialEngagementLevel": 5,
+            "regulationDifficulty": 0,
+            "moodSwingDirection": "stable",
+            "triggers": [],
+            "cognitiveSymptoms": [],
+            "copingStrategies": [],
+            "therapyNotes": "",
+            "medicationTaken": false,
+            "medicationNotes": "",
+            "notes": "",
+            "tags": [],
+            "createdAt": "2026-05-22T19:50:49.875Z",
+            "updatedAt": "2026-05-22T19:50:49.875Z"
+          },
+          {
+            "id": "1779484616129",
+            "timestamp": "2026-05-22T21:16:56.129Z",
+            "date": "2026-05-22",
+            "time": "17:16",
+            "episodeType": "general",
+            "mood": "good",
+            "moodIntensity": 5,
+            "emotionalState": [],
+            "anxietyLevel": 0,
+            "depressionLevel": 0,
+            "maniaLevel": 0,
+            "energyLevel": 5,
+            "stressLevel": 5,
+            "brainFogSeverity": 0,
+            "motivationLevel": 5,
+            "drivelLevel": 5,
+            "socialEngagementLevel": 5,
+            "regulationDifficulty": 0,
+            "moodSwingDirection": "stable",
+            "triggers": [],
+            "cognitiveSymptoms": [],
+            "copingStrategies": [],
+            "therapyNotes": "",
+            "medicationTaken": false,
+            "medicationNotes": "",
+            "notes": "",
+            "tags": [],
+            "createdAt": "2026-05-22T21:16:56.129Z",
+            "updatedAt": "2026-05-22T21:16:56.129Z"
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-05-22T19:50:49.875Z",
+        "updated_at": "2026-05-22T21:16:56.129Z",
+        "user_id": "default-user",
+        "version": 2
+      }
+    },
+    {
+      "date": "2026-05-22",
+      "category": "tracker",
+      "subcategory": "energy",
+      "content": {
+        "date": "2026-05-22",
+        "morningSpoons": 6,
+        "activities": [
+          {
+            "id": "activity-1779479469743",
+            "activityId": "errand-general",
+            "activityName": "General Errand",
+            "timestamp": "2026-05-22T19:51:09.743Z",
+            "spoonCost": 2,
+            "notes": ""
+          },
+          {
+            "id": "activity-1779479474077",
+            "activityId": "driving-short",
+            "activityName": "Short Drive",
+            "timestamp": "2026-05-22T19:51:14.077Z",
+            "spoonCost": 1,
+            "notes": ""
+          },
+          {
+            "id": "activity-1779479482785",
+            "activityId": "work-focus",
+            "activityName": "Focused Work",
+            "timestamp": "2026-05-22T19:51:22.785Z",
+            "spoonCost": 3,
+            "notes": ""
+          }
+        ],
+        "restPeriods": [],
+        "totalSpent": 6,
+        "totalRestored": 0,
+        "tags": []
+      },
+      "metadata": {
+        "created_at": "2026-05-22T19:50:53.325Z",
+        "updated_at": "2026-05-22T19:51:22.785Z",
+        "user_id": "default-user",
+        "version": 4
+      }
+    },
+    {
+      "date": "2026-05-22",
+      "category": "tracker",
+      "subcategory": "hydration-hydration-1779479500298",
+      "content": "",
+      "metadata": {
+        "created_at": "2026-05-22T19:51:40.298Z",
+        "updated_at": "2026-05-22T19:51:40.298Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-22",
+      "category": "tracker",
+      "subcategory": "hydration-hydration-1779479507962",
+      "content": "",
+      "metadata": {
+        "created_at": "2026-05-22T19:51:47.962Z",
+        "updated_at": "2026-05-22T19:51:47.962Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-22",
+      "category": "tracker",
+      "subcategory": "sleep-sleep-1779479566671",
+      "content": "",
+      "metadata": {
+        "created_at": "2026-05-22T19:52:46.671Z",
+        "updated_at": "2026-05-22T19:52:46.671Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-22",
+      "category": "tracker",
+      "subcategory": "dysautonomia",
+      "content": {
+        "entries": [
+          {
+            "episodeType": "general",
+            "symptoms": [
+              "Fainting/Near Fainting",
+              "Excessive Sweating",
+              "Flushing/Hot Flashes",
+              "Nausea",
+              "Temperature Dysregulation"
+            ],
+            "severity": 8,
+            "triggers": [],
+            "positionChange": "sitting-to-standing",
+            "duration": "3 minutes",
+            "interventions": [],
+            "notes": "",
+            "id": "1779489788983",
+            "timestamp": "2026-05-22T22:43:08.983Z",
+            "date": "2026-05-22"
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-05-22T22:43:08.983Z",
+        "updated_at": "2026-05-22T22:43:08.983Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-22",
+      "category": "tracker",
+      "subcategory": "upper-digestive",
+      "content": {
+        "entries": [
+          {
+            "id": "1779489791983",
+            "date": "2026-05-22",
+            "time": "18:43",
+            "symptoms": [
+              "bloating",
+              "stomach_pain"
+            ],
+            "severity": "moderate",
+            "triggers": [
+              "Large meals"
+            ],
+            "treatments": [
+              "Other"
+            ],
+            "notes": "",
+            "tags": [],
+            "createdAt": "2026-05-22T22:43:11.983Z",
+            "updatedAt": "2026-05-22T22:43:11.983Z"
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-05-22T22:43:11.983Z",
+        "updated_at": "2026-05-22T22:43:11.983Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-23",
+      "category": "tracker",
+      "subcategory": "self-care",
+      "content": {
+        "items": [
+          {
+            "id": "wash",
+            "label": "Washed the important bits",
+            "checked": false
+          },
+          {
+            "id": "teeth",
+            "label": "Brushed teeth",
+            "checked": false
+          },
+          {
+            "id": "hair",
+            "label": "Took care of hair",
+            "checked": false
+          },
+          {
+            "id": "meds",
+            "label": "Took medications",
+            "checked": false
+          },
+          {
+            "id": "water",
+            "label": "Drank water",
+            "checked": false
+          },
+          {
+            "id": "food",
+            "label": "Fed the flesh suit",
+            "checked": true
+          },
+          {
+            "id": "moved",
+            "label": "Moved your body (any amount)",
+            "checked": true
+          },
+          {
+            "id": "1776640700149",
+            "label": "Took a nap",
+            "checked": false
+          }
+        ],
+        "completedCount": 2,
+        "totalCount": 8
+      },
+      "metadata": {
+        "created_at": "2026-05-23T01:56:48.788Z",
+        "updated_at": "2026-05-23T14:55:00.544Z",
+        "user_id": "default-user",
+        "version": 6
+      }
+    },
+    {
+      "date": "2026-05-20",
+      "category": "tracker",
+      "subcategory": "bathroom",
+      "content": {
+        "entries": [
+          {
+            "id": "bathroom-1779329750802",
+            "timestamp": "2026-05-20T14:15:00.000Z",
+            "date": "2026-05-20",
+            "time": "10:15",
+            "episodeType": "diarrhea",
+            "bristolScale": "7",
+            "bowelCount": 3,
+            "painLevel": "Moderate",
+            "hydrationLevel": "good",
+            "createdAt": "2026-05-21T02:15:50.802Z",
+            "updatedAt": "2026-05-21T02:15:50.802Z"
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-05-21T02:15:50.803Z",
+        "updated_at": "2026-05-21T02:15:50.803Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-20",
+      "category": "tracker",
+      "subcategory": "pain",
+      "content": {
+        "entries": [
+          {
+            "id": "pain-1779329810448",
+            "timestamp": "2026-05-21T02:16:00.000Z",
+            "date": "2026-05-20",
+            "episodeType": "chronic-flare",
+            "painLevel": 4,
+            "painLocations": [
+              "Whole body"
+            ],
+            "painCharacter": [
+              "Aching",
+              "Dull"
+            ],
+            "painPattern": [
+              "Constant"
+            ],
+            "baselinePainLevel": 3
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-05-21T02:16:50.449Z",
+        "updated_at": "2026-05-21T02:16:50.449Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-20",
+      "category": "tracker",
+      "subcategory": "weather",
+      "content": [
+        {
+          "weatherTypes": [
+            "Sunny",
+            "Pressure Hell",
+            "Humid"
+          ],
+          "impact": "Yes",
+          "description": "",
+          "tags": [],
+          "timestamp": "2026-05-21T02:17:17.666Z"
+        }
+      ],
+      "metadata": {
+        "created_at": "2026-05-21T02:17:17.688Z",
+        "updated_at": "2026-05-21T02:17:17.688Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-20",
+      "category": "tracker",
+      "subcategory": "respiratory",
+      "content": {
+        "entries": [
+          {
+            "id": "1779329925152",
+            "timestamp": "2026-05-21T02:17:00.000Z",
+            "date": "2026-05-20",
+            "episodeType": "general",
+            "severity": 4,
+            "breathingPattern": "normal-just-uncomfortable",
+            "swelling": false,
+            "hivesPresent": false,
+            "throatTightness": false,
+            "epinephrineGiven": false,
+            "symptoms": [
+              "Burning Chest with Exertion",
+              "Runny Nose"
+            ],
+            "triggers": [],
+            "erVisitRequired": false
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-05-21T02:18:45.152Z",
+        "updated_at": "2026-05-21T02:18:45.152Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-20",
+      "category": "tracker",
+      "subcategory": "joint",
+      "content": {
+        "entries": [
+          {
+            "id": "1779330021590",
+            "timestamp": "2026-05-21T02:19:00.000Z",
+            "date": "2026-05-20",
+            "episodeType": "muscle-tightness",
+            "jointAffected": [
+              "Shoulder (left)",
+              "Shoulder (right)",
+              "Cervical spine (neck)",
+              "Thoracic spine (upper back)",
+              "Sacroiliac (left)",
+              "Sacroiliac (right)",
+              "Hip (left)",
+              "Hip (right)"
+            ],
+            "severity": 7,
+            "selfReducedFlag": false,
+            "swellingPresent": false,
+            "bruisingPresent": false,
+            "romImpactedPercent": 90,
+            "triggerActivity": [],
+            "treatmentApplied": [],
+            "erVisitRequired": false
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-05-21T02:20:21.591Z",
+        "updated_at": "2026-05-21T02:20:21.591Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-20",
+      "category": "tracker",
+      "subcategory": "hydration-hydration-1779330114576",
+      "content": "",
+      "metadata": {
+        "created_at": "2026-05-21T02:21:54.576Z",
+        "updated_at": "2026-05-21T02:21:54.576Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-20",
+      "category": "tracker",
+      "subcategory": "hydration-hydration-1779330130430",
+      "content": "",
+      "metadata": {
+        "created_at": "2026-05-21T02:22:10.430Z",
+        "updated_at": "2026-05-21T02:22:10.430Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-21",
+      "category": "tracker",
+      "subcategory": "self-care",
+      "content": {
+        "items": [
+          {
+            "id": "wash",
+            "label": "Washed the important bits",
+            "checked": false
+          },
+          {
+            "id": "teeth",
+            "label": "Brushed teeth",
+            "checked": true
+          },
+          {
+            "id": "hair",
+            "label": "Took care of hair",
+            "checked": false
+          },
+          {
+            "id": "meds",
+            "label": "Took medications",
+            "checked": true
+          },
+          {
+            "id": "water",
+            "label": "Drank water",
+            "checked": true
+          },
+          {
+            "id": "food",
+            "label": "Fed the flesh suit",
+            "checked": true
+          },
+          {
+            "id": "moved",
+            "label": "Moved your body (any amount)",
+            "checked": true
+          },
+          {
+            "id": "1776640700149",
+            "label": "Took a nap",
+            "checked": false
+          }
+        ],
+        "completedCount": 5,
+        "totalCount": 8
+      },
+      "metadata": {
+        "created_at": "2026-05-21T02:22:44.547Z",
+        "updated_at": "2026-05-21T02:22:54.166Z",
+        "user_id": "default-user",
+        "version": 5
+      }
+    },
+    {
+      "date": "2026-05-22",
+      "category": "tracker",
+      "subcategory": "self-care",
+      "content": {
+        "items": [
+          {
+            "id": "wash",
+            "label": "Washed the important bits",
+            "checked": false
+          },
+          {
+            "id": "teeth",
+            "label": "Brushed teeth",
+            "checked": false
+          },
+          {
+            "id": "hair",
+            "label": "Took care of hair",
+            "checked": false
+          },
+          {
+            "id": "meds",
+            "label": "Took medications",
+            "checked": false
+          },
+          {
+            "id": "water",
+            "label": "Drank water",
+            "checked": false
+          },
+          {
+            "id": "food",
+            "label": "Fed the flesh suit",
+            "checked": false
+          },
+          {
+            "id": "moved",
+            "label": "Moved your body (any amount)",
+            "checked": false
+          },
+          {
+            "id": "1776640700149",
+            "label": "Took a nap",
+            "checked": true
+          }
+        ],
+        "completedCount": 1,
+        "totalCount": 8
+      },
+      "metadata": {
+        "created_at": "2026-05-22T16:45:14.430Z",
+        "updated_at": "2026-05-22T16:45:14.430Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-23",
+      "category": "tracker",
+      "subcategory": "joint",
+      "content": {
+        "entries": [
+          {
+            "id": "1779511808484",
+            "timestamp": "2026-05-23T04:50:08.484Z",
+            "date": "2026-05-23",
+            "episodeType": "weakness",
+            "jointAffected": [],
+            "musclesAffected": [
+              "Proximal (shoulders & hips)"
+            ],
+            "severity": 8,
+            "selfReducedFlag": false,
+            "swellingPresent": false,
+            "bruisingPresent": false,
+            "romImpactedPercent": 70,
+            "triggerActivity": [
+              "Reaching overhead",
+              "Lifting"
+            ],
+            "treatmentApplied": [],
+            "erVisitRequired": false
+          },
+          {
+            "id": "1779526527928",
+            "timestamp": "2026-05-23T08:55:00.000Z",
+            "date": "2026-05-23",
+            "episodeType": "muscle-tightness",
+            "jointAffected": [],
+            "musclesAffected": [
+              "Proximal (shoulders & hips)",
+              "Coat hanger (neck & shoulders)"
+            ],
+            "severity": 7,
+            "selfReducedFlag": false,
+            "swellingPresent": false,
+            "bruisingPresent": false,
+            "romImpactedPercent": 70,
+            "triggerActivity": [],
+            "treatmentApplied": [],
+            "erVisitRequired": false
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-05-23T04:50:08.485Z",
+        "updated_at": "2026-05-23T08:55:27.929Z",
+        "user_id": "default-user",
+        "version": 2
+      }
+    },
+    {
+      "date": "2026-05-23",
+      "category": "tracker",
+      "subcategory": "hydration-hydration-1779511848597",
+      "content": "",
+      "metadata": {
+        "created_at": "2026-05-23T04:50:48.597Z",
+        "updated_at": "2026-05-23T04:50:48.597Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-23",
+      "category": "tracker",
+      "subcategory": "pain",
+      "content": {
+        "entries": [
+          {
+            "id": "pain-1779511885712",
+            "timestamp": "2026-05-23T04:50:00.000Z",
+            "date": "2026-05-23",
+            "episodeType": "chronic-flare",
+            "painLevel": 4,
+            "painLocations": [
+              "Whole body"
+            ],
+            "painCharacter": [
+              "Dull",
+              "Aching"
+            ],
+            "painPattern": [
+              "Constant"
+            ],
+            "baselinePainLevel": 3
+          },
+          {
+            "id": "1779542972898",
+            "timestamp": "2026-05-23T13:29:32.898Z",
+            "date": "2026-05-23",
+            "episodeType": "chronic-flare",
+            "painLevel": 4,
+            "painLocations": [
+              "Whole body"
+            ],
+            "painCharacter": [
+              "Dull",
+              "Aching"
+            ],
+            "painPattern": [
+              "Constant"
+            ],
+            "baselinePainLevel": 3
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-05-23T04:51:25.712Z",
+        "updated_at": "2026-05-23T13:29:32.898Z",
+        "user_id": "default-user",
+        "version": 2
+      }
+    },
+    {
+      "date": "2026-05-23",
+      "category": "tracker",
+      "subcategory": "head-pain",
+      "content": {
+        "entries": [
+          {
+            "id": "head-pain-1779511933042",
+            "timestamp": "2026-05-23T04:51:00.000Z",
+            "date": "2026-05-23",
+            "episodeType": "migraine-no-aura",
+            "painIntensity": 5,
+            "painLocation": [
+              "temples"
+            ],
+            "painType": [
+              "sharp",
+              "throbbing"
+            ],
+            "baselineHeadachePain": 2,
+            "auraPresent": false,
+            "auraSymptoms": [],
+            "associatedSymptoms": [],
+            "triggers": [],
+            "treatments": [
+              "rimegepant"
+            ],
+            "treatmentEffectiveness": 6,
+            "rescueMedicationsTaken": [
+              "rimegepant"
+            ],
+            "residualSymptoms": [],
+            "functionalImpact": "mild"
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-05-23T04:52:13.042Z",
+        "updated_at": "2026-05-23T04:52:13.042Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-23",
+      "category": "tracker",
+      "subcategory": "brain-fog",
+      "content": {
+        "entries": [
+          {
+            "id": "1779542808447",
+            "date": "2026-05-23",
+            "time": "09:26",
+            "symptoms": [
+              "word_finding",
+              "confusion",
+              "organizing_thoughts"
+            ],
+            "severity": "4",
+            "triggers": [
+              "Overexertion"
+            ],
+            "treatments": [
+              "Other"
+            ],
+            "notes": "",
+            "tags": [],
+            "createdAt": "2026-05-23T13:26:48.447Z",
+            "updatedAt": "2026-05-23T13:26:48.447Z"
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2026-05-23T13:26:48.448Z",
+        "updated_at": "2026-05-23T13:26:48.448Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-05-24",
+      "category": "tracker",
+      "subcategory": "self-care",
+      "content": {
+        "items": [
+          {
+            "id": "wash",
+            "label": "Washed the important bits",
+            "checked": false
+          },
+          {
+            "id": "hair",
+            "label": "Took care of hair",
+            "checked": true
+          },
+          {
+            "id": "meds",
+            "label": "Took medications",
+            "checked": false
+          },
+          {
+            "id": "water",
+            "label": "Drank water",
+            "checked": false
+          },
+          {
+            "id": "food",
+            "label": "Fed the flesh suit",
+            "checked": false
+          },
+          {
+            "id": "1776640700149",
+            "label": "Took a nap",
+            "checked": false
+          },
+          {
+            "id": "teeth",
+            "label": "Brushed teeth",
+            "checked": false
+          },
+          {
+            "id": "moved",
+            "label": "Moved your body (any amount)",
+            "checked": false
+          }
+        ],
+        "completedCount": 1,
+        "totalCount": 8
+      },
+      "metadata": {
+        "created_at": "2026-05-24T13:53:56.919Z",
+        "updated_at": "2026-05-24T13:53:56.919Z",
+        "user_id": "default-user",
+        "version": 1
+      }
+    },
+    {
+      "date": "2026-03-29",
+      "category": "tracker",
+      "subcategory": "reproductive-health",
+      "content": {
+        "cycleDay": 1,
+        "flow": "medium",
+        "symptoms": [
+          "cramps"
+        ],
+        "notes": ""
+      },
+      "metadata": {
+        "created_at": "2026-03-29T08:00:00.000Z",
+        "updated_at": "2026-03-29T08:00:00.000Z"
+      }
+    },
+    {
+      "date": "2026-03-30",
+      "category": "tracker",
+      "subcategory": "reproductive-health",
+      "content": {
+        "cycleDay": 2,
+        "flow": "medium",
+        "symptoms": [
+          "cramps"
+        ],
+        "notes": ""
+      },
+      "metadata": {
+        "created_at": "2026-03-30T08:00:00.000Z",
+        "updated_at": "2026-03-30T08:00:00.000Z"
+      }
+    },
+    {
+      "date": "2026-03-31",
+      "category": "tracker",
+      "subcategory": "reproductive-health",
+      "content": {
+        "cycleDay": 3,
+        "flow": "medium",
+        "symptoms": [
+          "cramps"
+        ],
+        "notes": ""
+      },
+      "metadata": {
+        "created_at": "2026-03-31T08:00:00.000Z",
+        "updated_at": "2026-03-31T08:00:00.000Z"
+      }
+    },
+    {
+      "date": "2026-04-01",
+      "category": "tracker",
+      "subcategory": "reproductive-health",
+      "content": {
+        "cycleDay": 4,
+        "flow": "medium",
+        "symptoms": [
+          "cramps"
+        ],
+        "notes": ""
+      },
+      "metadata": {
+        "created_at": "2026-04-01T08:00:00.000Z",
+        "updated_at": "2026-04-01T08:00:00.000Z"
+      }
+    },
+    {
+      "date": "2026-04-05",
+      "category": "tracker",
+      "subcategory": "reproductive-health",
+      "content": {
+        "cycleDay": 8,
+        "flow": "none",
+        "symptoms": [],
+        "notes": ""
+      },
+      "metadata": {
+        "created_at": "2026-04-05T08:00:00.000Z",
+        "updated_at": "2026-04-05T08:00:00.000Z"
+      }
+    },
+    {
+      "date": "2026-04-11",
+      "category": "tracker",
+      "subcategory": "reproductive-health",
+      "content": {
+        "cycleDay": 14,
+        "flow": "none",
+        "symptoms": [],
+        "notes": ""
+      },
+      "metadata": {
+        "created_at": "2026-04-11T08:00:00.000Z",
+        "updated_at": "2026-04-11T08:00:00.000Z"
+      }
+    },
+    {
+      "date": "2026-04-12",
+      "category": "tracker",
+      "subcategory": "reproductive-health",
+      "content": {
+        "cycleDay": 15,
+        "flow": "none",
+        "symptoms": [],
+        "notes": ""
+      },
+      "metadata": {
+        "created_at": "2026-04-12T08:00:00.000Z",
+        "updated_at": "2026-04-12T08:00:00.000Z"
+      }
+    },
+    {
+      "date": "2026-04-19",
+      "category": "tracker",
+      "subcategory": "reproductive-health",
+      "content": {
+        "cycleDay": 22,
+        "flow": "none",
+        "symptoms": [],
+        "notes": ""
+      },
+      "metadata": {
+        "created_at": "2026-04-19T08:00:00.000Z",
+        "updated_at": "2026-04-19T08:00:00.000Z"
+      }
+    },
+    {
+      "date": "2026-04-26",
+      "category": "tracker",
+      "subcategory": "reproductive-health",
+      "content": {
+        "cycleDay": 1,
+        "flow": "medium",
+        "symptoms": [
+          "cramps"
+        ],
+        "notes": ""
+      },
+      "metadata": {
+        "created_at": "2026-04-26T08:00:00.000Z",
+        "updated_at": "2026-04-26T08:00:00.000Z"
+      }
+    },
+    {
+      "date": "2026-04-27",
+      "category": "tracker",
+      "subcategory": "reproductive-health",
+      "content": {
+        "cycleDay": 2,
+        "flow": "medium",
+        "symptoms": [
+          "cramps"
+        ],
+        "notes": ""
+      },
+      "metadata": {
+        "created_at": "2026-04-27T08:00:00.000Z",
+        "updated_at": "2026-04-27T08:00:00.000Z"
+      }
+    },
+    {
+      "date": "2026-04-28",
+      "category": "tracker",
+      "subcategory": "reproductive-health",
+      "content": {
+        "cycleDay": 3,
+        "flow": "medium",
+        "symptoms": [
+          "cramps"
+        ],
+        "notes": ""
+      },
+      "metadata": {
+        "created_at": "2026-04-28T08:00:00.000Z",
+        "updated_at": "2026-04-28T08:00:00.000Z"
+      }
+    },
+    {
+      "date": "2026-04-29",
+      "category": "tracker",
+      "subcategory": "reproductive-health",
+      "content": {
+        "cycleDay": 4,
+        "flow": "medium",
+        "symptoms": [
+          "cramps"
+        ],
+        "notes": ""
+      },
+      "metadata": {
+        "created_at": "2026-04-29T08:00:00.000Z",
+        "updated_at": "2026-04-29T08:00:00.000Z"
+      }
+    },
+    {
+      "date": "2026-05-03",
+      "category": "tracker",
+      "subcategory": "reproductive-health",
+      "content": {
+        "cycleDay": 8,
+        "flow": "none",
+        "symptoms": [],
+        "notes": ""
+      },
+      "metadata": {
+        "created_at": "2026-05-03T08:00:00.000Z",
+        "updated_at": "2026-05-03T08:00:00.000Z"
+      }
+    },
+    {
+      "date": "2026-05-09",
+      "category": "tracker",
+      "subcategory": "reproductive-health",
+      "content": {
+        "cycleDay": 14,
+        "flow": "none",
+        "symptoms": [],
+        "notes": ""
+      },
+      "metadata": {
+        "created_at": "2026-05-09T08:00:00.000Z",
+        "updated_at": "2026-05-09T08:00:00.000Z"
+      }
+    },
+    {
+      "date": "2026-05-10",
+      "category": "tracker",
+      "subcategory": "reproductive-health",
+      "content": {
+        "cycleDay": 15,
+        "flow": "none",
+        "symptoms": [],
+        "notes": ""
+      },
+      "metadata": {
+        "created_at": "2026-05-10T08:00:00.000Z",
+        "updated_at": "2026-05-10T08:00:00.000Z"
+      }
+    },
+    {
+      "date": "2026-05-17",
+      "category": "tracker",
+      "subcategory": "reproductive-health",
+      "content": {
+        "cycleDay": 22,
+        "flow": "none",
+        "symptoms": [],
+        "notes": ""
+      },
+      "metadata": {
+        "created_at": "2026-05-17T08:00:00.000Z",
+        "updated_at": "2026-05-17T08:00:00.000Z"
+      }
+    },
+    {
+      "date": "2026-05-24",
+      "category": "tracker",
+      "subcategory": "reproductive-health",
+      "content": {
+        "cycleDay": 1,
+        "flow": "medium",
+        "symptoms": [
+          "cramps"
+        ],
+        "notes": ""
+      },
+      "metadata": {
+        "created_at": "2026-05-24T08:00:00.000Z",
+        "updated_at": "2026-05-24T08:00:00.000Z"
+      }
+    }
+  ],
+  "user_tags": [
+    {
+      "tag_name": "NOPE",
+      "color": "#EF4444",
+      "category_restrictions": [],
+      "is_hidden": false,
+      "is_system": true,
+      "behavior": "exclude_analytics",
+      "created_at": "2026-04-16T01:53:16.523Z",
+      "updated_at": "2026-04-16T01:53:16.523Z",
+      "id": 1
+    },
+    {
+      "tag_name": "NOPE",
+      "color": "#EF4444",
+      "category_restrictions": [],
+      "is_hidden": false,
+      "is_system": true,
+      "behavior": "exclude_analytics",
+      "created_at": "2026-04-09T03:39:02.571Z",
+      "updated_at": "2026-04-09T03:39:02.571Z",
+      "id": 2
+    },
+    {
+      "tag_name": "I KNOW",
+      "color": "#F59E0B",
+      "category_restrictions": [],
+      "is_hidden": false,
+      "is_system": true,
+      "behavior": "suppress_alerts",
+      "created_at": "2026-04-16T01:53:16.523Z",
+      "updated_at": "2026-04-16T01:53:16.523Z",
+      "id": 3
+    },
+    {
+      "tag_name": "I KNOW",
+      "color": "#F59E0B",
+      "category_restrictions": [],
+      "is_hidden": false,
+      "is_system": true,
+      "behavior": "suppress_alerts",
+      "created_at": "2026-04-09T03:39:02.571Z",
+      "updated_at": "2026-04-09T03:39:02.571Z",
+      "id": 4
+    }
+  ],
+  "image_blobs": []
+}
