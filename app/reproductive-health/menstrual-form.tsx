@@ -260,8 +260,8 @@ export function MenstrualForm({ formData, updateFormData, onSave, isLoading }: M
         </CardContent>
       </Card>
 
-      {/* Save Button */}
-      <Card>
+      {/* Save Button — full width across both columns */}
+      <Card className="lg:col-span-2">
         <CardContent className="pt-6">
           <Button
             onClick={onSave}
