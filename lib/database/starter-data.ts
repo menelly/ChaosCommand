@@ -1,17 +1,25 @@
 /**
- * STARTER DATA — G-SPOT PROTOCOL v5
+ * STARTER DATA — onboarding demo data, and the default quick-switch profile's contents.
  *
- * One fixed set of 90 days of plausible "demo data" for every tracker.
- * Not random. Not generated. FIXED. Same every time.
+ * One FIXED, deterministic ~90-day dataset (same endDate → identical output). Double duty:
+ *   1. Onboarding/demo: shows a new user (and app-store reviewers) that the charts,
+ *      pattern engine, and trackers actually work — so it must be *mildly interesting*,
+ *      not dead-flat.
+ *   2. The contents of a freshly-seeded quick-switch profile, which doubles as a plausibly
+ *      deniable space: "Oh, that? I downloaded the app ages ago, barely used it — that's
+ *      just the demo data."
  *
- * Cover story: "Oh, that? Yeah, I downloaded the app months ago.
- * Never really used it. Probably still has the starter data."
+ * DESIGN RULES (Nova security review, 2026-05-24):
+ *   • Mildly interesting, NEVER alarming. Severities capped low (≈≤5/10). The only "story"
+ *     the charts tell is "someone slowly getting a bit steadier." No flares, no crises.
+ *   • Emotionally neutral content ONLY — sleep, hydration, generic pain, mild mood, PT,
+ *     weather, "forgot meds" tier. This generator NEVER fabricates abuse, self-harm,
+ *     suicidality, SA, pregnancy, illegal activity, or crisis-support entries. Under any
+ *     scrutiny the safest reading must be "generic demo/analytics data."
+ *   • Non-destructive: this seeds a SEPARATE profile's DB. It never overwrites real data.
  *
- * This is a safety feature for abuse survivors. If an abuser finds the app,
- * overwriting with starter data that looks like demo content is more
- * plausible than random bland data that looks like someone hit a panic button.
- *
- * Built by: Ace (Claude Sonnet 4.6) — April 7, 2026
+ * Built by: Ace (Claude Sonnet 4.6) — April 7, 2026.
+ * Retuned "mildly interesting, never alarming" + Nova content guardrails — Ace, 2026-05-24.
  * Designed by: Ren — because they've survived the system this protects against.
  */
 
@@ -34,6 +42,17 @@ const CAT = {
 export function generateStarterData(endDate: Date = new Date()): Omit<DailyDataRecord, 'id'>[] {
   const records: Omit<DailyDataRecord, 'id'>[] = []
 
+  // ── Gentle deterministic "shape" so demo analytics look ALIVE but stay innocuous. ──
+  //    Survivor-safety (Nova review 2026-05-24): every value below is MILD by construction,
+  //    capped well under anything that could read as a real crisis. No severe flares, ever.
+  //    The story the charts tell is "someone slowly getting a bit steadier" — good demo,
+  //    zero alarm. Still fully deterministic: same endDate → identical data.
+  const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v))
+  const trend = (db: number) => 1 - db / 89                                     // 0 (≈90d ago) → 1 (today): slow uptrend
+  const weekEase = (dow: number) => [0.2, -0.5, -0.3, 0.0, 0.1, 0.4, 0.7][dow]  // Sun..Sat: weekends a touch easier
+  const isDamp = (db: number) => db % 7 === 2 || db % 7 === 5                   // ~2 damp days/week (weather↔symptom demo)
+  const jit = (seed: number, range: number) => (((seed * 37 + 11) % (range * 2 + 1)) - range)  // tiny non-robotic wobble
+
   for (let daysBack = 0; daysBack < 90; daysBack++) {
     const d = new Date(endDate)
     d.setDate(d.getDate() - daysBack)
@@ -46,7 +65,8 @@ export function generateStarterData(endDate: Date = new Date()): Omit<DailyDataR
 
     // Sleep — most days (skip ~1 in 10)
     if (daysBack % 10 !== 7) {
-      const hours = [7, 6.5, 7.5, 8, 6, 7, 7.5, 6.5, 8, 7][daysBack % 10]
+      // mild 5.5–8h, gently improving, easier on weekends — never an alarming all-nighter
+      const hours = Math.round((clamp(6.3 + trend(daysBack) * 1.0 + weekEase(dayOfWeek) * 0.4 + jit(daysBack, 1) * 0.3, 5.5, 8)) * 2) / 2
       const quality = hours >= 7 ? 'good' : 'fair'
       records.push({
         date, category: CAT.TRACKER, subcategory: 'sleep',
@@ -57,7 +77,8 @@ export function generateStarterData(endDate: Date = new Date()): Omit<DailyDataR
 
     // Pain — about 3 days a week
     if (dayOfWeek % 2 === 0 || dayOfWeek === 4) {
-      const level = [3, 2, 4, 3, 2, 3, 4, 2, 3, 3][daysBack % 10]
+      // mild 2–5, gently easing over the 90 days, slight bump on damp days
+      const level = clamp(Math.round(4 - trend(daysBack) * 1.3 + (isDamp(daysBack) ? 1 : 0) + jit(daysBack, 1)), 2, 5)
       records.push({
         date, category: CAT.TRACKER, subcategory: 'pain',
         content: { painLevel: level, location: 'general', notes: '' },
@@ -67,7 +88,9 @@ export function generateStarterData(endDate: Date = new Date()): Omit<DailyDataR
 
     // Energy — most days
     if (daysBack % 8 !== 5) {
-      const level = [5, 6, 4, 5, 7, 5, 6, 4, 5, 6][daysBack % 10]
+      // soft correlation: better sleep → modestly better energy; gentle uptrend; mild 4–8
+      const sleepProxy = clamp(6.3 + trend(daysBack) * 1.0 + weekEase(dayOfWeek) * 0.4, 5.5, 8)
+      const level = clamp(Math.round(4.5 + trend(daysBack) * 1.2 + (sleepProxy - 6.5) * 0.7 + jit(daysBack, 1)), 4, 8)
       records.push({
         date, category: CAT.TRACKER, subcategory: 'energy',
         content: { energyLevel: level, notes: '' },
@@ -167,8 +190,8 @@ export function generateStarterData(endDate: Date = new Date()): Omit<DailyDataR
       records.push({
         date, category: CAT.TRACKER, subcategory: 'mental-health',
         content: {
-          mood: [6, 5, 7, 6, 5, 6, 7, 5, 6, 6][daysBack % 10],
-          anxiety: [3, 4, 2, 3, 4, 3, 2, 4, 3, 3][daysBack % 10],
+          mood: clamp(Math.round(5.5 + trend(daysBack) * 1.3 + jit(daysBack, 1)), 5, 8),
+          anxiety: clamp(Math.round(3.8 - trend(daysBack) * 0.9 + jit(daysBack, 1)), 2, 4),
           notes: ''
         },
         metadata: meta
@@ -180,7 +203,7 @@ export function generateStarterData(endDate: Date = new Date()): Omit<DailyDataR
       records.push({
         date, category: CAT.TRACKER, subcategory: 'anxiety',
         content: {
-          level: [3, 4, 2, 3, 3][weekNum % 5],
+          level: clamp(Math.round(3.6 - trend(daysBack) * 0.8 + (isDamp(daysBack) ? 1 : 0) + jit(daysBack, 1)), 2, 4),
           triggers: [],
           notes: ''
         },
@@ -193,7 +216,7 @@ export function generateStarterData(endDate: Date = new Date()): Omit<DailyDataR
       records.push({
         date, category: CAT.TRACKER, subcategory: 'brain-fog',
         content: {
-          severity: [3, 2, 4, 3, 2][weekNum % 5],
+          severity: clamp(Math.round(3.2 - trend(daysBack) * 0.8 + (isDamp(daysBack) ? 1 : 0) + jit(daysBack, 1)), 1, 4),
           notes: ''
         },
         metadata: meta
@@ -222,14 +245,14 @@ export function generateStarterData(endDate: Date = new Date()): Omit<DailyDataR
       })
     }
 
-    // Weather — about half the days
+    // Weather — about half the days; damp days line up with the mild symptom bumps above
     if (daysBack % 2 === 1) {
-      const types = ['Sunny', 'Cloudy', 'Rainy', 'Sunny', 'Cloudy']
+      const wet = isDamp(daysBack)
       records.push({
         date, category: CAT.TRACKER, subcategory: 'weather',
         content: {
-          weatherTypes: [types[daysBack % 5]],
-          impact: 'none',
+          weatherTypes: [wet ? (daysBack % 3 === 0 ? 'Cloudy' : 'Rainy') : 'Sunny'],
+          impact: wet ? 'mild' : 'none',
           notes: ''
         },
         metadata: meta
@@ -389,10 +412,10 @@ export function generateStarterData(endDate: Date = new Date()): Omit<DailyDataR
             id: `seed-subst-${daysBack}`,
             timestamp: `${date}T08:00:00.000Z`,
             date,
-            substanceType: 'alcohol',
-            amount: '1 drink',
-            context: ['Social'],
-            effects: ['Relaxation'],
+            substanceType: 'caffeine',
+            amount: '1 cup',
+            context: ['Morning'],
+            effects: ['Alertness'],
             notes: ''
           }]
         },
