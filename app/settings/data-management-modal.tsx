@@ -14,9 +14,10 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Database, Download, Upload } from "lucide-react"
+import { Database, Download, Upload, Trash2 } from "lucide-react"
 import { exportAllData, importData } from "@/lib/database/migration-helper"
 import { encryptBackup, decryptBackup, downloadBackup } from "@/lib/database/encrypted-export"
+import { deleteCurrentProfile } from "@/lib/database/dexie-db"
 import { KeyboardAvoidingWrapper } from '@/components/ui/keyboard-avoiding-wrapper'
 
 interface DataManagementModalProps {
@@ -29,6 +30,8 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
   const [importPassword, setImportPassword] = useState("1234")  // backup-file password (visible, weak default)
   const [exportPassword, setExportPassword] = useState("1234")  // encrypt-export password (visible, weak default)
   const [importFile, setImportFile] = useState<File | null>(null)
+  const [deleteArmed, setDeleteArmed] = useState(false)   // two-step arming for the permanent wipe
+  const [showAdvancedExport, setShowAdvancedExport] = useState(false)  // hide unencrypted JSON behind intent
 
   // Plain JSON export — unencrypted, human-readable. Warn first (it's medical data in the
   // clear) and confirm where it saved (otherwise it lands silently in Downloads).
@@ -96,6 +99,43 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
     }
   }
 
+  // Permanent wipe — ONLY the currently-logged-in PIN's data. Other profiles on this device
+  // (e.g. a kid's PIN) are never touched. Honest, labeled, two-step armed, per-device warned.
+  const handleDeleteProfile = async () => {
+    const ok = confirm(
+      '⚠️ DELETE THIS PROFILE\'S DATA — PERMANENT\n\n' +
+      'This erases everything saved under the PIN you\'re logged in with right now — every ' +
+      'tracker, every entry, gone. It cannot be undone and there is no backup.\n\n' +
+      '👨‍👩‍👧 Other PINs on this device are NOT affected. If someone else (a kid, a partner) has ' +
+      'their own PIN here, their data stays exactly as it is. This only deletes YOURS.\n\n' +
+      '📱💻 IF YOU SYNC THIS PROFILE TO ANOTHER DEVICE: this only wipes the device you\'re on ' +
+      'right now. Run "Delete This Profile\'s Data" on each device separately — they share data ' +
+      'with each other, not through us, so we can\'t reach the other one for you.\n\n' +
+      'Are you absolutely sure you want to permanently delete this profile\'s data?'
+    )
+    if (!ok) { setDeleteArmed(false); return }
+    try {
+      const dbName = await deleteCurrentProfile()
+      // Drop the session hint so the app reopens at the locked screen, not this profile.
+      try {
+        localStorage.removeItem('chaos-user-pin')
+        localStorage.removeItem('chaos-demo-fixture-version')
+      } catch { /* ignore */ }
+      alert(
+        '🗑️ Done. This profile\'s data has been permanently deleted from this device.\n\n' +
+        'The app will now return to the locked screen. Other PINs on this device are untouched.\n\n' +
+        'Remember: if you synced this profile to another device, its copy is still there until you delete it there too.'
+      )
+      // Hard reload → guaranteed clean state, back at the locked/PIN screen.
+      window.location.href = '/'
+      window.location.reload()
+    } catch (error) {
+      console.error('Delete-profile failed:', error)
+      alert(`❌ Delete failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      setDeleteArmed(false)
+    }
+  }
+
   if (!isOpen) return null
 
   return (
@@ -119,11 +159,7 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
               </div>
 
               <div className="space-y-3">
-                <Button onClick={handleExportJson} variant="outline" className="w-full">
-                  <Download className="h-4 w-4 mr-2" />
-                  Export All Data (JSON, unencrypted)
-                </Button>
-
+                {/* Encrypted is THE default path — prominent, password right above it. */}
                 <div>
                   <Label htmlFor="export-password" className="text-xs">Backup password</Label>
                   <Input
@@ -139,10 +175,38 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
                   </p>
                 </div>
 
-                <Button onClick={handleExportBackup} variant="outline" className="w-full">
+                <Button onClick={handleExportBackup} className="w-full">
                   <Download className="h-4 w-4 mr-2" />
                   Export Encrypted Backup
                 </Button>
+
+                {/* Unencrypted JSON lives under Advanced — you have to go looking for the risky one. */}
+                {!showAdvancedExport ? (
+                  <button
+                    onClick={() => setShowAdvancedExport(true)}
+                    className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 w-full text-center pt-1"
+                  >
+                    Advanced ▾
+                  </button>
+                ) : (
+                  <div className="space-y-2 p-3 border border-dashed rounded bg-muted/30">
+                    <p className="text-xs text-muted-foreground">
+                      <strong>Advanced — unencrypted export.</strong> Plain-text JSON anyone can read.
+                      Only use this if you specifically need a readable copy (e.g. importing elsewhere).
+                      For storing or sharing, use the encrypted backup above.
+                    </p>
+                    <Button onClick={handleExportJson} variant="outline" className="w-full border-amber-500/50 text-amber-700 dark:text-amber-500 hover:bg-amber-500/10">
+                      <Download className="h-4 w-4 mr-2" />
+                      Export All Data (JSON, unencrypted)
+                    </Button>
+                    <button
+                      onClick={() => setShowAdvancedExport(false)}
+                      className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 w-full text-center"
+                    >
+                      Hide ▴
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -199,6 +263,41 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
                   </div>
                 )}
               </div>
+            </div>
+
+            {/* Danger zone — permanent, this-PIN-only delete */}
+            <div className="p-4 border border-destructive/40 rounded-lg bg-destructive/5">
+              <div className="flex items-center gap-2 mb-2">
+                <Trash2 className="h-4 w-4 text-destructive" />
+                <Label className="text-sm font-medium text-destructive">Delete This Profile&apos;s Data</Label>
+              </div>
+              <p className="text-xs text-muted-foreground mb-3">
+                Permanently erases everything saved under the PIN you&apos;re logged in with — no undo, no
+                backup. <strong>Other PINs on this device are not touched.</strong> If you sync to another
+                device, you&apos;ll need to do this there too.
+              </p>
+
+              {!deleteArmed ? (
+                <Button onClick={() => setDeleteArmed(true)} variant="outline" className="w-full border-destructive/50 text-destructive hover:bg-destructive/10">
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete This Profile&apos;s Data…
+                </Button>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-destructive">
+                    This cannot be undone. Permanently delete this profile&apos;s data?
+                  </p>
+                  <div className="flex gap-2">
+                    <Button onClick={handleDeleteProfile} variant="destructive" className="flex-1">
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Yes, delete permanently
+                    </Button>
+                    <Button onClick={() => setDeleteArmed(false)} variant="outline">
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
 
             <p className="text-xs text-muted-foreground text-center">

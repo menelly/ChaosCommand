@@ -79,16 +79,35 @@ async function openDemoDb() {
 }
 
 /**
- * Ensure the demo profile (PIN 1111) is populated. Idempotent: only seeds when the demo DB
- * is empty, so a visitor poking around isn't wiped on the next visit. Returns the record
- * count present after the call. Only ever touches the demo DB. Used by a manual 1111 login.
+ * localStorage key holding the `built_at` of the fixture currently laid down in the demo DB.
+ * Lets us SELF-HEAL: if the demo was seeded by an OLDER build (different/old-shaped data that
+ * may crash newer views), we detect the mismatch and force a fresh reset to the current fixture.
+ * This is why someone who poked 1111 in an old build still gets the clean current demo.
+ */
+const DEMO_FIXTURE_VERSION_KEY = 'chaos-demo-fixture-version'
+const FIXTURE_BUILT_AT: string = (demoFixture as any).built_at || 'unknown'
+
+/**
+ * Ensure the demo profile (PIN 1111) is populated AND current. Seeds when empty; ALSO force-resets
+ * when the stored demo predates the current fixture build (stale/old-shaped data from a prior
+ * version — the cause of the "1111 crashes on Pain All-time" bug, where old generator data lingered
+ * in IndexedDB across reinstalls). Same-session pokes by a visitor share the current version stamp,
+ * so they're not wiped. Returns the record count present after the call. Only touches the demo DB.
  */
 export async function ensureDemoSeeded(): Promise<number> {
   const db = await openDemoDb()
   const existing = await db.daily_data.count()
-  if (existing > 0) return existing
-  const records = fixtureRecords() // rich 90-day arc — a demo that shows analytics off
+  let storedVersion: string | null = null
+  try { storedVersion = localStorage.getItem(DEMO_FIXTURE_VERSION_KEY) } catch { /* SSR */ }
+
+  // Up-to-date and populated → leave it alone.
+  if (existing > 0 && storedVersion === FIXTURE_BUILT_AT) return existing
+
+  // Empty OR stale (old build / pre-stamp data) → lay down the current fixture fresh.
+  if (existing > 0) await db.daily_data.clear()   // wipe stale/old-shaped data that may crash views
+  const records = fixtureRecords()
   await db.daily_data.bulkAdd(records as any)
+  try { localStorage.setItem(DEMO_FIXTURE_VERSION_KEY, FIXTURE_BUILT_AT) } catch { /* SSR */ }
   return records.length
 }
 
@@ -102,5 +121,6 @@ export async function resetDemo(): Promise<number> {
   await db.daily_data.clear()
   const records = fixtureRecords()
   await db.daily_data.bulkAdd(records as any)
+  try { localStorage.setItem(DEMO_FIXTURE_VERSION_KEY, FIXTURE_BUILT_AT) } catch { /* SSR */ }
   return records.length
 }
