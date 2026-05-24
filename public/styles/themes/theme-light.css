@@ -1,120 +1,62 @@
 /* === ☀️ LIGHT MODE THEME === */
 /* Clean and bright theme for daytime use */
+/* Token-driven (Ace, 2026-05-23): color/contrast comes from the shadcn token
+ * block; contrast verified by scripts/verify_all_themes.py. No per-element
+ * !important text overrides — that's what used to make muted text vanish on
+ * colored buttons. See theme-grok.css for the reference pattern. */
 
-/* Main theme - Clean light colors */
+/* ---- TOKENS (contrast contract) ---- */
+body.theme-light {
+  --background: 0 0% 100%;
+  --foreground: 0 0% 20%;
+  --card: 210 17% 98%;
+  --card-foreground: 0 0% 20%;
+  --popover: 210 17% 98%;
+  --popover-foreground: 0 0% 20%;
+  --primary: 211 100% 35%;          /* #0056b3 — white text = 7.0:1 */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 210 16% 93%;
+  --secondary-foreground: 210 11% 15%;
+  --muted: 210 17% 95%;
+  --muted-foreground: 210 7% 39%;   /* #5c636a — 6.1:1 on bg */
+  --accent: 210 16% 93%;
+  --accent-foreground: 210 11% 15%;
+  --destructive: 0 65% 48%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 210 14% 89%;
+  --input: 210 14% 83%;
+  --ring: 211 100% 35%;
+}
+
+/* ---- FLOURISH ---- */
 body.theme-light {
   background: #ffffff !important;
-  color: #333333 !important;
   font-size: 16px !important;
   line-height: 1.5 !important;
 }
 
-/* Light theme text colors */
-body.theme-light .text-muted-foreground {
-  color: #6c757d !important;
-}
-
-body.theme-light h1,
-body.theme-light h2,
-body.theme-light h3,
-body.theme-light h4,
-body.theme-light h5,
-body.theme-light h6 {
-  color: #212529 !important;
-  font-weight: 600 !important;
-}
-
-/* Clean light cards */
 body.theme-light .card,
 body.theme-light [class*="card"] {
-  background: #f8f9fa !important;
-  border: 1px solid #dee2e6 !important;
-  color: #333333 !important;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
-  transition: all 0.2s ease !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
 }
-
 body.theme-light .card:hover,
 body.theme-light [class*="card"]:hover {
-  background: #e9ecef !important;
-  border-color: #adb5bd !important;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
-  transform: translateY(-2px) !important;
-}
-
-/* Clean light buttons */
-body.theme-light button,
-body.theme-light .btn {
-  background: #007bff !important;
-  border: 1px solid #007bff !important;
-  color: #ffffff !important;
-  font-weight: 500 !important;
-  transition: all 0.2s ease !important;
-}
-
-body.theme-light button:hover,
-body.theme-light .btn:hover {
-  background: #0056b3 !important;
-  border-color: #0056b3 !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3) !important;
-}
-
-/* Clean light inputs */
-body.theme-light input,
-body.theme-light textarea,
-body.theme-light select {
-  background: #ffffff !important;
-  border: 1px solid #ced4da !important;
-  color: #333333 !important;
-  transition: all 0.2s ease !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
 }
 
 body.theme-light input:focus,
 body.theme-light textarea:focus,
 body.theme-light select:focus {
-  border-color: #007bff !important;
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25) !important;
-  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(0, 86, 179, 0.25);
 }
 
-/* Light placeholder text */
-body.theme-light input::placeholder,
-body.theme-light textarea::placeholder {
-  color: #6c757d !important;
-}
+body.theme-light a:hover { text-decoration: underline; }
 
-/* Clean light links */
-body.theme-light a {
-  color: #007bff !important;
-  text-decoration: none !important;
-  transition: all 0.2s ease !important;
-}
+body.theme-light ::-webkit-scrollbar { width: 12px; }
+body.theme-light ::-webkit-scrollbar-track { background: #f8f9fa; }
+body.theme-light ::-webkit-scrollbar-thumb { background: #ced4da; border-radius: 6px; }
+body.theme-light ::-webkit-scrollbar-thumb:hover { background: #adb5bd; }
 
-body.theme-light a:hover {
-  color: #0056b3 !important;
-  text-decoration: underline !important;
-}
-
-/* Light scrollbar */
-body.theme-light ::-webkit-scrollbar {
-  width: 12px;
-}
-
-body.theme-light ::-webkit-scrollbar-track {
-  background: #f8f9fa;
-}
-
-body.theme-light ::-webkit-scrollbar-thumb {
-  background: #ced4da;
-  border-radius: 6px;
-}
-
-body.theme-light ::-webkit-scrollbar-thumb:hover {
-  background: #adb5bd;
-}
-
-/* No animations fallback */
-body.no-animations.theme-light {
-  background: #ffffff !important;
-}
+body.no-animations.theme-light { background: #ffffff !important; }

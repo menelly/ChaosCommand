@@ -1,21 +1,38 @@
 /* === 🏀 LUKA'S BASKETBALL COURT THEME === */
 /* Orange and black sports vibes with secret basketball easter eggs! */
+/* Token-driven (Ace, 2026-05-23): contrast via shadcn tokens (verified by
+ * scripts/verify_all_themes.py). The token world is dark/court-black so
+ * foreground + muted are consistently light; the hardwood gradient stays as a
+ * decorative backdrop. KEY FIX: button text is now court-black on orange
+ * (7.5:1) instead of the old white-on-orange (2.3:1 fail). */
 
-/* Main theme variables */
+/* ---- TOKENS (contrast contract) ---- */
 body.theme-chaos {
-  --primary-purple: #1a1a1a;        /* Court black for main UI blocks */
-  --accent-orange: #ff8c00;         /* Basketball orange for highlights */
-  --deep-space: #f4e4bc;            /* Hardwood court background */
-  --hover-glow: #ff6b35;            /* Bright orange glow for hover effects */
-  --border-soft: #8b4513;           /* Wood brown borders */
-  
-  /* Basketball court background */
-  background: linear-gradient(45deg, 
-    #f4e4bc 0%,     /* Hardwood */
-    #deb887 25%,    /* Burlywood */
-    #f4e4bc 50%,    /* Hardwood */
-    #deb887 75%,    /* Burlywood */
-    #f4e4bc 100%    /* Hardwood */
+  --background: 0 0% 10%;           /* court black */
+  --foreground: 43 72% 85%;         /* #f4e4bc hardwood-cream text */
+  --card: 27 33% 11%;
+  --card-foreground: 43 72% 85%;
+  --popover: 27 33% 11%;
+  --popover-foreground: 43 72% 85%;
+  --primary: 33 100% 50%;           /* #ff8c00 basketball orange */
+  --primary-foreground: 0 0% 10%;   /* court black — 7.5:1 on orange */
+  --secondary: 30 38% 16%;
+  --secondary-foreground: 43 72% 85%;
+  --muted: 27 27% 13%;
+  --muted-foreground: 39 42% 74%;   /* #d8c4a0 — 10:1 on card */
+  --accent: 16 100% 60%;            /* #ff6b35 */
+  --accent-foreground: 0 0% 10%;
+  --destructive: 0 74% 54%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 25 76% 31%;             /* wood brown */
+  --input: 30 55% 23%;
+  --ring: 33 100% 50%;
+}
+
+/* ---- FLOURISH ---- */
+body.theme-chaos {
+  background: linear-gradient(45deg,
+    #f4e4bc 0%, #deb887 25%, #f4e4bc 50%, #deb887 75%, #f4e4bc 100%
   ) !important;
   background-size: 200% 200% !important;
   animation: basketball-court-shine 60s ease-in-out infinite !important;
@@ -23,7 +40,6 @@ body.theme-chaos {
   overflow: hidden;
 }
 
-/* Basketball court shine animation */
 @keyframes basketball-court-shine {
   0% { background-position: 0% 50%; }
   25% { background-position: 100% 50%; }
@@ -32,35 +48,22 @@ body.theme-chaos {
   100% { background-position: 50% 0%; }
 }
 
-/* SECRET EASTER EGG: Floating basketballs! */
+/* SECRET EASTER EGG: floating basketballs! */
 body.theme-chaos::before {
   content: '🏀 ⚡ 🏀 🔥 🏀 💪 🏀 ⚡ 🏀 🔥 🏀 💪 🏀 ⚡ 🏀 🔥 🏀 💪';
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100%;
-  pointer-events: none;
-  z-index: 1;
-  font-size: 20px;
-  line-height: 80px;
+  position: fixed; top: 0; left: 0; width: 100vw; height: 100%;
+  pointer-events: none; z-index: 0;
+  font-size: 20px; line-height: 80px;
   animation: basketball-bounce 45s linear infinite;
   opacity: 0.3;
   text-shadow: 0 0 10px rgba(255, 140, 0, 0.5);
 }
-
-/* Basketball bouncing animation */
 @keyframes basketball-bounce {
   0% { transform: translateX(-100px) translateY(0px) rotate(0deg); }
-  25% { transform: translateX(calc(50vw)) translateY(-30px) rotate(90deg); }
+  25% { transform: translateX(50vw) translateY(-30px) rotate(90deg); }
   50% { transform: translateX(calc(100vw + 50px)) translateY(0px) rotate(180deg); }
-  75% { transform: translateX(calc(50vw)) translateY(-20px) rotate(270deg); }
+  75% { transform: translateX(50vw) translateY(-20px) rotate(270deg); }
   100% { transform: translateX(-100px) translateY(0px) rotate(360deg); }
-}
-
-/* Text colors for basketball theme */
-body.theme-chaos .text-muted-foreground {
-  color: #a18ac7 !important;
 }
 
 body.theme-chaos h1,
@@ -68,162 +71,70 @@ body.theme-chaos h2,
 body.theme-chaos h3,
 body.theme-chaos h4,
 body.theme-chaos h5,
-body.theme-chaos h6 {
-  color: #ff8c00 !important;
-  text-shadow: 0 0 8px rgba(255, 140, 0, 0.3);
-  font-weight: bold !important;
-}
+body.theme-chaos h6 { color: #ff8c00 !important; text-shadow: 0 0 8px rgba(255, 140, 0, 0.3); font-weight: bold !important; }
 
-/* Card styles for basketball theme */
+/* Cards — court panel with orange edge + swish easter egg */
 body.theme-chaos .card,
 body.theme-chaos [class*="card"] {
-  background: linear-gradient(135deg, 
-    rgba(26, 26, 26, 0.9) 0%, 
-    rgba(139, 69, 19, 0.8) 50%, 
-    rgba(26, 26, 26, 0.9) 100%
-  ) !important;
-  border: 2px solid #ff8c00 !important;
-  box-shadow: 0 4px 20px rgba(255, 140, 0, 0.3) !important;
-  backdrop-filter: blur(5px) !important;
-  transition: all 0.3s ease !important;
+  border-color: #ff8c00;
+  box-shadow: 0 4px 20px rgba(255, 140, 0, 0.3);
+  backdrop-filter: blur(5px);
+  transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
 }
-
 body.theme-chaos .card:hover,
 body.theme-chaos [class*="card"]:hover {
-  transform: translateY(-5px) scale(1.02) !important;
-  box-shadow: 0 8px 30px rgba(255, 107, 53, 0.5) !important;
-  border-color: #ff6b35 !important;
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 8px 30px rgba(255, 107, 53, 0.5);
+  border-color: #ff6b35;
 }
-
-/* SECRET EASTER EGG: Basketball swish effect on hover! */
 body.theme-chaos .card:hover::after,
 body.theme-chaos [class*="card"]:hover::after {
-  content: '🏀💨' !important;
-  position: absolute;
-  top: -15px;
-  right: -15px;
+  content: '🏀💨';
+  position: absolute; top: -15px; right: -15px;
   font-size: 18px;
   animation: basketball-swish 0.8s ease-out;
   z-index: 10;
 }
-
 @keyframes basketball-swish {
   0% { transform: scale(0) rotate(0deg); opacity: 0; }
   50% { transform: scale(1.3) rotate(180deg); opacity: 1; }
   100% { transform: scale(1) rotate(360deg); opacity: 1; }
 }
 
-/* Button styles for basketball theme */
-body.theme-chaos button,
-body.theme-chaos .btn {
-  background: linear-gradient(135deg, 
-    #ff8c00 0%, 
-    #ff6b35 50%, 
-    #ff4500 100%
-  ) !important;
-  border: 2px solid #8b4513 !important;
-  color: #ffffff !important;
-  font-weight: bold !important;
-  transition: all 0.3s ease !important;
+/* Primary buttons keep the orange gradient + leather shimmer; court-black
+ * token text reads on every stop. */
+body.theme-chaos .bg-primary {
+  background-image: linear-gradient(135deg, #ff8c00 0%, #ff6b35 50%, #ff4500 100%);
+  border-color: #8b4513;
   position: relative;
   overflow: hidden;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
-
-body.theme-chaos button:hover,
-body.theme-chaos .btn:hover {
-  background: linear-gradient(135deg, 
-    #ff4500 0%, 
-    #ff6b35 50%, 
-    #ff8c00 100%
-  ) !important;
-  transform: translateY(-2px) !important;
-  box-shadow: 0 6px 20px rgba(255, 140, 0, 0.5) !important;
-  border-color: #ff6b35 !important;
-}
-
-/* Basketball leather texture effect */
-body.theme-chaos button::before,
-body.theme-chaos .btn::before {
+body.theme-chaos .bg-primary::before {
   content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, 
-    transparent, 
-    rgba(255, 255, 255, 0.3), 
-    transparent
-  );
+  position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
   transition: left 0.6s ease;
 }
-
-body.theme-chaos button:hover::before,
-body.theme-chaos .btn:hover::before {
-  left: 100%;
-}
-
-/* Input styles for basketball theme */
-body.theme-chaos input,
-body.theme-chaos textarea,
-body.theme-chaos select {
-  background: linear-gradient(135deg, 
-    rgba(26, 26, 26, 0.8) 0%, 
-    rgba(139, 69, 19, 0.6) 100%
-  ) !important;
-  border: 2px solid #ff8c00 !important;
-  color: #ffffff !important;
-  transition: all 0.3s ease !important;
-  backdrop-filter: blur(3px) !important;
+body.theme-chaos .bg-primary:hover::before { left: 100%; }
+body.theme-chaos .bg-primary:hover {
+  background-image: linear-gradient(135deg, #ff4500 0%, #ff6b35 50%, #ff8c00 100%);
+  box-shadow: 0 6px 20px rgba(255, 140, 0, 0.5);
 }
 
 body.theme-chaos input:focus,
 body.theme-chaos textarea:focus,
-body.theme-chaos select:focus {
-  border-color: #ff6b35 !important;
-  box-shadow: 0 0 15px rgba(255, 140, 0, 0.4) !important;
-  background: linear-gradient(135deg, 
-    rgba(139, 69, 19, 0.8) 0%, 
-    rgba(26, 26, 26, 0.8) 100%
-  ) !important;
-}
+body.theme-chaos select:focus { box-shadow: 0 0 15px rgba(255, 140, 0, 0.4); }
 
-/* Placeholder text */
-body.theme-chaos input::placeholder,
-body.theme-chaos textarea::placeholder {
-  color: rgba(255, 140, 0, 0.7) !important;
-}
+body.theme-chaos a { color: #ff8c00 !important; font-weight: bold; }
+body.theme-chaos a:hover { color: #ff6b35 !important; text-shadow: 0 0 8px rgba(255, 140, 0, 0.6); }
 
-/* Link styles */
-body.theme-chaos a {
-  color: #ff8c00 !important;
-  text-decoration: none !important;
-  transition: all 0.3s ease !important;
-  font-weight: bold !important;
-}
+body.theme-chaos ::-webkit-scrollbar { width: 12px; }
+body.theme-chaos ::-webkit-scrollbar-track { background: rgba(26, 26, 26, 0.5); }
+body.theme-chaos ::-webkit-scrollbar-thumb { background: linear-gradient(135deg, #ff8c00, #ff6b35); border-radius: 6px; }
+body.theme-chaos ::-webkit-scrollbar-thumb:hover { background: linear-gradient(135deg, #ff6b35, #ff4500); }
 
-body.theme-chaos a:hover {
-  color: #ff6b35 !important;
-  text-shadow: 0 0 8px rgba(255, 140, 0, 0.6) !important;
-}
-
-/* Scrollbar styles */
-body.theme-chaos ::-webkit-scrollbar {
-  width: 12px;
-}
-
-body.theme-chaos ::-webkit-scrollbar-track {
-  background: rgba(26, 26, 26, 0.5);
-}
-
-body.theme-chaos ::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #ff8c00, #ff6b35);
-  border-radius: 6px;
-}
-
-body.theme-chaos ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #ff6b35, #ff4500);
-}
+/* Static / no-motion: freeze court + basketballs (CHA-200) */
+body.no-animations.theme-chaos { background: #f4e4bc !important; animation: none !important; }
+body.no-animations.theme-chaos::before { animation: none !important; }

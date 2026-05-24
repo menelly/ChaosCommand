@@ -8,7 +8,7 @@
  * button compares this string against what the manifest reports.
  */
 
-export const APP_VERSION = '0.5.2'
+export const APP_VERSION = '0.5.4'
 
 /**
  * URL of the public, static JSON manifest hosted alongside the release

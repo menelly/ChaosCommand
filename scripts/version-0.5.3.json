@@ -1,0 +1,6 @@
+{
+  "version": "0.5.3",
+  "released": "2026-05-23",
+  "url": "https://chaoscommand.center/download",
+  "notes": "Your saved healthcare providers, appointments, and visit reviews no longer disappear. There was a bug where they got quietly filed under the date you added them, so a day or two later they'd vanish from the list — they now always show, and any older entries are repaired automatically the next time you open the page. Also in this update: every color theme was rebuilt for readable contrast (no more washed-out, hard-to-read text on buttons and cards), Static Mode now fully stops ALL motion including the shimmering card edges for anyone who needs stillness, and there's a brand-new calm theme — Tone It Down Taupe — with zero motion, zero sparkle, just a quiet beige room. Every previous version is always available at chaoscommand.center/releases if you ever want to go back."
+}

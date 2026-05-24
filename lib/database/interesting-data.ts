@@ -376,5 +376,34 @@ export function generateInterestingData(endDate: Date = new Date()): Omit<DailyD
     }
   }
 
+  // ── Shape fix (2026-05-24): the v2 tracker refactors read `content.entries[]`, but the
+  //    lines above emit FLAT content for several of them. Flat data either renders nothing
+  //    (guarded trackers, e.g. seizure) or CRASHES the client (unguarded, e.g. Pain "All time"
+  //    → undefined.map). Wrap the flat content for the entries-shape trackers into a single
+  //    entry, with defensive common fields, so the demo both shows AND never crashes. Trackers
+  //    that already emit `entries` (cardiac/respiratory/skin/joint/substance) and the genuinely
+  //    flat ones (food-choice, weather, journal, reproductive) are left alone.
+  const ENTRIES_SHAPE = new Set([
+    'pain', 'energy', 'dysautonomia', 'brain-fog', 'upper-digestive',
+    'mental-health', 'head-pain', 'seizure', 'bathroom',
+  ])
+  for (const r of records) {
+    if (ENTRIES_SHAPE.has(r.subcategory) && !(r.content && Array.isArray((r.content as any).entries))) {
+      const ts = r.metadata?.created_at || `${r.date}T12:00:00.000Z`
+      r.content = {
+        entries: [{
+          id: `seed-${r.subcategory}-${r.date}`,
+          date: r.date,
+          time: '12:00 PM',
+          timestamp: ts,
+          createdAt: ts,
+          updatedAt: ts,
+          tags: [],
+          ...r.content,
+        }],
+      }
+    }
+  }
+
   return records
 }

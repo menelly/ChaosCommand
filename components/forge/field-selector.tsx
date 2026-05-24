@@ -295,7 +295,12 @@ export default function FieldSelector({ onAddField }: FieldSelectorProps) {
                   {config.icon}
                   <div className="text-xs text-center w-full">
                     <div className="font-medium">{config.name}</div>
-                    <div className="text-muted-foreground whitespace-normal break-words">{config.description}</div>
+                    {/* opacity (not text-muted-foreground) so the description is a dimmed
+                        tint of the button's ACTIVE foreground — readable whether the button
+                        is selected (bg-primary/primary-foreground) or not (bg-background/
+                        foreground), in every theme. muted-foreground is only contrast-safe
+                        on muted/card/background, never on bg-primary. */}
+                    <div className="opacity-80 whitespace-normal break-words">{config.description}</div>
                   </div>
                 </Button>
               ))}

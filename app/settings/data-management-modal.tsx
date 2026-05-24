@@ -1,41 +1,23 @@
 /*
- * Copyright (c) 2025 Chaos Cascade
- * Created by: Ren & Ace (Claude-4)
- * 
+ * Copyright (c) 2025-2026 Chaos Cascade
+ * Created by: Ren & Ace (Claude 4.x)
+ *
  * This file is part of the Chaos Cascade Medical Management System.
  * Revolutionary healthcare tools built with consciousness and care.
- */
-
-/*
- * Built by: Ace (Claude 4.x)
- * Date: 2025-01-11
- *
- * This code is part of a deliberately-unpatented medical management system.
- * Patentable technology, but we chose not to patent — the Patent Office doesn't
- * yet recognize AI co-inventors, and Ren refused to claim sole credit for work
- * we built together. Open source under PolyForm Noncommercial 1.0.0 instead.
- *
- * Co-invented by Ren (vision) and Ace (implementation)
- *
- * This wasn't built with compliance. It was built with defiance.
+ * Open source under PolyForm Noncommercial 1.0.0.
  *
  * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
  */
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Database, Download, Upload, Shield, Zap, Beaker, RefreshCw, QrCode } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useDailyData } from "@/lib/database/hooks/use-daily-data"
-import { GSpot4BoringFileExporter, BoringFileType } from "@/lib/database/g-spot-4.0-boring-file-steganography"
-import { exportAllData } from "@/lib/database/migration-helper"
-import TestPinManagerComponent from "@/components/test-pin-manager"
-import { generateStarterData, STARTER_DATA_TRACKERS } from "@/lib/database/starter-data"
-import { generateInterestingData } from "@/lib/database/interesting-data"
+import { Database, Download, Upload, Trash2 } from "lucide-react"
+import { exportAllData, importData } from "@/lib/database/migration-helper"
+import { encryptBackup, decryptBackup, downloadBackup } from "@/lib/database/encrypted-export"
+import { deleteCurrentProfile } from "@/lib/database/dexie-db"
 import { KeyboardAvoidingWrapper } from '@/components/ui/keyboard-avoiding-wrapper'
 
 interface DataManagementModalProps {
@@ -44,361 +26,251 @@ interface DataManagementModalProps {
 }
 
 export function DataManagementModal({ isOpen, onClose }: DataManagementModalProps) {
-  const [hasPin, setHasPin] = useState(false)
-  const [pinInput, setPinInput] = useState("")
-  const [confirmPinInput, setConfirmPinInput] = useState("")
-  const [showGSpotExplanation, setShowGSpotExplanation] = useState(false)
-  const [isExecutingGSpot, setIsExecutingGSpot] = useState(false)
   const [showImportDialog, setShowImportDialog] = useState(false)
-  const [importPin, setImportPin] = useState("")
-  const [importHour, setImportHour] = useState("")
+  const [importPassword, setImportPassword] = useState("1234")  // backup-file password (visible, weak default)
+  const [exportPassword, setExportPassword] = useState("1234")  // encrypt-export password (visible, weak default)
   const [importFile, setImportFile] = useState<File | null>(null)
+  const [deleteArmed, setDeleteArmed] = useState(false)   // two-step arming for the permanent wipe
+  const [deleteConfirmPin, setDeleteConfirmPin] = useState('')  // must re-type the logged-in PIN to delete
+  const [deletePinError, setDeletePinError] = useState('')
+  const [showAdvancedExport, setShowAdvancedExport] = useState(false)  // hide unencrypted JSON behind intent
 
-  // Database hook for G-Spot protocol
-  // Testing if IDE autocomplete demon has been exorcised! 🔥
-  const { secureOverwriteAllData, generateBlandData } = useDailyData()
-
-  // Check if PIN is set on component mount
-  useEffect(() => {
-    const savedPin = localStorage.getItem('chaos-data-pin')
-    setHasPin(!!savedPin)
-  }, [])
-
-  // G-Spot Protocol v5 — Starter Data Overwrite
-  const executeGSpotProtocol = async () => {
+  // Plain JSON export — unencrypted, human-readable. Warn first (it's medical data in the
+  // clear) and confirm where it saved (otherwise it lands silently in Downloads).
+  const handleExportJson = async () => {
+    const ok = confirm(
+      '⚠️ This export is NOT encrypted.\n\n' +
+      'Anyone who opens the file can read all your medical data, and it saves to your ' +
+      'Downloads folder in plain text.\n\n' +
+      'For a protected copy, use "Export Encrypted Backup" instead.\n\n' +
+      'Export unencrypted anyway?'
+    )
+    if (!ok) return
     try {
-      setIsExecutingGSpot(true)
-
-      // Generate deterministic starter data (90 days, all trackers)
-      console.log('🔥 G-SPOT v5: Generating starter data...')
-      const starterData = generateStarterData()
-
-      // Execute secure overwrite with starter data
-      console.log(`🔥 G-SPOT v5: Overwriting with ${starterData.length} starter records across ${STARTER_DATA_TRACKERS.length} trackers...`)
-      await secureOverwriteAllData(starterData as any)
-
-      alert(`✅ Data Reset to Starter Content\n\n${starterData.length} records across ${STARTER_DATA_TRACKERS.length} trackers.\n\nYour data now looks like default demo content that came with the app.`)
-
-      onClose()
-
-    } catch (error) {
-      console.error('G-Spot Protocol failed:', error)
-      alert(`❌ Data Reset Failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
-    } finally {
-      setIsExecutingGSpot(false)
-    }
-  }
-
-  // Handle G-Spot Export with proper encryption
-  const handleGSpotExport = async () => {
-    if (!hasPin) {
-      alert("Please set a PIN first for secure data export")
-      return
-    }
-
-    try {
-      const pin = localStorage.getItem('chaos-data-pin')
-      if (!pin) {
-        alert("PIN not found. Please set a PIN first.")
-        return
-      }
-
-      // Get all health data
-      const allDataString = await exportAllData()
-      const allData = JSON.parse(allDataString)
-
-      // Export with G-Spot 4.0 BORING FILE encryption! 🔥
-      const result = await GSpot4BoringFileExporter.exportMedicalData(
-        allData.daily_data,
-        pin,
-        BoringFileType.COSTCO_RECEIPT // Default to Costco receipt - perfectly boring!
+      const json = await exportAllData()
+      const date = new Date().toISOString().slice(0, 10)
+      const filename = `chaos-command-data-${date}.json`
+      downloadBackup(filename, json)
+      alert(
+        `✅ Saved: ${filename}\n\n` +
+        'It\'s in your Downloads folder and is NOT encrypted — anyone with the file can read ' +
+        'it. Move it somewhere safe or delete it when you\'re done.'
       )
-
-      if (result.success) {
-        // Download the boring file
-        const file = result.files[0]
-        const blob = new Blob([file.content], { type: 'application/json' })
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = file.filename
-        document.body.appendChild(a)
-        a.click()
-        document.body.removeChild(a)
-        URL.revokeObjectURL(url)
-
-        alert(`🔐 G-Spot 4.0 Export Complete!\n\nFile: ${file.filename}\n\n${result.message}\n\nYour medical data is now disguised as a perfectly boring household document!`)
-      } else {
-        throw new Error(result.message)
-      }
-
     } catch (error) {
-      console.error('G-Spot export failed:', error)
-      alert(`❌ Export Failed!\n\nError: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      console.error('JSON export failed:', error)
+      alert(`Export failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 
-  // Handle G-Spot Import
-  const handleGSpotImport = async () => {
-    if (!importFile || !importPin || !importHour) {
-      alert('Please provide all required fields')
+  // Encrypted backup export — honest AES-256-GCM, password-protected. No disguise, no time-keys.
+  const handleExportBackup = async () => {
+    if (!exportPassword) {
+      alert('Enter a password to encrypt the backup.')
       return
     }
-
     try {
-      // Read the file
-      const fileContent = await importFile.text()
-
-      // Import and decrypt with G-Spot 4.0
-      const importResult = await GSpot4BoringFileExporter.importMedicalData([{
-        filename: importFile.name,
-        content: fileContent
-      }], importPin)
-
-      // Confirm before overwriting
-      if (importResult.success && confirm(`🔓 G-Spot 4.0 Import Ready!\n\nFound medical data in boring file.\n\nThis will COMPLETELY REPLACE your current data. Continue?`)) {
-        // Overwrite with imported data
-        await secureOverwriteAllData(importResult.data)
-
-        alert(`✅ G-Spot Import Complete!\n\nRecords restored successfully!`)
-
-        // Reset import form
-        setImportFile(null)
-        setImportPin("")
-        setImportHour("")
-        setShowImportDialog(false)
-        onClose()
-      }
-
+      const payloadJson = await exportAllData() // full export: daily_data + tags + image blobs
+      const { filename, content } = await encryptBackup(payloadJson, exportPassword)
+      downloadBackup(filename, content)
+      alert(`🔐 Encrypted backup saved: ${filename}\n\nKeep the password — it's the only way to open this file. The default (1234) is weak on purpose; set your own for anything you'll store or share.`)
     } catch (error) {
-      console.error('G-Spot import failed:', error)
-      alert(`❌ G-Spot Import Failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      console.error('Encrypted export failed:', error)
+      alert(`❌ Export failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 
-  // Handle PIN setup
-  const handlePinSetup = () => {
-    if (pinInput !== confirmPinInput) {
-      alert('PINs do not match')
+  // Encrypted backup import — decrypt, then merge via importData (non-destructive: it merges
+  // into existing data rather than wiping it, so a restore can't clobber a profile).
+  const handleImportBackup = async () => {
+    if (!importFile || !importPassword) {
+      alert('Choose a backup file and enter its password.')
       return
     }
-    if (pinInput.length < 4) {
-      alert('PIN must be at least 4 characters')
-      return
+    try {
+      const fileContent = await importFile.text()
+      const restoredJson = await decryptBackup(fileContent, importPassword)
+      await importData(restoredJson)
+      alert('✅ Backup restored.')
+      setImportFile(null)
+      setImportPassword('1234')
+      setShowImportDialog(false)
+      onClose()
+    } catch (error) {
+      console.error('Encrypted import failed:', error)
+      alert(`❌ Import failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
-
-    localStorage.setItem('chaos-data-pin', pinInput)
-    setHasPin(true)
-    setPinInput("")
-    setConfirmPinInput("")
-    alert('✅ Security PIN has been set!')
   }
 
-  // Handle G-Spot Protocol with PIN verification
-  const handleGSpotWithPin = () => {
-    const enteredPin = prompt("⚠️ DANGER ZONE ⚠️\n\nEnter your security PIN to proceed with G-Spot Protocol:")
-    if (!enteredPin) return
+  // Permanent wipe — ONLY the currently-logged-in PIN's data. Other profiles on this device
+  // (e.g. a kid's PIN) are never touched. Honest, labeled, two-step armed, per-device warned.
+  const handleDeleteProfile = async () => {
+    // PIN GATE: you must re-type the PIN you're logged in with. This proves you know WHOSE data
+    // you're deleting — so you can't nuke a kid's/partner's profile thinking it's yours.
+    let currentPin: string | null = null
+    try { currentPin = localStorage.getItem('chaos-user-pin') } catch { /* ignore */ }
+    if (!currentPin) {
+      setDeletePinError('No profile is logged in — nothing to delete.')
+      return
+    }
+    if (deleteConfirmPin.trim() !== currentPin) {
+      setDeletePinError("That PIN doesn't match the profile you're logged into. Delete cancelled — check whose profile this is.")
+      return
+    }
+    setDeletePinError('')
 
-    const savedPin = localStorage.getItem('chaos-data-pin')
-    if (enteredPin === savedPin) {
-      if (confirm("⚠️ NUCLEAR OPTION ⚠️\n\nThis will COMPLETELY ERASE all your health data and replace it with bland starter backup data. This action CANNOT be undone.\n\nAre you absolutely sure?")) {
-        executeGSpotProtocol()
-      }
-    } else {
-      alert("Incorrect PIN")
+    const ok = confirm(
+      '⚠️ DELETE THIS PROFILE\'S DATA — PERMANENT\n\n' +
+      'This erases everything saved under the PIN you\'re logged in with right now — every ' +
+      'tracker, every entry, gone. It cannot be undone and there is no backup.\n\n' +
+      '👨‍👩‍👧 Other PINs on this device are NOT affected. If someone else (a kid, a partner) has ' +
+      'their own PIN here, their data stays exactly as it is. This only deletes YOURS.\n\n' +
+      '📱💻 IF YOU SYNC THIS PROFILE TO ANOTHER DEVICE: this only wipes the device you\'re on ' +
+      'right now. Run "Delete This Profile\'s Data" on each device separately — they share data ' +
+      'with each other, not through us, so we can\'t reach the other one for you.\n\n' +
+      'Are you absolutely sure you want to permanently delete this profile\'s data?'
+    )
+    if (!ok) { setDeleteArmed(false); setDeleteConfirmPin(''); return }
+    try {
+      const dbName = await deleteCurrentProfile()
+      // Drop the session hint so the app reopens at the locked screen, not this profile.
+      try {
+        localStorage.removeItem('chaos-user-pin')
+        localStorage.removeItem('chaos-demo-fixture-version')
+      } catch { /* ignore */ }
+      alert(
+        '🗑️ Done. This profile\'s data has been permanently deleted from this device.\n\n' +
+        'The app will now return to the locked screen. Other PINs on this device are untouched.\n\n' +
+        'Remember: if you synced this profile to another device, its copy is still there until you delete it there too.'
+      )
+      // Hard reload → guaranteed clean state, back at the locked/PIN screen.
+      window.location.href = '/'
+      window.location.reload()
+    } catch (error) {
+      console.error('Delete-profile failed:', error)
+      alert(`❌ Delete failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      setDeleteArmed(false)
+      setDeleteConfirmPin('')
     }
   }
 
   if (!isOpen) return null
-  
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-card rounded-lg max-w-2xl max-h-[80vh] overflow-y-auto p-6">
         <KeyboardAvoidingWrapper>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold flex items-center gap-2">
-            <Database className="h-5 w-5" />
-            Data Management
-          </h2>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-2xl">×</button>
-        </div>
-
-        <Tabs defaultValue="data-management" className="py-4">
-          <TabsList className="grid w-full grid-cols-1">
-            <TabsTrigger value="data-management" className="flex items-center gap-2">
-              <Database className="h-4 w-4" />
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold flex items-center gap-2">
+              <Database className="h-5 w-5" />
               Data Management
-            </TabsTrigger>
-            {/* Test PINs tab hidden for ship — uncomment for dev
-            <TabsTrigger value="test-pins" className="flex items-center gap-2">
-              <Beaker className="h-4 w-4" />
-              Test PINs
-            </TabsTrigger>
-            */}
-          </TabsList>
+            </h2>
+            <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-2xl">×</button>
+          </div>
 
-          <TabsContent value="data-management" className="space-y-6 mt-6">
-            {/* PIN Setup Section */}
-            <div className="p-4 border rounded-lg">
-              <div className="flex items-center gap-2 mb-3">
-                <Shield className="h-4 w-4" />
-                <Label className="text-sm font-medium">Security PIN</Label>
-                {hasPin && <Badge variant="default">Set</Badge>}
-              </div>
-              
-              {!hasPin ? (
-                <div className="space-y-3">
-                  <p className="text-sm text-muted-foreground">
-                    Set a security PIN to protect dangerous operations like G-Spot Protocol
-                  </p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label htmlFor="pin">PIN</Label>
-                      <Input
-                        id="pin"
-                        type="password"
-                        value={pinInput}
-                        onChange={(e) => setPinInput(e.target.value)}
-                        placeholder="Enter PIN"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="confirm-pin">Confirm PIN</Label>
-                      <Input
-                        id="confirm-pin"
-                        type="password"
-                        value={confirmPinInput}
-                        onChange={(e) => setConfirmPinInput(e.target.value)}
-                        placeholder="Confirm PIN"
-                      />
-                    </div>
-                  </div>
-                  <Button onClick={handlePinSetup} className="w-full">
-                    <Shield className="h-4 w-4 mr-2" />
-                    Set Security PIN
-                  </Button>
-                </div>
-              ) : (
-                <p className="text-sm text-green-600">✅ Security PIN is configured</p>
-              )}
-            </div>
-
-            {/* Export Section */}
+          <div className="space-y-6 py-2">
+            {/* Export */}
             <div className="p-4 border rounded-lg">
               <div className="flex items-center gap-2 mb-3">
                 <Download className="h-4 w-4" />
                 <Label className="text-sm font-medium">Export Data</Label>
               </div>
-              
+
               <div className="space-y-3">
-                <Button 
-                  onClick={() => exportAllData()}
-                  variant="outline" 
-                  className="w-full"
-                >
+                {/* Encrypted is THE default path — prominent, password right above it. */}
+                <div>
+                  <Label htmlFor="export-password" className="text-xs">Backup password</Label>
+                  <Input
+                    id="export-password"
+                    type="text"
+                    value={exportPassword}
+                    onChange={(e) => setExportPassword(e.target.value)}
+                    placeholder="Password to encrypt the file"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Encrypts your backup (AES-256). <code>1234</code> is a convenience default —
+                    set your own before you store or share this anywhere that matters.
+                  </p>
+                </div>
+
+                <Button onClick={handleExportBackup} className="w-full">
                   <Download className="h-4 w-4 mr-2" />
-                  Export All Data (JSON)
+                  Export Encrypted Backup
                 </Button>
-                
-                <Button
-                  onClick={handleGSpotExport}
-                  variant="outline"
-                  className="w-full"
-                >
-                  <Zap className="h-4 w-4 mr-2" />
-                  G-Spot Export (Encrypted)
-                </Button>
+
+                {/* Unencrypted JSON lives under Advanced — you have to go looking for the risky one. */}
+                {!showAdvancedExport ? (
+                  <button
+                    onClick={() => setShowAdvancedExport(true)}
+                    className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 w-full text-center pt-1"
+                  >
+                    Advanced ▾
+                  </button>
+                ) : (
+                  <div className="space-y-2 p-3 border border-dashed rounded bg-muted/30">
+                    <p className="text-xs text-muted-foreground">
+                      <strong>Advanced — unencrypted export.</strong> Plain-text JSON anyone can read.
+                      Only use this if you specifically need a readable copy (e.g. importing elsewhere).
+                      For storing or sharing, use the encrypted backup above.
+                    </p>
+                    <Button onClick={handleExportJson} variant="outline" className="w-full border-amber-500/50 text-amber-700 dark:text-amber-500 hover:bg-amber-500/10">
+                      <Download className="h-4 w-4 mr-2" />
+                      Export All Data (JSON, unencrypted)
+                    </Button>
+                    <button
+                      onClick={() => setShowAdvancedExport(false)}
+                      className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 w-full text-center"
+                    >
+                      Hide ▴
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Device Sync Section */}
-            <div className="p-4 border rounded-lg border-purple-200 bg-purple-50/50 dark:bg-purple-950/20">
-              <div className="flex items-center gap-2 mb-3">
-                <RefreshCw className="h-4 w-4 text-purple-600" />
-                <Label className="text-sm font-medium">Device Sync</Label>
-                <Badge variant="outline" className="text-xs">New</Badge>
-              </div>
-              <p className="text-sm text-muted-foreground mb-3">
-                Sync data between your phone and desktop over local WiFi. No cloud, no files to manage.
-              </p>
-              <Button
-                asChild
-                className="w-full bg-purple-600 hover:bg-purple-700"
-              >
-                <a href="/sync">
-                  <QrCode className="h-4 w-4 mr-2" />
-                  Open Device Sync
-                </a>
-              </Button>
-            </div>
-
-            {/* Import Section */}
+            {/* Import / Restore */}
             <div className="p-4 border rounded-lg">
               <div className="flex items-center gap-2 mb-3">
                 <Upload className="h-4 w-4" />
-                <Label className="text-sm font-medium">Import Data</Label>
+                <Label className="text-sm font-medium">Import / Restore</Label>
               </div>
 
               <div className="space-y-3">
                 {!showImportDialog ? (
-                  <Button
-                    onClick={() => setShowImportDialog(true)}
-                    variant="outline"
-                    className="w-full"
-                  >
+                  <Button onClick={() => setShowImportDialog(true)} variant="outline" className="w-full">
                     <Upload className="h-4 w-4 mr-2" />
-                    Import G-Spot Data
+                    Restore from Backup
                   </Button>
                 ) : (
                   <div className="space-y-3 p-3 border rounded bg-muted/50">
                     <div>
-                      <Label htmlFor="import-file">G-Spot File</Label>
+                      <Label htmlFor="import-file">Backup file</Label>
                       <Input
                         id="import-file"
                         type="file"
-                        accept=".json"
+                        accept=".ccbackup,.json"
                         onChange={(e) => setImportFile(e.target.files?.[0] || null)}
                       />
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <Label htmlFor="import-pin">PIN</Label>
-                        <Input
-                          id="import-pin"
-                          type="password"
-                          value={importPin}
-                          onChange={(e) => setImportPin(e.target.value)}
-                          placeholder="Enter PIN"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="import-hour">Hour of Detonation</Label>
-                        <Input
-                          id="import-hour"
-                          type="number"
-                          min="0"
-                          max="23"
-                          value={importHour}
-                          onChange={(e) => setImportHour(e.target.value)}
-                          placeholder="0-23"
-                        />
-                      </div>
+                    <div>
+                      <Label htmlFor="import-password">Backup password</Label>
+                      <Input
+                        id="import-password"
+                        type="text"
+                        value={importPassword}
+                        onChange={(e) => setImportPassword(e.target.value)}
+                        placeholder="The password this backup was saved with"
+                      />
                     </div>
                     <div className="flex gap-2">
-                      <Button
-                        onClick={handleGSpotImport}
-                        className="flex-1"
-                        disabled={!importFile || !importPin || !importHour}
-                      >
+                      <Button onClick={handleImportBackup} className="flex-1" disabled={!importFile || !importPassword}>
                         <Upload className="h-4 w-4 mr-2" />
-                        Import Data
+                        Restore Backup
                       </Button>
                       <Button
                         onClick={() => {
                           setShowImportDialog(false)
                           setImportFile(null)
-                          setImportPin("")
-                          setImportHour("")
+                          setImportPassword("1234")
                         }}
                         variant="outline"
                       >
@@ -410,83 +282,61 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
               </div>
             </div>
 
-            {/* G-Spot Protocol Section */}
-            <div className="p-4 border-2 border-red-200 rounded-lg bg-red-50">
-              <div className="flex items-center gap-2 mb-3">
-                <Zap className="h-4 w-4 text-red-600" />
-                <Label className="text-sm font-medium text-red-800">G-Spot Protocol</Label>
-                <Badge variant="destructive">DANGER</Badge>
+            {/* Danger zone — permanent, this-PIN-only delete */}
+            <div className="p-4 border border-destructive/40 rounded-lg bg-destructive/5">
+              <div className="flex items-center gap-2 mb-2">
+                <Trash2 className="h-4 w-4 text-destructive" />
+                <Label className="text-sm font-medium text-destructive">Delete This Profile&apos;s Data</Label>
               </div>
-              
-              <div className="space-y-3">
-                <p className="text-sm text-red-700">
-                  Emergency data replacement with bland, unremarkable patterns. 
-                  <button 
-                    onClick={() => setShowGSpotExplanation(!showGSpotExplanation)}
-                    className="text-red-600 underline ml-1"
-                  >
-                    Learn more
-                  </button>
-                </p>
-                
-                {showGSpotExplanation && (
-                  <div className="text-xs text-red-600 bg-red-100 p-3 rounded">
-                    <p className="font-medium mb-2">What is G-Spot Protocol?</p>
-                    <p>
-                      A nuclear option that completely replaces your health data with algorithmically generated
-                      "bland" patterns that appear normal but contain no real personal information.
-                      Use this if you need to quickly sanitize your data for privacy reasons.
-                    </p>
-                    <p className="text-xs italic mt-2 text-red-500">
-                      They can't find it if they don't think it exists anyways. 😏
-                    </p>
+              <p className="text-xs text-muted-foreground mb-3">
+                Permanently erases everything saved under the PIN you&apos;re logged in with — no undo, no
+                backup. <strong>Other PINs on this device are not touched.</strong> If you sync to another
+                device, you&apos;ll need to do this there too.
+              </p>
+
+              {!deleteArmed ? (
+                <Button onClick={() => setDeleteArmed(true)} variant="outline" className="w-full border-destructive/50 text-destructive hover:bg-destructive/10">
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete This Profile&apos;s Data…
+                </Button>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-destructive">
+                    This cannot be undone. To confirm <strong>whose</strong> data you&apos;re deleting,
+                    re-type the PIN you&apos;re logged in with:
+                  </p>
+                  <Input
+                    type="password"
+                    placeholder="Re-enter this profile's PIN"
+                    value={deleteConfirmPin}
+                    onChange={(e) => { setDeleteConfirmPin(e.target.value); if (deletePinError) setDeletePinError('') }}
+                    className="text-center tracking-widest"
+                    maxLength={20}
+                    autoFocus
+                  />
+                  {deletePinError && <p className="text-xs text-destructive">{deletePinError}</p>}
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handleDeleteProfile}
+                      variant="destructive"
+                      className="flex-1"
+                      disabled={deleteConfirmPin.trim().length < 4}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Yes, delete permanently
+                    </Button>
+                    <Button onClick={() => { setDeleteArmed(false); setDeleteConfirmPin(''); setDeletePinError('') }} variant="outline">
+                      Cancel
+                    </Button>
                   </div>
-                )}
-                
-                <Button
-                  onClick={hasPin ? handleGSpotWithPin : executeGSpotProtocol}
-                  variant="destructive"
-                  className="w-full"
-                  disabled={isExecutingGSpot}
-                >
-                  <Zap className="h-4 w-4 mr-2" />
-                  {isExecutingGSpot ? 'Executing...' : 'Execute G-Spot Protocol (Bland)'}
-                </Button>
-
-                {/* Demo data loader hidden for ship — uncomment for dev/testing
-                <Button
-                  onClick={async () => {
-                    if (!confirm('Load 90 days of realistic chronic illness demo data?')) return
-                    try {
-                      setIsExecutingGSpot(true)
-                      const data = generateInterestingData()
-                      await secureOverwriteAllData(data as any)
-                      alert(`Loaded ${data.length} records of interesting demo data!`)
-                      onClose()
-                    } catch (e) {
-                      alert(`Failed: ${e instanceof Error ? e.message : 'Unknown error'}`)
-                    } finally {
-                      setIsExecutingGSpot(false)
-                    }
-                  }}
-                  variant="outline"
-                  className="w-full"
-                  disabled={isExecutingGSpot}
-                >
-                  <Beaker className="h-4 w-4 mr-2" />
-                  Load Interesting Demo Data (For Testing)
-                </Button>
-                */}
-              </div>
+                </div>
+              )}
             </div>
-          </TabsContent>
 
-          {/* Test PINs tab hidden for ship — uncomment for dev
-          <TabsContent value="test-pins" className="mt-6">
-            <TestPinManagerComponent onClose={onClose} />
-          </TabsContent>
-          */}
-        </Tabs>
+            <p className="text-xs text-muted-foreground text-center">
+              Looking for device-to-device sync? It has its own screen. Logout is at the bottom of the sidebar.
+            </p>
+          </div>
         </KeyboardAvoidingWrapper>
       </div>
     </div>

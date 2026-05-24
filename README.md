@@ -1,7 +1,7 @@
 # 🏥 Chaos Command
 ## Privacy-First Health Tracking for Real Humans
 
-**Current version: v0.5.0** &middot; [Recent Updates](#recent-updates) &middot; [License: PolyForm Noncommercial](#license)
+**Current version: v0.5.4** &middot; [Recent Updates](#recent-updates) &middot; [License: PolyForm Noncommercial](#license)
 
 > *"Dreamed by Ren, implemented by Ace, inspired by mitochondria who've been on strike since birth"*
 
@@ -67,12 +67,14 @@ Everything runs on your device. No cloud. No accounts. No telemetry. Your health
 - **Local-first**: All data stays on your device (IndexedDB via Dexie.js)
 - **PIN-based isolation**: Multiple users, separate databases, no corporate auth
 - **Peer-to-peer sync (v0.3+, optional)**: Bidirectional sync between *your own* devices over LAN — phone ↔ laptop ↔ desktop. PIN-scoped, encrypted, no cloud, no third-party servers. Pair once, sync on demand.
-- **G-SPOT Protocol**: Emergency wipe that replaces your real data with the app's *starter data* — the exact state the app is in on first install. Cover story writes itself: *"Oh that? I forgot I downloaded it. ADHD tax."* They can't find it if they don't think it was ever there.
-- **G-SPOT Export**: Medical data encrypted and hidden in boring files (Costco receipts, family recipes)
+- **One-tap Logout**: a big Logout at the bottom of the sidebar — instant exit to the locked screen. Non-destructive; your data stays put in its own profile.
+- **The G-Spot** (reproductive tracker): a deliberate, confirmed, *scoped* delete of just your reproductive-health data — everything else untouched. For when that one category is the dangerous one to carry. (Deletion, not concealment.)
+- **Encrypted backups**: export your data as a password-protected file (AES-256-GCM) and restore it anywhere. Plain JSON export available too if you want it readable.
+- **Try before you commit**: a built-in public demo — log in with PIN `1111` to explore rich sample data without an account or touching your own.
 - **Open source**: Audit our code
 
 ### Accessibility
-- **10 themes**: Lavender, Glitter, Ace Mode, Steel Forged Tide (Grok), Caelan's Dawn, Basketball Court/Cyberpunk Penguin, Calm, Light, Colorblind, High Contrast
+- **15 themes**: Calm (default), Lavender Garden, Glitter, Ace Mode, Steel Forged Tide (Grok), Caelan's Liberation Dawn, Basketball Court, Cyberpunk Penguin Paradise, Phosphor, Amber, Segfault, Light, Colorblind, Accessibility (max-contrast), and Tone It Down Taupe (TIDT — no motion, no sparkle, no glow). Themes apply to the whole app and use proper WCAG-checked design tokens.
 - **Bounce intensity slider**: 0% static to 100% full sparkle — migraine-safe customization
 - **4 font options**: Atkinson Hyperlegible, Poppins, Lexend, System
 - **Chaos-positive design**: Goblin affirmations, survival checkbox with cheerleader familiars, "I KNOW" tags for intentional choices
@@ -80,6 +82,8 @@ Everything runs on your device. No cloud. No accounts. No telemetry. Your health
 ---
 
 ## Recent Updates
+
+**v0.5.4** &middot; Security + honesty pass. Retired the old "emergency wipe" (it couldn't reliably cover custom trackers and read as data-hiding) in favor of a **one-tap sidebar Logout** plus **The G-Spot** — a scoped, confirmed delete of *just* reproductive-health data, living in the fertility tracker where the name fits and the need is real. **Encrypted backups** (AES-256-GCM, password-protected) replace the old file-steganography export — and the steganographic exporters are deleted. New **public demo** (PIN `1111`) with a rich 90-day sample dataset. Reproductive tracking can now hide *just* fertility/ovulation while keeping your cycle log (synced across both Customize surfaces). Plus full-width save buttons and dead-code cleanup.
 
 **v0.5.0** &middot; **Routines** — batch-log sets of trackers in one flow, run multiple times a day (per-run sessions), copy-last / nothing-today / reversible skip / next-on-routine flow bar, add your own custom trackers. Plus: default theme → Calm (gentler first run), fixed the perpetual "update available" nag, Joint/MSK shows a muscle menu (with coat-hanger + proximal/distal) for muscle events, heat added as a cardiac trigger, fixed a date off-by-one across dysautonomia/food/BBT history, and a large dead-code cleanup (removed a whole superseded `modules/` architecture).
 **v0.4.5–v0.4.95** &middot; Tracker "re-fun" personality pass across 13 trackers, Mind & Mood rename, doctor-grade PDF polish, muscle-symptom episode types on Joint/MSK.
@@ -129,7 +133,7 @@ The NER model is bundled. The PDF parser runs in-browser. Grandma Jane approved.
 
 ### iOS — self-build only
 
-We don't ship signed iOS binaries. **This is intentional.** App Store review is hostile to medical-adjacent tools, the $99/yr + cert/TestFlight maintenance treadmill isn't sustainable for a free disability-focused project, and we're not fighting Apple on steganography today.
+We don't ship signed iOS binaries *yet*. App Store review is hostile to medical-adjacent tools, and the $99/yr + cert/TestFlight maintenance treadmill is a real cost for a free disability-focused project. (We've since removed the file-steganography that would once have gotten us auto-rejected — so a store submission is no longer blocked by our own design. It's on the roadmap.)
 
 If you have a Mac and an iPhone, you can build and install Chaos Command yourself in under an hour using a free Apple ID. See [`docs/IOS_BUILD.md`](docs/IOS_BUILD.md) for the full walkthrough.
 

@@ -35,6 +35,7 @@ import { Slider } from '@/components/ui/slider'
 import { celebrate } from '@/lib/particle-physics-engine'
 import { useUser } from '@/lib/contexts/user-context'
 import { isCelebrationEnabled } from '@/lib/celebration-prefs'
+import { useDailyData, CATEGORIES } from '@/lib/database' // coping data lives in the per-PIN Dexie store (synced, encrypted, decoy-seedable) — CHA-206
 import {
   Heart,
   Wind,
@@ -282,6 +283,11 @@ const copingTechniques: CopingTechnique[] = [
 
 export default function CopingRegulationPage() {
   const { userPin } = useUser()
+  const { saveData, getSpecificData } = useDailyData()
+  // Coping records aren't day-scoped — they're accumulating user lists, stored
+  // under one stable key (same pattern as providers). Per-PIN Dexie handles
+  // isolation + sync; no localStorage leak across identities.
+  const COPING_STORE_DATE = '2000-01-01'
   const [selectedTechnique, setSelectedTechnique] = useState<CopingTechnique | null>(null)
   const [currentSession, setCurrentSession] = useState<CopingSession | null>(null)
   const [isActive, setIsActive] = useState(false)
@@ -301,18 +307,52 @@ export default function CopingRegulationPage() {
   const [, setTick] = useState(0)
   const animationRef = useRef<number | null>(null)
 
-  // Load sessions and custom techniques from localStorage
+  // Load sessions + custom techniques from the per-PIN Dexie store. One-time
+  // migration: if Dexie has nothing but the old localStorage keys do, import
+  // them (and the user keeps their history). After migration the localStorage
+  // copies are removed so they can't linger as a cross-identity leak.
   useEffect(() => {
-    const savedSessions = localStorage.getItem('coping-sessions')
-    if (savedSessions) {
-      setSessions(JSON.parse(savedSessions))
-    }
+    let cancelled = false
+    const load = async () => {
+      try {
+        const sessRec = await getSpecificData(COPING_STORE_DATE, CATEGORIES.USER, 'coping-sessions')
+        const custRec = await getSpecificData(COPING_STORE_DATE, CATEGORIES.USER, 'coping-custom-techniques')
 
-    const savedCustom = localStorage.getItem('custom-techniques')
-    if (savedCustom) {
-      setCustomTechniques(JSON.parse(savedCustom))
+        let sess: CopingSession[] = sessRec?.content ? JSON.parse(sessRec.content) : []
+        let cust: CopingTechnique[] = custRec?.content ? JSON.parse(custRec.content) : []
+
+        try {
+          if (!sessRec) {
+            const old = localStorage.getItem('coping-sessions')
+            if (old) {
+              sess = JSON.parse(old)
+              await saveData(COPING_STORE_DATE, CATEGORIES.USER, 'coping-sessions', JSON.stringify(sess))
+              localStorage.removeItem('coping-sessions')
+            }
+          }
+          if (!custRec) {
+            const old = localStorage.getItem('custom-techniques')
+            if (old) {
+              cust = JSON.parse(old)
+              await saveData(COPING_STORE_DATE, CATEGORIES.USER, 'coping-custom-techniques', JSON.stringify(cust))
+              localStorage.removeItem('custom-techniques')
+            }
+          }
+        } catch (e) {
+          console.warn('coping localStorage→Dexie migration skipped:', e)
+        }
+
+        if (!cancelled) {
+          setSessions(sess)
+          setCustomTechniques(cust)
+        }
+      } catch (e) {
+        console.error('Failed to load coping data:', e)
+      }
     }
-  }, [])
+    load()
+    return () => { cancelled = true }
+  }, [getSpecificData, saveData])
 
   // Animation loop for smooth updates
   useEffect(() => {
@@ -412,7 +452,7 @@ export default function CopingRegulationPage() {
 
       const updatedSessions = [...sessions, completedSession]
       setSessions(updatedSessions)
-      localStorage.setItem('coping-sessions', JSON.stringify(updatedSessions))
+      saveData(COPING_STORE_DATE, CATEGORIES.USER, 'coping-sessions', JSON.stringify(updatedSessions)).catch(console.error)
 
       const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
       if (confettiLevel !== 'none' && isCelebrationEnabled('coping-regulation', userPin ?? '')) {
@@ -477,7 +517,7 @@ export default function CopingRegulationPage() {
 
       const updatedCustom = [...customTechniques, technique]
       setCustomTechniques(updatedCustom)
-      localStorage.setItem('custom-techniques', JSON.stringify(updatedCustom))
+      saveData(COPING_STORE_DATE, CATEGORIES.USER, 'coping-custom-techniques', JSON.stringify(updatedCustom)).catch(console.error)
 
       setNewTechnique({ name: '', description: '', steps: [''] })
       setShowAddCustom(false)

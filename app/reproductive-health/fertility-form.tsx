@@ -265,44 +265,45 @@ export function FertilityForm({ formData, updateFormData, onSave, isLoading }: F
             </CardContent>
           </Card>
 
-          {/* Conception Opportunity */}
-          <Card>
-            <CardContent className="pt-6 space-y-4">
-              <div className="flex items-center space-x-3">
-                <input
-                  type="checkbox"
-                  id="spermEggExposure"
-                  checked={formData.spermEggExposure || false}
-                  onChange={(e) => updateFormData('spermEggExposure', e.target.checked)}
-                  className="h-4 w-4 text-primary focus:ring-primary border-border rounded"
-                />
-                <Label htmlFor="spermEggExposure" className="text-sm font-semibold cursor-pointer">
-                  Conception opportunity
-                </Label>
-              </div>
-
-              {/* Save Button - Full Width */}
-              <Button
-                onClick={onSave}
-                disabled={isLoading}
-                className="w-full text-lg py-6"
-                size="lg"
-              >
-                {isLoading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    🌺 Save Fertility Entry
-                  </>
-                )}
-              </Button>
-            </CardContent>
-          </Card>
         </div>
       </div>
+
+      {/* Conception + Save — full-width footer below both columns (matches menstrual) */}
+      <Card>
+        <CardContent className="pt-6 space-y-4">
+          <div className="flex items-center space-x-3">
+            <input
+              type="checkbox"
+              id="spermEggExposure"
+              checked={formData.spermEggExposure || false}
+              onChange={(e) => updateFormData('spermEggExposure', e.target.checked)}
+              className="h-4 w-4 text-primary focus:ring-primary border-border rounded"
+            />
+            <Label htmlFor="spermEggExposure" className="text-sm font-semibold cursor-pointer">
+              Conception opportunity
+            </Label>
+          </div>
+
+          {/* Save Button - Full Width */}
+          <Button
+            onClick={onSave}
+            disabled={isLoading}
+            className="w-full text-lg py-6"
+            size="lg"
+          >
+            {isLoading ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Saving...
+              </>
+            ) : (
+              <>
+                🌺 Save Fertility Entry
+              </>
+            )}
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   )
 }

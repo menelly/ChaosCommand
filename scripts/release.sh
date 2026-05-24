@@ -7,6 +7,18 @@
 # regenerates CHANGELOG, deploys to chaoscommand.center. Does NOT build the
 # installer — that's a separate step you do AFTER this confirms the version
 # bumps cleanly.
+#
+# ⚠️ VERSION SOURCE OF TRUTH — read before releasing:
+#   scripts/bump_version.py is the CANONICAL bumper. It updates ALL SIX version spots
+#   (package.json, tauri.conf.json, Cargo.toml, Cargo.lock, lib/app-version.ts, AND the
+#   scripts/version-<v>.json manifest) and has a `--check [--live]` DRIFT DETECTOR.
+#   The 0.5.3 "update available" nag happened because the live manifest got bumped while
+#   the source files didn't. So, every release:
+#     • PREFER:  python scripts/bump_version.py <ver> --notes "..."   (then commit + tag)
+#     • ALWAYS after deploy:  python scripts/bump_version.py --check --live
+#       (confirms every spot agrees with the live site — catches the nag before users do)
+#   This script still bumps versions inline for convenience, but bump_version.py is the one
+#   that also covers the manifest + verifies no drift. When in doubt, run --check.
 set -euo pipefail
 
 if [ $# -lt 2 ]; then

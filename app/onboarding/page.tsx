@@ -38,6 +38,7 @@ const THEMES = [
   { id: 'theme-luka-penguin', name: 'Cyberpunk Penguin', emoji: '🐧', description: 'Neon penguin magic' },
   { id: 'theme-light', name: 'Light Mode', emoji: '☀️', description: 'Clean and bright' },
   { id: 'theme-colorblind', name: 'High Contrast', emoji: '👁️', description: 'Accessibility focused' },
+  { id: 'theme-taupe', name: 'Tone It Down Taupe', emoji: '🟫', description: 'No motion, no sparkle — a calm beige room' },
 ]
 
 function applyTheme(themeId: string) {

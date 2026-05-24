@@ -205,7 +205,7 @@ class PDFWriter {
     this.doc.setFont('helvetica', 'normal')
     const lines = this.doc.splitTextToSize(text, this.contentWidth)
     this.doc.text(lines, this.pageWidth / 2, this.y, { align: 'center' })
-    this.y += lines.length * 5 + 6
+    this.y += lines.length * 11 + 6 // 9pt text needs ~11pt line height (was 5 → squampy/overlap)
   }
 
   hr() {
@@ -252,7 +252,7 @@ class PDFWriter {
     this.doc.setFont('helvetica', 'normal')
     const lines = this.doc.splitTextToSize(text, this.contentWidth - 10)
     this.doc.text(lines, this.marginLeft + 5, this.y)
-    this.y += lines.length * 5 + 4 // was * 4.5 + 3 — more breathing room
+    this.y += lines.length * 11 + 4 // 9pt text needs ~11pt line height (was 5 → lines overlapped)
   }
 
   bulletBody(label: string, value: string) {
@@ -284,7 +284,7 @@ class PDFWriter {
       // Actually jsPDF rendered them all starting at valueX. For multi-line values,
       // we accept that wraps continue from the same x. Acceptable.
     }
-    this.y += Math.max(1, lines.length) * 5 + 2
+    this.y += Math.max(1, lines.length) * 11 + 3 // 9pt line height (was 5 → bullet list crammed/overlapped)
   }
 
   finding(text: string) {
@@ -294,7 +294,7 @@ class PDFWriter {
     this.doc.setFont('helvetica', 'normal')
     const lines = this.doc.splitTextToSize(text, this.contentWidth - 20)
     this.doc.text(lines, this.marginLeft + 15, this.y)
-    this.y += lines.length * 4.5 + 3
+    this.y += lines.length * 11 + 3 // 9pt line height (was 4.5 → wrapped findings overlapped the next block)
   }
 
   note(text: string) {
@@ -304,7 +304,7 @@ class PDFWriter {
     this.doc.setFont('helvetica', 'italic')
     const lines = this.doc.splitTextToSize(text, this.contentWidth)
     this.doc.text(lines, this.marginLeft, this.y)
-    this.y += lines.length * 3.5 + 3
+    this.y += lines.length * 9 + 3 // 7pt note needs ~9pt line height (was 3.5)
   }
 
   spacer(h: number = 6) {

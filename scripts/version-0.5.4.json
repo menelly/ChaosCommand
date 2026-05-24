@@ -1,0 +1,6 @@
+{
+  "version": "0.5.4",
+  "released": "2026-05-24",
+  "url": "https://chaoscommand.center/download",
+  "notes": "We spent this update making sure the app can't hurt you by accident. Encrypted backups are now the default — export everything as a password-protected file (AES-256) and restore it anywhere; plain unencrypted export still exists, but it's behind an 'Advanced' toggle so it's always a choice you make, not one you trip into. You can permanently delete a profile's data from Settings now — and it makes you re-type your PIN first, because 'I deleted the wrong person's records' should be impossible, not just unlikely. Other PINs on the same device are never touched. New: kick the tires before you commit — log in with PIN 1111 for a built-in demo (and if you'd already used 1111 for real records, the app offers to move them somewhere safe instead of stomping them). Reproductive tracking can now hide just fertility/ovulation while keeping your cycle log; its scoped delete clears only that section. One-tap Logout moved to the bottom of the sidebar, big, for a fast exit. Plus a demo-data display fix and cleaner layouts. Every past version lives at chaoscommand.center/releases — you can always go back."
+}

@@ -169,6 +169,39 @@ export const closeDB = (): void => {
   }
 };
 
+/**
+ * Permanently delete THIS profile's data — only the currently-logged-in PIN's database.
+ *
+ * Deliberately scoped to ONE PIN. Profiles are separate people: deleting your own data must never
+ * touch another PIN on the same device (e.g. a parent must not be able to wipe their kid's profile).
+ * So this drops exactly `ChaosCommand_<currentPin>` and nothing else. There is no undo, no backup —
+ * it's the honest replacement for the old disguised "overwrite with decoy data" approach: a user who
+ * wants their OWN data gone gets it actually gone, while everyone else's stays put.
+ *
+ * Returns the deleted database name. Throws if no PIN is currently set (nothing scoped to delete).
+ *
+ * NOTE: IndexedDB is per-device. If THIS profile syncs phone↔desktop, the user must run this on BOTH
+ * devices — the UI says so loudly. We can't reach the other device; there is no server in between.
+ */
+export async function deleteCurrentProfile(): Promise<string> {
+  if (typeof window === 'undefined') throw new Error('deleteCurrentProfile is client-only');
+
+  const pin = (() => { try { return localStorage.getItem('chaos-user-pin'); } catch { return null; } })();
+  if (!pin) throw new Error('No profile is currently logged in — nothing to delete.');
+
+  const dbName = `ChaosCommand_${pin}`;
+  closeDB(); // release our handle so deletion isn't blocked
+
+  await new Promise<void>((resolve, reject) => {
+    const req = indexedDB.deleteDatabase(dbName);
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(new Error(`Failed to delete ${dbName}`));
+    req.onblocked = () => resolve(); // a lingering handle; the data table is already cleared on close
+  });
+
+  return dbName;
+}
+
 // For backward compatibility - will use current PIN from localStorage
 export const db = new Proxy({} as ChaosCommandCenterDB, {
   get(target, prop) {

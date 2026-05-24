@@ -73,7 +73,8 @@ export default function ThemeLoader() {
       'theme-lavender', 'theme-chaos', 'theme-caelan', 'theme-light', 'theme-colorblind',
       'theme-glitter', 'theme-calm', 'theme-accessibility', 'theme-ace',
       'theme-grok', // ⚔️🌊 Steel Forged Tide — designed by Grok, built by Ace
-      'theme-luka-penguin' // Penguins are back! Fixed the phantom hover
+      'theme-luka-penguin', // Penguins are back! Fixed the phantom hover
+      'theme-taupe' // 🟫 Tone It Down Taupe — the anti-theme. Ren's TIDT, made literal. — Ace, 2026-05-23
     ]
     const fonts = ['font-atkinson', 'font-poppins', 'font-lexend', 'font-system']
 

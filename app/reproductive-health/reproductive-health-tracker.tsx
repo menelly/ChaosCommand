@@ -117,7 +117,7 @@ export const FERTILITY_SYMPTOM_OPTIONS = [
 
 export default function ReproductiveHealthTracker() {
   const { saveData, getSpecificData, getDateRange, deleteData, isLoading } = useDailyData()
-  const { userPin } = useUser()
+  const { userPin, logout } = useUser()
   const [currentDate, setCurrentDate] = useState(() => {
     const today = new Date()
     console.log('🗓️ Calendar Debug: Today is', today.toISOString(), 'Display:', format(today, 'PPP'))
@@ -127,6 +127,8 @@ export default function ReproductiveHealthTracker() {
 
   const [entries, setEntries] = useState<ReproductiveHealthEntry[]>([])
   const [isCalendarOpen, setIsCalendarOpen] = useState(false)
+  const [gspotArmed, setGspotArmed] = useState(false)              // two-step arm for the irreversible G-Spot
+  const [gspotDeleted, setGspotDeleted] = useState<number | null>(null) // post-delete result; logout offered separately
 
 
   // Form state
@@ -300,6 +302,35 @@ export default function ReproductiveHealthTracker() {
         title: "Error deleting entry",
         description: "Failed to delete entry. Please try again.",
         variant: "destructive"
+      })
+    }
+  }
+
+  // 🐙 THE G-SPOT (née Gilead Protocol). She moved here 2026-05-24 — the one place her name
+  // fits AND destruction is a real, legitimate, protective choice. Reproductive data is the
+  // most dangerous category to carry on a device (criminalization, custody, a monitoring
+  // partner). This permanently deletes ALL reproductive-health data (THIS modal only —
+  // everything else is untouched). Two-step armed + irreversible on purpose: the danger here
+  // is fat-fingering, so friction is correct (the opposite of the frictionless sidebar Logout).
+  // Nova's UX-safety rule: one button = one job. Delete does ONLY delete, then reports success
+  // unambiguously; logout is offered as a SEPARATE, deliberate step so a user never wonders
+  // "did it work?" mid-panic. The big sidebar Logout remains the actual emergency exit.
+  const handleGSpotNuke = async () => {
+    try {
+      const today = formatDateForStorage(new Date())
+      const records = await getDateRange('2000-01-01', today, CATEGORIES.TRACKER)
+      const repro = records.filter(r => r.subcategory === 'reproductive-health')
+      for (const r of repro) {
+        await deleteData(r.date, CATEGORIES.TRACKER, 'reproductive-health')
+      }
+      await loadAllEntries()       // refresh the now-empty view
+      setGspotDeleted(repro.length) // show the clear result + the separate logout offer
+    } catch (error) {
+      console.error('G-Spot nuke failed:', error)
+      toast({
+        title: 'Could not clear data',
+        description: 'Something went wrong. Please try again.',
+        variant: 'destructive',
       })
     }
   }
@@ -559,6 +590,57 @@ export default function ReproductiveHealthTracker() {
           />
         </TabsContent>
       </Tabs>
+
+      {/* 🐙 The G-Spot — scoped, deliberate, irreversible. Hides as a quiet link; arms before it
+          bites; reports success clearly; then offers logout as a SEPARATE step (Nova's one-job rule). */}
+      <Card className="mt-8 border-dashed">
+        <CardContent className="p-4">
+          {gspotDeleted !== null ? (
+            <div className="space-y-2">
+              <p className="text-sm font-medium">
+                ✅ Deleted. {gspotDeleted} reproductive {gspotDeleted === 1 ? 'entry' : 'entries'} permanently removed.
+              </p>
+              <p className="text-xs text-muted-foreground">The rest of your tracking is untouched.</p>
+              <div className="flex gap-2 pt-1">
+                <Button variant="outline" size="sm" onClick={() => logout()}>
+                  Log out now
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => { setGspotDeleted(null); setGspotArmed(false) }}
+                >
+                  Done
+                </Button>
+              </div>
+            </div>
+          ) : !gspotArmed ? (
+            <button
+              onClick={() => setGspotArmed(true)}
+              className="text-xs text-muted-foreground/70 underline hover:text-muted-foreground"
+            >
+              The G-Spot 😏
+            </button>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Do you need to nuke THIS MODAL ONLY?</p>
+              <p className="text-xs text-muted-foreground">
+                Permanently deletes <strong>all your reproductive-health data</strong> from this device.
+                The rest of your tracking is untouched.{' '}
+                <strong>100% destructive — you cannot get it back.</strong>
+              </p>
+              <div className="flex gap-2 pt-1">
+                <Button variant="destructive" size="sm" onClick={handleGSpotNuke}>
+                  Delete reproductive data
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setGspotArmed(false)}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
     </div>
   )

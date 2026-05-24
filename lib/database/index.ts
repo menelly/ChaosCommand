@@ -72,15 +72,7 @@ export type {
   ImageBlob as SecureImageBlob
 } from './secure-pin-database-architecture';
 
-// ============================================================================
-// G-SPOT 4.0 BORING FILE STEGANOGRAPHY - THE REVOLUTION
-// ============================================================================
-export {
-  GSpot4BoringFileExporter,
-  BoringFileType
-} from './g-spot-4.0-boring-file-steganography';
-
-export type {
-  ExportResult
-} from './g-spot-4.0-boring-file-steganography';
+// (Removed: G-Spot 4.0 boring-file steganography + G-Spot 3.0 webpack-disguise crypto.
+//  Disguising medical data read as clandestine tradecraft / app-store + forensic red flag.
+//  Replaced by honest encrypted-export.ts (AES-256-GCM). — 2026-05-24)
 
