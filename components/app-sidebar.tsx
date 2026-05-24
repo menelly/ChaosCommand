@@ -306,16 +306,6 @@ export default function AppSidebar() {
             <span>💜</span>
           </div>
 
-          {/* Logout */}
-          <Link
-            href={getHref('logout')}
-            className="mt-2 rounded text-xs font-medium transition-all py-1.5 px-1 hover:opacity-80 block text-center sidebar-btn-5"
-            title="Logout"
-            onClick={() => isMobile && setShowSidebar(false)}
-          >
-            🚪 Logout
-          </Link>
-
           {/* Customize — unified hub for visual + visibility toggles */}
           <Link
             href={getHref('customize')}
@@ -334,6 +324,17 @@ export default function AppSidebar() {
             onClick={() => isMobile && setShowSidebar(false)}
           >
             ⚙️ Settings
+          </Link>
+
+          {/* Logout — big, bottom-of-sidebar, one-tap. THE emergency exit: fast and obvious,
+              ~2× the height of the other buttons so it's hard to miss and easy to hit. */}
+          <Link
+            href={getHref('logout')}
+            className="mt-4 rounded-lg text-base font-bold transition-all py-3.5 px-2 hover:opacity-90 block text-center sidebar-btn-5"
+            title="Logout — quick exit"
+            onClick={() => isMobile && setShowSidebar(false)}
+          >
+            🚪 Logout
           </Link>
         </div>
       )}
