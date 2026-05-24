@@ -32,6 +32,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Briefcase, Settings2 } from "lucide-react"
 import { useIsMobilePlatform } from "@/lib/platform"
 import { TRACKERS, HIDDEN_TRACKERS_KEY } from "@/lib/manage/trackers-config"
+import { getPref, setPref } from "@/lib/prefs"
 import VisibleTrackersPanel from "@/components/customize/visible-trackers-panel"
 
 export default function WorkLifeIndex() {
@@ -43,7 +44,7 @@ export default function WorkLifeIndex() {
   // Load hidden trackers from localStorage on mount
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(HIDDEN_TRACKERS_KEY)
+      const saved = getPref(HIDDEN_TRACKERS_KEY)
       if (saved) {
         setHiddenTrackers(JSON.parse(saved))
       }
@@ -56,7 +57,7 @@ export default function WorkLifeIndex() {
   const updateHiddenTrackers = (newHidden: string[]) => {
     setHiddenTrackers(newHidden)
     try {
-      localStorage.setItem(HIDDEN_TRACKERS_KEY, JSON.stringify(newHidden))
+      setPref(HIDDEN_TRACKERS_KEY, JSON.stringify(newHidden))
     } catch (e) {
       console.error('Failed to save hidden trackers:', e)
     }

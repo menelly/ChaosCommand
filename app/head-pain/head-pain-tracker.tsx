@@ -17,6 +17,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import { getPref } from '@/lib/prefs'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -104,7 +105,7 @@ export function HeadPainTracker() {
       const updatedForDate = [...existingForDate, newEntry]
       await saveData(storageDate, CATEGORIES.TRACKER, 'head-pain', { entries: updatedForDate }, newEntry.tags || [])
 
-      const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
+      const confettiLevel = getPref('chaos-confetti-level') || 'medium'
       if (confettiLevel !== 'none' && isCelebrationEnabled('head-pain', userPin ?? '')) celebrate()
 
       toast({ title: '🧠 Head Pain Logged', description: 'Episode recorded for your neurologist' })

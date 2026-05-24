@@ -15,6 +15,7 @@
  */
 
 import confetti from 'canvas-confetti'
+import { getPref, setPref, removePref } from '@/lib/prefs'
 
 const EMOJI_KEY = 'chaos-celebration-emoji'
 const NEUTRAL_POOL = ['✨', '⭐', '💜', '🌟', '🎉']
@@ -28,7 +29,7 @@ export type ChosenEmoji = typeof AVAILABLE_EMOJIS[number]
 
 export function getChosenEmoji(): ChosenEmoji | null {
   if (typeof window === 'undefined') return null
-  const raw = localStorage.getItem(EMOJI_KEY)
+  const raw = getPref(EMOJI_KEY)
   if (raw && (AVAILABLE_EMOJIS as readonly string[]).includes(raw)) {
     return raw as ChosenEmoji
   }
@@ -37,8 +38,8 @@ export function getChosenEmoji(): ChosenEmoji | null {
 
 export function setChosenEmoji(emoji: ChosenEmoji | null): void {
   if (typeof window === 'undefined') return
-  if (emoji === null) localStorage.removeItem(EMOJI_KEY)
-  else localStorage.setItem(EMOJI_KEY, emoji)
+  if (emoji === null) removePref(EMOJI_KEY)
+  else setPref(EMOJI_KEY, emoji)
 }
 
 interface SparkleOptions {
@@ -50,7 +51,7 @@ interface SparkleOptions {
 
 export function fireSparkleCelebration(opts: SparkleOptions = {}): void {
   if (typeof window === 'undefined') return
-  const level = localStorage.getItem('chaos-confetti-level') || 'medium'
+  const level = getPref('chaos-confetti-level') || 'medium'
   if (level === 'none') return
   const scale = level === 'low' ? 0.3 : level === 'medium' ? 0.6 : 1.0
 

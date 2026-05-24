@@ -24,15 +24,16 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { getPref } from "@/lib/prefs"
 
 export default function ThemeLoader() {
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     // Load saved theme, font, and animations from localStorage
-    const savedTheme = localStorage.getItem('chaos-theme') || 'theme-lavender'
-    const savedFont = localStorage.getItem('chaos-font') || 'font-atkinson'
-    const savedAnimations = localStorage.getItem('chaos-animations') !== 'false' // default to true
+    const savedTheme = getPref('chaos-theme') || 'theme-lavender'
+    const savedFont = getPref('chaos-font') || 'font-atkinson'
+    const savedAnimations = getPref('chaos-animations') !== 'false' // default to true
 
     // Available themes and fonts
     const themes = [

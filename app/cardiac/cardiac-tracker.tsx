@@ -23,6 +23,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import { getPref } from '@/lib/prefs'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -125,7 +126,7 @@ export default function CardiacTracker() {
     const updatedEntries = [...entries, newEntry]
     await saveEntries(updatedEntries)
 
-    const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
+    const confettiLevel = getPref('chaos-confetti-level') || 'medium'
     if (confettiLevel !== 'none' && isCelebrationEnabled('cardiac', userPin ?? '')) {
       celebrate()
     }

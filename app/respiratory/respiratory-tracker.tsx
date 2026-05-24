@@ -6,6 +6,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import { getPref } from '@/lib/prefs'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -67,7 +68,7 @@ export default function RespiratoryTracker() {
     const newEntry: RespiratoryEntry = { id: Date.now().toString(), timestamp: ts || new Date().toISOString(), date: d || selectedDate, ...rest }
     const updatedEntries = [...entries, newEntry]
     await saveEntries(updatedEntries)
-    if ((localStorage.getItem('chaos-confetti-level') || 'medium') !== 'none' && isCelebrationEnabled('respiratory', userPin ?? '')) celebrate()
+    if ((getPref('chaos-confetti-level') || 'medium') !== 'none' && isCelebrationEnabled('respiratory', userPin ?? '')) celebrate()
     setActiveModal(null); setEditingEntry(null); setRefreshTrigger(p => p + 1)
     const info = getEpisodeTypeInfo(entryData.episodeType)
     toast({ title: `${info.icon} Event Saved`, description: `${info.name} recorded` })

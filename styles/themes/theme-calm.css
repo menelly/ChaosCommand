@@ -1,9 +1,37 @@
 /* === 🌊 CALM MODE THEME === */
 /* Blue and gold serenity for peaceful focus */
 
+/* ---- TOKENS (contrast contract) ----
+ * Calm is the DEFAULT theme and is bundled (imported in layout.tsx) for a
+ * no-flash first paint, so unlike the other themes its correct token block must
+ * live HERE, not only in public/styles/themes/theme-calm.css. Keep the two in
+ * sync — scripts/verify-theme-tokens.mjs checks both. Values match the served
+ * file: primary #1565c0 (white text 5.8:1), muted #355080 (7:1 on bg). */
+body.theme-calm {
+  --background: 205 87% 94%;
+  --foreground: 222 37% 19%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 37% 19%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 37% 19%;
+  --primary: 212 80% 42%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 207 89% 86%;
+  --secondary-foreground: 222 37% 19%;
+  --muted: 205 87% 94%;
+  --muted-foreground: 218 41% 35%;
+  --accent: 207 89% 86%;
+  --accent-foreground: 222 37% 19%;
+  --destructive: 0 66% 47%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 207 90% 77%;
+  --input: 207 90% 77%;
+  --ring: 212 80% 42%;
+}
+
 /* Main theme - Calming blues and golds */
 body.theme-calm {
-  background: linear-gradient(135deg, 
+  background: linear-gradient(135deg,
     #e3f2fd 0%,     /* Light blue */
     #bbdefb 25%,    /* Soft blue */
     #90caf9 50%,    /* Medium blue */

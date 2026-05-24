@@ -16,6 +16,8 @@ import { Switch } from "@/components/ui/switch"
 import { Slider } from "@/components/ui/slider"
 import { Label } from "@/components/ui/label"
 import { AVAILABLE_EMOJIS, type ChosenEmoji } from "@/lib/sparkle-celebration"
+import { getPref, setPref, getPrefNumber } from "@/lib/prefs"
+import ColorCustomizer from "@/components/customize/color-customizer"
 
 const themes = [
   { id: 'theme-phosphor', name: '💚 Phosphor', description: 'Terminal CRT green-on-black — for nerds and tired eyes', motion: 'animated' },
@@ -39,7 +41,9 @@ const fonts = [
   { id: 'font-atkinson', name: 'Atkinson Hyperlegible', description: 'Designed for low vision accessibility' },
   { id: 'font-poppins', name: 'Poppins', description: 'Modern and friendly' },
   { id: 'font-lexend', name: 'Lexend', description: 'Optimized for reading proficiency' },
-  { id: 'font-system', name: 'System Font', description: 'Your device default' }
+  { id: 'font-opendyslexic', name: 'OpenDyslexic', description: 'Designed for dyslexia — weighted letters resist flipping' },
+  { id: 'font-cutecharm', name: 'Cute Charm', description: 'Playful handwriting — cozy vibes (less ideal for dense data)' },
+  { id: 'font-system', name: 'System Font', description: "Your device's built-in font (Segoe UI on Windows)" }
 ]
 
 export default function VisualSettingsPanel() {
@@ -51,6 +55,7 @@ export default function VisualSettingsPanel() {
   const [confettiLevel, setConfettiLevel] = useState<'none' | 'low' | 'medium' | 'high'>('medium')
   const [celebrationStyle, setCelebrationStyle] = useState<'sparkle' | 'survival'>('sparkle')
   const [chosenEmoji, setChosenEmojiState] = useState<ChosenEmoji | null>(null)
+  const [familiarSet, setFamiliarSet] = useState<'all' | 'cheer' | 'sports-games'>('all')
 
   const applyTheme = (themeId: string) => {
     const oldTheme = document.querySelector('link[data-theme]')
@@ -65,28 +70,28 @@ export default function VisualSettingsPanel() {
         console.warn(`⚠️ Failed to load theme CSS: ${themeId}, falling back to calm`)
         document.body.className = document.body.className.replace(/theme-\w+/g, '') + ' theme-calm'
         setCurrentTheme('theme-calm')
-        localStorage.setItem('chaos-theme', 'theme-calm')
+        setPref('chaos-theme', 'theme-calm')
       }
       document.head.appendChild(link)
     }
 
     document.body.className = document.body.className.replace(/theme-\w+/g, '') + ` ${themeId}`
     setCurrentTheme(themeId)
-    localStorage.setItem('chaos-theme', themeId)
+    setPref('chaos-theme', themeId)
   }
 
   const applyFont = (fontId: string) => {
     fonts.forEach(font => document.body.classList.remove(font.id))
     document.body.classList.add(fontId)
     setCurrentFont(fontId)
-    localStorage.setItem('chaos-font', fontId)
+    setPref('chaos-font', fontId)
   }
 
   const applyBounceIntensity = (percent: number) => {
     const scale = percent / 100
     document.documentElement.style.setProperty('--bounce-scale', scale.toString())
     setBounceIntensity(percent)
-    localStorage.setItem('chaos-bounce-intensity', percent.toString())
+    setPref('chaos-bounce-intensity', percent.toString())
 
     if (percent <= 25 && percent > 0) document.body.classList.add('bounce-low')
     else document.body.classList.remove('bounce-low')
@@ -94,11 +99,11 @@ export default function VisualSettingsPanel() {
     if (percent === 0 && !document.body.classList.contains('no-animations')) {
       document.body.classList.add('no-animations')
       setAnimatedEffects(false)
-      localStorage.setItem('chaos-animations', 'false')
+      setPref('chaos-animations', 'false')
     } else if (percent > 0 && document.body.classList.contains('no-animations')) {
       document.body.classList.remove('no-animations')
       setAnimatedEffects(true)
-      localStorage.setItem('chaos-animations', 'true')
+      setPref('chaos-animations', 'true')
     }
   }
 
@@ -107,36 +112,42 @@ export default function VisualSettingsPanel() {
   const applyTextScale = (percent: number) => {
     document.documentElement.style.fontSize = percent + '%'
     setTextScale(percent)
-    localStorage.setItem('chaos-text-scale', percent.toString())
+    setPref('chaos-text-scale', percent.toString())
   }
 
   const toggleAnimatedEffects = (enabled: boolean) => {
     if (enabled) {
       document.body.classList.remove('no-animations')
-      const saved = parseInt(localStorage.getItem('chaos-bounce-intensity') || '10')
+      const saved = getPrefNumber('chaos-bounce-intensity', 10)
       applyBounceIntensity(saved)
     } else {
       document.body.classList.add('no-animations')
     }
     setAnimatedEffects(enabled)
-    localStorage.setItem('chaos-animations', enabled.toString())
+    setPref('chaos-animations', enabled.toString())
+  }
+
+  const applyFamiliarSet = (value: 'all' | 'cheer' | 'sports-games') => {
+    setFamiliarSet(value)
+    setPref('chaos-familiar-set', value)
   }
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('chaos-theme') || 'theme-calm'
-    const savedFont = localStorage.getItem('chaos-font') || 'font-atkinson'
-    const savedAnimations = localStorage.getItem('chaos-animations') !== 'false'
-    const savedIntensity = parseInt(localStorage.getItem('chaos-bounce-intensity') || '10')
-    const savedConfetti = (localStorage.getItem('chaos-confetti-level') as any) || 'medium'
-    const rawStyle = localStorage.getItem('chaos-celebration-style')
+    const savedTheme = getPref('chaos-theme') || 'theme-calm'
+    const savedFont = getPref('chaos-font') || 'font-atkinson'
+    const savedAnimations = getPref('chaos-animations') !== 'false'
+    const savedIntensity = getPrefNumber('chaos-bounce-intensity', 10)
+    const savedConfetti = (getPref('chaos-confetti-level') as any) || 'medium'
+    const rawStyle = getPref('chaos-celebration-style')
     const savedStyle: 'sparkle' | 'survival' = rawStyle === 'survival' ? 'survival' : 'sparkle'
-    const rawEmoji = localStorage.getItem('chaos-celebration-emoji')
+    const rawEmoji = getPref('chaos-celebration-emoji')
     const savedEmoji: ChosenEmoji | null =
       rawEmoji && (AVAILABLE_EMOJIS as readonly string[]).includes(rawEmoji)
         ? (rawEmoji as ChosenEmoji)
         : null
 
-    const savedTextScale = parseInt(localStorage.getItem('chaos-text-scale') || '100')
+    const savedTextScale = getPrefNumber('chaos-text-scale', 100)
+    const savedFamiliarSet = (getPref('chaos-familiar-set') as 'all' | 'cheer' | 'sports-games') || 'all'
 
     setCurrentTheme(savedTheme)
     setCurrentFont(savedFont)
@@ -146,6 +157,7 @@ export default function VisualSettingsPanel() {
     setConfettiLevel(savedConfetti)
     setCelebrationStyle(savedStyle)
     setChosenEmojiState(savedEmoji)
+    setFamiliarSet(savedFamiliarSet)
 
     applyTheme(savedTheme)
     fonts.forEach(font => document.body.classList.remove(font.id))
@@ -186,6 +198,8 @@ export default function VisualSettingsPanel() {
           🪨 = still · 🌀 = has motion. Any theme&apos;s motion can be reduced or turned off with the Visual Effects slider below.
         </p>
       </div>
+
+      <ColorCustomizer theme={currentTheme} />
 
       <div>
         <Label className="text-sm font-medium mb-2 block">Visual Effects</Label>
@@ -249,7 +263,7 @@ export default function VisualSettingsPanel() {
                 className="h-auto py-2 flex flex-col"
                 onClick={() => {
                   setConfettiLevel(opt.value)
-                  localStorage.setItem('chaos-confetti-level', opt.value)
+                  setPref('chaos-confetti-level', opt.value)
                 }}
               >
                 <span>{opt.emoji}</span>
@@ -273,7 +287,7 @@ export default function VisualSettingsPanel() {
                   disabled={confettiLevel === 'none'}
                   onClick={() => {
                     setCelebrationStyle(opt.value)
-                    localStorage.setItem('chaos-celebration-style', opt.value)
+                    setPref('chaos-celebration-style', opt.value)
                   }}
                 >
                   <span>{opt.emoji}</span>
@@ -284,6 +298,23 @@ export default function VisualSettingsPanel() {
           </div>
 
         </div>
+      </div>
+
+      <div>
+        <Label className="text-sm font-medium mb-2 block">Survival Familiars</Label>
+        <Select value={familiarSet} onValueChange={(v) => applyFamiliarSet(v as 'all' | 'cheer' | 'sports-games')}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">🎉 All familiars</SelectItem>
+            <SelectItem value="cheer">📣 Cheerleaders</SelectItem>
+            <SelectItem value="sports-games">🏀 Sports &amp; Games</SelectItem>
+          </SelectContent>
+        </Select>
+        <p className="text-[11px] text-muted-foreground mt-1.5">
+          Which crew cheers you on when you check the survival box.
+        </p>
       </div>
 
       <div>

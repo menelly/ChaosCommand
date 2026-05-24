@@ -3,6 +3,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import { getPref } from '@/lib/prefs'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -59,7 +60,7 @@ export default function SubstanceTracker() {
     const { timestamp: ts, date: d, ...rest } = data
     const newEntry: SubstanceEntry = { id: Date.now().toString(), timestamp: ts || new Date().toISOString(), date: d || selectedDate, ...rest }
     await saveEntries([...entries, newEntry])
-    if ((localStorage.getItem('chaos-confetti-level') || 'medium') !== 'none' && isCelebrationEnabled('substance', userPin ?? '')) celebrate()
+    if ((getPref('chaos-confetti-level') || 'medium') !== 'none' && isCelebrationEnabled('substance', userPin ?? '')) celebrate()
     setModalOpen(false); setEditingEntry(null); setPresetType(null); setRefreshTrigger(p => p + 1)
     const info = getSubstanceTypeInfo(data.substanceType)
     toast({ title: `${info.icon} Logged`, description: data.substanceName || info.name })

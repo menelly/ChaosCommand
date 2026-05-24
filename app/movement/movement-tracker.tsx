@@ -24,6 +24,7 @@
 "use client"
 
 import { useState } from "react"
+import { getPref } from "@/lib/prefs"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -85,7 +86,7 @@ export default function MovementTracker() {
       setIsModalOpen(false)
       setRefreshTrigger(prev => prev + 1)
 
-      const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
+      const confettiLevel = getPref('chaos-confetti-level') || 'medium'
       if (confettiLevel !== 'none' && isCelebrationEnabled('movement', userPin ?? '')) {
         celebrate()
       }

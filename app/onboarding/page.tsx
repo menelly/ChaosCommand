@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import { getPref, setPref } from '@/lib/prefs'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -54,7 +55,7 @@ function applyTheme(themeId: string) {
   }
 
   document.body.className = document.body.className.replace(/theme-\w+/g, '') + ` ${themeId}`
-  localStorage.setItem('chaos-theme', themeId)
+  setPref('chaos-theme', themeId)
 }
 
 // ============================================================================
@@ -424,10 +425,10 @@ const TRACKER_NAMES: Record<string, string> = {
 export default function OnboardingPage() {
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState(0) // 0 = theme, 1 = intro, 2-N+1 = categories, last = results
-  const [selectedTheme, setSelectedTheme] = useState(localStorage.getItem('chaos-theme') || 'theme-lavender')
-  const [bounceIntensity, setBounceIntensity] = useState(parseInt(localStorage.getItem('chaos-bounce-intensity') || '10'))
+  const [selectedTheme, setSelectedTheme] = useState(getPref('chaos-theme') || 'theme-lavender')
+  const [bounceIntensity, setBounceIntensity] = useState(parseInt(getPref('chaos-bounce-intensity') || '10'))
   const [confettiLevel, setConfettiLevel] = useState<'none' | 'low' | 'medium' | 'high'>(
-    (localStorage.getItem('chaos-confetti-level') as any) || 'medium'
+    (getPref('chaos-confetti-level') as any) || 'medium'
   )
   const [autoUpdate, setAutoUpdate] = useState<boolean>(getAutoUpdatePref())
   const [autoSync, setAutoSync] = useState<boolean>(getAutoSyncPref())
@@ -551,7 +552,7 @@ export default function OnboardingPage() {
                   value={[bounceIntensity]}
                   onValueChange={([v]) => {
                     setBounceIntensity(v)
-                    localStorage.setItem('chaos-bounce-intensity', v.toString())
+                    setPref('chaos-bounce-intensity', v.toString())
                     const scale = v / 100
                     document.documentElement.style.setProperty('--bounce-scale', scale.toString())
                   }}
@@ -581,7 +582,7 @@ export default function OnboardingPage() {
                       className="h-auto py-1.5 flex flex-col text-xs"
                       onClick={() => {
                         setConfettiLevel(opt.value)
-                        localStorage.setItem('chaos-confetti-level', opt.value)
+                        setPref('chaos-confetti-level', opt.value)
                       }}
                     >
                       <span>{opt.emoji}</span>

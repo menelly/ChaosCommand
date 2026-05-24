@@ -63,6 +63,10 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('chaos-user-pin', pin) // Database key
     localStorage.setItem('isLoggedIn', 'true')
 
+    // Per-PIN UI prefs (theme/font/text-size/etc.) key off chaos-user-pin, so now that
+    // it's set, tell ThemeLoader to re-apply THIS profile's appearance. (CHA-226)
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event('chaos-pin-changed'))
+
     // Force initialize the new user's database.
     if (isDemoPin(pin)) {
       // The public demo profile (1111): seed sample data on first view, so logging in with
@@ -86,6 +90,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem('currentUserPin')
     localStorage.removeItem('chaos-user-pin') // Database key
     localStorage.removeItem('isLoggedIn')
+
+    // PIN cleared → fall back to the global/default appearance for the login screen.
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event('chaos-pin-changed'))
 
     console.log('🚪 Logged out - database connection closed, data preserved')
   }

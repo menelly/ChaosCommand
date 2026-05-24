@@ -17,6 +17,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import { getPref } from '@/lib/prefs'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -101,7 +102,7 @@ export default function MindMoodPage() {
       const existingForDate = entries.filter(e => e.date === storageDate)
       const updatedForDate = [...existingForDate, newEntry]
       await saveData(storageDate, CATEGORIES.TRACKER, 'mental-health', { entries: updatedForDate }, newEntry.tags || [])
-      const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
+      const confettiLevel = getPref('chaos-confetti-level') || 'medium'
       if (confettiLevel !== 'none' && isCelebrationEnabled('mental-health', userPin ?? '')) celebrate()
       const goblinism = MENTAL_HEALTH_GOBLINISMS[Math.floor(Date.now() / 1000) % MENTAL_HEALTH_GOBLINISMS.length] || 'Logged 💜'
       toast({ title: '💜 Logged', description: goblinism })

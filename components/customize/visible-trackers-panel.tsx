@@ -25,6 +25,7 @@ import {
   type SectionId,
   type VisibilitySection,
 } from "@/lib/visibility-sections"
+import { getPref, setPref } from "@/lib/prefs"
 
 // Shared with /body's Customize + the reproductive tracker: hide ONLY fertility/ovulation/BBT
 // while KEEPING menstrual-cycle tracking. (You may want to know when you bleed without
@@ -63,14 +64,14 @@ function SectionToggleList({ section, onChange }: SectionToggleListProps) {
 
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(section.storageKey)
+      const saved = getPref(section.storageKey)
       if (saved) setHidden(JSON.parse(saved))
       else setHidden([])
     } catch (e) {
       console.error(`Failed to load ${section.storageKey}:`, e)
     }
     try {
-      const fertPref = localStorage.getItem(HIDE_FERTILITY_KEY)
+      const fertPref = getPref(HIDE_FERTILITY_KEY)
       setHideFertility(fertPref ? JSON.parse(fertPref) : false)
     } catch (e) {
       console.error('Failed to load fertility preference:', e)
@@ -80,7 +81,7 @@ function SectionToggleList({ section, onChange }: SectionToggleListProps) {
   const toggleFertility = (hide: boolean) => {
     setHideFertility(hide)
     try {
-      localStorage.setItem(HIDE_FERTILITY_KEY, JSON.stringify(hide))
+      setPref(HIDE_FERTILITY_KEY, JSON.stringify(hide))
     } catch (e) {
       console.error('Failed to save fertility preference:', e)
     }
@@ -89,7 +90,7 @@ function SectionToggleList({ section, onChange }: SectionToggleListProps) {
   const persist = (next: string[]) => {
     setHidden(next)
     try {
-      localStorage.setItem(section.storageKey, JSON.stringify(next))
+      setPref(section.storageKey, JSON.stringify(next))
     } catch (e) {
       console.error(`Failed to save ${section.storageKey}:`, e)
     }

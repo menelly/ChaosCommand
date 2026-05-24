@@ -15,18 +15,20 @@
  * and the per-tracker enable/disable toggle (`chaos-celebration-disabled-${pin}`).
  */
 
+import { getPref, setPref } from '@/lib/prefs'
+
 export type CelebrationStyle = 'sparkle' | 'survival'
 
 const STYLE_KEY = 'chaos-celebration-style'
 
 export function getCelebrationStyle(): CelebrationStyle {
   if (typeof window === 'undefined') return 'sparkle'
-  const raw = localStorage.getItem(STYLE_KEY)
+  const raw = getPref(STYLE_KEY)
   if (raw === 'survival') return 'survival'
   return 'sparkle'
 }
 
 export function setCelebrationStyle(style: CelebrationStyle): void {
   if (typeof window === 'undefined') return
-  localStorage.setItem(STYLE_KEY, style)
+  setPref(STYLE_KEY, style)
 }

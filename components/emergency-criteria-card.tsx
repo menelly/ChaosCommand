@@ -21,6 +21,7 @@ import React, { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react'
+import { getPref, setPref, removePref } from '@/lib/prefs'
 
 interface Props {
   /** Unique key for localStorage ack — e.g., 'seizure-911-acknowledged' */
@@ -50,7 +51,7 @@ export function EmergencyCriteriaCard({
 
   useEffect(() => {
     try {
-      const ack = localStorage.getItem(storageKey)
+      const ack = getPref(storageKey)
       setAcknowledged(ack === 'true')
     } catch { /* localStorage unavailable */ }
     setHydrated(true)
@@ -58,12 +59,12 @@ export function EmergencyCriteriaCard({
 
   const handleAck = () => {
     setAcknowledged(true)
-    try { localStorage.setItem(storageKey, 'true') } catch { /* no-op */ }
+    try { setPref(storageKey, 'true') } catch { /* no-op */ }
   }
 
   const handleReopen = () => {
     setAcknowledged(false)
-    try { localStorage.removeItem(storageKey) } catch { /* no-op */ }
+    try { removePref(storageKey) } catch { /* no-op */ }
   }
 
   // Read-once, then collapsed for good (until the user taps the pill to reopen it). We deliberately

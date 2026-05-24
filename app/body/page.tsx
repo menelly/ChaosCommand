@@ -24,6 +24,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { getPref, setPref } from "@/lib/prefs"
 import AppCanvas from "@/components/app-canvas"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -72,11 +73,11 @@ export default function PhysicalHealthIndex() {
   // Load hidden trackers from localStorage on mount
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(HIDDEN_TRACKERS_KEY)
+      const saved = getPref(HIDDEN_TRACKERS_KEY)
       if (saved) {
         setHiddenTrackers(JSON.parse(saved))
       }
-      const fertilityPref = localStorage.getItem(HIDE_FERTILITY_KEY)
+      const fertilityPref = getPref(HIDE_FERTILITY_KEY)
       if (fertilityPref) {
         setHideFertility(JSON.parse(fertilityPref))
       }
@@ -89,7 +90,7 @@ export default function PhysicalHealthIndex() {
   const updateHiddenTrackers = (newHidden: string[]) => {
     setHiddenTrackers(newHidden)
     try {
-      localStorage.setItem(HIDDEN_TRACKERS_KEY, JSON.stringify(newHidden))
+      setPref(HIDDEN_TRACKERS_KEY, JSON.stringify(newHidden))
     } catch (e) {
       console.error('Failed to save hidden trackers:', e)
     }
@@ -106,7 +107,7 @@ export default function PhysicalHealthIndex() {
   const toggleFertilityFeatures = (hide: boolean) => {
     setHideFertility(hide)
     try {
-      localStorage.setItem(HIDE_FERTILITY_KEY, JSON.stringify(hide))
+      setPref(HIDE_FERTILITY_KEY, JSON.stringify(hide))
     } catch (e) {
       console.error('Failed to save fertility preference:', e)
     }

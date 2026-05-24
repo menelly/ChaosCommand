@@ -8,6 +8,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { getPref } from "@/lib/prefs"
 import AppCanvas from "@/components/app-canvas"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -112,7 +113,7 @@ export default function SleepTracker() {
       await loadEntries()
       setRefreshTrigger(prev => prev + 1)
 
-      const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
+      const confettiLevel = getPref('chaos-confetti-level') || 'medium'
       if (confettiLevel !== 'none' && isCelebrationEnabled('sleep', userPin ?? '')) {
         celebrate()
       }

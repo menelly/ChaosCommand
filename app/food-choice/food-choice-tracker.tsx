@@ -24,6 +24,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { getPref } from "@/lib/prefs"
 import { format } from "date-fns"
 import AppCanvas from "@/components/app-canvas"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -111,7 +112,7 @@ export default function FoodChoiceTracker() {
     try {
       await saveData(selectedDate, CATEGORIES.TRACKER, 'food-choice', updatedEntry)
 
-      const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
+      const confettiLevel = getPref('chaos-confetti-level') || 'medium'
       if (confettiLevel !== 'none' && isCelebrationEnabled('food-choice', userPin ?? '')) {
         celebrate()
       }

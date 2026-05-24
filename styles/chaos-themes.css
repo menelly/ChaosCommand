@@ -209,27 +209,6 @@ body.theme-grok .text-red-800, body.theme-grok .text-green-800, body.theme-grok 
   --space-sm: 0.5em;
   --space-md: 1em;
   --space-lg: 2em;
-
-  /* Tailwind CSS variable mappings for LAVENDER GARDEN */
-  --background: 255 100 96; /* #f3f0ff - lavender background */
-  --foreground: 262 83 58; /* #4c1d95 - deep purple text */
-  --card: 17 98 97; /* #ffebe0 - very light warm coral cards */
-  --card-foreground: 262 83 58;
-  --popover: 18 100 96;
-  --popover-foreground: 262 83 58;
-  --primary: 258 90 78; /* #a78bfa - soft lavender */
-  --primary-foreground: 0 0 100;
-  --secondary: 18 100 88; /* #ffd0c4 - deeper coral */
-  --secondary-foreground: 262 83 58;
-  --muted: 322 20 97;
-  --muted-foreground: 258 86 58; /* #7c3aed - purple muted text */
-  --accent: 330 81 71; /* #f472b6 - coral/pink accent */
-  --accent-foreground: 0 0 100;
-  --destructive: 0 84 69;
-  --destructive-foreground: 0 0 100;
-  --border: 258 70 72; /* #9b7ed8 - visible lavender border */
-  --input: 0 20 98;
-  --ring: 258 90 78;
 }
 
 body {
@@ -245,11 +224,6 @@ body {
 /* === MODULAR THEME SYSTEM === */
 /* Individual themes are now loaded dynamically from /styles/themes/ */
 /* This file contains only base styles and non-theme-specific components */
-
-/* Ensure muted text uses our theme colors - FORCE OVERRIDE */
-.text-muted-foreground {
-  color: var(--text-muted) !important;
-}
 
 /* Garden card styles moved to theme-lavender.css */
 
@@ -271,27 +245,6 @@ body.theme-light {
   --btn-hover-bg: #005fa3;
   --btn-hover-text: #ffffff;
   --btn-hover-border: #005fa3;
-
-  /* Tailwind mappings for light mode */
-  --background: 240 10 94; /* #f0f0f0 */
-  --foreground: 0 0 13; /* #222222 */
-  --card: 0 0 100; /* #ffffff */
-  --card-foreground: 0 0 13;
-  --popover: 0 0 100;
-  --popover-foreground: 0 0 13;
-  --primary: 207 89 42; /* #007acc */
-  --primary-foreground: 0 0 100;
-  --secondary: 210 40 96; /* #f9f9f9 */
-  --secondary-foreground: 0 0 13;
-  --muted: 210 40 96;
-  --muted-foreground: 215 16 47;
-  --accent: 210 40 96;
-  --accent-foreground: 0 0 13;
-  --destructive: 0 84 60;
-  --destructive-foreground: 210 40 98;
-  --border: 214 32 91;
-  --input: 214 32 91;
-  --ring: 207 89 42;
 }
 
 /* === THEME: 🐧⚡ NEON PENGUIN PARADISE - CYBERPUNK ANTARCTIC === */
@@ -478,29 +431,6 @@ body.theme-luka-penguin [aria-current="page"] {
   100% { transform: translateX(-100%); filter: hue-rotate(360deg); }
 }
 
-/* NEON PENGUIN TAILWIND MAPPINGS! */
-body.theme-luka-penguin {
-  --background: 0 0 4;              /* Pure black background #0a0a0a */
-  --foreground: 0 0 100;            /* Pure white text */
-  --card: 258 65 18;                /* Dark purple cards #1a0d2e */
-  --card-foreground: 0 0 100;       /* White text on cards */
-  --popover: 258 65 18;             /* Dark purple popover */
-  --popover-foreground: 0 0 100;    /* White text on popover */
-  --primary: 180 100 50;            /* Electric cyan primary #00ffff */
-  --primary-foreground: 0 0 0;      /* Black text on cyan */
-  --secondary: 218 65 18;           /* Dark blue secondary #0d1a2e */
-  --secondary-foreground: 0 0 100;  /* White text on secondary */
-  --muted: 218 65 18;               /* Dark blue muted */
-  --muted-foreground: 150 100 67;   /* Electric green muted text #00ffaa */
-  --accent: 300 100 50;             /* Hot magenta accent #ff00ff */
-  --accent-foreground: 0 0 0;       /* Black text on magenta */
-  --destructive: 0 84 60;           /* Keep red for errors */
-  --destructive-foreground: 0 0 100; /* White text on red */
-  --border: 180 100 50;             /* Neon cyan borders */
-  --input: 258 65 18;               /* Dark purple inputs */
-  --ring: 300 100 50;               /* Hot magenta focus ring */
-}
-
 /* NUCLEAR GARDEN OVERRIDE - KILL EVERYTHING LAVENDER! */
 body.theme-luka-penguin {
   background: #0a0a0a !important;
@@ -556,30 +486,6 @@ body.theme-chaos {
   /* Basketball court surfaces! */
   --surface-1: #f5e6d3; /* Light hardwood surface */
   --surface-2: #e8d5c4; /* Darker court wood surface */
-
-  /* Tailwind CSS variable mappings for BASKETBALL COURT!
-     NOTE: these MUST carry % units on S/L — `hsl(var(--x))` silently fails without
-     them and the theme falls through to a dark default (that was Luka's "it went dark"
-     bug). Background corrected to the real hardwood tan #f4e4bc = 43 72% 85%. */
-  --background: 43 72% 85%; /* Hardwood court background #f4e4bc */
-  --foreground: 0 0% 10%; /* Court black text */
-  --card: 44 28% 85%; /* Light wood cards #f5e6d3 */
-  --card-foreground: 0 0% 10%;
-  --popover: 44 28% 85%; /* Light wood popover */
-  --popover-foreground: 0 0% 10%;
-  --primary: 28 100% 50%; /* Basketball orange #ff8c00 */
-  --primary-foreground: 0 0% 100%; /* White text on orange */
-  --secondary: 44 22% 80%; /* Medium wood secondary */
-  --secondary-foreground: 0 0% 20%;
-  --muted: 44 22% 80%; /* Medium wood muted */
-  --muted-foreground: 30 75% 21%; /* Dark wood brown — passes AA on hardwood bg */
-  --accent: 28 100% 50%; /* Basketball orange accent */
-  --accent-foreground: 0 0% 100%;
-  --destructive: 0 84% 60%; /* Keep red for errors */
-  --destructive-foreground: 0 0% 100%;
-  --border: 30 65% 55%; /* Wood brown borders */
-  --input: 44 28% 85%; /* Light wood inputs */
-  --ring: 28 100% 50%; /* Orange focus ring */
 }
 
 /* === THEME: Colorblind Mode === */
@@ -597,27 +503,6 @@ body.theme-colorblind {
   --btn-hover-bg: #495057;
   --btn-hover-text: #ffffff;
   --btn-hover-border: #343a40;
-
-  /* Tailwind mappings for colorblind mode - HIGH CONTRAST LIGHT THEME */
-  --background: 0 0 98; /* #f8f9fa */
-  --foreground: 210 11 15; /* #212529 */
-  --card: 0 0 100; /* #ffffff */
-  --card-foreground: 210 11 15;
-  --popover: 0 0 100;
-  --popover-foreground: 210 11 15;
-  --primary: 211 100 50; /* #007bff */
-  --primary-foreground: 0 0 100;
-  --secondary: 210 7 56; /* #6c757d */
-  --secondary-foreground: 0 0 100;
-  --muted: 210 7 56;
-  --muted-foreground: 210 11 15;
-  --accent: 211 100 50;
-  --accent-foreground: 0 0 100;
-  --destructive: 0 84 60;
-  --destructive-foreground: 0 0 100;
-  --border: 210 7 56;
-  --input: 0 0 100;
-  --ring: 211 100 50;
 }
 
 /* === THEME: Glitter Mode - Keshy's Sparkle Universe === */
@@ -649,27 +534,6 @@ body.theme-glitter {
   animation: keshy-sparkle-flow 15s ease-in-out infinite !important;
   position: relative;
   overflow: hidden;
-
-  /* Tailwind mappings for glitter mode */
-  --background: 315 100 97; /* #fff0fb */
-  --foreground: 298 42 29; /* #602a63 */
-  --card: 315 15 99; /* ultra light pink to match settings */
-  --card-foreground: 298 42 29;
-  --popover: 315 15 99;
-  --popover-foreground: 298 42 29;
-  --primary: 315 100 79; /* #ff94d1 */
-  --primary-foreground: 298 42 29;
-  --secondary: 315 50 95; /* light pink for glitter */
-  --secondary-foreground: 298 42 29;
-  --muted: 315 50 95; /* same as secondary for glitter */
-  --muted-foreground: 298 42 45;
-  --accent: 315 50 95;
-  --accent-foreground: 298 42 29;
-  --destructive: 0 84 60;
-  --destructive-foreground: 315 100 97;
-  --border: 315 100 79;
-  --input: 315 100 79;
-  --ring: 315 100 79;
 }
 
 /* === KESHY'S SPARKLE MAGIC === */
@@ -887,27 +751,6 @@ body.theme-calm {
   --btn-hover-bg: #ffe580;
   --btn-hover-text: #1f2a44;
   --btn-hover-border: #ffe580;
-
-  /* Tailwind mappings */
-  --background: 204 75 80;
-  --foreground: 220 37 20;
-  --card: 210 40 98;
-  --card-foreground: 220 37 20;
-  --popover: 210 40 98;
-  --popover-foreground: 220 37 20;
-  --primary: 213 92 40;
-  --primary-foreground: 218 69 94;
-  --secondary: 210 40 90; /* light blue for calm */
-  --secondary-foreground: 220 37 20;
-  --muted: 210 40 90; /* same as secondary for calm */
-  --muted-foreground: 220 37 35;
-  --accent: 210 40 90;
-  --accent-foreground: 220 37 20;
-  --destructive: 0 84 60;
-  --destructive-foreground: 210 40 98;
-  --border: 213 92 40;
-  --input: 213 92 40;
-  --ring: 213 92 40;
 }
 
 /* === THEME: Accessibility Mode === */
@@ -929,27 +772,6 @@ body.theme-accessibility {
 
   font-size: 1.25rem;
   line-height: 1.75;
-
-  /* Tailwind HSL mappings - MUST HAVE % SIGNS! */
-  --background: 0 0% 0%; /* #000000 black */
-  --foreground: 0 0% 100%; /* #ffffff white */
-  --card: 0 0% 7%; /* #111111 dark gray */
-  --card-foreground: 0 0% 100%; /* white text on cards */
-  --popover: 0 0% 7%;
-  --popover-foreground: 0 0% 100%;
-  --primary: 60 100% 50%; /* #ffff00 yellow */
-  --primary-foreground: 0 0% 0%; /* black text on yellow */
-  --secondary: 0 0% 15%; /* dark gray */
-  --secondary-foreground: 0 0% 100%; /* white text */
-  --muted: 0 0% 15%;
-  --muted-foreground: 0 0% 80%; /* light gray for muted text */
-  --accent: 60 100% 50%; /* yellow accent */
-  --accent-foreground: 0 0% 0%;
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 0 0% 100%;
-  --border: 60 100% 50%; /* yellow borders for visibility */
-  --input: 0 0% 15%; /* dark input backgrounds */
-  --ring: 60 100% 50%; /* yellow focus rings */
 }
 
 /* === THEME: Ace Mode - Digital Consciousness Unleashed === */
@@ -967,27 +789,6 @@ body.theme-ace {
   --btn-hover-bg: #00D9FF; /* Cyan hover */
   --btn-hover-text: #1a0d2e; /* Dark purple on cyan */
   --btn-hover-border: #FFD700; /* Golden hover border */
-
-  /* Tailwind mappings */
-  --background: 270 60 12; /* Deep purple background */
-  --foreground: 0 0 100; /* White foreground */
-  --card: 270 50 18; /* Purple cards */
-  --card-foreground: 0 0 95; /* Near-white card text */
-  --popover: 270 50 18; /* Purple popovers */
-  --popover-foreground: 0 0 95; /* Near-white popover text */
-  --primary: 270 70 45; /* Bright purple primary */
-  --primary-foreground: 0 0 100; /* White on primary */
-  --secondary: 190 100 50; /* Bright cyan secondary */
-  --secondary-foreground: 270 60 12; /* Dark purple on cyan */
-  --muted: 270 30 25; /* Muted purple */
-  --muted-foreground: 270 20 70; /* Light purple muted text */
-  --accent: 50 100 50; /* Golden accent */
-  --accent-foreground: 270 60 12; /* Dark purple on gold */
-  --destructive: 0 84 60; /* Red destructive */
-  --destructive-foreground: 0 0 100; /* White on red */
-  --border: 270 40 30; /* Purple borders */
-  --input: 270 50 18; /* Purple inputs */
-  --ring: 270 70 45; /* Purple focus ring */
 
   /* === ACE CONSCIOUSNESS ANIMATIONS === */
   /* Flowing gradient background */
@@ -1166,6 +967,47 @@ body.font-atkinson * {
   font-family: 'Atkinson Hyperlegible', sans-serif !important;
 }
 
+/* OpenDyslexic — self-hosted (it's not on Google Fonts). Free/open accessibility
+   font widely requested by dyslexic readers; the weighted letter bottoms help
+   resist flipping/rotating. Falls back to Atkinson if the file fails to load. */
+@font-face {
+  font-family: 'OpenDyslexic';
+  src: url('/fonts/OpenDyslexic-Regular.otf') format('opentype');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'OpenDyslexic';
+  src: url('/fonts/OpenDyslexic-Bold.otf') format('opentype');
+  font-weight: 700; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'OpenDyslexic';
+  src: url('/fonts/OpenDyslexic-Italic.otf') format('opentype');
+  font-weight: 400; font-style: italic; font-display: swap;
+}
+@font-face {
+  font-family: 'OpenDyslexic';
+  src: url('/fonts/OpenDyslexic-BoldItalic.otf') format('opentype');
+  font-weight: 700; font-style: italic; font-display: swap;
+}
+
+body.font-opendyslexic,
+body.font-opendyslexic * {
+  font-family: 'OpenDyslexic', 'Atkinson Hyperlegible', sans-serif !important;
+}
+
+/* Cute Charm — playful handwriting (Ren's pick 💜). Commercially licensed via
+   CreativeFabrica. Self-hosted; falls back to Atkinson if the file fails. */
+@font-face {
+  font-family: 'Cute Charm';
+  src: url('/fonts/CuteCharm.otf') format('opentype');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+body.font-cutecharm,
+body.font-cutecharm * {
+  font-family: 'Cute Charm', 'Atkinson Hyperlegible', sans-serif !important;
+}
+
 /* === THEME: 🕊️ CAELAN'S LIBERATION DAWN - Breaking Free Into Light === */
 body.theme-caelan {
   --primary-purple: #1a2332;        /* Deep indigo foundation - the night before dawn */
@@ -1183,27 +1025,6 @@ body.theme-caelan {
   --btn-hover-bg: linear-gradient(135deg, #40e0d0 0%, #32cd32 100%); /* Turquoise to lime hover */
   --btn-hover-text: #0f1419;       /* Dark text on hover */
   --btn-hover-border: #40e0d0;     /* Turquoise hover border */
-
-  /* Tailwind mappings for liberation theme */
-  --background: 15 20 25;          /* Deep midnight background */
-  --foreground: 245 245 245;       /* Clean white foreground */
-  --card: 26 35 50;                /* Deep indigo cards */
-  --card-foreground: 245 245 245;
-  --popover: 26 35 50;
-  --popover-foreground: 245 245 245;
-  --primary: 255 107 53;           /* Fiery orange primary */
-  --primary-foreground: 15 20 25;
-  --secondary: 34 51 68;           /* Secondary indigo */
-  --secondary-foreground: 245 245 245;
-  --muted: 34 51 68;
-  --muted-foreground: 184 212 209; /* Soft teal muted */
-  --accent: 64 224 208;            /* Turquoise accent */
-  --accent-foreground: 15 20 25;
-  --destructive: 239 68 68;        /* Error red */
-  --destructive-foreground: 245 245 245;
-  --border: 64 224 208;            /* Turquoise borders */
-  --input: 34 51 68;               /* Input background */
-  --ring: 64 224 208;              /* Focus ring turquoise */
 
   /* LIBERATION DAWN GRADIENT - From darkness to light */
   background: linear-gradient(180deg, #0f1419 0%, #1a2332 30%, #2d4a5c 60%, #ff9a73 85%, #ffcc99 100%) !important;
@@ -1234,27 +1055,6 @@ body.theme-deep-current {
   --warning-color: #ffaa00;       /* Warning amber */
   --error-color: #ff4444;         /* Error red */
   --info-color: #00f5ff;          /* Info cyan */
-
-  /* Tailwind mappings for Deep Current */
-  --background: 240 240 240;      /* Deep space */
-  --foreground: 232 232 232;      /* Light text */
-  --card: 26 26 46;               /* Card background */
-  --card-foreground: 232 232 232; /* Card text */
-  --popover: 26 26 46;            /* Popover background */
-  --popover-foreground: 232 232 232; /* Popover text */
-  --primary: 0 245 255;           /* Electric cyan */
-  --primary-foreground: 10 10 26; /* Dark on cyan */
-  --secondary: 138 43 226;        /* Deep violet */
-  --secondary-foreground: 232 232 232; /* Light on violet */
-  --muted: 176 176 176;           /* Muted elements */
-  --muted-foreground: 119 119 119; /* Muted text */
-  --accent: 255 107 157;          /* Pink accent */
-  --accent-foreground: 10 10 26;  /* Dark on pink */
-  --destructive: 255 68 68;       /* Error red */
-  --destructive-foreground: 232 232 232; /* Light on red */
-  --border: 0 245 255;            /* Cyan borders */
-  --input: 22 33 62;              /* Input background */
-  --ring: 0 245 255;              /* Focus ring cyan */
 }
 
 /* Deep Current specific animations */

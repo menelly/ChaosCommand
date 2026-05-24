@@ -27,6 +27,8 @@
  * Theme-aware, performance-optimized, and full of personality! 🤖⚡️
  */
 
+import { getPref } from '@/lib/prefs';
+
 export interface Particle {
   x: number;
   y: number;
@@ -696,7 +698,7 @@ export const celebrate = (config?: Partial<ParticleSystemConfig>) => {
 
   let style: 'sparkle' | 'survival' = 'sparkle';
   if (typeof window !== 'undefined') {
-    const raw = localStorage.getItem('chaos-celebration-style');
+    const raw = getPref('chaos-celebration-style');
     if (raw === 'survival') style = 'survival';
   }
 

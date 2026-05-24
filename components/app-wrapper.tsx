@@ -8,6 +8,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { getPref } from '@/lib/prefs'
 import { useDatabase } from '@/lib/database/hooks/use-database'
 import { LicenseProvider } from '@/lib/contexts/license-context'
 import LicenseGate from '@/components/license-gate'
@@ -105,13 +106,13 @@ function AppContent({ children }: AppWrapperProps) {
   // Restore bounce intensity from localStorage on mount — CSS default is 1 (full bounce)
   // so without this, navigating between pages resets to SUPER BOUNCY
   useEffect(() => {
-    const savedIntensity = parseInt(localStorage.getItem('chaos-bounce-intensity') || '10')
+    const savedIntensity = parseInt(getPref('chaos-bounce-intensity') || '10')
     const scale = savedIntensity / 100
     document.documentElement.style.setProperty('--bounce-scale', scale.toString())
     if (savedIntensity <= 25 && savedIntensity > 0) {
       document.body.classList.add('bounce-low')
     }
-    if (savedIntensity === 0 || localStorage.getItem('chaos-animations') === 'false') {
+    if (savedIntensity === 0 || getPref('chaos-animations') === 'false') {
       document.body.classList.add('no-animations')
     }
   }, [])

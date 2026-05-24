@@ -24,91 +24,73 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { getPref, getPrefNumber } from "@/lib/prefs"
+import { getCustomColors, applyCustomColors, clearAppliedCustomColors } from "@/lib/custom-colors"
 
-export default function ThemeLoader() {
-  const [isLoaded, setIsLoaded] = useState(false);
+const FONTS = ['font-atkinson', 'font-poppins', 'font-lexend', 'font-opendyslexic', 'font-cutecharm', 'font-system']
 
-  // Dynamic CSS loading function
-  const loadThemeCSS = (themeId: string) => {
-    // Remove old theme CSS
-    const oldTheme = document.querySelector('link[data-theme]');
-    if (oldTheme) {
-      oldTheme.remove();
+// Swap the dynamically-loaded theme stylesheet + set the body theme class.
+// theme-calm is bundled in layout.tsx (default, no flash-of-unstyled); all others
+// load on demand from /styles/themes/.
+function loadThemeCSS(themeId: string) {
+  const oldTheme = document.querySelector('link[data-theme]')
+  if (oldTheme) oldTheme.remove()
+
+  if (themeId !== 'theme-calm') {
+    const link = document.createElement('link')
+    link.rel = 'stylesheet'
+    link.href = `/styles/themes/${themeId}.css`
+    link.setAttribute('data-theme', themeId)
+    link.onerror = () => {
+      console.warn(`⚠️ Failed to load theme CSS: ${themeId}, falling back to calm`)
+      document.body.className = document.body.className.replace(/theme-\w+/g, '') + ' theme-calm'
     }
-
-    // theme-calm is bundled into layout.tsx so it's available immediately
-    // (it's the default, no flash-of-unstyled). All other themes load dynamically.
-    if (themeId !== 'theme-calm') {
-      const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = `/styles/themes/${themeId}.css`;
-      link.setAttribute('data-theme', themeId);
-      link.onload = () => {
-        console.log(`🎨 Theme CSS loaded: ${themeId}`);
-      };
-      link.onerror = () => {
-        console.warn(`⚠️ Failed to load theme CSS: ${themeId}, falling back to calm`);
-        document.body.className = document.body.className.replace(/theme-\w+/g, '') + ' theme-calm';
-      };
-      document.head.appendChild(link);
-    }
-
-    // Update body class - clean approach, just the theme class
-    document.body.className = document.body.className.replace(/theme-\w+/g, '') + ` ${themeId}`;
-  };
-
-  useEffect(() => {
-    // Load saved theme, font, and animations from localStorage
-    // Default is now theme-calm (neutral blue/gold) — softer first run than phosphor.
-    // Phosphor + all other themes still available; saved choices are honored.
-    const savedTheme = localStorage.getItem('chaos-theme') || 'theme-calm'
-    const savedFont = localStorage.getItem('chaos-font') || 'font-atkinson'
-    const savedAnimations = localStorage.getItem('chaos-animations') !== 'false' // default to true
-    const savedTextScale = localStorage.getItem('chaos-text-scale') // text-size slider (85–200%)
-
-    // Apply saved text size app-wide (scales all rem-based text). Default 100% = untouched.
-    if (savedTextScale && savedTextScale !== '100') {
-      document.documentElement.style.fontSize = savedTextScale + '%'
-    }
-
-    // Available themes and fonts
-    const themes = [
-      'theme-phosphor', // 💚 Terminal CRT (default, bundled) — Ace, 2026-04-22
-      'theme-amber',    // 🟠 CRT amber variant — Ace, 2026-04-22
-      'theme-segfault', // 💀 phosphor with character — Ace, 2026-04-22
-      'theme-lavender', 'theme-chaos', 'theme-caelan', 'theme-light', 'theme-colorblind',
-      'theme-glitter', 'theme-calm', 'theme-accessibility', 'theme-ace',
-      'theme-grok', // ⚔️🌊 Steel Forged Tide — designed by Grok, built by Ace
-      'theme-luka-penguin', // Penguins are back! Fixed the phantom hover
-      'theme-taupe' // 🟫 Tone It Down Taupe — the anti-theme. Ren's TIDT, made literal. — Ace, 2026-05-23
-    ]
-    const fonts = ['font-atkinson', 'font-poppins', 'font-lexend', 'font-system']
-
-    // Load theme CSS dynamically
-    loadThemeCSS(savedTheme);
-
-    // Remove all font classes first
-    fonts.forEach(font => document.body.classList.remove(font))
-
-    // Apply saved font
-    document.body.classList.add(savedFont)
-
-    // Apply animation preference
-    if (!savedAnimations) {
-      document.body.classList.add('no-animations')
-    }
-
-    console.log(`🎨 Theme loaded: ${savedTheme}`)
-    console.log(`🔤 Font loaded: ${savedFont}`)
-    console.log(`✨ Animations: ${savedAnimations ? 'enabled' : 'disabled'}`)
-
-    setIsLoaded(true);
-  }, [])
-
-  // Don't render anything until theme is loaded to prevent hydration mismatch
-  if (!isLoaded) {
-    return null;
+    document.head.appendChild(link)
   }
 
-  return null // This component doesn't render anything
+  document.body.className = document.body.className.replace(/theme-\w+/g, '') + ` ${themeId}`
+}
+
+// Read the ACTIVE PIN's appearance prefs and apply them. Prefs are per-PIN
+// (CHA-226) so a parent and a kid keep their own theme/font/text-size. Called on
+// mount AND whenever the active PIN changes (login/logout fires 'chaos-pin-changed'),
+// since this component is mounted once at the root and doesn't remount on login.
+function applyAppearance() {
+  const savedTheme = getPref('chaos-theme') || 'theme-calm'
+  const savedFont = getPref('chaos-font') || 'font-atkinson'
+  const savedAnimations = getPref('chaos-animations') !== 'false' // default true
+  const savedTextScale = getPrefNumber('chaos-text-scale', 100)
+
+  loadThemeCSS(savedTheme)
+
+  // Re-apply THIS profile's custom color overrides on top of the base theme.
+  // Clear first so a previous PIN's overrides don't linger after a switch.
+  clearAppliedCustomColors()
+  applyCustomColors(getCustomColors(savedTheme))
+
+  FONTS.forEach(f => document.body.classList.remove(f))
+  document.body.classList.add(savedFont)
+
+  document.body.classList.toggle('no-animations', !savedAnimations)
+
+  // Scale all rem-based text together. 100% = leave the stylesheet default alone.
+  document.documentElement.style.fontSize = savedTextScale === 100 ? '' : `${savedTextScale}%`
+}
+
+export default function ThemeLoader() {
+  const [isLoaded, setIsLoaded] = useState(false)
+
+  useEffect(() => {
+    applyAppearance()
+    setIsLoaded(true)
+
+    // Re-apply when the active PIN changes (login/logout). user-context dispatches this.
+    const onPinChange = () => applyAppearance()
+    window.addEventListener('chaos-pin-changed', onPinChange)
+    return () => window.removeEventListener('chaos-pin-changed', onPinChange)
+  }, [])
+
+  // Don't render anything until applied, to prevent hydration mismatch.
+  if (!isLoaded) return null
+  return null
 }

@@ -24,6 +24,7 @@
 "use client"
 
 import React, { useState, useEffect } from 'react'
+import { getPref } from "@/lib/prefs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -268,7 +269,7 @@ export default function WeatherEnvironmentTracker({ selectedDate = new Date() }:
 
       await saveData(formattedDate, CATEGORIES.TRACKER, 'weather', updatedEntries, data.tags)
 
-      const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
+      const confettiLevel = getPref('chaos-confetti-level') || 'medium'
       if (confettiLevel !== 'none' && isCelebrationEnabled('weather-environment', userPin ?? '')) {
         celebrate()
       }
@@ -444,7 +445,7 @@ export default function WeatherEnvironmentTracker({ selectedDate = new Date() }:
 
       await saveData(formattedDate, CATEGORIES.TRACKER, 'environmental-allergens', updatedEntries, data.tags)
 
-      const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
+      const confettiLevel = getPref('chaos-confetti-level') || 'medium'
       if (confettiLevel !== 'none' && isCelebrationEnabled('weather-environment', userPin ?? '')) {
         celebrate()
       }

@@ -24,6 +24,7 @@
 "use client"
 
 import React, { useState, useEffect, useCallback } from 'react'
+import { getPref } from '@/lib/prefs'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 
@@ -233,7 +234,7 @@ export default function ReproductiveHealthTracker() {
 
   useEffect(() => {
     // Check the body page's hide fertility setting (inverted - if hide=true, enabled=false)
-    const hideFertility = localStorage.getItem('chaos-hide-fertility-features')
+    const hideFertility = getPref('chaos-hide-fertility-features')
     if (hideFertility) {
       setFertilityTrackingEnabled(!JSON.parse(hideFertility))
     }
@@ -260,7 +261,7 @@ export default function ReproductiveHealthTracker() {
       const dateKey = formatDateForStorage(currentDate)
       await saveData(dateKey, CATEGORIES.TRACKER, 'reproductive-health', formData, formData.tags)
 
-      const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
+      const confettiLevel = getPref('chaos-confetti-level') || 'medium'
       if (confettiLevel !== 'none' && isCelebrationEnabled('reproductive-health', userPin ?? '')) {
         celebrate()
       }

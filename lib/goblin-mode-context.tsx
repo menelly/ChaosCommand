@@ -24,6 +24,7 @@
 "use client"
 
 import React, { createContext, useContext, useState, useEffect } from 'react'
+import { getPref, setPref } from '@/lib/prefs'
 
 interface GoblinModeContextType {
   goblinMode: boolean
@@ -37,11 +38,11 @@ export function GoblinModeProvider({ children }: { children: React.ReactNode }) 
 
   const setGoblinMode = (enabled: boolean) => {
     setGoblinModeState(enabled)
-    localStorage.setItem('chaos-goblin-mode', enabled.toString())
+    setPref('chaos-goblin-mode', enabled.toString())
   }
 
   useEffect(() => {
-    const savedGoblinMode = localStorage.getItem('chaos-goblin-mode') !== 'false'
+    const savedGoblinMode = getPref('chaos-goblin-mode') !== 'false'
     setGoblinModeState(savedGoblinMode)
   }, [])
 

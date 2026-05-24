@@ -29,6 +29,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { getPref } from '@/lib/prefs'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -261,7 +262,7 @@ export default function DiabetesTracker() {
       setEditingEntry(null)
       setIsAddModalOpen(false)
 
-      const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
+      const confettiLevel = getPref('chaos-confetti-level') || 'medium'
       if (confettiLevel !== 'none' && isCelebrationEnabled('diabetes-tracker', userPin ?? '')) {
         celebrate()
       }

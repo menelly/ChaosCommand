@@ -107,15 +107,28 @@ export default function RootLayout({
               // Load theme immediately to prevent color flash
               (function() {
                 try {
+                  // Per-PIN appearance prefs — mirrors lib/prefs.ts by hand (this inline
+                  // script can't import TS). Namespace by the active PIN (chaos-user-pin);
+                  // before login, or for a value not yet migrated, fall back to the legacy
+                  // global key (and adopt it into the PIN namespace on first read). (CHA-226)
+                  var pin = localStorage.getItem('chaos-user-pin');
+                  var readPref = function(k) {
+                    if (!pin) return localStorage.getItem(k);
+                    var scoped = localStorage.getItem('chaos-pref:' + pin + ':' + k);
+                    if (scoped !== null) return scoped;
+                    var legacy = localStorage.getItem(k);
+                    if (legacy !== null) { localStorage.setItem('chaos-pref:' + pin + ':' + k, legacy); return legacy; }
+                    return null;
+                  };
                   // Default theme: theme-calm (neutral blue/gold) — a softer first run
                   // than CRT-green phosphor. Saved themes (incl. phosphor) are honored.
-                  const savedTheme = localStorage.getItem('chaos-theme') || 'theme-calm';
-                  const savedFont = localStorage.getItem('chaos-font') || 'font-atkinson';
-                  const savedAnimations = localStorage.getItem('chaos-animations') !== 'false'; // default to true
+                  const savedTheme = readPref('chaos-theme') || 'theme-calm';
+                  const savedFont = readPref('chaos-font') || 'font-atkinson';
+                  const savedAnimations = readPref('chaos-animations') !== 'false'; // default to true
 
                   // Available themes and fonts
                   const themes = ['theme-phosphor', 'theme-amber', 'theme-segfault', 'theme-lavender', 'theme-chaos', 'theme-caelan', 'theme-light', 'theme-colorblind', 'theme-glitter', 'theme-calm', 'theme-accessibility', 'theme-ace', 'theme-grok', 'theme-luka-penguin', 'theme-taupe'];
-                  const fonts = ['font-atkinson', 'font-poppins', 'font-lexend', 'font-system'];
+                  const fonts = ['font-atkinson', 'font-poppins', 'font-lexend', 'font-opendyslexic', 'font-cutecharm', 'font-system'];
 
                   // Remove all theme classes first
                   themes.forEach(theme => document.body.classList.remove(theme));

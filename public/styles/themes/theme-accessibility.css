@@ -9,14 +9,14 @@
 body.theme-accessibility {
   --background: 0 0% 0%;
   --foreground: 0 0% 100%;
-  --card: 0 0% 100%;
-  --card-foreground: 0 0% 0%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 0 0% 0%;
+  --card: 0 0% 9%;                  /* #171717 near-black panel on the pure-black bg */
+  --card-foreground: 0 0% 100%;     /* white text — ~18:1 on card (was white-on-WHITE: invisible) */
+  --popover: 0 0% 9%;
+  --popover-foreground: 0 0% 100%;
   --primary: 0 0% 100%;             /* white button, black text */
   --primary-foreground: 0 0% 0%;
-  --secondary: 0 0% 100%;
-  --secondary-foreground: 0 0% 0%;
+  --secondary: 0 0% 9%;
+  --secondary-foreground: 0 0% 100%;
   --muted: 0 0% 0%;
   --muted-foreground: 0 0% 80%;     /* #ccc on black = 13:1 */
   --accent: 0 0% 100%;
@@ -57,14 +57,14 @@ body.theme-accessibility h6 { font-size: 1.4em !important; }
 body.theme-accessibility .card,
 body.theme-accessibility .tracker-card,
 body.theme-accessibility .module-card {
-  background: #ffffff !important;
-  border: 3px solid #000000 !important;
-  color: #000000 !important;
+  background: #171717 !important;        /* near-black panel (matches --card) */
+  border: 3px solid #ffffff !important;  /* white border delineates the card on black bg */
+  color: #ffffff !important;             /* white text — was #000 on a white card = invisible */
   box-shadow: none !important;
 }
 body.theme-accessibility .card:hover,
 body.theme-accessibility .tracker-card:hover,
-body.theme-accessibility .module-card:hover { background: #f0f0f0 !important; border-color: #333333 !important; }
+body.theme-accessibility .module-card:hover { background: #262626 !important; border-color: #ffff00 !important; }
 
 /* Buttons — invert on hover */
 body.theme-accessibility button,
@@ -90,6 +90,27 @@ body.theme-accessibility select {
 }
 body.theme-accessibility input::placeholder,
 body.theme-accessibility textarea::placeholder { color: #595959 !important; font-weight: bold !important; }
+
+/* Select/combobox trigger — the blanket white-button rule whitened it, which hid
+   the light muted sub-text (e.g. the theme description). Make the trigger dark like
+   the cards so the muted text reads. (The OPEN dropdown is already dark via --popover.) */
+body.theme-accessibility [role="combobox"] {
+  background: #171717 !important;
+  color: #ffffff !important;
+  border: 3px solid #ffffff !important;
+}
+
+/* Sliders — the track is bg-secondary (near-black), invisible on the black page.
+   Give it a visible gray bar + white outline, a high-vis yellow fill, and a bold thumb. */
+body.theme-accessibility .slider-track {
+  background: #555555 !important;
+  border: 1px solid #ffffff !important;
+}
+body.theme-accessibility .slider-range { background: #ffff00 !important; }
+body.theme-accessibility .slider-thumb {
+  background: #ffffff !important;
+  border: 3px solid #000000 !important;
+}
 
 /* Links — bright accessible blue on black (8.5:1), invert on hover */
 body.theme-accessibility a { color: #4dabf7 !important; text-decoration: underline !important; font-weight: bold !important; }

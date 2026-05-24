@@ -1,0 +1,6 @@
+{
+  "version": "0.5.5",
+  "released": "2026-05-24",
+  "url": "https://chaoscommand.center/download",
+  "notes": "0.5.5 \u2014 Accessibility & Customization. Every profile (PIN) now keeps its own theme, fonts, visible trackers, and colors \u2014 so a parent and a kid don't step on each other. New tweak-your-colors picker (start from any theme, nudge it, saved per profile). Added OpenDyslexic + more font choices. Rebuilt the whole theme engine so every theme actually renders right (RIP, mystery dark backgrounds). 30+ survival familiars in Cheerleader & Sports/Games sets you can choose between, plus a clicky-dopamine survival box. Accessibility theme made genuinely readable end to end."
+}

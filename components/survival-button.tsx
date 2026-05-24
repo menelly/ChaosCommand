@@ -24,6 +24,7 @@
 "use client"
 
 import React, { useState, useEffect, useCallback, useRef } from "react"
+import { getPref } from "@/lib/prefs"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -76,6 +77,24 @@ const goblinPhrases = [
   "Your chaos goblin is cheering. Can you hear the tiny pom-poms?",
   "Surviving is not the bare minimum. It IS the achievement.",
   "You didn't just survive — you survived while your body played on hard mode.",
+  // More variety added 2026-05-24 — bigger pool keeps the reward fresh (the
+  // "pavlov'd by confetti in a good way" effect dulls if the lines repeat).
+  "You stayed. On a day that didn't make it easy. That counts.",
+  "Still here, still spiteful, still unkillable. The streak holds.",
+  "Your body filed a complaint and you ignored it like a champion.",
+  "You survived a day your nervous system tried to cancel. Petty win, real win.",
+  "Nobody saw how hard that was. I did. You made it anyway.",
+  "Another day the warranty should've voided. Still running.",
+  "You did the invisible, unglamorous work of staying alive. Standing ovation.",
+  "The day came for you. You came back. 1–0.",
+  "You outlasted another one. The body tried; the body lost.",
+  "Survived. Again. At this point it's just your brand.",
+  "You're not behind. You're alive, which was the actual assignment.",
+  "Hard day, soft landing. You made it to the checkbox.",
+  "Still kicking, still here, still annoying the prognosis.",
+  "You did a whole day in a body that charges admission. Worth it.",
+  "Nobody's clapping out there, so I'll do it in here. You made it.",
+  "The streak doesn't care if it was pretty. Only that you're here.",
 ]
 
 // Softer affirmations (still not condescending)
@@ -98,15 +117,69 @@ const normalAffirmations = [
   "The fact that you're tracking this means you haven't stopped fighting.",
 ]
 
-// Array of familiar images for rotation
-const familiars = [
-  '/familiars/cheer.png',
-  '/familiars/owl.png',
-  '/familiars/puppy.png',
-  '/familiars/raccoon.png',
-  '/familiars/robot.png',
-  '/familiars/unicorn.png'
+// Familiar images for the survival celebration, tagged by set so each profile can
+// pick a vibe (per-PIN, via chaos-familiar-set). "cheer" = the cheerleader crew;
+// "sports-games" = the sporty/gamer critters (Keshy's). Selector lives in Customize.
+type FamiliarCategory = 'cheer' | 'sports-games'
+export type FamiliarSet = 'all' | FamiliarCategory
+
+const ALL_FAMILIARS: { src: string; category: FamiliarCategory }[] = [
+  // — Cheerleaders —
+  { src: '/familiars/cheer.png', category: 'cheer' },
+  { src: '/familiars/owl.png', category: 'cheer' },
+  { src: '/familiars/puppy.png', category: 'cheer' },
+  { src: '/familiars/raccoon.png', category: 'cheer' },
+  { src: '/familiars/robot.png', category: 'cheer' },
+  { src: '/familiars/unicorn.png', category: 'cheer' },
+  { src: '/familiars/cow.png', category: 'cheer' },
+  { src: '/familiars/fox1.png', category: 'cheer' },
+  { src: '/familiars/fox3.png', category: 'cheer' },
+  { src: '/familiars/octo1.png', category: 'cheer' },
+  { src: '/familiars/octo2.png', category: 'cheer' },
+  { src: '/familiars/octo3.png', category: 'cheer' },
+  { src: '/familiars/octo4.png', category: 'cheer' },
+  { src: '/familiars/panda1.png', category: 'cheer' },
+  { src: '/familiars/panda2.png', category: 'cheer' },
+  { src: '/familiars/panda4.png', category: 'cheer' },
+  { src: '/familiars/panda5.png', category: 'cheer' },
+  { src: '/familiars/panda6.png', category: 'cheer' },
+  { src: '/familiars/panda7.png', category: 'cheer' },
+  // — Sports & Games —
+  { src: '/familiars/cat1.png', category: 'sports-games' },
+  { src: '/familiars/cat2.png', category: 'sports-games' },
+  { src: '/familiars/cat3.png', category: 'sports-games' },
+  { src: '/familiars/cat4.png', category: 'sports-games' },
+  { src: '/familiars/cat5.png', category: 'sports-games' },
+  { src: '/familiars/cat6.png', category: 'sports-games' },
+  { src: '/familiars/cat7.png', category: 'sports-games' },
+  { src: '/familiars/corgi1.png', category: 'sports-games' },
+  { src: '/familiars/corgi2.png', category: 'sports-games' },
+  { src: '/familiars/corgi3.png', category: 'sports-games' },
+  { src: '/familiars/corgi4.png', category: 'sports-games' },
+  { src: '/familiars/penguin1.png', category: 'sports-games' },
+  { src: '/familiars/penguin2.png', category: 'sports-games' },
+  { src: '/familiars/penguin3.png', category: 'sports-games' },
 ]
+
+// The active familiar srcs for THIS profile's chosen set (falls back to all if the
+// chosen set somehow ends up empty, so the celebration never has nothing to show).
+function activeFamiliarSrcs(): string[] {
+  const set = (getPref('chaos-familiar-set') || 'all') as FamiliarSet
+  const list = set === 'all' ? ALL_FAMILIARS : ALL_FAMILIARS.filter(f => f.category === set)
+  const use = list.length ? list : ALL_FAMILIARS
+  return use.map(f => f.src)
+}
+
+// A random familiar from the active set, always DIFFERENT from the current one,
+// so every click visibly changes the critter (no "stuck on the same one") and the
+// new art shows up right away instead of being buried behind the original six.
+function nextFamiliarSrc(current: string): string {
+  const fam = activeFamiliarSrcs()
+  if (fam.length <= 1) return fam[0] ?? current
+  let pick = current
+  while (pick === current) pick = fam[Math.floor(Math.random() * fam.length)]
+  return pick
+}
 
 export default function SurvivalButton() {
   const { userPin } = useUser()
@@ -118,10 +191,14 @@ export default function SurvivalButton() {
   const [currentLabelPhrase, setCurrentLabelPhrase] = useState("")
   const [phraseType, setPhraseType] = useState<'goblin' | 'normal'>('goblin')
   const [showGremlin, setShowGremlin] = useState(false)
-  const [currentFamiliar, setCurrentFamiliar] = useState(familiars[0])
+  const [currentFamiliar, setCurrentFamiliar] = useState(ALL_FAMILIARS[0].src)
 
   // PIN-specific storage keys for family member isolation
-  const getStorageKey = (key: string) => userPin ? `${key}_${userPin}` : key
+  // Stable per-PIN so the state-loading effect below only re-runs on mount / PIN
+  // change — NOT on every render. (When this was a fresh arrow each render, the
+  // load effect re-ran constantly and reset the familiar + phrase back to their
+  // on-load values, so clicks never visibly changed the critter.)
+  const getStorageKey = useCallback((key: string) => userPin ? `${key}_${userPin}` : key, [userPin])
 
   // Load saved state
   useEffect(() => {
@@ -151,8 +228,9 @@ export default function SurvivalButton() {
       // Checked today — show a goblin celebration phrase
       const phraseIndex = cnt % goblinPhrases.length
       setCurrentPhrase(goblinPhrases[phraseIndex])
-      // Set a familiar based on count
-      setCurrentFamiliar(familiars[cnt % familiars.length])
+      // Set a familiar based on count, from this profile's chosen set
+      const fam = activeFamiliarSrcs()
+      setCurrentFamiliar(fam[cnt % fam.length])
     } else {
       // Not checked — show unchecked prompt
       const phraseIndex = cnt % uncheckedGoblinPhrases.length
@@ -164,7 +242,7 @@ export default function SurvivalButton() {
   const triggerConfetti = useCallback(() => {
     // 🎆 EPIC PARTICLE PHYSICS CELEBRATION!
     // Scale intensity with confetti level (independent of bounce/motion)
-    const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
+    const confettiLevel = getPref('chaos-confetti-level') || 'medium'
     if (confettiLevel === 'none') return
     const scale = confettiLevel === 'low' ? 0.3 : confettiLevel === 'medium' ? 0.6 : 1.0
     const particles = Math.round(100 * scale)
@@ -184,6 +262,9 @@ export default function SurvivalButton() {
   }, [])
 
   const phraseClickRef = useRef(0)
+  // Advances on every check so the familiar + saying cycle each click — a little
+  // dopamine hit — WITHOUT touching the once-per-day streak count.
+  const checkTickRef = useRef(0)
 
   const cyclePhrase = () => {
     phraseClickRef.current += 1
@@ -201,9 +282,8 @@ export default function SurvivalButton() {
         setPhraseType('normal')
       }
 
-      // Cycle familiar too!
-      const familiarIndex = click % familiars.length
-      setCurrentFamiliar(familiars[familiarIndex])
+      // Fresh random familiar each click — always different (the fun part)
+      setCurrentFamiliar(prev => nextFamiliarSrc(prev))
     } else {
       const idx = click % uncheckedGoblinPhrases.length
       setCurrentPhrase(uncheckedGoblinPhrases[idx])
@@ -233,22 +313,26 @@ export default function SurvivalButton() {
         localStorage.setItem(getStorageKey("lastCheckedDate"), today)
       }
 
+      // Advance the cycle counter so the familiar + saying change on every click
+      // (the count above only moves once per day — this is just the fun part).
+      checkTickRef.current += 1
+      const tick = checkTickRef.current
+
       // Trigger confetti + familiar (respects confetti level, independent of bounce)
-      const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
+      const confettiLevel = getPref('chaos-confetti-level') || 'medium'
       if (confettiLevel !== 'none') {
         triggerConfetti()
 
-        // Show the cheerleading familiar!
-        const familiarIndex = currentCount % familiars.length
-        setCurrentFamiliar(familiars[familiarIndex])
+        // Show a fresh random familiar — always different from the last (dopamine!)
+        setCurrentFamiliar(prev => nextFamiliarSrc(prev))
         setShowGremlin(true)
         setTimeout(() => {
           setShowGremlin(false)
         }, 2500)
       }
 
-      // Set initial checked phrase
-      const phraseIndex = currentCount % goblinPhrases.length
+      // Cycle the saying each click too (fresh dopamine; doesn't touch the count)
+      const phraseIndex = tick % goblinPhrases.length
       setCurrentPhrase(goblinPhrases[phraseIndex])
       setPhraseType('goblin')
 

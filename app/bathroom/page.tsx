@@ -9,6 +9,7 @@
 'use client'
 
 import React, { useState, useEffect, useMemo } from 'react'
+import { getPref } from '@/lib/prefs'
 import AppCanvas from '@/components/app-canvas'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -102,7 +103,7 @@ export default function BathroomPage() {
       const existingForDate = entries.filter(e => e.date === storageDate)
       const updatedForDate = [...existingForDate, newEntry]
       await saveData(storageDate, CATEGORIES.TRACKER, 'bathroom', { entries: updatedForDate }, newEntry.tags || [])
-      const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
+      const confettiLevel = getPref('chaos-confetti-level') || 'medium'
       if (confettiLevel !== 'none' && isCelebrationEnabled('bathroom', userPin ?? '')) celebrate()
       const goblinism = BATHROOM_GOBLINISMS[Math.floor(Date.now() / 1000) % BATHROOM_GOBLINISMS.length]
       toast({ title: '🚽 Logged', description: goblinism })

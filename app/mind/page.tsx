@@ -40,6 +40,7 @@ import {
   HelpCircle,
   Settings2
 } from "lucide-react"
+import { getPref, setPref } from "@/lib/prefs"
 
 const HIDDEN_TRACKERS_KEY = 'chaos-mind-hidden-trackers'
 
@@ -61,7 +62,7 @@ export default function MentalHealthIndex() {
   // Load hidden trackers from localStorage on mount
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(HIDDEN_TRACKERS_KEY)
+      const saved = getPref(HIDDEN_TRACKERS_KEY)
       if (saved) {
         setHiddenTrackers(JSON.parse(saved))
       }
@@ -74,7 +75,7 @@ export default function MentalHealthIndex() {
   const updateHiddenTrackers = (newHidden: string[]) => {
     setHiddenTrackers(newHidden)
     try {
-      localStorage.setItem(HIDDEN_TRACKERS_KEY, JSON.stringify(newHidden))
+      setPref(HIDDEN_TRACKERS_KEY, JSON.stringify(newHidden))
     } catch (e) {
       console.error('Failed to save hidden trackers:', e)
     }

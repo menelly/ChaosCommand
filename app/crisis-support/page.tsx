@@ -24,6 +24,7 @@
 "use client"
 
 import React, { useState, useEffect } from 'react'
+import { getPref } from '@/lib/prefs'
 import { openExternal } from '@/lib/open-external'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -97,7 +98,7 @@ export default function CrisisSupport() {
       setIsFormOpen(false)
       setRefreshTrigger(prev => prev + 1)
 
-      const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
+      const confettiLevel = getPref('chaos-confetti-level') || 'medium'
       if (confettiLevel !== 'none' && isCelebrationEnabled('crisis-support', userPin ?? '')) {
         celebrate()
       }

@@ -17,6 +17,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import { getPref } from '@/lib/prefs'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -108,7 +109,7 @@ export default function AnxietyTrackerPage() {
       const updatedForDate = [...existingForDate, newEntry]
       await saveData(storageDate, CATEGORIES.TRACKER, 'anxiety', { entries: updatedForDate }, newEntry.tags || [])
 
-      const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
+      const confettiLevel = getPref('chaos-confetti-level') || 'medium'
       if (confettiLevel !== 'none' && isCelebrationEnabled('anxiety', userPin ?? '')) celebrate()
 
       const goblinism = ANXIETY_GOBLINISMS[Math.floor(Date.now() / 1000) % ANXIETY_GOBLINISMS.length] || 'Anxiety logged 💜'

@@ -24,6 +24,7 @@
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
+import { getPref, setPref } from '@/lib/prefs'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -103,7 +104,7 @@ function useCollapsibleSections() {
 
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(COLLAPSED_SECTIONS_KEY)
+      const saved = getPref(COLLAPSED_SECTIONS_KEY)
       if (saved) setCollapsed(JSON.parse(saved))
     } catch {}
   }, [])
@@ -111,7 +112,7 @@ function useCollapsibleSections() {
   const toggle = (section: string) => {
     setCollapsed(prev => {
       const next = { ...prev, [section]: !prev[section] }
-      localStorage.setItem(COLLAPSED_SECTIONS_KEY, JSON.stringify(next))
+      setPref(COLLAPSED_SECTIONS_KEY, JSON.stringify(next))
       return next
     })
   }
@@ -203,7 +204,7 @@ export default function CommandZone() {
     // for migraine and sensory-sensitive users who'd correctly turned it
     // off in Visual Settings and still got hit with full confetti+emoji
     // bombs from the command-center checkboxes.
-    const confettiLevel = localStorage.getItem('chaos-confetti-level') || 'medium'
+    const confettiLevel = getPref('chaos-confetti-level') || 'medium'
     if (confettiLevel === 'none') return
     const scale = confettiLevel === 'low' ? 0.3 : confettiLevel === 'medium' ? 0.6 : 1.0
 
@@ -276,7 +277,7 @@ export default function CommandZone() {
   // Load hidden sections preference
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(HIDDEN_SECTIONS_KEY)
+      const saved = getPref(HIDDEN_SECTIONS_KEY)
       if (saved) setHiddenSections(JSON.parse(saved))
     } catch {}
   }, [])
@@ -284,7 +285,7 @@ export default function CommandZone() {
   const updateHiddenSections = (newHidden: string[]) => {
     setHiddenSections(newHidden)
     try {
-      localStorage.setItem(HIDDEN_SECTIONS_KEY, JSON.stringify(newHidden))
+      setPref(HIDDEN_SECTIONS_KEY, JSON.stringify(newHidden))
     } catch {}
   }
 
