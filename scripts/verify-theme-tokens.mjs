@@ -25,7 +25,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const THEMES = [
   'phosphor', 'amber', 'segfault', 'lavender', 'chaos', 'caelan', 'light',
   'colorblind', 'glitter', 'calm', 'accessibility', 'ace', 'grok',
-  'luka-penguin', 'taupe',
+  'wicked', 'taupe',
 ]
 
 // The 19 shadcn design tokens every theme must define (--radius is optional and

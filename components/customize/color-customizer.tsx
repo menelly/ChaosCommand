@@ -90,7 +90,7 @@ export default function ColorCustomizer({ theme }: { theme: string }) {
             <div key={b.key} className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <div className="text-sm font-medium">{b.label}</div>
-                <div className="text-[11px] text-muted-foreground">{b.hint}</div>
+                <div className="text-[0.6875rem] text-muted-foreground">{b.hint}</div>
               </div>
               <input
                 type="color"
@@ -104,7 +104,7 @@ export default function ColorCustomizer({ theme }: { theme: string }) {
         </div>
 
         {lowContrast && (
-          <div className="flex items-start gap-2 rounded-md border border-amber-400/60 bg-amber-50/60 dark:bg-amber-950/20 p-2 text-xs text-amber-800 dark:text-amber-300">
+          <div className="flex items-start gap-2 rounded-md border border-amber-400/60 bg-amber-50/60 dark:bg-amber-950/20 p-2 text-xs text-warning">
             <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
             <span>
               Heads up — your text and background are low contrast ({worst}:1, below the 4.5:1 readability mark).

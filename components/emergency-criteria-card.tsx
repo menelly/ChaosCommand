@@ -74,13 +74,19 @@ export function EmergencyCriteriaCard({
   // (recentEmergencyDetected prop is kept but ignored — caller plumbing removal tracked separately.)
   const expanded = !hydrated ? true : !acknowledged
 
+  // THEME-RELATIVE DANGER (2026-05-24): never hardcode red. Every theme defines
+  // --destructive + --destructive-foreground and calibrates that PAIR for contrast
+  // (the only pairing guaranteed readable on all 15 themes — incl. dark ones like
+  // ace/grok where hardcoded `text-red-900 dark:…` went dark-on-dark). Solid
+  // destructive fill = loud, unmistakable, AND always legible. See
+  // project_command_056_danger_colors.
   if (!expanded) {
-    // Collapsed pill — small, tappable, stays visible but out of the way
+    // Collapsed pill — subtle on the page bg, tappable to reopen.
     return (
       <Button
         variant="outline"
         onClick={handleReopen}
-        className="w-full justify-between border-red-300 dark:border-red-800 bg-red-50/50 dark:bg-red-950/10 text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20"
+        className="w-full justify-between border-2 border-destructive text-destructive bg-transparent hover:bg-destructive/10"
       >
         <span className="flex items-center gap-2 text-sm font-medium">
           <AlertTriangle className="h-4 w-4" />
@@ -92,17 +98,17 @@ export function EmergencyCriteriaCard({
   }
 
   return (
-    <Card className="border-red-500 border-2 bg-red-50 dark:bg-red-950/20">
+    <Card className="border-destructive border-2 bg-destructive text-destructive-foreground">
       <CardHeader className="pb-3">
-        <CardTitle className="text-red-700 dark:text-red-400 flex items-center gap-2 text-base">
+        <CardTitle className="text-destructive-foreground flex items-center gap-2 text-base">
           <AlertTriangle className="h-5 w-5" />
           {title}
         </CardTitle>
       </CardHeader>
-      <CardContent className="text-sm space-y-1 text-red-900 dark:text-red-200">
+      <CardContent className="text-sm space-y-1 text-destructive-foreground">
         {criteria.map((criterion, i) => (
           <div key={i} className="flex items-start gap-2">
-            <span className="text-red-500 font-bold mt-0.5">•</span>
+            <span className="font-bold mt-0.5">•</span>
             <span>{criterion}</span>
           </div>
         ))}
@@ -114,7 +120,7 @@ export function EmergencyCriteriaCard({
             variant="outline"
             size="sm"
             onClick={handleAck}
-            className="border-red-300 dark:border-red-800 text-red-700 dark:text-red-400"
+            className="border-destructive-foreground/40 bg-transparent text-destructive-foreground hover:bg-destructive-foreground/10"
           >
             <ChevronUp className="h-3 w-3 mr-1" />
             Got it — collapse

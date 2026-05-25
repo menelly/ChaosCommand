@@ -281,7 +281,7 @@ export default function PainTracker() {
                     <span className="text-xl mb-1">{r.icon}</span>
                     <span className="font-semibold text-sm">{r.name}</span>
                     <span className="text-xs text-muted-foreground mt-1">{r.description}</span>
-                    <span className="text-xs mt-2 text-blue-600 dark:text-blue-400 flex items-center gap-1">
+                    <span className="text-xs mt-2 text-info flex items-center gap-1">
                       {r.cta} <ExternalLink className="h-3 w-3" />
                     </span>
                   </Button>

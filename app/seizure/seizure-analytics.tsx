@@ -333,7 +333,7 @@ export function SeizureAnalytics({ entries }: Props) {
                         style={{ height: `${pct}%`, minHeight: count > 0 ? '4px' : '0' }}
                         title={`${hour}:00 — ${count} episodes`}
                       />
-                      <div className="text-[10px] text-muted-foreground mt-1">
+                      <div className="text-[0.625rem] text-muted-foreground mt-1">
                         {hour % 6 === 0 ? hour : ''}
                       </div>
                     </div>

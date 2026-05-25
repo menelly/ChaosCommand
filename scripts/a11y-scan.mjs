@@ -33,7 +33,7 @@ const BASE = `http://127.0.0.1:${PORT}`;
 const ALL_THEMES = [
   'theme-calm', 'theme-phosphor', 'theme-amber', 'theme-segfault', 'theme-lavender',
   'theme-chaos', 'theme-caelan', 'theme-light', 'theme-colorblind', 'theme-glitter',
-  'theme-accessibility', 'theme-ace', 'theme-grok', 'theme-luka-penguin', 'theme-taupe',
+  'theme-accessibility', 'theme-ace', 'theme-grok', 'theme-wicked', 'theme-taupe',
 ];
 // Curated high-value routes (the ones with real density + the known-risky ones).
 const KEY_ROUTES = [

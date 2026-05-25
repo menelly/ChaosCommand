@@ -262,7 +262,7 @@ export default function PatternsPage() {
               <AlertTriangle className="h-4 w-4 shrink-0 text-red-500" />
               <span className="hidden sm:inline">Red Flags</span>
               <span className="sm:hidden">🚨</span>
-              {v2HighPriorityCount > 0 && <Badge variant="destructive" className="text-[10px] h-4 ml-1">{v2HighPriorityCount}</Badge>}
+              {v2HighPriorityCount > 0 && <Badge variant="destructive" className="text-[0.625rem] h-4 ml-1">{v2HighPriorityCount}</Badge>}
             </TabsTrigger>
             <TabsTrigger value="correlations" className="flex items-center gap-1 text-xs sm:text-sm">
               <Network className="h-4 w-4 shrink-0" />
@@ -293,7 +293,7 @@ export default function PatternsPage() {
           <TabsContent value="redflags" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-red-700 dark:text-red-400">
+                <CardTitle className="flex items-center gap-2 text-destructive-foreground">
                   <AlertTriangle className="h-5 w-5" />
                   Medical red-flag patterns (v2 engine)
                 </CardTitle>
@@ -356,7 +356,7 @@ export default function PatternsPage() {
                         <div>
                           <div className="font-medium text-sm">
                             {new Date(s.run_at).toLocaleString()}
-                            {s.is_auto && <Badge variant="outline" className="ml-2 text-[10px]">auto</Badge>}
+                            {s.is_auto && <Badge variant="outline" className="ml-2 text-[0.625rem]">auto</Badge>}
                           </div>
                           <div className="text-xs text-muted-foreground">{s.summary}</div>
                         </div>

@@ -26,6 +26,13 @@ body.theme-chaos {
   --accent-foreground: 0 0% 100%;   /* white on deep orange */
   --destructive: 0 74% 42%;         /* #ba1c1c — white text passes */
   --destructive-foreground: 0 0% 100%;
+  /* semantic status tokens (info/success/warning) — see 056 */
+  --info: 211 80% 42%;
+  --info-foreground: 0 0% 100%;
+  --success: 142 60% 30%;
+  --success-foreground: 0 0% 100%;
+  --warning: 30 85% 35%;
+  --warning-foreground: 0 0% 10%;
   --border: 28 58% 42%;             /* #a96a2c wood-brown border */
   --input: 40 40% 80%;
   --ring: 30 100% 50%;              /* orange focus ring */

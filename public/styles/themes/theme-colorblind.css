@@ -22,6 +22,13 @@ body.theme-colorblind {
   --accent-foreground: 210 11% 15%;
   --destructive: 0 65% 48%;
   --destructive-foreground: 0 0% 100%;
+  /* semantic status tokens (info/success/warning) — see 056 */
+  --info: 211 80% 42%;
+  --info-foreground: 0 0% 100%;
+  --success: 142 60% 30%;
+  --success-foreground: 0 0% 100%;
+  --warning: 30 85% 35%;
+  --warning-foreground: 0 0% 10%;
   --border: 208 7% 46%;
   --input: 208 7% 46%;
   --ring: 211 100% 35%;

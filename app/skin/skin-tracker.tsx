@@ -170,7 +170,7 @@ export default function SkinTracker() {
                               <span className="text-lg">{info.icon}</span>
                               <span className="font-semibold">{info.name}</span>
                               {entry.bodyLocation && entry.bodyLocation.length > 0 && <Badge variant="outline">{entry.bodyLocation.slice(0, 2).join(', ')}{entry.bodyLocation.length > 2 ? '...' : ''}</Badge>}
-                              {entry.photos && entry.photos.length > 0 && <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border-blue-300">📎 {entry.photos.length} {entry.photos.length === 1 ? 'photo' : 'photos'}</Badge>}
+                              {entry.photos && entry.photos.length > 0 && <Badge variant="outline" className="bg-info/10 text-info border-blue-300">📎 {entry.photos.length} {entry.photos.length === 1 ? 'photo' : 'photos'}</Badge>}
                               {entry.epinephrineGiven && <Badge variant="destructive">EpiPen used</Badge>}
                             </div>
                             <div className="text-xs text-muted-foreground">

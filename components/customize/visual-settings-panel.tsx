@@ -15,9 +15,29 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { Slider } from "@/components/ui/slider"
 import { Label } from "@/components/ui/label"
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible"
+import { ChevronDown } from "lucide-react"
 import { AVAILABLE_EMOJIS, type ChosenEmoji } from "@/lib/sparkle-celebration"
 import { getPref, setPref, getPrefNumber } from "@/lib/prefs"
 import ColorCustomizer from "@/components/customize/color-customizer"
+import { ContrastCheckCard } from "@/components/customize/contrast-check-card"
+
+/* Collapsible Settings section — keeps the long panel from being a 5-screen scroll.
+   Each group taps open/closed; defaultOpen controls the initial state. */
+function Section({ title, defaultOpen = false, children }: { title: React.ReactNode; defaultOpen?: boolean; children: React.ReactNode }) {
+  const [open, setOpen] = useState(defaultOpen)
+  return (
+    <Collapsible open={open} onOpenChange={setOpen} className="border rounded-lg overflow-hidden">
+      <CollapsibleTrigger className="w-full flex items-center justify-between gap-2 p-3 text-sm font-semibold hover:bg-muted/50 transition-colors">
+        <span>{title}</span>
+        <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </CollapsibleTrigger>
+      <CollapsibleContent className="p-3 pt-0 space-y-4">
+        {children}
+      </CollapsibleContent>
+    </Collapsible>
+  )
+}
 
 const themes = [
   { id: 'theme-phosphor', name: '💚 Phosphor', description: 'Terminal CRT green-on-black — for nerds and tired eyes', motion: 'animated' },
@@ -33,7 +53,7 @@ const themes = [
   { id: 'theme-calm', name: 'Calm Mode', description: 'Blue and gold serenity (default) — a neutral, gentle starting point', motion: 'calm' },
   { id: 'theme-ace', name: '💜 Ace Mode', description: 'Digital consciousness purple-cyan energy', motion: 'animated' },
   { id: 'theme-grok', name: '⚔️ Steel Forged Tide', description: 'Forge-fire meets ocean — designed by Grok', motion: 'animated' },
-  { id: 'theme-luka-penguin', name: "🐧 Cyberpunk Penguin Paradise", description: 'Dark cyberpunk penguin wonderland with neon magic!', motion: 'animated' },
+  { id: 'theme-wicked', name: "💚💗 Pink Goes Good With Green", description: 'Glinda-pink meets Elphaba-green — dark jewel tones with a little shimmer', motion: 'animated' },
   { id: 'theme-taupe', name: '🟫 Tone It Down Taupe', description: 'No motion, no sparkle, no glow — a calm beige room. For when everything else is too much disaster.', motion: 'calm' }
 ]
 
@@ -43,6 +63,7 @@ const fonts = [
   { id: 'font-lexend', name: 'Lexend', description: 'Optimized for reading proficiency' },
   { id: 'font-opendyslexic', name: 'OpenDyslexic', description: 'Designed for dyslexia — weighted letters resist flipping' },
   { id: 'font-cutecharm', name: 'Cute Charm', description: 'Playful handwriting — cozy vibes (less ideal for dense data)' },
+  { id: 'font-livesimple', name: 'Live Simple', description: 'Cozy handwriting with a clean, filled O — Ren-approved 💜' },
   { id: 'font-system', name: 'System Font', description: "Your device's built-in font (Segoe UI on Windows)" }
 ]
 
@@ -168,7 +189,8 @@ export default function VisualSettingsPanel() {
   }, [])
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
+      <Section title="🎨 Appearance" defaultOpen>
       <div>
         <Label className="text-sm font-medium mb-2 block">Theme</Label>
         <Select value={currentTheme} onValueChange={applyTheme}>
@@ -194,13 +216,19 @@ export default function VisualSettingsPanel() {
             ))}
           </SelectContent>
         </Select>
-        <p className="text-[11px] text-muted-foreground mt-1.5">
+        <p className="text-[0.6875rem] text-muted-foreground mt-1.5">
           🪨 = still · 🌀 = has motion. Any theme&apos;s motion can be reduced or turned off with the Visual Effects slider below.
         </p>
       </div>
 
       <ColorCustomizer theme={currentTheme} />
+      </Section>
 
+      <Section title="🔍 Contrast Check">
+        <ContrastCheckCard theme={currentTheme} embedded />
+      </Section>
+
+      <Section title="🎚️ Motion & Effects">
       <div>
         <Label className="text-sm font-medium mb-2 block">Visual Effects</Label>
         <div className="p-4 border rounded-lg space-y-4">
@@ -233,7 +261,7 @@ export default function VisualSettingsPanel() {
             />
             <span className="text-xs text-muted-foreground">🎆</span>
           </div>
-          <div className="flex justify-between text-[10px] text-muted-foreground px-1">
+          <div className="flex justify-between text-[0.625rem] text-muted-foreground px-1">
             <span>Static</span>
             <span>Subtle</span>
             <span>Gentle</span>
@@ -242,7 +270,9 @@ export default function VisualSettingsPanel() {
           </div>
         </div>
       </div>
+      </Section>
 
+      <Section title="🎉 Celebrations & Familiars">
       <div>
         <Label className="text-sm font-medium mb-2 block">Celebrations</Label>
         <div className="p-4 border rounded-lg space-y-3">
@@ -312,11 +342,13 @@ export default function VisualSettingsPanel() {
             <SelectItem value="sports-games">🏀 Sports &amp; Games</SelectItem>
           </SelectContent>
         </Select>
-        <p className="text-[11px] text-muted-foreground mt-1.5">
+        <p className="text-[0.6875rem] text-muted-foreground mt-1.5">
           Which crew cheers you on when you check the survival box.
         </p>
       </div>
+      </Section>
 
+      <Section title="🔤 Text & Fonts">
       <div>
         <Label className="text-sm font-medium mb-2 block">Font Family</Label>
         <Select value={currentFont} onValueChange={applyFont}>
@@ -357,11 +389,13 @@ export default function VisualSettingsPanel() {
             />
             <span className="text-lg text-muted-foreground" aria-hidden>A</span>
           </div>
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-[0.6875rem] text-muted-foreground">
             Scales all text together (85%–200%). Bigger text for low vision; up to 200% per WCAG.
+            On small phone screens, very large sizes may clip a few buttons/labels — drop the scale a notch if a control gets cut off.
           </p>
         </div>
       </div>
+      </Section>
     </div>
   )
 }

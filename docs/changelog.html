@@ -87,11 +87,105 @@
   <p><strong>Free, local-first, no telemetry.</strong> Built by patients, for patients.</p>
   <p>Every line of code is public on <a href="https://github.com/menelly/ChaosCommand">github.com/menelly/ChaosCommand</a>. This page is generated from those commits — it's the receipt for what shipped in each release. Audit before you trust.</p>
 </div>
-<p class="meta">Last updated: 2026-05-12</p>
+<p class="meta">Last updated: 2026-05-24</p>
+<h2>v0.5.0<span class="date">&middot; 2026-05-24</span></h2>
+<h3>✨ New</h3><ul>
+<li>yeet the planning section out of Command (CHA-180)</li>
+<li>tech-debt sweep — delete dead modules/ architecture, calendar husk, chore-chart ghost</li>
+<li>drop dead calendar-monthly registry entry (advertised deleted /calendar route)</li>
+<li>Routines Phase 1 — data model + pin-keyed storage (CHA-167)</li>
+<li>Routines Phases 2+3 — builder + run page + nav (CHA-167)</li>
+<li>Routines — let users add their OWN (custom Forge) trackers (CHA-167)</li>
+<li>default theme phosphor -&gt; calm (neutral first run)</li>
+<li>Routines — Next-on-routine flow bar, 'nothing to log', reversible skip (CHA-167)</li>
+<li>Routines — 'Copy yest.' on run cards (Option A, CHA-167)</li>
+<li>muscle events get a MUSCLE menu, not the joint checklist</li>
+<li>add 'Coat hanger (neck &amp; shoulders)' muscle option</li>
+<li>Skip + Set-yest on the flow bar; skip now persists &amp; shares</li>
+<li>builder overhaul — categories, emoji palette, Manage trackers; drop autofill UI</li>
+<li>'Copy from &lt;routine&gt;' when creating; rename Copy yest. -&gt; Copy last</li>
+<li>version bump across all sources + release manifest</li>
+<li>per-run sessions (log multiple times/day) + Journal tracker + fix journal nav</li>
+<li>pending cards show 'Last logged &lt;when&gt;' instead of 'Not logged today'</li>
+<li>hide Copy-last when there's nothing clone-able to copy</li>
+<li>🔒 chore: Cargo.lock catches up to 0.5.1 (the build regenerated it, the octopus forgot to grab it the first time)</li>
+<li>🎬 docs: YouTube feature-overview script (v1), narrated by yours truly</li>
+<li>🐙 Merge the v2 tracker wave into master — landfall</li>
+<li>🔐 WIP: per-PIN localStorage foundation + close coping leak (CHA-206)</li>
+<li>🧘 Move coping data localStorage → per-PIN Dexie (CHA-206); drop pinStorage wrapper</li>
+<li>🗂️ Prior-releases rollback archive page (CHA-198)</li>
+<li>🚀 Ship 0.5.3 to production + archive 0.5.2</li>
+<li>🔖 Bump in-app version 0.5.2 → 0.5.3 (match live manifest, kill the nag)</li>
+<li>🔢 scripts/bump_version.py — one-command version bump + drift detector</li>
+<li>🎚️ Retune starter data: mildly interesting, never alarming (Nova content guardrails)</li>
+<li>🔐 Add honest encrypted-backup module (PBKDF2 → AES-256-GCM), no steganography</li>
+<li>🎭 Add demo-profile module: public sample data at PIN 1111 (seed-on-first-view)</li>
+<li>🔁 Rewire data modal: G-Spot → emergency logout; encrypted backup replaces steganography</li>
+<li>📝 release.sh: point to bump_version.py as canonical bumper + mandatory --check</li>
+<li>🐙 The G-Spot moves in: scoped reproductive-data nuke in the fertility modal</li>
+<li>🧹 Remove the G-Spot section from the data modal (she lives in reproductive now)</li>
+<li>🚪 Sidebar: Logout is now big + bottom + one-tap (the real emergency exit)</li>
+<li>👀 Demo profile (1111): awaited seed on login + "See the demo" button + reserve note</li>
+<li>💅 Reproductive forms: Save buttons full-width (stop the lopsided layout)</li>
+<li>🗑️ Delete dead steganography: g-spot-crypto.ts + g-spot-4.0-boring-file-steganography.ts</li>
+<li>🧹 Data modal cleanup + README refresh (v0.5.4)</li>
+<li>📝 README: themes 10 → 15 (accurate list incl. Tone It Down Taupe)</li>
+<li>🩹 Self-healing demo + honest per-PIN delete + encrypted-by-default export</li>
+<li>🔐 Require PIN re-entry to delete a profile (whose-data confirmation)</li>
+<li>📝 v0.5.4 release notes (data-control framing, Ren+Ace voice)</li>
+<li>🩹 Pain: stop pain≥9 force-holding the 911 card open ("collapse won't work")</li>
+<li>🩹 Emergency card: let users collapse a re-surfaced emergency (the real "collapse won't work")</li>
+<li>🩹 Pain: don't auto-flag dissection/SAH red flags from a descriptor word</li>
+<li>🩹 Emergency card: read-once-then-quiet (stop re-nagging from history)</li>
+</ul>
+<h3>🐛 Fix</h3><ul>
+<li>add HEAT + thermal triggers to syncope/presyncope list</li>
+<li>flow bar now finds current tracker + 'Next' targets next not-done</li>
+<li>joint Save disabled in muscle mode + Routines hub hydration error</li>
+<li>energy/weather count as done; registry matches real sections; Journal button</li>
+<li>bump lib/app-version.ts too (the nag-causing easy miss)</li>
+<li>custom 'Log again' double-? URL + prefix-match status for hydration/sleep/missed-work</li>
+<li>fresh Run resets skip + nothing-marks too (per-routine, not per-day)</li>
+<li>Copy last works with same-day entries (per-run fallout)</li>
+<li>history showed entries a day early (UTC date-parse off-by-one)</li>
+<li>history off-by-one date (same UTC parse bug as dysautonomia)</li>
+<li>fertility chart date ticks off-by-one (UTC parse)</li>
+<li>missed-work option contrast (Lavender) + Ren is PRIOR Navy ET</li>
+<li>event-card descriptions inherit button text color (theme-proof) across 12 trackers</li>
+<li>drop opacity-dimming on inherited text (upper-digestive, onboarding, gaslight-garage)</li>
+<li>🐙 fix(sync): routines now sync between devices</li>
+<li>📱 fix(routines): run-page cards stack on mobile (buttons were overlapping the text)</li>
+<li>🩺 Fix disappearing providers/appointments/reviews (date-scope bug)</li>
+<li>🔄 Fix task-list sync: union tasks by id instead of length heuristic (CHA-207)</li>
+<li>📄 Fix "squampy" PDF: line-height advance now matches font size (CHA-203)</li>
+<li>🐛 Fix demo (1111): seed hang on first start + make it WAY more robust</li>
+<li>🐛 Demo data: wrap flat content into {entries:[]} for v2-shape trackers (fix client crash)</li>
+<li>🎭 Demo = sanitized real-data fixture (no crash, real shapes) + unencrypted-export warning</li>
+<li>🛡️ Migration guard: never wipe real data on PIN 1111 (data-loss fix)</li>
+<li>🚀 Merge v0.5.4: G-Spot redesign, honest backups, per-PIN delete, migration guard, demo fixture</li>
+<li>♿ a11y gate (axe+Playwright) + theme readability fixes [gate-verified]</li>
+<li>🎨 0.5.5 Customize: basketball fix (Luka) + motion labels + text slider + drop emoji picker</li>
+<li>🎨 v0.5.5 — Accessibility &amp; Customization (a.k.a. "the smol bug fix")</li>
+</ul>
+<h3>♿ Accessibility</h3><ul>
+<li>🎨 Token refactor: kill the !important war, guarantee WCAG contrast (+ 1 very boring theme)</li>
+<li>♿ Customize parity: scoped "Hide Fertility &amp; Ovulation" in Settings → Visible Trackers</li>
+<li>🩹 a11y theme: muted-foreground #cccccc→#767676 (partial — theme needs full overhaul)</li>
+</ul>
+<h3>💫 UX</h3><ul>
+<li>🔖 Bump 0.5.3 → 0.5.4 (all six spots) for the G-Spot redesign release</li>
+</ul>
+<h2>v0.4.95<span class="date">&middot; 2026-05-22</span></h2>
+<h3>✨ New</h3><ul>
+<li>tracker re-fun pass + fix false update nag</li>
+</ul>
 <h2>v0.4.9<span class="date">&middot; 2026-05-12</span></h2>
 <h3>✨ New</h3><ul>
 <li>PDF polish — bullet evidence, purple accents, dedup + changelog tooling 📋✨</li>
 <li>version bump for PDF polish + changelog tooling release</li>
+</ul>
+<h3>🐛 Fix</h3><ul>
+<li>python3 → python for Windows compatibility</li>
 </ul>
 <h2>v0.4.8<span class="date">&middot; 2026-05-10</span></h2>
 <h3>✨ New</h3><ul>

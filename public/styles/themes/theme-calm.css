@@ -23,8 +23,15 @@ body.theme-calm {
   --accent-foreground: 222 37% 19%;
   --destructive: 0 66% 47%;
   --destructive-foreground: 0 0% 100%;
-  --border: 207 90% 77%;
-  --input: 207 90% 77%;
+  /* semantic status tokens (info/success/warning) — see 056 */
+  --info: 211 80% 42%;
+  --info-foreground: 0 0% 100%;
+  --success: 142 60% 30%;
+  --success-foreground: 0 0% 100%;
+  --warning: 30 85% 35%;
+  --warning-foreground: 0 0% 10%;
+  --border: 207 75% 48%;
+  --input: 207 75% 48%;
   --ring: 212 80% 42%;
 }
 

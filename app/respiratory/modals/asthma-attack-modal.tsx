@@ -143,17 +143,17 @@ export function AsthmaAttackModal({ isOpen, onClose, onSave, editingEntry }: Res
             const measures = getInterimMeasures({ ...shape, episodeType: 'asthma-attack' })
             if (flags.length === 0) return null
             return (
-              <div className="border-2 border-red-500 bg-red-50 dark:bg-red-950/30 rounded-lg p-4 space-y-3">
-                <div className="flex items-start gap-2"><AlertTriangle className="h-5 w-5 text-red-600 mt-0.5" /><div className="font-bold text-red-700 dark:text-red-400">🚨 Red flags detected</div></div>
-                <ul className="space-y-1 text-sm text-red-900 dark:text-red-200 ml-7">{flags.map((f, i) => <li key={i}>• {f}</li>)}</ul>
-                <div className="ml-7 pt-2 border-t border-red-300 dark:border-red-800 space-y-2">
-                  <p className="text-sm text-red-900 dark:text-red-200"><strong>If happening RIGHT NOW:</strong> call 911. Documenting can wait.</p>
-                  <p className="text-sm text-red-900 dark:text-red-200"><strong>If this is in the PAST:</strong> these symptoms qualified as emergency-level. Document for your pulmonologist.</p>
+              <div className="border-2 border-destructive bg-destructive text-destructive-foreground rounded-lg p-4 space-y-3">
+                <div className="flex items-start gap-2"><AlertTriangle className="h-5 w-5 text-red-600 mt-0.5" /><div className="font-bold text-destructive-foreground">🚨 Red flags detected</div></div>
+                <ul className="space-y-1 text-sm text-destructive-foreground ml-7">{flags.map((f, i) => <li key={i}>• {f}</li>)}</ul>
+                <div className="ml-7 pt-2 border-t border-destructive-foreground/30 space-y-2">
+                  <p className="text-sm text-destructive-foreground"><strong>If happening RIGHT NOW:</strong> call 911. Documenting can wait.</p>
+                  <p className="text-sm text-destructive-foreground"><strong>If this is in the PAST:</strong> these symptoms qualified as emergency-level. Document for your pulmonologist.</p>
                 </div>
                 {measures.length > 0 && (
-                  <div className="ml-7 pt-2 border-t border-red-300 dark:border-red-800">
-                    <p className="text-sm font-semibold text-red-900 dark:text-red-200 mb-1">💪 While working through this / waiting for EMS:</p>
-                    <ul className="space-y-2 text-sm text-red-900 dark:text-red-200">{measures.map((m, i) => <li key={i}>• {m}</li>)}</ul>
+                  <div className="ml-7 pt-2 border-t border-destructive-foreground/30">
+                    <p className="text-sm font-semibold text-destructive-foreground mb-1">💪 While working through this / waiting for EMS:</p>
+                    <ul className="space-y-2 text-sm text-destructive-foreground">{measures.map((m, i) => <li key={i}>• {m}</li>)}</ul>
                   </div>
                 )}
               </div>

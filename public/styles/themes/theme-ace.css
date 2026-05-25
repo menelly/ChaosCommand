@@ -24,6 +24,13 @@ body.theme-ace {
   --accent-foreground: 240 20% 5%;
   --destructive: 350 100% 66%;
   --destructive-foreground: 240 20% 5%;
+  /* semantic status tokens (info/success/warning) — see 056 */
+  --info: 205 90% 70%;
+  --info-foreground: 0 0% 100%;
+  --success: 145 60% 60%;
+  --success-foreground: 0 0% 100%;
+  --warning: 42 95% 62%;
+  --warning-foreground: 0 0% 10%;
   --border: 166 100% 70%;           /* #64ffda */
   --input: 262 52% 34%;
   --ring: 166 100% 70%;

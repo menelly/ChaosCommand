@@ -212,7 +212,7 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
                       Only use this if you specifically need a readable copy (e.g. importing elsewhere).
                       For storing or sharing, use the encrypted backup above.
                     </p>
-                    <Button onClick={handleExportJson} variant="outline" className="w-full border-amber-500/50 text-amber-700 dark:text-amber-500 hover:bg-amber-500/10">
+                    <Button onClick={handleExportJson} variant="outline" className="w-full border-amber-500/50 text-warning hover:bg-amber-500/10">
                       <Download className="h-4 w-4 mr-2" />
                       Export All Data (JSON, unencrypted)
                     </Button>

@@ -248,8 +248,8 @@ export default function SurvivalButton() {
     const particles = Math.round(100 * scale)
     const currentTheme = document.body.className.match(/theme-[\w-]+/)?.[0];
 
-    if (currentTheme === 'theme-chaos' || currentTheme === 'theme-luka-penguin') {
-      // 🐧 PENGUIN PARTY FOR LUKA!
+    if (currentTheme === 'theme-chaos') {
+      // 🐧 PENGUIN PARTY FOR LUKA! (secret penguins on the basketball court)
       penguinParty();
     } else {
       // 🎨 THEME-AWARE CELEBRATION FOR EVERYONE!

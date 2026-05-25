@@ -509,7 +509,7 @@ export default function UpperDigestiveAnalyticsDesktop({ className }: AnalyticsP
                   <div className="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-950/20 rounded-lg">
                     <AlertTriangle className="h-4 w-4 text-red-500 mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium text-red-700 dark:text-red-400">High Severity Alert</p>
+                      <p className="text-sm font-medium text-destructive-foreground">High Severity Alert</p>
                       <p className="text-sm text-red-600 dark:text-red-300">
                         Your average severity is {avgSeverity}/10. Consider discussing with your healthcare provider.
                       </p>
@@ -518,11 +518,11 @@ export default function UpperDigestiveAnalyticsDesktop({ className }: AnalyticsP
                 )}
 
                 {topTriggers.length > 0 && (
-                  <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
+                  <div className="flex items-start gap-2 p-3 bg-info/10 rounded-lg">
                     <Target className="h-4 w-4 text-blue-500 mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium text-blue-700 dark:text-blue-400">Top Trigger Identified</p>
-                      <p className="text-sm text-blue-600 dark:text-blue-300">
+                      <p className="text-sm font-medium text-info">Top Trigger Identified</p>
+                      <p className="text-sm text-info">
                         "{topTriggers[0].trigger}" appears in {topTriggers[0].count} episodes. Consider avoiding or managing this trigger.
                       </p>
                     </div>
@@ -530,11 +530,11 @@ export default function UpperDigestiveAnalyticsDesktop({ className }: AnalyticsP
                 )}
 
                 {timeData.length > 0 && (
-                  <div className="flex items-start gap-2 p-3 bg-green-50 dark:bg-green-950/20 rounded-lg">
+                  <div className="flex items-start gap-2 p-3 bg-success/10 rounded-lg">
                     <Clock className="h-4 w-4 text-green-500 mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium text-green-700 dark:text-green-400">Time Pattern Detected</p>
-                      <p className="text-sm text-green-600 dark:text-green-300">
+                      <p className="text-sm font-medium text-success">Time Pattern Detected</p>
+                      <p className="text-sm text-success">
                         Most episodes occur during {Object.entries(timePatterns).sort(([,a], [,b]) => (b as number) - (a as number))[0]?.[0]}.
                         Consider preventive measures during this time.
                       </p>

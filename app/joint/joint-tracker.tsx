@@ -146,7 +146,7 @@ export default function JointTracker() {
                               <span className="text-lg">{info.icon}</span>
                               <span className="font-semibold">{info.name}</span>
                               {entry.jointAffected && entry.jointAffected.length > 0 && <Badge variant="outline">{entry.jointAffected.slice(0, 2).join(', ')}{entry.jointAffected.length > 2 ? '...' : ''}</Badge>}
-                              {entry.attachmentImages && entry.attachmentImages.length > 0 && <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border-blue-300">📎 {entry.attachmentImages.length}</Badge>}
+                              {entry.attachmentImages && entry.attachmentImages.length > 0 && <Badge variant="outline" className="bg-info/10 text-info border-blue-300">📎 {entry.attachmentImages.length}</Badge>}
                               {entry.selfReducedFlag && <Badge variant="secondary">Self-reduced</Badge>}
                               {entry.erVisitRequired && <Badge variant="destructive">ER</Badge>}
                             </div>

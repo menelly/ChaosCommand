@@ -830,7 +830,7 @@ export default function BrainFogTracker() {
                     >
                       <span className="font-bold">{level.label}</span>
                       {level.description && (
-                        <span className="text-[10px] opacity-75">{level.description}</span>
+                        <span className="text-[0.625rem] opacity-75">{level.description}</span>
                       )}
                     </Button>
                   ))}

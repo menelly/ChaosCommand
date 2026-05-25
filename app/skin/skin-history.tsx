@@ -61,7 +61,7 @@ export function SkinHistory({ onEdit, onDelete, refreshTrigger }: { onEdit: (e: 
                           <span className="text-lg">{info.icon}</span>
                           <span className="font-semibold">{info.name}</span>
                           {entry.severity && <Badge variant="outline" className={getSeverityColor(entry.severity)}>{getSeverityLabel(entry.severity)} ({entry.severity}/10)</Badge>}
-                          {entry.photos && entry.photos.length > 0 && <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border-blue-300">📎 {entry.photos.length} {entry.photos.length === 1 ? 'photo' : 'photos'}</Badge>}
+                          {entry.photos && entry.photos.length > 0 && <Badge variant="outline" className="bg-info/10 text-info border-blue-300">📎 {entry.photos.length} {entry.photos.length === 1 ? 'photo' : 'photos'}</Badge>}
                           {entry.epinephrineGiven && <Badge variant="destructive">EpiPen used</Badge>}
                           {entry.erVisitRequired && <Badge variant="destructive">ER</Badge>}
                         </div>

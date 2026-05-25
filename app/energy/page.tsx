@@ -389,7 +389,7 @@ export default function EnergyPacingTracker() {
                 className="max-w-xs"
               />
               {selectedDate === new Date().toISOString().split('T')[0] && (
-                <Badge variant="outline" className="bg-green-50 dark:bg-green-950">Today</Badge>
+                <Badge variant="outline" className="bg-success/10">Today</Badge>
               )}
             </div>
           </CardContent>
@@ -525,7 +525,7 @@ export default function EnergyPacingTracker() {
                             <div
                               key={activity.id}
                               className={`flex items-center justify-between p-3 rounded-lg border ${
-                                isRest ? 'bg-teal-50 dark:bg-teal-950 border-teal-200 dark:border-teal-800' : 'bg-background'
+                                isRest ? 'bg-info/10 border-info/40' : 'bg-background'
                               }`}
                             >
                               <div className="flex items-center gap-3">
@@ -576,7 +576,7 @@ export default function EnergyPacingTracker() {
                           variant="outline"
                           size="sm"
                           onClick={() => logActivity(activity.id, activity.name, activity.defaultCost)}
-                          className="bg-teal-50 hover:bg-teal-100 border-teal-200 dark:bg-teal-950 dark:hover:bg-teal-900 dark:border-teal-800"
+                          className="bg-teal-50 hover:bg-teal-100 border-info/40 dark:hover:bg-info/10 border-info/40"
                         >
                           {activity.emoji} {activity.name} (+{Math.abs(activity.defaultCost)})
                         </Button>
@@ -654,7 +654,7 @@ export default function EnergyPacingTracker() {
                                     Spent: {record.totalSpent}
                                   </Badge>
                                   {record.totalRestored > 0 && (
-                                    <Badge variant="outline" className="bg-teal-50 dark:bg-teal-950">
+                                    <Badge variant="outline" className="bg-info/10">
                                       Restored: +{record.totalRestored}
                                     </Badge>
                                   )}

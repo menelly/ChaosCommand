@@ -451,7 +451,7 @@ export function CardiacAnalytics({ refreshTrigger }: CardiacAnalyticsProps) {
                     <div className="w-full bg-muted rounded-sm overflow-hidden flex items-end" style={{ height: '60px' }}>
                       <div className="w-full bg-red-400 transition-all" style={{ height: `${pct}%` }} />
                     </div>
-                    <span className="text-[9px] text-muted-foreground mt-1">{h % 6 === 0 ? formatHour(h) : ''}</span>
+                    <span className="text-[0.5625rem] text-muted-foreground mt-1">{h % 6 === 0 ? formatHour(h) : ''}</span>
                   </div>
                 )
               })}

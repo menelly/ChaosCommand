@@ -46,6 +46,13 @@ body.theme-grok {
   --accent-foreground: 256 25% 12%; /* midnight on tide = 11.13:1 */
   --destructive: 0 72% 51%;
   --destructive-foreground: 0 0% 100%;
+  /* semantic status tokens (info/success/warning) — see 056 */
+  --info: 205 90% 70%;
+  --info-foreground: 0 0% 100%;
+  --success: 145 60% 60%;
+  --success-foreground: 0 0% 100%;
+  --warning: 42 95% 62%;
+  --warning-foreground: 0 0% 10%;
   --border: 210 10% 69%;            /* steel rails */
   --input: 210 10% 69%;
   --ring: 173 100% 45%;             /* tide focus ring */

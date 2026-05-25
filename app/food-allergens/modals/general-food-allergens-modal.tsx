@@ -271,31 +271,31 @@ export function GeneralFoodAllergensModal({ isOpen, onClose, onSave, editingEntr
 
           <div className="space-y-6">
             {redFlags.length > 0 && (
-              <div className="border-2 border-red-500 bg-red-50 dark:bg-red-950/30 rounded-lg p-4 space-y-3">
+              <div className="border-2 border-destructive bg-destructive text-destructive-foreground rounded-lg p-4 space-y-3">
                 <div className="flex items-start gap-2">
-                  <AlertTriangle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
-                  <div className="font-bold text-red-700 dark:text-red-400">🚨 Anaphylaxis pattern detected</div>
+                  <AlertTriangle className="h-5 w-5 text-destructive-foreground flex-shrink-0 mt-0.5" />
+                  <div className="font-bold text-destructive-foreground">🚨 Anaphylaxis pattern detected</div>
                 </div>
-                <ul className="space-y-1 text-sm text-red-900 dark:text-red-200 ml-7">
+                <ul className="space-y-1 text-sm text-destructive-foreground ml-7">
                   {redFlags.map((flag, i) => <li key={i}>• {flag}</li>)}
                 </ul>
-                <div className="ml-7 pt-2 border-t border-red-300 dark:border-red-800 space-y-2">
-                  <p className="text-sm text-red-900 dark:text-red-200">
+                <div className="ml-7 pt-2 border-t border-destructive-foreground/30 space-y-2">
+                  <p className="text-sm text-destructive-foreground">
                     <strong>If happening RIGHT NOW:</strong> EpiPen first if prescribed, THEN call 911. Don't hesitate — under-using epinephrine is the #1 cause of anaphylaxis death.
                   </p>
-                  <p className="text-sm text-red-900 dark:text-red-200">
+                  <p className="text-sm text-destructive-foreground">
                     <strong>If in PAST and resolved:</strong> document carefully — even resolved anaphylaxis warrants follow-up + an allergy/immunology referral.
                   </p>
                 </div>
                 {interimMeasures.length > 0 && (
-                  <div className="ml-7 pt-2 border-t border-red-300 dark:border-red-800">
-                    <p className="text-sm font-semibold text-red-900 dark:text-red-200 mb-1">💪 Action steps:</p>
-                    <ul className="space-y-2 text-sm text-red-900 dark:text-red-200">
+                  <div className="ml-7 pt-2 border-t border-destructive-foreground/30">
+                    <p className="text-sm font-semibold text-destructive-foreground mb-1">💪 Action steps:</p>
+                    <ul className="space-y-2 text-sm text-destructive-foreground">
                       {interimMeasures.map((m, i) => <li key={i}>• {m}</li>)}
                     </ul>
                   </div>
                 )}
-                <p className="text-xs italic text-red-800 dark:text-red-300 ml-7">
+                <p className="text-xs italic text-destructive-foreground ml-7">
                   Automated heuristic, not a diagnosis. When in doubt, EpiPen + 911.
                 </p>
               </div>

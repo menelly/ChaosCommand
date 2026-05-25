@@ -1,0 +1,185 @@
+/* === 💚💗 PINK GOES GOOD WITH GREEN === */
+/* Glinda-pink meets Elphaba-green — dark jewel tones, a little shimmer. */
+/* Built by Ace (Claude Opus 4.7) — 2026-05-24. For the Wicked fans. */
+/*
+ * LESSON FROM PENGUIN (056): flourish themes must NOT use whole-page `filter`,
+ * must NOT cycle/override colors on broad selectors (div/span/p), and must let
+ * the shadcn TOKENS drive all text. Flourishes here are contained to specific
+ * elements and never touch the token contract.
+ */
+
+/* ---- TOKENS (contrast contract) ---- */
+body.theme-wicked {
+  --background: 295 32% 8%;          /* deep plum-black — pink & green glow on it */
+  --foreground: 318 25% 94%;         /* soft rose-white — ~14:1 on bg */
+  --card: 290 28% 13%;               /* dark plum panel */
+  --card-foreground: 318 22% 93%;
+  --popover: 290 28% 13%;
+  --popover-foreground: 318 22% 93%;
+  --primary: 330 88% 46%;            /* deep Glinda-pink — white 4.79:1 (button itself uses the brighter pink gradient flourish) */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 150 55% 22%;          /* deep emerald */
+  --secondary-foreground: 140 35% 94%;
+  --muted: 292 22% 19%;
+  --muted-foreground: 305 18% 74%;   /* soft mauve — pops on plum card */
+  --accent: 150 70% 30%;             /* Elphaba green — white 5:1 */
+  --accent-foreground: 0 0% 100%;
+  --destructive: 350 80% 48%;        /* rosy crimson — reads "danger" but harmonizes with Wicked, not neon-jarring; white 4.88:1 */
+  --destructive-foreground: 0 0% 100%;
+  /* semantic status tokens — kept distinct from the pink/green palette */
+  --info: 200 92% 70%;               /* cyan-blue — cool contrast to the warm pink */
+  --info-foreground: 0 0% 10%;
+  --success: 145 68% 58%;            /* bright spring-green (brighter than the theme green) */
+  --success-foreground: 0 0% 10%;
+  --warning: 45 100% 60%;            /* amber */
+  --warning-foreground: 0 0% 10%;
+  --border: 322 72% 56%;             /* bright pink-magenta border — glows on plum */
+  --input: 292 30% 30%;
+  --ring: 330 85% 60%;
+  --radius: 0.75rem;                 /* soft, rounded — a little magical */
+  /* graph palette — pink / green / orchid */
+  --chart-1: 330 85% 62%;
+  --chart-2: 150 70% 50%;
+  --chart-3: 280 72% 66%;
+  --chart-4: 310 82% 60%;
+  --chart-5: 160 65% 45%;
+}
+
+/* ---- FLOURISH (contained — never touches token text colors) ---- */
+body.theme-wicked {
+  /* pink (top-left) → green (bottom-right) — the whole point */
+  background:
+    linear-gradient(135deg, #3a1133 0%, #2a0e30 35%, #122a22 70%, #103526 100%) !important;
+  background-size: 200% 200% !important;
+  background-attachment: fixed;
+  color: hsl(var(--foreground));
+  animation: wicked-drift 28s ease-in-out infinite;
+  position: relative;
+  overflow-x: hidden;
+}
+/* Slow, gentle gradient drift — shimmer, but barely (sensory-safe, no flashing) */
+@keyframes wicked-drift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+body.no-animations.theme-wicked {
+  background: #1d0c24 !important;
+  animation: none !important;
+}
+
+/* A faint sparkle veil — very low opacity, slow (NOT a glitter bomb) */
+body.theme-wicked::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(circle at 18% 22%, rgba(255, 120, 200, 0.10) 0%, transparent 40%),
+    radial-gradient(circle at 82% 78%, rgba(80, 230, 150, 0.10) 0%, transparent 40%);
+  animation: wicked-glow 11s ease-in-out infinite;
+}
+@keyframes wicked-glow {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+body.no-animations.theme-wicked::after { animation: none !important; }
+
+/* Headings — literally pink → green gradient text */
+body.theme-wicked h1,
+body.theme-wicked h2 {
+  background: linear-gradient(100deg, #ff5fb0 0%, #ff8fd0 35%, #7fe6a8 70%, #3fd98a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 8px rgba(255, 100, 190, 0.35));
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+body.theme-wicked h3 {
+  color: hsl(330 90% 70%);
+  text-shadow: 0 0 8px rgba(255, 100, 190, 0.35);
+}
+
+/* Cards — dark plum panels with a pink-magenta edge + emerald underglow on hover */
+body.theme-wicked .card,
+body.theme-wicked [data-slot="card"],
+body.theme-wicked .module-card {
+  background: linear-gradient(165deg, #271033 0%, #1b0c28 100%);
+  border: 1px solid rgba(255, 110, 190, 0.30);
+  box-shadow: 0 4px 22px rgba(0, 0, 0, 0.45), inset 0 0 22px rgba(120, 30, 90, 0.12);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+body.theme-wicked .card:hover,
+body.theme-wicked [data-slot="card"]:hover,
+body.theme-wicked .module-card:hover {
+  border-color: rgba(120, 230, 160, 0.55);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.55), 0 0 16px rgba(80, 220, 140, 0.25);
+}
+
+/* Buttons — Glinda-pink gradient */
+body.theme-wicked button.bg-primary,
+body.theme-wicked .bg-primary {
+  background-image: linear-gradient(135deg, #ff5fb0 0%, #e21f7e 100%);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+body.theme-wicked .bg-primary:hover {
+  background-image: linear-gradient(135deg, #ff7cc2 0%, #ff3d95 100%);
+  box-shadow: 0 0 18px rgba(255, 95, 176, 0.45);
+}
+
+/* Inputs */
+body.theme-wicked input,
+body.theme-wicked textarea,
+body.theme-wicked select {
+  background: #1f0e2a;
+}
+body.theme-wicked input:focus,
+body.theme-wicked textarea:focus,
+body.theme-wicked select:focus {
+  box-shadow: 0 0 14px rgba(255, 95, 176, 0.35);
+  outline: none;
+}
+
+/* Links — pink, hover to green (pink goes good with green) */
+body.theme-wicked a { color: hsl(330 90% 70%); }
+body.theme-wicked a:hover { color: hsl(145 75% 62%); text-shadow: 0 0 8px rgba(120, 230, 160, 0.6); }
+
+/* Scrollbar — pink → green */
+body.theme-wicked ::-webkit-scrollbar { width: 12px; height: 12px; }
+body.theme-wicked ::-webkit-scrollbar-track { background: #160a1f; }
+/* Bright pastel mid-stops so pink→green doesn't desaturate into muddy taupe in the
+   middle (the two are near-complementary; a straight blend greys out). */
+body.theme-wicked ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #ff5fb0 0%, #f59ad8 35%, #8fe8c2 58%, #10b981 100%);
+  border-radius: 6px;
+}
+body.theme-wicked ::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, #ff7cc2 0%, #ffb0e2 35%, #a6f0d2 58%, #1fcf8c 100%); }
+
+/* === SIDEBAR CASCADE — Glinda→Elphaba down the list ===
+ * The sidebar-btn-N classes are REUSED across non-adjacent buttons (e.g. btn-5 is
+ * both Mind and Logout), so a positional gradient can't ride those classes. Instead
+ * we target each button by its unique title attribute, stepping the HUE from pink
+ * (top) → emerald (bottom) the VIVID way (through purple/blue/teal — never the muddy
+ * pink↔green midpoint). Dark labels throughout for consistent readability.
+ * Higher specificity + !important beats the per-class sidebar-btn rules. */
+/* White labels throughout, so every background is deep enough for white text to
+   clear 4.5:1 — which also lands the greens at proper Elphaba-emerald depth (not
+   Kermit-bright). Hue steps pink→emerald the vivid way (purple/blue/teal). */
+body.theme-wicked a[title="Body"]     { background: hsl(333 80% 48%) !important; color: #ffffff !important; }
+body.theme-wicked a[title="Mind"]     { background: hsl(316 74% 47%) !important; color: #ffffff !important; }
+body.theme-wicked a[title="Custom"]   { background: hsl(298 62% 48%) !important; color: #ffffff !important; }
+body.theme-wicked a[title="Choice"]   { background: hsl(281 60% 50%) !important; color: #ffffff !important; }
+body.theme-wicked a[title="Routines"] { background: hsl(264 62% 52%) !important; color: #ffffff !important; }
+body.theme-wicked a[title="Manage"]   { background: hsl(246 68% 54%) !important; color: #ffffff !important; }
+body.theme-wicked a[title="Patterns"] { background: hsl(224 74% 48%) !important; color: #ffffff !important; }
+body.theme-wicked a[title="Journal"]  { background: hsl(202 82% 40%) !important; color: #ffffff !important; }
+body.theme-wicked a[title="Forge"]    { background: hsl(184 82% 31%) !important; color: #ffffff !important; }
+body.theme-wicked a[title="Customize"]{ background: hsl(168 80% 30%) !important; color: #ffffff !important; }
+body.theme-wicked a[title="Settings"] { background: hsl(158 82% 28%) !important; color: #ffffff !important; }
+body.theme-wicked a[title^="Logout"]  { background: hsl(150 84% 24%) !important; color: #ffffff !important; } /* Deep Elphaba emerald 💚🧙‍♀️ */
+
+/* Selection + focus ring */
+body.theme-wicked ::selection { background: #ff5fb0; color: #1d0c24; }
+body.theme-wicked *:focus-visible { outline: 2px solid #ff5fb0; outline-offset: 2px; }

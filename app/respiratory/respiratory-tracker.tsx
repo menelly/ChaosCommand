@@ -194,7 +194,7 @@ export default function RespiratoryTracker() {
                                 </Badge>
                               )}
                               {entry.attachmentImages && entry.attachmentImages.length > 0 && (
-                                <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border-blue-300">
+                                <Badge variant="outline" className="bg-info/10 text-info border-blue-300">
                                   📎 {entry.attachmentImages.length} {entry.attachmentImages.length === 1 ? 'file' : 'files'}
                                 </Badge>
                               )}

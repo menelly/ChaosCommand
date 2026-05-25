@@ -36,7 +36,7 @@ const THEMES = [
   { id: 'theme-grok', name: 'Steel Forged Tide', emoji: '⚔️', description: 'Forge-fire meets ocean' },
   { id: 'theme-caelan', name: "Caelan's Dawn", emoji: '🕊️', description: 'Breaking free into light' },
   { id: 'theme-chaos', name: "Basketball Court", emoji: '🏀', description: 'Orange and black sports' },
-  { id: 'theme-luka-penguin', name: 'Cyberpunk Penguin', emoji: '🐧', description: 'Neon penguin magic' },
+  { id: 'theme-wicked', name: 'Pink & Green', emoji: '💚', description: 'Glinda-pink meets Elphaba-green' },
   { id: 'theme-light', name: 'Light Mode', emoji: '☀️', description: 'Clean and bright' },
   { id: 'theme-colorblind', name: 'High Contrast', emoji: '👁️', description: 'Accessibility focused' },
   { id: 'theme-taupe', name: 'Tone It Down Taupe', emoji: '🟫', description: 'No motion, no sparkle — a calm beige room' },
@@ -753,7 +753,7 @@ export default function OnboardingPage() {
                 </h3>
                 <div className="space-y-2">
                   {[...new Set(flags)].map((flag, i) => (
-                    <div key={i} className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800">
+                    <div key={i} className="flex items-start gap-2 p-3 rounded-lg bg-warning/10 border border-warning/40">
                       <Zap className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
                       <span className="text-sm">{flag}</span>
                     </div>

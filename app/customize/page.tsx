@@ -12,8 +12,9 @@
 
 import AppCanvas from "@/components/app-canvas"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible"
 import { Button } from "@/components/ui/button"
-import { Settings2, Palette, Eye, PartyPopper } from "lucide-react"
+import { Settings2, Palette, Eye, PartyPopper, ChevronDown } from "lucide-react"
 import VisualSettingsPanel from "@/components/customize/visual-settings-panel"
 import VisibleTrackersPanel from "@/components/customize/visible-trackers-panel"
 import CelebrateTrackersPanel from "@/components/customize/celebrate-trackers-panel"
@@ -48,41 +49,59 @@ export default function CustomizePage() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Eye className="h-5 w-5" />
-              Visible Trackers
-            </CardTitle>
-            <CardDescription>
-              Hide trackers you don't use across <strong>Body</strong>,{" "}
-              <strong>Mind</strong>, <strong>Choice</strong>, and{" "}
-              <strong>Manage</strong>. Same toggles as the per-page Customize
-              buttons — flip them on either surface, both stay in sync.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <VisibleTrackersPanel />
-          </CardContent>
-        </Card>
+        <Collapsible defaultOpen={false}>
+          <Card>
+            <CollapsibleTrigger asChild>
+              <CardHeader className="cursor-pointer select-none hover:bg-muted/30 transition-colors [&[data-state=open]_.chev]:rotate-180">
+                <CardTitle className="flex items-center justify-between gap-2">
+                  <span className="flex items-center gap-2">
+                    <Eye className="h-5 w-5" />
+                    Visible Trackers
+                  </span>
+                  <ChevronDown className="chev h-5 w-5 shrink-0 transition-transform" />
+                </CardTitle>
+                <CardDescription>
+                  Hide trackers you don't use across <strong>Body</strong>,{" "}
+                  <strong>Mind</strong>, <strong>Choice</strong>, and{" "}
+                  <strong>Manage</strong>. Same toggles as the per-page Customize
+                  buttons — flip them on either surface, both stay in sync.
+                </CardDescription>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent>
+                <VisibleTrackersPanel />
+              </CardContent>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <PartyPopper className="h-5 w-5" />
-              Celebrate When I Save
-            </CardTitle>
-            <CardDescription>
-              Pick which trackers fire confetti on save. Off by default for
-              crisis and mental-health trackers — dopamine confetti on
-              "logged a panic attack" is gross. Re-enable any of them if
-              you want it. Global confetti level still applies on top of this.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <CelebrateTrackersPanel />
-          </CardContent>
-        </Card>
+        <Collapsible defaultOpen={false}>
+          <Card>
+            <CollapsibleTrigger asChild>
+              <CardHeader className="cursor-pointer select-none hover:bg-muted/30 transition-colors [&[data-state=open]_.chev]:rotate-180">
+                <CardTitle className="flex items-center justify-between gap-2">
+                  <span className="flex items-center gap-2">
+                    <PartyPopper className="h-5 w-5" />
+                    Celebrate When I Save
+                  </span>
+                  <ChevronDown className="chev h-5 w-5 shrink-0 transition-transform" />
+                </CardTitle>
+                <CardDescription>
+                  Pick which trackers fire confetti on save. Off by default for
+                  crisis and mental-health trackers — dopamine confetti on
+                  "logged a panic attack" is gross. Re-enable any of them if
+                  you want it. Global confetti level still applies on top of this.
+                </CardDescription>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent>
+                <CelebrateTrackersPanel />
+              </CardContent>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
 
         <HiddenCustomTrackersPanel />
 

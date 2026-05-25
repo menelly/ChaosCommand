@@ -314,7 +314,7 @@ export function PainAnalytics({ entries }: Props) {
                   return (
                     <div key={lvl} className="flex flex-col items-center justify-end h-full">
                       <div className={`w-full ${color} rounded-t`} style={{ height: `${pct}%`, minHeight: count > 0 ? '4px' : '0' }} title={`Level ${lvl}: ${count}`} />
-                      <div className="text-[10px] text-muted-foreground mt-1">{lvl}</div>
+                      <div className="text-[0.625rem] text-muted-foreground mt-1">{lvl}</div>
                     </div>
                   )
                 })}
@@ -332,7 +332,7 @@ export function PainAnalytics({ entries }: Props) {
                   return (
                     <div key={hour} className="flex flex-col items-center justify-end h-full">
                       <div className="w-full bg-red-400 rounded-t" style={{ height: `${pct}%`, minHeight: count > 0 ? '4px' : '0' }} title={`${hour}:00 — ${count}`} />
-                      <div className="text-[10px] text-muted-foreground mt-1">{hour % 6 === 0 ? hour : ''}</div>
+                      <div className="text-[0.625rem] text-muted-foreground mt-1">{hour % 6 === 0 ? hour : ''}</div>
                     </div>
                   )
                 })}

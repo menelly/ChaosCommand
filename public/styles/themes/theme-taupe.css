@@ -30,8 +30,15 @@ body.theme-taupe {
   --accent-foreground: 35 12% 20%;
   --destructive: 9 44% 42%;         /* muted brick, not alarm-red */
   --destructive-foreground: 0 0% 100%;
-  --border: 39 17% 74%;
-  --input: 39 17% 74%;
+  /* semantic status tokens (info/success/warning) — see 056 */
+  --info: 211 80% 42%;
+  --info-foreground: 0 0% 100%;
+  --success: 142 60% 30%;
+  --success-foreground: 0 0% 100%;
+  --warning: 30 85% 35%;
+  --warning-foreground: 0 0% 10%;
+  --border: 39 28% 45%;
+  --input: 39 28% 45%;
   --ring: 35 11% 33%;
   --radius: 0.375rem;
 }

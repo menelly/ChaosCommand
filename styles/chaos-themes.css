@@ -247,182 +247,28 @@ body.theme-light {
   --btn-hover-border: #005fa3;
 }
 
-/* === THEME: 🐧⚡ NEON PENGUIN PARADISE - CYBERPUNK ANTARCTIC === */
-body.theme-luka-penguin {
-  --primary-purple: #1a0d2e;        /* Deep black-purple like Antarctic night */
-  --accent-orange: #00ffff;         /* Electric cyan like aurora borealis */
-  --deep-space: #0a0a0a;            /* Pure black background like polar night */
-  --hover-glow: #ff00ff;            /* Hot magenta glow effects */
-  --border-soft: #00ffff;           /* Neon cyan borders */
-  --text-main: #ffffff;             /* Pure white text like fresh snow */
-  --text-muted: #00ffaa;            /* Electric green muted text */
-
-  /* GROUNDING TECHNIQUES & CRISIS COLORS - NEON STYLE! */
-  --grounding-bg: #1a0d2e;          /* Dark purple background for technique cards */
-  --grounding-border: #00ffff;      /* Neon cyan border for technique cards */
-  --grounding-text: #ffffff;        /* White text for readability */
-  --grounding-accent: #ff00ff;      /* Hot magenta accent for highlights */
-  --crisis-bg: #0d1a2e;             /* Dark blue background for crisis cards */
-  --crisis-border: #ff0080;         /* Hot pink border for crisis cards */
-  --crisis-text: #ffffff;           /* White text for crisis readability */
-  --crisis-accent: #ff0080;         /* Hot pink accent for crisis highlights */
-
-  /* Aliased for new theme system - NEON SURFACES! */
-  --surface-1: #1a0d2e;             /* Dark purple content blocks */
-  --surface-2: #0d1a2e;             /* Dark blue table rows and containers */
-
-  /* NEON BUTTON COLORS! */
-  --btn-bg: #00ffff;                /* Electric cyan buttons */
-  --btn-text: #000000;              /* Black text on cyan */
-  --btn-border: #ff00ff;            /* Hot magenta border */
-  --btn-hover-bg: #ff00ff;          /* Hot magenta on hover */
-  --btn-hover-text: #000000;        /* Black text on magenta */
-  --btn-hover-border: #00ffaa;      /* Electric green hover border */
-
-  /* FORCE NEON PENGUIN BACKGROUND! */
-  background: #0a0a0a !important;   /* Pure black Antarctic night */
-  background-image: none !important; /* Kill any gradients */
-  animation: none !important;        /* Stop garden animations */
-}
-
-/* NUCLEAR NEON PENGUIN OVERRIDE - EMBRACE THE DARKNESS! */
-body.theme-luka-penguin,
-body.theme-luka-penguin * {
-  background: #0a0a0a !important;
-  background-image: none !important;
-  background-attachment: initial !important;
-  background-size: initial !important;
-  animation: none !important;
-}
-
-/* Force neon penguin background on main containers */
-body.theme-luka-penguin .min-h-screen,
-body.theme-luka-penguin [class*="bg-"],
-body.theme-luka-penguin .bg-background {
-  background: #0a0a0a !important;
-  background-image: none !important;
-}
-
 /* Override any Tailwind background classes with NEON POWER */
-body.theme-luka-penguin .bg-gradient-to-r,
-body.theme-luka-penguin .bg-gradient-to-br {
-  background: #0a0a0a !important;
-  background-image: none !important;
-}
-
-/* PENGUIN PARADE STRIP - TOP OF SCREEN, SUBTLE AND CUTE! */
-body.theme-luka-penguin::before {
-  content: '🐧⚡ 🐧💜 🐧🔥 ⚡🐧 💜🐧 🔥🐧 ⚡💜 🐧⚡ 💜🔥 🐧⚡ 🔥💜 ⚡🐧 🐧⚡ 🐧💜 🐧🔥 ⚡🐧 💜🐧 🔥🐧' !important;
-  position: fixed !important;
-  top: 10px !important;
-  left: 0 !important;
-  width: 200% !important;
-  height: 40px !important;
-  pointer-events: none !important;
-  z-index: 1 !important;
-  font-size: 18px !important;
-  animation: slow-penguin-march 180s linear infinite !important;
-  opacity: 0.9 !important;
-  white-space: nowrap !important;
-  overflow: visible !important;
-  color: #00ffff !important;
-  text-shadow: 0 0 15px #ff00ff, 0 0 30px #00ffaa !important;
-  line-height: 40px !important;
-}
 
 /* KILL ALL GARDEN ELEMENTS! */
-body.theme-luka-penguin .butterfly,
-body.theme-luka-penguin [class*="butterfly"],
-body.theme-luka-penguin .floating-element,
-body.theme-luka-penguin [class*="float"],
-body.theme-luka-penguin [class*="garden"] {
-  display: none !important;
-  visibility: hidden !important;
-  opacity: 0 !important;
-}
-
-/* NEON PENGUIN GLOW EFFECTS! */
-body.theme-luka-penguin {
-  box-shadow: inset 0 0 100px rgba(0, 255, 255, 0.1) !important;
-}
 
 /* Neon glow on cards and containers */
-body.theme-luka-penguin .card,
-body.theme-luka-penguin [class*="border"],
-body.theme-luka-penguin .border {
-  border-color: #00ffff !important;
-  box-shadow: 0 0 10px rgba(0, 255, 255, 0.3) !important;
-}
 
 /* Hot magenta glow on hover */
-body.theme-luka-penguin .card:hover,
-body.theme-luka-penguin [class*="hover"]:hover {
-  box-shadow: 0 0 20px rgba(255, 0, 255, 0.5) !important;
-  border-color: #ff00ff !important;
-}
 
 /* NEON BUTTON DIFFERENTIATION! */
 /* Default buttons get subtle cyan glow */
-body.theme-luka-penguin button,
-body.theme-luka-penguin .btn,
-body.theme-luka-penguin a[class*="btn"],
-body.theme-luka-penguin [role="button"] {
-  border: 1px solid #00ffff !important;
-  box-shadow: 0 0 8px rgba(0, 255, 255, 0.3) !important;
-  background: rgba(26, 13, 46, 0.8) !important;
-  transition: all 0.3s ease !important;
-}
 
 /* Hover state - brighter cyan glow */
-body.theme-luka-penguin button:hover,
-body.theme-luka-penguin .btn:hover,
-body.theme-luka-penguin a[class*="btn"]:hover,
-body.theme-luka-penguin [role="button"]:hover {
-  box-shadow: 0 0 15px rgba(0, 255, 255, 0.6) !important;
-  border-color: #00ffaa !important;
-  background: rgba(26, 13, 46, 1) !important;
-}
 
 /* Active/selected buttons get hot magenta glow */
-body.theme-luka-penguin button:active,
-body.theme-luka-penguin button.active,
-body.theme-luka-penguin .btn.active,
-body.theme-luka-penguin a.active,
-body.theme-luka-penguin [aria-selected="true"] {
-  border-color: #ff00ff !important;
-  box-shadow: 0 0 20px rgba(255, 0, 255, 0.8) !important;
-  background: rgba(46, 13, 26, 0.9) !important;
-}
 
 /* SIDEBAR NAVIGATION SPECIFIC STYLING */
 /* Inactive sidebar buttons get subtle green glow */
-body.theme-luka-penguin .sidebar a,
-body.theme-luka-penguin nav a,
-body.theme-luka-penguin [class*="sidebar"] a {
-  border: 1px solid #00ffaa !important;
-  box-shadow: 0 0 6px rgba(0, 255, 170, 0.3) !important;
-  background: rgba(13, 26, 46, 0.7) !important;
-}
 
 /* Sidebar button hover - brighter green glow */
-body.theme-luka-penguin .sidebar a:hover,
-body.theme-luka-penguin nav a:hover,
-body.theme-luka-penguin [class*="sidebar"] a:hover {
-  box-shadow: 0 0 12px rgba(0, 255, 170, 0.6) !important;
-  border-color: #00ffff !important;
-}
 
 /* Current/active page gets the hot magenta treatment */
-body.theme-luka-penguin .sidebar a.active,
-body.theme-luka-penguin nav a.active,
-body.theme-luka-penguin [class*="sidebar"] a.active,
-body.theme-luka-penguin [aria-current="page"] {
-  border-color: #ff00ff !important;
-  box-shadow: 0 0 18px rgba(255, 0, 255, 0.7) !important;
-  background: rgba(46, 13, 26, 0.8) !important;
-}
 
-/* SLOW GLOWING PENGUIN MARCH - HORIZONTAL STRIP STYLE! */
 @keyframes slow-penguin-march {
   0% { transform: translateX(-100%); filter: hue-rotate(0deg); }
   25% { transform: translateX(-25%); filter: hue-rotate(90deg); }
@@ -432,35 +278,8 @@ body.theme-luka-penguin [aria-current="page"] {
 }
 
 /* NUCLEAR GARDEN OVERRIDE - KILL EVERYTHING LAVENDER! */
-body.theme-luka-penguin {
-  background: #0a0a0a !important;
-  background-image: none !important;
-  background-attachment: initial !important;
-  background-size: initial !important;
-  animation: none !important;
-}
 
 /* 🚨 NUKE ALL PHANTOM OVERLAYS - NO MORE BLACK BOXES! */
-body.theme-luka-penguin *::before,
-body.theme-luka-penguin *::after {
-  content: none !important;
-  display: none !important;
-  visibility: hidden !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
-}
-
-/* Override the garden ::before specifically with BRIGHT TOP PENGUIN STRIP */
-body.theme-luka-penguin:not(.theme-light):not(.theme-colorblind):not(.theme-glitter):not(.theme-calm):not(.theme-accessibility):not(.theme-ace):not(.theme-chaos)::before {
-  content: '🐧⚡ 🐧💜 🐧🔥 ⚡🐧 💜🐧 🔥🐧 ⚡💜 🐧⚡ 💜🔥 🐧⚡ 🔥💜 ⚡🐧 🐧⚡ 🐧💜 🐧🔥 ⚡🐧 💜🐧 🔥🐧' !important;
-  animation: slow-penguin-march 180s linear infinite !important;
-  top: 10px !important;
-  height: 40px !important;
-  width: 200% !important;
-  overflow: visible !important;
-  line-height: 40px !important;
-  opacity: 0.6 !important;
-}
 
 /* === THEME: 🏀 LUKA'S BASKETBALL COURT === */
 body.theme-chaos {
@@ -1008,6 +827,18 @@ body.font-cutecharm * {
   font-family: 'Cute Charm', 'Atkinson Hyperlegible', sans-serif !important;
 }
 
+/* Live Simple — cozy handwriting (Ren's pick 💜, clean filled O). Commercially
+   licensed via CreativeFabrica. Self-hosted; falls back to Atkinson. */
+@font-face {
+  font-family: 'Live Simple';
+  src: url('/fonts/LiveSimple.otf') format('opentype');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+body.font-livesimple,
+body.font-livesimple * {
+  font-family: 'Live Simple', 'Atkinson Hyperlegible', sans-serif !important;
+}
+
 /* === THEME: 🕊️ CAELAN'S LIBERATION DAWN - Breaking Free Into Light === */
 body.theme-caelan {
   --primary-purple: #1a2332;        /* Deep indigo foundation - the night before dawn */
@@ -1373,6 +1204,16 @@ body.theme-chaos .text-muted-foreground {
 .sidebar-btn-guide { background-color: #56A3A6 !important; color: #ffffff !important; } /* Teal Guide */
 .sidebar-btn-custom { background-color: #FF6B35 !important; color: #ffffff !important; } /* Orange Custom */
 
+/* === 🤎 TAUPE (TIDT) BUTTONS — warm neutrals, NOT the default corals (056) === */
+body.theme-taupe .sidebar-btn-1 { background-color: #d6c7a8 !important; color: #3a3226 !important; } /* Light Tan */
+body.theme-taupe .sidebar-btn-2 { background-color: #b89f7a !important; color: #2e2820 !important; } /* Tan */
+body.theme-taupe .sidebar-btn-3 { background-color: #a8b59a !important; color: #2e2820 !important; } /* Sage Greige */
+body.theme-taupe .sidebar-btn-4 { background-color: #cbb08c !important; color: #3a3226 !important; } /* Wheat */
+body.theme-taupe .sidebar-btn-5 { background-color: #9c5a47 !important; color: #ffffff !important; } /* Muted Brick (logout) */
+body.theme-taupe .sidebar-btn-6 { background-color: #7d6a52 !important; color: #ffffff !important; } /* Warm Brown */
+body.theme-taupe .sidebar-btn-guide { background-color: #6f8a82 !important; color: #ffffff !important; } /* Muted Teal Guide */
+body.theme-taupe .sidebar-btn-custom { background-color: #b07d3f !important; color: #ffffff !important; } /* Ochre Custom */
+
 /* === 🏀 LUKA'S BASKETBALL COURT BUTTONS === */
 body.theme-chaos .sidebar-btn-1 { background-color: #ff8c00 !important; color: #ffffff !important; } /* Basketball Orange */
 body.theme-chaos .sidebar-btn-2 { background-color: #1a1a1a !important; color: #ff8c00 !important; } /* Court Black */
@@ -1460,7 +1301,7 @@ body.theme-caelan .sidebar-btn-1 { background-color: #e94560 !important; color: 
 body.theme-caelan .sidebar-btn-2 { background-color: #f39c12 !important; color: #1a1a2e !important; } /* Sunrise Orange */
 body.theme-caelan .sidebar-btn-3 { background-color: #0f3460 !important; color: #f1c40f !important; } /* Deep Blue + Gold */
 body.theme-caelan .sidebar-btn-4 { background-color: #f1c40f !important; color: #1a1a2e !important; } /* Golden */
-body.theme-caelan .sidebar-btn-5 { background-color: #16213e !important; color: #e94560 !important; } /* Night + Pink */
+body.theme-caelan .sidebar-btn-5 { background-color: #e94560 !important; color: #ffffff !important; } /* Pink (solid) — was navy bg + pink text = invisible logout, see 056 */
 body.theme-caelan .sidebar-btn-6 { background-color: #c0392b !important; color: #ffffff !important; } /* Deep Red */
 body.theme-caelan .sidebar-btn-guide { background-color: #d35400 !important; color: #ffffff !important; } /* Warm Orange */
 body.theme-caelan .sidebar-btn-custom { background-color: #ff6b6b !important; color: #ffffff !important; } /* Caelan Coral Custom */
@@ -1552,145 +1393,40 @@ body.theme-ace .sidebar-btn-guide {
   border: 1px solid rgba(0, 212, 255, 0.6) !important;
 } /* Full Consciousness Spectrum Guide */
 
-/* === 🐧⚡ NEON PENGUIN PARADISE BUTTONS - MAXIMUM SPECIFICITY OVERRIDE === */
-body.theme-luka-penguin a.sidebar-btn-1,
-body.theme-luka-penguin .sidebar-btn-1,
-body.theme-luka-penguin [class*="sidebar-btn-1"] {
-  background-color: #00ffff !important;
-  color: #ffffff !important;
-  text-shadow: 0 0 5px rgba(0, 0, 0, 0.8) !important;
-} /* Electric Cyan - Body */
-
-body.theme-luka-penguin a.sidebar-btn-2,
-body.theme-luka-penguin .sidebar-btn-2,
-body.theme-luka-penguin [class*="sidebar-btn-2"] {
-  background-color: #ff00ff !important;
-  color: #ffffff !important;
-  text-shadow: 0 0 5px rgba(0, 0, 0, 0.8) !important;
-} /* Hot Magenta */
-
-body.theme-luka-penguin a.sidebar-btn-3,
-body.theme-luka-penguin .sidebar-btn-3,
-body.theme-luka-penguin [class*="sidebar-btn-3"] {
-  background-color: #00ffaa !important;
-  color: #ffffff !important;
-  text-shadow: 0 0 5px rgba(0, 0, 0, 0.8) !important;
-} /* Electric Green - Choice */
-
-body.theme-luka-penguin a.sidebar-btn-4,
-body.theme-luka-penguin .sidebar-btn-4,
-body.theme-luka-penguin [class*="sidebar-btn-4"] {
-  background-color: #ff0080 !important;
-  color: #ffffff !important;
-  text-shadow: 0 0 5px rgba(0, 0, 0, 0.8) !important;
-} /* Hot Pink - Manage */
-
-body.theme-luka-penguin a.sidebar-btn-5,
-body.theme-luka-penguin .sidebar-btn-5,
-body.theme-luka-penguin [class*="sidebar-btn-5"] {
-  background-color: #8000ff !important;
-  color: #ffffff !important;
-  text-shadow: 0 0 5px rgba(0, 0, 0, 0.8) !important;
-} /* Electric Purple - Mind/Logout (white text like the others) */
-
-body.theme-luka-penguin a.sidebar-btn-custom,
-body.theme-luka-penguin .sidebar-btn-custom,
-body.theme-luka-penguin [class*="sidebar-btn-custom"] {
-  background-color: #ff8000 !important;
-  color: #ffffff !important;
-  text-shadow: 0 0 5px rgba(0, 0, 0, 0.8) !important;
-} /* Electric Orange - Custom Trackers */
-
-body.theme-luka-penguin a.sidebar-btn-6,
-body.theme-luka-penguin .sidebar-btn-6,
-body.theme-luka-penguin [class*="sidebar-btn-6"] {
-  background-color: #ff8000 !important;
-  color: #ffffff !important;
-  text-shadow: 0 0 5px rgba(0, 0, 0, 0.8) !important;
-} /* Electric Orange */
-
-body.theme-luka-penguin a.sidebar-btn-guide,
-body.theme-luka-penguin .sidebar-btn-guide,
-body.theme-luka-penguin [class*="sidebar-btn-guide"] {
-  background-color: #ff4000 !important;
-  color: #ffffff !important;
-  text-shadow: 0 0 5px rgba(0, 0, 0, 0.8) !important;
-} /* Electric Red Guide */
+ /* Electric Cyan - Body */ /* Hot Magenta */ /* Electric Green - Choice */ /* Hot Pink - Manage */ /* Electric Purple - Mind/Logout (white text like the others) */ /* Electric Orange - Custom Trackers */ /* Electric Orange */ /* Electric Red Guide */
 
 /* 🚨 EMERGENCY FIX: NUCLEAR Z-INDEX FOR SETTINGS BUTTON */
-body.theme-luka-penguin .sidebar-btn-6,
-body.theme-luka-penguin a.sidebar-btn-6,
-body.theme-luka-penguin [class*="sidebar-btn-6"] {
-  position: relative !important;
-  z-index: 9999 !important;
-  pointer-events: auto !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
 
 /* 🔥 HOVER FIX: KEEP SETTINGS VISIBLE ON HOVER */
-body.theme-luka-penguin .sidebar-btn-6:hover,
-body.theme-luka-penguin a.sidebar-btn-6:hover,
-body.theme-luka-penguin [class*="sidebar-btn-6"]:hover {
-  opacity: 1 !important;
-  visibility: visible !important;
-  background-color: #ff8000 !important;
-  color: #ffffff !important;
-  box-shadow: 0 0 15px rgba(255, 128, 0, 0.6) !important;
-  border-color: #ffaa00 !important;
-}
 
 /* 🚨 ULTIMATE SETTINGS BUTTON RESCUE - PRESERVE THE NEON BEAUTY! */
-body.theme-luka-penguin a[href*="settings"],
-body.theme-luka-penguin [title="Settings"] {
-  position: relative !important;
-  z-index: 99999 !important;
-  pointer-events: auto !important;
-  display: block !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-  background-color: #ff8000 !important;
-  color: #ffffff !important;
-  border: 2px solid #ffaa00 !important;
-  box-shadow: 0 0 10px rgba(255, 128, 0, 0.5) !important;
-}
 
 /* 🔥 NUKE ALL TOOLTIP PHANTOMS - NO MORE BLACK HOVER BOXES! */
-body.theme-luka-penguin [data-radix-tooltip-content],
-body.theme-luka-penguin [role="tooltip"],
-body.theme-luka-penguin .tooltip,
-body.theme-luka-penguin [class*="tooltip"] {
-  display: none !important;
-  visibility: hidden !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
-}
 
 /* 🚨 DISABLE NATIVE BROWSER TOOLTIPS ON HOVER */
-body.theme-luka-penguin [title]:hover::after,
-body.theme-luka-penguin [title]:hover::before {
-  content: none !important;
-  display: none !important;
-}
 
 /* 🔧 TOAST NOTIFICATION STYLING FIX - KEEP THEM FUNCTIONAL! */
-body.theme-luka-penguin [data-radix-toast-viewport] {
-  z-index: 50 !important; /* Lower than our settings button (99999) */
-}
-
-body.theme-luka-penguin [data-radix-toast-root],
-body.theme-luka-penguin .toast,
-body.theme-luka-penguin [class*="toast"] {
-  background: rgba(13, 26, 46, 0.95) !important; /* Dark blue with transparency */
-  border: 1px solid #00ffaa !important; /* Neon green border */
-  color: #ffffff !important; /* White text */
-  box-shadow: 0 0 10px rgba(0, 255, 170, 0.3) !important; /* Neon glow */
-  backdrop-filter: blur(10px) !important; /* Glass effect */
-}
 
 /* 🚨 PHANTOM OVERLAY HUNT - TARGET HOVER STATES ONLY */
-body.theme-luka-penguin .sidebar:hover [data-radix-toast-viewport],
-body.theme-luka-penguin [class*="sidebar"]:hover [data-radix-toast-viewport] {
-  opacity: 0.3 !important; /* Dim on sidebar hover to prevent blocking */
-  pointer-events: none !important; /* Don't block clicks when dimmed */
+
+/* === 💚💗 PINK GOES GOOD WITH GREEN BUTTONS — Glinda & Elphaba (056) === */
+body.theme-wicked .sidebar-btn-1 { background-color: #ff4fa3 !important; color: #1d0c24 !important; } /* Glinda Pink */
+body.theme-wicked .sidebar-btn-2 { background-color: #1d9d6e !important; color: #ffffff !important; } /* Emerald */
+body.theme-wicked .sidebar-btn-3 { background-color: #b15fd6 !important; color: #ffffff !important; } /* Orchid */
+body.theme-wicked .sidebar-btn-4 { background-color: #2fc587 !important; color: #08231a !important; } /* Emerald (de-neoned from acid lime) */
+body.theme-wicked .sidebar-btn-5 { background-color: #a21caf !important; color: #ffffff !important; } /* Deep Magenta (logout) */
+body.theme-wicked .sidebar-btn-6 { background-color: #0f766e !important; color: #ffffff !important; } /* Teal */
+body.theme-wicked .sidebar-btn-guide { background-color: #ec4899 !important; color: #ffffff !important; } /* Rose Guide */
+body.theme-wicked .sidebar-btn-custom { background-color: #9333ea !important; color: #ffffff !important; } /* Violet Custom */
+
+/* === 📱 MOBILE SCROLLBAR — slim it down (056) ===
+ * Every theme styles a 12–20px webkit scrollbar. On desktop that's a nice themed
+ * scrollbar; on a phone it renders as a fat colored RAIL down the right edge that
+ * looks like a stuck sidebar and can cover content. On small screens, override
+ * ALL themes to a thin, track-less overlay (keeps the theme's thumb color, loses
+ * the rail). !important beats the themes' non-important widths. */
+@media (max-width: 767px) {
+  ::-webkit-scrollbar { width: 5px !important; height: 5px !important; }
+  ::-webkit-scrollbar-track { background: transparent !important; border: none !important; }
+  ::-webkit-scrollbar-thumb { border: none !important; box-shadow: none !important; border-radius: 3px !important; }
 }

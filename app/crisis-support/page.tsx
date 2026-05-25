@@ -156,7 +156,7 @@ export default function CrisisSupport() {
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Crisis Mode Alert */}
         {crisisMode && (
-          <Alert className="border-red-500 bg-red-50 dark:bg-red-950">
+          <Alert className="border-destructive bg-destructive text-destructive-foreground [&>svg]:text-destructive-foreground">
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription className="text-lg font-medium">
               <div className="space-y-2">
@@ -164,15 +164,15 @@ export default function CrisisSupport() {
                 <div className="flex flex-wrap gap-2">
                   <Button 
                     onClick={() => handleEmergencyCall('988')}
-                    className="bg-red-600 hover:bg-red-700"
+                    className="bg-red-600 hover:bg-red-700 text-white"
                   >
                     <Phone className="h-4 w-4 mr-2" />
                     Call 988 Now
                   </Button>
-                  <Button 
+                  <Button
                     onClick={() => handleEmergencyCall('911')}
                     variant="outline"
-                    className="border-red-500 text-red-600"
+                    className="border-destructive-foreground text-destructive-foreground bg-transparent hover:bg-destructive-foreground/10"
                   >
                     Emergency 911
                   </Button>

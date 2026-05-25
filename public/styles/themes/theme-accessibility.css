@@ -23,6 +23,13 @@ body.theme-accessibility {
   --accent-foreground: 0 0% 0%;
   --destructive: 0 100% 50%;
   --destructive-foreground: 0 0% 100%;
+  /* semantic status tokens (info/success/warning) — see 056 */
+  --info: 205 90% 70%;
+  --info-foreground: 0 0% 100%;
+  --success: 145 60% 60%;
+  --success-foreground: 0 0% 100%;
+  --warning: 42 95% 62%;
+  --warning-foreground: 0 0% 10%;
   --border: 0 0% 100%;
   --input: 0 0% 100%;
   --ring: 60 100% 50%;              /* yellow focus */

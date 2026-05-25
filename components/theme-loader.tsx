@@ -27,7 +27,7 @@ import { useEffect, useState } from "react"
 import { getPref, getPrefNumber } from "@/lib/prefs"
 import { getCustomColors, applyCustomColors, clearAppliedCustomColors } from "@/lib/custom-colors"
 
-const FONTS = ['font-atkinson', 'font-poppins', 'font-lexend', 'font-opendyslexic', 'font-cutecharm', 'font-system']
+const FONTS = ['font-atkinson', 'font-poppins', 'font-lexend', 'font-opendyslexic', 'font-cutecharm', 'font-livesimple', 'font-system']
 
 // Swap the dynamically-loaded theme stylesheet + set the body theme class.
 // theme-calm is bundled in layout.tsx (default, no flash-of-unstyled); all others

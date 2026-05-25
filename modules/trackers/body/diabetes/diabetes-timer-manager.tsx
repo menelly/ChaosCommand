@@ -710,7 +710,7 @@ export function DiabetesTimerManager({ timers, onTimersChange, currentUserId }: 
               const config = TIMER_CONFIGS[timer.type]
 
               return (
-                <Card key={timer.id} className={isExpired ? 'border-red-500 bg-red-50' : ''}>
+                <Card key={timer.id} className={isExpired ? 'border-destructive bg-destructive/10' : ''}>
                   <CardContent className="p-4">
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-3">

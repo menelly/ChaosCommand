@@ -1,0 +1,6 @@
+{
+  "version": "0.5.6",
+  "released": "2026-05-24",
+  "url": "https://chaoscommand.center/download",
+  "notes": "Theme contrast overhaul: danger/911 colours now derive from each theme's --destructive token (no more unreadable red-on-dark), new --info/--success/--warning semantic token system across all 15 themes, and a live Contrast Check tool in Settings. Full contrast cleanup of every theme (borders, accents, danger). New 'Pink Goes Good With Green' (Wicked) theme replacing Cyberpunk Penguin, with a Glinda-to-Elphaba sidebar cascade. Settings + tracker panels are now collapsible (one screen instead of five). Mobile scrollbar slimmed; text-size scaling fixed to scale ALL text including hints (px to rem); Live Simple handwriting font added."
+}

@@ -585,7 +585,7 @@ export default function GaslightGaragePage() {
                           {missingPhotoCount[entry.id] > 0 && (
                             <Badge
                               variant="outline"
-                              className="text-xs border-amber-300 text-amber-700 dark:text-amber-400 dark:border-amber-700"
+                              className="text-xs border-amber-300 text-warning dark:border-amber-700"
                               title="Photo(s) on this entry were uploaded on another device and didn't sync to this one. Open the source device to see them."
                             >
                               📵 {missingPhotoCount[entry.id]} off-device

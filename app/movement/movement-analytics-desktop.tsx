@@ -582,11 +582,11 @@ export function MovementAnalyticsDesktop({ className }: AnalyticsProps) {
               <div className="space-y-4">
                 {/* Energy Boost Insight */}
                 {parseFloat(energyBoostRate) > 60 && (
-                  <div className="flex items-start gap-2 p-3 bg-green-50 dark:bg-green-950/20 rounded-lg">
+                  <div className="flex items-start gap-2 p-3 bg-success/10 rounded-lg">
                     <Zap className="h-4 w-4 text-green-500 mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium text-green-700 dark:text-green-400">Movement Boosts Your Energy!</p>
-                      <p className="text-sm text-green-600 dark:text-green-300">
+                      <p className="text-sm font-medium text-success">Movement Boosts Your Energy!</p>
+                      <p className="text-sm text-success">
                         {energyBoostRate}% of your movement sessions increase your energy. Your body loves to move! 💖
                       </p>
                     </div>
@@ -595,11 +595,11 @@ export function MovementAnalyticsDesktop({ className }: AnalyticsProps) {
 
                 {/* Best Activity Insight */}
                 {energyImpactData.length > 0 && energyImpactData[0].avgChange > 0 && (
-                  <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
+                  <div className="flex items-start gap-2 p-3 bg-info/10 rounded-lg">
                     <Heart className="h-4 w-4 text-blue-500 mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium text-blue-700 dark:text-blue-400">Best Energy Booster</p>
-                      <p className="text-sm text-blue-600 dark:text-blue-300">
+                      <p className="text-sm font-medium text-info">Best Energy Booster</p>
+                      <p className="text-sm text-info">
                         "{energyImpactData[0].type}" gives you the biggest energy boost (+{energyImpactData[0].avgChange} on average)!
                       </p>
                     </div>
@@ -608,11 +608,11 @@ export function MovementAnalyticsDesktop({ className }: AnalyticsProps) {
 
                 {/* Consistency Insight */}
                 {totalSessions >= 7 && (
-                  <div className="flex items-start gap-2 p-3 bg-purple-50 dark:bg-purple-950/20 rounded-lg">
+                  <div className="flex items-start gap-2 p-3 bg-info/10 rounded-lg">
                     <Activity className="h-4 w-4 text-purple-500 mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium text-purple-700 dark:text-purple-400">Consistent Mover!</p>
-                      <p className="text-sm text-purple-600 dark:text-purple-300">
+                      <p className="text-sm font-medium text-info">Consistent Mover!</p>
+                      <p className="text-sm text-info">
                         You've logged {totalSessions} movement sessions. Every movement counts, and you're proving it!
                       </p>
                     </div>
@@ -634,11 +634,11 @@ export function MovementAnalyticsDesktop({ className }: AnalyticsProps) {
 
                 {/* Encouragement for low data */}
                 {totalSessions < 5 && totalSessions > 0 && (
-                  <div className="flex items-start gap-2 p-3 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg">
+                  <div className="flex items-start gap-2 p-3 bg-warning/10 rounded-lg">
                     <Heart className="h-4 w-4 text-yellow-500 mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium text-yellow-700 dark:text-yellow-400">Keep Going!</p>
-                      <p className="text-sm text-yellow-600 dark:text-yellow-300">
+                      <p className="text-sm font-medium text-warning">Keep Going!</p>
+                      <p className="text-sm text-warning">
                         You've started tracking movement - that's wonderful! Keep logging to unlock more insights about what works best for your body.
                       </p>
                     </div>

@@ -317,7 +317,7 @@ export function EnergyPacingAnalytics({ refreshTrigger = 0 }: EnergyAnalyticsPro
                 <div className="flex items-center gap-2">
                   <p className="text-2xl font-bold">{analytics.avgBudget.toFixed(1)}</p>
                   {analytics.budgetTrend !== 0 && (
-                    <Badge variant="outline" className={analytics.budgetTrend > 0 ? 'text-green-600 dark:text-green-400' : 'text-orange-600 dark:text-orange-400'}>
+                    <Badge variant="outline" className={analytics.budgetTrend > 0 ? 'text-success' : 'text-warning'}>
                       {analytics.budgetTrend > 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
                       {analytics.budgetTrend > 0 ? '+' : ''}{analytics.budgetTrend.toFixed(1)}
                     </Badge>
@@ -342,7 +342,7 @@ export function EnergyPacingAnalytics({ refreshTrigger = 0 }: EnergyAnalyticsPro
                   <Heart className="h-4 w-4 text-teal-500" />
                   <span className="text-sm text-muted-foreground">Avg Restored</span>
                 </div>
-                <p className="text-2xl font-bold text-teal-600 dark:text-teal-400">+{analytics.avgRestored.toFixed(1)}</p>
+                <p className="text-2xl font-bold text-info">+{analytics.avgRestored.toFixed(1)}</p>
               </CardContent>
             </Card>
           </div>
@@ -368,7 +368,7 @@ export function EnergyPacingAnalytics({ refreshTrigger = 0 }: EnergyAnalyticsPro
                   <Progress value={analytics.pacingSuccessRate} className="h-3" />
                 </div>
                 {analytics.pacingTrend !== 0 && (
-                  <Badge variant="outline" className={analytics.pacingTrend > 0 ? 'text-green-600 dark:text-green-400' : 'text-orange-600 dark:text-orange-400'}>
+                  <Badge variant="outline" className={analytics.pacingTrend > 0 ? 'text-success' : 'text-warning'}>
                     {analytics.pacingTrend > 0 ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
                     {analytics.pacingTrend > 0 ? '+' : ''}{analytics.pacingTrend.toFixed(0)}%
                   </Badge>
@@ -376,28 +376,28 @@ export function EnergyPacingAnalytics({ refreshTrigger = 0 }: EnergyAnalyticsPro
               </div>
 
               <div className="grid grid-cols-2 gap-4 text-center">
-                <div className="p-3 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
-                  <p className="text-2xl font-bold text-green-700 dark:text-green-300">{analytics.daysWithinBudget}</p>
-                  <p className="text-sm text-green-600 dark:text-green-400">Days within budget</p>
+                <div className="p-3 bg-success/10 rounded-lg border border-success/40">
+                  <p className="text-2xl font-bold text-success">{analytics.daysWithinBudget}</p>
+                  <p className="text-sm text-success">Days within budget</p>
                 </div>
-                <div className="p-3 bg-orange-50 dark:bg-orange-950 rounded-lg border border-orange-200 dark:border-orange-800">
-                  <p className="text-2xl font-bold text-orange-700 dark:text-orange-300">{analytics.daysOverBudget}</p>
-                  <p className="text-sm text-orange-600 dark:text-orange-400">Days over budget</p>
+                <div className="p-3 bg-warning/10 rounded-lg border border-warning/40">
+                  <p className="text-2xl font-bold text-warning">{analytics.daysOverBudget}</p>
+                  <p className="text-sm text-warning">Days over budget</p>
                 </div>
               </div>
 
               {analytics.pacingSuccessRate >= 80 && (
-                <p className="text-sm text-green-600 dark:text-green-400 mt-4 text-center">
+                <p className="text-sm text-success mt-4 text-center">
                   Excellent pacing! You're doing great at protecting your energy.
                 </p>
               )}
               {analytics.pacingSuccessRate >= 50 && analytics.pacingSuccessRate < 80 && (
-                <p className="text-sm text-yellow-600 dark:text-yellow-400 mt-4 text-center">
+                <p className="text-sm text-warning mt-4 text-center">
                   Good effort! Try to stay within budget a bit more for better long-term energy.
                 </p>
               )}
               {analytics.pacingSuccessRate < 50 && (
-                <p className="text-sm text-orange-600 dark:text-orange-400 mt-4 text-center">
+                <p className="text-sm text-warning mt-4 text-center">
                   Pacing is hard! Consider starting with a slightly higher budget or saying no to some activities.
                 </p>
               )}
@@ -496,7 +496,7 @@ export function EnergyPacingAnalytics({ refreshTrigger = 0 }: EnergyAnalyticsPro
                     {analytics.highestCostActivities.map((activity, i) => (
                       <div key={activity.id} className="flex items-center justify-between">
                         <span className="text-sm">{activity.name}</span>
-                        <Badge className="bg-orange-100 dark:bg-orange-950 text-orange-800 dark:text-orange-300 border-orange-200 dark:border-orange-800">
+                        <Badge className="bg-warning/10 text-warning border-warning/40">
                           {activity.avgCost.toFixed(1)} spoons avg
                         </Badge>
                       </div>
@@ -531,14 +531,14 @@ export function EnergyPacingAnalytics({ refreshTrigger = 0 }: EnergyAnalyticsPro
                   {analytics.topRestTypes.map((rest) => (
                     <Badge
                       key={rest.id}
-                      className="bg-teal-50 dark:bg-teal-950 text-teal-800 dark:text-teal-300 border-teal-200 dark:border-teal-800"
+                      className="bg-info/10 text-info border-info/40"
                     >
                       {rest.name} ({rest.count}x, +{rest.avgRestored.toFixed(1)} avg)
                     </Badge>
                   ))}
                 </div>
                 {analytics.avgRestored < 1 && (
-                  <p className="text-sm text-orange-600 dark:text-orange-400 mt-3">
+                  <p className="text-sm text-warning mt-3">
                     You're not logging much rest. Remember: rest is productive!
                   </p>
                 )}
@@ -547,7 +547,7 @@ export function EnergyPacingAnalytics({ refreshTrigger = 0 }: EnergyAnalyticsPro
           )}
 
           {/* Tips Based on Data */}
-          <Card className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950 dark:to-blue-950 border-purple-200 dark:border-purple-800">
+          <Card className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950 dark:to-blue-950 border-info/40">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-purple-500" />
@@ -563,18 +563,18 @@ export function EnergyPacingAnalytics({ refreshTrigger = 0 }: EnergyAnalyticsPro
                 </p>
               )}
               {analytics.avgSpent > analytics.avgBudget && (
-                <p className="text-sm text-orange-700 dark:text-orange-400">
+                <p className="text-sm text-warning">
                   On average, you're spending more than your budget. This leads to PEM!
                   Try building in more rest or reducing activities.
                 </p>
               )}
               {analytics.avgRestored < analytics.avgSpent * 0.2 && (
-                <p className="text-sm text-teal-700 dark:text-teal-400">
+                <p className="text-sm text-info">
                   You're restoring less than 20% of what you spend. More intentional rest breaks could help!
                 </p>
               )}
               {analytics.pacingSuccessRate >= 70 && (
-                <p className="text-sm text-green-700 dark:text-green-400">
+                <p className="text-sm text-success">
                   Your pacing is solid! Keep listening to your body and protecting your energy.
                 </p>
               )}

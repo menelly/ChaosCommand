@@ -213,16 +213,16 @@ export function GeneralMindMoodModal({ isOpen, onClose, onSave, editingEntry, in
 
           <div className="space-y-6">
             {redFlags.length > 0 && (
-              <div className="border-2 border-red-500 bg-red-50 dark:bg-red-950/30 rounded-lg p-4 space-y-3">
+              <div className="border-2 border-destructive bg-destructive text-destructive-foreground rounded-lg p-4 space-y-3">
                 <div className="flex items-start gap-2">
-                  <LifeBuoy className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
-                  <div className="font-bold text-red-700 dark:text-red-400">💜 Pattern flagged — support is available</div>
+                  <LifeBuoy className="h-5 w-5 text-destructive-foreground flex-shrink-0 mt-0.5" />
+                  <div className="font-bold text-destructive-foreground">💜 Pattern flagged — support is available</div>
                 </div>
-                <ul className="space-y-1 text-sm text-red-900 dark:text-red-200 ml-7">
+                <ul className="space-y-1 text-sm text-destructive-foreground ml-7">
                   {redFlags.map((flag, i) => <li key={i}>• {flag}</li>)}
                 </ul>
-                <div className="ml-7 pt-2 border-t border-red-300 dark:border-red-800">
-                  <p className="text-sm text-red-900 dark:text-red-200 font-semibold">988 — call or text. 24/7. Free. Confidential.</p>
+                <div className="ml-7 pt-2 border-t border-destructive-foreground/30">
+                  <p className="text-sm text-destructive-foreground font-semibold">988 — call or text. 24/7. Free. Confidential.</p>
                 </div>
               </div>
             )}

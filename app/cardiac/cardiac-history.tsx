@@ -140,7 +140,7 @@ export function CardiacHistory({ onEdit, onDelete, refreshTrigger }: CardiacHist
                             </Badge>
                           )}
                           {entry.ecgStripImages && entry.ecgStripImages.length > 0 && (
-                            <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border-blue-300">
+                            <Badge variant="outline" className="bg-info/10 text-info border-blue-300">
                               📎 {entry.ecgStripImages.length} {entry.ecgStripImages.length === 1 ? 'file' : 'files'}
                             </Badge>
                           )}

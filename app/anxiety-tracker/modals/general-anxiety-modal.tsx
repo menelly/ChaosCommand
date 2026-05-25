@@ -249,31 +249,31 @@ export function GeneralAnxietyModal({ isOpen, onClose, onSave, editingEntry, ini
 
           <div className="space-y-6">
             {redFlags.length > 0 && (
-              <div className="border-2 border-red-500 bg-red-50 dark:bg-red-950/30 rounded-lg p-4 space-y-3">
+              <div className="border-2 border-destructive bg-destructive text-destructive-foreground rounded-lg p-4 space-y-3">
                 <div className="flex items-start gap-2">
-                  <LifeBuoy className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
-                  <div className="font-bold text-red-700 dark:text-red-400">💜 Crisis support is available</div>
+                  <LifeBuoy className="h-5 w-5 text-destructive-foreground flex-shrink-0 mt-0.5" />
+                  <div className="font-bold text-destructive-foreground">💜 Crisis support is available</div>
                 </div>
-                <ul className="space-y-1 text-sm text-red-900 dark:text-red-200 ml-7">
+                <ul className="space-y-1 text-sm text-destructive-foreground ml-7">
                   {redFlags.map((flag, i) => <li key={i}>• {flag}</li>)}
                 </ul>
-                <div className="ml-7 pt-2 border-t border-red-300 dark:border-red-800 space-y-2">
-                  <p className="text-sm text-red-900 dark:text-red-200 font-semibold">
+                <div className="ml-7 pt-2 border-t border-destructive-foreground/30 space-y-2">
+                  <p className="text-sm text-destructive-foreground font-semibold">
                     988 — call or text. Available 24/7. Free. Confidential.
                   </p>
-                  <p className="text-sm text-red-900 dark:text-red-200">
+                  <p className="text-sm text-destructive-foreground">
                     Crisis Text Line: text HOME to 741741. International: <a href="https://findahelpline.com" target="_blank" rel="noopener noreferrer" className="underline">findahelpline.com</a>
                   </p>
                 </div>
                 {interimMeasures.length > 0 && (
-                  <div className="ml-7 pt-2 border-t border-red-300 dark:border-red-800">
-                    <p className="text-sm font-semibold text-red-900 dark:text-red-200 mb-1">💪 Right now:</p>
-                    <ul className="space-y-2 text-sm text-red-900 dark:text-red-200">
+                  <div className="ml-7 pt-2 border-t border-destructive-foreground/30">
+                    <p className="text-sm font-semibold text-destructive-foreground mb-1">💪 Right now:</p>
+                    <ul className="space-y-2 text-sm text-destructive-foreground">
                       {interimMeasures.map((m, i) => <li key={i}>• {m}</li>)}
                     </ul>
                   </div>
                 )}
-                <p className="text-xs italic text-red-800 dark:text-red-300 ml-7">
+                <p className="text-xs italic text-destructive-foreground ml-7">
                   You don't have to be alone in this. Reaching out is brave, not weak.
                 </p>
               </div>
@@ -329,8 +329,8 @@ export function GeneralAnxietyModal({ isOpen, onClose, onSave, editingEntry, ini
             {/* 🚨 988 / Crisis check */}
             <Collapsible open={openSections.crisis} onOpenChange={() => toggleSection('crisis')}>
               <CollapsibleTrigger asChild>
-                <Button variant="outline" className="w-full justify-between h-auto py-3 border-red-300">
-                  <span className="font-medium text-red-700 dark:text-red-400">💜 Crisis check (Optional but important)</span>
+                <Button variant="outline" className="w-full justify-between h-auto py-3 border-destructive">
+                  <span className="font-medium text-destructive">💜 Crisis check (Optional but important)</span>
                   {openSections.crisis ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                 </Button>
               </CollapsibleTrigger>

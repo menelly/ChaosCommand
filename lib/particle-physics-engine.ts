@@ -130,12 +130,17 @@ export class EpicParticleEngine {
         };
 
       case 'theme-chaos': // 🏀 Luka's Basketball Court with secret penguin confetti!
-      case 'theme-luka-penguin':
-      case 'theme-luka-penguin-fresh':
         return {
           colors: ['#ff8c00', '#ff6b35', '#1a1a1a', '#ffffff', '#f4e4bc'], // Basketball colors!
           shapes: ['penguin', 'basketball', 'circle', 'star', 'octopus'], // 🐧🏀🐙 The whole crew!
           gravity: 0.4, // More gravity for bouncy basketballs!
+        };
+
+      case 'theme-wicked': // 💚💗 pink & green sparkle
+        return {
+          colors: ['#ff5fb0', '#3fd98a', '#ff8fd0', '#b15fd6', '#7fe6a8'], // pink/green/orchid
+          shapes: ['star', 'heart', 'circle', 'butterfly'], // a little magic
+          gravity: 0.25, // floaty, defying gravity
         };
 
       case 'theme-glitter':

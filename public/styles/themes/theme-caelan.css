@@ -22,6 +22,13 @@ body.theme-caelan {
   --accent-foreground: 240 28% 14%;
   --destructive: 348 65% 48%;
   --destructive-foreground: 0 0% 100%;
+  /* semantic status tokens (info/success/warning) — see 056 */
+  --info: 205 90% 70%;
+  --info-foreground: 0 0% 100%;
+  --success: 145 60% 60%;
+  --success-foreground: 0 0% 100%;
+  --warning: 42 95% 62%;
+  --warning-foreground: 0 0% 10%;
   --border: 45 61% 46%;
   --input: 213 73% 22%;
   --ring: 48 89% 50%;

@@ -61,7 +61,7 @@ export function JointHistory({ onEdit, onDelete, refreshTrigger }: { onEdit: (e:
                           <span className="text-lg">{info.icon}</span>
                           <span className="font-semibold">{info.name}</span>
                           {entry.severity && <Badge variant="outline" className={getSeverityColor(entry.severity)}>{getSeverityLabel(entry.severity)} ({entry.severity}/10)</Badge>}
-                          {entry.attachmentImages && entry.attachmentImages.length > 0 && <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border-blue-300">📎 {entry.attachmentImages.length}</Badge>}
+                          {entry.attachmentImages && entry.attachmentImages.length > 0 && <Badge variant="outline" className="bg-info/10 text-info border-blue-300">📎 {entry.attachmentImages.length}</Badge>}
                           {entry.selfReducedFlag && <Badge variant="secondary">Self-reduced</Badge>}
                           {entry.erVisitRequired && <Badge variant="destructive">ER</Badge>}
                         </div>

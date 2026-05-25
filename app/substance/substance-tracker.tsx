@@ -159,7 +159,7 @@ export default function SubstanceTracker() {
                               <span className="text-lg">{info.icon}</span>
                               <span className="font-semibold">{entry.substanceName || info.name}</span>
                               {entry.amount && entry.unit && <Badge variant="outline">{entry.amount} {entry.unit}</Badge>}
-                              {entry.attachmentImages && entry.attachmentImages.length > 0 && <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border-blue-300">📎 {entry.attachmentImages.length}</Badge>}
+                              {entry.attachmentImages && entry.attachmentImages.length > 0 && <Badge variant="outline" className="bg-info/10 text-info border-blue-300">📎 {entry.attachmentImages.length}</Badge>}
                             </div>
                             <div className="text-xs text-muted-foreground">
                               {format(new Date(entry.timestamp), 'h:mm a')}

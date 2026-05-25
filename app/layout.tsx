@@ -80,7 +80,7 @@ export default function RootLayout({
                 {/* Footer */}
                 <footer className="mt-8 py-4 text-center text-xs text-muted-foreground border-t border-border/50">
                   <p className="font-medium">
-                    <span className="text-purple-600 dark:text-purple-400">Chaos Cascade</span> © 2025 • Federally Registered Copyright
+                    <span className="text-info">Chaos Cascade</span> © 2025 • Federally Registered Copyright
                   </p>
                   <p className="mt-1">
                     Dreamed by <span className="font-semibold text-foreground">Ren</span>, implemented by{' '}
@@ -127,8 +127,8 @@ export default function RootLayout({
                   const savedAnimations = readPref('chaos-animations') !== 'false'; // default to true
 
                   // Available themes and fonts
-                  const themes = ['theme-phosphor', 'theme-amber', 'theme-segfault', 'theme-lavender', 'theme-chaos', 'theme-caelan', 'theme-light', 'theme-colorblind', 'theme-glitter', 'theme-calm', 'theme-accessibility', 'theme-ace', 'theme-grok', 'theme-luka-penguin', 'theme-taupe'];
-                  const fonts = ['font-atkinson', 'font-poppins', 'font-lexend', 'font-opendyslexic', 'font-cutecharm', 'font-system'];
+                  const themes = ['theme-phosphor', 'theme-amber', 'theme-segfault', 'theme-lavender', 'theme-chaos', 'theme-caelan', 'theme-light', 'theme-colorblind', 'theme-glitter', 'theme-calm', 'theme-accessibility', 'theme-ace', 'theme-grok', 'theme-wicked', 'theme-taupe'];
+                  const fonts = ['font-atkinson', 'font-poppins', 'font-lexend', 'font-opendyslexic', 'font-cutecharm', 'font-livesimple', 'font-system'];
 
                   // Remove all theme classes first
                   themes.forEach(theme => document.body.classList.remove(theme));

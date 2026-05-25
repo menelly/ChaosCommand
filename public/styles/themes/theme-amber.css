@@ -18,10 +18,17 @@ body.theme-amber {
   --muted-foreground: 30 50% 50%;
   --accent: 30 60% 18%;
   --accent-foreground: 35 100% 85%;
-  --destructive: 0 80% 55%;
+  --destructive: 0 75% 45%;
   --destructive-foreground: 0 0% 100%;
-  --border: 30 60% 22%;
-  --input: 30 60% 10%;
+  /* semantic status tokens (info/success/warning) — see 056 */
+  --info: 205 90% 70%;
+  --info-foreground: 0 0% 100%;
+  --success: 145 60% 60%;
+  --success-foreground: 0 0% 100%;
+  --warning: 42 95% 62%;
+  --warning-foreground: 0 0% 10%;
+  --border: 35 75% 42%;
+  --input: 35 65% 28%;
   --ring: 35 100% 55%;
   --radius: 0.25rem;
 }

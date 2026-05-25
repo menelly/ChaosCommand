@@ -145,7 +145,7 @@ export default function RoutineBuilderDialog({ open, onClose, pin, routine, onSa
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-[11px] text-muted-foreground mt-1">
+              <p className="text-[0.6875rem] text-muted-foreground mt-1">
                 Pulls in that routine's trackers + time of day — handy for making Night from Morning. You still name it.
               </p>
             </div>
@@ -244,7 +244,7 @@ export default function RoutineBuilderDialog({ open, onClose, pin, routine, onSa
                               <span className="text-lg">{t.emoji}</span>
                               <span className="flex-1">{t.label}</span>
                               {t.statusUnsupported && (
-                                <span className="text-[10px] uppercase tracking-wide text-muted-foreground">log-only</span>
+                                <span className="text-[0.625rem] uppercase tracking-wide text-muted-foreground">log-only</span>
                               )}
                             </button>
                           ))}
