@@ -99,14 +99,16 @@ export function CopingToolkit() {
 
   return (
     <div className="space-y-6">
-      {/* Emergency Actions First */}
-      <Card className="border-2 border-red-200 bg-red-50 dark:bg-red-950">
+      {/* Emergency Actions First — plain div + destructive TINT tokens (NOT a <Card> with
+          bg-red-50/dark:: custom themes don't toggle .dark, so they all got the light cream
+          box on a dark bg, and theme card rules can repaint <Card>. Tokens read on all 15. */}
+      <div className="rounded-lg border-2 border-destructive bg-destructive/10">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-red-700 dark:text-red-300">
+          <CardTitle className="flex items-center gap-2 text-destructive">
             <AlertTriangle className="h-5 w-5" />
             Emergency Actions - Use These First
           </CardTitle>
-          <p className="text-sm text-red-600 dark:text-red-400">
+          <p className="text-sm text-foreground">
             If you're in immediate danger or thinking of hurting yourself, start here.
           </p>
         </CardHeader>
@@ -143,7 +145,7 @@ export function CopingToolkit() {
                           e.stopPropagation()
                           handleStrategyComplete(strategy.id)
                         }}
-                        className={isCompleted ? 'text-green-600' : 'text-gray-400'}
+                        className={isCompleted ? 'text-success' : 'text-muted-foreground'}
                       >
                         <CheckCircle className="h-4 w-4" />
                       </Button>
@@ -154,7 +156,7 @@ export function CopingToolkit() {
             })}
           </div>
         </CardContent>
-      </Card>
+      </div>
 
       {/* Other Coping Categories */}
       <Card>

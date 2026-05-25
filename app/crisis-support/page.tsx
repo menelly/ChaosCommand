@@ -387,14 +387,16 @@ export default function CrisisSupport() {
           {/* Coping Tab */}
           <TabsContent value="coping">
             <div className="space-y-6">
-              {/* Emergency Actions */}
-              <Card className="border-2 border-red-200 bg-red-50 dark:bg-red-950">
+              {/* Emergency Actions — plain div + destructive TINT tokens (NOT bg-red-50/dark::
+                  custom themes don't toggle .dark, so all got the cream box on dark + washed
+                  heading; theme card rules can also repaint a <Card>). Reads on all 15 themes. */}
+              <div className="rounded-lg border-2 border-destructive bg-destructive/10">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-red-700 dark:text-red-300">
+                  <CardTitle className="flex items-center gap-2 text-destructive">
                     <AlertTriangle className="h-5 w-5" />
                     Emergency Actions - Use These First
                   </CardTitle>
-                  <p className="text-sm text-red-600 dark:text-red-400">
+                  <p className="text-sm text-foreground">
                     If you're in immediate danger or thinking of hurting yourself, start here.
                   </p>
                 </CardHeader>
@@ -454,7 +456,7 @@ export default function CrisisSupport() {
                     </Card>
                   </div>
                 </CardContent>
-              </Card>
+              </div>
 
               {/* Link to Coping & Regulation */}
               <Card>
