@@ -530,10 +530,12 @@ export default function HydrationTracker() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3" style={{ backgroundColor: 'var(--surface-1)', borderColor: 'var(--border-soft)' }}>
-            <TabsTrigger value="entry" style={{ color: 'var(--text-main)' }}>Log Drink</TabsTrigger>
-            <TabsTrigger value="history" style={{ color: 'var(--text-main)' }}>Hydration History</TabsTrigger>
-            <TabsTrigger value="analytics" style={{ color: 'var(--text-main)' }}>Analytics</TabsTrigger>
+          {/* No inline --surface-1/--text-main legacy vars: those resolve to coral/blue on
+              Wicked (and aren't real theme tokens). Let the themed shadcn tabs handle it. */}
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="entry">Log Drink</TabsTrigger>
+            <TabsTrigger value="history">Hydration History</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
 
           <TabsContent value="entry" className="space-y-6">
