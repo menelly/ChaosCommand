@@ -621,11 +621,11 @@ export function MovementAnalyticsDesktop({ className }: AnalyticsProps) {
 
                 {/* Top Feeling Insight */}
                 {topBodyFeel !== 'None' && bodyFeelData[0]?.count > 2 && (
-                  <div className="flex items-start gap-2 p-3 bg-pink-50 dark:bg-pink-950/20 rounded-lg">
-                    <Target className="h-4 w-4 text-pink-500 mt-0.5" />
+                  <div className="flex items-start gap-2 p-3 bg-info/10 rounded-lg">
+                    <Target className="h-4 w-4 text-info mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium text-pink-700 dark:text-pink-400">Movement Makes You Feel {topBodyFeel}</p>
-                      <p className="text-sm text-pink-600 dark:text-pink-300">
+                      <p className="text-sm font-medium text-info">Movement Makes You Feel {topBodyFeel}</p>
+                      <p className="text-sm text-info">
                         After moving, you most often feel "{topBodyFeel}" ({bodyFeelData[0].count} times). Your body is telling you something!
                       </p>
                     </div>

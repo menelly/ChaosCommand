@@ -546,17 +546,18 @@ export function EnergyPacingAnalytics({ refreshTrigger = 0 }: EnergyAnalyticsPro
             </Card>
           )}
 
-          {/* Tips Based on Data */}
-          <Card className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950 dark:to-blue-950 border-info/40">
+          {/* Tips Based on Data — token tint, NOT from-purple-50/dark:: gradient (which
+              rendered a light box + light-on-light text on custom dark themes). */}
+          <Card className="bg-info/10 border-info/40">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-purple-500" />
+              <CardTitle className="flex items-center gap-2 text-info">
+                <Sparkles className="h-5 w-5" />
                 {goblinMode ? "Chaos Wisdom" : "Pacing Insights"}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               {analytics.mostCommonBudget && (
-                <p className="text-sm">
+                <p className="text-sm text-foreground">
                   Your most common starting budget is <strong>{analytics.mostCommonBudget.budget} spoons</strong> ({analytics.mostCommonBudget.count} days).
                   {analytics.pacingSuccessRate < 60 && analytics.mostCommonBudget.budget < 8 &&
                     " Consider whether this accurately reflects your capacity."}
