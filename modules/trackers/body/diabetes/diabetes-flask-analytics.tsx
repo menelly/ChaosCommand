@@ -75,6 +75,8 @@ interface FlaskAnalyticsData {
     average_per_meal: number
     meals_count: number
   }
+  time_patterns: { label: string; avg: number; count: number }[]
+  glucose_trend: { avg: number; count: number }[]
   insights: string[]
   error?: string
 }
@@ -98,7 +100,7 @@ export default function DiabetesFlaskAnalytics({ entries, currentDate, loadAllEn
       // Load entries from the date range if we have the loader, otherwise use current entries
       let allEntries: DiabetesEntry[] = entries
       if (loadAllEntries) {
-        allEntries = await loadAllEntries(parseInt(dateRange))
+        allEntries = await loadAllEntries(dateRange === 'all' ? 36500 : parseInt(dateRange))
       }
 
       if (allEntries.length === 0) {
@@ -153,7 +155,50 @@ export default function DiabetesFlaskAnalytics({ entries, currentDate, loadAllEn
         ? parseFloat((totalCarbs / carbValues.length).toFixed(1))
         : 0
 
-      const days = parseInt(dateRange)
+      // TIME-OF-DAY glucose averages — surfaces dawn phenomenon & post-meal spikes.
+      const PERIOD_DEFS = [
+        { id: 'overnight', label: '🌙 Overnight (12–6a)', start: 0, end: 6 },
+        { id: 'morning', label: '🌅 Morning (6–11a)', start: 6, end: 11 },
+        { id: 'midday', label: '☀️ Midday (11a–2p)', start: 11, end: 14 },
+        { id: 'afternoon', label: '🌇 Afternoon (2–6p)', start: 14, end: 18 },
+        { id: 'evening', label: '🌆 Evening (6–10p)', start: 18, end: 22 },
+        { id: 'late', label: '🌙 Late (10p–12a)', start: 22, end: 24 },
+      ]
+      const periodBuckets: Record<string, number[]> = {}
+      bgEntries.forEach(e => {
+        const h = parseInt((e.entry_time || '').split(':')[0], 10)
+        if (isNaN(h)) return
+        const p = PERIOD_DEFS.find(p => h >= p.start && h < p.end)
+        if (p) (periodBuckets[p.id] ||= []).push(e.blood_glucose!)
+      })
+      const time_patterns = PERIOD_DEFS
+        .map(p => {
+          const vals = periodBuckets[p.id] || []
+          return { label: p.label, count: vals.length, avg: vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : 0 }
+        })
+        .filter(p => p.count > 0)
+
+      // GLUCOSE TREND — split the window into equal date-buckets, avg glucose per bucket.
+      const glucose_trend: { avg: number; count: number }[] = []
+      const ts = bgEntries.map(e => new Date(e.entry_date).getTime()).filter(t => !isNaN(t))
+      if (ts.length > 0) {
+        const minT = Math.min(...ts), maxT = Math.max(...ts)
+        const span = Math.max(1, maxT - minT)
+        const nb = Math.min(10, Math.max(3, bgEntries.length))
+        const sums = new Array(nb).fill(0), counts = new Array(nb).fill(0)
+        bgEntries.forEach(e => {
+          const t = new Date(e.entry_date).getTime()
+          if (isNaN(t)) return
+          let idx = Math.floor(((t - minT) / span) * nb)
+          if (idx >= nb) idx = nb - 1
+          if (idx < 0) idx = 0
+          sums[idx] += e.blood_glucose!
+          counts[idx] += 1
+        })
+        for (let i = 0; i < nb; i++) glucose_trend.push({ avg: counts[i] ? Math.round(sums[i] / counts[i]) : 0, count: counts[i] })
+      }
+
+      const days = dateRange === 'all' ? 0 : parseInt(dateRange)
       const data: FlaskAnalyticsData = {
         summary: {
           total_entries: allEntries.length,
@@ -185,9 +230,13 @@ export default function DiabetesFlaskAnalytics({ entries, currentDate, loadAllEn
           average_per_meal: avgCarbs,
           meals_count: carbEntries.length
         },
+        time_patterns,
+        glucose_trend,
         insights: allEntries.length > 0
           ? [
-              `You logged ${allEntries.length} diabetes entries in the last ${days} days.`,
+              dateRange === 'all'
+                ? `You logged ${allEntries.length} diabetes entries (all time).`
+                : `You logged ${allEntries.length} diabetes entries in the last ${days} days.`,
               normalPercent >= 70 ? `✅ Great work! ${normalPercent}% time in range.` : '',
               lowPercent >= 10 ? `⚠️ ${lowPercent}% of readings are low (<70) - watch for hypos.` : '',
               highPercent >= 30 ? `⚠️ ${highPercent}% of readings are high (>180) - consider adjusting.` : '',
@@ -246,7 +295,10 @@ export default function DiabetesFlaskAnalytics({ entries, currentDate, loadAllEn
     )
   }
 
-  const { summary, glucose_analysis, insulin_patterns, carb_analysis, insights } = analyticsData
+  const { summary, glucose_analysis, insulin_patterns, carb_analysis, time_patterns, glucose_trend, insights } = analyticsData
+  const tir = glucose_analysis?.time_in_range_percent
+  const maxTrend = Math.max(...glucose_trend.map(b => b.avg), 180, 1)
+  const glucoseColor = (v: number) => v <= 0 ? 'hsl(var(--muted-foreground))' : v < 70 ? 'hsl(var(--destructive))' : v <= 180 ? 'hsl(var(--success))' : 'hsl(var(--warning))'
 
   return (
     <div className="space-y-6">
@@ -264,9 +316,79 @@ export default function DiabetesFlaskAnalytics({ entries, currentDate, loadAllEn
             <SelectItem value="7">7 days</SelectItem>
             <SelectItem value="30">30 days</SelectItem>
             <SelectItem value="90">90 days</SelectItem>
+            <SelectItem value="180">6 months</SelectItem>
+            <SelectItem value="365">1 year</SelectItem>
+            <SelectItem value="all">All time</SelectItem>
           </SelectContent>
         </Select>
       </div>
+
+      {/* Time-in-range — visual stacked bar (the single most useful glucose metric) */}
+      {tir && glucose_analysis.readings_count > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Time in range</CardTitle>
+            <CardDescription>{glucose_analysis.readings_count} readings · target 70–180 mg/dL</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex h-5 w-full rounded overflow-hidden">
+              {tir.low > 0 && <div style={{ width: `${tir.low}%`, backgroundColor: 'hsl(var(--destructive))' }} title={`Low: ${tir.low}%`} />}
+              {tir.normal > 0 && <div style={{ width: `${tir.normal}%`, backgroundColor: 'hsl(var(--success))' }} title={`In range: ${tir.normal}%`} />}
+              {tir.high > 0 && <div style={{ width: `${tir.high}%`, backgroundColor: 'hsl(var(--warning))' }} title={`High: ${tir.high}%`} />}
+            </div>
+            <div className="flex justify-between text-xs mt-2">
+              <span className="text-destructive">Low {tir.low}%</span>
+              <span className="text-success">In range {tir.normal}%</span>
+              <span className="text-warning">High {tir.high}%</span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Glucose trend over time */}
+      {glucose_trend.length > 0 && glucose_trend.some(b => b.count > 0) && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Average glucose over time</CardTitle>
+            <CardDescription>Older → now · bar colour = in-range (green), low (red), high (amber)</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-end gap-1 h-28">
+              {glucose_trend.map((b, i) => (
+                <div key={i} className="flex-1 flex flex-col justify-end items-center" title={b.count ? `${b.avg} mg/dL (${b.count})` : 'no readings'}>
+                  <div className="w-full rounded-t" style={{ height: `${(b.avg / maxTrend) * 100}%`, minHeight: b.avg > 0 ? '4px' : '0', backgroundColor: glucoseColor(b.avg) }} />
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-between text-xs text-muted-foreground mt-1"><span>older</span><span>now</span></div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Time-of-day glucose pattern — dawn phenomenon / post-meal spikes */}
+      {time_patterns.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Glucose by time of day</CardTitle>
+            <CardDescription>Average reading per period — patterns worth showing your doctor</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {time_patterns.map(p => (
+                <div key={p.label}>
+                  <div className="flex items-center justify-between text-sm mb-1">
+                    <span>{p.label}</span>
+                    <span className="text-muted-foreground">{p.avg} mg/dL · {p.count} reading{p.count !== 1 ? 's' : ''}</span>
+                  </div>
+                  <div className="h-2 bg-muted rounded overflow-hidden">
+                    <div className="h-full" style={{ width: `${Math.min(100, (p.avg / maxTrend) * 100)}%`, backgroundColor: glucoseColor(p.avg) }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Insights Cards */}
       {insights && insights.length > 0 && (
