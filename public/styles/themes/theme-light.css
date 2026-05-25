@@ -33,6 +33,15 @@ body.theme-light {
   --border: 210 14% 62%;
   --input: 210 14% 62%;
   --ring: 211 100% 35%;
+  /* LEGACY design-var bridge — map old --surface-1/--text-main/etc. onto real tokens
+     so pages still using them don't inherit the :root coral/purple defaults. (056) */
+  --deep-space: hsl(var(--background));
+  --surface-1: hsl(var(--card));
+  --surface-2: hsl(var(--muted));
+  --primary-purple: hsl(var(--card));
+  --text-main: hsl(var(--foreground));
+  --text-muted: hsl(var(--muted-foreground));
+  --border-soft: hsl(var(--border));
 }
 
 /* ---- FLOURISH ---- */

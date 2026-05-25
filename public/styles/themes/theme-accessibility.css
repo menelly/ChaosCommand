@@ -33,6 +33,15 @@ body.theme-accessibility {
   --border: 0 0% 100%;
   --input: 0 0% 100%;
   --ring: 60 100% 50%;              /* yellow focus */
+  /* LEGACY design-var bridge — map old --surface-1/--text-main/etc. onto real tokens
+     so pages still using them don't inherit the :root coral/purple defaults. (056) */
+  --deep-space: hsl(var(--background));
+  --surface-1: hsl(var(--card));
+  --surface-2: hsl(var(--muted));
+  --primary-purple: hsl(var(--card));
+  --text-main: hsl(var(--foreground));
+  --text-muted: hsl(var(--muted-foreground));
+  --border-soft: hsl(var(--border));
 }
 
 /* ---- HIGH-CONTRAST ELEMENT RULES + LARGE TEXT ---- */
