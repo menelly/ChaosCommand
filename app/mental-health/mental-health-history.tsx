@@ -133,7 +133,7 @@ export function MindMoodHistory({ entries, onEdit, onDelete, onAddNew }: Props) 
                         {entry.depressionLevel >= 7 && <Badge variant="destructive">Dep {entry.depressionLevel}</Badge>}
                         {entry.maniaLevel >= 7 && <Badge variant="destructive">Mania {entry.maniaLevel}</Badge>}
                         {entry.moodSwingDirection === 'rapid-cycling' && <Badge variant="destructive">Rapid cycling</Badge>}
-                        {entry.meltdownOccurred && <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-300">Meltdown</Badge>}
+                        {entry.meltdownOccurred && <Badge variant="outline" className="bg-info/10 text-info border-info/30">Meltdown</Badge>}
                         {entry.brainFogSeverity >= 6 && <Badge variant="outline">Brain fog {entry.brainFogSeverity}</Badge>}
                       </div>
                       <div className="flex gap-1">

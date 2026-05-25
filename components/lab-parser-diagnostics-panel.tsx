@@ -102,9 +102,9 @@ export default function LabParserDiagnosticsPanel() {
                 className={cn(
                   "rounded-md border p-3 text-sm",
                   a.resultsFound > 0
-                    ? "border-green-200 bg-green-50/50 dark:bg-green-950/20"
+                    ? "border-success/30 bg-success/10"
                     : a.detectionPassed
-                      ? "border-amber-200 bg-amber-50/50 dark:bg-amber-950/20"
+                      ? "border-warning/30 bg-warning/10"
                       : "border-border bg-muted/30"
                 )}
               >

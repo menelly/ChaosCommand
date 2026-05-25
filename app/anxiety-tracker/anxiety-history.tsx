@@ -127,7 +127,7 @@ export function AnxietyHistory({ entries, onEdit, onDelete, onAddNew }: Props) {
                         {entry.panicLevel > 0 && <Badge variant="destructive">Panic {entry.panicLevel}/10</Badge>}
                         {entry.suicidalIdeation && <Badge variant="destructive">SI</Badge>}
                         {entry.selfHarmUrges && <Badge variant="destructive">SH urges</Badge>}
-                        {entry.crisisContactMade && <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-300">{entry.crisisContactType || 'contacted'}</Badge>}
+                        {entry.crisisContactMade && <Badge variant="outline" className="bg-info/10 text-info border-info/30">{entry.crisisContactType || 'contacted'}</Badge>}
                         {entry.shutdownAfter && <Badge variant="outline">Shutdown after</Badge>}
                       </div>
                       <div className="flex gap-1">

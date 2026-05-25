@@ -398,7 +398,7 @@ export default function LabResultsPage() {
               variant={filterAbnormal ? "default" : "outline"}
               onClick={() => setFilterAbnormal(!filterAbnormal)}
               className={filterAbnormal
-                ? "bg-red-100 text-red-800 border-red-300 hover:bg-red-200"
+                ? "bg-destructive/10 text-destructive border-destructive/30 hover:bg-destructive/20"
                 : "border-[var(--border-soft)] text-[var(--text-muted)]"
               }
             >
@@ -488,18 +488,18 @@ export default function LabResultsPage() {
                       </div>
                       <div className="flex flex-wrap items-center gap-1 justify-end">
                         {abnormalCount > 0 && (
-                          <Badge className="bg-red-100 text-red-800 text-xs">
+                          <Badge className="bg-destructive/10 text-destructive text-xs">
                             {abnormalCount} abnl
                           </Badge>
                         )}
                         {abnormalCount === 0 && (
-                          <Badge className="bg-green-100 text-green-800 text-xs">
+                          <Badge className="bg-success/10 text-success text-xs">
                             Normal
                           </Badge>
                         )}
                         {(report.addedToTimelineEntries?.length ?? 0) > 0 ? (
                           <Badge
-                            className="bg-blue-100 text-blue-800 text-xs"
+                            className="bg-info/10 text-info text-xs"
                             title={`Promoted to timeline ${report.addedToTimelineEntries!.length}× (most recent: ${new Date(report.addedToTimelineEntries![report.addedToTimelineEntries!.length - 1].addedAt).toLocaleDateString()})`}
                           >
                             ✓ on timeline
@@ -576,7 +576,7 @@ export default function LabResultsPage() {
 
                                   if (isEditing) {
                                     return (
-                                      <tr key={idx} className="border-t border-[var(--border-soft)] bg-blue-50/50 dark:bg-blue-950/20">
+                                      <tr key={idx} className="border-t border-[var(--border-soft)] bg-info/10">
                                         <td className="py-1 pr-1">
                                           <Input
                                             value={editValues.test_name || ''}
@@ -681,10 +681,10 @@ export default function LabResultsPage() {
                                         {result.flag && (
                                           <Badge className={
                                             result.flag.includes('H') || result.flag === 'HIGH' || result.flag === 'CRITICAL'
-                                              ? 'bg-red-100 text-red-800'
+                                              ? 'bg-destructive/10 text-destructive'
                                               : result.flag.includes('L') || result.flag === 'LOW'
-                                                ? 'bg-blue-100 text-blue-800'
-                                                : 'bg-yellow-100 text-yellow-800'
+                                                ? 'bg-info/10 text-info'
+                                                : 'bg-warning/10 text-warning'
                                           }>
                                             {result.flag}
                                           </Badge>

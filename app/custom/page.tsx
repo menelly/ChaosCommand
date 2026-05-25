@@ -442,8 +442,8 @@ function TrackerCard({
 
 function getCategoryStyle(category: string) {
   switch (category) {
-    case 'body': return 'bg-red-50 border-red-200 text-red-800'
-    case 'mind': return 'bg-blue-50 border-blue-200 text-blue-800'
-    default: return 'bg-orange-50 border-orange-200 text-orange-800'
+    case 'body': return 'bg-destructive/10 border-destructive/30 text-destructive'
+    case 'mind': return 'bg-info/10 border-info/30 text-info'
+    default: return 'bg-warning/10 border-warning/30 text-warning'
   }
 }

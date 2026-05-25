@@ -318,7 +318,7 @@ export function SeizureTracker() {
                                 <Badge variant="destructive">Status Epilepticus</Badge>
                               )}
                               {entry.rescueMedicationUsed && (
-                                <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-300">Rescue med</Badge>
+                                <Badge variant="outline" className="bg-warning/10 text-warning border-warning/30">Rescue med</Badge>
                               )}
                               {entry.injuriesOccurred && (
                                 <Badge variant="destructive">
@@ -326,7 +326,7 @@ export function SeizureTracker() {
                                 </Badge>
                               )}
                               {entry.attachmentImages && entry.attachmentImages.length > 0 && (
-                                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300">
+                                <Badge variant="outline" className="bg-info/10 text-info border-info/30">
                                   📎 {entry.attachmentImages.length}
                                 </Badge>
                               )}

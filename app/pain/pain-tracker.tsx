@@ -310,7 +310,7 @@ export default function PainTracker() {
                               {entry.thunderclapPattern && <Badge variant="destructive">Thunderclap</Badge>}
                               {entry.erVisitRequired && <Badge variant="destructive">ER</Badge>}
                               {entry.attachmentImages && entry.attachmentImages.length > 0 && (
-                                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300">
+                                <Badge variant="outline" className="bg-info/10 text-info border-info/30">
                                   📎 {entry.attachmentImages.length}
                                 </Badge>
                               )}

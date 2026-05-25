@@ -221,9 +221,9 @@ export default function TrackerBuilder() {
   // 🎨 CATEGORY STYLING
   const getCategoryStyle = (category: string) => {
     switch (category) {
-      case 'body': return 'bg-red-50 border-red-200 text-red-800';
-      case 'mind': return 'bg-blue-50 border-blue-200 text-blue-800';
-      default: return 'bg-orange-50 border-orange-200 text-orange-800';
+      case 'body': return 'bg-destructive/10 border-destructive/30 text-destructive';
+      case 'mind': return 'bg-info/10 border-info/30 text-info';
+      default: return 'bg-warning/10 border-warning/30 text-warning';
     }
   };
 
@@ -516,16 +516,16 @@ export default function TrackerBuilder() {
         <TabsContent value="save" className="space-y-6">
           {deploySuccess ? (
             // 🎉 SUCCESS STATE
-            <Card className="border-green-200 bg-green-50">
+            <Card className="border-success/30 bg-success/10">
               <CardContent className="pt-6">
                 <div className="text-center space-y-4">
-                  <CheckCircle className="h-16 w-16 mx-auto text-green-500" />
-                  <h2 className="text-2xl font-bold text-green-800">Tracker Deployed! 🎉</h2>
-                  <p className="text-green-700">
+                  <CheckCircle className="h-16 w-16 mx-auto text-success" />
+                  <h2 className="text-2xl font-bold text-success">Tracker Deployed! 🎉</h2>
+                  <p className="text-foreground">
                     <strong>{tracker.name}</strong> has been successfully added to your <strong>CUSTOM</strong> section!
                   </p>
-                  <div className="bg-white p-4 rounded-lg border border-green-200">
-                    <p className="text-sm text-green-600">
+                  <div className="bg-card p-4 rounded-lg border border-success/30">
+                    <p className="text-sm text-success">
                       🎯 Your custom tracker is now live and ready to use!<br/>
                       📊 Data will be saved alongside your other trackers<br/>
                       🔄 You can build more trackers anytime
@@ -572,12 +572,12 @@ export default function TrackerBuilder() {
 
                 {/* Validation Messages */}
                 {(!tracker.name || !tracker.fields?.length) && (
-                  <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-lg">
-                    <div className="flex items-center gap-2 text-yellow-800">
+                  <div className="bg-warning/10 border border-warning/30 p-3 rounded-lg">
+                    <div className="flex items-center gap-2 text-warning">
                       <Target className="h-4 w-4" />
                       <span className="font-medium">Missing Requirements:</span>
                     </div>
-                    <ul className="text-sm text-yellow-700 mt-1 ml-6 list-disc">
+                    <ul className="text-sm text-warning mt-1 ml-6 list-disc">
                       {!tracker.name && <li>Tracker name is required</li>}
                       {!tracker.fields?.length && <li>At least one field is required</li>}
                     </ul>

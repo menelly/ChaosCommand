@@ -257,7 +257,7 @@ export default function MindMoodPage() {
                                 {entry.depressionLevel >= 7 && <Badge variant="destructive">Dep {entry.depressionLevel}</Badge>}
                                 {entry.maniaLevel >= 7 && <Badge variant="destructive">Mania {entry.maniaLevel}</Badge>}
                                 {entry.moodSwingDirection === 'rapid-cycling' && <Badge variant="destructive">Rapid cycling</Badge>}
-                                {entry.meltdownOccurred && <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-300">Meltdown</Badge>}
+                                {entry.meltdownOccurred && <Badge variant="outline" className="bg-info/10 text-info border-info/30">Meltdown</Badge>}
                               </div>
                               <div className="text-xs text-muted-foreground">{entry.time}</div>
                               {entry.notes && <div className="text-xs mt-2 text-muted-foreground">{entry.notes.substring(0, 100)}{entry.notes.length > 100 ? '...' : ''}</div>}

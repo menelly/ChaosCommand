@@ -329,9 +329,9 @@ export function FoodAllergensTracker() {
                               {entry.epipenUsed && <Badge variant="destructive">EpiPen ×{entry.epipenDosesUsed || 1}</Badge>}
                               {entry.erVisitRequired && <Badge variant="destructive">ER</Badge>}
                               {entry.hospitalizedOvernight && <Badge variant="destructive">Hospitalized</Badge>}
-                              {entry.delayedReaction && <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-300">Delayed +{entry.delayedReactionHours}h</Badge>}
+                              {entry.delayedReaction && <Badge variant="outline" className="bg-warning/10 text-warning border-warning/30">Delayed +{entry.delayedReactionHours}h</Badge>}
                               {entry.attachmentImages && entry.attachmentImages.length > 0 && (
-                                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300">📎 {entry.attachmentImages.length}</Badge>
+                                <Badge variant="outline" className="bg-info/10 text-info border-info/30">📎 {entry.attachmentImages.length}</Badge>
                               )}
                             </div>
                             <div className="text-xs text-muted-foreground">

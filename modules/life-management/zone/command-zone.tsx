@@ -164,21 +164,21 @@ export default function CommandZone() {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <Card className="bg-gradient-to-r from-pink-100 to-purple-100">
+        <Card className="bg-muted/50">
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-pink-600">{completedTasks}</div>
+            <div className="text-2xl font-bold text-foreground">{completedTasks}</div>
             <div className="text-sm text-muted-foreground">Tasks Done Today</div>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-r from-green-100 to-blue-100">
+        <Card className="bg-muted/50">
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-green-600">{essentialSurvival}/{totalEssential}</div>
+            <div className="text-2xl font-bold text-foreground">{essentialSurvival}/{totalEssential}</div>
             <div className="text-sm text-muted-foreground">Survival Essentials</div>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-r from-yellow-100 to-orange-100">
+        <Card className="bg-muted/50">
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-orange-600">{completedSurvival}</div>
+            <div className="text-2xl font-bold text-foreground">{completedSurvival}</div>
             <div className="text-sm text-muted-foreground">Total Survival Items</div>
           </CardContent>
         </Card>
@@ -243,7 +243,7 @@ export default function CommandZone() {
                 />
                 <span className={`flex-1 ${item.completed ? 'line-through text-muted-foreground' : ''}`}>
                   {item.name}
-                  {item.essential && <span className="text-red-500 ml-1">*</span>}
+                  {item.essential && <span className="text-destructive ml-1">*</span>}
                 </span>
               </div>
             ))}

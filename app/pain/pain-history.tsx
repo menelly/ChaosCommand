@@ -167,7 +167,7 @@ export function PainHistory({ entries, onEdit, onDelete, onAddNew }: Props) {
                         {entry.pulsatileMass && <Badge variant="destructive">Pulsatile mass</Badge>}
                         {entry.erVisitRequired && <Badge variant="destructive"><AlertTriangle className="h-3 w-3 mr-1" />ER</Badge>}
                         {entry.attachmentImages && entry.attachmentImages.length > 0 && (
-                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300">
+                          <Badge variant="outline" className="bg-info/10 text-info border-info/30">
                             📎 {entry.attachmentImages.length}
                           </Badge>
                         )}

@@ -131,14 +131,14 @@ export function HeadPainHistory({ entries, onEdit, onDelete, onAddNew }: Props) 
                         </Badge>
                         <Badge variant="destructive">{getGremlinEmoji(entry.painIntensity || 0)} {entry.painIntensity}/10</Badge>
                         {delta !== null && delta > 0 && <Badge variant="outline">+{delta} flare</Badge>}
-                        {entry.auraPresent && <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-300">Aura</Badge>}
-                        {entry.rescueRedosed && <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-300">Multi-rescue</Badge>}
+                        {entry.auraPresent && <Badge variant="outline" className="bg-info/10 text-info border-info/30">Aura</Badge>}
+                        {entry.rescueRedosed && <Badge variant="outline" className="bg-warning/10 text-warning border-warning/30">Multi-rescue</Badge>}
                         {entry.worstHeadacheOfLife && <Badge variant="destructive">WHOL</Badge>}
                         {entry.thunderclapOnset && <Badge variant="destructive">Thunderclap</Badge>}
                         {entry.focalNeuroDeficit && <Badge variant="destructive">Focal deficit</Badge>}
                         {entry.erVisitRequired && <Badge variant="destructive"><AlertTriangle className="h-3 w-3 mr-1" />ER</Badge>}
                         {entry.attachmentImages && entry.attachmentImages.length > 0 && (
-                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300">📎 {entry.attachmentImages.length}</Badge>
+                          <Badge variant="outline" className="bg-info/10 text-info border-info/30">📎 {entry.attachmentImages.length}</Badge>
                         )}
                       </div>
                       <div className="flex gap-1">

@@ -186,9 +186,9 @@ function CustomTrackerAnalyticsInner({ tracker, entries }: CustomTrackerAnalytic
 
   const getTrendColor = (trend: string) => {
     switch (trend) {
-      case 'increasing': return 'text-green-600 bg-green-50 border-green-200';
-      case 'decreasing': return 'text-red-600 bg-red-50 border-red-200';
-      default: return 'text-blue-600 bg-blue-50 border-blue-200';
+      case 'increasing': return 'text-success bg-success/10 border-success/30';
+      case 'decreasing': return 'text-destructive bg-destructive/10 border-destructive/30';
+      default: return 'text-info bg-info/10 border-info/30';
     }
   };
 

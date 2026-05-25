@@ -188,7 +188,7 @@ export function SeizureHistory({ entries, onEdit, onDelete, onAddNew }: SeizureH
                         <Badge variant="outline">{getSeverityLevel(entry)}</Badge>
                         {entry.statusEpilepticus && <Badge variant="destructive">Status epi.</Badge>}
                         {entry.rescueMedicationUsed && (
-                          <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-300">Rescue med</Badge>
+                          <Badge variant="outline" className="bg-warning/10 text-warning border-warning/30">Rescue med</Badge>
                         )}
                         {entry.injuriesOccurred && (
                           <Badge variant="destructive"><AlertTriangle className="h-3 w-3 mr-1" />Injury</Badge>
@@ -197,7 +197,7 @@ export function SeizureHistory({ entries, onEdit, onDelete, onAddNew }: SeizureH
                           <Badge variant="destructive">EMS</Badge>
                         )}
                         {entry.attachmentImages && entry.attachmentImages.length > 0 && (
-                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300">
+                          <Badge variant="outline" className="bg-info/10 text-info border-info/30">
                             📎 {entry.attachmentImages.length}
                           </Badge>
                         )}
@@ -243,19 +243,19 @@ export function SeizureHistory({ entries, onEdit, onDelete, onAddNew }: SeizureH
                       <div className="text-sm mb-1"><span className="font-medium">Recovery:</span> {entry.recoveryTime}</div>
                     )}
                     {entry.rescueMedicationUsed && (
-                      <div className="text-sm mb-1 text-amber-700">
+                      <div className="text-sm mb-1 text-warning">
                         <span className="font-medium">Rescue med:</span>{' '}
                         {entry.rescueMedicationDetails || 'used'}
                       </div>
                     )}
                     {entry.medicationMissed && (
-                      <div className="text-sm mb-1 text-red-600">
+                      <div className="text-sm mb-1 text-destructive">
                         <span className="font-medium">⚠ AED missed:</span>{' '}
                         {entry.missedMedicationDetails || 'yes'}
                       </div>
                     )}
                     {entry.injuryDetails && (
-                      <div className="text-sm mb-1 text-red-600">
+                      <div className="text-sm mb-1 text-destructive">
                         <span className="font-medium">Injury:</span> {entry.injuryDetails}
                         {entry.injuryRequiredER && ' (ER)'}
                       </div>
