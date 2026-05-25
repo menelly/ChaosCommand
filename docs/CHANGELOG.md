@@ -2,11 +2,26 @@
 
 _Free, local-first, no telemetry. Built by patients, for patients._
 
-_Last updated: 2026-05-24_
+_Last updated: 2026-05-25_
 
 Each release ships fixes, new trackers, and accessibility improvements.
 Want to know exactly what changed? Every commit is public:
 [github.com/menelly/ChaosCommand](https://github.com/menelly/ChaosCommand)
+
+## v0.5.6 — 2026-05-25
+
+### ♿ Accessibility
+- The **Accessibility** theme is now **"Follow System"** — it respects your operating system's own accessibility settings (Windows Contrast Themes, macOS Increase Contrast) instead of forcing a fixed palette. If you've tuned high contrast at the OS level, the app now adopts *your* settings; otherwise it falls back to a clean high-contrast light/dark scheme. Better for low-vision users because it works *with* your screen reader and OS zoom.
+
+### 🎨 Themes & readability
+- Every one of the 15 themes audited for contrast. Danger/emergency cards (911, red-flag warnings) now read **red on all themes** (previously broke on dark/terminal themes).
+- Migrated legacy color variables and hardcoded light callout boxes to a single set of semantic design tokens — no more light-box-on-dark-theme surprises.
+- Per-theme fixes: basketball court borders, terminal-theme button text, segfault danger color, a shared active-tab indicator, and theme emojis for the rest.
+
+### 📊 Analytics
+- Client-side analytics rebuilds with **trigger → outcome correlations** ("when you logged X, Y happened Z% of the time") across digestive, pain, anxiety, seizure, cardiac, respiratory, food-allergens, skin, and mind & mood.
+- Diabetes: time-in-range bar, glucose trend over time, glucose-by-time-of-day.
+- Fixed upper-digestive History to show all-time entries (was today-only).
 
 ## v0.5.0 — 2026-05-24
 

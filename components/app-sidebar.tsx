@@ -27,7 +27,6 @@ import { useState, useEffect } from "react"
 import { X, Menu } from "lucide-react"
 import Link from "next/link"
 import { homeImageData } from "@/lib/home-image"
-import SidebarThemeSwitcher from "@/components/dev/sidebar-theme-switcher" // 🧪 TEMP — remove before 0.5.6 ship
 
 
 export default function AppSidebar() {
@@ -283,9 +282,6 @@ export default function AppSidebar() {
             />
           </Link>
 
-
-          {/* 🧪 TEMPORARY QA theme switcher — remove before 0.5.6 ship */}
-          <SidebarThemeSwitcher />
 
           {/* Trackers section */}
           <div className="mt-2">
