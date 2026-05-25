@@ -25,11 +25,11 @@ body.theme-calm {
   --destructive: 0 66% 47%;
   --destructive-foreground: 0 0% 100%;
   /* semantic status tokens (info/success/warning) — see 056 */
-  --info: 211 80% 42%;
+  --info: 211 85% 33%;
   --info-foreground: 0 0% 100%;
-  --success: 142 60% 30%;
+  --success: 145 68% 25%;
   --success-foreground: 0 0% 100%;
-  --warning: 30 85% 35%;
+  --warning: 26 95% 35%;
   --warning-foreground: 0 0% 10%;
   --border: 207 75% 48%;
   --input: 207 75% 48%;

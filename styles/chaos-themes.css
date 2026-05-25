@@ -1294,7 +1294,7 @@ body.theme-glitter .sidebar-btn-custom {
 /* === MISSING THEME CUSTOM BUTTONS === */
 body.theme-lavender .sidebar-btn-custom { background-color: #9D4EDD !important; color: #ffffff !important; } /* Lavender Purple Custom */
 body.theme-calm .sidebar-btn-custom { background-color: #ffd60a !important; color: #1f2a44 !important; } /* Calm Yellow Custom */
-body.theme-colorblind .sidebar-btn-custom { background-color: #dc3545 !important; color: #ffffff !important; } /* High Contrast Red Custom */
+/* colorblind .sidebar-btn-custom omitted — defined colorblind-safe (grayscale + dashed border) in theme-colorblind.css */
 body.theme-accessibility .sidebar-btn-custom { background-color: #28a745 !important; color: #ffffff !important; } /* Accessibility Green Custom */
 body.theme-ace .sidebar-btn-custom { background-color: #00ffff !important; color: #1a0a2e !important; } /* Ace Cyan Custom */
 body.theme-caelan .sidebar-btn-1 { background-color: #e94560 !important; color: #ffffff !important; } /* Dawn Pink */
@@ -1325,14 +1325,12 @@ body.theme-calm .sidebar-btn-5 { background-color: #F9DB6D !important; color: #1
 body.theme-calm .sidebar-btn-6 { background-color: #a2c5ff !important; color: #1f2a44 !important; } /* Soft Blue */
 body.theme-calm .sidebar-btn-guide { background-color: #4682b4 !important; color: #ffffff !important; } /* Steel Blue Guide */
 
-/* === COLORBLIND THEME BUTTONS === */
-body.theme-colorblind .sidebar-btn-1 { background-color: #ffa600 !important; color: #1c1c1c !important; } /* Orange */
-body.theme-colorblind .sidebar-btn-2 { background-color: #2b2d42 !important; color: #ffffff !important; } /* Dark Blue */
-body.theme-colorblind .sidebar-btn-3 { background-color: #ffcc66 !important; color: #1c1c1c !important; } /* Light Orange */
-body.theme-colorblind .sidebar-btn-4 { background-color: #2f2f2f !important; color: #ffffff !important; } /* Dark Gray */
-body.theme-colorblind .sidebar-btn-5 { background-color: #00bfff !important; color: #1c1c1c !important; } /* Bright Blue */
-body.theme-colorblind .sidebar-btn-6 { background-color: #333333 !important; color: #ffffff !important; } /* Medium Gray */
-body.theme-colorblind .sidebar-btn-guide { background-color: #4a4a4a !important; color: #ffffff !important; } /* Dark Gray Guide */
+/* === COLORBLIND THEME BUTTONS ===
+   Intentionally NOT defined here. The colorblind-safe set lives in
+   public/styles/themes/theme-colorblind.css: a grayscale VALUE ramp + variable
+   left-border width/style (solid/double/dashed) so buttons are told apart by
+   value + shape, never hue. (Removed the old colorful orange/blue set that
+   conflicted with it — colorblind must never distinguish by colour alone.) */
 
 /* === ACCESSIBILITY THEME BUTTONS === */
 body.theme-accessibility .sidebar-btn-1 { background-color: #ffff00 !important; color: #000000 !important; } /* Yellow */

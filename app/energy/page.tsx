@@ -576,7 +576,7 @@ export default function EnergyPacingTracker() {
                           variant="outline"
                           size="sm"
                           onClick={() => logActivity(activity.id, activity.name, activity.defaultCost)}
-                          className="bg-teal-50 hover:bg-teal-100 border-info/40 dark:hover:bg-info/10 border-info/40"
+                          className="bg-info/10 hover:bg-info/20 border-info/40"
                         >
                           {activity.emoji} {activity.name} (+{Math.abs(activity.defaultCost)})
                         </Button>

@@ -657,14 +657,14 @@ export default function LabResultsPage() {
                                     <tr
                                       key={idx}
                                       className={`border-t border-[var(--border-soft)] ${
-                                        result.is_abnormal ? 'bg-red-50/50' : ''
+                                        result.is_abnormal ? 'bg-destructive/10' : ''
                                       }`}
                                     >
                                       <td className="py-2 pr-2 font-medium text-[var(--text-main)]">
                                         {result.test_name}
                                       </td>
                                       <td className={`py-2 pr-2 ${
-                                        result.is_abnormal ? 'font-bold text-red-700' : 'text-[var(--text-main)]'
+                                        result.is_abnormal ? 'font-bold text-destructive' : 'text-[var(--text-main)]'
                                       }`}>
                                         {result.value_text || '—'}
                                       </td>

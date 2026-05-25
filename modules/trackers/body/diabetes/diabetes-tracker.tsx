@@ -371,7 +371,7 @@ export default function DiabetesTracker() {
 
           {/* Centered Title */}
           <div className="text-center">
-            <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--primary-purple)' }}>
+            <h1 className="text-3xl font-bold mb-2" style={{ color: 'hsl(var(--primary))' }}>
               🩸💉 DIABETES TRACKER
             </h1>
             <p className="text-lg" style={{ color: 'var(--text-muted)' }}>

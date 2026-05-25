@@ -226,14 +226,14 @@ export default function CustomTrackersIndex() {
 
         {/* 🎯 FORGE LINK */}
         <div className="mb-8">
-          <Card className="border-orange-200 bg-orange-50">
+          <Card className="border-warning/40 bg-warning/10">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <Hammer className="h-8 w-8 text-orange-500" />
+                  <Hammer className="h-8 w-8 text-warning" />
                   <div>
-                    <h3 className="font-semibold text-orange-800">Build New Trackers</h3>
-                    <p className="text-sm text-orange-600">Create custom medical trackers using the Forge</p>
+                    <h3 className="font-semibold text-warning">Build New Trackers</h3>
+                    <p className="text-sm text-foreground">Create custom medical trackers using the Forge</p>
                   </div>
                 </div>
                 <Link href="/forge">

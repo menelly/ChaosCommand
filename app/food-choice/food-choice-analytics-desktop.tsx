@@ -509,10 +509,10 @@ export default function FoodChoiceAnalyticsDesktop({ refreshTrigger }: FoodChoic
       </div>
 
       {/* Encouraging Footer */}
-      <Card className="border-primary/20 bg-gradient-to-r from-green-50 to-blue-50">
+      <Card className="border-primary/20 bg-muted/40">
         <CardContent className="p-6 text-center">
-          <Sparkles className="h-8 w-8 mx-auto mb-2 text-green-600" />
-          <p className="text-sm text-green-800 font-medium">
+          <Sparkles className="h-8 w-8 mx-auto mb-2 text-success" />
+          <p className="text-sm text-foreground font-medium">
             Remember: Every tracked meal is a victory. Your body appreciates every bit of nourishment,
             and there's no "right" way to feed yourself. You're doing great by paying attention. 💚
           </p>

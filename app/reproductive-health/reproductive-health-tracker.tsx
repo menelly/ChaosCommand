@@ -91,17 +91,17 @@ export interface ReproductiveHealthEntry {
 
 export const FLOW_LEVELS = [
   { value: 'none', label: 'None', emoji: '⚪', color: 'bg-muted' },
-  { value: 'spotting', label: 'Spotting', emoji: '🔴', color: 'bg-pink-100' },
-  { value: 'light', label: 'Light', emoji: '🩸', color: 'bg-red-100' },
-  { value: 'medium', label: 'Medium', emoji: '🔴', color: 'bg-red-200' },
-  { value: 'heavy', label: 'Heavy', emoji: '🩸', color: 'bg-red-300' }
+  { value: 'spotting', label: 'Spotting', emoji: '🔴', color: 'bg-pink-500/12 text-foreground' },
+  { value: 'light', label: 'Light', emoji: '🩸', color: 'bg-red-500/12 text-foreground' },
+  { value: 'medium', label: 'Medium', emoji: '🔴', color: 'bg-red-500/20 text-foreground' },
+  { value: 'heavy', label: 'Heavy', emoji: '🩸', color: 'bg-red-500/30 text-foreground' }
 ] as const
 
 export const OPK_LEVELS = [
   { value: 'negative', label: 'Negative', color: 'bg-muted' },
-  { value: 'low', label: 'Low', color: 'bg-yellow-100' },
-  { value: 'high', label: 'High', color: 'bg-orange-100' },
-  { value: 'peak', label: 'Peak', color: 'bg-green-100' }
+  { value: 'low', label: 'Low', color: 'bg-warning/10 text-foreground' },
+  { value: 'high', label: 'High', color: 'bg-warning/20 text-foreground' },
+  { value: 'peak', label: 'Peak', color: 'bg-success/10 text-foreground' }
 ] as const
 
 export const MOOD_OPTIONS = [

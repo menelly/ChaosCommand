@@ -152,9 +152,9 @@ export default function PatternsPage() {
 
   const getImpactColor = (impact: string) => {
     switch (impact) {
-      case 'high': return 'text-red-600 bg-red-50'
-      case 'medium': return 'text-yellow-600 bg-yellow-50'
-      case 'low': return 'text-green-600 bg-green-50'
+      case 'high': return 'text-destructive bg-destructive/10'
+      case 'medium': return 'text-warning bg-warning/10'
+      case 'low': return 'text-success bg-success/10'
       default: return 'text-[var(--text-muted)] bg-[var(--surface-1,#f9fafb)]'
     }
   }

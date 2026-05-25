@@ -202,11 +202,11 @@ export function HopeReminders() {
     <div className="space-y-6">
       {/* Random Hope Reminder */}
       {randomReminder && (
-        <Card className="border-yellow-200 bg-gradient-to-r from-yellow-50 to-orange-50">
+        <Card className="border-warning/40 bg-warning/10">
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2">
-                <Star className="h-5 w-5 text-yellow-600" />
+                <Star className="h-5 w-5 text-warning" />
                 Hope Reminder for You
               </CardTitle>
               <Button
@@ -345,12 +345,12 @@ export function HopeReminders() {
       </div>
 
       {/* Encouragement Footer */}
-      <Card className="border-pink-200 bg-pink-50">
+      <Card className="border-pink-500/30 bg-pink-500/12">
         <CardContent className="p-4">
           <div className="text-center">
             <Heart className="h-6 w-6 mx-auto mb-2 text-pink-600" />
-            <div className="font-medium text-pink-800">Building Your Hope Collection</div>
-            <div className="text-sm text-pink-700">
+            <div className="font-medium text-foreground">Building Your Hope Collection</div>
+            <div className="text-sm text-foreground">
               Each reminder you add is a light for dark moments. You're creating a powerful toolkit of hope. 💜✨
             </div>
           </div>

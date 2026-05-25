@@ -31,7 +31,7 @@ body.theme-segfault {
   --info-foreground: 0 0% 100%;
   --success: 145 60% 60%;
   --success-foreground: 0 0% 100%;
-  --warning: 42 95% 62%;
+  --warning: 38 100% 62%;
   --warning-foreground: 0 0% 10%;
   --border: 120 60% 32%;
   --input: 120 55% 22%;
@@ -111,6 +111,11 @@ body.theme-segfault h1, body.theme-segfault h2 {
 }
 
 body.theme-segfault .text-muted-foreground { color: #6b9b6b !important; }
+/* Force token dark text on the neon-green primary surface (segfault force-colors all
+   text light-green by design → light-on-neon = unreadable badges/buttons). (056) */
+body.theme-segfault .bg-primary { color: hsl(var(--primary-foreground)) !important; }
+/* SAFETY exemption: danger RED punches through the monochrome-green text force. (056) */
+body.theme-segfault .text-destructive { color: hsl(var(--destructive)) !important; }
 
 /* === CARDS — terminal panels with corruption === */
 body.theme-segfault .card,

@@ -118,7 +118,7 @@ export function CopingToolkit() {
                 <Card 
                   key={strategy.id}
                   className={`cursor-pointer transition-all hover:shadow-md ${
-                    isCompleted ? 'bg-green-50 border-green-200' : 'hover:border-red-300'
+                    isCompleted ? 'bg-success/10 border-success/40' : 'hover:border-destructive/40'
                   }`}
                   onClick={() => setSelectedStrategy(strategy.id)}
                 >
@@ -195,7 +195,7 @@ export function CopingToolkit() {
                         <Card 
                           key={strategy.id}
                           className={`cursor-pointer transition-all hover:shadow-md ${
-                            isCompleted ? 'bg-green-50 border-green-200' : 'hover:border-primary/50'
+                            isCompleted ? 'bg-success/10 border-success/40' : 'hover:border-primary/50'
                           }`}
                           onClick={() => setSelectedStrategy(strategy.id)}
                         >
@@ -315,15 +315,15 @@ export function CopingToolkit() {
 
       {/* Progress Summary */}
       {completedStrategies.length > 0 && (
-        <Card className="bg-green-50 border-green-200">
+        <Card className="bg-success/10 border-success/40">
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-green-600" />
-              <span className="font-medium text-green-800">
+              <CheckCircle className="h-5 w-5 text-success" />
+              <span className="font-medium text-success">
                 Great job! You've tried {completedStrategies.length} coping strategies.
               </span>
             </div>
-            <p className="text-sm text-green-700 mt-1">
+            <p className="text-sm text-foreground mt-1">
               Every strategy you try is a step toward healing. You're being incredibly brave. 💜
             </p>
           </CardContent>

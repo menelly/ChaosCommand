@@ -191,24 +191,24 @@ export function OvulationPredictionCard({
 
         {/* Tips based on status */}
         {prediction.status === 'pre-ovulation' && (
-          <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <p className="text-sm text-yellow-800">
+          <div className="p-3 bg-warning/10 border border-warning/40 rounded-lg">
+            <p className="text-sm text-warning">
               💡 <strong>Tip:</strong> This is a good time to track cervical mucus and continue OPK testing.
             </p>
           </div>
         )}
 
         {prediction.status === 'ovulation-likely' && (
-          <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-            <p className="text-sm text-green-800">
+          <div className="p-3 bg-success/10 border border-success/40 rounded-lg">
+            <p className="text-sm text-success">
               🎯 <strong>Peak fertility:</strong> This is your most fertile time if you're trying to conceive.
             </p>
           </div>
         )}
 
         {prediction.status === 'post-ovulation' && (
-          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm text-blue-800">
+          <div className="p-3 bg-info/10 border border-info/40 rounded-lg">
+            <p className="text-sm text-info">
               📊 <strong>Luteal phase:</strong> Continue tracking BBT to confirm ovulation occurred.
             </p>
           </div>

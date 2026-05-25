@@ -178,7 +178,7 @@ export default function FoodChoiceHistory() {
                   </h4>
                   <div className="space-y-2">
                     {entry.simpleEntries.map((simpleEntry) => (
-                      <div key={simpleEntry.id} className="bg-green-50 border border-green-200 rounded p-3">
+                      <div key={simpleEntry.id} className="bg-success/10 border border-success/40 rounded p-3">
                         <div className="flex items-center justify-between">
                           <div>
                             <span className="font-medium">
@@ -225,7 +225,7 @@ export default function FoodChoiceHistory() {
                   </h4>
                   <div className="space-y-3">
                     {entry.detailedEntries.map((detailedEntry) => (
-                      <div key={detailedEntry.id} className="bg-blue-50 border border-blue-200 rounded p-3">
+                      <div key={detailedEntry.id} className="bg-info/10 border border-info/40 rounded p-3">
                         <div className="flex items-center justify-between mb-2">
                           <span className="font-medium">
                             {detailedEntry.mealType.charAt(0).toUpperCase() + detailedEntry.mealType.slice(1)}

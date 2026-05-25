@@ -30,7 +30,7 @@ body.theme-phosphor {
   --info-foreground: 0 0% 100%;
   --success: 145 60% 60%;
   --success-foreground: 0 0% 100%;
-  --warning: 42 95% 62%;
+  --warning: 38 100% 62%;
   --warning-foreground: 0 0% 10%;
   --border: 120 60% 32%;
   --input: 120 55% 22%;
@@ -104,6 +104,16 @@ body.theme-phosphor h2 {
 body.theme-phosphor .text-muted-foreground {
   color: #6b9b6b !important;
 }
+
+/* Phosphor force-colors all text light-green (terminal aesthetic), which makes the
+   neon-green primary surface (badges/buttons using bg-primary) light-on-light. Force
+   the token's dark foreground on primary surfaces so they're readable. (056) */
+body.theme-phosphor .bg-primary {
+  color: hsl(var(--primary-foreground)) !important;
+}
+/* SAFETY exemption: let danger RED punch through the monochrome-green text force,
+   so 911/danger headings & bullets read as red (not terminal-green). (056) */
+body.theme-phosphor .text-destructive { color: hsl(var(--destructive)) !important; }
 
 /* === CARDS — terminal panels === */
 body.theme-phosphor .card,

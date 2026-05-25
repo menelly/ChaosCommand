@@ -104,13 +104,13 @@ export function CrisisResources() {
   return (
     <div className="space-y-6">
       {/* Emergency Banner */}
-      <Card className="border-red-200 bg-red-50">
+      <Card className="border-destructive/40 bg-destructive/10">
         <CardContent className="p-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-            <Shield className="h-6 w-6 text-red-600 shrink-0" />
+            <Shield className="h-6 w-6 text-destructive shrink-0" />
             <div className="flex-1">
-              <div className="font-bold text-red-800">In Immediate Danger?</div>
-              <div className="text-sm text-red-700">
+              <div className="font-bold text-destructive">In Immediate Danger?</div>
+              <div className="text-sm text-foreground">
                 Call 911 (US), 999 (UK), 112 (EU), or your local emergency number immediately.
               </div>
             </div>
@@ -127,13 +127,13 @@ export function CrisisResources() {
       </Card>
 
       {/* Quick Access - 988 */}
-      <Card className="border-blue-200 bg-blue-50">
+      <Card className="border-info/40 bg-info/10">
         <CardContent className="p-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-            <Heart className="h-6 w-6 text-blue-600 shrink-0" />
+            <Heart className="h-6 w-6 text-info shrink-0" />
             <div className="flex-1">
-              <div className="font-bold text-blue-800">988 Suicide & Crisis Lifeline</div>
-              <div className="text-sm text-blue-700">
+              <div className="font-bold text-info">988 Suicide & Crisis Lifeline</div>
+              <div className="text-sm text-foreground">
                 Free, confidential support 24/7 for people in distress
               </div>
             </div>
@@ -341,12 +341,12 @@ export function CrisisResources() {
       </div>
 
       {/* Footer Message */}
-      <Card className="border-purple-200 bg-purple-50">
+      <Card className="border-purple-500/30 bg-purple-500/12">
         <CardContent className="p-4">
           <div className="text-center">
             <Heart className="h-6 w-6 mx-auto mb-2 text-purple-600" />
-            <div className="font-medium text-purple-800">You Are Not Alone</div>
-            <div className="text-sm text-purple-700">
+            <div className="font-medium text-foreground">You Are Not Alone</div>
+            <div className="text-sm text-foreground">
               These resources exist because people care about you. Reaching out for help is a sign of strength, not weakness. 💜
             </div>
           </div>

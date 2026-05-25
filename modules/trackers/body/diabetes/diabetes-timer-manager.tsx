@@ -558,17 +558,17 @@ export function DiabetesTimerManager({ timers, onTimersChange, currentUserId }: 
         </div>
 
         {/* Notification Info Card */}
-        <Card className="mb-6 bg-blue-50 border-blue-200">
+        <Card className="mb-6 bg-info/10 border-info/40">
           <CardContent className="p-4">
             <div className="flex items-start gap-3">
               <div className="text-2xl">🔔</div>
               <div>
-                <h3 className="font-medium text-blue-900">Smart Notifications</h3>
-                <p className="text-sm text-blue-700 mt-1">
+                <h3 className="font-medium text-info">Smart Notifications</h3>
+                <p className="text-sm text-foreground mt-1">
                   Get alerts 24 hours, 4 hours, and 1 hour before your timers expire, plus immediate notifications when they're due.
                 </p>
                 {!notificationsEnabled && (
-                  <p className="text-xs text-blue-600 mt-2">
+                  <p className="text-xs text-foreground mt-2">
                     💡 Enable browser notifications above to never miss a timer!
                   </p>
                 )}

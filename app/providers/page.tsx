@@ -1125,7 +1125,7 @@ export default function ProvidersPage() {
                                     {providerReviews
                                       .sort((a, b) => new Date(b.appointmentDate).getTime() - new Date(a.appointmentDate).getTime())
                                       .map((review) => (
-                                        <div key={review.id} className="text-xs p-2 bg-green-50 rounded">
+                                        <div key={review.id} className="text-xs p-2 bg-success/10 rounded">
                                           <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-1">
                                               <Star className="h-3 w-3 text-yellow-500" />

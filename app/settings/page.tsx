@@ -255,10 +255,15 @@ export default function SettingsPage() {
         {/* Update Check modal (also not in the category array) */}
         <UpdateCheckModal isOpen={activeModal === 'updates'} onClose={closeModal} />
 
-        <div className="mt-8 text-center">
+        <div className="mt-8 text-center space-y-3">
           <Button variant="outline" onClick={() => window.history.back()}>
             ← Back to Command Center
           </Button>
+          <div>
+            <Button variant="ghost" size="sm" onClick={() => { window.location.href = '/theme-lab' }} className="text-muted-foreground">
+              🧪 Theme Lab (dev)
+            </Button>
+          </div>
           <p className="text-xs text-muted-foreground mt-4">Version v{APP_VERSION}</p>
         </div>
       </AppCanvas>

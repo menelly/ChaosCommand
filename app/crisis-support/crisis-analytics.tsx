@@ -377,11 +377,11 @@ export function CrisisAnalytics({ refreshTrigger }: CrisisAnalyticsProps) {
         <CardContent>
           <div className="space-y-3">
             {analytics.avgCopingEffectiveness >= 7 && (
-              <div className="flex items-start gap-2 p-3 bg-green-50 rounded-lg">
-                <TrendingUp className="h-4 w-4 text-green-600 mt-0.5" />
+              <div className="flex items-start gap-2 p-3 bg-success/10 rounded-lg">
+                <TrendingUp className="h-4 w-4 text-success mt-0.5" />
                 <div>
-                  <div className="font-medium text-green-800">Strong Coping Skills</div>
-                  <div className="text-sm text-green-700">
+                  <div className="font-medium text-success">Strong Coping Skills</div>
+                  <div className="text-sm text-foreground">
                     Your coping strategies are highly effective (avg {analytics.avgCopingEffectiveness}/10). 
                     You're building great resilience! 💜
                   </div>
@@ -390,11 +390,11 @@ export function CrisisAnalytics({ refreshTrigger }: CrisisAnalyticsProps) {
             )}
 
             {analytics.safetyPlanUsage / analytics.totalCrises >= 0.7 && (
-              <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-lg">
-                <Shield className="h-4 w-4 text-blue-600 mt-0.5" />
+              <div className="flex items-start gap-2 p-3 bg-info/10 rounded-lg">
+                <Shield className="h-4 w-4 text-info mt-0.5" />
                 <div>
-                  <div className="font-medium text-blue-800">Excellent Safety Plan Usage</div>
-                  <div className="text-sm text-blue-700">
+                  <div className="font-medium text-info">Excellent Safety Plan Usage</div>
+                  <div className="text-sm text-foreground">
                     You use your safety plan in {Math.round((analytics.safetyPlanUsage / analytics.totalCrises) * 100)}% of crises. 
                     This shows great self-care awareness!
                   </div>
@@ -403,11 +403,11 @@ export function CrisisAnalytics({ refreshTrigger }: CrisisAnalyticsProps) {
             )}
 
             {analytics.recentCrises < analytics.totalCrises / 2 && analytics.totalCrises > 4 && (
-              <div className="flex items-start gap-2 p-3 bg-green-50 rounded-lg">
-                <TrendingDown className="h-4 w-4 text-green-600 mt-0.5" />
+              <div className="flex items-start gap-2 p-3 bg-success/10 rounded-lg">
+                <TrendingDown className="h-4 w-4 text-success mt-0.5" />
                 <div>
-                  <div className="font-medium text-green-800">Crisis Frequency Improving</div>
-                  <div className="text-sm text-green-700">
+                  <div className="font-medium text-success">Crisis Frequency Improving</div>
+                  <div className="text-sm text-foreground">
                     You've had fewer crises recently compared to your overall history. 
                     Your coping strategies are working! 🌟
                   </div>
@@ -416,11 +416,11 @@ export function CrisisAnalytics({ refreshTrigger }: CrisisAnalyticsProps) {
             )}
 
             {analytics.avgIntensity <= 5 && (
-              <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-lg">
-                <Heart className="h-4 w-4 text-blue-600 mt-0.5" />
+              <div className="flex items-start gap-2 p-3 bg-info/10 rounded-lg">
+                <Heart className="h-4 w-4 text-info mt-0.5" />
                 <div>
-                  <div className="font-medium text-blue-800">Managing Crisis Intensity Well</div>
-                  <div className="text-sm text-blue-700">
+                  <div className="font-medium text-info">Managing Crisis Intensity Well</div>
+                  <div className="text-sm text-foreground">
                     Your average crisis intensity is {analytics.avgIntensity}/10, showing you're 
                     catching crises early or managing them effectively.
                   </div>
@@ -429,11 +429,11 @@ export function CrisisAnalytics({ refreshTrigger }: CrisisAnalyticsProps) {
             )}
 
             {analytics.professionalHelpRate / analytics.totalCrises >= 0.5 && (
-              <div className="flex items-start gap-2 p-3 bg-purple-50 rounded-lg">
+              <div className="flex items-start gap-2 p-3 bg-purple-500/12 rounded-lg">
                 <Heart className="h-4 w-4 text-purple-600 mt-0.5" />
                 <div>
-                  <div className="font-medium text-purple-800">Great Professional Support Usage</div>
-                  <div className="text-sm text-purple-700">
+                  <div className="font-medium text-foreground">Great Professional Support Usage</div>
+                  <div className="text-sm text-foreground">
                     You seek professional help in {Math.round((analytics.professionalHelpRate / analytics.totalCrises) * 100)}% of crises. 
                     This shows excellent self-advocacy! 💜
                   </div>
@@ -442,11 +442,11 @@ export function CrisisAnalytics({ refreshTrigger }: CrisisAnalyticsProps) {
             )}
 
             {/* Always show encouragement */}
-            <div className="flex items-start gap-2 p-3 bg-pink-50 rounded-lg">
+            <div className="flex items-start gap-2 p-3 bg-pink-500/12 rounded-lg">
               <Heart className="h-4 w-4 text-pink-600 mt-0.5" />
               <div>
-                <div className="font-medium text-pink-800">You Are Incredibly Brave</div>
-                <div className="text-sm text-pink-700">
+                <div className="font-medium text-foreground">You Are Incredibly Brave</div>
+                <div className="text-sm text-foreground">
                   Tracking {analytics.totalCrises} crisis experiences takes immense courage. 
                   Every entry is a step toward understanding and healing. You're doing amazing work. 💜✨
                 </div>

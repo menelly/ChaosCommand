@@ -74,12 +74,11 @@ export function EmergencyCriteriaCard({
   // (recentEmergencyDetected prop is kept but ignored — caller plumbing removal tracked separately.)
   const expanded = !hydrated ? true : !acknowledged
 
-  // THEME-RELATIVE DANGER (2026-05-24): never hardcode red. Every theme defines
-  // --destructive + --destructive-foreground and calibrates that PAIR for contrast
-  // (the only pairing guaranteed readable on all 15 themes — incl. dark ones like
-  // ace/grok where hardcoded `text-red-900 dark:…` went dark-on-dark). Solid
-  // destructive fill = loud, unmistakable, AND always legible. See
-  // project_command_056_danger_colors.
+  // THEME-RELATIVE DANGER (2026-05-24): never hardcode red. Use --destructive as a
+  // TINT (red border + red heading/bullets) with theme-foreground body text — reads
+  // as unmistakably serious without a solid-red billboard beating you over the head,
+  // and the criteria stay maximally legible (theme text, not white-on-loud-red).
+  // Readable + correct on all 15 themes. See project_command_056_danger_colors.
   if (!expanded) {
     // Collapsed pill — subtle on the page bg, tappable to reopen.
     return (
@@ -98,29 +97,29 @@ export function EmergencyCriteriaCard({
   }
 
   return (
-    <Card className="border-destructive border-2 bg-destructive text-destructive-foreground">
+    <Card className="border-destructive border-2 bg-destructive/10">
       <CardHeader className="pb-3">
-        <CardTitle className="text-destructive-foreground flex items-center gap-2 text-base">
+        <CardTitle className="text-destructive flex items-center gap-2 text-base">
           <AlertTriangle className="h-5 w-5" />
           {title}
         </CardTitle>
       </CardHeader>
-      <CardContent className="text-sm space-y-1 text-destructive-foreground">
+      <CardContent className="text-sm space-y-1 text-foreground">
         {criteria.map((criterion, i) => (
           <div key={i} className="flex items-start gap-2">
-            <span className="font-bold mt-0.5">•</span>
+            <span className="text-destructive font-bold mt-0.5">•</span>
             <span>{criterion}</span>
           </div>
         ))}
         {footerNote && (
-          <p className="pt-2 italic font-medium">{footerNote}</p>
+          <p className="pt-2 italic font-medium text-muted-foreground">{footerNote}</p>
         )}
         <div className="pt-3 flex justify-end">
           <Button
             variant="outline"
             size="sm"
             onClick={handleAck}
-            className="border-destructive-foreground/40 bg-transparent text-destructive-foreground hover:bg-destructive-foreground/10"
+            className="border-destructive text-destructive bg-transparent hover:bg-destructive/10"
           >
             <ChevronUp className="h-3 w-3 mr-1" />
             Got it — collapse

@@ -221,7 +221,7 @@ export default function FoodChoiceTracker() {
                     <CardContent>
                       <div className="space-y-3">
                         {entry.simpleEntries.map((simpleEntry) => (
-                          <div key={simpleEntry.id} className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                          <div key={simpleEntry.id} className="flex items-center justify-between p-3 bg-success/10 border border-success/40 rounded-lg">
                             <div>
                               <div className="flex items-center gap-2">
                                 <span className="font-medium">
@@ -252,12 +252,12 @@ export default function FoodChoiceTracker() {
                 )}
 
                 {/* Encouraging message */}
-                <Card className="bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
+                <Card className="bg-muted/40 border-success/40">
                   <CardContent className="p-6 text-center">
-                    <h4 className="text-lg font-semibold text-green-800 mb-2">
+                    <h4 className="text-lg font-semibold text-success mb-2">
                       You're doing great! 🌟
                     </h4>
-                    <p className="text-green-700">
+                    <p className="text-foreground">
                       Every bit of nourishment counts. Your body appreciates the care! 💚
                     </p>
                   </CardContent>

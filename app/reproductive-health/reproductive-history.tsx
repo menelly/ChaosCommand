@@ -266,7 +266,7 @@ export function ReproductiveHistory({ entries, onDelete, onEdit }: ReproductiveH
                     <h4 className="text-sm font-medium text-muted-foreground">Fertility Symptoms</h4>
                     <div className="flex flex-wrap gap-1">
                       {entry.fertilitySymptoms.map((symptom, index) => (
-                        <Badge key={index} variant="outline" className="text-xs bg-green-50">
+                        <Badge key={index} variant="outline" className="text-xs bg-success/10">
                           {symptom}
                         </Badge>
                       ))}

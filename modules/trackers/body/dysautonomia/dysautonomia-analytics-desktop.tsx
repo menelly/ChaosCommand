@@ -458,9 +458,9 @@ export function DysautonomiaAnalyticsDesktop({ entries }: DysautonomiaAnalyticsP
               </div>
 
               {analyticsData.spo2.min_spo2_recorded && analyticsData.spo2.min_spo2_recorded < 90 && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <div className="text-red-800 font-semibold">⚠️ Medical Alert</div>
-                  <div className="text-red-700 text-sm">
+                <div className="p-3 bg-destructive/10 border border-destructive/40 rounded-lg">
+                  <div className="text-destructive font-semibold">⚠️ Medical Alert</div>
+                  <div className="text-foreground text-sm">
                     Lowest SpO2 recorded: {analyticsData.spo2.min_spo2_recorded}% - This requires immediate medical attention!
                   </div>
                 </div>

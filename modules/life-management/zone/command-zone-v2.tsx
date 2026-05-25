@@ -564,7 +564,7 @@ export default function CommandZone() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold text-[var(--primary-purple)] mb-2">Command Zone</h1>
+        <h1 className="text-4xl font-bold text-primary mb-2">Command Zone</h1>
         <p className="text-muted-foreground">Your daily quest hub - let's get stuff done! ✨</p>
       </div>
 
@@ -587,13 +587,13 @@ export default function CommandZone() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <Card className="bg-gradient-to-r from-[var(--surface-1)] to-[var(--surface-2)]">
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-[var(--primary-purple)]">{completedTasks}</div>
+            <div className="text-2xl font-bold text-primary">{completedTasks}</div>
             <div className="text-sm text-muted-foreground">Tasks Done Today</div>
           </CardContent>
         </Card>
         <Card className="bg-gradient-to-r from-[var(--grounding-bg)] to-[var(--surface-1)]">
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-[var(--accent-orange)]">{completedGear}/{gearCheck.length}</div>
+            <div className="text-2xl font-bold text-accent">{completedGear}/{gearCheck.length}</div>
             <div className="text-sm text-muted-foreground">Gear Ready</div>
           </CardContent>
         </Card>
@@ -603,7 +603,7 @@ export default function CommandZone() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Daily Schedule */}
         {isSectionVisible('schedule') && (
-        <CollapsibleSection id="schedule" title="Today's Schedule" icon={<Clock className="h-5 w-5 text-[var(--accent-orange)]" />} sections={sections}>
+        <CollapsibleSection id="schedule" title="Today's Schedule" icon={<Clock className="h-5 w-5 text-accent" />} sections={sections}>
           <div className="flex justify-end gap-2 mb-2">
             <Button
               size="sm"
@@ -656,7 +656,7 @@ export default function CommandZone() {
               if (shadingMode === 'time-aware') {
                 if (isCurrent) {
                   shadingClass = 'bg-[var(--surface-1)]'
-                  extraClass = 'ring-2 ring-[var(--accent-orange)]'
+                  extraClass = 'ring-2 ring-accent'
                 } else if (isPast) {
                   extraClass = 'opacity-50'
                 }
@@ -678,7 +678,7 @@ export default function CommandZone() {
                     variant="ghost"
                     size="sm"
                     onClick={() => openEditBlock(block)}
-                    className="text-muted-foreground hover:text-[var(--primary-purple)]"
+                    className="text-muted-foreground hover:text-primary"
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>
@@ -703,7 +703,7 @@ export default function CommandZone() {
 
         {/* Task List */}
         {isSectionVisible('tasks') && (
-        <CollapsibleSection id="tasks" title="Today's Tasks" icon={<Package className="h-5 w-5 text-[var(--hover-glow)]" />} sections={sections}>
+        <CollapsibleSection id="tasks" title="Today's Tasks" icon={<Package className="h-5 w-5 text-accent" />} sections={sections}>
           <div className="space-y-4">
             <div className="flex gap-2">
               <Input
@@ -758,7 +758,7 @@ export default function CommandZone() {
 
         {/* Gear Check */}
         {isSectionVisible('gear') && (
-        <CollapsibleSection id="gear" title="Gear Check (Leaving House)" icon={<Backpack className="h-5 w-5 text-[var(--accent-orange)]" />} sections={sections}>
+        <CollapsibleSection id="gear" title="Gear Check (Leaving House)" icon={<Backpack className="h-5 w-5 text-accent" />} sections={sections}>
           <div className="space-y-4">
             <div className="flex gap-2">
               <Input
@@ -803,7 +803,7 @@ export default function CommandZone() {
 
         {/* Self-Care Tracker — did you take care of your meat suit today? */}
         {isSectionVisible('selfcare') && (
-        <CollapsibleSection id="selfcare" title={`Did You Take Care of You? (${selfCareCompleted}/${selfCare.length})`} icon={<Sparkles className="h-5 w-5 text-[var(--hover-glow)]" />} sections={sections}>
+        <CollapsibleSection id="selfcare" title={`Did You Take Care of You? (${selfCareCompleted}/${selfCare.length})`} icon={<Sparkles className="h-5 w-5 text-accent" />} sections={sections}>
           <div className="flex justify-end mb-2">
             <Button
               variant="ghost"

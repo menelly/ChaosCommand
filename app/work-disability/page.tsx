@@ -584,7 +584,7 @@ export default function WorkDisabilityPage() {
                   <div
                     className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
                       missedForm.couldNotDoAnythingElse
-                        ? 'bg-red-50 border-red-300'
+                        ? 'bg-destructive/10 border-destructive/40'
                         : 'bg-[var(--bg-card)] border-[var(--border-soft)]'
                     }`}
                     onClick={() => setMissedForm(f => ({ ...f, couldNotDoAnythingElse: !f.couldNotDoAnythingElse }))}
@@ -1398,9 +1398,9 @@ export default function WorkDisabilityPage() {
             </Card>
 
             {/* Reminder */}
-            <Card className="border-orange-200 bg-orange-50">
+            <Card className="border-warning/40 bg-warning/10">
               <CardContent className="py-4">
-                <p className="text-sm text-orange-800 text-center">
+                <p className="text-sm text-foreground text-center">
                   <strong>Remember:</strong> The question disability systems ask is not "are you sick?"
                   It's "can you perform any full-time job, reliably, five days a week?"
                   <br />

@@ -131,25 +131,25 @@ export const getPEMRiskLevel = (spent: number, budget: number) => {
 export const PEM_RISK_INFO = {
   safe: {
     label: 'Looking Good',
-    color: 'text-green-600 bg-green-50 border-green-200',
+    color: 'text-success bg-success/10 border-success/40',
     emoji: '💚',
     message: 'Plenty of spoons left. Keep pacing!'
   },
   caution: {
     label: 'Pacing Zone',
-    color: 'text-yellow-600 bg-yellow-50 border-yellow-200',
+    color: 'text-warning bg-warning/10 border-warning/40',
     emoji: '💛',
     message: 'Getting into moderate use. Consider what\'s essential.'
   },
   warning: {
     label: 'Low Spoons',
-    color: 'text-orange-600 bg-orange-50 border-orange-200',
+    color: 'text-warning bg-warning/10 border-warning/40',
     emoji: '🧡',
     message: 'Running low! Rest if you can. Prioritize carefully.'
   },
   danger: {
     label: 'Crash Risk',
-    color: 'text-red-600 bg-red-50 border-red-200',
+    color: 'text-destructive bg-destructive/10 border-destructive/40',
     emoji: '❤️‍🩹',
     message: 'High PEM risk! Please rest. Tomorrow-you will thank you.'
   },
