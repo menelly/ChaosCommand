@@ -1,40 +1,53 @@
-/* === ♿ ACCESSIBILITY THEME === */
-/* Maximum contrast and large text for optimal accessibility */
-/* Token-driven (Ace, 2026-05-23): pure black/white token block guarantees
- * 21:1 everywhere; element rules below enforce large text, big targets, and
- * thick focus rings. Fixed the one real bug: pure-blue #0000ff links on black
- * were only 2.44:1 — now a bright accessible blue (#4dabf7 = 8.5:1). */
+/* === ♿ FOLLOW SYSTEM — respects the OS's own accessibility settings === */
+/*
+ * Rewritten 2026-05-25 (Ace + Ren). The old version hand-painted a black/white
+ * high-contrast palette by force (!important everywhere) — which kept MISSING
+ * element types (white-on-white buttons, gray option-pills) and could never be
+ * truly complete. This version DEFERS to the operating system instead:
+ *
+ *  • If the user has OS-level high contrast on (Windows "Contrast Themes" /
+ *    High Contrast, macOS "Increase Contrast"), the browser's forced-colors
+ *    mode replaces our colors with THEIR exact tuning — their palette, their
+ *    contrast. We just stop fighting it. The OS knows their eyes better than we do.
+ *
+ *  • If they have NO OS accessibility setting, we fall back to a clean, large,
+ *    high-legibility scheme that follows prefers-color-scheme (light or dark).
+ *
+ * Net result: far less to maintain, and it actually serves low-vision users
+ * (it pairs with their screen reader + OS zoom instead of overriding them).
+ * TEST forced-colors via Windows Settings → Accessibility → Contrast themes.
+ */
 
-/* ---- TOKENS (contrast contract — all 21:1) ---- */
+/* ---- FALLBACK TOKENS — used only when the OS is NOT forcing colors ---- */
+/* High-contrast LIGHT by default (black-on-white, AAA), dark variant below. */
 body.theme-accessibility {
-  --background: 0 0% 0%;
-  --foreground: 0 0% 100%;
-  --card: 0 0% 9%;                  /* #171717 near-black panel on the pure-black bg */
-  --card-foreground: 0 0% 100%;     /* white text — ~18:1 on card (was white-on-WHITE: invisible) */
-  --popover: 0 0% 9%;
-  --popover-foreground: 0 0% 100%;
-  --primary: 0 0% 100%;             /* white button, black text */
-  --primary-foreground: 0 0% 0%;
-  --secondary: 0 0% 9%;
-  --secondary-foreground: 0 0% 100%;
-  --muted: 0 0% 0%;
-  --muted-foreground: 0 0% 80%;     /* #ccc on black = 13:1 */
-  --accent: 0 0% 100%;
+  --background: 0 0% 100%;
+  --foreground: 0 0% 0%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 0%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 0%;
+  --primary: 0 0% 0%;               /* black button, white text */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 88%;            /* light-gray pill, black text — readable on white */
+  --secondary-foreground: 0 0% 0%;
+  --muted: 0 0% 93%;
+  --muted-foreground: 0 0% 20%;     /* near-black on light = strong contrast */
+  --accent: 0 0% 85%;
   --accent-foreground: 0 0% 0%;
-  --destructive: 0 100% 50%;
+  --destructive: 0 75% 38%;         /* dark red — ~6:1 on white */
   --destructive-foreground: 0 0% 100%;
-  /* semantic status tokens (info/success/warning) — see 056 */
-  --info: 205 90% 70%;
+  --info: 211 100% 33%;
   --info-foreground: 0 0% 100%;
-  --success: 145 60% 60%;
+  --success: 145 80% 22%;
   --success-foreground: 0 0% 100%;
-  --warning: 38 100% 62%;
-  --warning-foreground: 0 0% 10%;
-  --border: 0 0% 100%;
-  --input: 0 0% 100%;
-  --ring: 60 100% 50%;              /* yellow focus */
-  /* LEGACY design-var bridge — map old --surface-1/--text-main/etc. onto real tokens
-     so pages still using them don't inherit the :root coral/purple defaults. (056) */
+  --warning: 32 100% 28%;
+  --warning-foreground: 0 0% 100%;
+  --border: 0 0% 0%;
+  --input: 0 0% 0%;
+  --ring: 211 100% 33%;
+  --radius: 0.375rem;
+  /* LEGACY design-var bridge → real tokens (see other themes). */
   --deep-space: hsl(var(--background));
   --surface-1: hsl(var(--card));
   --surface-2: hsl(var(--muted));
@@ -42,144 +55,85 @@ body.theme-accessibility {
   --text-main: hsl(var(--foreground));
   --text-muted: hsl(var(--muted-foreground));
   --border-soft: hsl(var(--border));
+  font-size: 18px;
+  line-height: 1.6;
 }
 
-/* ---- HIGH-CONTRAST ELEMENT RULES + LARGE TEXT ---- */
-body.theme-accessibility {
-  background: #000000 !important;
-  color: #ffffff !important;
-  font-size: 18px !important;
-  line-height: 1.6 !important;
+/* Dark fallback when the user's OS prefers dark (and isn't forcing colors). */
+@media (prefers-color-scheme: dark) {
+  body.theme-accessibility {
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+    --card: 0 0% 10%;
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 10%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 0 0% 100%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 0 0% 18%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 14%;
+    --muted-foreground: 0 0% 85%;
+    --accent: 0 0% 22%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 100% 72%;
+    --info: 205 90% 72%;
+    --success: 145 60% 66%;
+    --warning: 38 100% 66%;
+    --border: 0 0% 100%;
+    --input: 0 0% 70%;
+  }
 }
 
-/* No motion at all */
-body.theme-accessibility * { animation: none !important; transition: none !important; }
-
-body.theme-accessibility h1,
-body.theme-accessibility h2,
-body.theme-accessibility h3,
-body.theme-accessibility h4,
-body.theme-accessibility h5,
-body.theme-accessibility h6 { color: #ffffff !important; font-weight: bold !important; }
-body.theme-accessibility h1 { font-size: 2.5em !important; }
-body.theme-accessibility h2 { font-size: 2.2em !important; }
-body.theme-accessibility h3 { font-size: 2em !important; }
-body.theme-accessibility h4 { font-size: 1.8em !important; }
-body.theme-accessibility h5 { font-size: 1.6em !important; }
-body.theme-accessibility h6 { font-size: 1.4em !important; }
-
-/* Cards — white panels, thick black border. Specific classes only (NOT
- * [class*="card"], which matched bg-card / text-card-foreground utilities). */
-body.theme-accessibility .card,
-body.theme-accessibility .tracker-card,
-body.theme-accessibility .module-card {
-  background: #171717 !important;        /* near-black panel (matches --card) */
-  border: 3px solid #ffffff !important;  /* white border delineates the card on black bg */
-  color: #ffffff !important;             /* white text — was #000 on a white card = invisible */
-  box-shadow: none !important;
-}
-body.theme-accessibility .card:hover,
-body.theme-accessibility .tracker-card:hover,
-body.theme-accessibility .module-card:hover { background: #262626 !important; border-color: #ffff00 !important; }
-
-/* Buttons — invert on hover */
-body.theme-accessibility button,
-body.theme-accessibility .btn {
-  background: #ffffff !important;
-  border: 3px solid #000000 !important;
-  color: #000000 !important;
-  font-weight: bold !important;
-  font-size: 16px !important;
-  padding: 12px 20px !important;
-}
-body.theme-accessibility button:hover,
-body.theme-accessibility .btn:hover { background: #000000 !important; color: #ffffff !important; border-color: #ffffff !important; }
-
-body.theme-accessibility input,
-body.theme-accessibility textarea,
-body.theme-accessibility select {
-  background: #ffffff !important;
-  border: 3px solid #000000 !important;
-  color: #000000 !important;
-  font-size: 16px !important;
-  padding: 10px !important;
-}
-body.theme-accessibility input::placeholder,
-body.theme-accessibility textarea::placeholder { color: #595959 !important; font-weight: bold !important; }
-
-/* Select/combobox trigger — the blanket white-button rule whitened it, which hid
-   the light muted sub-text (e.g. the theme description). Make the trigger dark like
-   the cards so the muted text reads. (The OPEN dropdown is already dark via --popover.) */
-body.theme-accessibility [role="combobox"] {
-  background: #171717 !important;
-  color: #ffffff !important;
-  border: 3px solid #ffffff !important;
-}
-
-/* Sliders — the track is bg-secondary (near-black), invisible on the black page.
-   Give it a visible gray bar + white outline, a high-vis yellow fill, and a bold thumb. */
-body.theme-accessibility .slider-track {
-  background: #555555 !important;
-  border: 1px solid #ffffff !important;
-}
-body.theme-accessibility .slider-range { background: #ffff00 !important; }
-body.theme-accessibility .slider-thumb {
-  background: #ffffff !important;
-  border: 3px solid #000000 !important;
-}
-
-/* Links — bright accessible blue on black (8.5:1), invert on hover */
-body.theme-accessibility a { color: #4dabf7 !important; text-decoration: underline !important; font-weight: bold !important; }
-body.theme-accessibility a:hover { color: #ffffff !important; background: #0000aa !important; padding: 2px 4px !important; }
-
-/* Thick yellow focus ring on every interactive element */
-body.theme-accessibility button:focus,
-body.theme-accessibility .btn:focus,
-body.theme-accessibility a:focus,
-body.theme-accessibility input:focus,
-body.theme-accessibility textarea:focus,
-body.theme-accessibility select:focus,
-body.theme-accessibility [role="button"]:focus,
-body.theme-accessibility [tabindex]:focus {
-  outline: 4px solid #ffff00 !important;
-  outline-offset: 2px !important;
-}
-
-/* Sidebar buttons — same high-contrast treatment */
-body.theme-accessibility .sidebar-btn-1,
-body.theme-accessibility .sidebar-btn-2,
-body.theme-accessibility .sidebar-btn-3,
-body.theme-accessibility .sidebar-btn-4,
-body.theme-accessibility .sidebar-btn-5,
-body.theme-accessibility .sidebar-btn-6,
-body.theme-accessibility .sidebar-btn-guide,
-body.theme-accessibility .sidebar-btn-custom { background-color: #ffffff !important; color: #000000 !important; border: 3px solid #000000 !important; font-weight: bold !important; }
-body.theme-accessibility .sidebar-btn-1:hover,
-body.theme-accessibility .sidebar-btn-2:hover,
-body.theme-accessibility .sidebar-btn-3:hover,
-body.theme-accessibility .sidebar-btn-4:hover,
-body.theme-accessibility .sidebar-btn-5:hover,
-body.theme-accessibility .sidebar-btn-6:hover,
-body.theme-accessibility .sidebar-btn-guide:hover,
-body.theme-accessibility .sidebar-btn-custom:hover { background-color: #000000 !important; color: #ffffff !important; border-color: #ffffff !important; }
-
-/* Large click targets */
-body.theme-accessibility button,
-body.theme-accessibility .btn,
-body.theme-accessibility a,
-body.theme-accessibility input,
-body.theme-accessibility select { min-height: 44px !important; min-width: 44px !important; }
-
-body.theme-accessibility ::-webkit-scrollbar { width: 20px; }
-body.theme-accessibility ::-webkit-scrollbar-track { background: #ffffff; }
-body.theme-accessibility ::-webkit-scrollbar-thumb { background: #000000; border: 2px solid #ffffff; }
-body.theme-accessibility ::-webkit-scrollbar-thumb:hover { background: #333333; }
-
-/* Strip decorative pseudo animation/bg WITHOUT hiding functional ::before/
- * ::after (radio dots, checkbox marks, focus rings still work). */
+/* No motion in this mode (also covers users who picked it for vestibular reasons). */
+body.theme-accessibility *,
 body.theme-accessibility *::before,
 body.theme-accessibility *::after {
   animation: none !important;
   transition: none !important;
-  background-image: none !important;
+}
+
+/* Big touch targets + a strong, token-based focus ring (works in light, dark, AND
+   forced-colors, where Highlight overrides it). */
+body.theme-accessibility button,
+body.theme-accessibility .btn,
+body.theme-accessibility a,
+body.theme-accessibility input,
+body.theme-accessibility select,
+body.theme-accessibility textarea,
+body.theme-accessibility [role="button"] { min-height: 44px; }
+
+body.theme-accessibility :focus-visible {
+  outline: 3px solid hsl(var(--ring)) !important;
+  outline-offset: 2px !important;
+}
+
+/* ============================================================================
+   THE IMPORTANT PART — when the OS forces colors, GET OUT OF THE WAY.
+   Let the system palette replace everything; only kill the things that would
+   block it (gradients/images aren't auto-replaced) and lean on system color
+   keywords so shapes stay distinguishable.
+   ============================================================================ */
+@media (forced-colors: active) {
+  body.theme-accessibility,
+  body.theme-accessibility * {
+    forced-color-adjust: auto !important;
+    background-image: none !important;  /* gradients/images survive forced-colors — drop them */
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+  body.theme-accessibility button,
+  body.theme-accessibility .btn,
+  body.theme-accessibility [role="button"] {
+    border: 1px solid ButtonText !important;
+  }
+  body.theme-accessibility a { color: LinkText !important; }
+  body.theme-accessibility :focus-visible { outline: 3px solid Highlight !important; }
+}
+
+/* Chunky scrollbar (helps low-vision users hit it); uses currentColor-ish neutrals. */
+body.theme-accessibility ::-webkit-scrollbar { width: 18px; }
+body.theme-accessibility ::-webkit-scrollbar-thumb {
+  background: hsl(var(--foreground));
+  border: 3px solid hsl(var(--background));
 }

@@ -47,7 +47,7 @@ const themes = [
   { id: 'theme-chaos', name: '🏀 Basketball Court', description: 'Orange and black sports vibes', motion: 'animated' },
   { id: 'theme-caelan', name: '🕊️ Caelan\'s Liberation Dawn', description: 'Breaking free from darkness into light', motion: 'animated' },
   { id: 'theme-light', name: 'Light Mode', description: 'Clean and bright', motion: 'calm' },
-  { id: 'theme-accessibility', name: '♿ Accessibility', description: 'Maximum contrast, large text, no animations, yellow focus rings', motion: 'calm' },
+  { id: 'theme-accessibility', name: '♿ Follow System', description: 'Respects your OS accessibility settings (Windows/macOS high contrast). Large text, no motion. Best for low-vision setups — your system tuning wins.', motion: 'calm' },
   { id: 'theme-colorblind', name: 'Colorblind Friendly', description: 'High contrast accessibility', motion: 'calm' },
   { id: 'theme-glitter', name: 'Glitter Mode', description: 'Sparkly pink dreams', motion: 'animated' },
   { id: 'theme-calm', name: 'Calm Mode', description: 'Blue and gold serenity (default) — a neutral, gentle starting point', motion: 'calm' },
