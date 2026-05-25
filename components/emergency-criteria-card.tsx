@@ -18,7 +18,6 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react'
 import { getPref, setPref, removePref } from '@/lib/prefs'
@@ -96,15 +95,19 @@ export function EmergencyCriteriaCard({
     )
   }
 
+  // NOTE: deliberately a plain <div>, NOT shadcn <Card>. Every theme has an aggressive
+  // `body.theme-X [class*="card"] { background/border/color: ... !important }` rule that
+  // repaints any element whose class contains "card" (e.g. bg-card). That was steamrolling
+  // the red destructive tint — the 911 card rendered as a decorative blue/green theme card
+  // on calm/amber/segfault/ace. Plain divs carry no "card" class, so the destructive
+  // utilities win on all 15 themes. SAFETY: this card MUST read as red everywhere. (056)
   return (
-    <Card className="border-destructive border-2 bg-destructive/10">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-destructive flex items-center gap-2 text-base">
-          <AlertTriangle className="h-5 w-5" />
-          {title}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="text-sm space-y-1 text-foreground">
+    <div className="rounded-lg border-2 border-destructive bg-destructive/10 p-4">
+      <div className="text-destructive flex items-center gap-2 text-base font-semibold pb-3">
+        <AlertTriangle className="h-5 w-5" />
+        {title}
+      </div>
+      <div className="text-sm space-y-1 text-foreground">
         {criteria.map((criterion, i) => (
           <div key={i} className="flex items-start gap-2">
             <span className="text-destructive font-bold mt-0.5">•</span>
@@ -125,7 +128,7 @@ export function EmergencyCriteriaCard({
             Got it — collapse
           </Button>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }

@@ -182,7 +182,32 @@ export default function BathroomPage() {
     filtered.forEach(e => (e.triggers || []).forEach(t => { trigCount[t] = (trigCount[t] || 0) + 1 }))
     const topTriggers = Object.entries(trigCount).sort((a, b) => b[1] - a[1]).slice(0, 6)
 
-    return { total, typeCount, constipationCount, diarrheaCount, urinaryCount, redFlagCount, erCount, bloodEvents, bristolCount, topTriggers }
+    // TRIGGER → OUTCOME co-occurrence ("caffeine → diarrhea 80%"). For each trigger
+    // logged ≥2×, which episode types showed up in the same entry, and how often.
+    // Co-occurrence, NOT proven causation — but exactly the doctor-useful pattern.
+    const trigType: Record<string, { count: number; types: Record<string, number> }> = {}
+    filtered.forEach(e => {
+      (e.triggers || []).forEach(t => {
+        if (!trigType[t]) trigType[t] = { count: 0, types: {} }
+        trigType[t].count += 1
+        if (e.episodeType) trigType[t].types[e.episodeType] = (trigType[t].types[e.episodeType] || 0) + 1
+      })
+    })
+    const correlations = Object.entries(trigType)
+      .filter(([, v]) => v.count >= 2)
+      .map(([trigger, v]) => ({
+        trigger,
+        count: v.count,
+        top: Object.entries(v.types)
+          .map(([type, n]) => ({ type, n, pct: Math.round((n / v.count) * 100) }))
+          .sort((a, b) => b.n - a.n)
+          .slice(0, 3),
+      }))
+      .filter(c => c.top.length > 0)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 6)
+
+    return { total, typeCount, constipationCount, diarrheaCount, urinaryCount, redFlagCount, erCount, bloodEvents, bristolCount, topTriggers, correlations }
   }, [filtered])
 
   if (isLoading) {
@@ -424,6 +449,37 @@ export default function BathroomPage() {
                       <div key={t} className="flex items-center justify-between text-sm"><span>{t}</span><Badge variant="secondary">{n}</Badge></div>
                     ))}
                   </div>
+                </CardContent>
+              </Card>
+            )}
+            {stats.correlations.length > 0 && (
+              <Card>
+                <CardHeader><CardTitle className="text-base">Trigger → outcome patterns</CardTitle></CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {stats.correlations.map(c => (
+                      <div key={c.trigger}>
+                        <div className="flex items-center justify-between text-sm mb-1">
+                          <span className="font-medium">{c.trigger}</span>
+                          <span className="text-muted-foreground">{c.count} logs</span>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {c.top.map(s => {
+                            const info = getEpisodeTypeInfo(s.type)
+                            return (
+                              <Badge key={s.type} variant="secondary" className="font-normal">
+                                {info.icon} {info.name} · {s.pct}%
+                              </Badge>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-3">
+                    How often each outcome showed up in the same entry as the trigger — e.g. caffeine → Too much.
+                    Co-occurrence, not proof of cause, but worth raising with your doctor.
+                  </p>
                 </CardContent>
               </Card>
             )}

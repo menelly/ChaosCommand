@@ -116,6 +116,7 @@ export default function UpperDigestiveTracker() {
   
   // UI state
   const [entries, setEntries] = useState<UpperDigestiveEntry[]>([])
+  const [allEntries, setAllEntries] = useState<UpperDigestiveEntry[]>([]) // ALL-TIME, for History tab
   const [editingEntry, setEditingEntry] = useState<UpperDigestiveEntry | null>(null)
   const [activeTab, setActiveTab] = useState("entry")
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
@@ -123,12 +124,18 @@ export default function UpperDigestiveTracker() {
   // Load entries on mount
   useEffect(() => {
     loadEntries()
+    loadAllEntries()
   }, [])
 
   // Load entries for selected date
   useEffect(() => {
     loadEntries()
   }, [selectedDate])
+
+  // Refresh full history when the History tab opens
+  useEffect(() => {
+    if (activeTab === 'history') loadAllEntries()
+  }, [activeTab])
 
   const loadEntries = async () => {
     try {
@@ -166,6 +173,32 @@ export default function UpperDigestiveTracker() {
         description: "Failed to load entries. Please try again.",
         variant: "destructive"
       })
+    }
+  }
+
+  // ALL-TIME history. getDateRange filters by record.CATEGORY, so query CATEGORIES.TRACKER
+  // then filter subcategory (matching the working bathroom tracker). The History tab used to
+  // map over `entries` = selected-date only, so it only ever showed today. (056)
+  const loadAllEntries = async () => {
+    try {
+      const today = format(new Date(), 'yyyy-MM-dd')
+      const records = (await getDateRange('2000-01-01', today, CATEGORIES.TRACKER))
+        .filter(record => record.subcategory === 'upper-digestive')
+
+      const all: UpperDigestiveEntry[] = []
+      for (const record of records) {
+        let recEntries: any = record?.content?.entries
+        if (!recEntries) continue
+        if (typeof recEntries === 'string') {
+          try { recEntries = JSON.parse(recEntries) } catch { continue }
+        }
+        if (!Array.isArray(recEntries)) recEntries = [recEntries]
+        all.push(...recEntries)
+      }
+      all.sort((a, b) => new Date(`${b.date}T${b.time}`).getTime() - new Date(`${a.date}T${a.time}`).getTime())
+      setAllEntries(all)
+    } catch (error) {
+      console.error('Failed to load all upper digestive entries:', error)
     }
   }
 
@@ -240,6 +273,7 @@ export default function UpperDigestiveTracker() {
       // Reset form
       resetForm()
       await loadEntries()
+      await loadAllEntries()
     } catch (error) {
       console.error('Failed to save entry:', error)
       toast({
@@ -314,6 +348,7 @@ export default function UpperDigestiveTracker() {
       })
 
       await loadEntries()
+      await loadAllEntries()
     } catch (error) {
       console.error('Failed to delete entry:', error)
       toast({
@@ -469,15 +504,15 @@ export default function UpperDigestiveTracker() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {entries.length === 0 ? (
+                {allEntries.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <AlertCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>No entries found for {selectedDate}</p>
+                    <p>No entries yet</p>
                     <p className="text-sm">Start tracking your upper digestive symptoms!</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {entries.map((entry) => (
+                    {allEntries.map((entry) => (
                       <Card key={entry.id} className="border-l-4 border-l-orange-500">
                         <CardContent className="pt-4">
                           <div className="flex justify-between items-start mb-3">

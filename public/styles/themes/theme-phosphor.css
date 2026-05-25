@@ -105,10 +105,12 @@ body.theme-phosphor .text-muted-foreground {
   color: #6b9b6b !important;
 }
 
-/* Phosphor force-colors all text light-green (terminal aesthetic), which makes the
-   neon-green primary surface (badges/buttons using bg-primary) light-on-light. Force
-   the token's dark foreground on primary surfaces so they're readable. (056) */
-body.theme-phosphor .bg-primary {
+/* Phosphor force-colors all text light-green (terminal aesthetic), which makes
+   neon-green bg-primary surfaces (e.g. link-styled <a class="bg-primary">) light-on-light.
+   Force the token's dark foreground on those — but NOT on real <button>s: phosphor's
+   `button` rule already restyles buttons to dark-green-bg/light-green-text (terminal
+   style), and forcing dark text there gave us dark-on-dark-green (unreadable). (056) */
+body.theme-phosphor .bg-primary:not(button) {
   color: hsl(var(--primary-foreground)) !important;
 }
 /* SAFETY exemption: let danger RED punch through the monochrome-green text force,

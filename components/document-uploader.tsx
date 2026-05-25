@@ -931,7 +931,7 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
                               className="flex items-center gap-2 p-2 text-left text-sm border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors"
                             >
                               <template.icon className="h-4 w-4 text-blue-500 flex-shrink-0" />
-                              <span className="text-gray-700">{template.name}</span>
+                              <span className="text-foreground">{template.name}</span>
                             </button>
                           ))}
                         </div>
@@ -940,7 +940,7 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
                           <Label htmlFor="pasteText">Your notes</Label>
-                          <span className={`text-xs ${pastedText.length > 10000 ? 'text-orange-600' : 'text-gray-500'}`}>
+                          <span className={`text-xs ${pastedText.length > 10000 ? 'text-orange-600' : 'text-muted-foreground'}`}>
                             {pastedText.length.toLocaleString()} characters
                             {pastedText.length > 0 && ` • ~${Math.ceil(pastedText.split(/\s+/).filter(w => w).length / 200)} min read`}
                           </span>
@@ -993,7 +993,7 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
                           size="sm"
                           onClick={() => setPastedText('')}
                           disabled={!pastedText || isParsing}
-                          className="text-gray-500"
+                          className="text-muted-foreground"
                         >
                           Clear
                         </Button>
@@ -1331,7 +1331,7 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
                             <span className={`font-medium ${
                               providerToggleStates[event.provider_info.name.toLowerCase()]
                                 ? 'text-green-700'
-                                : 'text-gray-500'
+                                : 'text-muted-foreground'
                             }`}>
                               {providerToggleStates[event.provider_info.name.toLowerCase()]
                                 ? '✅ Add Provider'

@@ -24,7 +24,9 @@ body.theme-segfault {
   --muted-foreground: 120 40% 55%;
   --accent: 120 60% 15%;
   --accent-foreground: 0 0% 100%;
-  --destructive: 240 100% 25%; /* BSOD blue instead of red */
+  --destructive: 0 85% 60%; /* bright CRT red — danger MUST read as red, esp. the 911 card.
+                               (was BSOD-blue 240 100% 25% as a terminal in-joke, but --destructive
+                               is the safety/danger token app-wide; blue danger = unsafe. 056) */
   --destructive-foreground: 0 0% 100%;
   --border: 120 50% 18%;
   --input: 120 50% 8%;

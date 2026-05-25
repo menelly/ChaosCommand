@@ -1188,9 +1188,10 @@ body.theme-caelan .theme-button:active::after {
   }
 }
 
-body.theme-chaos .text-muted-foreground {
-  color: #a18ac7 !important;
-}
+/* (Removed a stale `body.theme-chaos .text-muted-foreground { color:#a18ac7 }` lavender
+ * override — a ghost of the OLD dark-chaos theme. On the current hardwood-tan court it
+ * painted muted text (tab labels, helper copy) lavender-on-tan = unreadable. The token
+ * `--muted-foreground: 28 72% 24%` (#69400f brown, AA on tan) is correct; let it win. 056) */
 
 /* === THEMED SIDEBAR BUTTONS === */
 
@@ -1416,6 +1417,19 @@ body.theme-wicked .sidebar-btn-5 { background-color: #a21caf !important; color: 
 body.theme-wicked .sidebar-btn-6 { background-color: #0f766e !important; color: #ffffff !important; } /* Teal */
 body.theme-wicked .sidebar-btn-guide { background-color: #ec4899 !important; color: #ffffff !important; } /* Rose Guide */
 body.theme-wicked .sidebar-btn-custom { background-color: #9333ea !important; color: #ffffff !important; } /* Violet Custom */
+
+/* === PRIMARY-SURFACE TEXT — token foreground on LINK/BADGE primary surfaces (056) ===
+ * A primary-coloured LINK or badge must use --primary-foreground for its text.
+ * Themes that recolour links (`body.theme-X a { color: ... }`) were overriding it on
+ * LINK-styled primary buttons (e.g. the Routines "Next:" Link on Wicked went
+ * pink-text-on-pink). Those link rules aren't !important, so this wins everywhere.
+ *
+ * BUT scoped `:not(button)`: terminal themes (phosphor/amber/segfault) restyle real
+ * <button>s to dark-bg/light-green-text via their own `button{}` rule. Forcing the
+ * token's DARK foreground there gave dark-on-dark-green (unreadable — the "+ log…"
+ * button). Real <button>s already get correct text from the `text-primary-foreground`
+ * utility, so they never needed this; only <a>/badge primary surfaces did. */
+.bg-primary:not(button) { color: hsl(var(--primary-foreground)) !important; }
 
 /* === 📱 MOBILE SCROLLBAR — slim it down (056) ===
  * Every theme styles a 12–20px webkit scrollbar. On desktop that's a nice themed

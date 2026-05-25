@@ -643,7 +643,7 @@ export default function LabResultsPage() {
                                               onClick={() => saveEdit(report)} title="Save">
                                               <Save className="h-3 w-3" />
                                             </Button>
-                                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0 min-h-[44px] min-w-[44px] text-gray-500"
+                                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0 min-h-[44px] min-w-[44px] text-muted-foreground"
                                               onClick={() => { setEditingTest(null); setEditValues({}) }} title="Cancel">
                                               <X className="h-3 w-3" />
                                             </Button>

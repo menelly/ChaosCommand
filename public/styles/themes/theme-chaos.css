@@ -34,7 +34,9 @@ body.theme-chaos {
   --warning: 26 95% 35%;
   --warning-foreground: 0 0% 10%;
   --border: 28 58% 42%;             /* #a96a2c wood-brown border */
-  --input: 40 40% 80%;
+  --input: 28 52% 50%;              /* wood-brown — was #dcd0b8 (40 40% 80%), invisible on tan
+                                       (~1.2:1). Outline buttons/inputs border with --input, so
+                                       it must read on the court. (056) */
   --ring: 30 100% 50%;              /* orange focus ring */
 }
 

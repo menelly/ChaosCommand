@@ -159,7 +159,7 @@ export default function CommandZone() {
     <div className="container mx-auto p-6 space-y-6">
       <div className="text-center mb-8">
         <h1 className="text-4xl font-bold text-pink-600 mb-2">Command Zone</h1>
-        <p className="text-gray-600">Your daily quest hub - let's get stuff done! ✨</p>
+        <p className="text-muted-foreground">Your daily quest hub - let's get stuff done! ✨</p>
       </div>
 
       {/* Quick Stats */}
@@ -167,19 +167,19 @@ export default function CommandZone() {
         <Card className="bg-gradient-to-r from-pink-100 to-purple-100">
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-pink-600">{completedTasks}</div>
-            <div className="text-sm text-gray-600">Tasks Done Today</div>
+            <div className="text-sm text-muted-foreground">Tasks Done Today</div>
           </CardContent>
         </Card>
         <Card className="bg-gradient-to-r from-green-100 to-blue-100">
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-green-600">{essentialSurvival}/{totalEssential}</div>
-            <div className="text-sm text-gray-600">Survival Essentials</div>
+            <div className="text-sm text-muted-foreground">Survival Essentials</div>
           </CardContent>
         </Card>
         <Card className="bg-gradient-to-r from-yellow-100 to-orange-100">
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-orange-600">{completedSurvival}</div>
-            <div className="text-sm text-gray-600">Total Survival Items</div>
+            <div className="text-sm text-muted-foreground">Total Survival Items</div>
           </CardContent>
         </Card>
       </div>
@@ -214,13 +214,13 @@ export default function CommandZone() {
                     checked={task.completed}
                     onCheckedChange={() => toggleTask(task.id)}
                   />
-                  <span className={`flex-1 ${task.completed ? 'line-through text-gray-500' : ''}`}>
+                  <span className={`flex-1 ${task.completed ? 'line-through text-muted-foreground' : ''}`}>
                     {task.text}
                   </span>
                 </div>
               ))}
               {dailyTasks.length === 0 && (
-                <p className="text-gray-500 text-center py-4">No tasks yet - add one above!</p>
+                <p className="text-muted-foreground text-center py-4">No tasks yet - add one above!</p>
               )}
             </div>
           </CardContent>
@@ -241,13 +241,13 @@ export default function CommandZone() {
                   checked={item.completed}
                   onCheckedChange={() => toggleSurvivalItem(item.id)}
                 />
-                <span className={`flex-1 ${item.completed ? 'line-through text-gray-500' : ''}`}>
+                <span className={`flex-1 ${item.completed ? 'line-through text-muted-foreground' : ''}`}>
                   {item.name}
                   {item.essential && <span className="text-red-500 ml-1">*</span>}
                 </span>
               </div>
             ))}
-            <p className="text-xs text-gray-500 mt-2">* Essential items</p>
+            <p className="text-xs text-muted-foreground mt-2">* Essential items</p>
           </CardContent>
         </Card>
       </div>

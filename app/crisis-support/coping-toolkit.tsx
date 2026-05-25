@@ -223,7 +223,7 @@ export function CopingToolkit() {
                                   e.stopPropagation()
                                   handleStrategyComplete(strategy.id)
                                 }}
-                                className={isCompleted ? 'text-green-600' : 'text-gray-400'}
+                                className={isCompleted ? 'text-green-600' : 'text-muted-foreground'}
                               >
                                 <CheckCircle className="h-4 w-4" />
                               </Button>

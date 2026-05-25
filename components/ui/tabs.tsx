@@ -52,7 +52,10 @@ const TabsTrigger = React.forwardRef<
   <TabsPrimitive.Trigger
     ref={ref}
     className={cn(
-      "inline-flex items-center justify-center rounded-sm px-2 py-1.5 text-xs sm:text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-center",
+      // Active-tab indicator must survive themes where --background ≈ --muted (glitter,
+      // ace) — bg-background + shadow alone is invisible there. Add a saturated primary
+      // inset ring (no layout shift) + bold (colorblind-safe non-color cue). (056)
+      "inline-flex items-center justify-center rounded-sm px-2 py-1.5 text-xs sm:text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=active]:font-bold data-[state=active]:ring-2 data-[state=active]:ring-inset data-[state=active]:ring-primary text-center",
       className
     )}
     {...props}

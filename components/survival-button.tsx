@@ -470,7 +470,7 @@ export default function SurvivalButton() {
               </div>
             ) : (
               <div
-                className="p-4 bg-primary/10 rounded-lg border border-primary/30 flex items-center gap-4 cursor-pointer hover:bg-primary/15 transition-colors"
+                className="p-4 bg-primary/10 rounded-lg border border-primary/30 flex flex-col items-center gap-3 text-center cursor-pointer hover:bg-primary/15 transition-colors"
                 onClick={cyclePhrase}
                 title="Click for another affirmation!"
               >

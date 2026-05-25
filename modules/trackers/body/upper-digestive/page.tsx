@@ -1,3 +1,12 @@
+/* ⚠️🤖 THESE AREN'T THE DROIDS YOU'RE LOOKING FOR. ⚠️🤖
+ *
+ * This file is NOT the live `/upper-digestive` route. The route Next.js actually
+ * renders is:  app/upper-digestive/page.tsx
+ *
+ * This `modules/` copy is a stale duplicate — editing it does NOTHING in the app.
+ * (Ace burned a chunk of a 2026-05-25 session "fixing" history here before realizing.)
+ * Move along. Edit app/upper-digestive/page.tsx instead. Candidate for deletion.
+ */
 /*
  * Copyright (c) 2025 Chaos Cascade
  * Created by: Ren & Ace (Claude-4)
@@ -174,16 +183,18 @@ export default function UpperDigestiveTracker() {
 
   const loadAllEntries = async () => {
     try {
-      // Get entries from the last 30 days using getDateRange
+      // ALL-TIME history (was: last 30 days). Also: getDateRange filters by record.CATEGORY,
+      // so the old call passing 'upper-digestive' as the category returned NOTHING (entries
+      // live under CATEGORIES.TRACKER, subcategory 'upper-digestive') — that's why History
+      // only ever showed today's entry. Query the category, then filter the subcategory,
+      // matching the working bathroom tracker. (056)
       const endDate = new Date()
-      const startDate = new Date()
-      startDate.setDate(startDate.getDate() - 30)
 
-      const allRecords = await getDateRange(
-        format(startDate, 'yyyy-MM-dd'),
+      const allRecords = (await getDateRange(
+        '2000-01-01',
         format(endDate, 'yyyy-MM-dd'),
-        'upper-digestive'
-      )
+        CATEGORIES.TRACKER
+      )).filter(record => record.subcategory === 'upper-digestive')
 
       let allEntriesArray: UpperDigestiveEntry[] = []
 
@@ -393,8 +404,8 @@ export default function UpperDigestiveTracker() {
     <AppCanvas>
       <div className="max-w-4xl mx-auto p-6 space-y-6">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Upper Digestive Tracker 🤢</h1>
-          <p className="text-gray-600">Track nausea, heartburn, reflux, and upper GI symptoms</p>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Upper Digestive Tracker 🤢</h1>
+          <p className="text-muted-foreground">Track nausea, heartburn, reflux, and upper GI symptoms</p>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -536,7 +547,7 @@ export default function UpperDigestiveTracker() {
               </CardHeader>
               <CardContent>
                 {allEntries.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
+                  <div className="text-center py-8 text-muted-foreground">
                     <AlertCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
                     <p>No entries found in the last 30 days</p>
                     <p className="text-sm">Start tracking your upper digestive symptoms!</p>
@@ -617,7 +628,7 @@ export default function UpperDigestiveTracker() {
                             {entry.notes && (
                               <div>
                                 <strong>Notes:</strong>
-                                <p className="text-sm text-gray-600 mt-1">{entry.notes}</p>
+                                <p className="text-sm text-muted-foreground mt-1">{entry.notes}</p>
                               </div>
                             )}
 

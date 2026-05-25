@@ -24,7 +24,9 @@ body.theme-segfault {
   --muted-foreground: 120 40% 55%;
   --accent: 120 60% 15%;
   --accent-foreground: 0 0% 100%;
-  --destructive: 240 100% 25%; /* BSOD blue instead of red */
+  --destructive: 0 85% 60%; /* bright CRT red — danger MUST read as red, esp. the 911 card.
+                               (was BSOD-blue 240 100% 25% as a terminal in-joke, but --destructive
+                               is the safety/danger token app-wide; blue danger = unsafe. 056) */
   --destructive-foreground: 0 0% 100%;
   /* semantic status tokens (info/success/warning) — see 056 */
   --info: 205 90% 70%;
@@ -112,8 +114,10 @@ body.theme-segfault h1, body.theme-segfault h2 {
 
 body.theme-segfault .text-muted-foreground { color: #6b9b6b !important; }
 /* Force token dark text on the neon-green primary surface (segfault force-colors all
-   text light-green by design → light-on-neon = unreadable badges/buttons). (056) */
-body.theme-segfault .bg-primary { color: hsl(var(--primary-foreground)) !important; }
+   text light-green by design → light-on-neon = unreadable badges/links). NOT on real
+   <button>s — the `button` rule already makes them dark-bg/light-text terminal style;
+   forcing dark text there = dark-on-dark-green (unreadable). (056) */
+body.theme-segfault .bg-primary:not(button) { color: hsl(var(--primary-foreground)) !important; }
 /* SAFETY exemption: danger RED punches through the monochrome-green text force. (056) */
 body.theme-segfault .text-destructive { color: hsl(var(--destructive)) !important; }
 
