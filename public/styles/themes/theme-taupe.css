@@ -41,6 +41,15 @@ body.theme-taupe {
   --input: 39 28% 45%;
   --ring: 35 11% 33%;
   --radius: 0.375rem;
+  /* LEGACY design-var bridge → real tokens (else pages using --surface-1/--text-main/etc.
+     inherit the :root coral/purple defaults). (056) */
+  --deep-space: hsl(var(--background));
+  --surface-1: hsl(var(--card));
+  --surface-2: hsl(var(--muted));
+  --primary-purple: hsl(var(--card));
+  --text-main: hsl(var(--foreground));
+  --text-muted: hsl(var(--muted-foreground));
+  --border-soft: hsl(var(--border));
 }
 
 /* ---- FLOURISH ---- */

@@ -37,6 +37,16 @@ body.theme-wicked {
   --input: 292 30% 30%;
   --ring: 330 85% 60%;
   --radius: 0.75rem;                 /* soft, rounded — a little magical */
+  /* LEGACY design-var bridge: pages still using --surface-1/--text-main/etc. (267 usages)
+     would otherwise inherit the :root coral/purple defaults (the "hidden coral + blue text").
+     Map them onto Wicked's real tokens so those pages theme correctly. (056) */
+  --deep-space: hsl(var(--background));
+  --surface-1: hsl(var(--card));
+  --surface-2: hsl(var(--muted));
+  --primary-purple: hsl(var(--card));
+  --text-main: hsl(var(--foreground));
+  --text-muted: hsl(var(--muted-foreground));
+  --border-soft: hsl(var(--border));
   /* graph palette — pink / green / orchid */
   --chart-1: 330 85% 62%;
   --chart-2: 150 70% 50%;
