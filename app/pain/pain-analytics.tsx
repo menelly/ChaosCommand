@@ -134,6 +134,32 @@ export function PainAnalytics({ entries }: Props) {
       ? flareEntries.reduce((s, e) => s + ((e.painLevel || 0) - (e.baselinePainLevel || 0)), 0) / flareEntries.length
       : null
 
+    // TRIGGER → outcome correlation. For each trigger logged ≥2×: avg pain level of
+    // those episodes + the pain character that co-occurred. Co-occurrence, NOT proven
+    // cause — but the doctor-useful pattern.
+    const trigStats: Record<string, { count: number; intensitySum: number; syms: Record<string, number> }> = {}
+    filtered.forEach(e => {
+      (e.triggers || []).forEach(t => {
+        if (!trigStats[t]) trigStats[t] = { count: 0, intensitySum: 0, syms: {} }
+        trigStats[t].count += 1
+        trigStats[t].intensitySum += (e.painLevel || 0)
+        ;(e.painCharacter || []).forEach(s => { trigStats[t].syms[s] = (trigStats[t].syms[s] || 0) + 1 })
+      })
+    })
+    const correlations = Object.entries(trigStats)
+      .filter(([, v]) => v.count >= 2)
+      .map(([trigger, v]) => ({
+        trigger,
+        count: v.count,
+        avgSeverity: Math.round((v.intensitySum / v.count) * 10) / 10,
+        top: Object.entries(v.syms)
+          .map(([sym, n]) => ({ label: sym, n, pct: Math.round((n / v.count) * 100) }))
+          .sort((a, b) => b.n - a.n)
+          .slice(0, 3),
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 6)
+
     // Frequency
     const windowDays = timeWindow === 'all'
       ? (total > 0 ? Math.max(1, differenceInDays(new Date(), new Date(filtered[filtered.length - 1].date))) : 1)
@@ -144,7 +170,7 @@ export function PainAnalytics({ entries }: Props) {
       total, avg: Math.round(avg * 10) / 10, peak, erCount, emsCount,
       typeCount, topLocations, topCharacter, topPatterns, topTriggers,
       topTreatmentEffectiveness, hourBins, sevBins, redFlagCount,
-      avgFlareDelta, perWeek, flareCount: flareEntries.length,
+      avgFlareDelta, perWeek, flareCount: flareEntries.length, correlations,
     }
   }, [filtered, timeWindow])
 
@@ -274,6 +300,36 @@ export function PainAnalytics({ entries }: Props) {
                     </div>
                   ))}
                 </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Trigger → symptom patterns */}
+          {stats.correlations.length > 0 && (
+            <Card>
+              <CardHeader><CardTitle className="text-base">Trigger → symptom patterns</CardTitle></CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {stats.correlations.map(c => (
+                    <div key={c.trigger}>
+                      <div className="flex items-center justify-between text-sm mb-1">
+                        <span className="font-medium">{c.trigger}</span>
+                        <span className="text-muted-foreground">{c.count} logs · avg {c.avgSeverity}/10</span>
+                      </div>
+                      {c.top.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5">
+                          {c.top.map(s => (
+                            <Badge key={s.label} variant="secondary" className="font-normal">{s.label} · {s.pct}%</Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground mt-3">
+                  Avg pain level when each trigger was present, plus the pain character that showed up alongside it.
+                  Co-occurrence, not proof of cause — but worth raising with your doctor.
+                </p>
               </CardContent>
             </Card>
           )}

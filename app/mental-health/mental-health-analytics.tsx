@@ -75,6 +75,31 @@ export function MindMoodAnalytics({ entries }: Props) {
 
     const meltdownCount = filtered.filter(e => e.meltdownOccurred).length
 
+    // Trigger → outcome correlation. For each trigger logged ≥2×: avg mood intensity of
+    // those check-ins + the emotional states that co-occurred. Co-occurrence, NOT proven cause.
+    const trigStats: Record<string, { count: number; intensitySum: number; syms: Record<string, number> }> = {}
+    filtered.forEach(e => {
+      (e.triggers || []).forEach(t => {
+        if (!trigStats[t]) trigStats[t] = { count: 0, intensitySum: 0, syms: {} }
+        trigStats[t].count += 1
+        trigStats[t].intensitySum += (e.moodIntensity || 0)
+        ;(e.emotionalState || []).forEach(s => { trigStats[t].syms[s] = (trigStats[t].syms[s] || 0) + 1 })
+      })
+    })
+    const correlations = Object.entries(trigStats)
+      .filter(([, v]) => v.count >= 2)
+      .map(([trigger, v]) => ({
+        trigger,
+        count: v.count,
+        avgIntensity: Math.round((v.intensitySum / v.count) * 10) / 10,
+        top: Object.entries(v.syms)
+          .map(([sym, n]) => ({ label: sym, pct: Math.round((n / v.count) * 100) }))
+          .sort((a, b) => b.pct - a.pct)
+          .slice(0, 3),
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 6)
+
     return {
       total,
       avgDep: avg('depressionLevel'), avgMania: avg('maniaLevel'), avgAnx: avg('anxietyLevel'),
@@ -82,7 +107,7 @@ export function MindMoodAnalytics({ entries }: Props) {
       avgMotiv: avg('motivationLevel'), avgConn: avg('socialEngagementLevel'),
       peakDep: peak('depressionLevel'), peakMania: peak('maniaLevel'),
       typeCount, topMoods, topTriggers, topCoping, topCogDomains, swingCount,
-      adherence, meltdownCount,
+      adherence, meltdownCount, correlations,
     }
   }, [filtered, timeWindow])
 
@@ -184,6 +209,34 @@ export function MindMoodAnalytics({ entries }: Props) {
                     <div key={t} className="flex items-center justify-between text-sm"><span>{t}</span><Badge variant="secondary">{n}</Badge></div>
                   ))}
                 </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {stats.correlations.length > 0 && (
+            <Card>
+              <CardHeader><CardTitle className="text-base">Trigger → symptom patterns</CardTitle></CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {stats.correlations.map(c => (
+                    <div key={c.trigger}>
+                      <div className="flex items-center justify-between text-sm mb-1">
+                        <span className="font-medium">{c.trigger}</span>
+                        <span className="text-muted-foreground">{c.count} logs · avg {c.avgIntensity}/10</span>
+                      </div>
+                      {c.top.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5">
+                          {c.top.map(s => (
+                            <Badge key={s.label} variant="secondary" className="font-normal">{s.label} · {s.pct}%</Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground mt-3">
+                  Co-occurrence, not proof of cause — but worth raising with your doctor.
+                </p>
               </CardContent>
             </Card>
           )}

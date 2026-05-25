@@ -97,12 +97,40 @@ export function FoodAllergensAnalytics({ entries }: Props) {
       } catch {}
     })
 
+    // FOOD → reaction correlation. For each allergen/food logged ≥2×: avg reaction severity
+    // of those reactions + the symptoms that co-occurred. Co-occurrence, NOT proven cause.
+    const foodStats: Record<string, { count: number; sevSum: number; sevN: number; syms: Record<string, number> }> = {}
+    filtered.forEach(e => {
+      if (!e.allergenName) return
+      const key = e.allergenName.trim().toLowerCase()
+      if (!foodStats[key]) foodStats[key] = { count: 0, sevSum: 0, sevN: 0, syms: {} }
+      foodStats[key].count += 1
+      if (typeof e.reactionSeverityScore === 'number') {
+        foodStats[key].sevSum += e.reactionSeverityScore
+        foodStats[key].sevN += 1
+      }
+      ;(e.symptoms || []).forEach(s => { foodStats[key].syms[s] = (foodStats[key].syms[s] || 0) + 1 })
+    })
+    const correlations = Object.entries(foodStats)
+      .filter(([, v]) => v.count >= 2)
+      .map(([food, v]) => ({
+        trigger: food,
+        count: v.count,
+        avgSeverity: v.sevN > 0 ? Math.round((v.sevSum / v.sevN) * 10) / 10 : null,
+        top: Object.entries(v.syms)
+          .map(([sym, n]) => ({ label: sym, n, pct: Math.round((n / v.count) * 100) }))
+          .sort((a, b) => b.n - a.n)
+          .slice(0, 3),
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 6)
+
     return {
       total, epipenCount, erCount, emsCount, hospCount,
       anaphCount, celiacCount, intoleranceCount,
       typeCount, topAllergens, topSources, topSymptoms,
       celiacEntriesCount: celiacEntries.length, aftermathStats,
-      hourBins,
+      hourBins, correlations,
     }
   }, [filtered, timeWindow])
 
@@ -178,6 +206,36 @@ export function FoodAllergensAnalytics({ entries }: Props) {
                     </div>
                   ))}
                 </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Food → reaction patterns */}
+          {stats.correlations.length > 0 && (
+            <Card>
+              <CardHeader><CardTitle className="text-base">Food → reaction patterns</CardTitle></CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {stats.correlations.map(c => (
+                    <div key={c.trigger}>
+                      <div className="flex items-center justify-between text-sm mb-1">
+                        <span className="font-medium capitalize">{c.trigger}</span>
+                        <span className="text-muted-foreground">{c.count} logs{c.avgSeverity !== null ? ` · avg ${c.avgSeverity}/10` : ''}</span>
+                      </div>
+                      {c.top.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5">
+                          {c.top.map(s => (
+                            <Badge key={s.label} variant="secondary" className="font-normal">{s.label} · {s.pct}%</Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground mt-3">
+                  The symptoms that showed up alongside each food{stats.correlations.some(c => c.avgSeverity !== null) ? ', plus avg reaction severity' : ''}.
+                  Co-occurrence, not proof of cause — but worth raising with your doctor.
+                </p>
               </CardContent>
             </Card>
           )}

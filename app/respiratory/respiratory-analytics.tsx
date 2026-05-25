@@ -68,7 +68,32 @@ export function RespiratoryAnalytics({ refreshTrigger }: { refreshTrigger: numbe
     const epiCount = allEntries.filter(e => e.epinephrineGiven).length
     const redZoneCount = allEntries.filter(e => e.peakFlowZone === 'red').length
 
-    return { total, last7, typeCounts, triggerCounts, pfMin, pfAvg, spo2Min, spo2Avg, desatEvents, inhalerAvg, erCount, epiCount, redZoneCount }
+    // TRIGGER → symptom correlation. For each trigger logged ≥2×: avg severity of those
+    // events + the symptoms that co-occurred. Co-occurrence, NOT proven cause.
+    const trigStats: Record<string, { count: number; sevSum: number; syms: Record<string, number> }> = {}
+    for (const e of allEntries) {
+      for (const t of (e.triggers || [])) {
+        if (!trigStats[t]) trigStats[t] = { count: 0, sevSum: 0, syms: {} }
+        trigStats[t].count += 1
+        trigStats[t].sevSum += (e.severity || 0)
+        for (const s of (e.symptoms || [])) trigStats[t].syms[s] = (trigStats[t].syms[s] || 0) + 1
+      }
+    }
+    const correlations = Object.entries(trigStats)
+      .filter(([, v]) => v.count >= 2)
+      .map(([trigger, v]) => ({
+        trigger,
+        count: v.count,
+        avgSeverity: Math.round((v.sevSum / v.count) * 10) / 10,
+        top: Object.entries(v.syms)
+          .map(([sym, n]) => ({ label: sym, n, pct: Math.round((n / v.count) * 100) }))
+          .sort((a, b) => b.n - a.n)
+          .slice(0, 3),
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 6)
+
+    return { total, last7, typeCounts, triggerCounts, pfMin, pfAvg, spo2Min, spo2Avg, desatEvents, inhalerAvg, erCount, epiCount, redZoneCount, correlations }
   }, [allEntries])
 
   const sortedTriggers = Object.entries(stats.triggerCounts).sort((a, b) => b[1] - a[1]).slice(0, 8)
@@ -148,6 +173,36 @@ export function RespiratoryAnalytics({ refreshTrigger }: { refreshTrigger: numbe
                 </div>
               )
             })}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Trigger → symptom patterns */}
+      {stats.correlations.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3"><CardTitle className="text-base">Trigger → symptom patterns</CardTitle></CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {stats.correlations.map(c => (
+                <div key={c.trigger}>
+                  <div className="flex items-center justify-between text-sm mb-1">
+                    <span className="font-medium">{c.trigger}</span>
+                    <span className="text-muted-foreground">{c.count} logs · avg {c.avgSeverity}/10</span>
+                  </div>
+                  {c.top.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {c.top.map(s => (
+                        <Badge key={s.label} variant="secondary" className="font-normal">{s.label} · {s.pct}%</Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground mt-3">
+              Avg severity when each trigger was present, plus the symptoms that showed up alongside it.
+              Co-occurrence, not proof of cause — but worth raising with your doctor.
+            </p>
           </CardContent>
         </Card>
       )}

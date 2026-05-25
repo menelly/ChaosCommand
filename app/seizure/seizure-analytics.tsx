@@ -87,6 +87,35 @@ export function SeizureAnalytics({ entries }: Props) {
     filtered.forEach(e => (e.triggers || []).forEach(t => { trigCount[t] = (trigCount[t] || 0) + 1 }))
     const topTriggers = Object.entries(trigCount).sort((a, b) => b[1] - a[1]).slice(0, 8)
 
+    // TRIGGER → outcome correlation. For each trigger logged ≥2×: avg symptom severity of
+    // those episodes (over the ones that recorded it) + the ictal symptoms that co-occurred.
+    // Co-occurrence, NOT proven cause — but the doctor-useful pattern.
+    const trigStats: Record<string, { count: number; sevSum: number; sevCount: number; syms: Record<string, number> }> = {}
+    filtered.forEach(e => {
+      (e.triggers || []).forEach(t => {
+        if (!trigStats[t]) trigStats[t] = { count: 0, sevSum: 0, sevCount: 0, syms: {} }
+        trigStats[t].count += 1
+        if (typeof e.symptomSeverity === 'number') {
+          trigStats[t].sevSum += e.symptomSeverity
+          trigStats[t].sevCount += 1
+        }
+        ;(e.symptoms || []).forEach(s => { trigStats[t].syms[s] = (trigStats[t].syms[s] || 0) + 1 })
+      })
+    })
+    const correlations = Object.entries(trigStats)
+      .filter(([, v]) => v.count >= 2)
+      .map(([trigger, v]) => ({
+        trigger,
+        count: v.count,
+        avgSeverity: v.sevCount > 0 ? Math.round((v.sevSum / v.sevCount) * 10) / 10 : null,
+        top: Object.entries(v.syms)
+          .map(([sym, n]) => ({ label: sym, n, pct: Math.round((n / v.count) * 100) }))
+          .sort((a, b) => b.n - a.n)
+          .slice(0, 3),
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 6)
+
     // Time-of-day distribution (24-hour bins)
     const hourBins: number[] = new Array(24).fill(0)
     filtered.forEach(e => {
@@ -135,7 +164,7 @@ export function SeizureAnalytics({ entries }: Props) {
       auraCount, tongueBittenCount, incontinenceCount, medicationMissedCount,
       typeCount, topSymptoms, topPostictal, topAura, topTriggers,
       hourBins, peakHour, avgSleep, dehydrationPct, illnessPct, flashingPct, missedMedPct,
-      perWeek, perMonth, awarenessCount, durCount,
+      perWeek, perMonth, awarenessCount, durCount, correlations,
     }
   }, [filtered, timeWindow])
 
@@ -275,6 +304,38 @@ export function SeizureAnalytics({ entries }: Props) {
                     </div>
                   ))}
                 </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Trigger → symptom patterns */}
+          {stats.correlations.length > 0 && (
+            <Card>
+              <CardHeader><CardTitle className="text-base">Trigger → symptom patterns</CardTitle></CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {stats.correlations.map(c => (
+                    <div key={c.trigger}>
+                      <div className="flex items-center justify-between text-sm mb-1">
+                        <span className="font-medium">{c.trigger}</span>
+                        <span className="text-muted-foreground">
+                          {c.count} logs{c.avgSeverity != null ? ` · avg ${c.avgSeverity}/10` : ''}
+                        </span>
+                      </div>
+                      {c.top.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5">
+                          {c.top.map(s => (
+                            <Badge key={s.label} variant="secondary" className="font-normal">{s.label} · {s.pct}%</Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground mt-3">
+                  Symptoms that showed up alongside each trigger (and avg severity where recorded).
+                  Co-occurrence, not proof of cause — but worth raising with your doctor.
+                </p>
               </CardContent>
             </Card>
           )}

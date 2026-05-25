@@ -138,12 +138,38 @@ export function HeadPainAnalytics({ entries }: Props) {
     const impactCount: Record<string, number> = {}
     filtered.forEach(e => { impactCount[e.functionalImpact || 'unknown'] = (impactCount[e.functionalImpact || 'unknown'] || 0) + 1 })
 
+    // TRIGGER → outcome correlation. For each trigger logged ≥2×: avg pain intensity of
+    // those episodes + the associated symptoms that co-occurred. Co-occurrence, NOT proven
+    // cause — but the doctor-useful pattern ("stress → nausea, avg 7.5/10").
+    const trigStats: Record<string, { count: number; intensitySum: number; syms: Record<string, number> }> = {}
+    filtered.forEach(e => {
+      (e.triggers || []).forEach(t => {
+        if (!trigStats[t]) trigStats[t] = { count: 0, intensitySum: 0, syms: {} }
+        trigStats[t].count += 1
+        trigStats[t].intensitySum += (e.painIntensity || 0)
+        ;(e.associatedSymptoms || []).forEach(s => { trigStats[t].syms[s] = (trigStats[t].syms[s] || 0) + 1 })
+      })
+    })
+    const correlations = Object.entries(trigStats)
+      .filter(([, v]) => v.count >= 2)
+      .map(([trigger, v]) => ({
+        trigger: labelFor(trigger, TRIGGERS),
+        count: v.count,
+        avgIntensity: Math.round((v.intensitySum / v.count) * 10) / 10,
+        top: Object.entries(v.syms)
+          .map(([sym, n]) => ({ sym: labelFor(sym, ASSOCIATED_SYMPTOMS), n, pct: Math.round((n / v.count) * 100) }))
+          .sort((a, b) => b.n - a.n)
+          .slice(0, 3),
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 6)
+
     return {
       total, avg: Math.round(avg * 10) / 10, peak, auraCount, erCount, emsCount,
       multiRescueCount, redFlagCount, typeCount,
       topTriggers, topAura, topAssociated, topTreatmentEffectiveness,
       avgFlareDelta, flareCount: flareEntries.length, deltaBins,
-      hourBins, perMonth, impactCount,
+      hourBins, perMonth, impactCount, correlations,
     }
   }, [filtered, timeWindow])
 
@@ -243,6 +269,36 @@ export function HeadPainAnalytics({ entries }: Props) {
                     </div>
                   ))}
                 </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Trigger → outcome patterns */}
+          {stats.correlations.length > 0 && (
+            <Card>
+              <CardHeader><CardTitle className="text-base">Trigger → symptom patterns</CardTitle></CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {stats.correlations.map(c => (
+                    <div key={c.trigger}>
+                      <div className="flex items-center justify-between text-sm mb-1">
+                        <span className="font-medium">{c.trigger}</span>
+                        <span className="text-muted-foreground">{c.count} logs · avg {c.avgIntensity}/10</span>
+                      </div>
+                      {c.top.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5">
+                          {c.top.map(s => (
+                            <Badge key={s.sym} variant="secondary" className="font-normal">{s.sym} · {s.pct}%</Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground mt-3">
+                  Avg pain level when each trigger was present, plus the symptoms that showed up alongside it.
+                  Co-occurrence, not proof of cause — but worth raising with your neurologist.
+                </p>
               </CardContent>
             </Card>
           )}

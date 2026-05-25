@@ -51,7 +51,33 @@ export function SkinAnalytics({ refreshTrigger }: { refreshTrigger: number }) {
     const photoCount = allEntries.filter(e => e.photos && e.photos.length > 0).reduce((s, e) => s + (e.photos?.length || 0), 0)
     const erCount = allEntries.filter(e => e.erVisitRequired).length
     const epiCount = allEntries.filter(e => e.epinephrineGiven).length
-    return { total, last7, typeCounts, triggerCounts, locationCounts, treatmentCounts, photoCount, erCount, epiCount }
+
+    // Trigger → outcome correlation. For each suspected trigger logged ≥2×: avg severity of
+    // those events + the skin characteristics that co-occurred. Co-occurrence, NOT proven cause.
+    const trigStats: Record<string, { count: number; severitySum: number; syms: Record<string, number> }> = {}
+    for (const e of allEntries) {
+      for (const t of (e.suspectedTrigger || [])) {
+        if (!trigStats[t]) trigStats[t] = { count: 0, severitySum: 0, syms: {} }
+        trigStats[t].count += 1
+        trigStats[t].severitySum += (e.severity || 0)
+        for (const s of (e.characterDescription || [])) trigStats[t].syms[s] = (trigStats[t].syms[s] || 0) + 1
+      }
+    }
+    const correlations = Object.entries(trigStats)
+      .filter(([, v]) => v.count >= 2)
+      .map(([trigger, v]) => ({
+        trigger,
+        count: v.count,
+        avgSeverity: Math.round((v.severitySum / v.count) * 10) / 10,
+        top: Object.entries(v.syms)
+          .map(([sym, n]) => ({ label: sym, pct: Math.round((n / v.count) * 100) }))
+          .sort((a, b) => b.pct - a.pct)
+          .slice(0, 3),
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 6)
+
+    return { total, last7, typeCounts, triggerCounts, locationCounts, treatmentCounts, photoCount, erCount, epiCount, correlations }
   }, [allEntries])
 
   const sortedTriggers = Object.entries(stats.triggerCounts).sort((a, b) => b[1] - a[1]).slice(0, 8)
@@ -91,6 +117,12 @@ export function SkinAnalytics({ refreshTrigger }: { refreshTrigger: number }) {
       {sortedLocations.length > 0 && <Card><CardHeader className="pb-3"><CardTitle className="text-base">Most Common Locations</CardTitle></CardHeader><CardContent className="space-y-2">{sortedLocations.map(([l, c]) => <div key={l} className="flex items-center justify-between text-sm"><span>{l}</span><Badge variant="secondary">{c}</Badge></div>)}</CardContent></Card>}
       {sortedTriggers.length > 0 && <Card><CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><AlertCircle className="h-4 w-4" /> Top Suspected Triggers</CardTitle></CardHeader>
         <CardContent className="space-y-2">{sortedTriggers.map(([t, c]) => { const p = (c / stats.total) * 100; return <div key={t} className="space-y-1"><div className="flex items-center justify-between text-sm"><span>{t}</span><span className="text-muted-foreground">{c} events ({p.toFixed(0)}%)</span></div><div className="w-full bg-muted rounded-full h-2 overflow-hidden"><div className="bg-pink-400 h-2" style={{ width: `${p}%` }} /></div></div> })}</CardContent></Card>}
+      {stats.correlations.length > 0 && <Card><CardHeader className="pb-3"><CardTitle className="text-base">Trigger → symptom patterns</CardTitle></CardHeader>
+        <CardContent className="space-y-3">{stats.correlations.map(c => <div key={c.trigger}>
+          <div className="flex items-center justify-between text-sm mb-1"><span className="font-medium">{c.trigger}</span><span className="text-muted-foreground">{c.count} logs · avg {c.avgSeverity}/10</span></div>
+          {c.top.length > 0 && <div className="flex flex-wrap gap-1.5">{c.top.map(s => <Badge key={s.label} variant="secondary" className="font-normal">{s.label} · {s.pct}%</Badge>)}</div>}
+        </div>)}
+        <p className="text-xs text-muted-foreground mt-3">Co-occurrence, not proof of cause — but worth raising with your doctor.</p></CardContent></Card>}
       {sortedTreatments.length > 0 && <Card><CardHeader className="pb-3"><CardTitle className="text-base">Treatments Applied</CardTitle></CardHeader><CardContent className="space-y-2">{sortedTreatments.map(([t, c]) => <div key={t} className="flex items-center justify-between text-sm"><span>{t}</span><Badge variant="secondary">{c}</Badge></div>)}</CardContent></Card>}
     </div>
   )
