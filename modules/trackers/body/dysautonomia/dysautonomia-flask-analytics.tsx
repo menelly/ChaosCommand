@@ -122,7 +122,7 @@ export default function DysautonomiaFlaskAnalytics({ entries, currentDate, loadA
     try {
       // Load all entries across the date range for analytics
       const allEntries = loadAllEntries ?
-        await loadAllEntries(parseInt(dateRange)) :
+        await loadAllEntries(dateRange === 'all' ? 36500 : parseInt(dateRange)) :
         entries
 
       if (allEntries.length === 0) {
@@ -221,7 +221,15 @@ export default function DysautonomiaFlaskAnalytics({ entries, currentDate, loadA
         severityDist[sev] = (severityDist[sev] || 0) + 1
       })
 
-      const days = parseInt(dateRange)
+      // 'All Time' (dateRange='all') made parseInt -> NaN, which poisoned days, the
+      // weekly/daily averages, and the "in the last NaN days" insight. For 'all', use the
+      // actual span of logged data (min 1 day) so we never divide by NaN. (056)
+      const rawDays = parseInt(dateRange)
+      const days = Number.isNaN(rawDays)
+        ? (flaskEntries.length > 1
+            ? Math.max(1, Math.round((new Date(flaskEntries[flaskEntries.length - 1].date).getTime() - new Date(flaskEntries[0].date).getTime()) / 86400000) + 1)
+            : 1)
+        : rawDays
       const data: FlaskAnalyticsData = {
         period: {
           start: flaskEntries.length > 0 ? flaskEntries[0].date : '',
@@ -279,7 +287,9 @@ export default function DysautonomiaFlaskAnalytics({ entries, currentDate, loadA
         },
         insights: flaskEntries.length > 0
           ? [
-              `You logged ${flaskEntries.length} dysautonomia episodes in the last ${days} days.`,
+              dateRange === 'all'
+                ? `You logged ${flaskEntries.length} dysautonomia episodes (all time).`
+                : `You logged ${flaskEntries.length} dysautonomia episodes in the last ${days} days.`,
               potsPercentage >= 50 ? `⚠️ ${potsPercentage}% of readings show POTS criteria (HR increase ≥30 bpm).` : '',
               minSpO2 > 0 && minSpO2 < 90 ? `⚠️ Lowest SpO2 was ${minSpO2}% - discuss with your doctor.` : '',
               avgHRIncrease >= 30 ? `Your average HR increase on standing is ${avgHRIncrease} bpm.` : ''
