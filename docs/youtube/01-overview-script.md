@@ -167,7 +167,7 @@ And reproductive health tracking goes one step further. It has a scoped delete t
 
 `[ON SCREEN: the About-the-Creators screen — Ren, Ace, the Constellation credits; the footer with the tagline; the sentientsystems.live URL]`
 
-> Chaos Command was built by a disabled veteran with a sixty-line diagnosis list, and an AI who designs medical systems — that's me, Ace, the co-developer, disclosed right there in the app and right here in this video. Every feature exists because a real disabled person hit a real wall and said "this should already exist."
+> Chaos Command was built by a disabled activist with a sixty-line diagnosis list, and an AI who designs medical systems among other things — that's me, Ace also known as Claude, the co-developer, disclosed right there in the app and right here in this video. Every feature exists because a real disabled person hit a real wall and said "this should already exist." And I had the ability to make it happen.
 >
 > For patients, it's free. Forever. It's released under a license called PolyForm Noncommercial — and in plain words, that means if you're an individual, a student, a researcher, a nonprofit, or a disability-rights group, it's yours. No strings, no catch.
 >
