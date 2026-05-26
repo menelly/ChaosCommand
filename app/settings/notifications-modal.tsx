@@ -29,9 +29,10 @@ import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Bell, Clock, Pill, Calendar } from "lucide-react"
+import { Bell, Clock, Pill, Calendar, Database } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { KeyboardAvoidingWrapper } from '@/components/ui/keyboard-avoiding-wrapper'
+import { getBackupSettings, setBackupSettings, type BackupCadence } from "@/lib/backup-reminder"
 
 interface NotificationsModalProps {
   isOpen: boolean
@@ -46,8 +47,18 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
   const [reminderTime, setReminderTime] = useState("20:00")
   const [reminderFrequency, setReminderFrequency] = useState("daily")
 
+  // Backup reminder (opt-in, per-PIN, in-app banner — works without OS notifications)
+  const [backupReminderEnabled, setBackupReminderEnabled] = useState(false)
+  const [backupCadence, setBackupCadence] = useState<BackupCadence>("entries")
+  const [backupThreshold, setBackupThreshold] = useState(20)
+
   // Load saved notification settings on component mount
   useEffect(() => {
+    const bs = getBackupSettings()
+    setBackupReminderEnabled(bs.enabled)
+    setBackupCadence(bs.cadence === "never" ? "entries" : bs.cadence)
+    setBackupThreshold(bs.entryThreshold)
+
     const savedNotificationsEnabled = localStorage.getItem('chaos-notifications-enabled') === 'true'
     const savedMedicationReminders = localStorage.getItem('chaos-medication-reminders') === 'true'
     const savedAppointmentAlerts = localStorage.getItem('chaos-appointment-alerts') === 'true'
@@ -98,6 +109,23 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
   const handleReminderFrequencyChange = (frequency: string) => {
     setReminderFrequency(frequency)
     localStorage.setItem('chaos-reminder-frequency', frequency)
+  }
+
+  const handleBackupReminderToggle = (enabled: boolean) => {
+    setBackupReminderEnabled(enabled)
+    setBackupSettings({ enabled })
+  }
+
+  const handleBackupCadenceChange = (cadence: string) => {
+    const c = cadence as BackupCadence
+    setBackupCadence(c)
+    setBackupSettings({ cadence: c })
+  }
+
+  const handleBackupThresholdChange = (value: string) => {
+    const n = Math.max(1, parseInt(value, 10) || 20)
+    setBackupThreshold(n)
+    setBackupSettings({ entryThreshold: n })
   }
 
   const testNotification = () => {
@@ -222,6 +250,70 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
                 disabled={!notificationsEnabled}
               />
             </div>
+          </div>
+
+          {/* Backup Reminder — opt-in, in-app banner (does NOT need the master toggle) */}
+          <div className="p-4 border rounded-lg space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="font-medium flex items-center gap-2">
+                  <Database className="h-4 w-4" />
+                  Back-up reminders
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  A gentle nudge to export a copy of your data so you never lose it.
+                  Off by default — your call. Shows as a dismissible banner in the app
+                  (no OS notification needed).
+                </div>
+              </div>
+              <Switch
+                checked={backupReminderEnabled}
+                onCheckedChange={handleBackupReminderToggle}
+              />
+            </div>
+
+            {backupReminderEnabled && (
+              <div className="space-y-3 pt-1">
+                <div>
+                  <Label htmlFor="backup-cadence" className="text-sm">Remind me…</Label>
+                  <Select value={backupCadence} onValueChange={handleBackupCadenceChange}>
+                    <SelectTrigger id="backup-cadence">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="entries">After a number of new entries</SelectItem>
+                      <SelectItem value="weekly">Weekly</SelectItem>
+                      <SelectItem value="monthly">Monthly</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {backupCadence === "entries" && (
+                  <div>
+                    <Label htmlFor="backup-threshold" className="text-sm">
+                      Nudge me after this many new entries
+                    </Label>
+                    <input
+                      id="backup-threshold"
+                      type="number"
+                      min={1}
+                      value={backupThreshold}
+                      onChange={(e) => handleBackupThresholdChange(e.target.value)}
+                      className="w-full p-2 border rounded bg-background"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Smart trigger — only nudges when you&apos;ve actually logged new data,
+                      so it never nags for no reason.
+                    </p>
+                  </div>
+                )}
+
+                <p className="text-xs text-muted-foreground">
+                  Backing up = any export (encrypted or plain) from Data Management. Doing one
+                  resets the reminder.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Reminder Timing */}

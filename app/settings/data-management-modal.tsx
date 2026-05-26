@@ -18,6 +18,7 @@ import { Database, Download, Upload, Trash2 } from "lucide-react"
 import { exportAllData, importData } from "@/lib/database/migration-helper"
 import { encryptBackup, decryptBackup, downloadBackup } from "@/lib/database/encrypted-export"
 import { deleteCurrentProfile } from "@/lib/database/dexie-db"
+import { recordBackup } from "@/lib/backup-reminder"
 import { KeyboardAvoidingWrapper } from '@/components/ui/keyboard-avoiding-wrapper'
 
 interface DataManagementModalProps {
@@ -51,6 +52,7 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
       const date = new Date().toISOString().slice(0, 10)
       const filename = `chaos-command-data-${date}.json`
       downloadBackup(filename, json)
+      await recordBackup() // any export counts as a backup — reset the reminder clock
       alert(
         `✅ Saved: ${filename}\n\n` +
         'It\'s in your Downloads folder and is NOT encrypted — anyone with the file can read ' +
@@ -72,6 +74,7 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
       const payloadJson = await exportAllData() // full export: daily_data + tags + image blobs
       const { filename, content } = await encryptBackup(payloadJson, exportPassword)
       downloadBackup(filename, content)
+      await recordBackup() // any export counts as a backup — reset the reminder clock
       alert(`🔐 Encrypted backup saved: ${filename}\n\nKeep the password — it's the only way to open this file. The default (1234) is weak on purpose; set your own for anything you'll store or share.`)
     } catch (error) {
       console.error('Encrypted export failed:', error)

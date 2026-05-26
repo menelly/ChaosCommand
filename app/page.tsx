@@ -19,10 +19,12 @@
 
 import AppCanvas from "@/components/app-canvas"
 import CommandZone from "@/modules/life-management/zone/command-zone-v2"
+import BackupReminderBanner from "@/components/backup-reminder-banner"
 
 export default function HomePage() {
   return (
     <AppCanvas currentPage="command-zone">
+      <BackupReminderBanner />
       <CommandZone />
     </AppCanvas>
   )
