@@ -54,6 +54,10 @@ That's the whole list. No part of your medical information is in any of those re
 **Fonts are bundled with the app** — we self-host every typeface, so the app makes no
 request to Google or any other font service.
 
+**Want to use a VPN, Tor, or a burner device? Do it.** 🛡️ We can't tell whether you do,
+and we wouldn't care if we could — we never see you in the first place. We give zero
+effs about how you connect. Your safety is yours to run. **Protect yourself.**
+
 **Your rights are simple here because we hold nothing:** you can view, edit, export,
 and permanently delete all of your data yourself, from within the app, at any time,
 without asking us — because you're the only one who has it.
