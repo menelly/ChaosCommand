@@ -766,6 +766,83 @@ body.theme-ace .sidebar-btn-6:hover::after {
 }
 
 /* === FONT OVERRIDES === */
+
+/* Atkinson Hyperlegible, Poppins, Lexend — SELF-HOSTED (latin woff2, OFL).
+   Previously loaded from fonts.googleapis.com, which leaked every user's IP to
+   Google on each app launch — not acceptable for a privacy-first medical app.
+   Now mirrored locally via scripts/self_host_fonts.py. The app makes ZERO
+   third-party font requests. (Ace, 2026-05-26, CHA-229) */
+@font-face {
+  font-family: 'Atkinson Hyperlegible';
+  font-style: normal; font-weight: 400; font-display: swap;
+  src: url('/fonts/AtkinsonHyperlegible-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Atkinson Hyperlegible';
+  font-style: italic; font-weight: 400; font-display: swap;
+  src: url('/fonts/AtkinsonHyperlegible-400i.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Atkinson Hyperlegible';
+  font-style: normal; font-weight: 700; font-display: swap;
+  src: url('/fonts/AtkinsonHyperlegible-700.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Atkinson Hyperlegible';
+  font-style: italic; font-weight: 700; font-display: swap;
+  src: url('/fonts/AtkinsonHyperlegible-700i.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal; font-weight: 300; font-display: swap;
+  src: url('/fonts/Poppins-300.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal; font-weight: 400; font-display: swap;
+  src: url('/fonts/Poppins-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal; font-weight: 500; font-display: swap;
+  src: url('/fonts/Poppins-500.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal; font-weight: 600; font-display: swap;
+  src: url('/fonts/Poppins-600.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal; font-weight: 700; font-display: swap;
+  src: url('/fonts/Poppins-700.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Lexend';
+  font-style: normal; font-weight: 300; font-display: swap;
+  src: url('/fonts/Lexend-300.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Lexend';
+  font-style: normal; font-weight: 400; font-display: swap;
+  src: url('/fonts/Lexend-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Lexend';
+  font-style: normal; font-weight: 500; font-display: swap;
+  src: url('/fonts/Lexend-500.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Lexend';
+  font-style: normal; font-weight: 600; font-display: swap;
+  src: url('/fonts/Lexend-600.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Lexend';
+  font-style: normal; font-weight: 700; font-display: swap;
+  src: url('/fonts/Lexend-700.woff2') format('woff2');
+}
+
 body.font-poppins,
 body.font-poppins * {
   font-family: 'Poppins', sans-serif !important;

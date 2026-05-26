@@ -41,14 +41,13 @@ Here's what that actually means:
    see if a newer version exists. Like any web request, our server briefly sees your
    IP address and the time of the request. We don't log this to profile you, and you
    can turn update-checking off in Settings.
-2. **Fonts.** The app currently loads its typefaces from Google Fonts, which means
-   Google's servers see your device's IP address when the app loads. _(We consider
-   this a gap and intend to self-host fonts so this stops happening — see README.)_
-3. **Images you add by link.** If you paste an image *URL* into the app, your device
+2. **Images you add by link.** If you paste an image *URL* into the app, your device
    fetches that image from wherever you pointed it. That's a request to that third
    party, initiated by you.
 
 That's the whole list. No part of your medical information is in any of those requests.
+**Fonts are bundled with the app** — we self-host every typeface, so the app makes no
+request to Google or any other font service.
 
 **Your rights are simple here because we hold nothing:** you can view, edit, export,
 and permanently delete all of your data yourself, from within the app, at any time,
@@ -90,13 +89,13 @@ none of which transmit User Data:
    `https://chaoscommand.center/version.json`. As an incident of any HTTP request, the
    serving infrastructure may transiently process the requesting IP address, timestamp,
    and user-agent string. This feature can be disabled by the user in Settings.
-   (b) **Font delivery.** The App currently retrieves typeface assets from Google Fonts
-   (`fonts.googleapis.com`, `fonts.gstatic.com`); as a result, Google may receive the
-   device's IP address at load time. The Company's intent is to migrate to
-   self-hosted fonts to eliminate this third-party request.
-   (c) **User-initiated image retrieval.** Where a user supplies a remote image URL,
+   (b) **User-initiated image retrieval.** Where a user supplies a remote image URL,
    the device retrieves that resource directly from the third-party host designated by
    the user.
+
+All typefaces are self-hosted and bundled with the App; the App makes no request to any
+third-party font service (e.g., Google Fonts) and the application's content-security
+policy prohibits such requests.
 
 ### 6. Site (Website) Data
 The Site is a static distribution and informational site. The Site sets no first-party

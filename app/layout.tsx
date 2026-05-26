@@ -64,9 +64,9 @@ export default function RootLayout({
         <link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192" />
         <link rel="icon" href="/icon-512.png" type="image/png" sizes="512x512" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Lexend:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+        {/* Fonts are SELF-HOSTED (see @font-face in styles/chaos-themes.css). We no
+            longer load from fonts.googleapis.com — a privacy-first medical app must
+            not leak the user's IP to Google on every launch. (Ace, 2026-05-26, CHA-229) */}
 
       </head>
       <body className="h-screen overflow-hidden bg-background font-sans antialiased" suppressHydrationWarning>
