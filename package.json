@@ -1,6 +1,6 @@
 {
   "name": "command",
-  "version": "0.5.6",
+  "version": "0.5.7",
   "private": true,
   "description": "Chaos Command Center - Desktop app with Dexie.js unified database for date-first hierarchical storage",
   "scripts": {

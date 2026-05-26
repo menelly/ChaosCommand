@@ -1,6 +1,6 @@
 {
   "version": "0.5.6",
-  "released": "2026-05-24",
+  "released": "2026-05-25",
   "url": "https://chaoscommand.center/download",
-  "notes": "Theme contrast overhaul: danger/911 colours now derive from each theme's --destructive token (no more unreadable red-on-dark), new --info/--success/--warning semantic token system across all 15 themes, and a live Contrast Check tool in Settings. Full contrast cleanup of every theme (borders, accents, danger). New 'Pink Goes Good With Green' (Wicked) theme replacing Cyberpunk Penguin, with a Glinda-to-Elphaba sidebar cascade. Settings + tracker panels are now collapsible (one screen instead of five). Mobile scrollbar slimmed; text-size scaling fixed to scale ALL text including hints (px to rem); Live Simple handwriting font added."
+  "notes": "Theme readability overhaul: danger/911 colours now derive from each theme's --destructive token (no more unreadable red-on-dark), new --info/--success/--warning semantic tokens + a single-source design-token migration across all 15 themes so nothing renders light-box-on-dark anymore. Live Contrast Check tool in Settings. New 'Pink Goes Good With Green' (Wicked) theme with a Glinda-to-Elphaba sidebar. The Accessibility theme is now 'Follow System' - it respects your OS high-contrast settings (Windows/macOS) instead of a fixed palette, far better for low-vision users. Analytics rebuilt client-side with trigger->outcome correlations across most trackers, plus diabetes time-in-range / glucose trends. Collapsible Settings, slimmer mobile scrollbar, fixed text-size scaling, Live Simple font."
 }
