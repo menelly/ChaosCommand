@@ -67,6 +67,15 @@ const fonts = [
   { id: 'font-inter', name: 'Inter', description: 'Clean modern interface font — crisp at any size' },
   { id: 'font-crimson', name: 'Crimson Pro', description: 'Elegant reading serif — book-like, easy on the eyes' },
   { id: 'font-jetbrains', name: 'JetBrains Mono', description: 'Monospace — every character lines up (numbers/terminal vibes)' },
+  // Decorative pack (Creative Fabrica) — fun/personality, best for vibes over dense data
+  { id: 'font-authentic', name: 'Authentic Satruh', description: 'Decorative — fun & personality (less ideal for dense data)' },
+  { id: 'font-basher', name: 'Basher Rivelga', description: 'Decorative — fun & personality (less ideal for dense data)' },
+  { id: 'font-bumpy', name: 'Bumpy', description: 'Decorative — playful & bouncy (less ideal for dense data)' },
+  { id: 'font-cagront', name: 'Cagront Serif', description: 'Decorative serif — characterful (less ideal for dense data)' },
+  { id: 'font-distraction', name: 'Distraction', description: 'Decorative — fun & personality (less ideal for dense data)' },
+  { id: 'font-ginfitanle', name: 'Ginfitanle', description: 'Decorative — fun & personality (less ideal for dense data)' },
+  { id: 'font-helliona', name: 'Helliona', description: 'Decorative — fun & personality (less ideal for dense data)' },
+  { id: 'font-likehere', name: 'Likehere', description: 'Decorative — fun & personality (less ideal for dense data)' },
   { id: 'font-system', name: 'System Font', description: "Your device's built-in font (Segoe UI on Windows)" }
 ]
 

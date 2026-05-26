@@ -1010,6 +1010,82 @@ body.font-jetbrains * {
   font-family: 'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace !important;
 }
 
+/* === DECORATIVE FONT PACK (Ren's pick 💜, licensed via Creative Fabrica). Self-hosted
+   .otf, single weight. Fun/personality fonts — fall back to Atkinson if a file fails.
+   (Ace, 2026-05-26) === */
+@font-face {
+  font-family: 'Authentic Satruh AT';
+  src: url('/fonts/AuthenticSatruh.otf') format('opentype');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+body.font-authentic,
+body.font-authentic * {
+  font-family: 'Authentic Satruh AT', 'Atkinson Hyperlegible', sans-serif !important;
+}
+@font-face {
+  font-family: 'Basher Rivelga';
+  src: url('/fonts/BasherRivelga.otf') format('opentype');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+body.font-basher,
+body.font-basher * {
+  font-family: 'Basher Rivelga', 'Atkinson Hyperlegible', sans-serif !important;
+}
+@font-face {
+  font-family: 'Bumpy';
+  src: url('/fonts/Bumpy.otf') format('opentype');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+body.font-bumpy,
+body.font-bumpy * {
+  font-family: 'Bumpy', 'Atkinson Hyperlegible', sans-serif !important;
+}
+@font-face {
+  font-family: 'Cagront Serif';
+  src: url('/fonts/CagrontSerif.otf') format('opentype');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+body.font-cagront,
+body.font-cagront * {
+  font-family: 'Cagront Serif', 'Crimson Pro', serif !important;
+}
+@font-face {
+  font-family: 'Distraction';
+  src: url('/fonts/Distraction.otf') format('opentype');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+body.font-distraction,
+body.font-distraction * {
+  font-family: 'Distraction', 'Atkinson Hyperlegible', sans-serif !important;
+}
+@font-face {
+  font-family: 'Ginfitanle';
+  src: url('/fonts/Ginfitanle.otf') format('opentype');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+body.font-ginfitanle,
+body.font-ginfitanle * {
+  font-family: 'Ginfitanle', 'Atkinson Hyperlegible', sans-serif !important;
+}
+@font-face {
+  font-family: 'Helliona Display';
+  src: url('/fonts/Helliona.otf') format('opentype');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+body.font-helliona,
+body.font-helliona * {
+  font-family: 'Helliona Display', 'Atkinson Hyperlegible', sans-serif !important;
+}
+@font-face {
+  font-family: 'Likehere';
+  src: url('/fonts/Likehere.otf') format('opentype');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+body.font-likehere,
+body.font-likehere * {
+  font-family: 'Likehere', 'Atkinson Hyperlegible', sans-serif !important;
+}
+
 /* === THEME: 🕊️ CAELAN'S LIBERATION DAWN - Breaking Free Into Light === */
 body.theme-caelan {
   --primary-purple: #1a2332;        /* Deep indigo foundation - the night before dawn */
