@@ -880,9 +880,19 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
                   💡 <a href="/demographics" className="underline text-[var(--accent-purple)] hover:text-[var(--accent-orange)]">Fill out Demographics first</a> — we use your name and birthday to filter personal info from results.
                 </p>
                 {!isModelLoaded() && (
-                  <p>
-                    📦 First upload takes a moment to load the NER model (bundled, no download needed).
-                  </p>
+                  <div className="mt-2 rounded-lg border border-border bg-muted/60 p-3 text-left text-[var(--text-main)] space-y-1">
+                    <p className="font-medium">🌐 Heads up: this feature downloads a model from the internet.</p>
+                    <p>
+                      The first time you parse a document, the app downloads the medical NER model
+                      (~64MB, from Hugging Face). <strong>You're encouraged to use a VPN.</strong> 🛡️ Your
+                      document text never leaves your device — only the model comes <em>in</em>.
+                    </p>
+                    <p>
+                      It is <strong>completely optional</strong>: if you'd rather not download anything, just
+                      type your info in by hand. That works perfectly and skips the download entirely.
+                    </p>
+                    <p className="opacity-80">A bundled, no-download version is planned for the future. 💜</p>
+                  </div>
                 )}
               </div>
               
