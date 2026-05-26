@@ -916,6 +916,100 @@ body.font-livesimple * {
   font-family: 'Live Simple', 'Atkinson Hyperlegible', sans-serif !important;
 }
 
+/* Inter — clean modern UI sans (OFL). Self-hosted woff2. (Ace, 2026-05-26) */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal; font-weight: 400; font-display: swap;
+  src: url('/fonts/Inter-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal; font-weight: 500; font-display: swap;
+  src: url('/fonts/Inter-500.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal; font-weight: 600; font-display: swap;
+  src: url('/fonts/Inter-600.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal; font-weight: 700; font-display: swap;
+  src: url('/fonts/Inter-700.woff2') format('woff2');
+}
+body.font-inter,
+body.font-inter * {
+  font-family: 'Inter', 'Atkinson Hyperlegible', sans-serif !important;
+}
+
+/* Crimson Pro — elegant reading serif (OFL). Self-hosted woff2, incl. italics. */
+@font-face {
+  font-family: 'Crimson Pro';
+  font-style: normal; font-weight: 400; font-display: swap;
+  src: url('/fonts/CrimsonPro-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Crimson Pro';
+  font-style: italic; font-weight: 400; font-display: swap;
+  src: url('/fonts/CrimsonPro-400i.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Crimson Pro';
+  font-style: normal; font-weight: 500; font-display: swap;
+  src: url('/fonts/CrimsonPro-500.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Crimson Pro';
+  font-style: italic; font-weight: 500; font-display: swap;
+  src: url('/fonts/CrimsonPro-500i.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Crimson Pro';
+  font-style: normal; font-weight: 600; font-display: swap;
+  src: url('/fonts/CrimsonPro-600.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Crimson Pro';
+  font-style: italic; font-weight: 600; font-display: swap;
+  src: url('/fonts/CrimsonPro-600i.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Crimson Pro';
+  font-style: normal; font-weight: 700; font-display: swap;
+  src: url('/fonts/CrimsonPro-700.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Crimson Pro';
+  font-style: italic; font-weight: 700; font-display: swap;
+  src: url('/fonts/CrimsonPro-700i.woff2') format('woff2');
+}
+body.font-crimson,
+body.font-crimson * {
+  font-family: 'Crimson Pro', 'Atkinson Hyperlegible', serif !important;
+}
+
+/* JetBrains Mono — crisp monospace (OFL). Self-hosted woff2. Also what the
+   Phosphor / Amber / Segfault retro themes reference — now they actually get it. */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal; font-weight: 400; font-display: swap;
+  src: url('/fonts/JetBrainsMono-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal; font-weight: 500; font-display: swap;
+  src: url('/fonts/JetBrainsMono-500.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal; font-weight: 700; font-display: swap;
+  src: url('/fonts/JetBrainsMono-700.woff2') format('woff2');
+}
+body.font-jetbrains,
+body.font-jetbrains * {
+  font-family: 'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace !important;
+}
+
 /* === THEME: 🕊️ CAELAN'S LIBERATION DAWN - Breaking Free Into Light === */
 body.theme-caelan {
   --primary-purple: #1a2332;        /* Deep indigo foundation - the night before dawn */

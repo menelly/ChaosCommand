@@ -128,7 +128,7 @@ export default function RootLayout({
 
                   // Available themes and fonts
                   const themes = ['theme-phosphor', 'theme-amber', 'theme-segfault', 'theme-lavender', 'theme-chaos', 'theme-caelan', 'theme-light', 'theme-colorblind', 'theme-glitter', 'theme-calm', 'theme-accessibility', 'theme-ace', 'theme-grok', 'theme-wicked', 'theme-taupe'];
-                  const fonts = ['font-atkinson', 'font-poppins', 'font-lexend', 'font-opendyslexic', 'font-cutecharm', 'font-livesimple', 'font-system'];
+                  const fonts = ['font-atkinson', 'font-poppins', 'font-lexend', 'font-opendyslexic', 'font-cutecharm', 'font-livesimple', 'font-inter', 'font-crimson', 'font-jetbrains', 'font-system'];
 
                   // Remove all theme classes first
                   themes.forEach(theme => document.body.classList.remove(theme));

@@ -341,6 +341,62 @@ export function SupportModal({ isOpen, onClose }: SupportModalProps) {
 
           <Separator />
 
+          {/* Resources & Acknowledgments */}
+          <div className="space-y-3">
+            <h3 className="font-medium flex items-center gap-2">
+              📚 Resources & Acknowledgments
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              Chaos Command is built on the work of others. Every font below is{' '}
+              <strong>self-hosted</strong> — bundled with the app — so using Command never
+              pings a third party or leaks your IP. With gratitude:
+            </p>
+
+            <div className="text-sm space-y-3">
+              <div>
+                <div className="font-medium text-foreground mb-1">🔤 Typefaces</div>
+                <ul className="space-y-1 text-muted-foreground">
+                  <li>
+                    <button className="text-primary underline underline-offset-2" onClick={() => openExternalLink('https://opendyslexic.org/')}>OpenDyslexic</button>
+                    {' '}— dyslexia-friendly, by Abelardo Gonzalez (open source)
+                  </li>
+                  <li>
+                    <button className="text-primary underline underline-offset-2" onClick={() => openExternalLink('https://www.brailleinstitute.org/freefont/')}>Atkinson Hyperlegible</button>
+                    {' '}— low-vision legibility, by the Braille Institute
+                  </li>
+                  <li>
+                    <button className="text-primary underline underline-offset-2" onClick={() => openExternalLink('https://fonts.google.com/')}>Inter, Lexend, Poppins, Crimson Pro, JetBrains Mono</button>
+                    {' '}— under the SIL Open Font License
+                  </li>
+                  <li>
+                    <button className="text-primary underline underline-offset-2" onClick={() => openExternalLink('https://www.creativefabrica.com/')}>Cute Charm &amp; Live Simple</button>
+                    {' '}— handwriting fonts, licensed via Creative Fabrica
+                  </li>
+                </ul>
+              </div>
+
+              <div>
+                <div className="font-medium text-foreground mb-1">🧠 Language &amp; medical data</div>
+                <ul className="space-y-1 text-muted-foreground">
+                  <li>
+                    <button className="text-primary underline underline-offset-2" onClick={() => openExternalLink('https://huggingface.co/d4data/biomedical-ner-all')}>biomedical-ner-all</button>
+                    {' '}— medical entity recognition model (d4data, via Hugging Face), used for document parsing on desktop
+                  </li>
+                  <li>
+                    <button className="text-primary underline underline-offset-2" onClick={() => openExternalLink('https://github.com/huggingface/transformers.js')}>Transformers.js</button>
+                    {' '}— runs the NER model on-device, no server
+                  </li>
+                  <li>
+                    <button className="text-primary underline underline-offset-2" onClick={() => openExternalLink('https://www.cms.gov/medicare/coding-billing/icd-10-codes')}>ICD-10 codes</button>
+                    {' '}— diagnostic coding (WHO / U.S. CMS) for doctor-mode reports
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <Separator />
+
           {/* About Chaos Command */}
           <div className="space-y-3">
             <h3 className="font-medium flex items-center gap-2">

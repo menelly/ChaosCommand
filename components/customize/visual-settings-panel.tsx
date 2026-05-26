@@ -64,6 +64,9 @@ const fonts = [
   { id: 'font-opendyslexic', name: 'OpenDyslexic', description: 'Designed for dyslexia — weighted letters resist flipping' },
   { id: 'font-cutecharm', name: 'Cute Charm', description: 'Playful handwriting — cozy vibes (less ideal for dense data)' },
   { id: 'font-livesimple', name: 'Live Simple', description: 'Cozy handwriting with a clean, filled O — Ren-approved 💜' },
+  { id: 'font-inter', name: 'Inter', description: 'Clean modern interface font — crisp at any size' },
+  { id: 'font-crimson', name: 'Crimson Pro', description: 'Elegant reading serif — book-like, easy on the eyes' },
+  { id: 'font-jetbrains', name: 'JetBrains Mono', description: 'Monospace — every character lines up (numbers/terminal vibes)' },
   { id: 'font-system', name: 'System Font', description: "Your device's built-in font (Segoe UI on Windows)" }
 ]
 

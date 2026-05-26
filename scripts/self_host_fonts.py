@@ -27,10 +27,10 @@ FONTS = {
     "Atkinson Hyperlegible": {"weights": [400, 700], "italics": True},
     "Poppins":               {"weights": [300, 400, 500, 600, 700], "italics": False},
     "Lexend":                {"weights": [300, 400, 500, 600, 700], "italics": False},
-    # --- add Ren-approved menu fonts here, e.g.: ---
-    # "Inter":          {"weights": [400, 500, 600, 700], "italics": False},
-    # "Lora":           {"weights": [400, 500, 600, 700], "italics": True},
-    # "JetBrains Mono": {"weights": [400, 700], "italics": False},
+    # --- Ren-approved menu fonts (2026-05-26): clean sans, reading serif, mono ---
+    "Inter":         {"weights": [400, 500, 600, 700], "italics": False},
+    "Crimson Pro":   {"weights": [400, 500, 600, 700], "italics": True},
+    "JetBrains Mono": {"weights": [400, 500, 700], "italics": False},
 }
 
 

@@ -44,6 +44,11 @@ Here's what that actually means:
 2. **Images you add by link.** If you paste an image *URL* into the app, your device
    fetches that image from wherever you pointed it. That's a request to that third
    party, initiated by you.
+3. **Document parsing (desktop only).** If you use the optional document-parsing
+   feature on the desktop app, the app downloads a medical language model from Hugging
+   Face the first time you run it. The download is the model itself — *your document and
+   its text are read and processed entirely on your device and are never uploaded.*
+   This feature is not present in the mobile app.
 
 That's the whole list. No part of your medical information is in any of those requests.
 **Fonts are bundled with the app** — we self-host every typeface, so the app makes no
@@ -92,6 +97,11 @@ none of which transmit User Data:
    (b) **User-initiated image retrieval.** Where a user supplies a remote image URL,
    the device retrieves that resource directly from the third-party host designated by
    the user.
+   (c) **On-device document parsing (desktop only).** The optional document-parsing
+   feature in the desktop application retrieves a machine-learning model from a
+   third-party model host (Hugging Face) on first use. Inference is performed locally on
+   the user's device; document content is not transmitted. This feature is not included
+   in the mobile application.
 
 All typefaces are self-hosted and bundled with the App; the App makes no request to any
 third-party font service (e.g., Google Fonts) and the application's content-security
