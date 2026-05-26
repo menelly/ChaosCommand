@@ -159,9 +159,9 @@ And reproductive health tracking goes one step further. It has a scoped delete t
 
 ## 13 · Make it yours
 
-`[ON SCREEN: the accessibility settings — font picker (Atkinson Hyperlegible, Lexend), the motion/bounce slider going from Full down to Static, keyboard navigation, reproductive health toggle]`
+`[ON SCREEN: the accessibility settings — font picker scrolling through the full menu (Atkinson Hyperlegible, Lexend, OpenDyslexic, plus the decorative ones), the motion/bounce slider going from Full down to Static, keyboard navigation, reproductive health toggle]`
 
-> Disability is a Venn diagram with no center — so in Chaos Command, everything that can be a setting, is. You've already seen the themes. But underneath those: four font options including Atkinson Hyperlegible and Lexend for dyslexia. A motion slider you can turn all the way down to zero if animation triggers migraines, seizures, or vestibular symptoms — beautiful colors, no movement, it's a first-class mode, not an afterthought. Full keyboard and screen-reader support.
+> Disability is a Venn diagram with no center — so in Chaos Command, everything that can be a setting, is. You've already seen the themes. But underneath those: a whole menu of fonts — accessibility-first ones like Atkinson Hyperlegible, Lexend, and OpenDyslexic for dyslexia, plus playful ones just for the joy of it — and every single one is bundled right into the app, so it never phones home to Google just to load a typeface. A motion slider you can turn all the way down to zero if animation triggers migraines, seizures, or vestibular symptoms — beautiful colors, no movement, it's a first-class mode, not an afterthought. Full keyboard and screen-reader support.
 >
 > Reproductive tracking is a single toggle. Turn it off and it's gone — not hidden, not grayed out, *gone*. And when it's on, it uses gender-neutral inclusive framing, because not everyone who tracks a cycle is a woman, and not every woman tracks a cycle.
 
