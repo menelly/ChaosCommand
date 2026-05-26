@@ -80,7 +80,7 @@ export default function RootLayout({
                 {/* Footer */}
                 <footer className="mt-8 py-4 text-center text-xs text-muted-foreground border-t border-border/50">
                   <p className="font-medium">
-                    <span className="text-info">Chaos Cascade</span> © 2025 • Federally Registered Copyright
+                    <span className="text-info">Silicon Scaffolding LLC</span> © 2025 • Federally Registered Copyright
                   </p>
                   <p className="mt-1">
                     Dreamed by <span className="font-semibold text-foreground">Ren</span>, implemented by{' '}
