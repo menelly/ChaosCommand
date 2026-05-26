@@ -67,7 +67,7 @@ And reproductive health tracking goes one step further. It has a scoped delete t
 >
 > Track dysautonomia by episode type — orthostatic, blood pressure, GI, temperature, oxygen. Log a seizure with its aura and what the recovery felt like. Glucose, insulin, ketones, CGM timers. Cardiac, respiratory, head pain down to the hemiplegic features. Brain fog sorted by *kind* of fog. Energy in spoons, with room to flag the crash before it lands. Pain, sleep, hydration, food and allergens with separate logic for IgE allergies versus celiac versus intolerance — because those are three different things and your gut knows the difference even if your doctor doesn't. Anxiety that knows the difference between a panic attack and an autistic meltdown, because those need different interventions even though they look similar from the outside. Mental health, coping strategies, crisis planning.
 >
-> If your body does it wrong, we probably track it.
+> If your body does it differently than expected, we probably track it.
 
 ---
 
