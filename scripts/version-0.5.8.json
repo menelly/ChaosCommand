@@ -1,0 +1,6 @@
+{
+  "version": "0.5.8",
+  "released": "2026-05-30",
+  "url": "https://chaoscommand.center/download",
+  "notes": "PDF export now reports everything you actually track \u2014 8 previously-missing tracker sections, medications + appointment attendance for SSDI, and a joint/MSK weakness fix. Plus optional password-protected exports so your medical data isn't plaintext in Downloads."
+}
