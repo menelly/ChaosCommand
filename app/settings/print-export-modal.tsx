@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Printer, FileText, Stethoscope, Scale, ChevronRight, ChevronLeft, Download, Loader2, User, X } from "lucide-react"
+import { Printer, FileText, Stethoscope, Scale, ChevronRight, ChevronLeft, Download, Loader2, User, X, Lock, AlertTriangle } from "lucide-react"
 import { useDailyData } from "@/lib/database/hooks/use-daily-data"
 import { CATEGORIES, formatDateForStorage } from "@/lib/database/dexie-db"
 import { generateMedicalReport } from "@/lib/pdf-report-generator"
@@ -117,6 +117,8 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
   const [includeLabs, setIncludeLabs] = useState(true)
   const [includeTimeline, setIncludeTimeline] = useState(true)
   const [includeWorkDisability, setIncludeWorkDisability] = useState(false)
+  const [passwordProtect, setPasswordProtect] = useState(false)
+  const [pdfPassword, setPdfPassword] = useState('')
   const [dateRangeStart, setDateRangeStart] = useState('')
   const [dateRangeEnd, setDateRangeEnd] = useState(formatDateForStorage(new Date()))
   const [excludedTags, setExcludedTags] = useState<string[]>([])
@@ -279,6 +281,38 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
         workData = { missedWork, employment, applications }
       }
 
+      // Medications (category 'tracker', subcategory medications-<id>) — current +
+      // discontinued regimen for the Medications section. From MANAGE (CHA-246).
+      // Dedupe: a med edited on multiple days yields multiple dated records under the
+      // SAME medications-<id> key → keep the latest per id; then drop any remaining
+      // identical name+dose+schedule duplicates so the regimen isn't listed twice.
+      const medById = new Map<string, any>()
+      for (const r of (allTrackerData || [])) {
+        if (!r.subcategory?.startsWith('medications-')) continue
+        const prev = medById.get(r.subcategory)
+        if (!prev || String(r.date || '') >= String(prev.date || '')) medById.set(r.subcategory, r)
+      }
+      const seenMed = new Set<string>()
+      const medications = Array.from(medById.values())
+        .map((r: any) => typeof r.content === 'string' ? JSON.parse(r.content) : r.content)
+        .filter(Boolean)
+        .filter((m: any) => {
+          const key = `${(m.brandName || m.genericName || '').toLowerCase()}|${m.dose || ''}|${m.time || ''}|${m.active}`
+          if (seenMed.has(key)) return false
+          seenMed.add(key)
+          return true
+        })
+
+      // Appointments (category 'user', subcategory appointment-plan-/appointment-review-)
+      // — attendance evidence for SSDI care-engagement. From MANAGE (CHA-246).
+      const appointments = (allUserDataFull || [])
+        .filter((r: any) => r.subcategory?.startsWith('appointment-'))
+        .map((r: any) => {
+          const c = typeof r.content === 'string' ? JSON.parse(r.content) : r.content
+          return c ? { ...c, _kind: r.subcategory.startsWith('appointment-review') ? 'review' : 'plan' } : null
+        })
+        .filter(Boolean)
+
       // Generate PDF client-side
       const blob = generateMedicalReport({
         demographics,
@@ -316,6 +350,9 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
         }),
         includePatterns,
         workData,
+        medications,
+        appointments,
+        encryptionPassword: passwordProtect ? pdfPassword : undefined,
       })
 
       // Download or share the PDF.
@@ -634,9 +671,36 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
                 </div>
               </div>
 
-              <p className="text-xs text-muted-foreground text-center">
-                Your report will be saved to your Downloads folder
-              </p>
+              {/* Privacy / encryption — exported PDFs are PHI written to disk */}
+              <div className="rounded-lg border border-destructive bg-destructive/10 p-3 space-y-3">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
+                  <p className="text-xs text-foreground">
+                    This report is <strong>unencrypted medical data</strong> saved to your Downloads folder. Anyone with access to the file can read it. Password-protect it below before sharing or storing.
+                  </p>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Lock className="h-4 w-4" />
+                    <Label>Password-protect this PDF</Label>
+                  </div>
+                  <Switch checked={passwordProtect} onCheckedChange={setPasswordProtect} />
+                </div>
+                {passwordProtect && (
+                  <div className="space-y-1">
+                    <Input
+                      type="password"
+                      placeholder="Set a password to open the PDF"
+                      value={pdfPassword}
+                      onChange={(e) => setPdfPassword(e.target.value)}
+                      autoComplete="new-password"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      You'll need this password to open the file. There's no recovery — keep it somewhere safe.
+                    </p>
+                  </div>
+                )}
+              </div>
 
               <div className="flex gap-2">
                 <Button variant="outline" onClick={() => setStep(2)} className="flex-1">
@@ -645,7 +709,7 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
                 <Button
                   onClick={handleGenerate}
                   className="flex-1"
-                  disabled={isGenerating}
+                  disabled={isGenerating || (passwordProtect && !pdfPassword.trim())}
                 >
                   {isGenerating ? (
                     <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Generating...</>

@@ -44,6 +44,7 @@ export interface TriggerPattern {
   totalOccurrences: number
   coOccurrences: Record<string, number>  // what symptoms co-occur
   averageSeverity: number
+  severityCount: number  // occurrences that actually carried a recorded severity
 }
 
 export interface TreatmentEffect {
@@ -83,32 +84,37 @@ function groupByDate(records: DailyDataRecord[]): Map<string, DailyDataRecord[]>
   return map
 }
 
-/** Extract numeric severity from various tracker formats */
+/**
+ * Coerce a value to a usable severity number, or null.
+ * Accepts numeric strings — several trackers (e.g. brain-fog) store severity as a string,
+ * and the old `typeof === 'number'` check silently dropped every one of them.
+ * Treats 0 / blank / non-numeric as "not recorded": severity scales start at 1, so a 0
+ * means "no value entered," not "an episode of zero severity."
+ */
+function toSev(v: any): number | null {
+  if (v === null || v === undefined || v === '') return null
+  const n = typeof v === 'number' ? v : Number(v)
+  return Number.isFinite(n) && n > 0 ? n : null
+}
+
+/** Extract numeric severity from various tracker formats. Returns null when nothing was recorded. */
 function extractSeverity(record: DailyDataRecord): number | null {
   const c = record.content
   if (!c) return null
-  // Direct severity field
-  if (typeof c.severity === 'number') return c.severity
-  // Pain level
-  if (typeof c.painLevel === 'number') return c.painLevel
-  // Mood (often 1-10)
-  if (typeof c.mood === 'number') return c.mood
-  // Energy level
-  if (typeof c.energyLevel === 'number') return c.energyLevel
-  if (typeof c.energy === 'number') return c.energy
-  // Nested in entries
-  if (Array.isArray(c.entries)) {
-    const severities = c.entries
-      .map((e: any) => e.severity ?? e.painLevel ?? e.intensity)
-      .filter((v: any) => typeof v === 'number')
-    if (severities.length > 0) return severities.reduce((a: number, b: number) => a + b, 0) / severities.length
+  // Direct scalar fields (may arrive as a number OR a numeric string)
+  for (const v of [c.severity, c.painLevel, c.mood, c.energyLevel, c.energy]) {
+    const n = toSev(v)
+    if (n !== null) return n
   }
-  // Episodes with severity
-  if (Array.isArray(c.episodes)) {
-    const severities = c.episodes
-      .map((e: any) => e.severity)
-      .filter((v: any) => typeof v === 'number')
-    if (severities.length > 0) return severities.reduce((a: number, b: number) => a + b, 0) / severities.length
+  // Nested in entries / episodes — average only the values actually recorded
+  for (const key of ['entries', 'episodes'] as const) {
+    const arr = (c as any)[key]
+    if (Array.isArray(arr)) {
+      const severities = arr
+        .map((e: any) => toSev(e.severity ?? e.painLevel ?? e.intensity))
+        .filter((v: number | null): v is number => v !== null)
+      if (severities.length > 0) return severities.reduce((a: number, b: number) => a + b, 0) / severities.length
+    }
   }
   return null
 }
@@ -319,7 +325,8 @@ function findTriggerPatterns(data: TrackerData): PatternInsight[] {
             sources: [],
             totalOccurrences: 0,
             coOccurrences: {},
-            averageSeverity: 0
+            averageSeverity: 0,
+            severityCount: 0
           }
         }
         const tp = triggerMap[key]
@@ -331,9 +338,11 @@ function findTriggerPatterns(data: TrackerData): PatternInsight[] {
           tp.coOccurrences[symptom] = (tp.coOccurrences[symptom] || 0) + 1
         }
 
-        // Running average severity
+        // Running average severity — averaged over occurrences that actually recorded one
+        // (was dividing by totalOccurrences, skewing the mean when some occurrences had no severity)
         if (severity !== null) {
-          tp.averageSeverity = tp.averageSeverity + (severity - tp.averageSeverity) / tp.totalOccurrences
+          tp.severityCount++
+          tp.averageSeverity = tp.averageSeverity + (severity - tp.averageSeverity) / tp.severityCount
         }
       }
     }
@@ -352,6 +361,11 @@ function findTriggerPatterns(data: TrackerData): PatternInsight[] {
       .slice(0, 3)
       .map(([s]) => s)
 
+    // Only state a severity figure when one was actually recorded — a fabricated "0.0/10"
+    // reads as "painless" on a doctor-facing report, which is a misrepresentation.
+    const severityClause = tp.severityCount > 0 ? ` with avg severity ${tp.averageSeverity.toFixed(1)}/10` : ''
+    const coClause = topCoOccurrence.length > 0 ? ` Often comes with: ${topCoOccurrence.join(', ')}.` : ''
+
     insights.push({
       id: `trigger-${tp.trigger.toLowerCase().replace(/\s+/g, '-')}`,
       type: 'trigger',
@@ -359,8 +373,8 @@ function findTriggerPatterns(data: TrackerData): PatternInsight[] {
         ? `${tp.trigger} — Cross-System Trigger`
         : `${tp.trigger} Trigger Pattern`,
       description: crossTracker
-        ? `"${tp.trigger}" triggers episodes across ${tp.sources.length} systems (${sourceNames}). Appeared ${tp.totalOccurrences} times with avg severity ${tp.averageSeverity.toFixed(1)}/10.${topCoOccurrence.length > 0 ? ` Often comes with: ${topCoOccurrence.join(', ')}.` : ''}`
-        : `"${tp.trigger}" appeared ${tp.totalOccurrences} times in ${sourceNames} with avg severity ${tp.averageSeverity.toFixed(1)}/10.${topCoOccurrence.length > 0 ? ` Often comes with: ${topCoOccurrence.join(', ')}.` : ''}`,
+        ? `"${tp.trigger}" triggers episodes across ${tp.sources.length} systems (${sourceNames}). Appeared ${tp.totalOccurrences} times${severityClause}.${coClause}`
+        : `"${tp.trigger}" appeared ${tp.totalOccurrences} times in ${sourceNames}${severityClause}.${coClause}`,
       confidence: Math.min(95, 50 + tp.totalOccurrences * 5 + (crossTracker ? 15 : 0)),
       impact: crossTracker ? 'high' : tp.totalOccurrences >= 8 ? 'high' : 'medium',
       data: {
