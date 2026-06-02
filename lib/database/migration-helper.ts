@@ -208,14 +208,25 @@ export async function importData(jsonData: string): Promise<void> {
           .first();
 
         if (!existing) {
-          await db.daily_data.add(record);
-          dailyInserted++;
+          // Don't re-insert tombstoned records that were deleted before they ever arrived here
+          if (!record.metadata?.deleted_at) {
+            await db.daily_data.add(record);
+            dailyInserted++;
+          } else {
+            dailySkipped++;
+          }
         } else {
           const existingTime = new Date(existing.metadata?.updated_at || 0).getTime();
           const incomingTime = new Date(record.metadata?.updated_at || 0).getTime();
           if (incomingTime > existingTime) {
-            await db.daily_data.update(existing.id!, record);
-            dailyUpdated++;
+            if (record.metadata?.deleted_at) {
+              // Incoming tombstone is newer — propagate the deletion
+              await db.daily_data.delete(existing.id!);
+              dailyUpdated++;
+            } else {
+              await db.daily_data.update(existing.id!, record);
+              dailyUpdated++;
+            }
           } else {
             dailySkipped++;
           }

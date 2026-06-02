@@ -53,6 +53,7 @@ export interface DailyDataRecord {
     updated_at: string;
     user_id?: string;
     version?: number;
+    deleted_at?: string; // tombstone for sync propagation — soft delete instead of hard delete
   };
 }
 

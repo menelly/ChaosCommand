@@ -31,6 +31,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { useDailyData, formatDateForStorage } from '@/lib/database';
+import { getDB } from '@/lib/database/dexie-db';
 import { 
   Medication, 
   MedicationFormData, 
@@ -79,6 +80,7 @@ export function useMedicationTracker(): UseMedicationTrackerReturn {
       
       const medicationRecords = records.filter(
         record => record.subcategory?.startsWith(MEDICATION_SUBCATEGORIES.MEDICATIONS)
+          && !record.metadata?.deleted_at
       );
 
       const loadedMedications: Medication[] = medicationRecords.map(record => {
@@ -254,13 +256,21 @@ export function useMedicationTracker(): UseMedicationTrackerReturn {
       // Remove refill reminder if it exists
       await removeRefillReminder(id);
 
-      // Delete from database
-      const today = formatDateForStorage(new Date());
-      await deleteData(
-        today,
-        MEDICATION_CATEGORIES.TRACKER,
-        `${MEDICATION_SUBCATEGORIES.MEDICATIONS}-${id}`
-      );
+      // Soft-delete: find the record by subcategory (not by date — medications are stored
+      // with their creation date, not today's date, so deleteData(today,...) silently misses).
+      // Setting deleted_at acts as a tombstone so sync can propagate the deletion to other devices.
+      const db = getDB();
+      const subcategory = `${MEDICATION_SUBCATEGORIES.MEDICATIONS}-${id}`;
+      const record = await db.daily_data
+        .where('subcategory')
+        .equals(subcategory)
+        .first();
+      if (record?.id != null) {
+        const now = new Date().toISOString();
+        await db.daily_data.update(record.id, {
+          metadata: { ...record.metadata, deleted_at: now, updated_at: now }
+        });
+      }
 
       // Update local state
       setMedications(prev => prev.filter(med => med.id !== id));
