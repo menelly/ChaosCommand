@@ -115,7 +115,7 @@ export function FoodAllergensHistory({ entries, onEdit, onDelete, onAddNew }: Pr
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.total}</div><div className="text-xs text-muted-foreground">Reactions</div></CardContent></Card>
-        <Card><CardContent className="p-3"><div className="text-2xl font-bold text-red-600">{stats.anaphCount}</div><div className="text-xs text-muted-foreground">Anaphylaxis</div></CardContent></Card>
+        <Card><CardContent className="p-3"><div className="text-2xl font-bold text-destructive">{stats.anaphCount}</div><div className="text-xs text-muted-foreground">Anaphylaxis</div></CardContent></Card>
         <Card><CardContent className="p-3"><div className="text-2xl font-bold text-amber-600">{stats.epipenCount}</div><div className="text-xs text-muted-foreground">EpiPen</div></CardContent></Card>
         <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.erCount}</div><div className="text-xs text-muted-foreground">ER visits</div></CardContent></Card>
         <Card><CardContent className="p-3"><div className="text-2xl font-bold text-amber-600">{stats.celiacCount}</div><div className="text-xs text-muted-foreground">Celiac flares</div></CardContent></Card>

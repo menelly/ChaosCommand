@@ -143,21 +143,21 @@ export function SelfCareHistory({ refreshTrigger, onEdit, onDelete }: SelfCareHi
 
   const getEffectivenessColor = (effectiveness: number) => {
     if (effectiveness >= 8) return 'bg-green-100 text-green-800'
-    if (effectiveness >= 5) return 'bg-yellow-100 text-yellow-800'
-    return 'bg-red-100 text-red-800'
+    if (effectiveness >= 5) return 'bg-warning/10 text-warning'
+    return 'bg-destructive/10 text-destructive'
   }
 
   const getEnergyChange = (before: number, after: number) => {
     const change = after - before
     if (change > 0) return { text: `+${change}`, color: 'text-green-600' }
-    if (change < 0) return { text: `${change}`, color: 'text-red-600' }
+    if (change < 0) return { text: `${change}`, color: 'text-destructive' }
     return { text: '0', color: 'text-muted-foreground' }
   }
 
   const getStressChange = (before: number, after: number) => {
     const change = before - after // Positive change means stress decreased (good)
     if (change > 0) return { text: `-${change}`, color: 'text-green-600' }
-    if (change < 0) return { text: `+${Math.abs(change)}`, color: 'text-red-600' }
+    if (change < 0) return { text: `+${Math.abs(change)}`, color: 'text-destructive' }
     return { text: '0', color: 'text-muted-foreground' }
   }
 
@@ -354,12 +354,12 @@ export function SelfCareHistory({ refreshTrigger, onEdit, onDelete }: SelfCareHi
                   {/* Experience Indicators */}
                   <div className="flex gap-2 text-xs">
                     {entry.feltGuilty && (
-                      <Badge variant="outline" className="text-orange-600 border-orange-200">
+                      <Badge variant="outline" className="text-warning border-warning/30">
                         Felt guilty
                       </Badge>
                     )}
                     {entry.interrupted && (
-                      <Badge variant="outline" className="text-red-600 border-red-200">
+                      <Badge variant="outline" className="text-destructive border-destructive/20">
                         Interrupted
                       </Badge>
                     )}

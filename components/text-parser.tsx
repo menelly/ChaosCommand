@@ -115,8 +115,8 @@ export default function TextParserComponent({
 
   const getConfidenceColor = (confidence: number) => {
     if (confidence >= 0.8) return 'text-green-600';
-    if (confidence >= 0.6) return 'text-yellow-600';
-    return 'text-red-600';
+    if (confidence >= 0.6) return 'text-warning';
+    return 'text-destructive';
   };
 
   const getConfidenceBadge = (confidence: number) => {
@@ -239,12 +239,12 @@ export default function TextParserComponent({
 
             {/* Errors */}
             {parseResult.errors && parseResult.errors.length > 0 && (
-              <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
-                <div className="flex items-center gap-2 text-yellow-800 text-sm">
+              <div className="mt-4 p-3 bg-warning/5 border border-warning/20 rounded">
+                <div className="flex items-center gap-2 text-warning text-sm">
                   <AlertCircle className="h-4 w-4" />
                   <span className="font-medium">Parsing Issues:</span>
                 </div>
-                <ul className="mt-1 text-xs text-yellow-700 list-disc list-inside">
+                <ul className="mt-1 text-xs text-warning list-disc list-inside">
                   {parseResult.errors.map((error, index) => (
                     <li key={index}>{error}</li>
                   ))}

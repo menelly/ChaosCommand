@@ -332,7 +332,7 @@ export function CrisisAnalytics({ refreshTrigger }: CrisisAnalyticsProps) {
               <div className="text-sm text-muted-foreground">Professional Help Sought</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-red-600">
+              <div className="text-2xl font-bold text-destructive">
                 {Math.round((analytics.emergencyRate / analytics.totalCrises) * 100)}%
               </div>
               <div className="text-sm text-muted-foreground">Emergency Services Used</div>

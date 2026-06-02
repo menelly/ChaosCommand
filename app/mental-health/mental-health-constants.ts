@@ -28,7 +28,7 @@ export const EPISODE_TYPES = [
   { id: 'mood' as MindMoodEpisodeType, name: 'Mood', icon: '🎭', description: 'Emotional state — depression, mania, mood swings', color: 'bg-violet-100 text-violet-800 border-violet-200' },
   { id: 'cognitive' as MindMoodEpisodeType, name: 'Cognitive', icon: '🧠', description: 'Brain fog, focus, processing, decision-making', color: 'bg-cyan-100 text-cyan-800 border-cyan-200' },
   { id: 'energy' as MindMoodEpisodeType, name: 'Energy', icon: '⚡', description: 'Mental energy, fatigue, drive', color: 'bg-amber-100 text-amber-800 border-amber-200' },
-  { id: 'motivation' as MindMoodEpisodeType, name: 'Motivation', icon: '🎯', description: 'Anhedonia, executive function, follow-through', color: 'bg-orange-100 text-orange-800 border-orange-200' },
+  { id: 'motivation' as MindMoodEpisodeType, name: 'Motivation', icon: '🎯', description: 'Anhedonia, executive function, follow-through', color: 'bg-warning/10 text-warning border-warning/20' },
   { id: 'connection' as MindMoodEpisodeType, name: 'Connection', icon: '🤝', description: 'Social engagement, loneliness, intimacy', color: 'bg-pink-100 text-pink-800 border-pink-200' },
   { id: 'regulation' as MindMoodEpisodeType, name: 'Emotional Regulation', icon: '🌊', description: 'Frustration tolerance, meltdown precursors (AuDHD-aware)', color: 'bg-blue-100 text-blue-800 border-blue-200' },
   { id: 'general' as MindMoodEpisodeType, name: 'General Check-in', icon: '💜', description: 'Mixed / quick check-in / "just logging where I am"', color: 'bg-purple-100 text-purple-800 border-purple-200' },
@@ -106,11 +106,11 @@ export const MOOD_OPTIONS: MoodOption[] = [
   { value: 'amazing', emoji: '🤩', label: 'Amazing', color: 'bg-green-100 text-green-800' },
   { value: 'great', emoji: '😊', label: 'Great', color: 'bg-green-100 text-green-800' },
   { value: 'good', emoji: '🙂', label: 'Good', color: 'bg-blue-100 text-blue-800' },
-  { value: 'okay', emoji: '😐', label: 'Okay', color: 'bg-yellow-100 text-yellow-800' },
+  { value: 'okay', emoji: '😐', label: 'Okay', color: 'bg-warning/10 text-warning' },
   { value: 'meh', emoji: '😑', label: 'Meh', color: 'bg-gray-100 text-gray-800' },
-  { value: 'down', emoji: '😔', label: 'Down', color: 'bg-orange-100 text-orange-800' },
-  { value: 'bad', emoji: '😞', label: 'Bad', color: 'bg-red-100 text-red-800' },
-  { value: 'awful', emoji: '😭', label: 'Awful', color: 'bg-red-100 text-red-800' },
+  { value: 'down', emoji: '😔', label: 'Down', color: 'bg-warning/10 text-warning' },
+  { value: 'bad', emoji: '😞', label: 'Bad', color: 'bg-destructive/10 text-destructive' },
+  { value: 'awful', emoji: '😭', label: 'Awful', color: 'bg-destructive/10 text-destructive' },
 ]
 
 // Additional Emotional States (can select multiple)

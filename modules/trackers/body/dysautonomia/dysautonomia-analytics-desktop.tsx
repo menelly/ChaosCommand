@@ -217,7 +217,7 @@ export function DysautonomiaAnalyticsDesktop({ entries }: DysautonomiaAnalyticsP
       <Card>
         <CardContent className="p-6">
           <div className="text-center">
-            <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-red-500" />
+            <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-destructive" />
             <h3 className="text-lg font-semibold mb-2">Analytics Error</h3>
             <p className="text-muted-foreground mb-4">{error}</p>
             <Button onClick={fetchAnalytics} variant="outline">
@@ -521,7 +521,7 @@ export function DysautonomiaAnalyticsDesktop({ entries }: DysautonomiaAnalyticsP
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-orange-500" />
+              <AlertTriangle className="h-5 w-5 text-warning" />
               Trigger Analysis
             </CardTitle>
           </CardHeader>
@@ -618,15 +618,15 @@ export function DysautonomiaAnalyticsDesktop({ entries }: DysautonomiaAnalyticsP
                 <div className="text-sm text-muted-foreground">Mild (1-3)</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-yellow-600">{analyticsData.severity.distribution?.moderate}</div>
+                <div className="text-2xl font-bold text-warning">{analyticsData.severity.distribution?.moderate}</div>
                 <div className="text-sm text-muted-foreground">Moderate (4-6)</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-orange-600">{analyticsData.severity.distribution?.severe}</div>
+                <div className="text-2xl font-bold text-warning">{analyticsData.severity.distribution?.severe}</div>
                 <div className="text-sm text-muted-foreground">Severe (7-8)</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-red-600">{analyticsData.severity.distribution?.critical}</div>
+                <div className="text-2xl font-bold text-destructive">{analyticsData.severity.distribution?.critical}</div>
                 <div className="text-sm text-muted-foreground">Critical (9-10)</div>
               </div>
             </div>

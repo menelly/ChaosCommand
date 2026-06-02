@@ -260,7 +260,7 @@ function AppContent({ children }: AppWrapperProps) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="text-center space-y-4 max-w-md">
-          <div className="text-red-500 text-6xl">⚠️</div>
+          <div className="text-destructive text-6xl">⚠️</div>
           <h2 className="text-xl font-semibold">Database Error</h2>
           <p className="text-muted-foreground">{error}</p>
           <p className="text-sm text-muted-foreground">

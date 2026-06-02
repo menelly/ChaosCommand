@@ -104,7 +104,7 @@ export function AnxietyHistory({ entries, onEdit, onDelete, onAddNew }: Props) {
         <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.avgAnx}</div><div className="text-xs text-muted-foreground">Avg anxiety</div></CardContent></Card>
         <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.avgPanic}</div><div className="text-xs text-muted-foreground">Avg panic</div></CardContent></Card>
         <Card><CardContent className="p-3"><div className="text-2xl font-bold text-purple-600">{stats.meltdownCount}</div><div className="text-xs text-muted-foreground">Meltdowns</div></CardContent></Card>
-        <Card><CardContent className="p-3"><div className="text-2xl font-bold text-red-600">{stats.siCount}</div><div className="text-xs text-muted-foreground">SI flagged</div></CardContent></Card>
+        <Card><CardContent className="p-3"><div className="text-2xl font-bold text-destructive">{stats.siCount}</div><div className="text-xs text-muted-foreground">SI flagged</div></CardContent></Card>
       </div>
 
       <Card>

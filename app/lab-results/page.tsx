@@ -525,7 +525,7 @@ export default function LabResultsPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 h-9 w-9 p-0"
+                            className="text-destructive hover:text-destructive hover:bg-destructive/5 h-9 w-9 p-0"
                             onClick={(e) => {
                               e.stopPropagation()
                               handleAddToTimeline(report, true)
@@ -538,7 +538,7 @@ export default function LabResultsPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 h-9 w-9 p-0"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/5 h-9 w-9 p-0"
                           onClick={(e) => {
                             e.stopPropagation()
                             handleDeleteReport(report)
@@ -693,7 +693,7 @@ export default function LabResultsPage() {
                                       <td className="py-2 pr-2">
                                         {trend.values.length >= 2 && (
                                           <div className="flex items-center gap-1 text-xs">
-                                            {trend.direction === "up" && <TrendingUp className="h-3 w-3 text-red-500" />}
+                                            {trend.direction === "up" && <TrendingUp className="h-3 w-3 text-destructive" />}
                                             {trend.direction === "down" && <TrendingDown className="h-3 w-3 text-blue-500" />}
                                             {trend.direction === "stable" && <Minus className="h-3 w-3 text-green-500" />}
                                             <span className="text-[var(--text-muted)]">
@@ -708,7 +708,7 @@ export default function LabResultsPage() {
                                             onClick={() => startEdit(report.id, idx, result)} title="Edit">
                                             <Edit3 className="h-3 w-3" />
                                           </Button>
-                                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 min-h-[44px] min-w-[44px] text-red-400"
+                                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 min-h-[44px] min-w-[44px] text-destructive"
                                             onClick={() => deleteTest(report, idx)} title="Delete test">
                                             <X className="h-3 w-3" />
                                           </Button>

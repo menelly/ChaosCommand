@@ -446,11 +446,11 @@ export default function TimelinePage() {
   // Get status color
   const getStatusColor = (status: MedicalEvent['status']) => {
     switch (status) {
-      case 'active': return 'bg-red-100 text-red-800';
+      case 'active': return 'bg-destructive/10 text-destructive';
       case 'resolved': return 'bg-green-100 text-green-800';
       case 'ongoing': return 'bg-blue-100 text-blue-800';
       case 'scheduled': return 'bg-yellow-100 text-yellow-800';
-      case 'needs_review': return 'bg-orange-100 text-orange-800';
+      case 'needs_review': return 'bg-warning/10 text-warning';
       default: return 'bg-muted text-muted-foreground';
     }
   };
@@ -1030,8 +1030,8 @@ export default function TimelinePage() {
                               <Badge
                                 variant="outline"
                                 className={
-                                  event.severity === 'critical' ? 'border-red-500 text-red-700' :
-                                  event.severity === 'severe' ? 'border-orange-500 text-orange-700' :
+                                  event.severity === 'critical' ? 'border-destructive text-destructive' :
+                                  event.severity === 'severe' ? 'border-warning text-warning' :
                                   event.severity === 'moderate' ? 'border-yellow-500 text-yellow-700' :
                                   'border-green-500 text-green-700'
                                 }
@@ -1106,7 +1106,7 @@ export default function TimelinePage() {
                               variant="ghost"
                               size="sm"
                               onClick={(e) => { e.stopPropagation(); handleDeleteEvent(event) }}
-                              className="text-red-600 hover:text-red-700"
+                              className="text-destructive hover:text-destructive"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>

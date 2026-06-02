@@ -304,12 +304,12 @@ export function SelfCareAnalytics({ refreshTrigger }: SelfCareAnalyticsProps) {
             {overallStats.avgEnergyChange >= 0 ? (
               <TrendingUp className="h-4 w-4 text-green-600" />
             ) : (
-              <TrendingDown className="h-4 w-4 text-red-600" />
+              <TrendingDown className="h-4 w-4 text-destructive" />
             )}
           </CardHeader>
           <CardContent>
             <div className={`text-2xl font-bold ${
-              overallStats.avgEnergyChange >= 0 ? 'text-green-600' : 'text-red-600'
+              overallStats.avgEnergyChange >= 0 ? 'text-green-600' : 'text-destructive'
             }`}>
               {overallStats.avgEnergyChange >= 0 ? '+' : ''}{overallStats.avgEnergyChange.toFixed(1)}
             </div>
@@ -325,12 +325,12 @@ export function SelfCareAnalytics({ refreshTrigger }: SelfCareAnalyticsProps) {
             {overallStats.avgStressChange >= 0 ? (
               <TrendingDown className="h-4 w-4 text-green-600" />
             ) : (
-              <TrendingUp className="h-4 w-4 text-red-600" />
+              <TrendingUp className="h-4 w-4 text-destructive" />
             )}
           </CardHeader>
           <CardContent>
             <div className={`text-2xl font-bold ${
-              overallStats.avgStressChange >= 0 ? 'text-green-600' : 'text-red-600'
+              overallStats.avgStressChange >= 0 ? 'text-green-600' : 'text-destructive'
             }`}>
               {overallStats.avgStressChange >= 0 ? '-' : '+'}{Math.abs(overallStats.avgStressChange).toFixed(1)}
             </div>

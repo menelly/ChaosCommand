@@ -67,7 +67,7 @@ export const EPISODE_TYPES = [
     name: 'Cluster',
     icon: '🔪',
     description: 'Severe one-sided, around eye/temple, watery eye, runny nose',
-    color: 'bg-red-100 text-red-800 border-red-200'
+    color: 'bg-destructive/10 text-destructive border-destructive/20'
   },
   {
     id: 'sinus' as HeadPainEpisodeType,
@@ -81,7 +81,7 @@ export const EPISODE_TYPES = [
     name: 'Worst of Life',
     icon: '🚨',
     description: 'Sudden, severe, "worst headache ever" — RULE OUT SAH IMMEDIATELY',
-    color: 'bg-red-200 text-red-900 border-red-300'
+    color: 'bg-destructive/20 text-destructive border-destructive/30'
   },
   {
     id: 'general' as HeadPainEpisodeType,

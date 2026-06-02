@@ -271,8 +271,8 @@ export default function DiabetesFlaskAnalytics({ entries, currentDate, loadAllEn
     return (
       <Card>
         <CardContent className="p-8 text-center">
-          <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-4" />
-          <p className="text-red-600 mb-4">Analytics Error: {error}</p>
+          <AlertCircle className="h-8 w-8 text-destructive mx-auto mb-4" />
+          <p className="text-destructive mb-4">Analytics Error: {error}</p>
           <Button onClick={loadLocalAnalytics} variant="outline">
             Retry Analytics
           </Button>
@@ -469,7 +469,7 @@ export default function DiabetesFlaskAnalytics({ entries, currentDate, loadAllEn
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span>Low (&lt;70):</span>
-                  <span className="text-red-600">{glucose_analysis.time_in_range_percent.low}%</span>
+                  <span className="text-destructive">{glucose_analysis.time_in_range_percent.low}%</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>Normal (70-180):</span>
@@ -477,7 +477,7 @@ export default function DiabetesFlaskAnalytics({ entries, currentDate, loadAllEn
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>High (&gt;180):</span>
-                  <span className="text-orange-600">{glucose_analysis.time_in_range_percent.high}%</span>
+                  <span className="text-warning">{glucose_analysis.time_in_range_percent.high}%</span>
                 </div>
               </div>
             </CardContent>

@@ -299,11 +299,11 @@ export function GeneralEpisodeModal({ isOpen, onClose, onSave, editingEntry }: E
               )}
               {restingSpO2 && standingSpO2 && (
                 <div>SpO2 Drop: {parseInt(restingSpO2) - parseInt(standingSpO2)}%
-                  {parseInt(restingSpO2) - parseInt(standingSpO2) > 4 && <span className="text-red-500 ml-1">⚠️ Significant</span>}
+                  {parseInt(restingSpO2) - parseInt(standingSpO2) > 4 && <span className="text-destructive ml-1">⚠️ Significant</span>}
                 </div>
               )}
               {lowestSpO2 && parseInt(lowestSpO2) < 90 && (
-                <div className="text-red-500">🚨 Critical SpO2: {lowestSpO2}% (Normal: ≥95%)</div>
+                <div className="text-destructive">🚨 Critical SpO2: {lowestSpO2}% (Normal: ≥95%)</div>
               )}
             </div>
           </div>

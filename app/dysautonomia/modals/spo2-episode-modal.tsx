@@ -241,19 +241,19 @@ export function SpO2EpisodeModal({ isOpen, onClose, onSave, editingEntry }: Epis
             {/* SpO2 Analysis */}
             <div className="space-y-2 text-sm">
               {spO2Drop !== null && (
-                <div className={`flex items-center gap-2 ${spO2Drop > 4 ? 'text-red-600' : 'text-muted-foreground'}`}>
+                <div className={`flex items-center gap-2 ${spO2Drop > 4 ? 'text-destructive' : 'text-muted-foreground'}`}>
                   SpO2 Drop: {spO2Drop}% 
                   {spO2Drop > 4 && <Badge variant="destructive">Significant</Badge>}
                 </div>
               )}
               {isCritical && (
-                <div className="flex items-center gap-2 text-red-600">
+                <div className="flex items-center gap-2 text-destructive">
                   <AlertTriangle className="h-4 w-4" />
                   Critical SpO2: {lowestValue}% (Normal: ≥95%)
                 </div>
               )}
               {isSevere && (
-                <div className="flex items-center gap-2 text-red-800 font-semibold">
+                <div className="flex items-center gap-2 text-destructive font-semibold">
                   <AlertTriangle className="h-4 w-4" />
                   SEVERE SpO2: {lowestValue}% - Seek immediate medical attention!
                 </div>

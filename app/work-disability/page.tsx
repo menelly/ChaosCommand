@@ -98,9 +98,9 @@ const WORK_TYPES: { value: WorkType; label: string; icon: React.ReactNode }[] = 
 ]
 
 const IMPACT_LEVELS: { value: ImpactLevel; label: string; color: string }[] = [
-  { value: "mild", label: "Mild — could do some things", color: "bg-yellow-100 text-yellow-800 border-yellow-300" },
-  { value: "moderate", label: "Moderate — struggled significantly", color: "bg-orange-100 text-orange-800 border-orange-300" },
-  { value: "severe", label: "Severe — could barely function", color: "bg-red-100 text-red-800 border-red-300" },
+  { value: "mild", label: "Mild — could do some things", color: "bg-warning/10 text-warning border-warning/30" },
+  { value: "moderate", label: "Moderate — struggled significantly", color: "bg-warning/10 text-warning border-warning/30" },
+  { value: "severe", label: "Severe — could barely function", color: "bg-destructive/10 text-destructive border-destructive/20" },
 ]
 
 const APP_TYPES = ["SSDI", "SSI", "State Disability", "Private LTD", "VA Disability", "Voc Rehab", "Other"]
@@ -108,8 +108,8 @@ const APP_TYPES = ["SSDI", "SSI", "State Disability", "Private LTD", "VA Disabil
 const STATUS_COLORS: Record<string, string> = {
   "Pending": "bg-blue-100 text-blue-800",
   "Approved": "bg-green-100 text-green-800",
-  "Denied": "bg-red-100 text-red-800",
-  "Appeal": "bg-orange-100 text-orange-800",
+  "Denied": "bg-destructive/10 text-destructive",
+  "Appeal": "bg-warning/10 text-warning",
 }
 
 // ============================================================================
@@ -396,13 +396,13 @@ export default function WorkDisabilityPage() {
                 </Card>
                 <Card className="border-[var(--border-soft)] bg-[var(--bg-card)]">
                   <CardContent className="py-3 text-center">
-                    <div className="text-2xl font-bold text-red-600">{missedStats.totalDisabled}</div>
+                    <div className="text-2xl font-bold text-destructive">{missedStats.totalDisabled}</div>
                     <div className="text-xs text-[var(--text-muted)]">Completely Unable</div>
                   </CardContent>
                 </Card>
                 <Card className="border-[var(--border-soft)] bg-[var(--bg-card)]">
                   <CardContent className="py-3 text-center">
-                    <div className="text-2xl font-bold text-orange-600">
+                    <div className="text-2xl font-bold text-destructive">
                       {missedStats.byImpact.find(i => i.value === "severe")?.count || 0}
                     </div>
                     <div className="text-xs text-[var(--text-muted)]">Severe Days</div>
@@ -662,7 +662,7 @@ export default function WorkDisabilityPage() {
                             {workType?.label || day.workType}
                           </Badge>
                           {day.couldNotDoAnythingElse && (
-                            <Badge className="bg-red-100 text-red-800 text-xs">
+                            <Badge className="bg-destructive/10 text-destructive text-xs">
                               Total Limitation
                             </Badge>
                           )}
@@ -682,7 +682,7 @@ export default function WorkDisabilityPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-7 w-7 p-0 text-[var(--text-muted)] hover:text-red-500"
+                            className="h-7 w-7 p-0 text-[var(--text-muted)] hover:text-destructive"
                             onClick={() => deleteMissedDay(day)}
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -835,7 +835,7 @@ export default function WorkDisabilityPage() {
                             onClick={() => editEmployment(emp)}>
                             <Edit3 className="h-3.5 w-3.5" />
                           </Button>
-                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-[var(--text-muted)] hover:text-red-500"
+                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-[var(--text-muted)] hover:text-destructive"
                             onClick={() => deleteEmployment(emp)}>
                             <Trash2 className="h-3.5 w-3.5" />
                           </Button>
@@ -845,7 +845,7 @@ export default function WorkDisabilityPage() {
                     {emp.jobDuties && <p className="text-sm text-[var(--text-muted)] mt-2">{emp.jobDuties}</p>}
                     {emp.accommodationsRequested.details && (
                       <div className="mt-2 text-xs">
-                        <span className="text-orange-600 font-medium">Requested:</span>{" "}
+                        <span className="text-warning font-medium">Requested:</span>{" "}
                         <span className="text-[var(--text-muted)]">{emp.accommodationsRequested.details}</span>
                       </div>
                     )}
@@ -931,10 +931,10 @@ export default function WorkDisabilityPage() {
                         placeholder="If assigned" className="mt-1" />
                     </div>
                     <div>
-                      <Label className="text-[var(--text-main)] text-red-600">Appeal Deadline</Label>
+                      <Label className="text-[var(--text-main)] text-destructive">Appeal Deadline</Label>
                       <Input type="date" value={appForm.appealDeadline}
                         onChange={e => setAppForm(f => ({ ...f, appealDeadline: e.target.value }))}
-                        className="mt-1 border-red-200" />
+                        className="mt-1 border-destructive/20" />
                     </div>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -1012,7 +1012,7 @@ export default function WorkDisabilityPage() {
                           {app.status}
                         </Badge>
                         {app.appealDeadline && (
-                          <Badge className="bg-red-100 text-red-800 text-xs">
+                          <Badge className="bg-destructive/10 text-destructive text-xs">
                             <AlertTriangle className="h-3 w-3 mr-1" />
                             Deadline: {app.appealDeadline}
                           </Badge>
@@ -1022,7 +1022,7 @@ export default function WorkDisabilityPage() {
                             onClick={() => editApplication(app)}>
                             <Edit3 className="h-3.5 w-3.5" />
                           </Button>
-                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-[var(--text-muted)] hover:text-red-500"
+                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-[var(--text-muted)] hover:text-destructive"
                             onClick={() => deleteApplication(app)}>
                             <Trash2 className="h-3.5 w-3.5" />
                           </Button>

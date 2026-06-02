@@ -164,7 +164,7 @@ export default function CrisisSupport() {
                 <div className="flex flex-wrap gap-2">
                   <Button 
                     onClick={() => handleEmergencyCall('988')}
-                    className="bg-red-600 hover:bg-red-700 text-white"
+                    className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
                   >
                     <Phone className="h-4 w-4 mr-2" />
                     Call 988 Now
@@ -218,7 +218,7 @@ export default function CrisisSupport() {
         {/* Quick Access Emergency Resources */}
         <Card className="border-2 border-primary">
           <CardHeader className="text-center pb-2">
-            <CardTitle className="flex items-center justify-center gap-2 text-red-600">
+            <CardTitle className="flex items-center justify-center gap-2 text-destructive">
               <Phone className="h-5 w-5" />
               Immediate Help - Available 24/7
             </CardTitle>
@@ -227,7 +227,7 @@ export default function CrisisSupport() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Button
                 onClick={() => handleEmergencyCall('988')}
-                className="crisis-emergency-btn crisis-emergency-988 h-auto py-4 flex flex-col items-center gap-1 bg-red-500 hover:bg-red-600 text-white"
+                className="crisis-emergency-btn crisis-emergency-988 h-auto py-4 flex flex-col items-center gap-1 bg-destructive hover:bg-destructive/90 text-destructive-foreground"
               >
                 <Phone className="h-6 w-6" />
                 <span className="font-semibold">988 Crisis Line</span>
@@ -237,7 +237,7 @@ export default function CrisisSupport() {
               <Button
                 onClick={() => handleEmergencyCall('741741')}
                 variant="outline"
-                className="crisis-emergency-btn crisis-emergency-text h-auto py-4 flex flex-col items-center gap-1 border-orange-500 text-orange-600 hover:bg-orange-500 hover:text-white"
+                className="crisis-emergency-btn crisis-emergency-text h-auto py-4 flex flex-col items-center gap-1 border-warning text-warning hover:bg-warning hover:text-white"
               >
                 <MessageSquare className="h-6 w-6" />
                 <span className="font-semibold">Text HOME to 741741</span>
@@ -296,7 +296,7 @@ export default function CrisisSupport() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Heart className="h-5 w-5 text-red-500" />
+                    <Heart className="h-5 w-5 text-destructive" />
                     Right Now: You Matter
                   </CardTitle>
                 </CardHeader>
@@ -402,7 +402,7 @@ export default function CrisisSupport() {
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <Card className="cursor-pointer transition-all hover:shadow-md hover:border-red-300">
+                    <Card className="cursor-pointer transition-all hover:shadow-md hover:border-destructive/30">
                       <CardContent className="p-4">
                         <h3 className="font-medium text-sm">Call for Help</h3>
                         <p className="text-xs text-muted-foreground mt-1">
@@ -410,7 +410,7 @@ export default function CrisisSupport() {
                         </p>
                         <Button
                           onClick={() => handleEmergencyCall('988')}
-                          className="mt-2 w-full bg-red-500 hover:bg-red-600"
+                          className="mt-2 w-full bg-destructive hover:bg-destructive/90"
                           size="sm"
                         >
                           <Phone className="h-4 w-4 mr-2" />
@@ -419,7 +419,7 @@ export default function CrisisSupport() {
                       </CardContent>
                     </Card>
 
-                    <Card className="cursor-pointer transition-all hover:shadow-md hover:border-red-300">
+                    <Card className="cursor-pointer transition-all hover:shadow-md hover:border-destructive/30">
                       <CardContent className="p-4">
                         <h3 className="font-medium text-sm">Remove Means</h3>
                         <p className="text-xs text-muted-foreground mt-1">
@@ -428,7 +428,7 @@ export default function CrisisSupport() {
                       </CardContent>
                     </Card>
 
-                    <Card className="cursor-pointer transition-all hover:shadow-md hover:border-red-300">
+                    <Card className="cursor-pointer transition-all hover:shadow-md hover:border-destructive/30">
                       <CardContent className="p-4">
                         <h3 className="font-medium text-sm">Get Somewhere Safe</h3>
                         <p className="text-xs text-muted-foreground mt-1">
@@ -437,7 +437,7 @@ export default function CrisisSupport() {
                       </CardContent>
                     </Card>
 
-                    <Card className="cursor-pointer transition-all hover:shadow-md hover:border-red-300">
+                    <Card className="cursor-pointer transition-all hover:shadow-md hover:border-destructive/30">
                       <CardContent className="p-4">
                         <h3 className="font-medium text-sm">Use Your Safety Plan</h3>
                         <p className="text-xs text-muted-foreground mt-1">

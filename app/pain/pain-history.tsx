@@ -134,7 +134,7 @@ export function PainHistory({ entries, onEdit, onDelete, onAddNew }: Props) {
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.total}</div><div className="text-xs text-muted-foreground">Episodes</div></CardContent></Card>
         <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.avg}</div><div className="text-xs text-muted-foreground">Avg level</div></CardContent></Card>
-        <Card><CardContent className="p-3"><div className="text-2xl font-bold text-red-600">{stats.peak}</div><div className="text-xs text-muted-foreground">Peak level</div></CardContent></Card>
+        <Card><CardContent className="p-3"><div className="text-2xl font-bold text-destructive">{stats.peak}</div><div className="text-xs text-muted-foreground">Peak level</div></CardContent></Card>
         <Card><CardContent className="p-3"><div className="text-2xl font-bold text-amber-600">{stats.flagsCount}</div><div className="text-xs text-muted-foreground">Red flags</div></CardContent></Card>
         <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.erCount}</div><div className="text-xs text-muted-foreground">ER visits</div></CardContent></Card>
       </div>

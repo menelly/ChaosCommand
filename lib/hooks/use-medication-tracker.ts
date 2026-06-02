@@ -268,7 +268,7 @@ export function useMedicationTracker(): UseMedicationTrackerReturn {
       if (record?.id != null) {
         const now = new Date().toISOString();
         await db.daily_data.update(record.id, {
-          metadata: { ...record.metadata, deleted_at: now, updated_at: now }
+          metadata: { ...record.metadata, created_at: record.metadata?.created_at ?? now, deleted_at: now, updated_at: now }
         });
       }
 

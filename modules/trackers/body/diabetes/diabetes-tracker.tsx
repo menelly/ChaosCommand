@@ -362,8 +362,8 @@ export default function DiabetesTracker() {
         <div className="text-center mb-6">
           {/* Expired Timer Alert */}
           {timers.some(timer => getTimeRemaining(timer).expired) && (
-            <div className="flex items-center justify-center gap-2 px-3 py-1 mb-4 bg-red-100 border border-red-300 rounded-lg animate-pulse">
-              <span className="text-red-600 font-bold text-sm">
+            <div className="flex items-center justify-center gap-2 px-3 py-1 mb-4 bg-destructive/10 border border-destructive/30 rounded-lg animate-pulse">
+              <span className="text-destructive font-bold text-sm">
                 🚨 {timers.filter(timer => getTimeRemaining(timer).expired).length} Timer(s) Expired!
               </span>
             </div>

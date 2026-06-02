@@ -25,14 +25,14 @@ import { AnxietyTypeOption, CopingStrategy, AnxietyEpisodeType } from './anxiety
 
 // === v2 EPISODE TYPES (multi-modal) ===
 export const EPISODE_TYPES = [
-  { id: 'panic-attack' as AnxietyEpisodeType, name: 'Panic Attack', icon: '😱', description: 'Intense fear with physical symptoms', color: 'bg-red-100 text-red-800 border-red-200' },
-  { id: 'generalized' as AnxietyEpisodeType, name: 'Generalized', icon: '😰', description: 'General worry / unease', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
+  { id: 'panic-attack' as AnxietyEpisodeType, name: 'Panic Attack', icon: '😱', description: 'Intense fear with physical symptoms', color: 'bg-destructive/10 text-destructive border-destructive/20' },
+  { id: 'generalized' as AnxietyEpisodeType, name: 'Generalized', icon: '😰', description: 'General worry / unease', color: 'bg-warning/10 text-warning border-warning/20' },
   { id: 'social' as AnxietyEpisodeType, name: 'Social', icon: '😳', description: 'Anxiety around people / social situations', color: 'bg-blue-100 text-blue-800 border-blue-200' },
   { id: 'phobic' as AnxietyEpisodeType, name: 'Phobic', icon: '⚠️', description: 'Specific trigger / stimulus', color: 'bg-violet-100 text-violet-800 border-violet-200' },
   { id: 'ocd-shaped' as AnxietyEpisodeType, name: 'OCD-shaped', icon: '🔁', description: 'Intrusive thoughts + compulsion urges', color: 'bg-cyan-100 text-cyan-800 border-cyan-200' },
   { id: 'meltdown' as AnxietyEpisodeType, name: 'Meltdown', icon: '🌪️', description: 'Sensory / emotional overload (AuDHD)', color: 'bg-purple-100 text-purple-800 border-purple-200' },
   { id: 'shutdown' as AnxietyEpisodeType, name: 'Shutdown', icon: '🔇', description: 'Withdrawal / inability to function (AuDHD)', color: 'bg-gray-100 text-gray-800 border-gray-200' },
-  { id: 'anticipatory' as AnxietyEpisodeType, name: 'Anticipatory', icon: '⏰', description: 'Worry about future events', color: 'bg-orange-100 text-orange-800 border-orange-200' },
+  { id: 'anticipatory' as AnxietyEpisodeType, name: 'Anticipatory', icon: '⏰', description: 'Worry about future events', color: 'bg-warning/10 text-warning border-warning/20' },
   { id: 'performance' as AnxietyEpisodeType, name: 'Performance', icon: '🎭', description: 'Fear of being judged / failing', color: 'bg-pink-100 text-pink-800 border-pink-200' },
   { id: 'health' as AnxietyEpisodeType, name: 'Health Anxiety', icon: '🏥', description: 'Worry about illness / medical issues', color: 'bg-emerald-100 text-emerald-800 border-emerald-200' },
   { id: 'general' as AnxietyEpisodeType, name: 'General / Other', icon: '🌫️', description: 'Other anxiety experience', color: 'bg-slate-100 text-slate-800 border-slate-200' },
@@ -143,7 +143,7 @@ export const ANXIETY_TYPES: AnxietyTypeOption[] = [
     label: 'Generalized Anxiety',
     emoji: '😰',
     description: 'General worry and unease',
-    color: 'bg-yellow-100 text-yellow-800'
+    color: 'bg-warning/10 text-warning'
   },
   {
     value: 'social',
@@ -157,7 +157,7 @@ export const ANXIETY_TYPES: AnxietyTypeOption[] = [
     label: 'Panic Attack',
     emoji: '😱',
     description: 'Intense fear with physical symptoms',
-    color: 'bg-red-100 text-red-800'
+    color: 'bg-destructive/10 text-destructive'
   },
   {
     value: 'meltdown',
@@ -178,7 +178,7 @@ export const ANXIETY_TYPES: AnxietyTypeOption[] = [
     label: 'Anticipatory Anxiety',
     emoji: '⏰',
     description: 'Worry about future events',
-    color: 'bg-orange-100 text-orange-800'
+    color: 'bg-warning/10 text-warning'
   },
   {
     value: 'performance',

@@ -16,21 +16,21 @@ export const EPISODE_TYPES = [
     name: 'Mild Reaction',
     icon: '😬',
     description: 'Itching, mild rash, mild GI — no airway involvement',
-    color: 'bg-yellow-100 text-yellow-800 border-yellow-200'
+    color: 'bg-warning/10 text-warning border-warning/20'
   },
   {
     id: 'moderate' as FoodReactionEpisodeType,
     name: 'Moderate Reaction',
     icon: '⚠️',
     description: 'Hives, swelling, GI distress, but no airway/breathing involvement',
-    color: 'bg-orange-100 text-orange-800 border-orange-200'
+    color: 'bg-warning/10 text-warning border-warning/20'
   },
   {
     id: 'severe-anaphylaxis' as FoodReactionEpisodeType,
     name: 'Severe / Anaphylaxis',
     icon: '🚨',
     description: 'Multisystem — skin + airway/breathing. EpiPen + 911 territory',
-    color: 'bg-red-100 text-red-800 border-red-200'
+    color: 'bg-destructive/10 text-destructive border-destructive/20'
   },
   {
     id: 'celiac-autoimmune' as FoodReactionEpisodeType,
@@ -188,10 +188,10 @@ export const COMMON_TREATMENTS = [
 
 // === SEVERITY LEVELS ===
 export const SEVERITY_LEVELS: { value: 'Mild' | 'Moderate' | 'Severe' | 'Life-threatening'; label: string; color: string }[] = [
-  { value: 'Mild', label: 'Mild', color: 'text-yellow-600' },
-  { value: 'Moderate', label: 'Moderate', color: 'text-orange-600' },
-  { value: 'Severe', label: 'Severe', color: 'text-red-600' },
-  { value: 'Life-threatening', label: 'Life-threatening', color: 'text-red-800' },
+  { value: 'Mild', label: 'Mild', color: 'text-warning' },
+  { value: 'Moderate', label: 'Moderate', color: 'text-warning' },
+  { value: 'Severe', label: 'Severe', color: 'text-destructive' },
+  { value: 'Life-threatening', label: 'Life-threatening', color: 'text-destructive' },
 ]
 
 // === RELATED TRACKERS ===

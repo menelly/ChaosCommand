@@ -6,12 +6,12 @@
 import { SpreadingPattern } from './skin-types'
 
 export const EPISODE_TYPES = [
-  { id: 'rash', name: 'Rash', icon: '🩹', description: 'Generic skin rash, redness, or eruption', color: 'bg-red-100 text-red-800 border-red-200' },
+  { id: 'rash', name: 'Rash', icon: '🩹', description: 'Generic skin rash, redness, or eruption', color: 'bg-destructive/10 text-destructive border-destructive/20' },
   { id: 'hives', name: 'Hives', icon: '🎯', description: 'Raised welts, often itchy, allergic-pattern', color: 'bg-pink-100 text-pink-800 border-pink-200' },
   { id: 'eczema-flare', name: 'Eczema Flare', icon: '🌵', description: 'Atopic dermatitis flare, dry/inflamed/itchy patches', color: 'bg-amber-100 text-amber-800 border-amber-200' },
   { id: 'mole-lesion', name: 'Mole / Lesion', icon: '⚫', description: 'New, changing, or concerning mole or growth (ABCDE check)', color: 'bg-stone-100 text-stone-800 border-stone-200' },
-  { id: 'wound', name: 'Wound', icon: '🩸', description: 'Cut, scrape, burn, abrasion, or laceration', color: 'bg-orange-100 text-orange-800 border-orange-200' },
-  { id: 'sunburn', name: 'Sunburn', icon: '☀️', description: 'UV-induced burn, mild to severe', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
+  { id: 'wound', name: 'Wound', icon: '🩸', description: 'Cut, scrape, burn, abrasion, or laceration', color: 'bg-warning/10 text-warning border-warning/20' },
+  { id: 'sunburn', name: 'Sunburn', icon: '☀️', description: 'UV-induced burn, mild to severe', color: 'bg-warning/10 text-warning border-warning/20' },
   { id: 'allergic-contact', name: 'Contact Reaction', icon: '🌿', description: 'Suspected contact allergen (poison ivy, nickel, fragrance, etc.)', color: 'bg-green-100 text-green-800 border-green-200' },
   { id: 'general', name: 'General Skin Event', icon: '🧴', description: 'Other / mixed skin observation', color: 'bg-purple-100 text-purple-800 border-purple-200' },
 ] as const
@@ -129,14 +129,14 @@ export const SPREADING_OPTIONS: { value: SpreadingPattern; label: string }[] = [
 export const SEVERITY_LABELS = [
   { value: 1, label: 'Very Mild', color: 'text-green-600' },
   { value: 2, label: 'Mild', color: 'text-green-500' },
-  { value: 3, label: 'Mild-Moderate', color: 'text-yellow-600' },
-  { value: 4, label: 'Moderate', color: 'text-yellow-500' },
-  { value: 5, label: 'Moderate', color: 'text-orange-500' },
-  { value: 6, label: 'Moderate-Severe', color: 'text-orange-600' },
-  { value: 7, label: 'Severe', color: 'text-red-500' },
-  { value: 8, label: 'Very Severe', color: 'text-red-600' },
-  { value: 9, label: 'Extreme', color: 'text-red-700' },
-  { value: 10, label: 'Crisis (call 911)', color: 'text-red-800' }
+  { value: 3, label: 'Mild-Moderate', color: 'text-warning' },
+  { value: 4, label: 'Moderate', color: 'text-warning' },
+  { value: 5, label: 'Moderate', color: 'text-warning' },
+  { value: 6, label: 'Moderate-Severe', color: 'text-warning' },
+  { value: 7, label: 'Severe', color: 'text-destructive' },
+  { value: 8, label: 'Very Severe', color: 'text-destructive' },
+  { value: 9, label: 'Extreme', color: 'text-destructive' },
+  { value: 10, label: 'Crisis (call 911)', color: 'text-destructive' }
 ]
 
 export const RELATED_TRACKERS = [

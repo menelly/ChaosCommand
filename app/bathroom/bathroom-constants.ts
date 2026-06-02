@@ -9,8 +9,8 @@ export const EPISODE_TYPES = [
   { id: 'normal-bm' as BathroomEpisodeType, name: 'Normal', icon: '💩', description: 'Everything went smoothly! 🎉', color: 'bg-green-100 text-green-800 border-green-200' },
   { id: 'constipation' as BathroomEpisodeType, name: 'Stuck', icon: '🪨', description: "Didn't go, hard, infrequent, or made you regret breakfast choices", color: 'bg-amber-100 text-amber-800 border-amber-200' },
   { id: 'diarrhea' as BathroomEpisodeType, name: 'Too much', icon: '💦', description: "Loose, urgent, or 'oh god where's a bathroom'", color: 'bg-blue-100 text-blue-800 border-blue-200' },
-  { id: 'urinary' as BathroomEpisodeType, name: 'Urinary', icon: '🚽', description: 'Pee-related — frequency, urgency, burning, leakage', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
-  { id: 'blood-or-red-flag' as BathroomEpisodeType, name: '🚨 Red flag', icon: '🩸', description: 'Blood, severe pain, obstruction signs — call your doctor', color: 'bg-red-100 text-red-800 border-red-200' },
+  { id: 'urinary' as BathroomEpisodeType, name: 'Urinary', icon: '🚽', description: 'Pee-related — frequency, urgency, burning, leakage', color: 'bg-warning/10 text-warning border-warning/20' },
+  { id: 'blood-or-red-flag' as BathroomEpisodeType, name: '🚨 Red flag', icon: '🩸', description: 'Blood, severe pain, obstruction signs — call your doctor', color: 'bg-destructive/10 text-destructive border-destructive/20' },
   { id: 'general' as BathroomEpisodeType, name: 'Mystery Chaos', icon: '💀', description: 'Something weird happened and you want to remember it', color: 'bg-gray-100 text-gray-800 border-gray-200' },
 ] as const
 

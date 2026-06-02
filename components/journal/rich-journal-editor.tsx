@@ -126,7 +126,7 @@ export function RichJournalEditor({ date, tabId, placeholder = "Start writing...
         } catch (error) {
           console.error('Failed to load image:', blobKey, error);
           const errorDiv = document.createElement('div');
-          errorDiv.className = 'bg-red-100 p-2 rounded my-2 text-sm text-red-600';
+          errorDiv.className = 'bg-destructive/10 p-2 rounded my-2 text-sm text-destructive';
           errorDiv.textContent = '📸 Failed to load image';
           errorDiv.contentEditable = 'false';
           editor.appendChild(errorDiv);

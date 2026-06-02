@@ -795,8 +795,8 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
   // 🎨 CONFIDENCE COLOR CODING (THEME AWARE!)
   const getConfidenceColor = (confidence: number) => {
     if (confidence >= 80) return 'bg-green-100 text-green-800 border-green-200';
-    if (confidence >= 60) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-    return 'bg-red-100 text-red-800 border-red-200';
+    if (confidence >= 60) return 'bg-warning/10 text-warning border-warning/20';
+    return 'bg-destructive/10 text-destructive border-destructive/20';
   };
 
   const getFileIcon = (fileType: string) => {
@@ -952,7 +952,7 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
                           <Label htmlFor="pasteText">Your notes</Label>
-                          <span className={`text-xs ${pastedText.length > 10000 ? 'text-orange-600' : 'text-muted-foreground'}`}>
+                          <span className={`text-xs ${pastedText.length > 10000 ? 'text-warning' : 'text-muted-foreground'}`}>
                             {pastedText.length.toLocaleString()} characters
                             {pastedText.length > 0 && ` • ~${Math.ceil(pastedText.split(/\s+/).filter(w => w).length / 200)} min read`}
                           </span>
@@ -978,8 +978,8 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
 
                       {/* Error display */}
                       {parseError && (
-                        <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                          <div className="flex items-center gap-2 text-red-700 text-sm">
+                        <div className="bg-destructive/5 border border-destructive/20 rounded-lg p-3">
+                          <div className="flex items-center gap-2 text-destructive text-sm">
                             <AlertCircle className="h-4 w-4" />
                             <span>{parseError}</span>
                           </div>
@@ -1093,7 +1093,7 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
                       </Badge>
                     )}
                     {file.status === 'error' && (
-                      <Badge className="bg-red-100 text-red-800 border-red-200">
+                      <Badge className="bg-destructive/10 text-destructive border-destructive/20">
                         <AlertCircle className="h-3 w-3 mr-1" />
                         Error
                       </Badge>
@@ -1102,7 +1102,7 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
                       variant="ghost"
                       size="sm"
                       onClick={() => removeFile(file.id)}
-                      className="text-[var(--text-muted)] hover:text-red-600"
+                      className="text-[var(--text-muted)] hover:text-destructive"
                     >
                       <X className="h-4 w-4" />
                     </Button>
@@ -1148,7 +1148,7 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
                 )}
 
                 {file.status === 'error' && file.error && (
-                  <p className="text-sm text-red-600">
+                  <p className="text-sm text-destructive">
                     ❌ {file.error}
                   </p>
                 )}
@@ -1249,7 +1249,7 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
                         {event.confidence}% confidence
                       </Badge>
                       {event.needsReview && (
-                        <Badge variant="outline" className="border-yellow-300 text-yellow-700">
+                        <Badge variant="outline" className="border-warning/40 text-warning">
                           Needs Review
                         </Badge>
                       )}
@@ -1357,14 +1357,14 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
 
                     {/* 🚨 GORGEOUS DISMISSED FINDINGS DISPLAY - NOW EDITABLE! */}
                     {event.incidentalFindings && event.incidentalFindings.length > 0 && (
-                      <div className="bg-gradient-to-r from-red-50 to-orange-50 border border-red-200 rounded-lg p-3 mb-3">
+                      <div className="bg-destructive/5 border border-destructive/20 rounded-lg p-3 mb-3">
                         <div className="flex items-center gap-2 mb-2">
-                          <AlertCircle className="h-4 w-4 text-red-600" />
-                          <span className="font-medium text-red-800">🚨 Potentially Dismissed Findings</span>
+                          <AlertCircle className="h-4 w-4 text-destructive" />
+                          <span className="font-medium text-destructive">🚨 Potentially Dismissed Findings</span>
                           <Sparkles className="h-3 w-3 text-orange-500" />
                           <button
                             onClick={() => toggleEditMode(event.id)}
-                            className="ml-auto text-xs text-red-600 hover:text-red-800 underline"
+                            className="ml-auto text-xs text-destructive hover:opacity-80 underline"
                           >
                             ✏️ Edit
                           </button>
@@ -1388,20 +1388,20 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
 
                               handleEditEvent(event.id, 'incidentalFindings', updatedFindings);
                             }}
-                            className="w-full text-sm text-red-700 bg-white border border-red-300 rounded p-2 min-h-32"
+                            className="w-full text-sm text-destructive bg-white border border-destructive/30 rounded p-2 min-h-32"
                             placeholder="Edit findings... Format: Finding text\nWhy it matters (significance level)"
                           />
                         ) : (
-                          <div className="space-y-2 cursor-pointer hover:bg-red-25" onClick={() => toggleEditMode(event.id)}>
+                          <div className="space-y-2 cursor-pointer hover:bg-destructive/5" onClick={() => toggleEditMode(event.id)}>
                             {event.incidentalFindings.slice(0, 3).map((finding, idx) => (
-                              <div key={idx} className="bg-white/50 rounded p-2 border border-red-100">
-                                <div className="font-medium text-red-700 text-sm">{finding.finding}</div>
-                                <div className="text-xs text-red-600">{finding.whyItMatters}</div>
+                              <div key={idx} className="bg-white/50 rounded p-2 border border-destructive/20">
+                                <div className="font-medium text-destructive text-sm">{finding.finding}</div>
+                                <div className="text-xs text-destructive/80">{finding.whyItMatters}</div>
                                 <div className="flex gap-1 mt-1">
                                   <Badge className={`text-xs ${
-                                    finding.significance === 'critical' ? 'bg-red-100 text-red-800' :
-                                    finding.significance === 'high' ? 'bg-orange-100 text-orange-800' :
-                                    finding.significance === 'moderate' ? 'bg-yellow-100 text-yellow-800' :
+                                    finding.significance === 'critical' ? 'bg-destructive/10 text-destructive' :
+                                    finding.significance === 'high' ? 'bg-warning/10 text-warning' :
+                                    finding.significance === 'moderate' ? 'bg-warning/10 text-warning' :
                                     'bg-gray-100 text-gray-800'
                                   }`}>
                                     {finding.significance} significance
@@ -1410,7 +1410,7 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
                               </div>
                             ))}
                             {event.incidentalFindings.length > 3 && (
-                              <div className="text-xs text-red-600 italic">
+                              <div className="text-xs text-destructive italic">
                                 +{event.incidentalFindings.length - 3} more findings detected... (click to edit all)
                               </div>
                             )}
@@ -1467,7 +1467,7 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-[var(--text-muted)] hover:text-red-600"
+                      className="text-[var(--text-muted)] hover:text-destructive"
                       onClick={() => {
                         setAllParsedEvents(prev => prev.filter(e => e.id !== event.id));
                       }}
@@ -1504,7 +1504,7 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
                   <Button
                     size="sm"
                     variant="outline"
-                    className="border-[var(--border-soft)] text-[var(--text-muted)] hover:text-red-600 hover:border-red-300"
+                    className="border-[var(--border-soft)] text-[var(--text-muted)] hover:text-destructive hover:border-destructive/30"
                     onClick={() => {
                       setAllParsedEvents(prev => prev.filter(e => e.id !== event.id));
                     }}
@@ -1639,7 +1639,7 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
                                 placeholder="unit"
                               />
                               {lab.is_abnormal && (
-                                <Badge className="bg-red-100 text-red-800 text-xs shrink-0">
+                                <Badge className="bg-destructive/10 text-destructive text-xs shrink-0">
                                   {lab.flag || 'ABNL'}
                                 </Badge>
                               )}

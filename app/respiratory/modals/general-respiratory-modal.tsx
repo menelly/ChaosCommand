@@ -137,7 +137,7 @@ export function GeneralRespiratoryModal({ isOpen, onClose, onSave, editingEntry 
             if (flags.length === 0) return null
             return (
               <div className="border-2 border-destructive bg-destructive text-destructive-foreground rounded-lg p-4 space-y-3">
-                <div className="flex items-start gap-2"><AlertTriangle className="h-5 w-5 text-red-600 mt-0.5" /><div className="font-bold text-destructive-foreground">🚨 Red flags detected</div></div>
+                <div className="flex items-start gap-2"><AlertTriangle className="h-5 w-5 text-destructive-foreground mt-0.5" /><div className="font-bold text-destructive-foreground">🚨 Red flags detected</div></div>
                 <ul className="space-y-1 text-sm text-destructive-foreground ml-7">{flags.map((f, i) => <li key={i}>• {f}</li>)}</ul>
                 <div className="ml-7 pt-2 border-t border-destructive-foreground/30 space-y-2">
                   <p className="text-sm text-destructive-foreground"><strong>If happening RIGHT NOW:</strong> call 911. Documenting can wait.</p>

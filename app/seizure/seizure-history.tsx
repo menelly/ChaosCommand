@@ -136,7 +136,7 @@ export function SeizureHistory({ entries, onEdit, onDelete, onAddNew }: SeizureH
       {/* Summary */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.total}</div><div className="text-xs text-muted-foreground">Episodes</div></CardContent></Card>
-        <Card><CardContent className="p-3"><div className="text-2xl font-bold text-red-600">{stats.statusEpisCount}</div><div className="text-xs text-muted-foreground">Status epi.</div></CardContent></Card>
+        <Card><CardContent className="p-3"><div className="text-2xl font-bold text-destructive">{stats.statusEpisCount}</div><div className="text-xs text-muted-foreground">Status epi.</div></CardContent></Card>
         <Card><CardContent className="p-3"><div className="text-2xl font-bold text-amber-600">{stats.rescueMedCount}</div><div className="text-xs text-muted-foreground">Rescue med</div></CardContent></Card>
         <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.injuryRate}%</div><div className="text-xs text-muted-foreground">Injury rate</div></CardContent></Card>
         <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.erVisits}</div><div className="text-xs text-muted-foreground">ER / EMS</div></CardContent></Card>

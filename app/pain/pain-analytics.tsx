@@ -207,7 +207,7 @@ export function PainAnalytics({ entries }: Props) {
             <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.total}</div><div className="text-xs text-muted-foreground">Episodes</div></CardContent></Card>
             <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.perWeek}/wk</div><div className="text-xs text-muted-foreground">Frequency</div></CardContent></Card>
             <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.avg}</div><div className="text-xs text-muted-foreground">Avg level</div></CardContent></Card>
-            <Card><CardContent className="p-3"><div className="text-2xl font-bold text-red-600">{stats.peak}</div><div className="text-xs text-muted-foreground">Peak</div></CardContent></Card>
+            <Card><CardContent className="p-3"><div className="text-2xl font-bold text-destructive">{stats.peak}</div><div className="text-xs text-muted-foreground">Peak</div></CardContent></Card>
             <Card><CardContent className="p-3"><div className="text-2xl font-bold text-amber-600">{stats.redFlagCount}</div><div className="text-xs text-muted-foreground">Red flags</div></CardContent></Card>
             <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.erCount}</div><div className="text-xs text-muted-foreground">ER visits</div></CardContent></Card>
             <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.emsCount}</div><div className="text-xs text-muted-foreground">911/EMS</div></CardContent></Card>
@@ -366,7 +366,7 @@ export function PainAnalytics({ entries }: Props) {
               <div className="grid grid-cols-11 gap-1 items-end h-32">
                 {stats.sevBins.map((count, lvl) => {
                   const pct = (count / maxSevCount) * 100
-                  const color = lvl >= 9 ? 'bg-red-700' : lvl >= 7 ? 'bg-red-500' : lvl >= 4 ? 'bg-orange-400' : 'bg-yellow-400'
+                  const color = lvl >= 9 ? 'bg-destructive' : lvl >= 7 ? 'bg-destructive' : lvl >= 4 ? 'bg-warning' : 'bg-warning'
                   return (
                     <div key={lvl} className="flex flex-col items-center justify-end h-full">
                       <div className={`w-full ${color} rounded-t`} style={{ height: `${pct}%`, minHeight: count > 0 ? '4px' : '0' }} title={`Level ${lvl}: ${count}`} />
@@ -387,7 +387,7 @@ export function PainAnalytics({ entries }: Props) {
                   const pct = (count / maxHourCount) * 100
                   return (
                     <div key={hour} className="flex flex-col items-center justify-end h-full">
-                      <div className="w-full bg-red-400 rounded-t" style={{ height: `${pct}%`, minHeight: count > 0 ? '4px' : '0' }} title={`${hour}:00 — ${count}`} />
+                      <div className="w-full bg-destructive rounded-t" style={{ height: `${pct}%`, minHeight: count > 0 ? '4px' : '0' }} title={`${hour}:00 — ${count}`} />
                       <div className="text-[0.625rem] text-muted-foreground mt-1">{hour % 6 === 0 ? hour : ''}</div>
                     </div>
                   )

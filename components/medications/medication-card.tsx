@@ -227,7 +227,7 @@ export function MedicationCard({
             )}
             
             {medication.requiresFood && (
-              <div className="flex items-center gap-2 text-sm text-orange-600">
+              <div className="flex items-center gap-2 text-sm text-warning">
                 <AlertTriangle className="h-4 w-4" />
                 <span>Take with food</span>
               </div>

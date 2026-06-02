@@ -101,7 +101,7 @@ export function JointAnalytics({ refreshTrigger }: { refreshTrigger: number }) {
         <Card><CardContent className="pt-4 pb-4"><div className="text-xs uppercase text-muted-foreground">Total Events</div><div className="text-2xl font-bold">{stats.total}</div></CardContent></Card>
         <Card><CardContent className="pt-4 pb-4"><div className="text-xs uppercase text-muted-foreground">Last 7 Days</div><div className="text-2xl font-bold">{stats.last7}</div></CardContent></Card>
         <Card><CardContent className="pt-4 pb-4"><div className="text-xs uppercase text-muted-foreground">Self-Reduced</div><div className="text-2xl font-bold">{stats.selfReducedCount}</div>{stats.selfReducedRatio !== null && <div className="text-xs text-muted-foreground mt-1">{stats.selfReducedRatio}% of subs/dis</div>}</CardContent></Card>
-        <Card><CardContent className="pt-4 pb-4"><div className="text-xs uppercase text-muted-foreground">ER Visits</div><div className="text-2xl font-bold text-red-600">{stats.erCount}</div></CardContent></Card>
+        <Card><CardContent className="pt-4 pb-4"><div className="text-xs uppercase text-muted-foreground">ER Visits</div><div className="text-2xl font-bold text-destructive">{stats.erCount}</div></CardContent></Card>
       </div>
 
       <Card>
@@ -141,7 +141,7 @@ export function JointAnalytics({ refreshTrigger }: { refreshTrigger: number }) {
               return (
                 <div key={t} className="space-y-1">
                   <div className="flex items-center justify-between text-sm"><span>{t}</span><span className="text-muted-foreground">{c} events ({pct.toFixed(0)}%)</span></div>
-                  <div className="w-full bg-muted rounded-full h-2 overflow-hidden"><div className="bg-orange-400 h-2" style={{ width: `${pct}%` }} /></div>
+                  <div className="w-full bg-muted rounded-full h-2 overflow-hidden"><div className="bg-warning h-2" style={{ width: `${pct}%` }} /></div>
                 </div>
               )
             })}
@@ -163,8 +163,8 @@ export function JointAnalytics({ refreshTrigger }: { refreshTrigger: number }) {
         <CardContent>
           <div className="grid grid-cols-3 gap-3 text-sm">
             <div className="text-center"><div className="text-xs uppercase text-muted-foreground">Mild (1-3)</div><div className="text-2xl font-bold text-green-600">{stats.severityBuckets.mild}</div></div>
-            <div className="text-center"><div className="text-xs uppercase text-muted-foreground">Moderate (4-6)</div><div className="text-2xl font-bold text-yellow-600">{stats.severityBuckets.moderate}</div></div>
-            <div className="text-center"><div className="text-xs uppercase text-muted-foreground">Severe (7-10)</div><div className="text-2xl font-bold text-red-600">{stats.severityBuckets.severe}</div></div>
+            <div className="text-center"><div className="text-xs uppercase text-muted-foreground">Moderate (4-6)</div><div className="text-2xl font-bold text-warning">{stats.severityBuckets.moderate}</div></div>
+            <div className="text-center"><div className="text-xs uppercase text-muted-foreground">Severe (7-10)</div><div className="text-2xl font-bold text-destructive">{stats.severityBuckets.severe}</div></div>
           </div>
           {(stats.swellingCount > 0 || stats.bruisingCount > 0) && (
             <div className="mt-4 pt-3 border-t flex gap-4 text-sm justify-center text-muted-foreground">

@@ -364,7 +364,7 @@ export default function BathroomPage() {
               <Card><CardContent className="p-3"><div className="text-2xl font-bold text-amber-600">{stats.constipationCount}</div><div className="text-xs text-muted-foreground">Constipation</div></CardContent></Card>
               <Card><CardContent className="p-3"><div className="text-2xl font-bold text-blue-600">{stats.diarrheaCount}</div><div className="text-xs text-muted-foreground">Diarrhea</div></CardContent></Card>
               <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.urinaryCount}</div><div className="text-xs text-muted-foreground">Urinary</div></CardContent></Card>
-              <Card><CardContent className="p-3"><div className="text-2xl font-bold text-red-600">{stats.bloodEvents}</div><div className="text-xs text-muted-foreground">Blood events</div></CardContent></Card>
+              <Card><CardContent className="p-3"><div className="text-2xl font-bold text-destructive">{stats.bloodEvents}</div><div className="text-xs text-muted-foreground">Blood events</div></CardContent></Card>
             </div>
 
             <Card>
@@ -425,7 +425,7 @@ export default function BathroomPage() {
               <Card><CardContent className="p-3"><div className="text-2xl font-bold text-amber-600">{stats.constipationCount}</div><div className="text-xs text-muted-foreground">Constipation</div></CardContent></Card>
               <Card><CardContent className="p-3"><div className="text-2xl font-bold text-blue-600">{stats.diarrheaCount}</div><div className="text-xs text-muted-foreground">Diarrhea</div></CardContent></Card>
               <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.urinaryCount}</div><div className="text-xs text-muted-foreground">Urinary</div></CardContent></Card>
-              <Card><CardContent className="p-3"><div className="text-2xl font-bold text-red-600">{stats.redFlagCount}</div><div className="text-xs text-muted-foreground">Red flag</div></CardContent></Card>
+              <Card><CardContent className="p-3"><div className="text-2xl font-bold text-destructive">{stats.redFlagCount}</div><div className="text-xs text-muted-foreground">Red flag</div></CardContent></Card>
               <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.erCount}</div><div className="text-xs text-muted-foreground">ER visits</div></CardContent></Card>
             </div>
             {Object.keys(stats.bristolCount).length > 0 && (

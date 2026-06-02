@@ -76,7 +76,7 @@ export default function LicenseGate({ children }: { children: React.ReactNode })
           </div>
 
           {(activateError || error) && (
-            <div className="flex items-start gap-2 text-sm text-red-600 dark:text-red-400">
+            <div className="flex items-start gap-2 text-sm text-destructive">
               <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
               <span>{activateError || error}</span>
             </div>

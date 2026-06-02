@@ -162,7 +162,7 @@ export function FoodAllergensAnalytics({ entries }: Props) {
         <>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.total}</div><div className="text-xs text-muted-foreground">Total reactions</div></CardContent></Card>
-            <Card><CardContent className="p-3"><div className="text-2xl font-bold text-red-600">{stats.anaphCount}</div><div className="text-xs text-muted-foreground">Anaphylaxis</div></CardContent></Card>
+            <Card><CardContent className="p-3"><div className="text-2xl font-bold text-destructive">{stats.anaphCount}</div><div className="text-xs text-muted-foreground">Anaphylaxis</div></CardContent></Card>
             <Card><CardContent className="p-3"><div className="text-2xl font-bold text-amber-600">{stats.epipenCount}</div><div className="text-xs text-muted-foreground">EpiPen used</div></CardContent></Card>
             <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.erCount}</div><div className="text-xs text-muted-foreground">ER visits</div></CardContent></Card>
             <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.hospCount}</div><div className="text-xs text-muted-foreground">Hospitalized</div></CardContent></Card>

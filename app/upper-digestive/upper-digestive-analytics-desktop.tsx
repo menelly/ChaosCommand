@@ -506,11 +506,11 @@ export default function UpperDigestiveAnalyticsDesktop({ className }: AnalyticsP
             ) : (
               <div className="space-y-3">
                 {parseFloat(avgSeverity) > 7 && (
-                  <div className="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-950/20 rounded-lg">
-                    <AlertTriangle className="h-4 w-4 text-red-500 mt-0.5" />
+                  <div className="flex items-start gap-2 p-3 bg-destructive/5 rounded-lg">
+                    <AlertTriangle className="h-4 w-4 text-destructive mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium text-destructive-foreground">High Severity Alert</p>
-                      <p className="text-sm text-red-600 dark:text-red-300">
+                      <p className="text-sm font-medium text-destructive">High Severity Alert</p>
+                      <p className="text-sm text-destructive">
                         Your average severity is {avgSeverity}/10. Consider discussing with your healthcare provider.
                       </p>
                     </div>

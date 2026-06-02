@@ -136,16 +136,16 @@ export function CrisisHistory({ refreshTrigger, onEdit, onDelete }: CrisisHistor
 
   const getIntensityColor = (intensity: number) => {
     if (intensity <= 3) return 'text-green-600'
-    if (intensity <= 6) return 'text-yellow-600'
-    if (intensity <= 8) return 'text-orange-600'
-    return 'text-red-600'
+    if (intensity <= 6) return 'text-warning'
+    if (intensity <= 8) return 'text-warning'
+    return 'text-destructive'
   }
 
   const getSafetyColor = (safety: number) => {
     if (safety >= 8) return 'text-green-600'
-    if (safety >= 5) return 'text-yellow-600'
-    if (safety >= 3) return 'text-orange-600'
-    return 'text-red-600'
+    if (safety >= 5) return 'text-warning'
+    if (safety >= 3) return 'text-warning'
+    return 'text-destructive'
   }
 
   if (isLoading) {
@@ -363,7 +363,7 @@ export function CrisisHistory({ refreshTrigger, onEdit, onDelete }: CrisisHistor
                   )}
                   {entry.emergencyServicesUsed && (
                     <div className="flex items-center gap-1">
-                      <AlertTriangle className="h-3 w-3 text-red-600" />
+                      <AlertTriangle className="h-3 w-3 text-destructive" />
                       <span>Emergency services used</span>
                     </div>
                   )}

@@ -337,7 +337,7 @@ export function MedicationTracker() {
             <CardTitle className="text-sm font-medium">Need Refill</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{medicationsNeedingRefill.length}</div>
+            <div className="text-2xl font-bold text-warning">{medicationsNeedingRefill.length}</div>
             <p className="text-xs text-muted-foreground">
               within next 7 days
             </p>

@@ -203,7 +203,7 @@ export function SeizureAnalytics({ entries }: Props) {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.total}</div><div className="text-xs text-muted-foreground">Episodes</div></CardContent></Card>
             <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.perWeek}/wk</div><div className="text-xs text-muted-foreground">~{stats.perMonth}/mo</div></CardContent></Card>
-            <Card><CardContent className="p-3"><div className="text-2xl font-bold text-red-600">{stats.statusEpiCount}</div><div className="text-xs text-muted-foreground">Status epi.</div></CardContent></Card>
+            <Card><CardContent className="p-3"><div className="text-2xl font-bold text-destructive">{stats.statusEpiCount}</div><div className="text-xs text-muted-foreground">Status epi.</div></CardContent></Card>
             <Card><CardContent className="p-3"><div className="text-2xl font-bold text-amber-600">{stats.rescueMedCount}</div><div className="text-xs text-muted-foreground">Rescue med</div></CardContent></Card>
             <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.emsCount}</div><div className="text-xs text-muted-foreground">911 / EMS</div></CardContent></Card>
             <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.injuryCount}</div><div className="text-xs text-muted-foreground">Injuries</div></CardContent></Card>
@@ -390,7 +390,7 @@ export function SeizureAnalytics({ entries }: Props) {
                   return (
                     <div key={hour} className="flex flex-col items-center justify-end h-full">
                       <div
-                        className="w-full bg-yellow-400 rounded-t"
+                        className="w-full bg-warning rounded-t"
                         style={{ height: `${pct}%`, minHeight: count > 0 ? '4px' : '0' }}
                         title={`${hour}:00 — ${count} episodes`}
                       />

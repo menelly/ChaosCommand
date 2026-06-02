@@ -129,7 +129,7 @@ export function RespiratoryAnalytics({ refreshTrigger }: { refreshTrigger: numbe
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Card><CardContent className="pt-4 pb-4"><div className="text-xs uppercase text-muted-foreground">Total Events</div><div className="text-2xl font-bold">{stats.total}</div></CardContent></Card>
         <Card><CardContent className="pt-4 pb-4"><div className="text-xs uppercase text-muted-foreground">Last 7 Days</div><div className="text-2xl font-bold">{stats.last7}</div></CardContent></Card>
-        <Card><CardContent className="pt-4 pb-4"><div className="text-xs uppercase text-muted-foreground">Red Zone PF</div><div className="text-2xl font-bold text-red-600">{stats.redZoneCount}</div></CardContent></Card>
+        <Card><CardContent className="pt-4 pb-4"><div className="text-xs uppercase text-muted-foreground">Red Zone PF</div><div className="text-2xl font-bold text-destructive">{stats.redZoneCount}</div></CardContent></Card>
         <Card><CardContent className="pt-4 pb-4"><div className="text-xs uppercase text-muted-foreground">EpiPen / ER</div><div className="text-2xl font-bold">{stats.epiCount + stats.erCount}</div></CardContent></Card>
       </div>
 
@@ -150,9 +150,9 @@ export function RespiratoryAnalytics({ refreshTrigger }: { refreshTrigger: numbe
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
               {stats.spo2Avg !== null && <div><div className="text-xs uppercase text-muted-foreground">Avg Lowest SpO2</div><div className="text-xl font-bold">{stats.spo2Avg}%</div></div>}
-              {stats.spo2Min !== null && <div><div className="text-xs uppercase text-muted-foreground">Lowest SpO2 Recorded</div><div className="text-xl font-bold text-red-600">{stats.spo2Min}%</div></div>}
+              {stats.spo2Min !== null && <div><div className="text-xs uppercase text-muted-foreground">Lowest SpO2 Recorded</div><div className="text-xl font-bold text-destructive">{stats.spo2Min}%</div></div>}
               {stats.pfAvg !== null && <div><div className="text-xs uppercase text-muted-foreground">Avg Peak Flow</div><div className="text-xl font-bold">{stats.pfAvg} L/min</div></div>}
-              {stats.pfMin !== null && <div><div className="text-xs uppercase text-muted-foreground">Lowest Peak Flow</div><div className="text-xl font-bold text-red-600">{stats.pfMin} L/min</div></div>}
+              {stats.pfMin !== null && <div><div className="text-xs uppercase text-muted-foreground">Lowest Peak Flow</div><div className="text-xl font-bold text-destructive">{stats.pfMin} L/min</div></div>}
               {stats.desatEvents > 0 && <div><div className="text-xs uppercase text-muted-foreground">Desat Events (&lt;92%)</div><div className="text-xl font-bold">{stats.desatEvents}</div></div>}
               {stats.inhalerAvg !== null && <div><div className="text-xs uppercase text-muted-foreground">Avg Inhaler Response</div><div className="text-xl font-bold">{stats.inhalerAvg}/5</div></div>}
             </div>

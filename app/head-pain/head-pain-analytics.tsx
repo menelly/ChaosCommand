@@ -203,7 +203,7 @@ export function HeadPainAnalytics({ entries }: Props) {
             <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.total}</div><div className="text-xs text-muted-foreground">Episodes</div></CardContent></Card>
             <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.perMonth}</div><div className="text-xs text-muted-foreground">/ month</div></CardContent></Card>
             <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.avg}</div><div className="text-xs text-muted-foreground">Avg level</div></CardContent></Card>
-            <Card><CardContent className="p-3"><div className="text-2xl font-bold text-red-600">{stats.peak}</div><div className="text-xs text-muted-foreground">Peak</div></CardContent></Card>
+            <Card><CardContent className="p-3"><div className="text-2xl font-bold text-destructive">{stats.peak}</div><div className="text-xs text-muted-foreground">Peak</div></CardContent></Card>
             <Card><CardContent className="p-3"><div className="text-2xl font-bold text-purple-600">{stats.auraCount}</div><div className="text-xs text-muted-foreground">With aura</div></CardContent></Card>
             <Card><CardContent className="p-3"><div className="text-2xl font-bold text-amber-600">{stats.multiRescueCount}</div><div className="text-xs text-muted-foreground">Multi-rescue</div></CardContent></Card>
             <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.erCount}</div><div className="text-xs text-muted-foreground">ER visits</div></CardContent></Card>
@@ -247,8 +247,8 @@ export function HeadPainAnalytics({ entries }: Props) {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                   <div><div className="text-xs text-muted-foreground">Mild bump (+1)</div><div className="text-lg font-semibold">{stats.deltaBins.mild}</div></div>
                   <div><div className="text-xs text-muted-foreground">Moderate (+2-3)</div><div className="text-lg font-semibold">{stats.deltaBins.moderate}</div></div>
-                  <div><div className="text-xs text-muted-foreground">Severe (+4-5)</div><div className="text-lg font-semibold text-orange-600">{stats.deltaBins.severe}</div></div>
-                  <div><div className="text-xs text-muted-foreground">Extreme (+6+)</div><div className="text-lg font-semibold text-red-600">{stats.deltaBins.extreme}</div></div>
+                  <div><div className="text-xs text-muted-foreground">Severe (+4-5)</div><div className="text-lg font-semibold text-warning">{stats.deltaBins.severe}</div></div>
+                  <div><div className="text-xs text-muted-foreground">Extreme (+6+)</div><div className="text-lg font-semibold text-destructive">{stats.deltaBins.extreme}</div></div>
                 </div>
                 <p className="text-xs text-muted-foreground mt-3 italic">
                   The "extreme" bucket = your needs-multiple-rescue-meds days. Show this to your neurologist.

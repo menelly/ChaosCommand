@@ -2,12 +2,12 @@
 
 export const EPISODE_TYPES = [
   { id: 'subluxation', name: 'Subluxation', icon: '🦴', description: 'Partial joint dislocation, self-reduced or spontaneous', color: 'bg-amber-100 text-amber-800 border-amber-200' },
-  { id: 'dislocation', name: 'Dislocation', icon: '⚠️', description: 'Full dislocation requiring reduction', color: 'bg-red-100 text-red-800 border-red-200' },
-  { id: 'joint-pain', name: 'Joint Pain', icon: '😣', description: 'Pain without dislocation', color: 'bg-orange-100 text-orange-800 border-orange-200' },
+  { id: 'dislocation', name: 'Dislocation', icon: '⚠️', description: 'Full dislocation requiring reduction', color: 'bg-destructive/10 text-destructive border-destructive/20' },
+  { id: 'joint-pain', name: 'Joint Pain', icon: '😣', description: 'Pain without dislocation', color: 'bg-warning/10 text-warning border-warning/20' },
   { id: 'swelling', name: 'Swelling', icon: '🎈', description: 'Joint swelling / effusion', color: 'bg-blue-100 text-blue-800 border-blue-200' },
   { id: 'instability', name: 'Instability', icon: '🌀', description: 'Joint feels loose / giving way (ligamentous)', color: 'bg-purple-100 text-purple-800 border-purple-200' },
   { id: 'weakness', name: 'Weakness', icon: '💪', description: 'Muscle weakness — proximal, distal, focal, or generalized (HMSN, polymyositis, myopathy, anti-synthetase)', color: 'bg-rose-100 text-rose-800 border-rose-200' },
-  { id: 'cramping', name: 'Cramping', icon: '🪢', description: 'Muscle cramps / spasms — acute painful contractions (electrolyte, neuropathic, exertion)', color: 'bg-orange-100 text-orange-800 border-orange-200' },
+  { id: 'cramping', name: 'Cramping', icon: '🪢', description: 'Muscle cramps / spasms — acute painful contractions (electrolyte, neuropathic, exertion)', color: 'bg-warning/10 text-warning border-warning/20' },
   { id: 'fasciculations', name: 'Fasciculations', icon: '🌊', description: 'Visible twitching under skin / fine wormy movements (HMSN, motor neuron involvement)', color: 'bg-teal-100 text-teal-800 border-teal-200' },
   { id: 'muscle-tightness', name: 'Muscle Tightness', icon: '🔒', description: "Sustained muscle tightness, hypertonicity, knots that won't release (the \"massage therapists give up\" kind)", color: 'bg-fuchsia-100 text-fuchsia-800 border-fuchsia-200' },
   { id: 'rom-restriction', name: 'ROM Restriction', icon: '🚧', description: 'Limited range of motion', color: 'bg-gray-100 text-gray-800 border-gray-200' },
@@ -126,14 +126,14 @@ export const TREATMENTS = [
 export const SEVERITY_LABELS = [
   { value: 1, label: 'Very Mild', color: 'text-green-600' },
   { value: 2, label: 'Mild', color: 'text-green-500' },
-  { value: 3, label: 'Mild-Moderate', color: 'text-yellow-600' },
-  { value: 4, label: 'Moderate', color: 'text-yellow-500' },
-  { value: 5, label: 'Moderate', color: 'text-orange-500' },
-  { value: 6, label: 'Moderate-Severe', color: 'text-orange-600' },
-  { value: 7, label: 'Severe', color: 'text-red-500' },
-  { value: 8, label: 'Very Severe', color: 'text-red-600' },
-  { value: 9, label: 'Extreme', color: 'text-red-700' },
-  { value: 10, label: 'Crisis', color: 'text-red-800' }
+  { value: 3, label: 'Mild-Moderate', color: 'text-warning' },
+  { value: 4, label: 'Moderate', color: 'text-warning' },
+  { value: 5, label: 'Moderate', color: 'text-warning' },
+  { value: 6, label: 'Moderate-Severe', color: 'text-warning' },
+  { value: 7, label: 'Severe', color: 'text-destructive' },
+  { value: 8, label: 'Very Severe', color: 'text-destructive' },
+  { value: 9, label: 'Extreme', color: 'text-destructive' },
+  { value: 10, label: 'Crisis', color: 'text-destructive' }
 ]
 
 export const RELATED_TRACKERS = [

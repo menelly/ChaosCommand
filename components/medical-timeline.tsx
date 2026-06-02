@@ -109,12 +109,12 @@ export default function MedicalTimeline({ events, onEditEvent, onViewProvider }:
   // Get event color
   const getEventColor = (type: MedicalEvent['type']) => {
     switch (type) {
-      case 'diagnosis': return 'bg-red-100 text-red-700 border-red-200';
+      case 'diagnosis': return 'bg-destructive/10 text-destructive border-destructive/20';
       case 'surgery': return 'bg-purple-100 text-purple-700 border-purple-200';
-      case 'hospitalization': return 'bg-orange-100 text-orange-700 border-orange-200';
+      case 'hospitalization': return 'bg-warning/10 text-warning border-warning/20';
       case 'treatment': return 'bg-blue-100 text-blue-700 border-blue-200';
       case 'test': return 'bg-green-100 text-green-700 border-green-200';
-      case 'medication': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+      case 'medication': return 'bg-warning/10 text-warning border-warning/20';
       case 'dismissed_findings': return 'bg-slate-100 text-slate-700 border-slate-200';
       default: return 'bg-gray-100 text-gray-700 border-gray-200';
     }
@@ -123,11 +123,11 @@ export default function MedicalTimeline({ events, onEditEvent, onViewProvider }:
   // Get status color
   const getStatusColor = (status: MedicalEvent['status']) => {
     switch (status) {
-      case 'active': return 'bg-red-100 text-red-800';
+      case 'active': return 'bg-destructive/10 text-destructive';
       case 'resolved': return 'bg-green-100 text-green-800';
       case 'ongoing': return 'bg-blue-100 text-blue-800';
-      case 'scheduled': return 'bg-yellow-100 text-yellow-800';
-      case 'needs_review': return 'bg-orange-100 text-orange-800';
+      case 'scheduled': return 'bg-warning/10 text-warning';
+      case 'needs_review': return 'bg-warning/10 text-warning';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -215,9 +215,9 @@ export default function MedicalTimeline({ events, onEditEvent, onViewProvider }:
                                   <Badge
                                     variant="outline"
                                     className={`text-xs ${
-                                      event.severity === 'critical' ? 'border-red-500 text-red-700 bg-red-50' :
-                                      event.severity === 'severe' ? 'border-orange-500 text-orange-700 bg-orange-50' :
-                                      event.severity === 'moderate' ? 'border-yellow-500 text-yellow-700 bg-yellow-50' :
+                                      event.severity === 'critical' ? 'border-destructive text-destructive bg-destructive/5' :
+                                      event.severity === 'severe' ? 'border-warning text-warning bg-warning/5' :
+                                      event.severity === 'moderate' ? 'border-warning text-warning bg-warning/5' :
                                       'border-green-500 text-green-700 bg-green-50'
                                     }`}
                                   >

@@ -265,19 +265,19 @@ export function PotsEpisodeModal({ isOpen, onClose, onSave, editingEntry }: Epis
             </div>
             {/* POTS indicator: standing - resting ≥ 30bpm */}
             {restingHeartRate && standingHeartRate && (
-              <div className={`text-sm font-medium ${parseInt(standingHeartRate) - parseInt(restingHeartRate) >= 30 ? 'text-red-600' : 'text-muted-foreground'}`}>
+              <div className={`text-sm font-medium ${parseInt(standingHeartRate) - parseInt(restingHeartRate) >= 30 ? 'text-destructive' : 'text-muted-foreground'}`}>
                 Standing increase: +{parseInt(standingHeartRate) - parseInt(restingHeartRate)} bpm
                 {parseInt(standingHeartRate) - parseInt(restingHeartRate) >= 30 && ' (meets POTS criteria ≥30)'}
               </div>
             )}
             {/* IST indicator: sitting or resting HR > 100 */}
             {(sittingHeartRate && parseInt(sittingHeartRate) > 100) && (
-              <div className="text-sm font-medium text-orange-600">
+              <div className="text-sm font-medium text-warning">
                 Sitting HR {sittingHeartRate} bpm — elevated at rest (IST pattern)
               </div>
             )}
             {(restingHeartRate && parseInt(restingHeartRate) > 100) && (
-              <div className="text-sm font-medium text-orange-600">
+              <div className="text-sm font-medium text-warning">
                 Resting HR {restingHeartRate} bpm — elevated at rest (IST pattern)
               </div>
             )}

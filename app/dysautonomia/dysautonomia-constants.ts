@@ -33,7 +33,7 @@ export const EPISODE_TYPES = [
     name: 'POTS / IST Episode',
     icon: '💓',
     description: 'Heart rate changes — orthostatic or inappropriate sinus tachycardia',
-    color: 'bg-red-100 text-red-800 border-red-200'
+    color: 'bg-destructive/10 text-destructive border-destructive/20'
   },
   {
     id: 'blood-pressure',
@@ -54,7 +54,7 @@ export const EPISODE_TYPES = [
     name: 'Temp Regulation',
     icon: '🌡️',
     description: 'Sweating, temperature control issues',
-    color: 'bg-orange-100 text-orange-800 border-orange-200'
+    color: 'bg-warning/10 text-warning border-warning/20'
   },
   {
     id: 'spo2',
@@ -245,14 +245,14 @@ export const RELATED_TRACKERS = [
 export const SEVERITY_LABELS = [
   { value: 1, label: 'Very Mild', color: 'text-green-600' },
   { value: 2, label: 'Mild', color: 'text-green-500' },
-  { value: 3, label: 'Mild-Moderate', color: 'text-yellow-600' },
-  { value: 4, label: 'Moderate', color: 'text-yellow-500' },
-  { value: 5, label: 'Moderate', color: 'text-orange-500' },
-  { value: 6, label: 'Moderate-Severe', color: 'text-orange-600' },
-  { value: 7, label: 'Severe', color: 'text-red-500' },
-  { value: 8, label: 'Very Severe', color: 'text-red-600' },
-  { value: 9, label: 'Extreme', color: 'text-red-700' },
-  { value: 10, label: 'Crisis', color: 'text-red-800' }
+  { value: 3, label: 'Mild-Moderate', color: 'text-warning' },
+  { value: 4, label: 'Moderate', color: 'text-warning' },
+  { value: 5, label: 'Moderate', color: 'text-warning' },
+  { value: 6, label: 'Moderate-Severe', color: 'text-warning' },
+  { value: 7, label: 'Severe', color: 'text-destructive' },
+  { value: 8, label: 'Very Severe', color: 'text-destructive' },
+  { value: 9, label: 'Extreme', color: 'text-destructive' },
+  { value: 10, label: 'Crisis', color: 'text-destructive' }
 ]
 
 // Duration Units for Structured Input

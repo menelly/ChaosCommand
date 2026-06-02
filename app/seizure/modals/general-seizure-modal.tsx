@@ -384,7 +384,7 @@ export function GeneralSeizureModal({ isOpen, onClose, onSave, editingEntry, ini
               <CollapsibleTrigger asChild>
                 <Button variant="outline" className="w-full justify-between h-auto py-3">
                   <span className="font-medium">
-                    Duration {isLongDuration(durationCategory) && <span className="text-red-600 ml-2">⚠️ Status epilepticus range</span>}
+                    Duration {isLongDuration(durationCategory) && <span className="text-destructive ml-2">⚠️ Status epilepticus range</span>}
                   </span>
                   {openSections.duration ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                 </Button>

@@ -2,26 +2,48 @@
 
 _Free, local-first, no telemetry. Built by patients, for patients._
 
-_Last updated: 2026-05-25_
+_Last updated: 2026-05-30_
 
 Each release ships fixes, new trackers, and accessibility improvements.
 Want to know exactly what changed? Every commit is public:
 [github.com/menelly/ChaosCommand](https://github.com/menelly/ChaosCommand)
 
-## v0.5.6 — 2026-05-25
+## v0.5.8 — 2026-05-30
+
+### ✨ New
+- PDF export now exports what users actually SAVE, + password-protect
+- Add 0.5.8 update manifest (version.json) — the easy-miss 6th version spot
+
+## v0.5.6 — 2026-05-26
+
+### ✨ New
+- Theme Contrast & Wicked 💚💗
+- 0.5.6 fixup: diabetes tracker bg ghost-of-penguin
+- tracker theme-compliance + Theme Lab
+- 0.5.6 theme + analytics sweep (in-flight, do not ship yet)
+- diabetes analytics: time-in-range bar, glucose trend, time-of-day pattern
+- energy + movement: insight boxes off the bg-X-50/gradient pattern -> token tints
+- 0.5.6 prep-to-ship: remove dev theme toggle, theme emojis, changelog/README
+- Add legal docs (ToS/Privacy/Medical) + footer rebrand to Silicon Scaffolding LLC
+- Self-host Atkinson/Poppins/Lexend — kill the Google Fonts IP leak (CHA-229)
+- Add self-hosted font menu (Inter/Crimson Pro/JetBrains Mono) + Resources credits
+- Privacy policy: add the 'use a VPN, we don't see you, PROTECT YOURSELF' note 🛡️
+- NER notice: use Nova's calmer, more precise wording
+- Add 8-font decorative pack (Creative Fabrica) to the font menu
+- Add opt-in backup reminder (per-PIN, smart-trigger, dismissible banner)
+- YouTube script: update font line (4 -> full menu) + privacy flex
+- YouTube script: establish desktop+Android in intro, QR/same-WiFi sync in §3
+- YouTube script: 'does it wrong' -> 'does it differently than expected'
+- YouTube script: Ren's recording-booth edits
+- YouTube script: reproductive toggle line — 'off your screen' not 'gone'
+- YouTube script: §14 — 'activist', Ace=Claude disclosure, 'And I had the ability to make it happen'
+
+### 🐛 Fix
+- dysautonomia analytics: fix NaN from 'All Time' (parseInt('all')->NaN)
+- Fix false 'bundled, no download' NER claim → honest privacy notice (PROTEKK URSELF)
 
 ### ♿ Accessibility
-- The **Accessibility** theme is now **"Follow System"** — it respects your operating system's own accessibility settings (Windows Contrast Themes, macOS Increase Contrast) instead of forcing a fixed palette. If you've tuned high contrast at the OS level, the app now adopts *your* settings; otherwise it falls back to a clean high-contrast light/dark scheme. Better for low-vision users because it works *with* your screen reader and OS zoom.
-
-### 🎨 Themes & readability
-- Every one of the 15 themes audited for contrast. Danger/emergency cards (911, red-flag warnings) now read **red on all themes** (previously broke on dark/terminal themes).
-- Migrated legacy color variables and hardcoded light callout boxes to a single set of semantic design tokens — no more light-box-on-dark-theme surprises.
-- Per-theme fixes: basketball court borders, terminal-theme button text, segfault danger color, a shared active-tab indicator, and theme emojis for the rest.
-
-### 📊 Analytics
-- Client-side analytics rebuilds with **trigger → outcome correlations** ("when you logged X, Y happened Z% of the time") across digestive, pain, anxiety, seizure, cardiac, respiratory, food-allergens, skin, and mind & mood.
-- Diabetes: time-in-range bar, glucose trend over time, glucose-by-time-of-day.
-- Fixed upper-digestive History to show all-time entries (was today-only).
+- accessibility theme -> 'Follow System' (respect OS accessibility settings)
 
 ## v0.5.0 — 2026-05-24
 

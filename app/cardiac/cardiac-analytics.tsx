@@ -345,7 +345,7 @@ export function CardiacAnalytics({ refreshTrigger }: CardiacAnalyticsProps) {
                     <span className="text-muted-foreground">{count} events ({pct.toFixed(0)}%)</span>
                   </div>
                   <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-                    <div className="bg-red-400 h-2" style={{ width: `${pct}%` }} />
+                    <div className="bg-destructive h-2" style={{ width: `${pct}%` }} />
                   </div>
                 </div>
               )
@@ -455,11 +455,11 @@ export function CardiacAnalytics({ refreshTrigger }: CardiacAnalyticsProps) {
             </div>
             <div className="text-center">
               <div className="text-xs uppercase tracking-wide text-muted-foreground">Moderate (4-6)</div>
-              <div className="text-2xl font-bold text-yellow-600">{stats.severityBuckets.moderate}</div>
+              <div className="text-2xl font-bold text-warning">{stats.severityBuckets.moderate}</div>
             </div>
             <div className="text-center">
               <div className="text-xs uppercase tracking-wide text-muted-foreground">Severe (7-10)</div>
-              <div className="text-2xl font-bold text-red-600">{stats.severityBuckets.severe}</div>
+              <div className="text-2xl font-bold text-destructive">{stats.severityBuckets.severe}</div>
             </div>
           </div>
         </CardContent>
@@ -504,7 +504,7 @@ export function CardiacAnalytics({ refreshTrigger }: CardiacAnalyticsProps) {
                 return (
                   <div key={h} className="flex flex-col items-center" title={`${formatHour(h)}: ${c} ${c === 1 ? 'event' : 'events'}`}>
                     <div className="w-full bg-muted rounded-sm overflow-hidden flex items-end" style={{ height: '60px' }}>
-                      <div className="w-full bg-red-400 transition-all" style={{ height: `${pct}%` }} />
+                      <div className="w-full bg-destructive transition-all" style={{ height: `${pct}%` }} />
                     </div>
                     <span className="text-[0.5625rem] text-muted-foreground mt-1">{h % 6 === 0 ? formatHour(h) : ''}</span>
                   </div>

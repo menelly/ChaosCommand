@@ -58,9 +58,9 @@ export function GraphAnalytics() {
   }
 
   const getWeightColor = (weight: number) => {
-    if (weight >= 0.8) return 'bg-red-500'
-    if (weight >= 0.6) return 'bg-orange-500'
-    if (weight >= 0.4) return 'bg-yellow-500'
+    if (weight >= 0.8) return 'bg-destructive'
+    if (weight >= 0.6) return 'bg-warning'
+    if (weight >= 0.4) return 'bg-warning/60'
     return 'bg-green-500'
   }
 
