@@ -742,7 +742,7 @@ export default function CopingRegulationPage() {
                 <div className="border-t pt-6">
                   <h3 className="font-semibold text-center mb-4">How are you feeling?</h3>
                   <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-3">
-                    <Button onClick={() => completeSession(true)} className="bg-green-500 hover:bg-green-600">
+                    <Button onClick={() => completeSession(true)} className="bg-success text-success-foreground hover:bg-success/90">
                       <ThumbsUp className="h-5 w-5 mr-2" />
                       This helped!
                     </Button>
@@ -838,7 +838,7 @@ export default function CopingRegulationPage() {
                           Used {sessionsCount} times
                         </Badge>
                         {helpfulCount > 0 && (
-                          <div className="text-xs text-green-600 mt-1">
+                          <div className="text-xs text-success mt-1">
                             ✓ Helpful {helpfulCount} times
                           </div>
                         )}

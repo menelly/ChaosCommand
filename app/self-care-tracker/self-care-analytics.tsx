@@ -233,7 +233,7 @@ export function SelfCareAnalytics({ refreshTrigger }: SelfCareAnalyticsProps) {
   if (isLoading) {
     return (
       <div className="text-center py-8">
-        <BarChart3 className="h-8 w-8 mx-auto mb-4 text-pink-500 animate-pulse" />
+        <BarChart3 className="h-8 w-8 mx-auto mb-4 text-primary animate-pulse" />
         <p>Analyzing your self-care patterns...</p>
       </div>
     )
@@ -243,7 +243,7 @@ export function SelfCareAnalytics({ refreshTrigger }: SelfCareAnalyticsProps) {
     return (
       <Card>
         <CardContent className="text-center py-8">
-          <Heart className="h-12 w-12 mx-auto mb-4 text-pink-300" />
+          <Heart className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
           <h3 className="text-lg font-medium mb-2">No data to analyze yet</h3>
           <p className="text-muted-foreground">
             Start tracking your self-care to see insights about what works best for you! 💜
@@ -302,14 +302,14 @@ export function SelfCareAnalytics({ refreshTrigger }: SelfCareAnalyticsProps) {
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Energy Impact</CardTitle>
             {overallStats.avgEnergyChange >= 0 ? (
-              <TrendingUp className="h-4 w-4 text-green-600" />
+              <TrendingUp className="h-4 w-4 text-success" />
             ) : (
               <TrendingDown className="h-4 w-4 text-destructive" />
             )}
           </CardHeader>
           <CardContent>
             <div className={`text-2xl font-bold ${
-              overallStats.avgEnergyChange >= 0 ? 'text-green-600' : 'text-destructive'
+              overallStats.avgEnergyChange >= 0 ? 'text-success' : 'text-destructive'
             }`}>
               {overallStats.avgEnergyChange >= 0 ? '+' : ''}{overallStats.avgEnergyChange.toFixed(1)}
             </div>
@@ -323,14 +323,14 @@ export function SelfCareAnalytics({ refreshTrigger }: SelfCareAnalyticsProps) {
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Stress Relief</CardTitle>
             {overallStats.avgStressChange >= 0 ? (
-              <TrendingDown className="h-4 w-4 text-green-600" />
+              <TrendingDown className="h-4 w-4 text-success" />
             ) : (
               <TrendingUp className="h-4 w-4 text-destructive" />
             )}
           </CardHeader>
           <CardContent>
             <div className={`text-2xl font-bold ${
-              overallStats.avgStressChange >= 0 ? 'text-green-600' : 'text-destructive'
+              overallStats.avgStressChange >= 0 ? 'text-success' : 'text-destructive'
             }`}>
               {overallStats.avgStressChange >= 0 ? '-' : '+'}{Math.abs(overallStats.avgStressChange).toFixed(1)}
             </div>
@@ -345,7 +345,7 @@ export function SelfCareAnalytics({ refreshTrigger }: SelfCareAnalyticsProps) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Heart className="h-5 w-5 text-pink-500" />
+            <Heart className="h-5 w-5 text-primary" />
             Self-Care by Category
           </CardTitle>
         </CardHeader>
@@ -382,7 +382,7 @@ export function SelfCareAnalytics({ refreshTrigger }: SelfCareAnalyticsProps) {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Target className="h-5 w-5 text-green-500" />
+              <Target className="h-5 w-5 text-success" />
               Your Most Effective Self-Care
             </CardTitle>
             <p className="text-sm text-muted-foreground">
@@ -410,7 +410,7 @@ export function SelfCareAnalytics({ refreshTrigger }: SelfCareAnalyticsProps) {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-lg font-bold text-green-600">
+                      <div className="text-lg font-bold text-success">
                         {activity.avgEffectiveness.toFixed(1)}/10
                       </div>
                       <div className="text-xs text-muted-foreground">effectiveness</div>

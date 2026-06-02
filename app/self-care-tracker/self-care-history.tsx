@@ -142,21 +142,21 @@ export function SelfCareHistory({ refreshTrigger, onEdit, onDelete }: SelfCareHi
   }
 
   const getEffectivenessColor = (effectiveness: number) => {
-    if (effectiveness >= 8) return 'bg-green-100 text-green-800'
+    if (effectiveness >= 8) return 'bg-success/10 text-success'
     if (effectiveness >= 5) return 'bg-warning/10 text-warning'
     return 'bg-destructive/10 text-destructive'
   }
 
   const getEnergyChange = (before: number, after: number) => {
     const change = after - before
-    if (change > 0) return { text: `+${change}`, color: 'text-green-600' }
+    if (change > 0) return { text: `+${change}`, color: 'text-success' }
     if (change < 0) return { text: `${change}`, color: 'text-destructive' }
     return { text: '0', color: 'text-muted-foreground' }
   }
 
   const getStressChange = (before: number, after: number) => {
     const change = before - after // Positive change means stress decreased (good)
-    if (change > 0) return { text: `-${change}`, color: 'text-green-600' }
+    if (change > 0) return { text: `-${change}`, color: 'text-success' }
     if (change < 0) return { text: `+${Math.abs(change)}`, color: 'text-destructive' }
     return { text: '0', color: 'text-muted-foreground' }
   }
@@ -164,7 +164,7 @@ export function SelfCareHistory({ refreshTrigger, onEdit, onDelete }: SelfCareHi
   if (isLoading) {
     return (
       <div className="text-center py-8">
-        <Heart className="h-8 w-8 mx-auto mb-4 text-pink-500 animate-pulse" />
+        <Heart className="h-8 w-8 mx-auto mb-4 text-primary animate-pulse" />
         <p>Loading your self-care journey...</p>
       </div>
     )
@@ -265,7 +265,7 @@ export function SelfCareHistory({ refreshTrigger, onEdit, onDelete }: SelfCareHi
       {filteredEntries.length === 0 ? (
         <Card>
           <CardContent className="text-center py-8">
-            <Heart className="h-12 w-12 mx-auto mb-4 text-pink-300" />
+            <Heart className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
             <h3 className="text-lg font-medium mb-2">
               {entries.length === 0 ? 'No self-care entries yet' : 'No entries match your filters'}
             </h3>
@@ -290,23 +290,23 @@ export function SelfCareHistory({ refreshTrigger, onEdit, onDelete }: SelfCareHi
             return (
               <Card key={uniqueKey} className="hover:shadow-md transition-shadow">
                 <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="text-2xl">{categoryInfo?.emoji}</div>
-                      <div>
-                        <CardTitle className="text-lg">{getActivityLabel(entry)}</CardTitle>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Calendar className="h-4 w-4" />
-                          {entry.date ? format(parseISO(entry.date), 'MMM d, yyyy') : 'No date'} at {entry.time || 'No time'}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start gap-3 min-w-0">
+                      <div className="text-2xl shrink-0">{categoryInfo?.emoji}</div>
+                      <div className="min-w-0">
+                        <CardTitle className="text-lg truncate">{getActivityLabel(entry)}</CardTitle>
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground mt-1">
+                          <Calendar className="h-4 w-4 shrink-0" />
+                          <span>{entry.date ? format(parseISO(entry.date), 'MMM d, yyyy') : 'No date'} at {entry.time || 'No time'}</span>
                           <span>•</span>
                           <span>{entry.duration || 'No duration'}</span>
                         </div>
+                        <Badge className={`mt-2 ${getEffectivenessColor(entry.effectiveness || 5)}`}>
+                          {entry.effectiveness || 5}/10 effective
+                        </Badge>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Badge className={getEffectivenessColor(entry.effectiveness || 5)}>
-                        {entry.effectiveness || 5}/10 effective
-                      </Badge>
+                    <div className="flex flex-col gap-1 shrink-0">
                       <Button variant="ghost" size="sm" onClick={() => onEdit(entry)}>
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -364,7 +364,7 @@ export function SelfCareHistory({ refreshTrigger, onEdit, onDelete }: SelfCareHi
                       </Badge>
                     )}
                     {entry.wouldDoAgain && (
-                      <Badge variant="outline" className="text-green-600 border-green-200">
+                      <Badge variant="outline" className="text-success border-success/30">
                         Would do again
                       </Badge>
                     )}

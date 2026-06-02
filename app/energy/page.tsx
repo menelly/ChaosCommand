@@ -561,7 +561,7 @@ export default function EnergyPacingTracker() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">
-                      <Heart className="h-5 w-5 text-teal-500" />
+                      <Heart className="h-5 w-5 text-info" />
                       Quick Rest
                     </CardTitle>
                     <CardDescription>
@@ -594,18 +594,18 @@ export default function EnergyPacingTracker() {
           <TabsContent value="history" className="space-y-4">
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <CardTitle>Energy History</CardTitle>
                     <CardDescription>Your pacing patterns over time</CardDescription>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Search className="h-4 w-4 text-muted-foreground" />
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <Search className="h-4 w-4 text-muted-foreground shrink-0" />
                     <Input
                       placeholder="Search..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-48"
+                      className="w-full sm:w-48"
                     />
                   </div>
                 </div>
@@ -632,9 +632,9 @@ export default function EnergyPacingTracker() {
 
                       return (
                         <Card key={record.date} className={`border-l-4 ${
-                          risk === 'danger' ? 'border-l-red-500 dark:border-l-red-400' :
-                          risk === 'warning' ? 'border-l-orange-500 dark:border-l-orange-400' :
-                          risk === 'caution' ? 'border-l-yellow-500 dark:border-l-yellow-400' : 'border-l-green-500 dark:border-l-green-400'
+                          risk === 'danger' ? 'border-l-destructive' :
+                          risk === 'warning' ? 'border-l-warning' :
+                          risk === 'caution' ? 'border-l-warning/60' : 'border-l-success'
                         }`}>
                           <CardContent className="pt-4">
                             <div className="flex items-start justify-between mb-3">

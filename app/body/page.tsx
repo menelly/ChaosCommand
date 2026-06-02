@@ -420,8 +420,8 @@ export default function PhysicalHealthIndex() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => updateHiddenTrackers([])}
-                    disabled={hiddenTrackers.length === 0}
+                    onClick={() => { updateHiddenTrackers([]); toggleFertilityFeatures(false); }}
+                    disabled={hiddenTrackers.length === 0 && !hideFertility}
                   >
                     Show All
                   </Button>

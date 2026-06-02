@@ -178,7 +178,7 @@ export function SelfCareForm({ initialData, selectedCategory, onSave, onCancel }
     <Card className="w-full">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Heart className="h-5 w-5 text-pink-500" />
+          <Heart className="h-5 w-5 text-primary" />
           {initialData ? 'Edit Self-Care Entry' : 'Track Your Self-Care'}
         </CardTitle>
         <p className="text-sm text-muted-foreground">

@@ -118,6 +118,12 @@
   body {
     @apply bg-background text-foreground;
   }
+  /* Prevent slash-separated labels (e.g. "anxiety/panic") from overflowing
+     narrow mobile viewports. Excludes code/pre so formatted output is safe. */
+  *:not(code):not(pre):not(code *):not(pre *) {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
 }
 
 /* Custom scrollbar for sidebar */

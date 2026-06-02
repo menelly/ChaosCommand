@@ -54,22 +54,29 @@ export interface OvulationPrediction {
 
 /**
  * SMART MULTI-FACTOR FERTILITY ANALYSIS
- * Weighs BBT, OPK, cervical mucus, and ferning together
+ * Weighs BBT, OPK, cervical mucus, and ferning together.
+ *
+ * recentEntries: last 7 days — used for OPK, CM, ferning (stale LH surge data is misleading)
+ * bbtEntries: full current cycle — BBT needs the pre-ovulation baseline to detect the shift;
+ *             a 7-day window misses it if ovulation happened >7 days ago
  */
-function analyzeAllFertilitySigns(entries: CycleEntry[], today: Date): FertilityAnalysis {
-  // Sort entries by date (most recent first) - add T12:00:00 to fix timezone issues
-  entries.sort((a, b) => new Date(b.date + 'T12:00:00').getTime() - new Date(a.date + 'T12:00:00').getTime())
+function analyzeAllFertilitySigns(recentEntries: CycleEntry[], bbtEntries: CycleEntry[], today: Date): FertilityAnalysis {
+  // Sort both sets most-recent-first
+  recentEntries.sort((a, b) => new Date(b.date + 'T12:00:00').getTime() - new Date(a.date + 'T12:00:00').getTime())
+  bbtEntries.sort((a, b) => new Date(b.date + 'T12:00:00').getTime() - new Date(a.date + 'T12:00:00').getTime())
 
-  // Get recent data for each sign
-  const recentOPKs = entries.filter(e => e.opk && e.opk !== 'negative')
-  const recentBBTs = entries.filter(e => e.bbt !== null && e.bbt !== undefined)
-  const recentCM = entries.filter(e => e.cervicalFluid && e.cervicalFluid !== '')
-  const recentFerning = entries.filter(e => e.ferning && e.ferning !== 'none')
+  // OPK, CM, ferning: use recent window only
+  const recentOPKs = recentEntries.filter(e => e.opk && e.opk !== 'negative')
+  const recentCM = recentEntries.filter(e => e.cervicalFluid && e.cervicalFluid !== '')
+  const recentFerning = recentEntries.filter(e => e.ferning && e.ferning !== 'none')
 
-  console.log('🔬 MULTI-FACTOR DEBUG: OPKs:', recentOPKs.length, 'BBTs:', recentBBTs.length, 'CM:', recentCM.length)
+  // BBT: use full-cycle entries so the pre-ovulation baseline is available for shift detection
+  const cycleBBTs = bbtEntries.filter(e => e.bbt !== null && e.bbt !== undefined)
+
+  console.log('🔬 MULTI-FACTOR DEBUG: OPKs:', recentOPKs.length, 'BBTs (full cycle):', cycleBBTs.length, 'CM:', recentCM.length)
 
   // 1. CHECK BBT TEMPERATURE SHIFT (HIGHEST PRIORITY - most reliable)
-  const bbtAnalysis = analyzeBBTShift(recentBBTs, today)
+  const bbtAnalysis = analyzeBBTShift(cycleBBTs, today)
   if (bbtAnalysis.ovulationDetected) {
     console.log('🌡️ BBT shift detected - using as primary indicator')
     return bbtAnalysis
@@ -311,26 +318,36 @@ export function predictOvulation(
     message: 'Not enough data for prediction. Keep tracking!'
   }
 
-  // Check for recent OPK data FIRST (last 7 days only - ignore ancient history!)
+  // OPK / CM / ferning: last 7 days only (stale LH surge data is misleading for current cycle)
   const recentEntries = entries
     .filter(entry => {
-      // Add T12:00:00 to fix timezone issues with date-only strings
       const entryDate = new Date(entry.date + 'T12:00:00')
       const daysAgo = differenceInDays(today, entryDate)
-      return daysAgo >= 0 && daysAgo <= 7 // Only last week
+      return daysAgo >= 0 && daysAgo <= 7
     })
-    .sort((a, b) => new Date(b.date + 'T12:00:00').getTime() - new Date(a.date + 'T12:00:00').getTime()) // Most recent first
+    .sort((a, b) => new Date(b.date + 'T12:00:00').getTime() - new Date(a.date + 'T12:00:00').getTime())
+
+  // BBT: full current cycle — since LMP if known, otherwise cycleLength + 5 days for baseline buffer
+  const bbtWindowDays = lmpDate
+    ? differenceInDays(today, new Date(lmpDate + 'T12:00:00')) + 1
+    : averageCycleLength + 5
+  const bbtEntries = entries
+    .filter(entry => {
+      const entryDate = new Date(entry.date + 'T12:00:00')
+      const daysAgo = differenceInDays(today, entryDate)
+      return daysAgo >= 0 && daysAgo <= bbtWindowDays
+    })
+    .sort((a, b) => new Date(b.date + 'T12:00:00').getTime() - new Date(a.date + 'T12:00:00').getTime())
 
   const recentOPKs = recentEntries.filter(entry => entry.opk && entry.opk !== 'negative')
   const mostRecentOPK = recentOPKs[0]
 
-  // DEBUG: Log OPK data
-  console.log('🔮 PREDICTOR DEBUG: Recent entries:', recentEntries.length)
+  console.log('🔮 PREDICTOR DEBUG: Recent entries:', recentEntries.length, '| BBT window:', bbtWindowDays, 'days (', bbtEntries.length, 'entries)')
   console.log('🔮 PREDICTOR DEBUG: Recent OPKs:', recentOPKs)
   console.log('🔮 PREDICTOR DEBUG: Most recent OPK:', mostRecentOPK)
 
-  // MULTI-FACTOR ANALYSIS - Check ALL the signs!
-  const analysis = analyzeAllFertilitySigns(recentEntries, today)
+  // MULTI-FACTOR ANALYSIS - OPK/CM use recent window, BBT uses full cycle
+  const analysis = analyzeAllFertilitySigns(recentEntries, bbtEntries, today)
 
   if (analysis.ovulationDetected) {
     return {
@@ -358,7 +375,7 @@ export function predictOvulation(
   const cycleDay = differenceInDays(today, new Date(lmpDate + 'T12:00:00')) + 1
 
   // Basic cycle-based prediction (ovulation around day 14 for 28-day cycle)
-  const estimatedOvulationDay = Math.round(averageCycleLength * 0.5) // Roughly middle of cycle
+  const estimatedOvulationDay = averageCycleLength - 14 // Luteal phase is fixed at ~14 days; ovulation is 14 days before end, not the middle
   const daysUntilEstimatedOvulation = estimatedOvulationDay - cycleDay
 
   // Fall back to cycle-based estimation

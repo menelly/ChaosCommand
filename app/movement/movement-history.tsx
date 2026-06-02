@@ -30,7 +30,7 @@ import { Badge } from "@/components/ui/badge"
 import { Heart, Edit, Trash2, Calendar } from "lucide-react"
 import { MovementEntry } from './movement-types'
 import { getMovementType, getIntensityLevel } from './movement-constants'
-import { useDailyData } from "@/lib/database"
+import { useDailyData, CATEGORIES } from "@/lib/database"
 import { format } from "date-fns"
 
 interface MovementHistoryProps {
@@ -40,22 +40,24 @@ interface MovementHistoryProps {
   refreshTrigger?: number
 }
 
-export function MovementHistory({ 
-  selectedDate, 
-  onEdit, 
-  onDelete, 
-  refreshTrigger = 0 
+export function MovementHistory({
+  selectedDate,
+  onEdit,
+  onDelete,
+  refreshTrigger = 0
 }: MovementHistoryProps) {
-  const { getCategoryData } = useDailyData()
+  const { getDateRange } = useDailyData()
   const [entries, setEntries] = useState<MovementEntry[]>([])
   const [isLoading, setIsLoading] = useState(false)
 
   const loadEntries = useCallback(async () => {
     setIsLoading(true)
     try {
-      const data = await getCategoryData(selectedDate, 'tracker')
+      const today = format(new Date(), 'yyyy-MM-dd')
+      const ninetyDaysAgo = format(new Date(Date.now() - 90 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd')
+      const allData = await getDateRange(ninetyDaysAgo, today, CATEGORIES.TRACKER)
+      const data = allData.filter(record => record.subcategory.startsWith('movement-'))
       const movementEntries = data
-        .filter(record => record.subcategory.startsWith('movement-'))
         .map(data => {
           try {
             console.log('🔍 Raw data.content:', data.content)
@@ -115,19 +117,24 @@ export function MovementHistory({
         })
         .filter(Boolean) as MovementEntry[]
       
-      setEntries(movementEntries.sort((a, b) => {
-        // Safe sorting without modifying data
+      // Sort newest first (by date, then time within a date)
+      movementEntries.sort((a, b) => {
+        const dateA = a?.date || ''
+        const dateB = b?.date || ''
+        const dateCmp = dateB.localeCompare(dateA)
+        if (dateCmp !== 0) return dateCmp
         const timeA = a?.time || '00:00'
         const timeB = b?.time || '00:00'
-        return timeA.localeCompare(timeB)
-      }))
+        return timeB.localeCompare(timeA)
+      })
+      setEntries(movementEntries)
     } catch (error) {
       console.error('Failed to load movement entries:', error)
       setEntries([])
     } finally {
       setIsLoading(false)
     }
-  }, [selectedDate, getCategoryData])
+  }, [getDateRange])
 
   // Load entries when date changes or refresh is triggered
   useEffect(() => {
@@ -164,7 +171,7 @@ export function MovementHistory({
           Movement History
         </CardTitle>
         <CardDescription>
-          Your movement journey for {format(new Date(selectedDate), 'MMMM d, yyyy')}
+          Your movement journey — last 90 days ({entries.length} entries)
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -172,7 +179,7 @@ export function MovementHistory({
           <div className="text-center py-8">
             <Heart className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground">
-              No movement logged for this date
+              No movement logged in the last 90 days
             </p>
             <p className="text-sm text-muted-foreground mt-2">
               Every movement counts! Tap &quot;Track Movement&quot; to celebrate your body in motion! 💖
@@ -186,7 +193,7 @@ export function MovementHistory({
               const intensityLevel = getIntensityLevel(entry.intensity)
 
               return (
-                <Card key={entry.id} className="border-l-4 border-l-pink-500">
+                <Card key={entry.id} className="border-l-4 border-l-primary">
                   <CardContent className="pt-4">
                     <div className="flex justify-between items-start mb-3">
                       <div className="flex items-center gap-3">
@@ -196,11 +203,11 @@ export function MovementHistory({
                             {movementType.description}
                           </h3>
                           <p className="text-sm text-muted-foreground">
-                            {entry.time} {entry.duration && `• ${entry.duration}`}
+                            {entry.date && format(new Date(entry.date + 'T12:00:00'), 'MMM d, yyyy')}{entry.date ? ' • ' : ''}{entry.time} {entry.duration && `• ${entry.duration}`}
                           </p>
                         </div>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex flex-col gap-1 shrink-0">
                         <Button
                           variant="ghost"
                           size="sm"
@@ -227,8 +234,8 @@ export function MovementHistory({
 
                       <div className="text-sm">
                         <strong>Energy:</strong> {entry.energyBefore} → {entry.energyAfter}
-                        {entry.energyAfter > entry.energyBefore && <span className="text-green-600 ml-1">↗️</span>}
-                        {entry.energyAfter < entry.energyBefore && <span className="text-blue-600 ml-1">↘️</span>}
+                        {entry.energyAfter > entry.energyBefore && <span className="text-success ml-1">↗️</span>}
+                        {entry.energyAfter < entry.energyBefore && <span className="text-info ml-1">↘️</span>}
                         {entry.energyAfter === entry.energyBefore && <span className="text-[var(--text-muted)] ml-1">→</span>}
                       </div>
 

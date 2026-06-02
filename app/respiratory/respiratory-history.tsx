@@ -69,50 +69,50 @@ export function RespiratoryHistory({ onEdit, onDelete, refreshTrigger }: Props) 
             {grouped[date].map(entry => {
               const info = getEpisodeTypeInfo(entry.episodeType)
               return (
-                <Card key={entry.id} className="bg-muted/30">
-                  <CardContent className="pt-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1 flex-wrap">
-                          <span className="text-lg">{info.icon}</span>
-                          <span className="font-semibold">{info.name}</span>
-                          {entry.severity && <Badge variant="outline" className={getSeverityColor(entry.severity)}>{getSeverityLabel(entry.severity)} ({entry.severity}/10)</Badge>}
-                          {entry.peakFlowZone && entry.peakFlowZone !== 'unknown' && (
-                            <Badge variant="outline" className={entry.peakFlowZone === 'red' ? 'text-red-600' : entry.peakFlowZone === 'yellow' ? 'text-yellow-600' : 'text-green-600'}>
-                              PF: {entry.peakFlowZone}
-                            </Badge>
-                          )}
-                          {entry.attachmentImages && entry.attachmentImages.length > 0 && (
-                            <Badge variant="outline" className="bg-info/10 text-info border-blue-300">
-                              📎 {entry.attachmentImages.length} {entry.attachmentImages.length === 1 ? 'file' : 'files'}
-                            </Badge>
-                          )}
-                          {entry.epinephrineGiven && <Badge variant="destructive">EpiPen used</Badge>}
-                          {entry.erVisitRequired && <Badge variant="destructive">ER</Badge>}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {format(new Date(entry.timestamp), 'h:mm a')}
-                          {entry.spo2Lowest && ` • Lowest SpO2 ${entry.spo2Lowest}%`}
-                          {entry.peakFlowReading && ` • PF ${entry.peakFlowReading} L/min`}
-                          {entry.timeToResolutionMin && ` • ${entry.timeToResolutionMin} min to resolve`}
-                        </div>
-                        {entry.symptoms && entry.symptoms.length > 0 && <div className="text-xs mt-2 text-muted-foreground"><strong>Symptoms:</strong> {entry.symptoms.join(', ')}</div>}
-                        {entry.triggers && entry.triggers.length > 0 && <div className="text-xs mt-1 text-muted-foreground"><strong>Triggers:</strong> {entry.triggers.join(', ')}</div>}
-                        {entry.inhalerUsed && entry.inhalerName && (
-                          <div className="text-xs mt-1 text-muted-foreground">
-                            <strong>Inhaler:</strong> {entry.inhalerName} {entry.inhalerDoses && `× ${entry.inhalerDoses} doses`}
-                            {entry.inhalerResponse && ` (response ${entry.inhalerResponse}/5)`}
-                          </div>
-                        )}
-                        {entry.notes && <div className="text-xs mt-2 italic">{entry.notes}</div>}
-                      </div>
-                      <div className="flex gap-1 ml-2">
-                        <Button size="sm" variant="ghost" onClick={() => onEdit(entry)}><Edit className="h-3 w-3" /></Button>
-                        <Button size="sm" variant="ghost" onClick={() => onDelete(entry)}><Trash2 className="h-3 w-3" /></Button>
-                      </div>
+                <div
+                  key={entry.id}
+                  className="border-l-4 pl-4 py-3 border border-border rounded-r-lg bg-muted/30"
+                  style={{ borderLeftColor: 'hsl(var(--primary))' }}
+                >
+                  <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-lg">{info.icon}</span>
+                      <span className="font-semibold">{info.name}</span>
+                      {entry.severity && <Badge variant="outline" className={getSeverityColor(entry.severity)}>{getSeverityLabel(entry.severity)} ({entry.severity}/10)</Badge>}
+                      {entry.peakFlowZone && entry.peakFlowZone !== 'unknown' && (
+                        <Badge variant="outline" className={entry.peakFlowZone === 'red' ? 'text-red-600' : entry.peakFlowZone === 'yellow' ? 'text-yellow-600' : 'text-green-600'}>
+                          PF: {entry.peakFlowZone}
+                        </Badge>
+                      )}
+                      {entry.attachmentImages && entry.attachmentImages.length > 0 && (
+                        <Badge variant="outline" className="bg-info/10 text-info border-blue-300">
+                          📎 {entry.attachmentImages.length} {entry.attachmentImages.length === 1 ? 'file' : 'files'}
+                        </Badge>
+                      )}
+                      {entry.epinephrineGiven && <Badge variant="destructive">EpiPen used</Badge>}
+                      {entry.erVisitRequired && <Badge variant="destructive">ER</Badge>}
                     </div>
-                  </CardContent>
-                </Card>
+                    <div className="flex gap-1">
+                      <Button size="sm" variant="ghost" onClick={() => onEdit(entry)}><Edit className="h-3 w-3" /></Button>
+                      <Button size="sm" variant="ghost" onClick={() => onDelete(entry)}><Trash2 className="h-3 w-3" /></Button>
+                    </div>
+                  </div>
+                  <div className="text-xs text-muted-foreground mb-1">
+                    {format(new Date(entry.timestamp), 'h:mm a')}
+                    {entry.spo2Lowest && ` • Lowest SpO2 ${entry.spo2Lowest}%`}
+                    {entry.peakFlowReading && ` • PF ${entry.peakFlowReading} L/min`}
+                    {entry.timeToResolutionMin && ` • ${entry.timeToResolutionMin} min to resolve`}
+                  </div>
+                  {entry.symptoms && entry.symptoms.length > 0 && <div className="text-xs mt-1 text-muted-foreground"><strong>Symptoms:</strong> {entry.symptoms.join(', ')}</div>}
+                  {entry.triggers && entry.triggers.length > 0 && <div className="text-xs mt-1 text-muted-foreground"><strong>Triggers:</strong> {entry.triggers.join(', ')}</div>}
+                  {entry.inhalerUsed && entry.inhalerName && (
+                    <div className="text-xs mt-1 text-muted-foreground">
+                      <strong>Inhaler:</strong> {entry.inhalerName} {entry.inhalerDoses && `× ${entry.inhalerDoses} doses`}
+                      {entry.inhalerResponse && ` (response ${entry.inhalerResponse}/5)`}
+                    </div>
+                  )}
+                  {entry.notes && <div className="text-xs mt-1 italic">{entry.notes}</div>}
+                </div>
               )
             })}
           </CardContent>

@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Moon, Edit, Trash2, Calendar } from "lucide-react"
-import { useDailyData } from "@/lib/database"
+import { useDailyData, CATEGORIES } from "@/lib/database"
 import { useToast } from "@/hooks/use-toast"
 import { format } from "date-fns"
 import { formatLocalDateString } from "@/lib/utils/dateUtils"
@@ -34,23 +34,32 @@ import {
 } from './sleep-constants'
 
 export default function SleepTracker() {
-  const { saveData, getCategoryData, deleteData, isLoading: dbLoading } = useDailyData()
+  const { saveData, getCategoryData, getDateRange, deleteData, isLoading: dbLoading } = useDailyData()
   const { userPin } = useUser()
   const { toast } = useToast()
 
   // State
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'))
   const [entries, setEntries] = useState<SleepEntry[]>([])
+  const [historyEntries, setHistoryEntries] = useState<SleepEntry[]>([])
   const [editingEntry, setEditingEntry] = useState<SleepEntry | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [historyLoading, setHistoryLoading] = useState(false)
   const [activeTab, setActiveTab] = useState("entry")
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [refreshTrigger, setRefreshTrigger] = useState(0)
 
-  // Load entries for selected date
+  // Load entries for selected date (for entry/editing)
   useEffect(() => {
     loadEntries()
   }, [selectedDate])
+
+  // Load history entries (90-day range) when history tab is active or refresh triggered
+  useEffect(() => {
+    if (activeTab === 'history') {
+      loadHistoryEntries()
+    }
+  }, [activeTab, refreshTrigger])
 
   const loadEntries = async () => {
     try {
@@ -89,6 +98,47 @@ export default function SleepTracker() {
     }
   }
 
+  const loadHistoryEntries = async () => {
+    setHistoryLoading(true)
+    try {
+      const today = format(new Date(), 'yyyy-MM-dd')
+      const ninetyDaysAgo = format(new Date(Date.now() - 90 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd')
+      const records = await getDateRange(ninetyDaysAgo, today, CATEGORIES.TRACKER)
+      const sleepRecords = records.filter(
+        record => record.subcategory === 'sleep' || record.subcategory.startsWith('sleep-')
+      )
+
+      const allEntries: SleepEntry[] = sleepRecords
+        .map(record => {
+          try {
+            let parsed = typeof record.content === 'string'
+              ? JSON.parse(record.content)
+              : record.content
+            if (isLegacyEntry(parsed)) {
+              return migrateLegacyEntry(parsed)
+            }
+            return parsed as SleepEntry
+          } catch (error) {
+            console.error('Failed to parse sleep history entry:', error)
+            return null
+          }
+        })
+        .filter(Boolean) as SleepEntry[]
+
+      // Sort newest first
+      allEntries.sort((a, b) => {
+        const dateA = a.date || ''
+        const dateB = b.date || ''
+        return dateB.localeCompare(dateA)
+      })
+      setHistoryEntries(allEntries)
+    } catch (error) {
+      console.error('Failed to load sleep history:', error)
+    } finally {
+      setHistoryLoading(false)
+    }
+  }
+
   const handleSave = async (entryData: Omit<SleepEntry, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
       setIsLoading(true)
@@ -111,6 +161,7 @@ export default function SleepTracker() {
       setEditingEntry(null)
       setIsModalOpen(false)
       await loadEntries()
+      await loadHistoryEntries()
       setRefreshTrigger(prev => prev + 1)
 
       const confettiLevel = getPref('chaos-confetti-level') || 'medium'
@@ -144,6 +195,7 @@ export default function SleepTracker() {
       setIsLoading(true)
       await deleteData(entry.date, 'tracker', `sleep-${entry.id}`)
       await loadEntries()
+      await loadHistoryEntries()
       setRefreshTrigger(prev => prev + 1)
       toast({
         title: "Entry Deleted 🗑️",
@@ -241,7 +293,7 @@ export default function SleepTracker() {
           </TabsContent>
 
           <TabsContent value="history" className="space-y-4">
-            {/* Sleep History */}
+            {/* Sleep History — 90-day range */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -249,20 +301,20 @@ export default function SleepTracker() {
                   Sleep History
                 </CardTitle>
                 <CardDescription>
-                  Your documented sleep adventures for {formatLocalDateString(selectedDate)}
+                  Your documented sleep adventures — last 90 days ({historyEntries.length} entries)
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {isLoading || dbLoading ? (
+                {historyLoading ? (
                   <div className="text-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                    <p className="text-muted-foreground">Loading sleep data...</p>
+                    <p className="text-muted-foreground">Loading sleep history...</p>
                   </div>
-                ) : entries.length === 0 ? (
+                ) : historyEntries.length === 0 ? (
                   <div className="text-center py-8">
                     <Moon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                     <p className="text-muted-foreground">
-                      No sleep entries for {formatLocalDateString(selectedDate)}
+                      No sleep entries in the last 90 days
                     </p>
                     <p className="text-sm mt-2 text-muted-foreground">
                       The dream goblins are waiting for your sleep data!
@@ -270,7 +322,7 @@ export default function SleepTracker() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {entries.map((entry) => {
+                    {historyEntries.map((entry) => {
                       const qualityOption = getQualityOption(entry.quality)
                       const disruptionLabels = getDisruptionLabels(entry.disruptions || [])
 

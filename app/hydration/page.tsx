@@ -37,7 +37,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Progress } from "@/components/ui/progress"
 import { Droplets, Edit, Trash2, Calendar, Target, Settings, Loader2, TrendingUp, Award, BarChart3 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useDailyData, formatDateForStorage } from "@/lib/database"
+import { useDailyData, formatDateForStorage, CATEGORIES } from "@/lib/database"
 import { useToast } from "@/hooks/use-toast"
 import { format } from "date-fns"
 import { formatLocalDateString } from "@/lib/utils/dateUtils"
@@ -99,7 +99,7 @@ const HYDRATION_GOBLINISMS = [
 ]
 
 export default function HydrationTracker() {
-  const { saveData, getCategoryData, getSpecificData, deleteData, isLoading } = useDailyData()
+  const { saveData, getCategoryData, getSpecificData, getDateRange, deleteData, isLoading } = useDailyData()
   const { userPin } = useUser()
   const { toast } = useToast()
   
@@ -114,6 +114,10 @@ export default function HydrationTracker() {
   const [dailyGoal, setDailyGoal] = useState(64) // 64oz default (about 8 cups)
   const [reminderInterval, setReminderInterval] = useState(2) // 2 hours
   const [showGoalDialog, setShowGoalDialog] = useState(false)
+
+  // History state (90-day range, separate from single-date entries)
+  const [historyEntries, setHistoryEntries] = useState<HydrationEntry[]>([])
+  const [historyLoading, setHistoryLoading] = useState(false)
 
   // Analytics state
   const [analyticsData, setAnalyticsData] = useState<{
@@ -132,6 +136,13 @@ export default function HydrationTracker() {
     loadEntries()
     loadGoals()
   }, [selectedDate])
+
+  // Load 90-day history when history tab is active
+  useEffect(() => {
+    if (activeTab === 'history') {
+      loadHistoryEntries()
+    }
+  }, [activeTab])
 
   const loadEntries = async () => {
     try {
@@ -176,6 +187,44 @@ export default function HydrationTracker() {
       }
     } catch (error) {
       console.error('Failed to load hydration goals:', error)
+    }
+  }
+
+  const loadHistoryEntries = async () => {
+    setHistoryLoading(true)
+    try {
+      const today = format(new Date(), 'yyyy-MM-dd')
+      const ninetyDaysAgo = format(new Date(Date.now() - 90 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd')
+      const records = await getDateRange(ninetyDaysAgo, today, CATEGORIES.TRACKER)
+      const hydrationRecords = records.filter(r => r.subcategory.startsWith('hydration-'))
+
+      const allEntries: HydrationEntry[] = hydrationRecords
+        .map(record => {
+          try {
+            let parsed: HydrationEntry
+            if (typeof record.content === 'string') {
+              parsed = JSON.parse(record.content) as HydrationEntry
+            } else {
+              parsed = record.content as HydrationEntry
+            }
+            return parsed
+          } catch {
+            return null
+          }
+        })
+        .filter(Boolean) as HydrationEntry[]
+
+      // Sort newest first (by date then time)
+      allEntries.sort((a, b) => {
+        const dateCompare = (b.date || '').localeCompare(a.date || '')
+        if (dateCompare !== 0) return dateCompare
+        return (b.time || '').localeCompare(a.time || '')
+      })
+      setHistoryEntries(allEntries)
+    } catch (error) {
+      console.error('Failed to load hydration history:', error)
+    } finally {
+      setHistoryLoading(false)
     }
   }
 
@@ -343,6 +392,7 @@ export default function HydrationTracker() {
       setEditingEntry(null)
       setIsModalOpen(false)
       await loadEntries()
+      await loadHistoryEntries()
 
       const confettiLevel = getPref('chaos-confetti-level') || 'medium'
       if (confettiLevel !== 'none' && isCelebrationEnabled('hydration', userPin ?? '')) {
@@ -374,6 +424,7 @@ export default function HydrationTracker() {
     try {
       await deleteData(entry.date, 'tracker', `hydration-${entry.id}`)
       await loadEntries()
+      await loadHistoryEntries()
       toast({
         title: "Entry Deleted 🗑️",
         description: "Hydration entry has been evaporated into the digital ether!"
@@ -562,7 +613,7 @@ export default function HydrationTracker() {
           </TabsContent>
 
           <TabsContent value="history" className="space-y-4">
-            {/* Hydration History */}
+            {/* Hydration History — 90-day range */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -570,15 +621,20 @@ export default function HydrationTracker() {
                   Hydration History
                 </CardTitle>
                 <CardDescription>
-                  Your documented liquid adventures for {formatLocalDateString(selectedDate)}
+                  Your documented liquid adventures — last 90 days ({historyEntries.length} entries)
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {entries.length === 0 ? (
+                {historyLoading ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                    <p className="text-muted-foreground">Loading hydration history...</p>
+                  </div>
+                ) : historyEntries.length === 0 ? (
                   <div className="text-center py-8">
                     <Droplets className="h-12 w-12 text-secondary-foreground mx-auto mb-4" />
                     <p className="text-secondary-foreground">
-                      No hydration entries for this date
+                      No hydration entries in the last 90 days
                     </p>
                     <p className="text-sm text-secondary-foreground mt-2">
                       The water sprites are waiting for your drink data!
@@ -586,7 +642,7 @@ export default function HydrationTracker() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {entries.map((entryRaw) => {
+                    {historyEntries.map((entryRaw) => {
                       // If entry is still a string, parse it here
                       let entry: HydrationEntry
                       if (typeof entryRaw === 'string') {
@@ -602,7 +658,7 @@ export default function HydrationTracker() {
 
                       const drinkTypeInfo = getDrinkType(entry.drinkType)
                       const effectiveAmount = Math.round(entry.amount * drinkTypeInfo.multiplier)
-                      
+
                       return (
                         <Card key={entry.id} className="border-l-4 border-l-blue-500">
                           <CardContent className="pt-4">
@@ -614,7 +670,7 @@ export default function HydrationTracker() {
                                     {entry.amount}oz {drinkTypeInfo.label.replace(/^.+ /, '')}
                                   </h3>
                                   <p className="text-sm text-muted-foreground">
-                                    {entry.time} • {effectiveAmount}oz effective hydration
+                                    {entry.date ? formatLocalDateString(entry.date) : ''}{entry.date && entry.time ? ' • ' : ''}{entry.time} • {effectiveAmount}oz effective hydration
                                   </p>
                                 </div>
                               </div>
@@ -635,11 +691,11 @@ export default function HydrationTracker() {
                                 </Button>
                               </div>
                             </div>
-                            
+
                             {entry.notes && (
                               <p className="text-sm mb-3">{entry.notes}</p>
                             )}
-                            
+
                             {entry.tags && entry.tags.length > 0 && (
                               <div className="flex flex-wrap gap-1">
                                 {entry.tags.map((tag) => (

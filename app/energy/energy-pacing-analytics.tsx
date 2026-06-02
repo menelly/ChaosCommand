@@ -339,7 +339,7 @@ export function EnergyPacingAnalytics({ refreshTrigger = 0 }: EnergyAnalyticsPro
             <Card>
               <CardContent className="pt-4">
                 <div className="flex items-center gap-2 mb-1">
-                  <Heart className="h-4 w-4 text-teal-500" />
+                  <Heart className="h-4 w-4 text-info" />
                   <span className="text-sm text-muted-foreground">Avg Restored</span>
                 </div>
                 <p className="text-2xl font-bold text-info">+{analytics.avgRestored.toFixed(1)}</p>
@@ -432,9 +432,9 @@ export function EnergyPacingAnalytics({ refreshTrigger = 0 }: EnergyAnalyticsPro
                         <Progress
                           value={percent}
                           className={`h-4 ${
-                            level === 'safe' ? '[&>div]:bg-green-500' :
-                            level === 'caution' ? '[&>div]:bg-yellow-500' :
-                            level === 'warning' ? '[&>div]:bg-orange-500' : '[&>div]:bg-red-500'
+                            level === 'safe' ? '[&>div]:bg-success' :
+                            level === 'caution' ? '[&>div]:bg-warning/60' :
+                            level === 'warning' ? '[&>div]:bg-warning' : '[&>div]:bg-destructive'
                           }`}
                         />
                       </div>
@@ -486,7 +486,7 @@ export function EnergyPacingAnalytics({ refreshTrigger = 0 }: EnergyAnalyticsPro
             <Card>
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-orange-500" />
+                  <AlertTriangle className="h-4 w-4 text-warning" />
                   Highest Cost Activities
                 </CardTitle>
               </CardHeader>
@@ -519,7 +519,7 @@ export function EnergyPacingAnalytics({ refreshTrigger = 0 }: EnergyAnalyticsPro
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Heart className="h-5 w-5 text-teal-500" />
+                  <Heart className="h-5 w-5 text-info" />
                   Rest Patterns
                 </CardTitle>
                 <CardDescription>

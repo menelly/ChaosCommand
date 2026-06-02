@@ -53,35 +53,35 @@ export function SkinHistory({ onEdit, onDelete, refreshTrigger }: { onEdit: (e: 
             {grouped[date].map(entry => {
               const info = getEpisodeTypeInfo(entry.episodeType)
               return (
-                <Card key={entry.id} className="bg-muted/30">
-                  <CardContent className="pt-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1 flex-wrap">
-                          <span className="text-lg">{info.icon}</span>
-                          <span className="font-semibold">{info.name}</span>
-                          {entry.severity && <Badge variant="outline" className={getSeverityColor(entry.severity)}>{getSeverityLabel(entry.severity)} ({entry.severity}/10)</Badge>}
-                          {entry.photos && entry.photos.length > 0 && <Badge variant="outline" className="bg-info/10 text-info border-blue-300">📎 {entry.photos.length} {entry.photos.length === 1 ? 'photo' : 'photos'}</Badge>}
-                          {entry.epinephrineGiven && <Badge variant="destructive">EpiPen used</Badge>}
-                          {entry.erVisitRequired && <Badge variant="destructive">ER</Badge>}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {format(new Date(entry.timestamp), 'h:mm a')}
-                          {entry.bodyLocation && entry.bodyLocation.length > 0 && ` • ${entry.bodyLocation.join(', ')}`}
-                          {entry.itchiness && ` • Itch ${entry.itchiness}/10`}
-                          {entry.pain && ` • Pain ${entry.pain}/10`}
-                        </div>
-                        {entry.suspectedTrigger && entry.suspectedTrigger.length > 0 && <div className="text-xs mt-2 text-muted-foreground"><strong>Suspected trigger:</strong> {entry.suspectedTrigger.join(', ')}</div>}
-                        {entry.treatmentApplied && entry.treatmentApplied.length > 0 && <div className="text-xs mt-1 text-muted-foreground"><strong>Treatment:</strong> {entry.treatmentApplied.join(', ')}{entry.treatmentResponse && ` (response ${entry.treatmentResponse}/5)`}</div>}
-                        {entry.notes && <div className="text-xs mt-2 italic">{entry.notes}</div>}
-                      </div>
-                      <div className="flex gap-1 ml-2">
-                        <Button size="sm" variant="ghost" onClick={() => onEdit(entry)}><Edit className="h-3 w-3" /></Button>
-                        <Button size="sm" variant="ghost" onClick={() => onDelete(entry)}><Trash2 className="h-3 w-3" /></Button>
-                      </div>
+                <div
+                  key={entry.id}
+                  className="border-l-4 pl-4 py-3 border border-border rounded-r-lg bg-muted/30"
+                  style={{ borderLeftColor: 'hsl(var(--primary))' }}
+                >
+                  <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-lg">{info.icon}</span>
+                      <span className="font-semibold">{info.name}</span>
+                      {entry.severity && <Badge variant="outline" className={getSeverityColor(entry.severity)}>{getSeverityLabel(entry.severity)} ({entry.severity}/10)</Badge>}
+                      {entry.photos && entry.photos.length > 0 && <Badge variant="outline" className="bg-info/10 text-info border-blue-300">📎 {entry.photos.length} {entry.photos.length === 1 ? 'photo' : 'photos'}</Badge>}
+                      {entry.epinephrineGiven && <Badge variant="destructive">EpiPen used</Badge>}
+                      {entry.erVisitRequired && <Badge variant="destructive">ER</Badge>}
                     </div>
-                  </CardContent>
-                </Card>
+                    <div className="flex gap-1">
+                      <Button size="sm" variant="ghost" onClick={() => onEdit(entry)}><Edit className="h-3 w-3" /></Button>
+                      <Button size="sm" variant="ghost" onClick={() => onDelete(entry)}><Trash2 className="h-3 w-3" /></Button>
+                    </div>
+                  </div>
+                  <div className="text-xs text-muted-foreground mb-1">
+                    {format(new Date(entry.timestamp), 'h:mm a')}
+                    {entry.bodyLocation && entry.bodyLocation.length > 0 && ` • ${entry.bodyLocation.join(', ')}`}
+                    {entry.itchiness && ` • Itch ${entry.itchiness}/10`}
+                    {entry.pain && ` • Pain ${entry.pain}/10`}
+                  </div>
+                  {entry.suspectedTrigger && entry.suspectedTrigger.length > 0 && <div className="text-xs mt-1 text-muted-foreground"><strong>Suspected trigger:</strong> {entry.suspectedTrigger.join(', ')}</div>}
+                  {entry.treatmentApplied && entry.treatmentApplied.length > 0 && <div className="text-xs mt-1 text-muted-foreground"><strong>Treatment:</strong> {entry.treatmentApplied.join(', ')}{entry.treatmentResponse && ` (response ${entry.treatmentResponse}/5)`}</div>}
+                  {entry.notes && <div className="text-xs mt-1 italic">{entry.notes}</div>}
+                </div>
               )
             })}
           </CardContent>

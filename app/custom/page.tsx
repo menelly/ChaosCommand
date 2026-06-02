@@ -237,7 +237,7 @@ export default function CustomTrackersIndex() {
                   </div>
                 </div>
                 <Link href="/forge">
-                  <Button className="bg-orange-500 hover:bg-orange-600">
+                  <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
                     <Plus className="h-4 w-4 mr-2" />
                     Open Forge
                   </Button>
@@ -316,7 +316,7 @@ export default function CustomTrackersIndex() {
                   Build your first custom tracker using the Forge!
                 </p>
                 <Link href="/forge">
-                  <Button size="lg" className="bg-orange-500 hover:bg-orange-600">
+                  <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90">
                     <Rocket className="h-5 w-5 mr-2" />
                     Start Building
                   </Button>

@@ -204,79 +204,76 @@ export function DysautonomiaHistory({ onEdit, onDelete, refreshTrigger }: Dysaut
                   {dayEntries.map((entry) => {
                     const episodeInfo = getEpisodeTypeInfo(entry.episodeType)
                     return (
-                      <div key={entry.id} className="flex items-start justify-between p-3 bg-muted/50 rounded-lg">
-                        <div className="flex items-start gap-3 flex-1">
-                          <span className="text-lg">{episodeInfo.icon}</span>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="font-medium">{episodeInfo.name}</span>
-                              <Badge variant="outline" className={getSeverityColor(entry.severity)}>
-                                {getSeverityLabel(entry.severity)}
-                              </Badge>
-                            </div>
-                            
-                            {entry.symptoms.length > 0 && (
-                              <div className="text-sm text-muted-foreground mb-1">
-                                <strong>Symptoms:</strong> {entry.symptoms.slice(0, 3).join(', ')}
-                                {entry.symptoms.length > 3 && ` +${entry.symptoms.length - 3} more`}
-                              </div>
-                            )}
-                            
-                            {entry.triggers.length > 0 && (
-                              <div className="text-sm text-muted-foreground mb-1">
-                                <strong>Triggers:</strong> {entry.triggers.slice(0, 2).join(', ')}
-                                {entry.triggers.length > 2 && ` +${entry.triggers.length - 2} more`}
-                              </div>
-                            )}
-                            
-                            {entry.interventions.length > 0 && (
-                              <div className="text-sm text-muted-foreground mb-1">
-                                <strong>Helped by:</strong> {entry.interventions.slice(0, 2).join(', ')}
-                                {entry.interventions.length > 2 && ` +${entry.interventions.length - 2} more`}
-                                {entry.interventionEffectiveness && (
-                                  <span className="ml-1">
-                                    (Effectiveness: {entry.interventionEffectiveness}/5)
-                                  </span>
-                                )}
-                              </div>
-                            )}
-                            
-                            {(entry.restingHeartRate || entry.standingHeartRate) && (
-                              <div className="text-sm text-muted-foreground mb-1">
-                                <strong>Heart Rate:</strong>
-                                {entry.restingHeartRate && ` Resting: ${entry.restingHeartRate}`}
-                                {entry.standingHeartRate && ` Standing: ${entry.standingHeartRate}`}
-                                {entry.heartRateIncrease && ` (+${entry.heartRateIncrease})`}
-                              </div>
-                            )}
-                            
-                            {entry.notes && (
-                              <div className="text-sm text-muted-foreground italic">
-                                "{entry.notes}"
-                              </div>
-                            )}
-                            
-                            <div className="text-xs text-muted-foreground mt-2">
-                              {format(new Date(entry.timestamp), 'h:mm a')}
-                            </div>
+                      <div key={entry.id} className="p-3 bg-muted/50 rounded-lg">
+                        <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-lg">{episodeInfo.icon}</span>
+                            <span className="font-medium">{episodeInfo.name}</span>
+                            <Badge variant="outline" className={getSeverityColor(entry.severity)}>
+                              {getSeverityLabel(entry.severity)}
+                            </Badge>
+                          </div>
+                          <div className="flex gap-1">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => onEdit(entry)}
+                            >
+                              <Edit className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => onDelete(entry)}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
                           </div>
                         </div>
-                        
-                        <div className="flex gap-1 ml-3">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => onEdit(entry)}
-                          >
-                            <Edit className="h-3 w-3" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => onDelete(entry)}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
+
+                        {entry.symptoms.length > 0 && (
+                          <div className="text-sm text-muted-foreground mb-1">
+                            <strong>Symptoms:</strong> {entry.symptoms.slice(0, 3).join(', ')}
+                            {entry.symptoms.length > 3 && ` +${entry.symptoms.length - 3} more`}
+                          </div>
+                        )}
+
+                        {entry.triggers.length > 0 && (
+                          <div className="text-sm text-muted-foreground mb-1">
+                            <strong>Triggers:</strong> {entry.triggers.slice(0, 2).join(', ')}
+                            {entry.triggers.length > 2 && ` +${entry.triggers.length - 2} more`}
+                          </div>
+                        )}
+
+                        {entry.interventions.length > 0 && (
+                          <div className="text-sm text-muted-foreground mb-1">
+                            <strong>Helped by:</strong> {entry.interventions.slice(0, 2).join(', ')}
+                            {entry.interventions.length > 2 && ` +${entry.interventions.length - 2} more`}
+                            {entry.interventionEffectiveness && (
+                              <span className="ml-1">
+                                (Effectiveness: {entry.interventionEffectiveness}/5)
+                              </span>
+                            )}
+                          </div>
+                        )}
+
+                        {(entry.restingHeartRate || entry.standingHeartRate) && (
+                          <div className="text-sm text-muted-foreground mb-1">
+                            <strong>Heart Rate:</strong>
+                            {entry.restingHeartRate && ` Resting: ${entry.restingHeartRate}`}
+                            {entry.standingHeartRate && ` Standing: ${entry.standingHeartRate}`}
+                            {entry.heartRateIncrease && ` (+${entry.heartRateIncrease})`}
+                          </div>
+                        )}
+
+                        {entry.notes && (
+                          <div className="text-sm text-muted-foreground italic">
+                            "{entry.notes}"
+                          </div>
+                        )}
+
+                        <div className="text-xs text-muted-foreground mt-2">
+                          {format(new Date(entry.timestamp), 'h:mm a')}
                         </div>
                       </div>
                     )

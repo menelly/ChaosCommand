@@ -20,6 +20,7 @@ import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Heart, Edit, Trash2, Calendar } from 'lucide-react'
 import { format } from 'date-fns'
 
@@ -33,10 +34,19 @@ interface CardiacHistoryProps {
   refreshTrigger: number
 }
 
+const DURATION_FILTERS = [
+  { value: 'all', label: 'All durations' },
+  { value: 'seconds', label: 'Seconds' },
+  { value: 'minutes', label: 'Minutes' },
+  { value: 'hours', label: 'Hours' },
+  { value: 'none', label: 'Not recorded' },
+]
+
 export function CardiacHistory({ onEdit, onDelete, refreshTrigger }: CardiacHistoryProps) {
   const { getDateRange } = useDailyData()
   const [historyEntries, setHistoryEntries] = useState<CardiacEntry[]>([])
   const [historyLoading, setHistoryLoading] = useState(false)
+  const [durationFilter, setDurationFilter] = useState('all')
 
   useEffect(() => {
     loadHistoryEntries()
@@ -72,6 +82,17 @@ export function CardiacHistory({ onEdit, onDelete, refreshTrigger }: CardiacHist
     }
   }
 
+  const filteredEntries = historyEntries.filter(entry => {
+    if (durationFilter === 'all') return true
+    if (durationFilter === 'none') return !entry.duration
+    if (!entry.duration) return false
+    const d = entry.duration.toLowerCase()
+    if (durationFilter === 'seconds') return d.includes('second') || d.includes('sec')
+    if (durationFilter === 'minutes') return d.includes('minute') || d.includes('min')
+    if (durationFilter === 'hours') return d.includes('hour') || d.includes('hr')
+    return true
+  })
+
   if (historyLoading) {
     return (
       <Card>
@@ -94,88 +115,84 @@ export function CardiacHistory({ onEdit, onDelete, refreshTrigger }: CardiacHist
     )
   }
 
-  // Group by date
+  // Group filtered entries by date
   const grouped: Record<string, CardiacEntry[]> = {}
-  for (const entry of historyEntries) {
+  for (const entry of filteredEntries) {
     if (!grouped[entry.date]) grouped[entry.date] = []
     grouped[entry.date].push(entry)
   }
 
   return (
     <div className="space-y-4">
+      {/* Filters */}
+      <Card>
+        <CardContent className="pt-4">
+          <div className="grid grid-cols-1 gap-3">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Duration</label>
+              <Select value={durationFilter} onValueChange={setDurationFilter}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {DURATION_FILTERS.map(f => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
-            90-Day Cardiac History ({historyEntries.length} events)
+            90-Day Cardiac History ({filteredEntries.length} events)
           </CardTitle>
         </CardHeader>
       </Card>
 
-      {Object.keys(grouped).map(date => (
-        <Card key={date}>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">
-              {format(new Date(date + 'T12:00:00'), 'EEEE, MMMM d, yyyy')}
-              <Badge variant="secondary" className="ml-2">{grouped[date].length}</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {grouped[date].map(entry => {
-              const info = getEpisodeTypeInfo(entry.episodeType)
-              return (
-                <Card key={entry.id} className="bg-muted/30">
-                  <CardContent className="pt-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1 flex-wrap">
-                          <span className="text-lg">{info.icon}</span>
-                          <span className="font-semibold">{info.name}</span>
-                          {entry.rhythmType && entry.rhythmType !== 'unknown' && (
-                            <Badge variant="outline">{entry.rhythmType}</Badge>
-                          )}
-                          {entry.symptomSeverity && (
-                            <Badge variant="outline" className={getSeverityColor(entry.symptomSeverity)}>
-                              {getSeverityLabel(entry.symptomSeverity)} ({entry.symptomSeverity}/10)
-                            </Badge>
-                          )}
-                          {entry.ecgStripImages && entry.ecgStripImages.length > 0 && (
-                            <Badge variant="outline" className="bg-info/10 text-info border-blue-300">
-                              📎 {entry.ecgStripImages.length} {entry.ecgStripImages.length === 1 ? 'file' : 'files'}
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {format(new Date(entry.timestamp), 'h:mm a')}
-                          {entry.duration && ` • ${entry.duration}`}
-                          {entry.hrPeak && ` • Peak HR ${entry.hrPeak}`}
-                          {entry.bpAtEvent && ` • BP ${entry.bpAtEvent}`}
-                          {entry.spo2AtEvent && ` • SpO2 ${entry.spo2AtEvent}%`}
-                        </div>
-                        {entry.uWavesNoted && (
-                          <Badge variant="destructive" className="mt-2 text-xs">U waves (hypoK signal)</Badge>
+      {Object.keys(grouped).length === 0 ? (
+        <Card>
+          <CardContent className="pt-6 text-center text-muted-foreground">
+            No events match the selected filter.
+          </CardContent>
+        </Card>
+      ) : (
+        Object.keys(grouped).map(date => (
+          <Card key={date}>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">
+                {format(new Date(date + 'T12:00:00'), 'EEEE, MMMM d, yyyy')}
+                <Badge variant="secondary" className="ml-2">{grouped[date].length}</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {grouped[date].map(entry => {
+                const info = getEpisodeTypeInfo(entry.episodeType)
+                return (
+                  <div
+                    key={entry.id}
+                    className="border-l-4 pl-4 py-3 border border-border rounded-r-lg bg-muted/30"
+                    style={{ borderLeftColor: 'hsl(var(--primary))' }}
+                  >
+                    <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-lg">{info.icon}</span>
+                        <span className="font-semibold">{info.name}</span>
+                        {entry.rhythmType && entry.rhythmType !== 'unknown' && (
+                          <Badge variant="outline">{entry.rhythmType}</Badge>
                         )}
-                        {entry.symptoms && entry.symptoms.length > 0 && (
-                          <div className="text-xs mt-2 text-muted-foreground">
-                            <strong>Symptoms:</strong> {entry.symptoms.join(', ')}
-                          </div>
+                        {entry.symptomSeverity && (
+                          <Badge variant="outline" className={getSeverityColor(entry.symptomSeverity)}>
+                            {getSeverityLabel(entry.symptomSeverity)} ({entry.symptomSeverity}/10)
+                          </Badge>
                         )}
-                        {entry.triggers && entry.triggers.length > 0 && (
-                          <div className="text-xs mt-1 text-muted-foreground">
-                            <strong>Triggers:</strong> {entry.triggers.join(', ')}
-                          </div>
-                        )}
-                        {entry.resolutionMethod && (
-                          <div className="text-xs mt-1 text-muted-foreground">
-                            <strong>Resolved by:</strong> {entry.resolutionMethod}
-                            {entry.valsalvaSuccessSeconds && ` (${entry.valsalvaSuccessSeconds}s)`}
-                          </div>
-                        )}
-                        {entry.notes && (
-                          <div className="text-xs mt-2 italic">{entry.notes}</div>
+                        {entry.ecgStripImages && entry.ecgStripImages.length > 0 && (
+                          <Badge variant="outline" className="bg-info/10 text-info border-blue-300">
+                            📎 {entry.ecgStripImages.length} {entry.ecgStripImages.length === 1 ? 'file' : 'files'}
+                          </Badge>
                         )}
                       </div>
-                      <div className="flex gap-1 ml-2">
+                      <div className="flex gap-1">
                         <Button size="sm" variant="ghost" onClick={() => onEdit(entry)}>
                           <Edit className="h-3 w-3" />
                         </Button>
@@ -184,13 +201,42 @@ export function CardiacHistory({ onEdit, onDelete, refreshTrigger }: CardiacHist
                         </Button>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              )
-            })}
-          </CardContent>
-        </Card>
-      ))}
+                    <div className="text-xs text-muted-foreground mb-1">
+                      {format(new Date(entry.timestamp), 'h:mm a')}
+                      {entry.duration && ` • ${entry.duration}`}
+                      {entry.hrPeak && ` • Peak HR ${entry.hrPeak}`}
+                      {entry.bpAtEvent && ` • BP ${entry.bpAtEvent}`}
+                      {entry.spo2AtEvent && ` • SpO2 ${entry.spo2AtEvent}%`}
+                    </div>
+                    {entry.uWavesNoted && (
+                      <Badge variant="destructive" className="mt-1 text-xs">U waves (hypoK signal)</Badge>
+                    )}
+                    {entry.symptoms && entry.symptoms.length > 0 && (
+                      <div className="text-xs mt-1 text-muted-foreground">
+                        <strong>Symptoms:</strong> {entry.symptoms.join(', ')}
+                      </div>
+                    )}
+                    {entry.triggers && entry.triggers.length > 0 && (
+                      <div className="text-xs mt-1 text-muted-foreground">
+                        <strong>Triggers:</strong> {entry.triggers.join(', ')}
+                      </div>
+                    )}
+                    {entry.resolutionMethod && (
+                      <div className="text-xs mt-1 text-muted-foreground">
+                        <strong>Resolved by:</strong> {entry.resolutionMethod}
+                        {entry.valsalvaSuccessSeconds && ` (${entry.valsalvaSuccessSeconds}s)`}
+                      </div>
+                    )}
+                    {entry.notes && (
+                      <div className="text-xs mt-1 italic">{entry.notes}</div>
+                    )}
+                  </div>
+                )
+              })}
+            </CardContent>
+          </Card>
+        ))
+      )}
     </div>
   )
 }
