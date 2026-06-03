@@ -38,7 +38,8 @@ import {
   Shield,
   Frown,
   HelpCircle,
-  Settings2
+  Settings2,
+  BookOpen
 } from "lucide-react"
 import { getPref, setPref } from "@/lib/prefs"
 
@@ -145,6 +146,15 @@ export default function MentalHealthIndex() {
       icon: <Shield className="h-5 w-5" />,
       status: 'available',
       href: '/crisis-support'
+    },
+    {
+      id: 'journal',
+      name: 'Journal',
+      shortDescription: 'Free-form notes, reflections, and rich text entries',
+      helpContent: 'A private journal for thoughts, reflections, daily notes, and longer-form writing. Supports rich text formatting and links entries to your health timeline.',
+      icon: <BookOpen className="h-5 w-5" />,
+      status: 'available',
+      href: '/journal'
     }
   ]
 

@@ -57,12 +57,12 @@ export default function AppSidebar() {
       buttonClass: "sidebar-btn-5"
     },
     {
-      id: "custom",
-      text: "Custom",
-      emoji: "🔧",
-      targetPageId: "custom",
+      id: "maintain",
+      text: "Maintain",
+      emoji: "🔩",
+      targetPageId: "maintain",
       isVisible: true,
-      buttonClass: "sidebar-btn-custom"
+      buttonClass: "sidebar-btn-4"
     },
     {
       id: "choice",
@@ -73,17 +73,25 @@ export default function AppSidebar() {
       buttonClass: "sidebar-btn-3"
     },
     {
-      id: "routines",
-      text: "Routines",
-      emoji: "📋",
-      targetPageId: "routines",
+      id: "built",
+      text: "Built",
+      emoji: "🔧",
+      targetPageId: "custom",
       isVisible: true,
-      buttonClass: "sidebar-btn-2"
+      buttonClass: "sidebar-btn-custom"
+    },
+    {
+      id: "forge",
+      text: "Forge",
+      emoji: "🔨",
+      targetPageId: "forge",
+      isVisible: true,
+      buttonClass: "sidebar-btn-guide"
     },
     {
       id: "manage",
       text: "Manage",
-      emoji: "📋",
+      emoji: "🗂️",
       targetPageId: "manage",
       isVisible: true,
       buttonClass: "sidebar-btn-4"
@@ -97,22 +105,13 @@ export default function AppSidebar() {
       buttonClass: "sidebar-btn-6"
     },
     {
-      id: "journal",
-      text: "Journal",
-      emoji: "📝",
-      targetPageId: "journal",
+      id: "routines",
+      text: "Routines",
+      emoji: "📋",
+      targetPageId: "routines",
       isVisible: true,
       buttonClass: "sidebar-btn-2"
     },
-    {
-      id: "forge",
-      text: "Forge",
-      emoji: "🔨",
-      targetPageId: "forge",
-      isVisible: true,
-      buttonClass: "sidebar-btn-guide"
-    },
-
   ]
 
   // Available trackers for shortcuts
