@@ -29,6 +29,7 @@ import AppCanvas from "@/components/app-canvas"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import {
@@ -45,7 +46,9 @@ import {
   Wind,
   Sparkles,
   Bone,
-  Activity
+  Activity,
+  ChevronDown,
+  ChevronRight
 } from "lucide-react"
 
 interface TrackerButton {
@@ -242,6 +245,28 @@ export default function PhysicalHealthIndex() {
     !hiddenTrackers.includes(tracker.id) // Respect user's hidden preferences
   );
 
+  // Specialty groups — group trackers by body system for the accordion layout
+  const SPECIALTY_GROUPS = [
+    { id: 'head-neuro', label: '🧠 Head & Nervous System', trackerIds: ['head-pain', 'seizure-tracking', 'dysautonomia'] },
+    { id: 'heart-lungs', label: '❤️ Heart & Lungs', trackerIds: ['cardiac', 'respiratory'] },
+    { id: 'gut', label: '🍽️ Gut & Digestive', trackerIds: ['upper-digestive', 'digestive-health'] },
+    { id: 'metabolic', label: '⚡ Metabolic & Immune', trackerIds: ['diabetes-tracker', 'food-allergens'] },
+    { id: 'skin', label: '🩹 Skin', trackerIds: ['skin'] },
+    { id: 'msk', label: '🦴 Bones, Joints & Muscles', trackerIds: ['joint'] },
+    { id: 'reproductive', label: '🌸 Reproductive', trackerIds: ['reproductive-health'] },
+    { id: 'environment', label: '🌦️ Environment', trackerIds: ['weather-environment'] },
+    { id: 'general', label: '📍 General', trackerIds: ['pain-tracking'] },
+  ]
+
+  const [openGroups, setOpenGroups] = useState<Set<string>>(
+    () => new Set(SPECIALTY_GROUPS.map(g => g.id)) // all open by default
+  )
+  const toggleGroup = (id: string) => setOpenGroups(prev => {
+    const next = new Set(prev)
+    next.has(id) ? next.delete(id) : next.add(id)
+    return next
+  })
+
   const getTrackerHref = (trackerId: string): string => {
     // Handle specific tracker navigation - PDF-friendly anchor links
     switch (trackerId) {
@@ -277,63 +302,75 @@ export default function PhysicalHealthIndex() {
           </p>
         </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {trackers.map((tracker) => (
-            <Card
-              key={tracker.id}
-              className="cursor-pointer hover:shadow-md transition-shadow"
-            >
-              <CardHeader
-                className="pb-3 cursor-pointer"
-                onClick={() => {
-                  const href = getTrackerHref(tracker.id)
-                  if (href) {
-                    window.location.href = href
-                  }
-                }}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="text-primary">
-                      {tracker.icon}
-                    </div>
-                    <CardTitle className="text-base leading-tight">{tracker.name}</CardTitle>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Dialog>
-                    <DialogTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 w-6 p-0 hover:bg-muted"
-                        onClick={(e) => e.stopPropagation()}
+        <div className="space-y-3">
+          {SPECIALTY_GROUPS.map(group => {
+            const groupTrackers = group.trackerIds
+              .map(id => trackers.find(t => t.id === id))
+              .filter(Boolean) as typeof trackers
+            if (groupTrackers.length === 0) return null
+            const isOpen = openGroups.has(group.id)
+            return (
+              <Collapsible key={group.id} open={isOpen} onOpenChange={() => toggleGroup(group.id)}>
+                <CollapsibleTrigger asChild>
+                  <button className="w-full flex items-center justify-between px-4 py-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-left font-medium text-sm">
+                    <span>{group.label}</span>
+                    {isOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                  </button>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pt-2 pb-1">
+                    {groupTrackers.map((tracker) => (
+                      <Card
+                        key={tracker.id}
+                        className="cursor-pointer hover:shadow-md transition-shadow"
                       >
-                        <HelpCircle className="h-4 w-4" />
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent
-                      className="max-w-md"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2">
-                          {tracker.icon}
-                          {tracker.name}
-                        </DialogTitle>
-                        <DialogDescription className="text-left">
-                          {tracker.helpContent}
-                        </DialogDescription>
-                      </DialogHeader>
-                    </DialogContent>
-                  </Dialog>
+                        <CardHeader
+                          className="pb-3 cursor-pointer"
+                          onClick={() => {
+                            const href = getTrackerHref(tracker.id)
+                            if (href) window.location.href = href
+                          }}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="text-primary">{tracker.icon}</div>
+                              <CardTitle className="text-base leading-tight">{tracker.name}</CardTitle>
+                            </div>
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 w-6 p-0 hover:bg-muted"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <HelpCircle className="h-4 w-4" />
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-md" onClick={(e) => e.stopPropagation()}>
+                                <DialogHeader>
+                                  <DialogTitle className="flex items-center gap-2">
+                                    {tracker.icon}
+                                    {tracker.name}
+                                  </DialogTitle>
+                                  <DialogDescription className="text-left">
+                                    {tracker.helpContent}
+                                  </DialogDescription>
+                                </DialogHeader>
+                              </DialogContent>
+                            </Dialog>
+                          </div>
+                          <CardDescription className="text-sm mt-2">
+                            {tracker.shortDescription}
+                          </CardDescription>
+                        </CardHeader>
+                      </Card>
+                    ))}
                   </div>
-                </div>
-                <CardDescription className="text-sm mt-2">
-                  {tracker.shortDescription}
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          ))}
+                </CollapsibleContent>
+              </Collapsible>
+            )
+          })}
         </div>
 
         {/* CUSTOMIZE TRACKERS */}
