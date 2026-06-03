@@ -130,7 +130,7 @@ function CollapsibleSection({ id, title, icon, sections, children }: {
 }) {
   const isOpen = !sections.isCollapsed(id)
   return (
-    <Card>
+    <Card id={id}>
       <CardHeader
         className="cursor-pointer select-none active:bg-accent/50 transition-colors"
         onClick={() => sections.toggle(id)}

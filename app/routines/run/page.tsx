@@ -124,8 +124,9 @@ function RoutineRun() {
   }
 
   const trackers = resolved
-  // "Done" = either logged real data OR consciously marked "nothing to log today".
-  const doneCount = trackers.filter(t => status[t.id]?.loggedToday || cleared.has(t.id)).length
+  // "Done" = logged real data, consciously marked "nothing to log today", OR skipped for this session.
+  // Skipped = a conscious decision; it should count toward completion so the routine can finish.
+  const doneCount = trackers.filter(t => status[t.id]?.loggedToday || cleared.has(t.id) || skipped.has(t.id)).length
   const complete = trackers.length > 0 && doneCount === trackers.length
 
   const logNow = (href: string) =>

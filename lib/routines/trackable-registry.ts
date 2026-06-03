@@ -97,6 +97,12 @@ export const TRACKABLE_TRACKERS: readonly TrackableTracker[] = [
   // ── Manage (daily-loggable only) ──
   { id: 'medications', label: 'Medications', emoji: '💊', href: '/medications', subcategory: 'medications', category: 'manage', statusUnsupported: true },
   { id: 'missed-work', label: 'Missed Work', emoji: '💼', href: '/work-disability', subcategory: 'missed-work', subcategoryPrefix: 'missed-work-', category: 'manage', copyUnsupported: true },
+  // ── Command Zone sections (navigate directly to the right part of the home page) ──
+  { id: 'cz-survival', label: 'Survival Check', emoji: '🆘', href: '/#survival', subcategory: 'cz-survival', category: 'manage', statusUnsupported: true, copyUnsupported: true },
+  { id: 'cz-tasks', label: "Today's Tasks", emoji: '📦', href: '/#tasks', subcategory: 'cz-tasks', category: 'manage', statusUnsupported: true, copyUnsupported: true },
+  { id: 'cz-schedule', label: "Today's Schedule", emoji: '🕐', href: '/#schedule', subcategory: 'cz-schedule', category: 'manage', statusUnsupported: true, copyUnsupported: true },
+  { id: 'cz-gear', label: 'Gear Check', emoji: '🎒', href: '/#gear', subcategory: 'cz-gear', category: 'manage', statusUnsupported: true, copyUnsupported: true },
+  { id: 'cz-selfcare', label: 'Self-Care Check', emoji: '✨', href: '/#selfcare', subcategory: 'cz-selfcare', category: 'manage', statusUnsupported: true, copyUnsupported: true },
 ]
 
 const BY_ID = new Map(TRACKABLE_TRACKERS.map(t => [t.id, t]))
