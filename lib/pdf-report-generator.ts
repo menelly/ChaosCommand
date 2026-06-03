@@ -1,8 +1,8 @@
-/*
+﻿/*
  * Copyright (c) 2025-2026 Chaos Cascade
  * Created by: Ren & Ace
  *
- * Client-side PDF Report Generator — ported from Flask/ReportLab to jsPDF.
+ * Client-side PDF Report Generator â€” ported from Flask/ReportLab to jsPDF.
  * "Your data, your words, their language."
  */
 
@@ -44,40 +44,40 @@ function formatLabValue(r: { value_text?: string; unit?: string }): string {
 
 // ICD-10 mapping for tracked SYMPTOMS / CONDITIONS only.
 // Deliberately NOT coded: lifestyle/wellness/behavior trackers. Logging a healthy behavior
-// or a subjective state is NOT a diagnosis — auto-coding it (food logging → "dietary
-// surveillance", self-care → "disability limitation", drinking water → "dehydration",
-// sleeping → "sleep disorder") can mislead a clinician, follow a patient through their
-// records, and affect insurance. Those trackers render "—" instead.
-// Yeeted 2026-05-28 per Ren (behaviors/disorders → "—"): food-choice, self-care(+tracker),
+// or a subjective state is NOT a diagnosis â€” auto-coding it (food logging â†’ "dietary
+// surveillance", self-care â†’ "disability limitation", drinking water â†’ "dehydration",
+// sleeping â†’ "sleep disorder") can mislead a clinician, follow a patient through their
+// records, and affect insurance. Those trackers render "â€”" instead.
+// Yeeted 2026-05-28 per Ren (behaviors/disorders â†’ "â€”"): food-choice, self-care(+tracker),
 // movement, hydration, sleep, coping, crisis-support, mental-health/mood, anxiety, substance, weather.
 // Softened to gentle symptom codes: brain-fog, energy. Real dx will come from the timeline (CHA-241).
 const ICD10_MAP: Record<string, string> = {
-  // ── Genuine symptom / condition trackers (a clinician wants these) ──
-  'pain': 'R52 — Pain, unspecified',
-  'head-pain': 'G43.909 — Migraine, unspecified',
-  'dysautonomia': 'G90.9 — Disorder of autonomic nervous system, unspecified',
-  'seizure': 'R56.9 — Unspecified convulsions / G40.901 — Epilepsy, unspecified',
-  'upper-digestive': 'K30 — Functional dyspepsia',
-  'bathroom': 'R19.7 — Diarrhea / K59.00 — Constipation / N39.0 — UTI',
-  'sensory': 'R44.8 — Sensory perception disturbance',
-  'sensory-tracker': 'R44.8 — Sensory perception disturbance',
-  'reproductive-health': 'N94.6 — Dysmenorrhea, unspecified',
-  'diabetes': 'E11.9 — Type 2 diabetes mellitus without complications',
-  'cardiac': 'R00.2 — Palpitations / I49.9 — Cardiac arrhythmia, unspecified',
-  'respiratory': 'R06.02 — Shortness of breath / J45.909 — Asthma, unspecified',
-  'skin': 'L29.9 — Pruritus / L50.9 — Urticaria, unspecified',
-  'joint': 'M25.50 — Pain in unspecified joint',
-  'food-allergens': 'T78.40XA — Allergy, unspecified, initial encounter / K90.0 — Celiac disease',
-  // ── Subjective SYMPTOM trackers: gentle SYMPTOM codes (R-codes) only — never a disorder dx ──
-  'brain-fog': 'R41.840 — Attention and concentration deficit',  // softened from R41.82 "altered mental status"
-  'energy': 'R53.83 — Other fatigue',
-  // NOTE: mood/Mind&Mood, anxiety, substance, and weather render "—" on purpose. Their only honest
-  // codes are disorder diagnoses (F39, F41.9, F10.10) or non-conditions — auto-assigning those from
+  // â”€â”€ Genuine symptom / condition trackers (a clinician wants these) â”€â”€
+  'pain': 'R52 â€” Pain, unspecified',
+  'head-pain': 'G43.909 â€” Migraine, unspecified',
+  'dysautonomia': 'G90.9 â€” Disorder of autonomic nervous system, unspecified',
+  'seizure': 'R56.9 â€” Unspecified convulsions / G40.901 â€” Epilepsy, unspecified',
+  'upper-digestive': 'K30 â€” Functional dyspepsia',
+  'bathroom': 'R19.7 â€” Diarrhea / K59.00 â€” Constipation / N39.0 â€” UTI',
+  'sensory': 'R44.8 â€” Sensory perception disturbance',
+  'sensory-tracker': 'R44.8 â€” Sensory perception disturbance',
+  'reproductive-health': 'N94.6 â€” Dysmenorrhea, unspecified',
+  'diabetes': 'E11.9 â€” Type 2 diabetes mellitus without complications',
+  'cardiac': 'R00.2 â€” Palpitations / I49.9 â€” Cardiac arrhythmia, unspecified',
+  'respiratory': 'R06.02 â€” Shortness of breath / J45.909 â€” Asthma, unspecified',
+  'skin': 'L29.9 â€” Pruritus / L50.9 â€” Urticaria, unspecified',
+  'joint': 'M25.50 â€” Pain in unspecified joint',
+  'food-allergens': 'T78.40XA â€” Allergy, unspecified, initial encounter / K90.0 â€” Celiac disease',
+  // â”€â”€ Subjective SYMPTOM trackers: gentle SYMPTOM codes (R-codes) only â€” never a disorder dx â”€â”€
+  'brain-fog': 'R41.840 â€” Attention and concentration deficit',  // softened from R41.82 "altered mental status"
+  'energy': 'R53.83 â€” Other fatigue',
+  // NOTE: mood/Mind&Mood, anxiety, substance, and weather render "â€”" on purpose. Their only honest
+  // codes are disorder diagnoses (F39, F41.9, F10.10) or non-conditions â€” auto-assigning those from
   // tracker type pathologizes the act of tracking. Substance especially: NEVER auto-flag a use disorder.
-  // Real diagnoses will be pulled from the user's medical timeline instead — see CHA-241.
+  // Real diagnoses will be pulled from the user's medical timeline instead â€” see CHA-241.
 }
 
-// Display names — fixes the "head-pain" → "Head" truncation bug
+// Display names â€” fixes the "head-pain" â†’ "Head" truncation bug
 const TRACKER_DISPLAY_NAMES: Record<string, string> = {
   'pain': 'Pain',
   'head-pain': 'Head Pain',
@@ -96,6 +96,7 @@ const TRACKER_DISPLAY_NAMES: Record<string, string> = {
   'reproductive-health': 'Reproductive Health',
   'diabetes': 'Diabetes',
   'food-choice': 'Food Choice',
+  'gu': 'GU',
   'cardiac': 'Cardiac',
   'respiratory': 'Respiratory',
   'skin': 'Skin',
@@ -118,7 +119,7 @@ const TRACKER_DISPLAY_NAMES: Record<string, string> = {
 const displayName = (sub: string): string => {
   if (TRACKER_DISPLAY_NAMES[sub]) return TRACKER_DISPLAY_NAMES[sub]
   // Fallback: prettify the slug WITHOUT splitting on hyphen (the v1 bug)
-  // and strip duplicate-word artifacts like "Hydration Hydration" → "Hydration"
+  // and strip duplicate-word artifacts like "Hydration Hydration" â†’ "Hydration"
   const dedup = sub.replace(/^(\w+(?:[-\s]\w+)*)\s+\1$/i, '$1')
   return dedup.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 }
@@ -226,7 +227,7 @@ class PDFWriter {
     this.doc.setFont('helvetica', 'normal')
     const lines = this.doc.splitTextToSize(text, this.contentWidth)
     this.doc.text(lines, this.pageWidth / 2, this.y, { align: 'center' })
-    this.y += lines.length * 11 + 6 // 9pt text needs ~11pt line height (was 5 → squampy/overlap)
+    this.y += lines.length * 11 + 6 // 9pt text needs ~11pt line height (was 5 â†’ squampy/overlap)
   }
 
   hr() {
@@ -273,7 +274,7 @@ class PDFWriter {
     this.doc.setFont('helvetica', 'normal')
     const lines = this.doc.splitTextToSize(text, this.contentWidth - 10)
     this.doc.text(lines, this.marginLeft + 5, this.y)
-    this.y += lines.length * 11 + 4 // 9pt text needs ~11pt line height (was 5 → lines overlapped)
+    this.y += lines.length * 11 + 4 // 9pt text needs ~11pt line height (was 5 â†’ lines overlapped)
   }
 
   bulletBody(label: string, value: string) {
@@ -285,7 +286,7 @@ class PDFWriter {
     // Purple bullet
     this.doc.setTextColor(COLORS.purple)
     this.doc.setFont('helvetica', 'bold')
-    this.doc.text('•', bulletX, this.y)
+    this.doc.text('â€¢', bulletX, this.y)
     // Bold label
     this.doc.setTextColor(COLORS.section)
     this.doc.setFont('helvetica', 'bold')
@@ -301,11 +302,11 @@ class PDFWriter {
     this.doc.text(lines, valueX, this.y)
     // Hanging indent for subsequent lines (if value wraps)
     if (lines.length > 1) {
-      // Re-render with proper hanging indent — first line at valueX, rest at labelX
+      // Re-render with proper hanging indent â€” first line at valueX, rest at labelX
       // Actually jsPDF rendered them all starting at valueX. For multi-line values,
       // we accept that wraps continue from the same x. Acceptable.
     }
-    this.y += Math.max(1, lines.length) * 11 + 3 // 9pt line height (was 5 → bullet list crammed/overlapped)
+    this.y += Math.max(1, lines.length) * 11 + 3 // 9pt line height (was 5 â†’ bullet list crammed/overlapped)
   }
 
   finding(text: string) {
@@ -315,7 +316,7 @@ class PDFWriter {
     this.doc.setFont('helvetica', 'normal')
     const lines = this.doc.splitTextToSize(text, this.contentWidth - 20)
     this.doc.text(lines, this.marginLeft + 15, this.y)
-    this.y += lines.length * 11 + 3 // 9pt line height (was 4.5 → wrapped findings overlapped the next block)
+    this.y += lines.length * 11 + 3 // 9pt line height (was 4.5 â†’ wrapped findings overlapped the next block)
   }
 
   note(text: string) {
@@ -398,7 +399,7 @@ class PDFWriter {
 }
 
 export function generateMedicalReport(data: ReportData): Blob {
-  // Optional real PDF encryption — when a password is supplied the file is
+  // Optional real PDF encryption â€” when a password is supplied the file is
   // encrypted at rest, so exported PHI isn't plaintext in the Downloads folder.
   const pw = (data.encryptionPassword || '').trim()
   const doc = new jsPDF({
@@ -411,7 +412,7 @@ export function generateMedicalReport(data: ReportData): Blob {
   const isDoctor = data.reportStyle === 'doctor'
   // Attorney/SSDI audience: lead with functional impact, medical evidence
   // follows. Reviewers (lawyers, ALJs, claims examiners) decide "can this
-  // person work?" first and use medical detail to support that finding —
+  // person work?" first and use medical detail to support that finding â€”
   // doctor audience is the inverse, medical first.
   const isAttorney = data.audience === 'attorney'
   const trackerData = data.trackerData || []
@@ -422,7 +423,7 @@ export function generateMedicalReport(data: ReportData): Blob {
   // and several use a PER-ENTRY subcategory (e.g. `sensory-<id>`, `crisis-<id>`)
   // with the entry JSON-stringified into content. This collects a flat list of
   // entry objects for any subcategory predicate, so a section never has to care
-  // about the shape — which is exactly the class of bug (guessing the shape) that
+  // about the shape â€” which is exactly the class of bug (guessing the shape) that
   // dropped this data in v1. (CHA-246, 2026-05-30.)
   const gatherEntries = (match: (sub: string) => boolean): any[] => {
     const out: any[] = []
@@ -438,7 +439,7 @@ export function generateMedicalReport(data: ReportData): Blob {
     return out
   }
   const tn = (obj: Record<string, number>, n = 6) =>
-    Object.entries(obj).sort((a, b) => b[1] - a[1]).slice(0, n).map(([k, v]) => `${k} (${v}×)`).join(', ')
+    Object.entries(obj).sort((a, b) => b[1] - a[1]).slice(0, n).map(([k, v]) => `${k} (${v}Ã—)`).join(', ')
   const meanOf = (a: number[]) => a.length ? (a.reduce((x, y) => x + y, 0) / a.length) : 0
 
   // === HEADER ===
@@ -470,8 +471,8 @@ export function generateMedicalReport(data: ReportData): Blob {
   w.body(summaryText)
 
   // Functional impact / work-capacity section. Defined here so it can be
-  // called either right after Executive Summary (attorney/SSDI audience —
-  // functional first) or at the end of the report (doctor/personal —
+  // called either right after Executive Summary (attorney/SSDI audience â€”
+  // functional first) or at the end of the report (doctor/personal â€”
   // medical first, work last).
   const renderWorkSection = () => {
     const workData = data.workData
@@ -504,7 +505,7 @@ export function generateMedicalReport(data: ReportData): Blob {
         const durText = duration + (hours ? ` (${hours}h)` : '')
         let reasonText = m.reason || ''
         if (m.notes && m.notes !== m.reason) {
-          reasonText += reasonText ? ` — ${m.notes}` : m.notes
+          reasonText += reasonText ? ` â€” ${m.notes}` : m.notes
         }
         return [m.date || '', `${impact}${unable}`, m.workType || m.type || '', durText, reasonText]
       })
@@ -522,7 +523,7 @@ export function generateMedicalReport(data: ReportData): Blob {
         const title = emp.jobTitle || emp.title || emp.position || ''
         const start = emp.dateStarted || emp.startDate || ''
         const end = emp.active ? 'Present' : (emp.dateEnded || emp.endDate || '')
-        w.body(`${employer} — ${title} (${start} to ${end})`)
+        w.body(`${employer} â€” ${title} (${start} to ${end})`)
 
         if (emp.jobDuties) w.body(`  Job duties: ${emp.jobDuties}`)
 
@@ -559,8 +560,8 @@ export function generateMedicalReport(data: ReportData): Blob {
         let line = appType
         if (agency) line += ` (${agency})`
         line += `: ${status}`
-        if (filed) line += ` — filed ${filed}`
-        if (caseNum) line += ` — Case #${caseNum}`
+        if (filed) line += ` â€” filed ${filed}`
+        if (caseNum) line += ` â€” Case #${caseNum}`
         w.body(line)
 
         if (app.notes) w.body(`  Notes: ${app.notes}`)
@@ -578,7 +579,7 @@ export function generateMedicalReport(data: ReportData): Blob {
   }
 
   // === TRACKED CONDITIONS (ICD-10 for doctor mode) ===
-  // Fix: keep FULL subcategory (don't split on hyphen — that turned head-pain → "Head")
+  // Fix: keep FULL subcategory (don't split on hyphen â€” that turned head-pain â†’ "Head")
   // Fix v0.4.9: collapse duplicate tracker rows by display name so "hydration",
   // "Hydration", and "Hydration Hydration" all merge into one "Hydration" row.
   const trackerCounts: Record<string, number> = {}
@@ -634,7 +635,7 @@ export function generateMedicalReport(data: ReportData): Blob {
       }
     }
     const top = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 4)
-    return top.length > 0 ? top.map(([k, v]) => `${k} (${v}×)`).join(', ') : ''
+    return top.length > 0 ? top.map(([k, v]) => `${k} (${v}Ã—)`).join(', ') : ''
   }
 
   if (isDoctor) {
@@ -644,7 +645,7 @@ export function generateMedicalReport(data: ReportData): Blob {
       const canonicalKey = displayToKey[display]
       return [
         display,
-        ICD10_MAP[canonicalKey] || '—',
+        ICD10_MAP[canonicalKey] || 'â€”',
         String(trackerDayCounts[display]?.size || 0),
         String(count),
       ]
@@ -652,7 +653,7 @@ export function generateMedicalReport(data: ReportData): Blob {
     w.table(['Condition', 'ICD-10 Code', 'Days', 'Entries'], rows, [110, 230, 50, 50])
     w.note('ICD-10 codes shown are suggestions based on tracked symptoms and may not match official diagnoses. Supporting evidence below.')
 
-    // Supporting evidence subsection — key signals that validate each ICD suggestion
+    // Supporting evidence subsection â€” key signals that validate each ICD suggestion
     w.spacer(4)
     w.subSection('Supporting evidence (top symptoms/triggers per tracker)')
     for (const [display] of sorted) {
@@ -671,7 +672,7 @@ export function generateMedicalReport(data: ReportData): Blob {
     }
   }
 
-  // === MEDICATIONS (current + discontinued regimen) — all audiences ===
+  // === MEDICATIONS (current + discontinued regimen) â€” all audiences ===
   // SSDI/attorney AND doctor both need this: a maintained med regimen is
   // treatment-compliance evidence, and current meds are foundational clinical
   // context. From the MANAGE section (per Ren, 2026-05-30, CHA-246).
@@ -687,7 +688,7 @@ export function generateMedicalReport(data: ReportData): Blob {
       const rows = active.map((m: any) => [nameOf(m), m.dose || '', m.time || '', m.conditionTreating || ''])
       w.table(['Medication', 'Dose', 'Schedule', 'Treating'], rows, [180, 70, 75, 115])
       const withReminders = active.filter((m: any) => m.enableReminders && (m.reminderTimes || []).length).length
-      if (withReminders > 0) w.body(`${withReminders} of ${active.length} current medications have scheduled reminders set — adherence support in place.`)
+      if (withReminders > 0) w.body(`${withReminders} of ${active.length} current medications have scheduled reminders set â€” adherence support in place.`)
     }
     const sideFx = active.filter((m: any) => m.persistentSideEffects)
     if (sideFx.length && isDoctor) {
@@ -697,14 +698,14 @@ export function generateMedicalReport(data: ReportData): Blob {
     if (stopped.length && isDoctor) {
       w.subSection(`Discontinued (${stopped.length})`)
       for (const m of stopped.slice(0, 20)) {
-        const reason = m.discontinuedReason ? ` — stopped: ${m.discontinuedReason}` : ''
+        const reason = m.discontinuedReason ? ` â€” stopped: ${m.discontinuedReason}` : ''
         const when = m.dateStopped ? ` (${m.dateStopped})` : ''
-        w.body(`${nameOf(m)}${m.dose ? ` — ${m.dose}` : ''}${when}${reason}`)
+        w.body(`${nameOf(m)}${m.dose ? ` â€” ${m.dose}` : ''}${when}${reason}`)
       }
     }
   }
 
-  // === APPOINTMENT ATTENDANCE — all audiences (SSDI weighs care engagement) ===
+  // === APPOINTMENT ATTENDANCE â€” all audiences (SSDI weighs care engagement) ===
   const appointments = data.appointments || []
   if (appointments.length) {
     w.sectionHeader('Appointment Attendance')
@@ -726,17 +727,17 @@ export function generateMedicalReport(data: ReportData): Blob {
     if (upcoming.length) {
       w.subSection('Upcoming')
       for (const p of upcoming.slice().sort((a: any, b: any) => String(a.appointmentDate || '').localeCompare(String(b.appointmentDate || ''))).slice(0, 15)) {
-        w.body(`${p.appointmentDate || ''}${p.appointmentTime ? ` ${p.appointmentTime}` : ''} — ${p.providerName || ''}`)
+        w.body(`${p.appointmentDate || ''}${p.appointmentTime ? ` ${p.appointmentTime}` : ''} â€” ${p.providerName || ''}`)
       }
     }
   }
 
-  // Symptom correlations render HERE — right under Tracked Conditions / Supporting
-  // Evidence — so the Pearson table sits with the evidence it belongs to, instead
+  // Symptom correlations render HERE â€” right under Tracked Conditions / Supporting
+  // Evidence â€” so the Pearson table sits with the evidence it belongs to, instead
   // of trailing the whole report. (renderCorrelations is a hoisted fn declared below.)
   renderCorrelations()
 
-  // === PAIN ASSESSMENT — rich for doctors ===
+  // === PAIN ASSESSMENT â€” rich for doctors ===
   const painEntries = trackerData.filter(r => r.subcategory === 'pain')
   if (painEntries.length) {
     w.sectionHeader(isDoctor ? 'Pain Assessment' : 'Pain Summary')
@@ -800,14 +801,14 @@ export function generateMedicalReport(data: ReportData): Blob {
 
     // Top locations / character / pattern
     const topN = (obj: Record<string, number>, n = 6) =>
-      Object.entries(obj).sort((a, b) => b[1] - a[1]).slice(0, n).map(([k, v]) => `${k} (${v}×)`).join(', ')
+      Object.entries(obj).sort((a, b) => b[1] - a[1]).slice(0, n).map(([k, v]) => `${k} (${v}Ã—)`).join(', ')
     if (Object.keys(locations).length) w.body(`Top locations: ${topN(locations)}`)
     if (Object.keys(characters).length) w.body(`Pain character: ${topN(characters)}`)
     if (Object.keys(patterns).length) w.body(`Pain pattern: ${topN(patterns)}`)
     if (Object.keys(radiation).length) w.body(`Radiation pattern: ${topN(radiation)}`)
     if (Object.keys(triggers).length) w.body(`Top triggers: ${topN(triggers)}`)
 
-    // Treatment effectiveness — only treatments used 2+ times
+    // Treatment effectiveness â€” only treatments used 2+ times
     const txRanked = Object.entries(treatmentEff)
       .filter(([, scores]) => scores.length >= 2)
       .map(([name, scores]) => ({
@@ -824,26 +825,26 @@ export function generateMedicalReport(data: ReportData): Blob {
       w.table(['Treatment', 'Avg Effectiveness', 'Uses'], rows, [220, 100, 60], COLORS.painHeader)
     }
 
-    // Red flag history — clinically significant
+    // Red flag history â€” clinically significant
     const flagLines: string[] = []
-    if (tearingCount > 0) flagLines.push(`Tearing-quality pain reported ${tearingCount}× — aortic dissection differential`)
-    if (thunderclapCount > 0) flagLines.push(`Thunderclap onset reported ${thunderclapCount}× — SAH/RCVS differential`)
-    if (cardaCount > 0) flagLines.push(`Cauda equina pattern (back + leg weakness + bowel/bladder) ${cardaCount}× — surgical-window emergency`)
-    if (erCount > 0) flagLines.push(`ER visit required ${erCount}×`)
-    if (emsCount > 0) flagLines.push(`EMS contacted ${emsCount}×`)
+    if (tearingCount > 0) flagLines.push(`Tearing-quality pain reported ${tearingCount}Ã— â€” aortic dissection differential`)
+    if (thunderclapCount > 0) flagLines.push(`Thunderclap onset reported ${thunderclapCount}Ã— â€” SAH/RCVS differential`)
+    if (cardaCount > 0) flagLines.push(`Cauda equina pattern (back + leg weakness + bowel/bladder) ${cardaCount}Ã— â€” surgical-window emergency`)
+    if (erCount > 0) flagLines.push(`ER visit required ${erCount}Ã—`)
+    if (emsCount > 0) flagLines.push(`EMS contacted ${emsCount}Ã—`)
     if (flagLines.length && isDoctor) {
       w.spacer(2)
       w.subSection('Red flags from pain entries')
       for (const f of flagLines) w.finding(f)
     }
 
-    // Chronic flare delta — Ren's idea, doctors care about this
+    // Chronic flare delta â€” Ren's idea, doctors care about this
     if (flareDeltas.length >= 2 && isDoctor) {
       const avgDelta = flareDeltas.reduce((a, b) => a + b, 0) / flareDeltas.length
       const extreme = flareDeltas.filter(d => d >= 6).length
       w.spacer(2)
       w.subSection('Chronic-pain flare delta from baseline')
-      w.body(`${flareDeltas.length} flare events tracked with baseline reference. Average flare: +${avgDelta.toFixed(1)} above baseline. ${extreme} were "extreme" flares (+6 above baseline) — those are the days requiring multi-modal intervention.`)
+      w.body(`${flareDeltas.length} flare events tracked with baseline reference. Average flare: +${avgDelta.toFixed(1)} above baseline. ${extreme} were "extreme" flares (+6 above baseline) â€” those are the days requiring multi-modal intervention.`)
     }
 
     // Monthly trend
@@ -859,7 +860,7 @@ export function generateMedicalReport(data: ReportData): Blob {
     }
   }
 
-  // === HEAD PAIN — multi-rescue + baseline-delta + aura ===
+  // === HEAD PAIN â€” multi-rescue + baseline-delta + aura ===
   const headPainEntries = trackerData.filter(r => r.subcategory === 'head-pain')
   if (headPainEntries.length && isDoctor) {
     w.sectionHeader('Head Pain Assessment')
@@ -895,9 +896,9 @@ export function generateMedicalReport(data: ReportData): Blob {
       const avg = intensities.reduce((a, b) => a + b, 0) / intensities.length
       w.body(`${total} episodes. Mean intensity ${avg.toFixed(1)}/10. With aura: ${withAura} (${Math.round(withAura/total*100)}%).`)
     }
-    if (whol > 0) w.finding(`"Worst headache of life" reported ${whol}× — SAH workup if not yet done.`)
-    if (thunderclap > 0) w.finding(`Thunderclap onset reported ${thunderclap}× — SAH/RCVS differential.`)
-    if (multiRescue > 0) w.body(`Multi-rescue migraine days (Nurtec + Imitrex etc.): ${multiRescue} — suggests acute regimen may be undertreated; preventive escalation discussion warranted.`)
+    if (whol > 0) w.finding(`"Worst headache of life" reported ${whol}Ã— â€” SAH workup if not yet done.`)
+    if (thunderclap > 0) w.finding(`Thunderclap onset reported ${thunderclap}Ã— â€” SAH/RCVS differential.`)
+    if (multiRescue > 0) w.body(`Multi-rescue migraine days (Nurtec + Imitrex etc.): ${multiRescue} â€” suggests acute regimen may be undertreated; preventive escalation discussion warranted.`)
     if (flareDeltas.length >= 2) {
       const avgD = flareDeltas.reduce((a, b) => a + b, 0) / flareDeltas.length
       const extreme = flareDeltas.filter(d => d >= 5).length
@@ -909,7 +910,7 @@ export function generateMedicalReport(data: ReportData): Blob {
       w.table(['Type', 'Count'], typeRows, [200, 60])
     }
     const trigEntries = Object.entries(triggers).sort((a, b) => b[1] - a[1]).slice(0, 6)
-    if (trigEntries.length) w.body(`Top triggers: ${trigEntries.map(([t, c]) => `${t} (${c}×)`).join(', ')}`)
+    if (trigEntries.length) w.body(`Top triggers: ${trigEntries.map(([t, c]) => `${t} (${c}Ã—)`).join(', ')}`)
     const txRanked = Object.entries(treatmentEff)
       .filter(([, s]) => s.length >= 2)
       .map(([name, s]) => ({ name, avg: s.reduce((a, b) => a + b, 0) / s.length, n: s.length }))
@@ -920,7 +921,7 @@ export function generateMedicalReport(data: ReportData): Blob {
     }
   }
 
-  // === SEIZURE — status epi, autonomic, rescue meds ===
+  // === SEIZURE â€” status epi, autonomic, rescue meds ===
   const seizureEntries = trackerData.filter(r => r.subcategory === 'seizure')
   if (seizureEntries.length && isDoctor) {
     w.sectionHeader('Seizure Assessment')
@@ -945,18 +946,18 @@ export function generateMedicalReport(data: ReportData): Blob {
         ;(e.symptoms || e.seizureSymptoms || []).forEach((s: string) => { symptoms[s] = (symptoms[s] || 0) + 1 })
       }
     }
-    w.body(`${total} seizure events recorded. Aura present in ${withAura} (${total ? Math.round(withAura/total*100) : 0}%). Rescue med used: ${rescueUsed}×. EMS: ${ems}×. Injuries: ${injuries}×.`)
-    if (statusEpi > 0) w.finding(`Status epilepticus events: ${statusEpi} — neurological emergency, neurology follow-up indicated.`)
-    if (autonomic >= 3) w.finding(`Autonomic seizure pattern: ${autonomic} events — often misdiagnosed as POTS/MCAS/panic; consider EEG with autonomic monitoring.`)
+    w.body(`${total} seizure events recorded. Aura present in ${withAura} (${total ? Math.round(withAura/total*100) : 0}%). Rescue med used: ${rescueUsed}Ã—. EMS: ${ems}Ã—. Injuries: ${injuries}Ã—.`)
+    if (statusEpi > 0) w.finding(`Status epilepticus events: ${statusEpi} â€” neurological emergency, neurology follow-up indicated.`)
+    if (autonomic >= 3) w.finding(`Autonomic seizure pattern: ${autonomic} events â€” often misdiagnosed as POTS/MCAS/panic; consider EEG with autonomic monitoring.`)
     const typeRows = Object.entries(types).sort((a, b) => b[1] - a[1]).map(([t, c]) => [String(t), String(c)])
     if (typeRows.length) {
       w.subSection('Episode type distribution')
       w.table(['Type', 'Count'], typeRows, [240, 60])
     }
     const symRows = Object.entries(symptoms).sort((a, b) => b[1] - a[1]).slice(0, 8)
-    if (symRows.length) w.body(`Top ictal symptoms: ${symRows.map(([s, c]) => `${s} (${c}×)`).join(', ')}`)
+    if (symRows.length) w.body(`Top ictal symptoms: ${symRows.map(([s, c]) => `${s} (${c}Ã—)`).join(', ')}`)
     const trigRows = Object.entries(triggers).sort((a, b) => b[1] - a[1]).slice(0, 6)
-    if (trigRows.length) w.body(`Top triggers: ${trigRows.map(([s, c]) => `${s} (${c}×)`).join(', ')}`)
+    if (trigRows.length) w.body(`Top triggers: ${trigRows.map(([s, c]) => `${s} (${c}Ã—)`).join(', ')}`)
   }
 
   // === FOOD REACTIONS / ALLERGENS ===
@@ -989,8 +990,8 @@ export function generateMedicalReport(data: ReportData): Blob {
         if (e.exposureSource) sources[e.exposureSource] = (sources[e.exposureSource] || 0) + 1
       }
     }
-    w.body(`${total} reactions tracked. Anaphylaxis: ${anaphylaxis} (EpiPen used ${epipen}×). Celiac/autoimmune: ${celiac}. Intolerance: ${intolerance}. ER: ${er}. Hospitalized: ${hosp}.`)
-    if (anaphylaxis > 0) w.finding(`Anaphylaxis events: ${anaphylaxis} — allergy/immunology referral + EpiPen Rx renewal indicated.`)
+    w.body(`${total} reactions tracked. Anaphylaxis: ${anaphylaxis} (EpiPen used ${epipen}Ã—). Celiac/autoimmune: ${celiac}. Intolerance: ${intolerance}. ER: ${er}. Hospitalized: ${hosp}.`)
+    if (anaphylaxis > 0) w.finding(`Anaphylaxis events: ${anaphylaxis} â€” allergy/immunology referral + EpiPen Rx renewal indicated.`)
     if (celiac + intolerance >= 4) {
       const ce = celiac + intolerance
       w.subSection('Celiac/intolerance aftermath pattern')
@@ -1006,10 +1007,10 @@ export function generateMedicalReport(data: ReportData): Blob {
       w.table(['Allergen / trigger', 'Reactions'], allRows, [240, 80])
     }
     const srcRows = Object.entries(sources).sort((a, b) => b[1] - a[1]).slice(0, 6)
-    if (srcRows.length) w.body(`Top exposure sources: ${srcRows.map(([s, c]) => `${s} (${c}×)`).join(', ')}`)
+    if (srcRows.length) w.body(`Top exposure sources: ${srcRows.map(([s, c]) => `${s} (${c}Ã—)`).join(', ')}`)
   }
 
-  // === CARDIAC — rhythm types, syncope, HR ===
+  // === CARDIAC â€” rhythm types, syncope, HR ===
   const cardEntries = trackerData.filter(r => r.subcategory === 'cardiac')
   if (cardEntries.length && isDoctor) {
     w.sectionHeader('Cardiac Assessment')
@@ -1032,8 +1033,8 @@ export function generateMedicalReport(data: ReportData): Blob {
       }
     }
     w.body(`${total} cardiac events. Syncope (full LOC): ${syncope}. ER required: ${er}. ECG strips uploaded: ${ecgFiles}.`)
-    if (vt > 0) w.finding(`Ventricular tachycardia captured ${vt}× — urgent cardiology / EP consult.`)
-    if (syncope >= 2) w.finding(`Recurrent syncope (${syncope}×) — tilt-table or extended Holter indicated.`)
+    if (vt > 0) w.finding(`Ventricular tachycardia captured ${vt}Ã— â€” urgent cardiology / EP consult.`)
+    if (syncope >= 2) w.finding(`Recurrent syncope (${syncope}Ã—) â€” tilt-table or extended Holter indicated.`)
     if (hrPeaks.length) {
       const max = Math.max(...hrPeaks), min = Math.min(...hrPeaks)
       const avg = hrPeaks.reduce((a, b) => a + b, 0) / hrPeaks.length
@@ -1065,7 +1066,7 @@ export function generateMedicalReport(data: ReportData): Blob {
       }
     }
     w.body(`${total} respiratory events. Asthma attacks: ${asthma}. Allergic reactions: ${allergic}. Red-zone peak flow: ${redZone}. ER: ${er}.`)
-    if (redZone >= 1) w.finding(`Red-zone peak flow recorded ${redZone}× — uncontrolled asthma / step-up therapy discussion.`)
+    if (redZone >= 1) w.finding(`Red-zone peak flow recorded ${redZone}Ã— â€” uncontrolled asthma / step-up therapy discussion.`)
     const typeRows = Object.entries(types).sort((a, b) => b[1] - a[1]).map(([t, c]) => [t, String(c)])
     if (typeRows.length) w.table(['Episode type', 'Count'], typeRows, [240, 80])
   }
@@ -1089,8 +1090,8 @@ export function generateMedicalReport(data: ReportData): Blob {
       }
     }
     w.body(`${total} skin events. Photos captured: ${photos} (available in app for dermatology consult). ER: ${er}.`)
-    if (throatTight > 0) w.finding(`Throat tightness with skin reaction reported ${throatTight}× — anaphylaxis pattern.`)
-    if (mucous > 0) w.finding(`Mucous membrane involvement ${mucous}× — SJS/TEN differential if drug-related.`)
+    if (throatTight > 0) w.finding(`Throat tightness with skin reaction reported ${throatTight}Ã— â€” anaphylaxis pattern.`)
+    if (mucous > 0) w.finding(`Mucous membrane involvement ${mucous}Ã— â€” SJS/TEN differential if drug-related.`)
     const typeRows = Object.entries(types).sort((a, b) => b[1] - a[1]).map(([t, c]) => [t, String(c)])
     if (typeRows.length) w.table(['Lesion type', 'Count'], typeRows, [240, 80])
     if (photos > 0) w.note(`Skin photos are stored locally in the app and excluded from this PDF for privacy. Dermatology can request a screen-share or in-clinic photo review.`)
@@ -1099,8 +1100,8 @@ export function generateMedicalReport(data: ReportData): Blob {
   // === JOINT / MSK ===
   // Field names verified against the saved schema (joint-types.ts) AND the in-app
   // joint-analytics.tsx (the source of truth for what's actually stored). The v1
-  // PDF section read `jointsAffected` / `selfReduced` / `subluxationOccurred` —
-  // none of which exist on the saved entry — so it silently dropped severity,
+  // PDF section read `jointsAffected` / `selfReduced` / `subluxationOccurred` â€”
+  // none of which exist on the saved entry â€” so it silently dropped severity,
   // muscle weakness, episode types, ROM, swelling, and per-muscle data. Fixed.
   const jointEntries = trackerData.filter(r => r.subcategory === 'joint')
   if (jointEntries.length && isDoctor) {
@@ -1145,23 +1146,23 @@ export function generateMedicalReport(data: ReportData): Blob {
     // Instability / EDS signal
     if (subluxations + dislocations > 0) {
       const ratio = (subluxations + dislocations) > 0 ? Math.round(selfReduced / (subluxations + dislocations) * 100) : 0
-      w.body(`Subluxations: ${subluxations}. Dislocations: ${dislocations}. Self-reduced: ${selfReduced}${selfReduced > 0 ? ` (${ratio}% of subs/dislocations) — joint hypermobility / EDS-pattern signal` : ''}.`)
+      w.body(`Subluxations: ${subluxations}. Dislocations: ${dislocations}. Self-reduced: ${selfReduced}${selfReduced > 0 ? ` (${ratio}% of subs/dislocations) â€” joint hypermobility / EDS-pattern signal` : ''}.`)
     }
 
-    // Muscle weakness — clinically load-bearing, MUST surface (was silently dropped)
+    // Muscle weakness â€” clinically load-bearing, MUST surface (was silently dropped)
     if (weaknessSeverities.length) {
       const peak = Math.max(...weaknessSeverities)
       const mean = weaknessSeverities.reduce((a, b) => a + b, 0) / weaknessSeverities.length
       w.body(`Muscle weakness reported in ${weaknessSeverities.length} event(s): mean ${mean.toFixed(1)}/10, peak ${peak}/10.`)
-      if (peak >= 7) w.finding(`Severe muscle weakness (peak ${peak}/10) — proximal weakness warrants myopathy / neuromuscular workup (CK, EMG); distal or focal warrants neuropathy evaluation.`)
+      if (peak >= 7) w.finding(`Severe muscle weakness (peak ${peak}/10) â€” proximal weakness warrants myopathy / neuromuscular workup (CK, EMG); distal or focal warrants neuropathy evaluation.`)
     }
 
     if (romImpacts.length) {
       const avgRom = romImpacts.reduce((a, b) => a + b, 0) / romImpacts.length
       w.body(`Range-of-motion impact: mean ${avgRom.toFixed(0)}% restriction (n=${romImpacts.length}).`)
     }
-    if (swelling > 0 || bruising > 0) w.body(`Swelling present: ${swelling}×. Bruising present: ${bruising}×.`)
-    if (erVisits > 0) w.finding(`ER visit required for an MSK event ${erVisits}×.`)
+    if (swelling > 0 || bruising > 0) w.body(`Swelling present: ${swelling}Ã—. Bruising present: ${bruising}Ã—.`)
+    if (erVisits > 0) w.finding(`ER visit required for an MSK event ${erVisits}Ã—.`)
     if (treatmentResp.length) {
       const avgT = treatmentResp.reduce((a, b) => a + b, 0) / treatmentResp.length
       w.body(`Mean treatment response: ${avgT.toFixed(1)}/10 (n=${treatmentResp.length}).`)
@@ -1188,7 +1189,7 @@ export function generateMedicalReport(data: ReportData): Blob {
     }
   }
 
-  // === BATHROOM — Bristol distribution + red flags ===
+  // === BATHROOM â€” Bristol distribution + red flags ===
   const bathEntries = trackerData.filter(r => r.subcategory === 'bathroom')
   if (bathEntries.length && isDoctor) {
     w.sectionHeader('Bathroom Assessment')
@@ -1209,10 +1210,10 @@ export function generateMedicalReport(data: ReportData): Blob {
       }
     }
     w.body(`${total} entries. Constipation: ${types['constipation'] || 0}. Diarrhea: ${types['diarrhea'] || 0}. Urinary: ${types['urinary'] || 0}.`)
-    if (blackTarry > 0) w.finding(`Black tarry stool reported ${blackTarry}× — upper GI bleed differential, GI eval indicated.`)
-    if (pyelo > 0) w.finding(`Pyelonephritis pattern (UTI + fever + flank) ${pyelo}× — recurrent suggests urology workup for structural cause.`)
-    if (obstruction > 0) w.finding(`Obstruction pattern (no gas + vomiting) ${obstruction}× — surgical evaluation if recent and unevaluated.`)
-    if (bloodUrine > 0) w.finding(`Blood in urine ${bloodUrine}× — needs evaluation if no clear source.`)
+    if (blackTarry > 0) w.finding(`Black tarry stool reported ${blackTarry}Ã— â€” upper GI bleed differential, GI eval indicated.`)
+    if (pyelo > 0) w.finding(`Pyelonephritis pattern (UTI + fever + flank) ${pyelo}Ã— â€” recurrent suggests urology workup for structural cause.`)
+    if (obstruction > 0) w.finding(`Obstruction pattern (no gas + vomiting) ${obstruction}Ã— â€” surgical evaluation if recent and unevaluated.`)
+    if (bloodUrine > 0) w.finding(`Blood in urine ${bloodUrine}Ã— â€” needs evaluation if no clear source.`)
     const bristolRows = ['1','2','3','4','5','6','7'].filter(t => bristolDist[t]).map(t => [`Type ${t}`, String(bristolDist[t])])
     if (bristolRows.length) {
       w.subSection('Bristol scale distribution')
@@ -1254,14 +1255,14 @@ export function generateMedicalReport(data: ReportData): Blob {
       if (si > 0) w.finding(`Suicidal ideation flagged: ${si} entries.`)
       if (sh > 0) w.finding(`Self-harm urges flagged: ${sh} entries.`)
       if (hopeless > 0) w.finding(`Hopelessness flagged: ${hopeless} entries.`)
-      if (crisisContact > 0) w.body(`Patient reached out for crisis support: ${crisisContact}× (988 / therapist / etc.) — protective factor documented.`)
-      if (hospConsidered > 0) w.finding(`Hospitalization considered: ${hospConsidered}×.`)
+      if (crisisContact > 0) w.body(`Patient reached out for crisis support: ${crisisContact}Ã— (988 / therapist / etc.) â€” protective factor documented.`)
+      if (hospConsidered > 0) w.finding(`Hospitalization considered: ${hospConsidered}Ã—.`)
     }
     const typeRows = Object.entries(types).sort((a, b) => b[1] - a[1]).map(([t, c]) => [t, String(c)])
     if (typeRows.length) w.table(['Episode type', 'Count'], typeRows, [240, 80])
   }
 
-  // === MIND & MOOD — mixed states, rapid cycling, mania levels ===
+  // === MIND & MOOD â€” mixed states, rapid cycling, mania levels ===
   const mmEntries = trackerData.filter(r => r.subcategory === 'mental-health')
   if (mmEntries.length && isDoctor) {
     w.sectionHeader('Mind & Mood Assessment')
@@ -1282,20 +1283,20 @@ export function generateMedicalReport(data: ReportData): Blob {
         if (e.episodeType) types[e.episodeType] = (types[e.episodeType] || 0) + 1
       }
     }
-    const avg = (arr: number[]) => arr.length ? (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1) : '—'
+    const avg = (arr: number[]) => arr.length ? (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1) : 'â€”'
     w.body(`${total} check-ins. Mean depression ${avg(depLevels)}/10. Mean mania ${avg(maniaLevels)}/10. Mean energy ${avg(energyLevels)}/10. Mean brain fog ${avg(fogLevels)}/10.`)
-    if (mixedState > 0) w.finding(`Mixed-state days (high dep + high mania): ${mixedState} — highest suicide-risk window in mood disorders.`)
-    if (rapidCycling > 0) w.finding(`Rapid cycling reported ${rapidCycling}× — affects medication choice; consider discussing with prescriber.`)
+    if (mixedState > 0) w.finding(`Mixed-state days (high dep + high mania): ${mixedState} â€” highest suicide-risk window in mood disorders.`)
+    if (rapidCycling > 0) w.finding(`Rapid cycling reported ${rapidCycling}Ã— â€” affects medication choice; consider discussing with prescriber.`)
     const typeRows = Object.entries(types).sort((a, b) => b[1] - a[1]).map(([t, c]) => [t, String(c)])
     if (typeRows.length) w.table(['Check-in focus', 'Count'], typeRows, [240, 80])
   }
 
   // ============================================================================
-  // EXPANDED TRACKER SECTIONS (CHA-246, 2026-05-30) — these trackers save real
+  // EXPANDED TRACKER SECTIONS (CHA-246, 2026-05-30) â€” these trackers save real
   // data the v1 report dropped ENTIRELY (no section at all). Each reads via
   // gatherEntries() so it matches the tracker's true storage shape.
-  // NOTE: self-care is deliberately NOT exported — per Ren (disability-law), it's
-  // an adverse-inference risk for SSDI ("went to the park → why didn't you work?").
+  // NOTE: self-care is deliberately NOT exported â€” per Ren (disability-law), it's
+  // an adverse-inference risk for SSDI ("went to the park â†’ why didn't you work?").
   // ============================================================================
 
   // === UPPER DIGESTIVE ===
@@ -1339,8 +1340,8 @@ export function generateMedicalReport(data: ReportData): Blob {
       }
       w.body(`${days.length} days tracked (spoon-theory pacing). Mean starting energy ${meanOf(morning).toFixed(1)} spoons; mean spent ${meanOf(spent).toFixed(1)}, mean restored ${meanOf(restored).toFixed(1)}.`)
       if (eod.length) w.body(`Mean end-of-day energy: ${meanOf(eod).toFixed(1)}/5.`)
-      if (overBudget > 0) w.finding(`Energy over-budget (spent > available) on ${overBudget}/${days.length} days — post-exertional crash risk; supports activity-limitation in functional assessments.`)
-      if (pemHigh > 0) w.finding(`High/danger post-exertional-malaise risk flagged on ${pemHigh} days — hallmark of ME/CFS.`)
+      if (overBudget > 0) w.finding(`Energy over-budget (spent > available) on ${overBudget}/${days.length} days â€” post-exertional crash risk; supports activity-limitation in functional assessments.`)
+      if (pemHigh > 0) w.finding(`High/danger post-exertional-malaise risk flagged on ${pemHigh} days â€” hallmark of ME/CFS.`)
     }
   }
 
@@ -1361,11 +1362,11 @@ export function generateMedicalReport(data: ReportData): Blob {
       w.body(`${overloads.length} sensory-overload episodes${lvl.length ? `, mean intensity ${meanOf(lvl).toFixed(1)}/10 (peak ${Math.max(...lvl)}/10)` : ''}. Shutdown after ${shutdowns}.`)
       if (Object.keys(types).length) w.body(`Overload modalities: ${tn(types)}`)
       if (Object.keys(trig).length) w.body(`Top triggers: ${tn(trig)}`)
-      if (shutdowns > 0) w.finding(`Post-overload shutdown reported ${shutdowns}× — functional impairment relevant to sensory-processing / autism accommodations.`)
+      if (shutdowns > 0) w.finding(`Post-overload shutdown reported ${shutdowns}Ã— â€” functional impairment relevant to sensory-processing / autism accommodations.`)
     }
   }
 
-  // === SUBSTANCE USE LOG (neutral — never auto-flag a use disorder) ===
+  // === SUBSTANCE USE LOG (neutral â€” never auto-flag a use disorder) ===
   {
     const sub = gatherEntries(s => s === 'substance')
     if (sub.length && isDoctor) {
@@ -1398,7 +1399,7 @@ export function generateMedicalReport(data: ReportData): Blob {
         if (typeof e.energyAfter === 'number') after.push(e.energyAfter)
         if (typeof e.energyBefore === 'number' && typeof e.energyAfter === 'number' && e.energyAfter < e.energyBefore) worse++
       }
-      w.body(`${mv.length} movement sessions. Mean energy before ${meanOf(before).toFixed(1)}/10, after ${meanOf(after).toFixed(1)}/10. Energy dropped after activity on ${worse}/${mv.length} sessions${worse ? ' — exertion-intolerance signal relevant to functional capacity' : ''}.`)
+      w.body(`${mv.length} movement sessions. Mean energy before ${meanOf(before).toFixed(1)}/10, after ${meanOf(after).toFixed(1)}/10. Energy dropped after activity on ${worse}/${mv.length} sessions${worse ? ' â€” exertion-intolerance signal relevant to functional capacity' : ''}.`)
       if (Object.keys(types).length) w.body(`Activity types: ${tn(types)}`)
       if (Object.keys(feel).length) w.body(`Body response: ${tn(feel)}`)
     }
@@ -1421,8 +1422,8 @@ export function generateMedicalReport(data: ReportData): Blob {
         if (e.safetyPlanUsed) planUsed++
       }
       w.body(`${cr.length} crisis episodes logged. Mean intensity ${meanOf(intensity).toFixed(1)}/10. Mean felt-safety ${meanOf(safety).toFixed(1)}/10.`)
-      if (ems > 0) w.finding(`Emergency services involved ${ems}× — documents acute-risk history.`)
-      w.body(`Protective factors: reached professional help ${prof}×, used safety plan ${planUsed}×.`)
+      if (ems > 0) w.finding(`Emergency services involved ${ems}Ã— â€” documents acute-risk history.`)
+      w.body(`Protective factors: reached professional help ${prof}Ã—, used safety plan ${planUsed}Ã—.`)
       const tr = Object.entries(types).sort((a, b) => b[1] - a[1]).map(([t, c]) => [t, String(c)])
       if (tr.length) { w.subSection('Crisis type distribution'); w.table(['Type', 'Count'], tr, [240, 80]) }
     }
@@ -1493,10 +1494,10 @@ export function generateMedicalReport(data: ReportData): Blob {
           w.subSection(insight.title)
           w.body(insight.description)
         }
-        if (high.length > 12) w.note(`(${high.length - 12} additional high-impact patterns shown in app's Patterns → Red Flags tab)`)
+        if (high.length > 12) w.note(`(${high.length - 12} additional high-impact patterns shown in app's Patterns â†’ Red Flags tab)`)
       }
     } catch (err) {
-      // Pattern engine load failed — non-fatal, just skip the section
+      // Pattern engine load failed â€” non-fatal, just skip the section
       console.error('Pattern engine v2 failed in PDF:', err)
     }
   }
@@ -1574,7 +1575,7 @@ export function generateMedicalReport(data: ReportData): Blob {
         w.subSection(`Abnormal findings (${content.date || labSet.date || ''})`)
         for (const r of abnormals) {
           const flag = r.flag ? ` [${r.flag}]` : ''
-          w.finding(`${r.test_name || ''}: ${formatLabValue(r)} (ref: ${normalizeUnits(r.reference_text || '—')})${flag}`)
+          w.finding(`${r.test_name || ''}: ${formatLabValue(r)} (ref: ${normalizeUnits(r.reference_text || 'â€”')})${flag}`)
         }
       }
     }
@@ -1633,13 +1634,13 @@ export function generateMedicalReport(data: ReportData): Blob {
         const title = ev.title || '(untitled)'
         const status = ev.status && ev.status !== 'active' ? ` [${String(ev.status).replace(/_/g, ' ')}]` : ''
         const severity = ev.severity && ev.severity !== 'mild' ? ` (${ev.severity})` : ''
-        const provider = ev.provider ? ` — ${ev.provider}` : ''
+        const provider = ev.provider ? ` â€” ${ev.provider}` : ''
         w.finding(`${date}: ${title}${severity}${status}${provider}`)
         // Description line if present and reasonably short, to keep the
         // report scannable. Long descriptions truncate with an ellipsis.
         if (ev.description && typeof ev.description === 'string') {
           const desc = ev.description.length > 200
-            ? ev.description.slice(0, 197).trim() + '…'
+            ? ev.description.slice(0, 197).trim() + 'â€¦'
             : ev.description
           w.finding(`    ${desc}`)
         }
@@ -1755,7 +1756,7 @@ export function generateMedicalReport(data: ReportData): Blob {
     }
   }
 
-  // === WORK & DISABILITY (skipped here for attorney audience — already
+  // === WORK & DISABILITY (skipped here for attorney audience â€” already
   // rendered above, right after Executive Summary, so functional limits
   // lead the report.)
   if (!isAttorney) {
@@ -1772,3 +1773,4 @@ export function generateMedicalReport(data: ReportData): Blob {
 
   return doc.output('blob')
 }
+

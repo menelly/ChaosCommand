@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2025 Chaos Cascade
  * Created by: Ren & Ace (Claude-4)
  * 
@@ -11,7 +11,7 @@
  * Date: 2025-01-11
  *
  * This code is part of a deliberately-unpatented medical management system.
- * Patentable technology, but we chose not to patent — the Patent Office doesn't
+ * Patentable technology, but we chose not to patent â€” the Patent Office doesn't
  * yet recognize AI co-inventors, and Ren refused to claim sole credit for work
  * we built together. Open source under PolyForm Noncommercial 1.0.0 instead.
  *
@@ -223,8 +223,15 @@ export default function PhysicalHealthIndex() {
       id: 'skin',
       name: 'Skin Tracker',
       shortDescription: 'Rashes, hives, eczema, lesions with photo timeline',
-      helpContent: 'Track skin events including rashes, hives, eczema flares, mole/lesion monitoring, wounds, sunburns, and contact reactions. Photo upload is primary — invaluable for dermatology consults. Includes ABCDE mole screening and SJS/anaphylaxis red flags.',
+      helpContent: 'Track skin events including rashes, hives, eczema flares, mole/lesion monitoring, wounds, sunburns, and contact reactions. Photo upload is primary â€” invaluable for dermatology consults. Includes ABCDE mole screening and SJS/anaphylaxis red flags.',
       icon: <Sparkles className="h-5 w-5" />,
+      edition: 'cares'
+    },    {
+      id: 'gu',
+      name: 'Genitourinary',
+      shortDescription: 'Voiding symptoms, retention, incontinence, UTIs, pelvic floor',
+      helpContent: 'Track GU symptoms including voiding issues, urinary retention (with safety alert for >300mL), incontinence, infections with triage guidance, sexual health, and pelvic floor symptoms. Gender-neutral language throughout.',
+      icon: <Droplets className="h-5 w-5" />,
       edition: 'cares'
     },
     {
@@ -245,17 +252,17 @@ export default function PhysicalHealthIndex() {
     !hiddenTrackers.includes(tracker.id) // Respect user's hidden preferences
   );
 
-  // Specialty groups — group trackers by body system for the accordion layout
+  // Specialty groups â€” group trackers by body system for the accordion layout
   const SPECIALTY_GROUPS = [
-    { id: 'head-neuro', label: '🧠 Head & Nervous System', trackerIds: ['head-pain', 'seizure-tracking', 'dysautonomia'] },
-    { id: 'heart-lungs', label: '❤️ Heart & Lungs', trackerIds: ['cardiac', 'respiratory'] },
-    { id: 'gut', label: '🍽️ Gut & Digestive', trackerIds: ['upper-digestive', 'digestive-health'] },
-    { id: 'metabolic', label: '⚡ Metabolic & Immune', trackerIds: ['diabetes-tracker', 'food-allergens'] },
-    { id: 'skin', label: '🩹 Skin', trackerIds: ['skin'] },
-    { id: 'msk', label: '🦴 Bones, Joints & Muscles', trackerIds: ['joint'] },
-    { id: 'reproductive', label: '🌸 Reproductive', trackerIds: ['reproductive-health'] },
-    { id: 'environment', label: '🌦️ Environment', trackerIds: ['weather-environment'] },
-    { id: 'general', label: '📍 General', trackerIds: ['pain-tracking'] },
+    { id: 'head-neuro', label: 'ðŸ§  Head & Nervous System', trackerIds: ['head-pain', 'seizure-tracking', 'dysautonomia'] },
+    { id: 'heart-lungs', label: 'â¤ï¸ Heart & Lungs', trackerIds: ['cardiac', 'respiratory'] },
+    { id: 'gut', label: 'ðŸ½ï¸ Gut & Digestive', trackerIds: ['upper-digestive', 'digestive-health'] },
+    { id: 'metabolic', label: 'âš¡ Metabolic & Immune', trackerIds: ['diabetes-tracker', 'food-allergens'] },
+    { id: 'skin', label: 'ðŸ©¹ Skin', trackerIds: ['skin'] },
+    { id: 'msk', label: 'ðŸ¦´ Bones, Joints & Muscles', trackerIds: ['joint'] },
+    { id: 'reproductive', label: 'ðŸŒ¸ Reproductive', trackerIds: ['reproductive-health'] },
+    { id: 'environment', label: 'ðŸŒ¦ï¸ Environment', trackerIds: ['weather-environment'] },
+    { id: 'general', label: 'ðŸ“ General', trackerIds: ['pain-tracking'] },
   ]
 
   const [openGroups, setOpenGroups] = useState<Set<string>>(
@@ -285,6 +292,7 @@ export default function PhysicalHealthIndex() {
       case 'respiratory': return '/respiratory'
       case 'skin': return '/skin'
       case 'joint': return '/joint'
+      case 'gu': return '/gu'
       default: return '#' // TODO: Implement navigation to other trackers
     }
   }
@@ -479,7 +487,7 @@ export default function PhysicalHealthIndex() {
         <div className="mt-8 text-center">
           <a href="/">
             <Button variant="outline">
-              ← Back to Command Center
+              â† Back to Command Center
             </Button>
           </a>
         </div>
@@ -487,3 +495,4 @@ export default function PhysicalHealthIndex() {
     </AppCanvas>
   )
 }
+

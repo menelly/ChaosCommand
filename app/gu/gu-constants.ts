@@ -106,3 +106,105 @@ export const SEVERITY_LABELS: { level: number; label: string; color: string }[] 
   { level: 9, label: 'Very severe', color: 'text-destructive' },
   { level: 10, label: 'Crisis', color: 'text-destructive' },
 ]
+
+// ── INFECTION TRIAGE GUIDANCE ─────────────────────────────────────────────────
+// Shown contextually in the modal based on symptoms selected.
+// NOT a diagnosis — guidance on urgency level for seeking care.
+
+export const INFECTION_TRIAGE = {
+  // Simple uncomplicated UTI — the "probably telehealth is fine" scenario
+  uncomplicated: {
+    trigger: 'dysuria + frequency/urgency, no fever, no flank pain, not pregnant, no catheter',
+    level: 'routine' as const,
+    guidance: `Symptoms suggest a simple UTI. Telehealth or your primary care within 1-2 days is usually fine.
+Drink plenty of water. OTC phenazopyridine (AZO) helps burning but doesn't treat infection.
+Note: it turns urine bright orange — normal, not blood.`,
+  },
+
+  // Complicated UTI — needs same-day attention
+  complicated: {
+    trigger: 'fever OR flank pain OR nausea/vomiting OR systemically unwell',
+    level: 'urgent' as const,
+    guidance: `Fever or flank pain with UTI symptoms suggests the infection may have spread to your kidneys (pyelonephritis).
+This needs same-day evaluation — oral antibiotics may not be enough.
+Go to urgent care or your provider today. If you feel very unwell, go to the ER.`,
+  },
+
+  // Catheter-associated UTI — device issue first
+  catheter: {
+    trigger: 'has catheter + infection symptoms',
+    level: 'urgent' as const,
+    guidance: `UTI with a urinary catheter (CAUTI) often requires catheter evaluation or change in addition to antibiotics.
+Contact your care team today — don't wait on this one.`,
+  },
+
+  // Pregnancy — always treat promptly
+  pregnancy: {
+    trigger: 'pregnant + any UTI symptoms',
+    level: 'urgent' as const,
+    guidance: `UTI in pregnancy requires prompt treatment even if symptoms seem mild.
+Untreated UTIs can cause preterm labor. Contact your OB/midwife today.`,
+  },
+
+  // Recurrent UTIs — pattern worth addressing
+  recurrent: {
+    trigger: '3+ UTIs in the past year',
+    level: 'followup' as const,
+    guidance: `Recurrent UTIs (3+ per year) are worth discussing with a urologist.
+There may be an underlying cause (structural, hormonal, microbiome) that can be addressed to reduce frequency.`,
+  },
+
+  // Yeast infection
+  yeast: {
+    trigger: 'cottage-cheese discharge + itching, no fever',
+    level: 'routine' as const,
+    guidance: `Typical yeast infection symptoms. OTC treatment (Monistat/fluconazole) is reasonable for a first or occasional episode.
+If this is your 4th+ this year, or OTC treatment isn't working, see a provider — may be resistant strain, diabetes, or immune issue.`,
+  },
+
+  // BV — needs prescription
+  bv: {
+    trigger: 'gray discharge + fishy odor',
+    level: 'routine' as const,
+    guidance: `Gray discharge with fishy odor suggests bacterial vaginosis (BV).
+BV needs prescription antibiotics — OTC yeast treatments won't help.
+Telehealth is fine for this; it's common and treatable.`,
+  },
+
+  // Discharge that might be STI
+  sti_possible: {
+    trigger: 'yellow/green discharge, new sexual partner, or no clear other cause',
+    level: 'routine' as const,
+    guidance: `Yellow or green discharge warrants STI testing, especially with a new partner.
+Telehealth or a sexual health clinic can arrange testing discreetly.
+Many STIs have no symptoms — testing is the only way to know.`,
+  },
+
+  // Visible blood without clear cause
+  hematuria_no_infection: {
+    trigger: 'blood in urine without obvious UTI symptoms',
+    level: 'urgent' as const,
+    guidance: `Blood in urine without infection symptoms needs evaluation to rule out kidney stones, bladder issues, or other causes.
+One episode after intense exercise can be normal, but recurrent or unexplained hematuria warrants urology referral.`,
+  },
+}
+
+// Helper: determine which triage guidance applies given entry state
+export function getInfectionTriageLevel(
+  hasFever: boolean,
+  hasFlankPain: boolean,
+  hasCatheter: boolean,
+  dischargeCharacter: string | undefined,
+  bloodVisible: boolean,
+  infectionSuspected: boolean
+): typeof INFECTION_TRIAGE[keyof typeof INFECTION_TRIAGE] | null {
+  if (!infectionSuspected && !bloodVisible) return null
+  if (hasFever || hasFlankPain) return INFECTION_TRIAGE.complicated
+  if (hasCatheter && infectionSuspected) return INFECTION_TRIAGE.catheter
+  if (bloodVisible && !infectionSuspected) return INFECTION_TRIAGE.hematuria_no_infection
+  if (dischargeCharacter === 'cottage-cheese') return INFECTION_TRIAGE.yeast
+  if (dischargeCharacter === 'gray') return INFECTION_TRIAGE.bv
+  if (dischargeCharacter === 'yellow-green') return INFECTION_TRIAGE.sti_possible
+  if (infectionSuspected) return INFECTION_TRIAGE.uncomplicated
+  return null
+}
