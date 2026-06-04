@@ -25,7 +25,7 @@
 import AppCanvas from "@/components/app-canvas"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Wrench, Pill, Activity, Droplets, Stethoscope } from "lucide-react"
+import { ArrowLeft, Wrench, Pill, Activity, Stethoscope, Timer } from "lucide-react"
 
 const MAINTAIN_SECTIONS = [
   {
@@ -37,27 +37,19 @@ const MAINTAIN_SECTIONS = [
     status: "available" as const,
   },
   {
+    id: "devices",
+    name: "Devices & Timers",
+    description: "CGM sensors, pump sites, GLP-1 — track when each needs changing",
+    icon: <Timer className="h-5 w-5" />,
+    href: "/maintain/devices",
+    status: "available" as const,
+  },
+  {
     id: "lines-tubes",
     name: "Lines & Tubes",
-    description: "PICC, central lines, ostomy, catheter, Foley, PEG/GJ, Dexcom, and other devices",
+    description: "PICC, central lines, ostomy, catheter, Foley, PEG/GJ, and other devices",
     icon: <Activity className="h-5 w-5" />,
     href: "/lines-tubes",
-    status: "coming-soon" as const,
-  },
-  {
-    id: "gu",
-    name: "Genitourinary",
-    description: "GU symptoms, urinary patterns, and related tracking",
-    icon: <Droplets className="h-5 w-5" />,
-    href: "/gu",
-    status: "coming-soon" as const,
-  },
-  {
-    id: "endocrine",
-    name: "Endocrine & Hormonal",
-    description: "Hormonal patterns, thyroid, adrenal, and metabolic tracking",
-    icon: <Activity className="h-5 w-5" />,
-    href: "/endocrine",
     status: "coming-soon" as const,
   },
   {

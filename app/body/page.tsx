@@ -163,11 +163,11 @@ export default function PhysicalHealthIndex() {
     },
 
     {
-      id: 'diabetes-tracker',
-      name: 'Diabetes Tracker',
-      shortDescription: 'Blood glucose, insulin, carbs, ketones, CGM/pump timers',
-      helpContent: 'Comprehensive diabetes management with blood glucose tracking, insulin logging, carb counting, ketone monitoring, and smart timers for CGM, pump, and GLP-1 changes. Includes analytics, NOPE tag system for excluding bad data, and browser notifications for expired devices.',
-      icon: <Droplets className="h-5 w-5" />,
+      id: 'endocrine',
+      name: 'Endocrine',
+      shortDescription: 'Blood sugar / diabetes, thyroid, adrenal — hormonal & metabolic',
+      helpContent: 'Endocrine system tracking. Includes the full diabetes module (blood glucose, insulin, carbs, ketones, analytics) plus thyroid (hypo/hyper symptoms, labs, med response) and adrenal (cortisol patterns, fatigue, crisis warning signs). Device timers (CGM/pump/GLP-1) live in Maintain → Devices & Timers.',
+      icon: <Activity className="h-5 w-5" />,
       edition: 'cares'
     },
 
@@ -267,7 +267,7 @@ export default function PhysicalHealthIndex() {
     { id: 'ent', label: '👂 Ear, Nose & Throat', trackerIds: ['ent'] },
     { id: 'heart-lungs', label: '❤️ Heart & Lungs', trackerIds: ['cardiac', 'respiratory'] },
     { id: 'gut', label: '🍽️ Gut & Digestive', trackerIds: ['upper-digestive', 'digestive-health'] },
-    { id: 'metabolic', label: '⚡ Metabolic & Immune', trackerIds: ['diabetes-tracker', 'food-allergens'] },
+    { id: 'metabolic', label: '⚡ Metabolic & Immune', trackerIds: ['endocrine', 'food-allergens'] },
     { id: 'skin', label: '🩹 Skin', trackerIds: ['skin'] },
     { id: 'msk', label: '🦴 Bones, Joints & Muscles', trackerIds: ['joint'] },
     { id: 'reproductive', label: '🌸 Reproductive', trackerIds: ['reproductive-health', 'gu'] },
@@ -310,6 +310,7 @@ export default function PhysicalHealthIndex() {
       case 'weather-environment': return '/weather-environment'
       case 'seizure-tracking': return '/seizure'
       case 'diabetes-tracker': return '/diabetes'
+      case 'endocrine': return '/endocrine'
       case 'vitals': return '/vitals'
       case 'cardiac': return '/cardiac'
       case 'respiratory': return '/respiratory'

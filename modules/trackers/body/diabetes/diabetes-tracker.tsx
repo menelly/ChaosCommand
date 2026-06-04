@@ -392,9 +392,8 @@ export default function DiabetesTracker() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="tracking">Tracking</TabsTrigger>
-            <TabsTrigger value="timers">Timers</TabsTrigger>
             <TabsTrigger value="history">History</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
@@ -662,14 +661,8 @@ export default function DiabetesTracker() {
             </div>
           </TabsContent>
 
-          {/* Timers Tab */}
-          <TabsContent value="timers" className="space-y-6">
-            <DiabetesTimerManager 
-              timers={timers}
-              onTimersChange={setTimers}
-              currentUserId={currentUserId}
-            />
-          </TabsContent>
+          {/* Timers moved to Maintain → Devices & Timers (CHA-254). Manager still
+              imported + used there; glucose entries keep their cgm/pump/glp1 fields. */}
 
           {/* History Tab */}
           <TabsContent value="history" className="space-y-6">

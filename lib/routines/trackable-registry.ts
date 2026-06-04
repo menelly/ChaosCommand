@@ -78,6 +78,8 @@ export const TRACKABLE_TRACKERS: readonly TrackableTracker[] = [
   { id: 'food-allergens', label: 'Food Allergens', emoji: '⚠️', href: '/food-allergens', subcategory: 'food-allergens', category: 'body' },
   { id: 'weather', label: 'Weather & Environment', emoji: '🌦️', href: '/weather-environment', subcategory: 'weather', category: 'body' },
   { id: 'diabetes', label: 'Diabetes', emoji: '💉', href: '/diabetes', subcategory: 'diabetes', category: 'body', statusUnsupported: true },
+  { id: 'thyroid', label: 'Thyroid', emoji: '🦋', href: '/thyroid', subcategory: 'thyroid', category: 'body', statusUnsupported: true },
+  { id: 'adrenal', label: 'Adrenal', emoji: '🔥', href: '/adrenal', subcategory: 'adrenal', category: 'body', statusUnsupported: true },
   { id: 'vitals', label: 'Vitals', emoji: '🩺', href: '/vitals', subcategory: 'vitals', category: 'body', statusUnsupported: true },
   // -- Mind --
   { id: 'brain-fog', label: 'Brain Fog', emoji: '🌫️', href: '/brain-fog', subcategory: 'brain-fog', category: 'mind' },
