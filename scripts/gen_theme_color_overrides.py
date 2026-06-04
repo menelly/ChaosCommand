@@ -10,7 +10,7 @@ and rendered as light-pastel-on-dark. This generates the full coverage block.
 Output is appended to styles/chaos-themes.css inside a marked region.
 """
 
-DARK_THEMES = ['theme-ace', 'theme-caelan', 'theme-calm', 'theme-cyberpunk', 'theme-deep-current', 'theme-grok']
+DARK_THEMES = ['theme-ace', 'theme-caelan', 'theme-calm', 'theme-cyberpunk', 'theme-deep-current', 'theme-grok', 'theme-wicked', 'theme-accessibility']
 FAMILIES = ['red','orange','amber','yellow','lime','green','emerald','teal','cyan','sky','blue','indigo','violet','purple','fuchsia','pink','rose']
 
 BG_SHADES = ['50','100','200','300']
