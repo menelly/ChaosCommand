@@ -23,6 +23,8 @@ import {
 import { useRouter } from 'next/navigation'
 import { getAutoUpdatePref, setAutoUpdatePref } from '@/lib/auto-update-check'
 import { getAutoSyncPref, setAutoSyncPref } from '@/lib/auto-sync'
+import PersonalizationPanel from '@/components/customize/personalization-panel'
+import { UserRound } from 'lucide-react'
 
 // ============================================================================
 // THEME DATA
@@ -434,7 +436,7 @@ export default function OnboardingPage() {
   const [autoSync, setAutoSync] = useState<boolean>(getAutoSyncPref())
   const [selectedSymptoms, setSelectedSymptoms] = useState<Set<string>>(new Set())
 
-  const totalSteps = SYMPTOM_CATEGORIES.length + 2 // intro + categories + results
+  const totalSteps = SYMPTOM_CATEGORIES.length + 3 // theme + personalization + intro + categories + results
 
   const toggleSymptom = (symptomId: string) => {
     setSelectedSymptoms(prev => {
@@ -661,8 +663,40 @@ export default function OnboardingPage() {
     )
   }
 
-  // INTRO STEP
+  // PERSONALIZATION STEP — "make this yours" before the clinical checklist
   if (currentStep === 1) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-3 sm:p-6 bg-background">
+        <Card className="max-w-2xl w-full">
+          <CardContent className="p-4 sm:p-8 space-y-6">
+            <div className="text-center space-y-2">
+              <UserRound className="h-10 w-10 text-primary mx-auto" />
+              <h1 className="text-2xl font-bold">Make It Yours</h1>
+              <p className="text-muted-foreground">
+                Your name and the words that fit you. All optional, all private, all changeable anytime in Customize.
+              </p>
+            </div>
+
+            <PersonalizationPanel />
+
+            <div className="flex items-center justify-between pt-2">
+              <Button variant="outline" onClick={() => setCurrentStep(0)}>
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back
+              </Button>
+              <Button onClick={() => setCurrentStep(2)} className="flex items-center gap-2">
+                Next
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  // INTRO STEP
+  if (currentStep === 2) {
     return (
       <div className="min-h-screen flex items-center justify-center p-3 sm:p-6 bg-background">
         <Card className="max-w-2xl w-full">
@@ -690,7 +724,7 @@ export default function OnboardingPage() {
               <Button variant="outline" onClick={skipOnboarding}>
                 Skip — I know what I need
               </Button>
-              <Button onClick={() => setCurrentStep(2)} className="flex items-center gap-2">
+              <Button onClick={() => setCurrentStep(3)} className="flex items-center gap-2">
                 Let's find out
                 <ArrowRight className="h-4 w-4" />
               </Button>
@@ -702,7 +736,7 @@ export default function OnboardingPage() {
   }
 
   // RESULTS STEP
-  if (currentStep === SYMPTOM_CATEGORIES.length + 2) {
+  if (currentStep === SYMPTOM_CATEGORIES.length + 3) {
     const { trackers, flags } = getRecommendations()
 
     return (
@@ -783,7 +817,7 @@ export default function OnboardingPage() {
   }
 
   // SYMPTOM CATEGORY STEPS
-  const categoryIndex = currentStep - 2
+  const categoryIndex = currentStep - 3
   const category = SYMPTOM_CATEGORIES[categoryIndex]
   const categorySelectedCount = category.symptoms.filter(s => selectedSymptoms.has(s.id)).length
 
