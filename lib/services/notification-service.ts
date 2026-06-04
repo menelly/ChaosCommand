@@ -85,6 +85,74 @@ export async function fireNotification(title: string, body: string): Promise<voi
 }
 
 // ============================================================================
+// NATIVE OS SCHEDULING (fires even when the app is closed — mobile)
+// ============================================================================
+//
+// This is the "real" path the Dexie-queue ticker below could never deliver:
+// hand the fire time to the OS via the Tauri notification plugin's Schedule
+// API, so Android/iOS wake and fire the toast even with Chaos Command closed.
+//
+// Caveats, honestly stated:
+//   - Reliable fire-when-closed is a MOBILE guarantee (Android AlarmManager /
+//     iOS UNUserNotificationCenter). On desktop the behavior varies and a
+//     closed app may not fire — that's what the .ics calendar export is for.
+//   - allowWhileIdle:true asks Android to fire through Doze (uses an exact
+//     alarm; the plugin's manifest declares SCHEDULE_EXACT_ALARM).
+//   - Notification ids are 32-bit ints, so we hash the string key to one.
+
+/** Stable, positive 32-bit id from an arbitrary string key. */
+export function notificationIdFor(key: string): number {
+  let h = 0
+  for (let i = 0; i < key.length; i++) {
+    h = (Math.imul(h, 31) + key.charCodeAt(i)) | 0
+  }
+  // Keep it positive and comfortably inside i32.
+  return (Math.abs(h) % 2_000_000_000) + 1
+}
+
+/**
+ * Schedule a one-shot OS notification at a future time. Cancels any prior
+ * notification with the same string key first (so re-scheduling on edit is
+ * idempotent). Returns true if it was handed to the OS, false otherwise
+ * (past time, no permission, or not running under Tauri).
+ */
+export async function scheduleOsNotification(opts: {
+  key: string
+  title: string
+  body: string
+  fireAt: Date
+}): Promise<boolean> {
+  if (!(opts.fireAt instanceof Date) || isNaN(opts.fireAt.getTime())) return false
+  if (opts.fireAt.getTime() <= Date.now()) return false
+  const granted = await ensureNotificationPermission()
+  if (!granted) return false
+  try {
+    const mod = await import('@tauri-apps/plugin-notification')
+    const id = notificationIdFor(opts.key)
+    try { await mod.cancel([id]) } catch { /* nothing scheduled yet */ }
+    mod.sendNotification({
+      id,
+      title: opts.title,
+      body: opts.body,
+      schedule: mod.Schedule.at(opts.fireAt, false, true), // allowWhileIdle
+    })
+    console.log(`🔔 OS-scheduled "${opts.title}" for ${opts.fireAt.toISOString()} (id ${id})`)
+    return true
+  } catch (e) {
+    console.warn('scheduleOsNotification failed (not in Tauri?):', e)
+    return false
+  }
+}
+
+/** Cancel a previously scheduled OS notification by its string key. */
+export async function cancelOsNotification(key: string): Promise<void> {
+  try {
+    const mod = await import('@tauri-apps/plugin-notification')
+    await mod.cancel([notificationIdFor(key)])
+  } catch { /* not in Tauri or nothing to cancel */ }
+}
+
+// ============================================================================
 // SCHEDULE (queue in Dexie)
 // ============================================================================
 

@@ -31,6 +31,7 @@ import { db, CATEGORIES, SUBCATEGORIES, formatDateForStorage, getCurrentTimestam
 import { useDailyData } from '@/lib/database/hooks/use-daily-data'
 import { toast } from '@/hooks/use-toast'
 import AddToCalendarButton from '@/components/add-to-calendar-button'
+import { scheduleOsNotification, cancelOsNotification } from '@/lib/services/notification-service'
 import {
   DeviceTimer,
   DEVICE_PRESETS,
@@ -61,6 +62,33 @@ export function DeviceTimerManager({ timers, onTimersChange, currentUserId }: De
   const { saveData, getSpecificData } = useDailyData()
 
   const activePreset = getDeviceConfig(timerType, customName)
+
+  // Hand the OS a real scheduled notification for a timer: one a day before it
+  // expires, one when it's due. Re-scheduling is idempotent (cancels by key
+  // first), so calling this on every save/restart is safe. Fires even when the
+  // app is closed on mobile — see notification-service.ts for the caveats.
+  const scheduleTimerNotifications = async (timer: DeviceTimer) => {
+    const cfg = getDeviceConfig(timer.type, timer.customName)
+    const expires = new Date(timer.expires_at)
+    const leadAt = new Date(expires.getTime() - 24 * 60 * 60 * 1000)
+    await scheduleOsNotification({
+      key: `device-timer-${timer.id}-lead`,
+      title: `${cfg.icon} ${timer.name} expires tomorrow`,
+      body: `Your ${cfg.name} is due for a change soon — grab supplies.`,
+      fireAt: leadAt,
+    })
+    await scheduleOsNotification({
+      key: `device-timer-${timer.id}`,
+      title: `${cfg.icon} Time to change ${timer.name}`,
+      body: `Your ${cfg.name} is due now.`,
+      fireAt: expires,
+    })
+  }
+
+  const cancelTimerNotifications = async (id: string) => {
+    await cancelOsNotification(`device-timer-${id}-lead`)
+    await cancelOsNotification(`device-timer-${id}`)
+  }
 
   const resetTimerForm = () => {
     setEditingTimer(null)
@@ -184,6 +212,7 @@ export function DeviceTimerManager({ timers, onTimersChange, currentUserId }: De
       })
 
       await addToCalendar(newTimer)
+      await scheduleTimerNotifications(newTimer)
     } catch (error) {
       console.error('❌ Failed to save device timer:', error)
       toast({ title: 'Error', description: 'Failed to save timer. Please try again.', variant: 'destructive' })
@@ -296,6 +325,7 @@ export function DeviceTimerManager({ timers, onTimersChange, currentUserId }: De
       }
 
       await removeFromCalendar(timerToDelete)
+      await cancelTimerNotifications(id)
       onTimersChange(timers.filter(t => t.id !== id))
 
       toast({ title: '⏹️ Timer Stopped', description: `${timerToDelete.name} has been removed.` })
