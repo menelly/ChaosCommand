@@ -34,15 +34,7 @@ export interface TrackerConfig {
 }
 
 export const TRACKERS: TrackerConfig[] = [
-  {
-    id: 'medications',
-    name: 'Medications & Supplements',
-    shortDescription: 'Dosing schedules, refill reminders, pharmacy contacts, side effects',
-    helpContent: 'Track all your medications and supplements with dosing schedules, refill reminders, pharmacy contacts, and side effect monitoring. Essential for medication management and medical appointments.',
-    icon: <Pill className="h-5 w-5" />,
-    status: 'available',
-    href: '/medications',
-  },
+  // Medications moved to Maintain → it's daily upkeep, not clinical data management. (/medications route unchanged.)
   {
     id: 'providers',
     name: 'Healthcare Providers',
