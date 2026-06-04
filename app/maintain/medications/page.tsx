@@ -48,6 +48,40 @@ function readTakenMap(date: string): Record<string, string> {
   }
 }
 
+// Bucket a free-text time ("Morning", "8:00 AM", "With dinner", "PM"…) into a
+// time-of-day group so the daily list clusters instead of becoming one long
+// scroll. Keyword matches win; bare clock times fall back to hour ranges.
+type TimeBucketKey = "morning" | "afternoon" | "evening" | "bedtime" | "anytime"
+
+const BUCKET_META: Record<TimeBucketKey, { label: string; order: number }> = {
+  morning: { label: "🌅 Morning", order: 0 },
+  afternoon: { label: "☀️ Afternoon", order: 1 },
+  evening: { label: "🌆 Evening", order: 2 },
+  bedtime: { label: "🌙 Bedtime", order: 3 },
+  anytime: { label: "💊 Anytime", order: 4 },
+}
+
+function timeBucket(time?: string): TimeBucketKey {
+  if (!time) return "anytime"
+  const t = time.toLowerCase()
+  if (/bed|night|\bhs\b|qhs|before sleep/.test(t)) return "bedtime"
+  if (/morning|breakfast|wake|\bam\b|a\.m\./.test(t)) return "morning"
+  if (/noon|lunch|midday|afternoon/.test(t)) return "afternoon"
+  if (/evening|dinner|supper|\bpm\b|p\.m\./.test(t)) return "evening"
+  const m = t.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/)
+  if (m) {
+    let hr = parseInt(m[1], 10)
+    const ap = m[3]
+    if (ap === "pm" && hr < 12) hr += 12
+    if (ap === "am" && hr === 12) hr = 0
+    if (hr < 12) return "morning"
+    if (hr < 17) return "afternoon"
+    if (hr < 21) return "evening"
+    return "bedtime"
+  }
+  return "anytime"
+}
+
 function fmtTime(iso: string): string {
   if (!iso) return ""
   const d = new Date(iso)
@@ -96,6 +130,16 @@ export default function MaintainMedicationsPage() {
     })
   }
 
+  const takeAllInGroup = (meds: { id: string }[]) => {
+    setTakenMap(prev => {
+      const next = { ...prev }
+      const stamp = selectedDate === today ? new Date().toISOString() : `${selectedDate}T12:00:00`
+      for (const m of meds) if (!(m.id in next)) next[m.id] = stamp
+      try { setPref(takenKey(selectedDate), JSON.stringify(next)) } catch {}
+      return next
+    })
+  }
+
   // Daily meds = opted into the daily checklist AND not discontinued
   const dailyMeds = medications.filter(m => m.dailyMaintain && m.active !== false)
   const takenCount = dailyMeds.filter(m => m.id in takenMap).length
@@ -123,6 +167,60 @@ export default function MaintainMedicationsPage() {
     if (days < 0) return { days, label: 'Refill overdue' }
     if (days <= 7) return { days, label: days === 0 ? 'Refill due today' : `Refill in ${days}d` }
     return null
+  }
+
+  // Cluster the daily meds by time-of-day; only show headers when there's more
+  // than one group (so a 2-med day stays a clean flat list).
+  const groups = (() => {
+    const byBucket: Record<TimeBucketKey, typeof dailyMeds> = {
+      morning: [], afternoon: [], evening: [], bedtime: [], anytime: [],
+    }
+    for (const m of dailyMeds) byBucket[timeBucket(m.time)].push(m)
+    return (Object.keys(byBucket) as TimeBucketKey[])
+      .filter(k => byBucket[k].length > 0)
+      .sort((a, b) => BUCKET_META[a].order - BUCKET_META[b].order)
+      .map(k => ({ key: k, label: BUCKET_META[k].label, meds: byBucket[k] }))
+  })()
+  const showHeaders = groups.length > 1
+
+  const renderMedCard = (med: typeof dailyMeds[number]) => {
+    const name = med.brandName || med.genericName || 'Medication'
+    const takenAt = takenMap[med.id]
+    const taken = med.id in takenMap
+    const refill = refillInfo(med.refillDate)
+    const timeStr = fmtTime(takenAt)
+    return (
+      <Card
+        key={med.id}
+        className={`cursor-pointer transition-colors ${taken ? 'bg-success/5 border-success/20' : 'hover:bg-accent/40'}`}
+        onClick={() => toggleTaken(med.id)}
+      >
+        <CardContent className="py-3 flex items-center gap-3">
+          <Checkbox checked={taken} onCheckedChange={() => toggleTaken(med.id)} onClick={(e) => e.stopPropagation()} />
+          <div className="flex-1 min-w-0">
+            <div className={`font-medium ${taken ? 'line-through text-muted-foreground' : ''}`}>
+              {name}
+              {med.dose ? <span className="text-muted-foreground font-normal"> · {med.dose}</span> : null}
+            </div>
+            <div className="text-xs text-muted-foreground flex items-center gap-1.5 flex-wrap">
+              {(med.time || med.requiresFood) && (
+                <span>{med.time}{med.time && med.requiresFood ? ' · ' : ''}{med.requiresFood ? 'with food' : ''}</span>
+              )}
+              {taken && timeStr && (
+                <span className="inline-flex items-center gap-1 text-success">
+                  <Clock className="h-3 w-3" /> taken {timeStr}
+                </span>
+              )}
+            </div>
+          </div>
+          {refill && selectedDate === today && (
+            <span className={`shrink-0 text-xs inline-flex items-center gap-1 ${refill.days < 0 ? 'text-destructive' : 'text-warning'}`}>
+              <AlertCircle className="h-3.5 w-3.5" /> {refill.label}
+            </span>
+          )}
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
@@ -175,44 +273,24 @@ export default function MaintainMedicationsPage() {
           </Card>
         )}
 
-        <div className="space-y-2">
-          {dailyMeds.map(med => {
-            const name = med.brandName || med.genericName || 'Medication'
-            const takenAt = takenMap[med.id]
-            const taken = med.id in takenMap
-            const refill = refillInfo(med.refillDate)
-            const timeStr = fmtTime(takenAt)
+        <div className="space-y-4">
+          {groups.map(g => {
+            const allInGroupTaken = g.meds.every(m => m.id in takenMap)
+            const showRow = showHeaders || g.meds.length > 1
             return (
-              <Card
-                key={med.id}
-                className={`cursor-pointer transition-colors ${taken ? 'bg-success/5 border-success/20' : 'hover:bg-accent/40'}`}
-                onClick={() => toggleTaken(med.id)}
-              >
-                <CardContent className="py-3 flex items-center gap-3">
-                  <Checkbox checked={taken} onCheckedChange={() => toggleTaken(med.id)} onClick={(e) => e.stopPropagation()} />
-                  <div className="flex-1 min-w-0">
-                    <div className={`font-medium ${taken ? 'line-through text-muted-foreground' : ''}`}>
-                      {name}
-                      {med.dose ? <span className="text-muted-foreground font-normal"> · {med.dose}</span> : null}
-                    </div>
-                    <div className="text-xs text-muted-foreground flex items-center gap-1.5 flex-wrap">
-                      {(med.time || med.requiresFood) && (
-                        <span>{med.time}{med.time && med.requiresFood ? ' · ' : ''}{med.requiresFood ? 'with food' : ''}</span>
-                      )}
-                      {taken && timeStr && (
-                        <span className="inline-flex items-center gap-1 text-success">
-                          <Clock className="h-3 w-3" /> taken {timeStr}
-                        </span>
-                      )}
-                    </div>
+              <div key={g.key} className="space-y-2">
+                {showRow && (
+                  <div className="flex items-center justify-between px-1 min-h-7">
+                    <h2 className="text-sm font-semibold text-muted-foreground">{showHeaders ? g.label : ''}</h2>
+                    {!allInGroupTaken && (
+                      <Button variant="ghost" size="sm" className="h-7 text-xs text-primary" onClick={() => takeAllInGroup(g.meds)}>
+                        <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Take all{showHeaders ? '' : ' for today'}
+                      </Button>
+                    )}
                   </div>
-                  {refill && selectedDate === today && (
-                    <span className={`shrink-0 text-xs inline-flex items-center gap-1 ${refill.days < 0 ? 'text-destructive' : 'text-warning'}`}>
-                      <AlertCircle className="h-3.5 w-3.5" /> {refill.label}
-                    </span>
-                  )}
-                </CardContent>
-              </Card>
+                )}
+                {g.meds.map(renderMedCard)}
+              </div>
             )
           })}
         </div>
