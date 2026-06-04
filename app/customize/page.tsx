@@ -14,8 +14,9 @@ import AppCanvas from "@/components/app-canvas"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible"
 import { Button } from "@/components/ui/button"
-import { Settings2, Palette, Eye, PartyPopper, ChevronDown } from "lucide-react"
+import { Settings2, Palette, Eye, PartyPopper, ChevronDown, UserRound } from "lucide-react"
 import VisualSettingsPanel from "@/components/customize/visual-settings-panel"
+import PersonalizationPanel from "@/components/customize/personalization-panel"
 import VisibleTrackersPanel from "@/components/customize/visible-trackers-panel"
 import CelebrateTrackersPanel from "@/components/customize/celebrate-trackers-panel"
 import HiddenCustomTrackersPanel from "@/components/hidden-custom-trackers-panel"
@@ -48,6 +49,31 @@ export default function CustomizePage() {
             <VisualSettingsPanel />
           </CardContent>
         </Card>
+
+        <Collapsible defaultOpen={false}>
+          <Card>
+            <CollapsibleTrigger asChild>
+              <CardHeader className="cursor-pointer select-none hover:bg-muted/30 transition-colors [&[data-state=open]_.chev]:rotate-180">
+                <CardTitle className="flex items-center justify-between gap-2">
+                  <span className="flex items-center gap-2">
+                    <UserRound className="h-5 w-5" />
+                    About You
+                  </span>
+                  <ChevronDown className="chev h-5 w-5 shrink-0 transition-transform" />
+                </CardTitle>
+                <CardDescription>
+                  Your name, pronouns, and the language we use for you. Neutral by
+                  default; gendered terms like "Mama" are yours if you want them.
+                </CardDescription>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent>
+                <PersonalizationPanel />
+              </CardContent>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
 
         <Collapsible defaultOpen={false}>
           <Card>

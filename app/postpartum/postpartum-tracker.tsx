@@ -36,11 +36,18 @@ import { GeneralPostpartumModal } from './modals/general-postpartum-modal'
 import { useDailyData, CATEGORIES } from '@/lib/database'
 import { getDB } from '@/lib/database/dexie-db'
 import { useUser } from '@/lib/contexts/user-context'
+import { getPersonalization } from '@/lib/personalization'
 
 export default function PostpartumTracker() {
   const { saveData, searchByContent } = useDailyData()
   const { userPin } = useUser()
   const { toast } = useToast()
+
+  // Read the user's chosen parent/feeding language (joy both ways — CHA-261).
+  const [personalization, setPersonalization] = useState(() =>
+    typeof window !== 'undefined' ? getPersonalization() : null
+  )
+  useEffect(() => { setPersonalization(getPersonalization()) }, [])
 
   const today = format(new Date(), 'yyyy-MM-dd')
   const [entries, setEntries] = useState<PostpartumEntry[]>([])
@@ -329,8 +336,8 @@ export default function PostpartumTracker() {
         onClose={() => { setModalOpen(false); setEditingEntry(null) }}
         onSave={editingEntry ? handleUpdateEntry : handleSaveEntry}
         editingEntry={editingEntry}
-        feedingTerm="feeding"
-        parentTerm="parent"
+        feedingTerm={personalization?.feedingTerm ?? "feeding"}
+        parentTerm={personalization?.parentTerm ?? "parent"}
         lastFeedSide={lastFeedSide}
       />
     </div>
