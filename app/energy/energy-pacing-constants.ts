@@ -85,14 +85,18 @@ export const ACTIVITIES_BY_CATEGORY = {
   'rest': ACTIVITIES.filter(a => a.category === 'rest'),
 }
 
+// Category-identity colors. Theme-adaptive: low-opacity tint reads correctly on
+// ANY theme background (light wash on light themes, subtle glow on dark), and the
+// text has light/dark variants so it stays legible on the Ace dark theme etc.
+// (Was fixed bg-X-100/text-X-800 light-mode pastels that clashed on dark themes.)
 export const CATEGORY_INFO: Record<string, { label: string; emoji: string; color: string }> = {
-  'self-care': { label: 'Self Care', emoji: '🚿', color: 'bg-purple-100 text-purple-800 border-purple-200' },
-  'household': { label: 'Household', emoji: '🏠', color: 'bg-amber-100 text-amber-800 border-amber-200' },
-  'errands': { label: 'Errands', emoji: '🛒', color: 'bg-red-100 text-red-800 border-red-200' },
-  'social': { label: 'Social', emoji: '💬', color: 'bg-blue-100 text-blue-800 border-blue-200' },
-  'physical': { label: 'Physical', emoji: '🚶', color: 'bg-green-100 text-green-800 border-green-200' },
-  'mental': { label: 'Mental', emoji: '🧠', color: 'bg-indigo-100 text-indigo-800 border-indigo-200' },
-  'rest': { label: 'Rest', emoji: '😴', color: 'bg-teal-100 text-teal-800 border-teal-200' },
+  'self-care': { label: 'Self Care', emoji: '🚿', color: 'bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-500/30' },
+  'household': { label: 'Household', emoji: '🏠', color: 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30' },
+  'errands': { label: 'Errands', emoji: '🛒', color: 'bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-500/30' },
+  'social': { label: 'Social', emoji: '💬', color: 'bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-500/30' },
+  'physical': { label: 'Physical', emoji: '🚶', color: 'bg-green-500/15 text-green-700 dark:text-green-300 border-green-500/30' },
+  'mental': { label: 'Mental', emoji: '🧠', color: 'bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border-indigo-500/30' },
+  'rest': { label: 'Rest', emoji: '😴', color: 'bg-teal-500/15 text-teal-700 dark:text-teal-300 border-teal-500/30' },
 }
 
 // ============================================================================
