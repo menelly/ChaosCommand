@@ -34,7 +34,15 @@ export interface TrackerConfig {
 }
 
 export const TRACKERS: TrackerConfig[] = [
-  // Medications moved to Maintain → it's daily upkeep, not clinical data management. (/medications route unchanged.)
+  {
+    id: 'medications',
+    name: 'Medications & Supplements',
+    shortDescription: 'Your full medication registry — every prescription, incl. as-needed & emergency',
+    helpContent: 'Your complete medication record: every prescription and supplement, including as-needed and emergency meds (EpiPen, Baqsimi, rescue inhaler) you do not take daily. Set dose, schedule, pharmacy, doctor, refills, and side effects. For each med you can opt it into your daily "taken today" checklist in Maintain. This registry is the reference/record view; Maintain shows just the daily ones.',
+    icon: <Pill className="h-5 w-5" />,
+    status: 'available',
+    href: '/medications',
+  },
   {
     id: 'providers',
     name: 'Healthcare Providers',

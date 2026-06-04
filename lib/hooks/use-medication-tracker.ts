@@ -149,6 +149,7 @@ export function useMedicationTracker(): UseMedicationTrackerReturn {
         notes: data.notes.trim() || undefined,
         tags: data.tags || [],
         active: data.active,
+        dailyMaintain: data.dailyMaintain,
         enableReminders: data.enableReminders,
         reminderTimes: data.reminderTimes || [],
         createdAt: now,

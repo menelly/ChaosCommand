@@ -30,11 +30,11 @@ import { ArrowLeft, ArrowRight, Wrench, Pill, Activity, Timer } from "lucide-rea
 const MAINTAIN_SECTIONS = [
   {
     id: "medications",
-    name: "Medications & Supplements",
-    description: "Daily meds and supplements — what you take, dosing, refill reminders",
+    name: "Today's Medications",
+    description: "Your daily meds — tap each as you take it. (Full list lives in Manage.)",
     icon: Pill,
     color: "bg-pink-500",
-    href: "/medications",
+    href: "/maintain/medications",
     status: "available" as const,
   },
   {

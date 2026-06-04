@@ -411,6 +411,28 @@ export function MedicationForm({
                 </Label>
               </div>
 
+              {/* Daily Maintain opt-in — the friendly prompt so users don't juggle a flag */}
+              <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-2">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="dailyMaintain"
+                    checked={formData.dailyMaintain}
+                    onCheckedChange={(checked) => handleInputChange('dailyMaintain', checked)}
+                  />
+                  <Label htmlFor="dailyMaintain" className="cursor-pointer">
+                    Add to my daily Maintain tracker?{" "}
+                    <span className={`font-semibold ${formData.dailyMaintain ? 'text-primary' : 'text-muted-foreground'}`}>
+                      {formData.dailyMaintain ? 'Yes' : 'No'}
+                    </span>
+                  </Label>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Turn on for meds you take on a daily schedule — they'll show up in Maintain with a quick
+                  "taken today" check. Leave off for as-needed or emergency meds (like an EpiPen, Baqsimi, or
+                  rescue inhaler) — those stay here in your full medication list.
+                </p>
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="conditionTreating">
                   What it's for <span className="text-muted-foreground">(optional)</span>

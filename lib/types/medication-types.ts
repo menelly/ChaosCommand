@@ -75,6 +75,10 @@ export interface Medication {
 
   // Status and reminders (optional)
   active?: boolean;                     // Is this medication currently active?
+  dailyMaintain?: boolean;             // Show in the daily "taken today" Maintain checklist?
+                                        // TRUE = daily scheduled med (BP pill, thyroid, etc.).
+                                        // FALSE/undefined = as-needed/emergency (epipen, Baqsimi,
+                                        // rescue inhaler) — stays in the Manage registry only.
   enableReminders?: boolean;            // Should we send reminders?
   reminderTimes?: string[];             // ["8:00 AM", "6:30 PM"]
 
@@ -118,6 +122,7 @@ export interface MedicationFormData {
   notes: string;
   tags: string[];
   active: boolean;
+  dailyMaintain: boolean;
   enableReminders: boolean;
   reminderTimes: string[];
   enableRefillReminders: boolean;
@@ -276,6 +281,7 @@ export const DEFAULT_MEDICATION_FORM: MedicationFormData = {
   notes: '',
   tags: [],
   active: true,
+  dailyMaintain: false,
   enableReminders: false,
   reminderTimes: [],
   enableRefillReminders: false,
