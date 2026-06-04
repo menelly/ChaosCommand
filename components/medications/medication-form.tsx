@@ -559,6 +559,27 @@ export function MedicationForm({
                   )}
                 </div>
               </div>
+
+              {/* Show on medical timeline toggle */}
+              <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-2 mt-2">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="showOnTimeline"
+                    checked={formData.showOnTimeline}
+                    onCheckedChange={(checked) => handleInputChange('showOnTimeline', checked)}
+                  />
+                  <Label htmlFor="showOnTimeline" className="cursor-pointer">
+                    Show on my medical timeline?{" "}
+                    <span className={`font-semibold ${formData.showOnTimeline ? 'text-primary' : 'text-muted-foreground'}`}>
+                      {formData.showOnTimeline ? 'Yes' : 'No'}
+                    </span>
+                  </Label>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Adds start/stop dates to your medical timeline, so you can show a provider when you were on
+                  what. Leave off for things you'd rather not chart there.
+                </p>
+              </div>
             </CardContent>
           </Card>
 
@@ -897,20 +918,7 @@ export function MedicationForm({
                 />
                 <Label htmlFor="active">This medication is currently active</Label>
               </div>
-
-              <div className="flex items-start space-x-2 mt-4">
-                <Switch
-                  id="showOnTimeline"
-                  checked={formData.showOnTimeline}
-                  onCheckedChange={(checked) => handleInputChange('showOnTimeline', checked)}
-                />
-                <div className="space-y-1">
-                  <Label htmlFor="showOnTimeline">Show on medical timeline</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Includes this med (and the trial window if you fill in stopped date) on your timeline. Turn off for meds you don't want appearing in exports your doctors see.
-                  </p>
-                </div>
-              </div>
+              {/* "Show on medical timeline" toggle moved up to the Timeline section (where the dates it affects live). */}
             </CardContent>
           </Card>
 
