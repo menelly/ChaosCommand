@@ -72,6 +72,7 @@ const ICD10_MAP: Record<string, string> = {
   'food-allergens': 'T78.40XA — Allergy, unspecified, initial encounter / K90.0 — Celiac disease',
   'ent': 'H66.90 — Otitis media / H93.19 — Tinnitus / R42 — Dizziness / J32.9 — Chronic sinusitis',
   'postpartum': 'Z39.2 — Routine postpartum follow-up / O90.9 — Postpartum complication, unspecified / Z76.2 — Health supervision of newborn',
+  'lines-tubes': 'Z45.2 — Adjustment of vascular access device / T82.7XXA — Infection due to vascular device / Z43.9 — Attention to unspecified artificial opening',
   // ── Subjective SYMPTOM trackers: gentle SYMPTOM codes (R-codes) only — never a disorder dx ──
   'brain-fog': 'R41.840 — Attention and concentration deficit',  // softened from R41.82 "altered mental status"
   'energy': 'R53.83 — Other fatigue',
@@ -103,6 +104,7 @@ const TRACKER_DISPLAY_NAMES: Record<string, string> = {
   'gu': 'GU',
   'ent': 'ENT',
   'postpartum': 'Postpartum & Newborn',
+  'lines-tubes': 'Lines & Tubes',
   'thyroid': 'Thyroid',
   'adrenal': 'Adrenal',
   'cardiac': 'Cardiac',

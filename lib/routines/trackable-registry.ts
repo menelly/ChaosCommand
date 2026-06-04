@@ -104,6 +104,7 @@ export const TRACKABLE_TRACKERS: readonly TrackableTracker[] = [
   { id: 'gu', label: 'Genitourinary', emoji: '💧', href: '/gu', subcategory: 'gu', category: 'body', statusUnsupported: true },
   { id: 'ent', label: 'Ear, Nose & Throat', emoji: '👂', href: '/ent', subcategory: 'ent', category: 'body', statusUnsupported: true },
   { id: 'postpartum', label: 'Postpartum & Newborn', emoji: '👶', href: '/postpartum', subcategory: 'postpartum', category: 'body', statusUnsupported: true },
+  { id: 'lines-tubes', label: 'Lines & Tubes', emoji: '🔌', href: '/lines-tubes', subcategory: 'lines-tubes', category: 'manage', statusUnsupported: true },
   // One Command Zone step (navigates to the home page) — kept as a single entry
   // so the routine flow bar can advance cleanly. Granular section jumps were
   // confusing in the builder and broke next-step detection (all shared '/').

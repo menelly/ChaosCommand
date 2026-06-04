@@ -53,7 +53,7 @@ const MAINTAIN_SECTIONS = [
     icon: Activity,
     color: "bg-teal-500",
     href: "/lines-tubes",
-    status: "coming-soon" as const,
+    status: "available" as const,
   },
 ]
 
