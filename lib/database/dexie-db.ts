@@ -147,7 +147,13 @@ export const getDB = (userPin?: string): ChaosCommandCenterDB => {
     throw new Error('Database can only be accessed on the client side');
   }
 
-  const effectivePin = userPin || null;
+  // When no PIN is passed, fall back to the active PIN from localStorage — same
+  // resolution the `db` proxy uses. Without this, getDB() returned the UNSCOPED
+  // default DB while saveData (via `db`) wrote to ChaosCommand_<pin>, so soft
+  // deletes queried the wrong (empty) database and silently did nothing. (CHA-258
+  // class bug — affected every tracker's delete.)
+  const effectivePin = userPin
+    ?? (typeof window !== 'undefined' ? localStorage.getItem('chaos-user-pin') : null);
 
   // If PIN changed (including to/from null), close old DB and create new instance
   if (effectivePin !== _currentPin || !_db || !_db.isOpen()) {
