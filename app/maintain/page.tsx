@@ -40,7 +40,7 @@ const MAINTAIN_SECTIONS = [
   {
     id: "devices",
     name: "Devices & Timers",
-    description: "CGM sensors, pump sites, GLP-1 — track when each needs changing",
+    description: "Sensors, pump sites, injectables, dressings — track when each needs changing",
     icon: Timer,
     color: "bg-blue-500",
     href: "/maintain/devices",

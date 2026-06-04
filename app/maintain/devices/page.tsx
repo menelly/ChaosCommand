@@ -18,11 +18,11 @@ import AppCanvas from "@/components/app-canvas"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Wrench } from "lucide-react"
 import { db, CATEGORIES } from "@/lib/database"
-import { DiabetesTimerManager } from "@/modules/trackers/body/diabetes/diabetes-timer-manager"
-import type { Timer } from "@/modules/trackers/body/diabetes/diabetes-types"
+import { DeviceTimerManager } from "./device-timer-manager"
+import { DEVICE_TIMER_SUBCATEGORY, type DeviceTimer } from "./device-types"
 
 export default function MaintainDevicesPage() {
-  const [timers, setTimers] = useState<Timer[]>([])
+  const [timers, setTimers] = useState<DeviceTimer[]>([])
   const currentUserId = "default"
 
   const loadTimers = async () => {
@@ -30,9 +30,9 @@ export default function MaintainDevicesPage() {
       const records = await db.daily_data
         .where("category")
         .equals(CATEGORIES.HEALTH)
-        .and((record: any) => record.subcategory === "diabetes_timers")
+        .and((record: any) => record.subcategory === DEVICE_TIMER_SUBCATEGORY)
         .toArray()
-      let all: Timer[] = []
+      let all: DeviceTimer[] = []
       records.forEach((record: any) => {
         if (record.content) {
           const t = Array.isArray(record.content) ? record.content : [record.content]
@@ -49,9 +49,6 @@ export default function MaintainDevicesPage() {
 
   useEffect(() => {
     loadTimers()
-    if ("Notification" in window && Notification.permission === "default") {
-      Notification.requestPermission()
-    }
   }, [])
 
   return (
@@ -62,10 +59,10 @@ export default function MaintainDevicesPage() {
             <Wrench className="h-6 w-6 text-primary" />
             <h1 className="text-2xl font-bold">Devices &amp; Timers</h1>
           </div>
-          <p className="text-muted-foreground">CGM sensors, pump sites, and GLP-1 — track when each needs changing</p>
+          <p className="text-muted-foreground">Sensors, pump sites, injectables, lines, dressings — track when each needs changing</p>
         </header>
 
-        <DiabetesTimerManager
+        <DeviceTimerManager
           timers={timers}
           onTimersChange={setTimers}
           currentUserId={currentUserId}
