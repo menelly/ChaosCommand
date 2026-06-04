@@ -26,6 +26,7 @@ import { useToast } from "@/hooks/use-toast"
 import { useUser } from "@/lib/contexts/user-context"
 import { useDailyData, formatDateForStorage } from "@/lib/database"
 import { getRoutine, type Routine } from "@/lib/routines/routines-config"
+import { withRoutineParam } from "@/lib/routines/routine-url"
 import { type TrackableTracker } from "@/lib/routines/trackable-registry"
 import { loadAllTrackables, indexTrackables } from "@/lib/routines/load-trackables"
 import { buildStatusMap } from "@/lib/routines/routine-status"
@@ -125,7 +126,7 @@ export default function RoutineFlowBar() {
 
   const runHref = `/routines/run?id=${encodeURIComponent(routineId)}`
   const nextHref = next
-    ? `${next.href}${next.href.includes("?") ? "&" : "?"}routine=${encodeURIComponent(routineId)}`
+    ? withRoutineParam(next.href, routineId)
     : runHref
 
   // Current-tracker actions on the bar (then advance), mirroring the run list.

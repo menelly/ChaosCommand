@@ -31,6 +31,7 @@ import { getClearedTrackers, markNothingToLog, unmarkNothingToLog } from "@/lib/
 import { getSkippedTrackers, markSkipped, unmarkSkipped } from "@/lib/routines/routine-skipped"
 import { getRunStart } from "@/lib/routines/routine-session"
 import { copyLastEntryToToday, buildCopyableMap } from "@/lib/routines/copy-last-entry"
+import { withRoutineParam } from "@/lib/routines/routine-url"
 
 /** "today 3:14 PM" / "yesterday 9:02 AM" / "May 20, 3:14 PM" */
 function formatLastLogged(ms: number): string {
@@ -130,9 +131,7 @@ function RoutineRun() {
   const complete = trackers.length > 0 && doneCount === trackers.length
 
   const logNow = (href: string) =>
-    // href may already carry a query (custom trackers: /custom-tracker?id=X) —
-    // use & not ? so we don't make an invalid double-? URL ("Tracker Not Found").
-    router.push(`${href}${href.includes("?") ? "&" : "?"}routine=${encodeURIComponent(routine.id)}`)
+    router.push(withRoutineParam(href, routine.id))
   const skip = (id: string) => {
     markSkipped(pin, routineId, today, id)
     setSkipped(prev => new Set(prev).add(id))
