@@ -54,7 +54,7 @@ export default function AppSidebar() {
       emoji: "🧠",
       targetPageId: "mind",
       isVisible: true,
-      buttonClass: "sidebar-btn-5"
+      buttonClass: "sidebar-btn-2"
     },
     {
       id: "maintain",
@@ -62,7 +62,7 @@ export default function AppSidebar() {
       emoji: "🔩",
       targetPageId: "maintain",
       isVisible: true,
-      buttonClass: "sidebar-btn-4"
+      buttonClass: "sidebar-btn-3"
     },
     {
       id: "choice",
@@ -70,7 +70,7 @@ export default function AppSidebar() {
       emoji: "💪",
       targetPageId: "choice",
       isVisible: true,
-      buttonClass: "sidebar-btn-3"
+      buttonClass: "sidebar-btn-4"
     },
     {
       id: "built",
@@ -78,7 +78,7 @@ export default function AppSidebar() {
       emoji: "🔧",
       targetPageId: "custom",
       isVisible: true,
-      buttonClass: "sidebar-btn-custom"
+      buttonClass: "sidebar-btn-5"
     },
     {
       id: "forge",
@@ -86,7 +86,7 @@ export default function AppSidebar() {
       emoji: "🔨",
       targetPageId: "forge",
       isVisible: true,
-      buttonClass: "sidebar-btn-guide"
+      buttonClass: "sidebar-btn-6"
     },
     {
       id: "manage",
@@ -94,7 +94,7 @@ export default function AppSidebar() {
       emoji: "🗂️",
       targetPageId: "manage",
       isVisible: true,
-      buttonClass: "sidebar-btn-4"
+      buttonClass: "sidebar-btn-guide"
     },
     {
       id: "patterns",
@@ -102,7 +102,7 @@ export default function AppSidebar() {
       emoji: "📊",
       targetPageId: "patterns",
       isVisible: true,
-      buttonClass: "sidebar-btn-6"
+      buttonClass: "sidebar-btn-1"
     },
     {
       id: "routines",

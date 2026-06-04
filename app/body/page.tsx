@@ -254,23 +254,36 @@ export default function PhysicalHealthIndex() {
 
   // Specialty groups â€” group trackers by body system for the accordion layout
   const SPECIALTY_GROUPS = [
-    { id: 'head-neuro', label: 'ðŸ§  Head & Nervous System', trackerIds: ['head-pain', 'seizure-tracking', 'dysautonomia'] },
-    { id: 'heart-lungs', label: 'â¤ï¸ Heart & Lungs', trackerIds: ['cardiac', 'respiratory'] },
-    { id: 'gut', label: 'ðŸ½ï¸ Gut & Digestive', trackerIds: ['upper-digestive', 'digestive-health'] },
-    { id: 'metabolic', label: 'âš¡ Metabolic & Immune', trackerIds: ['diabetes-tracker', 'food-allergens'] },
-    { id: 'skin', label: 'ðŸ©¹ Skin', trackerIds: ['skin'] },
-    { id: 'msk', label: 'ðŸ¦´ Bones, Joints & Muscles', trackerIds: ['joint'] },
-    { id: 'reproductive', label: 'ðŸŒ¸ Reproductive', trackerIds: ['reproductive-health'] },
-    { id: 'environment', label: 'ðŸŒ¦ï¸ Environment', trackerIds: ['weather-environment'] },
-    { id: 'general', label: 'ðŸ“ General', trackerIds: ['pain-tracking'] },
+    { id: 'head-neuro', label: '🧠 Head & Nervous System', trackerIds: ['head-pain', 'seizure-tracking', 'dysautonomia'] },
+    { id: 'heart-lungs', label: '❤️ Heart & Lungs', trackerIds: ['cardiac', 'respiratory'] },
+    { id: 'gut', label: '🍽️ Gut & Digestive', trackerIds: ['upper-digestive', 'digestive-health'] },
+    { id: 'metabolic', label: '⚡ Metabolic & Immune', trackerIds: ['diabetes-tracker', 'food-allergens'] },
+    { id: 'skin', label: '🩹 Skin', trackerIds: ['skin'] },
+    { id: 'msk', label: '🦴 Bones, Joints & Muscles', trackerIds: ['joint'] },
+    { id: 'reproductive', label: '🌸 Reproductive', trackerIds: ['reproductive-health', 'gu'] },
+    { id: 'environment', label: '🌦️ Environment', trackerIds: ['weather-environment'] },
+    { id: 'general', label: '📍 General', trackerIds: ['pain-tracking'] },
   ]
 
-  const [openGroups, setOpenGroups] = useState<Set<string>>(
-    () => new Set(SPECIALTY_GROUPS.map(g => g.id)) // all open by default
-  )
-  const toggleGroup = (id: string) => setOpenGroups(prev => {
+  // Collapsed-group state persists to localStorage so it survives navigation.
+  // We store the COLLAPSED set (default empty = all open) so new groups added
+  // later default to open without needing a migration.
+  const COLLAPSED_GROUPS_KEY = 'chaos-body-collapsed-groups'
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    try {
+      const saved = getPref(COLLAPSED_GROUPS_KEY)
+      if (saved) setCollapsedGroups(new Set(JSON.parse(saved)))
+    } catch (e) {
+      console.error('Failed to load collapsed groups:', e)
+    }
+  }, [])
+
+  const toggleGroup = (id: string) => setCollapsedGroups(prev => {
     const next = new Set(prev)
     next.has(id) ? next.delete(id) : next.add(id)
+    try { setPref(COLLAPSED_GROUPS_KEY, JSON.stringify([...next])) } catch {}
     return next
   })
 
@@ -316,7 +329,7 @@ export default function PhysicalHealthIndex() {
               .map(id => trackers.find(t => t.id === id))
               .filter(Boolean) as typeof trackers
             if (groupTrackers.length === 0) return null
-            const isOpen = openGroups.has(group.id)
+            const isOpen = !collapsedGroups.has(group.id)
             return (
               <Collapsible key={group.id} open={isOpen} onOpenChange={() => toggleGroup(group.id)}>
                 <CollapsibleTrigger asChild>
