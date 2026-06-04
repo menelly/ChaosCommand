@@ -47,6 +47,7 @@ import {
   Sparkles,
   Bone,
   Activity,
+  Ear,
   ChevronDown,
   ChevronRight
 } from "lucide-react"
@@ -235,6 +236,14 @@ export default function PhysicalHealthIndex() {
       edition: 'cares'
     },
     {
+      id: 'ent',
+      name: 'Ear, Nose & Throat',
+      shortDescription: 'Ear, hearing, tinnitus, vertigo, sinus, throat, nosebleeds',
+      helpContent: 'Track ENT symptoms including ear pain/infection, hearing changes (with same-day alert for sudden hearing loss), tinnitus, vertigo, sinus issues, throat/voice problems, and nosebleeds. Catches real red flags: sudden sensorineural hearing loss, airway concerns, mastoiditis, chronic hoarseness.',
+      icon: <Ear className="h-5 w-5" />,
+      edition: 'cares'
+    },
+    {
       id: 'joint',
       name: 'Joint / MSK Tracker',
       shortDescription: 'Subluxations, dislocations, swelling, ROM',
@@ -255,6 +264,7 @@ export default function PhysicalHealthIndex() {
   // Specialty groups â€” group trackers by body system for the accordion layout
   const SPECIALTY_GROUPS = [
     { id: 'head-neuro', label: '🧠 Head & Nervous System', trackerIds: ['head-pain', 'seizure-tracking', 'dysautonomia'] },
+    { id: 'ent', label: '👂 Ear, Nose & Throat', trackerIds: ['ent'] },
     { id: 'heart-lungs', label: '❤️ Heart & Lungs', trackerIds: ['cardiac', 'respiratory'] },
     { id: 'gut', label: '🍽️ Gut & Digestive', trackerIds: ['upper-digestive', 'digestive-health'] },
     { id: 'metabolic', label: '⚡ Metabolic & Immune', trackerIds: ['diabetes-tracker', 'food-allergens'] },
@@ -306,6 +316,7 @@ export default function PhysicalHealthIndex() {
       case 'skin': return '/skin'
       case 'joint': return '/joint'
       case 'gu': return '/gu'
+      case 'ent': return '/ent'
       default: return '#' // TODO: Implement navigation to other trackers
     }
   }

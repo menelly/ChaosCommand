@@ -27,6 +27,7 @@ import { useState, useEffect } from "react"
 import { X, Menu } from "lucide-react"
 import Link from "next/link"
 import { homeImageData } from "@/lib/home-image"
+import { openDisclaimer } from "@/components/medical-disclaimer-bar"
 
 
 export default function AppSidebar() {
@@ -324,6 +325,15 @@ export default function AppSidebar() {
           >
             ⚙️ Settings
           </Link>
+
+          {/* Medical disclaimer — opens the "not medical care" dialog (also auto-shows once on first launch) */}
+          <button
+            onClick={() => { openDisclaimer(); isMobile && setShowSidebar(false) }}
+            className="mt-2 w-full rounded text-[11px] text-muted-foreground transition-all py-1 px-1 hover:text-foreground block text-center"
+            title="Medical disclaimer"
+          >
+            ⚕️ Disclaimer
+          </button>
 
           {/* Logout — big, bottom-of-sidebar, one-tap. THE emergency exit: fast and obvious,
               ~2× the height of the other buttons so it's hard to miss and easy to hit. */}

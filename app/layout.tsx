@@ -40,6 +40,7 @@ import AppSidebar from "@/components/app-sidebar"
 import { Toaster } from "@/components/ui/toaster"
 import { AppWrapper } from "@/components/app-wrapper"
 import RoutineFlowBar from "@/components/routines/routine-flow-bar"
+import MedicalDisclaimerBar from "@/components/medical-disclaimer-bar"
 // import AddyChatBubble from "@/components/addy-chat-bubble" // Commented out - AI module for later
 
 export const metadata = {
@@ -89,6 +90,7 @@ export default function RootLayout({
                   <p className="mt-1 text-xs italic">
                     This wasn't built with compliance. It was built with defiance.
                   </p>
+                  {/* Full medical disclaimer lives in the sticky MedicalDisclaimerBar (big once, then collapses). */}
                 </footer>
               </div>
               <AppSidebar />
@@ -97,6 +99,7 @@ export default function RootLayout({
               <RoutineFlowBar />
             </Suspense>
             <Toaster />
+            <MedicalDisclaimerBar />
             {/* <AddyChatBubble /> */} {/* Commented out - AI module for later */}
           </GoblinModeProvider>
           {/* </LicenseGate></LicenseProvider> */}

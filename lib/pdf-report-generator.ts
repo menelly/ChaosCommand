@@ -68,6 +68,7 @@ const ICD10_MAP: Record<string, string> = {
   'skin': 'L29.9 — Pruritus / L50.9 — Urticaria, unspecified',
   'joint': 'M25.50 — Pain in unspecified joint',
   'food-allergens': 'T78.40XA — Allergy, unspecified, initial encounter / K90.0 — Celiac disease',
+  'ent': 'H66.90 — Otitis media / H93.19 — Tinnitus / R42 — Dizziness / J32.9 — Chronic sinusitis',
   // ── Subjective SYMPTOM trackers: gentle SYMPTOM codes (R-codes) only — never a disorder dx ──
   'brain-fog': 'R41.840 — Attention and concentration deficit',  // softened from R41.82 "altered mental status"
   'energy': 'R53.83 — Other fatigue',
@@ -97,6 +98,7 @@ const TRACKER_DISPLAY_NAMES: Record<string, string> = {
   'diabetes': 'Diabetes',
   'food-choice': 'Food Choice',
   'gu': 'GU',
+  'ent': 'ENT',
   'cardiac': 'Cardiac',
   'respiratory': 'Respiratory',
   'skin': 'Skin',
