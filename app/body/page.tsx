@@ -48,6 +48,7 @@ import {
   Bone,
   Activity,
   Ear,
+  Baby,
   ChevronDown,
   ChevronRight
 } from "lucide-react"
@@ -227,7 +228,16 @@ export default function PhysicalHealthIndex() {
       helpContent: 'Track skin events including rashes, hives, eczema flares, mole/lesion monitoring, wounds, sunburns, and contact reactions. Photo upload is primary â€” invaluable for dermatology consults. Includes ABCDE mole screening and SJS/anaphylaxis red flags.',
       icon: <Sparkles className="h-5 w-5" />,
       edition: 'cares'
-    },    {
+    },
+    {
+      id: 'postpartum',
+      name: 'Postpartum & Newborn',
+      shortDescription: 'Recovery, feeding, and baby — bleeding, mood, diapers, all in one',
+      helpContent: 'One place for the postpartum cluster so you are not juggling apps: your recovery (bleeding/lochia with hemorrhage alert, uterus check, healing, mood/PPD screening with crisis support), feeding (which side last, durations, pumping, bottles — gender-neutral terms), and baby (diapers, weight, sleep, jaundice and newborn-fever alerts). Hideable; turn it on when you need it.',
+      icon: <Baby className="h-5 w-5" />,
+      edition: 'cares'
+    },
+    {
       id: 'gu',
       name: 'Genitourinary',
       shortDescription: 'Voiding symptoms, retention, incontinence, UTIs, pelvic floor',
@@ -270,7 +280,7 @@ export default function PhysicalHealthIndex() {
     { id: 'metabolic', label: '⚡ Metabolic & Immune', trackerIds: ['endocrine', 'food-allergens'] },
     { id: 'skin', label: '🩹 Skin', trackerIds: ['skin'] },
     { id: 'msk', label: '🦴 Bones, Joints & Muscles', trackerIds: ['joint'] },
-    { id: 'reproductive', label: '🌸 Reproductive', trackerIds: ['reproductive-health', 'gu'] },
+    { id: 'reproductive', label: '🌸 Reproductive', trackerIds: ['reproductive-health', 'postpartum', 'gu'] },
     { id: 'environment', label: '🌦️ Environment', trackerIds: ['weather-environment'] },
     { id: 'general', label: '📍 General', trackerIds: ['pain-tracking'] },
   ]
@@ -317,6 +327,7 @@ export default function PhysicalHealthIndex() {
       case 'skin': return '/skin'
       case 'joint': return '/joint'
       case 'gu': return '/gu'
+      case 'postpartum': return '/postpartum'
       case 'ent': return '/ent'
       default: return '#' // TODO: Implement navigation to other trackers
     }
