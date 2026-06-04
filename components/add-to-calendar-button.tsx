@@ -86,31 +86,31 @@ export default function AddToCalendarButton({
             className="fixed inset-0 z-40"
             onClick={() => setOpen(false)}
           />
-          <div className="absolute right-0 mt-1 z-50 min-w-[220px] rounded-md border border-[var(--border-soft)] bg-[var(--bg-card,white)] shadow-lg overflow-hidden">
+          <div className="absolute right-0 mt-1 z-50 min-w-[220px] rounded-md border border-border bg-popover text-popover-foreground shadow-lg overflow-hidden">
             {/* Google Calendar only makes sense for a single event — the
                 URL format can only pre-fill one at a time. */}
             {!multi && (
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); handleGoogle() }}
-                className="w-full text-left px-3 py-2.5 text-sm text-[var(--text-main)] hover:bg-[var(--surface-2)] flex items-center gap-2"
+                className="w-full text-left px-3 py-2.5 text-sm hover:bg-accent hover:text-accent-foreground flex items-center gap-2"
               >
                 <ExternalLink className="h-4 w-4 flex-shrink-0" />
                 <div>
                   <div className="font-medium">Google Calendar</div>
-                  <div className="text-xs text-[var(--text-muted)]">Opens in browser</div>
+                  <div className="text-xs text-muted-foreground">Opens in browser</div>
                 </div>
               </button>
             )}
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); handleIcs() }}
-              className={`w-full text-left px-3 py-2.5 text-sm text-[var(--text-main)] hover:bg-[var(--surface-2)] flex items-center gap-2 ${!multi ? 'border-t border-[var(--border-soft)]' : ''}`}
+              className={`w-full text-left px-3 py-2.5 text-sm hover:bg-accent hover:text-accent-foreground flex items-center gap-2 ${!multi ? 'border-t border-border' : ''}`}
             >
               <Download className="h-4 w-4 flex-shrink-0" />
               <div>
                 <div className="font-medium">Download .ics</div>
-                <div className="text-xs text-[var(--text-muted)]">
+                <div className="text-xs text-muted-foreground">
                   {multi
                     ? `${events!.length} events • Apple / Outlook / anything`
                     : 'Apple / Outlook / anything'}
