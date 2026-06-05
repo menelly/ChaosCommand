@@ -145,25 +145,41 @@ export default function TimelinePage() {
         console.log('🔍 RAW EVENT DATA:', eventData);
         console.log('🔍 EVENT DATA LENGTH:', eventData.length);
 
+        // DEFENSIVE PARSE: content may be a JSON string OR an already-parsed
+        // object, and one corrupt record must NOT crash the whole load. The old
+        // code did a bare JSON.parse(item.content) per item with no try/catch —
+        // a single object-shaped or malformed record threw, aborted the entire
+        // .map, and left the timeline blank even though the data was fine (and
+        // still exported to PDF). Skip the bad ones, keep the rest.
         const eventList = eventData.map((item: any) => {
-          console.log('🔍 PARSING ITEM:', item);
-          return JSON.parse(item.content) as MedicalEvent;
-        });
+          try {
+            return (typeof item.content === 'string' ? JSON.parse(item.content) : item.content) as MedicalEvent;
+          } catch (e) {
+            console.warn('⚠️ Skipped unparseable medical event:', item?.subcategory, e);
+            return null;
+          }
+        }).filter(Boolean) as MedicalEvent[];
 
         // Load providers for linking
         const providerData = allUserData.filter(item =>
           item.subcategory === SUBCATEGORIES.PROVIDERS ||
           item.subcategory.startsWith(SUBCATEGORIES.PROVIDERS + '-')
         );
-        const providerList = providerData.map((item: any) => {
-          const provider = JSON.parse(item.content);
+        const providerList = (providerData.map((item: any) => {
+          let provider: any;
+          try {
+            provider = typeof item.content === 'string' ? JSON.parse(item.content) : item.content;
+          } catch (e) {
+            console.warn('⚠️ Skipped unparseable provider:', item?.subcategory, e);
+            return null;
+          }
           return {
             id: provider.id,
             name: provider.name,
             specialty: provider.specialty,
             organization: provider.organization
           };
-        });
+        })).filter(Boolean) as any[];
 
         // Load medications and project them onto the timeline.
         // Tracker uses category 'tracker' + subcategory 'medications-{id}', so
