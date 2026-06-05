@@ -211,15 +211,54 @@ export function useMedicationTracker(): UseMedicationTrackerReturn {
         throw new Error('Either brand name or generic name is required');
       }
 
-      // Update in database
-      const today = formatDateForStorage(new Date());
-      await saveData(
-        today,
-        MEDICATION_CATEGORIES.TRACKER,
-        `${MEDICATION_SUBCATEGORIES.MEDICATIONS}-${id}`,
-        updatedMedication,
-        updatedMedication.tags || [] // Include tags for database searching
-      );
+      // Update in database — CHA-273 fix.
+      // Medications are stored under their CREATION date, not today's. The old code did
+      // saveData(today, ...), which keys on [date+category+subcategory]; on any day AFTER
+      // creation it found nothing under `today` and spawned a SECOND record → duplicate.
+      // Instead, locate the existing record(s) by subcategory (date-agnostic, exactly like
+      // the fixed delete path below) and update IN PLACE at the record's real date.
+      const db = getDB();
+      const subcategory = `${MEDICATION_SUBCATEGORIES.MEDICATIONS}-${id}`;
+      const existingRecords = (await db.daily_data
+        .where('subcategory')
+        .equals(subcategory)
+        .toArray())
+        .filter(record => !record.metadata?.deleted_at);
+
+      if (existingRecords.length > 0) {
+        // Canonical = earliest-created record (its original home). Update that one in place;
+        // updateData preserves the record's date/created_at and bumps the version.
+        existingRecords.sort((a, b) =>
+          new Date(a.metadata?.created_at || 0).getTime() -
+          new Date(b.metadata?.created_at || 0).getTime()
+        );
+        const [canonical, ...dupes] = existingRecords;
+        await updateData(canonical.id!, updatedMedication, updatedMedication.tags || []);
+
+        // Converge any pre-existing duplicates (spawned by this bug before the fix) by
+        // tombstoning the extras, so the med stops appearing multiple times on reload.
+        const now = new Date().toISOString();
+        for (const dupe of dupes) {
+          if (dupe?.id != null) {
+            await db.daily_data.update(dupe.id, {
+              metadata: { ...dupe.metadata, created_at: dupe.metadata?.created_at ?? now, deleted_at: now, updated_at: now }
+            });
+          }
+        }
+      } else {
+        // No stored record found (edge case) — fall back to a dated save so the edit is
+        // never silently lost. Prefer the med's creation date so future edits find it.
+        const fallbackDate = existingMedication.createdAt
+          ? formatDateForStorage(new Date(existingMedication.createdAt))
+          : formatDateForStorage(new Date());
+        await saveData(
+          fallbackDate,
+          MEDICATION_CATEGORIES.TRACKER,
+          subcategory,
+          updatedMedication,
+          updatedMedication.tags || [] // Include tags for database searching
+        );
+      }
 
       // Handle refill reminder changes
       if (updatedMedication.enableRefillReminders && updatedMedication.refillDate) {
@@ -243,7 +282,7 @@ export function useMedicationTracker(): UseMedicationTrackerReturn {
       console.error('Failed to update medication:', err);
       throw err;
     }
-  }, [medications, saveData]);
+  }, [medications, saveData, updateData]);
 
   const deleteMedication = useCallback(async (id: string): Promise<void> => {
     try {
