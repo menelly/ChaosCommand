@@ -14,9 +14,10 @@ import AppCanvas from "@/components/app-canvas"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible"
 import { Button } from "@/components/ui/button"
-import { Settings2, Palette, Eye, PartyPopper, ChevronDown, UserRound } from "lucide-react"
+import { Settings2, Palette, Eye, PartyPopper, ChevronDown, UserRound, PanelLeft } from "lucide-react"
 import VisualSettingsPanel from "@/components/customize/visual-settings-panel"
 import PersonalizationPanel from "@/components/customize/personalization-panel"
+import SidebarDeclutterPanel from "@/components/customize/sidebar-declutter-panel"
 import VisibleTrackersPanel from "@/components/customize/visible-trackers-panel"
 import CelebrateTrackersPanel from "@/components/customize/celebrate-trackers-panel"
 import HiddenCustomTrackersPanel from "@/components/hidden-custom-trackers-panel"
@@ -124,6 +125,32 @@ export default function CustomizePage() {
             <CollapsibleContent>
               <CardContent>
                 <CelebrateTrackersPanel />
+              </CardContent>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
+
+        <Collapsible defaultOpen={false}>
+          <Card>
+            <CollapsibleTrigger asChild>
+              <CardHeader className="cursor-pointer select-none hover:bg-muted/30 transition-colors [&[data-state=open]_.chev]:rotate-180">
+                <CardTitle className="flex items-center justify-between gap-2">
+                  <span className="flex items-center gap-2">
+                    <PanelLeft className="h-5 w-5" />
+                    Sidebar Declutter
+                  </span>
+                  <ChevronDown className="chev h-5 w-5 shrink-0 transition-transform" />
+                </CardTitle>
+                <CardDescription>
+                  Turn off whole sidebar sections you don't use — never touch
+                  Maintain, Forge, Patterns, or Routines? Hide the buttons. Home,
+                  Customize, Settings, and Logout always stay.
+                </CardDescription>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent>
+                <SidebarDeclutterPanel />
               </CardContent>
             </CollapsibleContent>
           </Card>

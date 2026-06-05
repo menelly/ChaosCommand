@@ -28,6 +28,8 @@ import { X, Menu } from "lucide-react"
 import Link from "next/link"
 import { homeImageData } from "@/lib/home-image"
 import { openDisclaimer } from "@/components/medical-disclaimer-bar"
+import { getPref } from "@/lib/prefs"
+import { SIDEBAR_NAV_ITEMS, SIDEBAR_HIDDEN_KEY, SIDEBAR_NAV_CHANGED_EVENT } from "@/lib/sidebar-nav"
 
 
 export default function AppSidebar() {
@@ -38,82 +40,11 @@ export default function AppSidebar() {
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null)
   const [holdTimer, setHoldTimer] = useState<NodeJS.Timeout | null>(null)
   const [holdingShortcut, setHoldingShortcut] = useState<string | null>(null)
+  // Per-PIN list of sidebar nav ids the user has decluttered (hidden).
+  const [hiddenNav, setHiddenNav] = useState<string[]>([])
 
-  // Default sidebar items with themed button classes
-  const sidebarItems = [
-    {
-      id: "body",
-      text: "Body",
-      emoji: "🫀",
-      targetPageId: "body",
-      isVisible: true,
-      buttonClass: "sidebar-btn-1"
-    },
-    {
-      id: "mind",
-      text: "Mind",
-      emoji: "🧠",
-      targetPageId: "mind",
-      isVisible: true,
-      buttonClass: "sidebar-btn-2"
-    },
-    {
-      id: "maintain",
-      text: "Maintain",
-      emoji: "🔩",
-      targetPageId: "maintain",
-      isVisible: true,
-      buttonClass: "sidebar-btn-3"
-    },
-    {
-      id: "choice",
-      text: "Choice",
-      emoji: "💪",
-      targetPageId: "choice",
-      isVisible: true,
-      buttonClass: "sidebar-btn-4"
-    },
-    {
-      id: "built",
-      text: "Built",
-      emoji: "🔧",
-      targetPageId: "custom",
-      isVisible: true,
-      buttonClass: "sidebar-btn-5"
-    },
-    {
-      id: "forge",
-      text: "Forge",
-      emoji: "🔨",
-      targetPageId: "forge",
-      isVisible: true,
-      buttonClass: "sidebar-btn-6"
-    },
-    {
-      id: "manage",
-      text: "Manage",
-      emoji: "🗂️",
-      targetPageId: "manage",
-      isVisible: true,
-      buttonClass: "sidebar-btn-guide"
-    },
-    {
-      id: "patterns",
-      text: "Patterns",
-      emoji: "📊",
-      targetPageId: "patterns",
-      isVisible: true,
-      buttonClass: "sidebar-btn-1"
-    },
-    {
-      id: "routines",
-      text: "Routines",
-      emoji: "📋",
-      targetPageId: "routines",
-      isVisible: true,
-      buttonClass: "sidebar-btn-2"
-    },
-  ]
+  // Canonical nav list lives in lib/sidebar-nav (shared with the declutter panel).
+  const sidebarItems = SIDEBAR_NAV_ITEMS
 
   // Available trackers for shortcuts
   const availableTrackers = {
@@ -183,6 +114,26 @@ export default function AppSidebar() {
       console.error('Failed to load sidebar state:', error)
       // Default to true on error
       setShowSidebar(true)
+    }
+  }, [])
+
+  // Load decluttered nav ids (per-PIN) + re-read whenever the Customize panel
+  // changes them, so hiding a section updates the sidebar live.
+  useEffect(() => {
+    const loadHidden = () => {
+      try {
+        const saved = getPref(SIDEBAR_HIDDEN_KEY)
+        setHiddenNav(saved ? JSON.parse(saved) : [])
+      } catch {
+        setHiddenNav([])
+      }
+    }
+    loadHidden()
+    window.addEventListener(SIDEBAR_NAV_CHANGED_EVENT, loadHidden)
+    window.addEventListener('chaos-pin-changed', loadHidden)
+    return () => {
+      window.removeEventListener(SIDEBAR_NAV_CHANGED_EVENT, loadHidden)
+      window.removeEventListener('chaos-pin-changed', loadHidden)
     }
   }, [])
 
@@ -285,7 +236,7 @@ export default function AppSidebar() {
 
           {/* Trackers section */}
           <div className="mt-2">
-            {sidebarItems.filter(item => item.isVisible).map((item) => (
+            {sidebarItems.filter(item => !hiddenNav.includes(item.id)).map((item) => (
               <Link
                 key={item.id}
                 href={getHref(item.targetPageId)}
