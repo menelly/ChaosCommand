@@ -673,31 +673,35 @@ export default function OnboardingPage() {
   // PERSONALIZATION STEP — "make this yours" before the clinical checklist
   if (currentStep === 1) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-3 sm:p-6 bg-background">
-        <Card className="max-w-2xl w-full">
-          <CardContent className="p-4 sm:p-8 space-y-6">
-            <div className="text-center space-y-2">
-              <UserRound className="h-10 w-10 text-primary mx-auto" />
-              <h1 className="text-2xl font-bold">Make It Yours</h1>
-              <p className="text-muted-foreground">
-                Your name and the words that fit you. All optional, all private, all changeable anytime in Customize.
-              </p>
-            </div>
+      // h-screen + overflow-y-auto so the long panel scrolls to Back/Next
+      // (app body is overflow-hidden); min-h-full centers when it fits.
+      <div className="h-screen overflow-y-auto bg-background">
+        <div className="min-h-full flex items-center justify-center p-3 sm:p-6">
+          <Card className="max-w-2xl w-full">
+            <CardContent className="p-4 sm:p-8 space-y-6">
+              <div className="text-center space-y-2">
+                <UserRound className="h-10 w-10 text-primary mx-auto" />
+                <h1 className="text-2xl font-bold">Make It Yours</h1>
+                <p className="text-muted-foreground">
+                  Your name and the words that fit you. All optional, all private, all changeable anytime in Customize.
+                </p>
+              </div>
 
-            <PersonalizationPanel />
+              <PersonalizationPanel />
 
-            <div className="flex items-center justify-between pt-2">
-              <Button variant="outline" onClick={() => setCurrentStep(0)}>
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back
-              </Button>
-              <Button onClick={() => setCurrentStep(2)} className="flex items-center gap-2">
-                Next
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+              <div className="flex items-center justify-between pt-2">
+                <Button variant="outline" onClick={() => setCurrentStep(0)}>
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back
+                </Button>
+                <Button onClick={() => setCurrentStep(2)} className="flex items-center gap-2">
+                  Next
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     )
   }

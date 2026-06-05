@@ -18,10 +18,17 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { UserRound, ArrowRight } from "lucide-react"
 import PersonalizationPanel from "@/components/customize/personalization-panel"
+import ThemeLoader from "@/components/theme-loader"
 
 export default function PersonalizationWelcome({ onDone }: { onDone: () => void }) {
   return (
-    <div className="min-h-screen flex items-center justify-center p-3 sm:p-6 bg-background">
+    // h-screen + overflow-y-auto so a long panel scrolls to the Done button
+    // (the app body is overflow-hidden). min-h-full centers when it fits.
+    <div className="h-screen overflow-y-auto bg-background">
+      {/* Re-apply the active PIN's theme — this gate paints during the login
+          transition, before ThemeLoader's effect lands, so it'd flash white. */}
+      <ThemeLoader />
+      <div className="min-h-full flex items-center justify-center p-3 sm:p-6">
       <Card className="max-w-2xl w-full">
         <CardContent className="p-4 sm:p-8 space-y-6">
           <div className="text-center space-y-2">
@@ -46,6 +53,7 @@ export default function PersonalizationWelcome({ onDone }: { onDone: () => void 
           </p>
         </CardContent>
       </Card>
+      </div>
     </div>
   )
 }
