@@ -39,6 +39,11 @@ const TRACKER_SUBCATEGORIES = [
   'food-allergens', 'bathroom', 'head-pain', 'crisis', 'coping',
   // v0.4.x trackers
   'cardiac', 'respiratory', 'skin', 'joint', 'substance',
+  // Clinician-feedback (CHA-251) + Maintain trackers — now READ into the
+  // correlation engine. Deep per-tracker detectors are a follow-up; loading
+  // them here is what lets medication-adherence correlate against symptoms
+  // (e.g. skipped Abilify → worse function), which is the whole point.
+  'gu', 'ent', 'postpartum', 'thyroid', 'adrenal', 'lines-tubes', 'medication-adherence',
   'other'
 ] as const
 

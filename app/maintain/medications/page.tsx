@@ -26,7 +26,8 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { ArrowLeft, ArrowRight, Pill, CheckCircle2, AlertCircle, Clock } from "lucide-react"
 import { useMedicationTracker } from "@/lib/hooks/use-medication-tracker"
 import { getPref, setPref } from "@/lib/prefs"
-import { formatDateForStorage } from "@/lib/database"
+import { formatDateForStorage, useDailyData, CATEGORIES } from "@/lib/database"
+import { ADHERENCE_SUBCATEGORY } from "@/lib/medications/adherence"
 
 function takenKey(date: string) { return `med-taken-${date}` }
 
@@ -104,44 +105,56 @@ function prettyDate(date: string, today: string): string {
 
 export default function MaintainMedicationsPage() {
   const { medications, isLoading } = useMedicationTracker()
+  const { saveData } = useDailyData()
   const today = formatDateForStorage(new Date())
   const [selectedDate, setSelectedDate] = useState(today)
   const [takenMap, setTakenMap] = useState<Record<string, string>>({})
   const [ready, setReady] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
 
+  // Daily meds = opted into the daily checklist AND not discontinued
+  const dailyMeds = medications.filter(m => m.dailyMaintain && m.active !== false)
+
   useEffect(() => {
     setTakenMap(readTakenMap(selectedDate))
     setReady(true)
   }, [selectedDate])
 
+  // Durable, syncable, PDF-visible adherence record for a date. Snapshots which
+  // meds were expected that day so "missed" stays computable later. Runs
+  // alongside the localStorage pref (which drives the instant UI). Fire-and-forget.
+  const persistAdherence = (date: string, taken: Record<string, string>) => {
+    const expected = dailyMeds.map(m => ({
+      id: m.id,
+      name: m.brandName || m.genericName || "Medication",
+      dose: m.dose,
+    }))
+    try {
+      void saveData(date, CATEGORIES.TRACKER, ADHERENCE_SUBCATEGORY, { date, expected, taken }, [])
+    } catch { /* non-fatal — pref still holds the day */ }
+  }
+
   const toggleTaken = (id: string) => {
-    setTakenMap(prev => {
-      const next = { ...prev }
-      if (id in next) {
-        delete next[id]
-      } else {
-        // Stamp the real time only when logging "today"; for a back-dated entry
-        // we don't know the clock time, so store the date at noon as a marker.
-        next[id] = selectedDate === today ? new Date().toISOString() : `${selectedDate}T12:00:00`
-      }
-      try { setPref(takenKey(selectedDate), JSON.stringify(next)) } catch {}
-      return next
-    })
+    const next = { ...takenMap }
+    if (id in next) {
+      delete next[id]
+    } else {
+      // Real time only when logging "today"; back-dated entries store noon as a marker.
+      next[id] = selectedDate === today ? new Date().toISOString() : `${selectedDate}T12:00:00`
+    }
+    setTakenMap(next)
+    try { setPref(takenKey(selectedDate), JSON.stringify(next)) } catch {}
+    persistAdherence(selectedDate, next)
   }
 
   const takeAllInGroup = (meds: { id: string }[]) => {
-    setTakenMap(prev => {
-      const next = { ...prev }
-      const stamp = selectedDate === today ? new Date().toISOString() : `${selectedDate}T12:00:00`
-      for (const m of meds) if (!(m.id in next)) next[m.id] = stamp
-      try { setPref(takenKey(selectedDate), JSON.stringify(next)) } catch {}
-      return next
-    })
+    const next = { ...takenMap }
+    const stamp = selectedDate === today ? new Date().toISOString() : `${selectedDate}T12:00:00`
+    for (const m of meds) if (!(m.id in next)) next[m.id] = stamp
+    setTakenMap(next)
+    try { setPref(takenKey(selectedDate), JSON.stringify(next)) } catch {}
+    persistAdherence(selectedDate, next)
   }
-
-  // Daily meds = opted into the daily checklist AND not discontinued
-  const dailyMeds = medications.filter(m => m.dailyMaintain && m.active !== false)
   const takenCount = dailyMeds.filter(m => m.id in takenMap).length
   const allTaken = dailyMeds.length > 0 && takenCount === dailyMeds.length
 
@@ -321,6 +334,14 @@ export default function MaintainMedicationsPage() {
                 </CardContent>
               </Card>
             )}
+          </div>
+        )}
+
+        {ready && dailyMeds.length > 0 && (
+          <div className="text-center">
+            <Button variant="outline" size="sm" asChild>
+              <a href="/maintain/medications/history">📈 Full adherence history &amp; analytics</a>
+            </Button>
           </div>
         )}
 
