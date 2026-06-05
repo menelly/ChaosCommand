@@ -531,7 +531,7 @@ export default function PhysicalHealthIndex() {
         <div className="mt-8 text-center">
           <a href="/">
             <Button variant="outline">
-              â† Back to Command Center
+              ← Back to Command Center
             </Button>
           </a>
         </div>
