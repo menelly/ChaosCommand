@@ -737,17 +737,17 @@ export default function EnergyPacingTracker() {
                     </button>
 
                     {isExpanded && (
-                      <div className="p-3 grid grid-cols-2 gap-2">
+                      <div className="p-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {activities.map((activity) => (
                           <Button
                             key={activity.id}
                             variant="outline"
-                            className="justify-start h-auto py-2"
+                            className="justify-start h-auto py-2 whitespace-normal"
                             onClick={() => logActivity(activity.id, activity.name, activity.defaultCost, activityNotes)}
                           >
-                            <span className="mr-2">{activity.emoji}</span>
-                            <span className="flex-1 text-left">{activity.name}</span>
-                            <Badge variant="secondary" className="ml-2">
+                            <span className="mr-2 shrink-0">{activity.emoji}</span>
+                            <span className="flex-1 text-left min-w-0 break-words">{activity.name}</span>
+                            <Badge variant="secondary" className="ml-2 shrink-0">
                               {activity.defaultCost > 0 ? `-${activity.defaultCost}` : `+${Math.abs(activity.defaultCost)}`}
                             </Badge>
                           </Button>
