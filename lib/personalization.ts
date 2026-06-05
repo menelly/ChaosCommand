@@ -52,7 +52,7 @@ export const PERSONALIZATION_DEFAULTS: Personalization = {
   pronounsCustom: "",
   pronounsInExports: false,
   gender: "",
-  reproEnabled: false,
+  reproEnabled: true, // visible by default — turning it OFF hides repro/postpartum (no regression for existing users)
   parentTerm: "parent",
   feedingTerm: "feeding",
 }

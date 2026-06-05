@@ -25,6 +25,7 @@
 
 import { useState, useEffect } from "react"
 import { getPref, setPref } from "@/lib/prefs"
+import { getPersonalization } from "@/lib/personalization"
 import AppCanvas from "@/components/app-canvas"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -74,6 +75,9 @@ export default function PhysicalHealthIndex() {
   const [hiddenTrackers, setHiddenTrackers] = useState<string[]>([])
   const [hideFertility, setHideFertility] = useState(false)
   const [isCustomizeOpen, setIsCustomizeOpen] = useState(false)
+  // Reproductive master switch (personalization, CHA-261). When off, repro-health
+  // and postpartum hide entirely. Defaults true so existing users keep them.
+  const [reproEnabled, setReproEnabled] = useState(true)
 
   // Load hidden trackers from localStorage on mount
   useEffect(() => {
@@ -86,6 +90,7 @@ export default function PhysicalHealthIndex() {
       if (fertilityPref) {
         setHideFertility(JSON.parse(fertilityPref))
       }
+      setReproEnabled(getPersonalization().reproEnabled)
     } catch (e) {
       console.error('Failed to load hidden trackers:', e)
     }
@@ -268,7 +273,10 @@ export default function PhysicalHealthIndex() {
     (tracker.edition === 'core' || // Always show core features
     tracker.edition === userEdition || // Show user's edition
     userEdition === 'command') && // Command edition sees everything
-    !hiddenTrackers.includes(tracker.id) // Respect user's hidden preferences
+    !hiddenTrackers.includes(tracker.id) && // Respect user's hidden preferences
+    // Reproductive master switch: hide repro-health + postpartum when off. (GU is
+    // genitourinary, not reproductive — it stays.)
+    !(!reproEnabled && (tracker.id === 'reproductive-health' || tracker.id === 'postpartum'))
   );
 
   // Specialty groups â€” group trackers by body system for the accordion layout

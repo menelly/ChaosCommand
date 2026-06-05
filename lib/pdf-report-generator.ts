@@ -7,6 +7,7 @@
  */
 
 import jsPDF from 'jspdf'
+import { getPersonalization, resolvedPronouns } from '@/lib/personalization'
 
 /**
  * Repair unit strings that were split by OCR / PDF text-extraction whitespace
@@ -458,12 +459,16 @@ export function generateMedicalReport(data: ReportData): Blob {
   w.title('Patient Health Report')
 
   const demo = data.demographics || {}
-  const patientName = demo.legalName || demo.preferredName || 'Patient'
+  // Personalization (CHA-261): falls back to the user's chosen name when there's
+  // no clinical demographic name, and adds pronouns to the header when opted in.
+  const pz = (() => { try { return getPersonalization() } catch { return null } })()
+  const patientName = demo.legalName || demo.preferredName || pz?.name || 'Patient'
   const dob = demo.dateOfBirth || ''
   const dateRange = data.dateRange || { start: '?', end: '?' }
 
   const subtitleParts: string[] = []
   if (patientName) subtitleParts.push(`Patient: ${patientName}`)
+  if (pz?.pronounsInExports) subtitleParts.push(`Pronouns: ${resolvedPronouns(pz).label}`)
   if (dob) subtitleParts.push(`DOB: ${dob}`)
   if (data.providerName) subtitleParts.push(`Prepared for: ${data.providerName}`)
   subtitleParts.push(`Period: ${dateRange.start} to ${dateRange.end}`)

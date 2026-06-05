@@ -45,7 +45,12 @@ const TRACKER_OPTIONS = [
   { id: 'bathroom', label: 'Bathroom (bowel + urinary)', category: 'body' },
   { id: 'food-allergens', label: 'Food Reactions / Allergens', category: 'body' },
   { id: 'reproductive-health', label: 'Reproductive Health', category: 'body' },
+  { id: 'postpartum', label: 'Postpartum & Newborn', category: 'body' },
+  { id: 'gu', label: 'Genitourinary (GU)', category: 'body' },
+  { id: 'ent', label: 'Ear, Nose & Throat (ENT)', category: 'body' },
   { id: 'diabetes', label: 'Diabetes', category: 'body' },
+  { id: 'thyroid', label: 'Thyroid', category: 'body' },
+  { id: 'adrenal', label: 'Adrenal', category: 'body' },
   { id: 'brain-fog', label: 'Brain Fog', category: 'mind' },
   { id: 'mental-health', label: 'Mind & Mood', category: 'mind' },
   { id: 'anxiety', label: 'Anxiety', category: 'mind' },
@@ -58,6 +63,8 @@ const TRACKER_OPTIONS = [
   { id: 'self-care', label: 'Self-Care', category: 'choice' },
   { id: 'substance', label: 'Substance', category: 'choice' },
   { id: 'weather', label: 'Weather Impact', category: 'other' },
+  { id: 'lines-tubes', label: 'Lines & Tubes', category: 'other' },
+  { id: 'medication-adherence', label: 'Medication Adherence', category: 'other' },
 ]
 
 // Smart defaults by specialty
