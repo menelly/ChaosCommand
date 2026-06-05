@@ -491,7 +491,11 @@ export default function OnboardingPage() {
     // Mark complete globally AND per-PIN
     localStorage.setItem('chaos-onboarding-complete', 'true')
     const pin = localStorage.getItem('chaos-user-pin')
-    if (pin) localStorage.setItem(`chaos-onboarding-complete-${pin}`, 'true')
+    if (pin) {
+      localStorage.setItem(`chaos-onboarding-complete-${pin}`, 'true')
+      // They set personalization in the "Make It Yours" step — don't re-prompt.
+      localStorage.setItem(`chaos-personalization-prompted-${pin}`, 'true')
+    }
 
     // Save symptom selections for potential future reference
     localStorage.setItem('chaos-onboarding-symptoms', JSON.stringify([...selectedSymptoms]))
@@ -502,7 +506,10 @@ export default function OnboardingPage() {
   const skipOnboarding = () => {
     localStorage.setItem('chaos-onboarding-complete', 'true')
     const pin = localStorage.getItem('chaos-user-pin')
-    if (pin) localStorage.setItem(`chaos-onboarding-complete-${pin}`, 'true')
+    if (pin) {
+      localStorage.setItem(`chaos-onboarding-complete-${pin}`, 'true')
+      localStorage.setItem(`chaos-personalization-prompted-${pin}`, 'true')
+    }
     router.push('/')
   }
 

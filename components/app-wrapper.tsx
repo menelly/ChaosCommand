@@ -17,6 +17,7 @@ import { Toaster } from '@/components/ui/toaster'
 import PinLogin from '@/components/pin-login'
 import KonamiEasterEgg from '@/components/konami-easter-egg'
 import ReminderTicker from '@/components/reminder-ticker'
+import PersonalizationWelcome from '@/components/personalization-welcome'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Sparkles, Rocket } from 'lucide-react'
@@ -101,6 +102,7 @@ function AppContent({ children }: AppWrapperProps) {
   const pathname = usePathname()
   const [isNewUser, setIsNewUser] = useState<boolean | null>(null)
   const [checkingNewUser, setCheckingNewUser] = useState(false)
+  const [showPersonalize, setShowPersonalize] = useState(false)
   const { toast } = useToast()
 
   // Restore bounce intensity from localStorage on mount — CSS default is 1 (full bounce)
@@ -216,6 +218,10 @@ function AppContent({ children }: AppWrapperProps) {
 
     if (onboardingDone === 'true' || globalOnboardingDone === 'true') {
       setIsNewUser(false)
+      // One-time personalization prompt for users who onboarded BEFORE
+      // personalization existed (CHA-261). Fires once on next login, then never.
+      const personalized = localStorage.getItem(`chaos-personalization-prompted-${userPin}`)
+      if (personalized !== 'true') setShowPersonalize(true)
       return
     }
 
@@ -285,6 +291,18 @@ function AppContent({ children }: AppWrapperProps) {
   // New user — show welcome choice (but not if already on onboarding/logout)
   if (isNewUser && !pathname?.startsWith('/onboarding') && !pathname?.startsWith('/logout')) {
     return <NewUserWelcome pin={userPin!} onDismiss={() => setIsNewUser(false)} />
+  }
+
+  // Existing user who predates personalization — one-time "Make It Yours" gate.
+  if (showPersonalize && !pathname?.startsWith('/onboarding') && !pathname?.startsWith('/logout')) {
+    return (
+      <PersonalizationWelcome
+        onDone={() => {
+          try { localStorage.setItem(`chaos-personalization-prompted-${userPin}`, 'true') } catch {}
+          setShowPersonalize(false)
+        }}
+      />
+    )
   }
 
   return (
