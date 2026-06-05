@@ -132,6 +132,10 @@ export default function PersonalizationPanel() {
         <Switch id="pz-repro" checked={p.reproEnabled} onCheckedChange={v => update("reproEnabled", v)} />
       </div>
 
+      {/* Parent + feeding language only surface in postpartum/feeding views, so
+          they're only relevant when reproductive tracking is on. Hide otherwise. */}
+      {p.reproEnabled && (
+      <>
       {/* Parent term — joy both ways */}
       <div className="space-y-1.5">
         <Label className="flex items-center gap-1.5"><Heart className="h-4 w-4 text-primary" /> What should we call you as a parent?</Label>
@@ -165,6 +169,8 @@ export default function PersonalizationPanel() {
         </Select>
         <p className="text-xs text-muted-foreground">How feeding is described in the postpartum tracker.</p>
       </div>
+      </>
+      )}
     </div>
   )
 }
