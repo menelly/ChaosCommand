@@ -262,15 +262,21 @@ export function useMedicationTracker(): UseMedicationTrackerReturn {
       // Setting deleted_at acts as a tombstone so sync can propagate the deletion to other devices.
       const db = getDB();
       const subcategory = `${MEDICATION_SUBCATEGORIES.MEDICATIONS}-${id}`;
-      const record = await db.daily_data
+      // Tombstone EVERY record for this med, not just .first(). daily_data is keyed
+      // by [date+category+subcategory], so a med edited on a different day (CHA-273)
+      // can have multiple records under the same subcategory across dates. The old
+      // code tombstoned one and left the duplicate, so the med reappeared on reload.
+      const dupes = await db.daily_data
         .where('subcategory')
         .equals(subcategory)
-        .first();
-      if (record?.id != null) {
-        const now = new Date().toISOString();
-        await db.daily_data.update(record.id, {
-          metadata: { ...record.metadata, created_at: record.metadata?.created_at ?? now, deleted_at: now, updated_at: now }
-        });
+        .toArray();
+      const now = new Date().toISOString();
+      for (const record of dupes) {
+        if (record?.id != null) {
+          await db.daily_data.update(record.id, {
+            metadata: { ...record.metadata, created_at: record.metadata?.created_at ?? now, deleted_at: now, updated_at: now }
+          });
+        }
       }
 
       // Update local state
