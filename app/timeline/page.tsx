@@ -99,7 +99,7 @@ export default function TimelinePage() {
 
   // 🚀 REVOLUTIONARY HYBRID DATABASE SYSTEM (Commented out for vacation! 🏖️)
   // const hybridDB = useHybridDatabase();
-  const { saveData, getCategoryData, deleteData, getDateRange, isLoading } = useDailyData();
+  const { saveData, getCategoryData, deleteData, getDateRange, getAllCategoryData, isLoading } = useDailyData();
 
   // Form state
   const [formData, setFormData] = useState<Partial<MedicalEvent>>({
@@ -129,7 +129,12 @@ export default function TimelinePage() {
       try {
         console.log('🏖️ VACATION MODE: Loading from Dexie...');
 
-        const allUserData = await getDateRange('1900-01-01', '2100-12-31', CATEGORIES.USER);
+        // Load by CATEGORY, not date-range. getDateRange filters on the `date`
+        // index, and Dexie's .where('date') silently drops any record whose date
+        // is undefined/empty — so events without a clean indexed date vanished
+        // from the timeline while still showing on the labs page (which uses
+        // getAllCategoryData). Match the labs page so nothing falls through.
+        const allUserData = await getAllCategoryData(CATEGORIES.USER);
         console.log('🔍 ALL USER DATA:', allUserData);
 
         // 🐉 FIXED: Handle compound subcategories like 'medical-events-medical-XXXXX'
@@ -163,7 +168,7 @@ export default function TimelinePage() {
         // Load medications and project them onto the timeline.
         // Tracker uses category 'tracker' + subcategory 'medications-{id}', so
         // re-fetch over the tracker category instead of relying on USER data.
-        const medRecords = await getDateRange('1900-01-01', '2100-12-31', 'tracker');
+        const medRecords = await getAllCategoryData('tracker');
         const medItems = medRecords.filter((r: any) => r.subcategory.startsWith('medications-'));
         const medEvents: MedicalEvent[] = [];
         for (const r of medItems) {
@@ -216,7 +221,7 @@ export default function TimelinePage() {
         console.error('Failed to load medical data:', error);
         console.error('🐉 DRAGON ERROR DETAILS:', error);
       }
-  }, [getCategoryData, getDateRange, isLoading]);
+  }, [getCategoryData, getAllCategoryData, isLoading]);
 
   useEffect(() => {
     loadData();
