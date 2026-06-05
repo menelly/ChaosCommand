@@ -608,15 +608,15 @@ export default function WeatherEnvironmentTracker({ selectedDate = new Date() }:
       {/* Date Navigation */}
       <Card>
         <CardContent className="pt-6">
-          <div className="flex items-center justify-between gap-1">
-            <Button variant="outline" size="sm" onClick={goToPreviousDay}>
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <Button variant="outline" size="sm" onClick={goToPreviousDay} className="shrink-0">
               <ChevronLeft className="h-4 w-4" />
             </Button>
 
             <div className="flex items-center gap-2">
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="justify-start text-left font-normal text-xs sm:text-sm">
+                  <Button variant="outline" className="justify-start text-left font-normal text-xs sm:text-sm whitespace-nowrap">
                     <CalendarIcon className="mr-1 sm:mr-2 h-4 w-4 flex-shrink-0" />
                     {format(currentDate, "MMM d, yyyy")}
                   </Button>
@@ -630,13 +630,13 @@ export default function WeatherEnvironmentTracker({ selectedDate = new Date() }:
                   />
                 </PopoverContent>
               </Popover>
-              
-              <Button variant="outline" size="sm" onClick={goToToday}>
+
+              <Button variant="outline" size="sm" onClick={goToToday} className="whitespace-nowrap shrink-0">
                 Today
               </Button>
             </div>
 
-            <Button variant="outline" size="sm" onClick={goToNextDay}>
+            <Button variant="outline" size="sm" onClick={goToNextDay} className="shrink-0">
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
