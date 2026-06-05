@@ -42,7 +42,7 @@ const TRACKER_SUBCATEGORIES = [
   // Clinician-feedback (CHA-251) + Maintain trackers — now READ into the
   // correlation engine. Deep per-tracker detectors are a follow-up; loading
   // them here is what lets medication-adherence correlate against symptoms
-  // (e.g. skipped Abilify → worse function), which is the whole point.
+  // (e.g. a skipped dose → worse symptoms next day), which is the whole point.
   'gu', 'ent', 'postpartum', 'thyroid', 'adrenal', 'lines-tubes', 'medication-adherence',
   'other'
 ] as const

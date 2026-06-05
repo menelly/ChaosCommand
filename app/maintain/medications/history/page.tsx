@@ -177,7 +177,7 @@ export default function MedAdherenceHistoryPage() {
                 <p className="font-medium text-info mb-1">Want to know what a missed med does to you?</p>
                 <p className="text-muted-foreground">
                   This adherence data feeds the <a href="/patterns" className="underline text-primary">Patterns</a> engine —
-                  so "skipped Abilify → worse function the next day" can surface as a real correlation against your symptom trackers, not a hunch.
+                  so "a skipped dose → worse symptoms the next day" can surface as a real correlation against your symptom trackers, not a hunch.
                 </p>
               </CardContent>
             </Card>
