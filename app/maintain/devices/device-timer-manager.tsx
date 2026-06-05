@@ -178,10 +178,10 @@ export function DeviceTimerManager({ timers, onTimersChange, currentUserId }: De
   }
 
   const startTimer = async () => {
-    if (!timerInsertedDate || !timerInsertedTime || !timerDays) {
+    if (!timerInsertedDate || !timerDays) {
       toast({
         title: 'Missing Information',
-        description: 'Please fill in the date, time, and how many days it lasts.',
+        description: 'Please fill in the date and how many days it lasts. (Time is optional.)',
         variant: 'destructive',
       })
       return
@@ -195,7 +195,8 @@ export function DeviceTimerManager({ timers, onTimersChange, currentUserId }: De
       return
     }
 
-    const insertedDateTime = new Date(`${timerInsertedDate}T${timerInsertedTime}`)
+    // Time is optional — default to midnight if the user didn't bother.
+    const insertedDateTime = new Date(`${timerInsertedDate}T${timerInsertedTime || '00:00'}`)
     const expirationDateTime = new Date(insertedDateTime)
     expirationDateTime.setDate(expirationDateTime.getDate() + parseInt(timerDays))
 
@@ -512,7 +513,7 @@ export function DeviceTimerManager({ timers, onTimersChange, currentUserId }: De
                   <Input id="insertedDate" type="date" value={timerInsertedDate} onChange={(e) => setTimerInsertedDate(e.target.value)} />
                 </div>
                 <div>
-                  <Label htmlFor="insertedTime">Time</Label>
+                  <Label htmlFor="insertedTime">Time <span className="text-muted-foreground font-normal">(optional)</span></Label>
                   <Input id="insertedTime" type="time" value={timerInsertedTime} onChange={(e) => setTimerInsertedTime(e.target.value)} />
                 </div>
               </div>
