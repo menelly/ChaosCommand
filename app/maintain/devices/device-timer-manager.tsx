@@ -34,12 +34,44 @@ import AddToCalendarButton from '@/components/add-to-calendar-button'
 import { scheduleOsNotification, cancelOsNotification } from '@/lib/services/notification-service'
 import {
   DeviceTimer,
+  DeviceEvent,
   DEVICE_PRESETS,
   DEVICE_TIMER_SUBCATEGORY,
+  DEVICE_LOG_SUBCATEGORY,
   getDeviceConfig,
   deviceDisplayName,
   getTimeRemaining,
 } from './device-types'
+
+// Downscale + compress an image File to a base64 JPEG data URL so a sensor-box
+// photo doesn't bloat the record. Longest edge capped, quality 0.7.
+async function fileToCompressedDataUrl(file: File, maxEdge = 1024): Promise<string> {
+  const dataUrl = await new Promise<string>((resolve, reject) => {
+    const r = new FileReader()
+    r.onload = () => resolve(r.result as string)
+    r.onerror = reject
+    r.readAsDataURL(file)
+  })
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const i = new Image()
+      i.onload = () => resolve(i)
+      i.onerror = reject
+      i.src = dataUrl
+    })
+    const scale = Math.min(1, maxEdge / Math.max(img.width, img.height))
+    const w = Math.round(img.width * scale)
+    const h = Math.round(img.height * scale)
+    const canvas = document.createElement('canvas')
+    canvas.width = w; canvas.height = h
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return dataUrl
+    ctx.drawImage(img, 0, 0, w, h)
+    return canvas.toDataURL('image/jpeg', 0.7)
+  } catch {
+    return dataUrl // fall back to the raw read if canvas fails
+  }
+}
 
 interface DeviceTimerManagerProps {
   timers: DeviceTimer[]
@@ -58,8 +90,42 @@ export function DeviceTimerManager({ timers, onTimersChange, currentUserId }: De
   const [timerInsertedDate, setTimerInsertedDate] = useState('')
   const [timerInsertedTime, setTimerInsertedTime] = useState('')
   const [timerDays, setTimerDays] = useState('')
+  const [serialNumber, setSerialNumber] = useState('')
+  const [lotNumber, setLotNumber] = useState('')
+  const [photo, setPhoto] = useState('')
 
   const { saveData, getSpecificData } = useDailyData()
+
+  // Append a device-change event to the history log (started/restarted/stopped).
+  // On restart/stop, computes how long the PRIOR instance actually lasted vs its
+  // expected duration — the early-failure signal that powers warranty claims.
+  const logDeviceEvent = async (e: Omit<DeviceEvent, 'id' | 'at'>) => {
+    const day = formatDateForStorage(new Date())
+    const id = `devlog-${Date.now()}-${Math.round(Math.abs((e.timerId || '').split('').reduce((a, c) => a + c.charCodeAt(0), 0)))}`
+    const event: DeviceEvent = { ...e, id, at: new Date().toISOString() }
+    try {
+      const existing = await db.daily_data
+        .where('[date+category+subcategory]')
+        .equals([day, CATEGORIES.HEALTH, DEVICE_LOG_SUBCATEGORY])
+        .first()
+      const list: DeviceEvent[] = existing && Array.isArray(existing.content) ? existing.content as DeviceEvent[] : []
+      list.push(event)
+      await db.daily_data.put({
+        date: day,
+        category: CATEGORIES.HEALTH,
+        subcategory: DEVICE_LOG_SUBCATEGORY,
+        content: list,
+        tags: [],
+        metadata: {
+          created_at: existing?.metadata?.created_at || getCurrentTimestamp(),
+          updated_at: getCurrentTimestamp(),
+          user_id: currentUserId,
+        },
+      })
+    } catch (err) {
+      console.error('Failed to log device event:', err)
+    }
+  }
 
   const activePreset = getDeviceConfig(timerType, customName)
 
@@ -98,6 +164,9 @@ export function DeviceTimerManager({ timers, onTimersChange, currentUserId }: De
     setTimerInsertedDate('')
     setTimerInsertedTime('')
     setTimerDays('')
+    setSerialNumber('')
+    setLotNumber('')
+    setPhoto('')
   }
 
   const onTypeChange = (value: string) => {
@@ -139,6 +208,9 @@ export function DeviceTimerManager({ timers, onTimersChange, currentUserId }: De
       inserted_at: insertedDateTime.toISOString(),
       expires_at: expirationDateTime.toISOString(),
       user_id: currentUserId,
+      serialNumber: serialNumber.trim() || undefined,
+      lotNumber: lotNumber.trim() || undefined,
+      photo: photo || undefined,
     }
 
     try {
@@ -213,6 +285,27 @@ export function DeviceTimerManager({ timers, onTimersChange, currentUserId }: De
 
       await addToCalendar(newTimer)
       await scheduleTimerNotifications(newTimer)
+
+      // Log the change event. On a restart, compute how long the PRIOR instance
+      // actually lasted (replace-now minus old start) vs what was expected —
+      // that's the early-failure / warranty signal.
+      const expectedDays = parseInt(timerDays)
+      if (editingTimer) {
+        const priorStart = new Date(editingTimer.inserted_at).getTime()
+        const actualDays = Math.max(0, Math.round((Date.now() - priorStart) / (1000 * 60 * 60 * 24)))
+        await logDeviceEvent({
+          timerId: newTimer.id, type: newTimer.type, customName: newTimer.customName, name: newTimer.name,
+          action: 'restarted', inserted_at: newTimer.inserted_at, expires_at: newTimer.expires_at,
+          expectedDays, actualDays, earlyFailure: actualDays < expectedDays - 1,
+          serialNumber: newTimer.serialNumber, lotNumber: newTimer.lotNumber,
+        })
+      } else {
+        await logDeviceEvent({
+          timerId: newTimer.id, type: newTimer.type, customName: newTimer.customName, name: newTimer.name,
+          action: 'started', inserted_at: newTimer.inserted_at, expires_at: newTimer.expires_at,
+          expectedDays, serialNumber: newTimer.serialNumber, lotNumber: newTimer.lotNumber,
+        })
+      }
     } catch (error) {
       console.error('❌ Failed to save device timer:', error)
       toast({ title: 'Error', description: 'Failed to save timer. Please try again.', variant: 'destructive' })
@@ -292,6 +385,9 @@ export function DeviceTimerManager({ timers, onTimersChange, currentUserId }: De
     const expiresDate = new Date(timer.expires_at)
     const daysDiff = Math.ceil((expiresDate.getTime() - insertedDate.getTime()) / (1000 * 60 * 60 * 24))
     setTimerDays(daysDiff.toString())
+    setSerialNumber(timer.serialNumber || '')
+    setLotNumber(timer.lotNumber || '')
+    setPhoto(timer.photo || '')
 
     setIsTimerModalOpen(true)
   }
@@ -326,6 +422,18 @@ export function DeviceTimerManager({ timers, onTimersChange, currentUserId }: De
 
       await removeFromCalendar(timerToDelete)
       await cancelTimerNotifications(id)
+
+      // Log the stop with how long it actually lasted.
+      const startedMs = new Date(timerToDelete.inserted_at).getTime()
+      const expectedDays = Math.max(1, Math.round((new Date(timerToDelete.expires_at).getTime() - startedMs) / (1000 * 60 * 60 * 24)))
+      const actualDays = Math.max(0, Math.round((Date.now() - startedMs) / (1000 * 60 * 60 * 24)))
+      await logDeviceEvent({
+        timerId: timerToDelete.id, type: timerToDelete.type, customName: timerToDelete.customName, name: timerToDelete.name,
+        action: 'stopped', inserted_at: timerToDelete.inserted_at, expires_at: timerToDelete.expires_at,
+        expectedDays, actualDays, earlyFailure: actualDays < expectedDays - 1,
+        serialNumber: timerToDelete.serialNumber, lotNumber: timerToDelete.lotNumber,
+      })
+
       onTimersChange(timers.filter(t => t.id !== id))
 
       toast({ title: '⏹️ Timer Stopped', description: `${timerToDelete.name} has been removed.` })
@@ -426,6 +534,46 @@ export function DeviceTimerManager({ timers, onTimersChange, currentUserId }: De
                 </p>
               </div>
 
+              {/* Warranty info — serial / lot / photo. Saves you when it dies early. */}
+              <div className="space-y-3 rounded-lg border border-border p-3">
+                <p className="text-xs font-medium text-muted-foreground">
+                  Warranty info (optional) — worth it when a sensor dies on day 5
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="serial" className="text-xs">Serial #</Label>
+                    <Input id="serial" value={serialNumber} onChange={(e) => setSerialNumber(e.target.value)} placeholder="device serial" />
+                  </div>
+                  <div>
+                    <Label htmlFor="lot" className="text-xs">Lot / Batch #</Label>
+                    <Input id="lot" value={lotNumber} onChange={(e) => setLotNumber(e.target.value)} placeholder="lot number" />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="devphoto" className="text-xs">Photo of box / sensor</Label>
+                  <Input
+                    id="devphoto"
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={async (e) => {
+                      const f = e.target.files?.[0]
+                      if (f) {
+                        try { setPhoto(await fileToCompressedDataUrl(f)) }
+                        catch { toast({ title: 'Photo error', description: 'Could not read that image.', variant: 'destructive' }) }
+                      }
+                    }}
+                  />
+                  {photo && (
+                    <div className="mt-2 flex items-center gap-2">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={photo} alt="device" className="h-16 w-16 rounded object-cover border border-border" />
+                      <Button type="button" variant="ghost" size="sm" className="text-xs text-destructive" onClick={() => setPhoto('')}>Remove</Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <div className="flex justify-end gap-2 pt-2">
                 <Button type="button" variant="outline" onClick={() => setIsTimerModalOpen(false)}>Cancel</Button>
                 <Button onClick={startTimer}>{editingTimer ? 'Restart Timer' : 'Start Timer'}</Button>
@@ -463,6 +611,21 @@ export function DeviceTimerManager({ timers, onTimersChange, currentUserId }: De
                           <div className="text-sm text-muted-foreground truncate">
                             {deviceDisplayName(timer)} · started {new Date(timer.inserted_at).toLocaleDateString()}
                           </div>
+                          {(timer.serialNumber || timer.lotNumber || timer.photo) && (
+                            <div className="flex items-center gap-2 mt-1">
+                              {timer.photo && (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={timer.photo} alt="device" className="h-8 w-8 rounded object-cover border border-border shrink-0" />
+                              )}
+                              {(timer.serialNumber || timer.lotNumber) && (
+                                <div className="text-xs text-muted-foreground truncate">
+                                  {timer.serialNumber && <>SN: {timer.serialNumber}</>}
+                                  {timer.serialNumber && timer.lotNumber && ' · '}
+                                  {timer.lotNumber && <>Lot: {timer.lotNumber}</>}
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                       <div className="text-right shrink-0">

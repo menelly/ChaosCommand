@@ -69,6 +69,12 @@ export default function MaintainDevicesPage() {
         />
 
         <div className="flex justify-center pt-2">
+          <Button variant="outline" size="sm" asChild>
+            <a href="/maintain/devices/history">📋 Device change history &amp; early failures</a>
+          </Button>
+        </div>
+
+        <div className="flex justify-center">
           <Button variant="outline" asChild>
             <a href="/maintain"><ArrowLeft className="h-4 w-4 mr-2" />Back to Maintain</a>
           </Button>

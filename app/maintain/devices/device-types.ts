@@ -26,7 +26,35 @@ export interface DeviceTimer {
   inserted_at: string    // ISO — when applied/inserted/injected
   expires_at: string     // ISO — when it needs changing/next dose
   user_id: string
+  serialNumber?: string  // device serial — warranty claims when it dies early
+  lotNumber?: string     // lot/batch number — same
+  photo?: string         // base64 data URL of the box/sensor (warranty evidence)
 }
+
+// A historical device-change event. Logged on every start / restart / stop so
+// you get a real change-log: how often you swap each device, and — the
+// warranty gold — whether it died EARLY (actualDays < expectedDays). When a
+// Dexcom quits on day 5, this is the record (plus the serial) that gets you a
+// free replacement instead of a shrug.
+export interface DeviceEvent {
+  id: string
+  timerId: string
+  type: string
+  customName?: string
+  name: string
+  action: "started" | "restarted" | "stopped"
+  at: string             // ISO — when the action happened
+  inserted_at: string    // the (new) instance's start
+  expires_at: string
+  expectedDays: number
+  actualDays?: number    // restarted/stopped: how long the PRIOR instance lasted
+  earlyFailure?: boolean // actualDays meaningfully short of expectedDays
+  serialNumber?: string
+  lotNumber?: string
+}
+
+// Stored under HEALTH like the timers themselves; one record per event (unique id).
+export const DEVICE_LOG_SUBCATEGORY = "device-timer-log"
 
 export interface DevicePreset {
   key: string
