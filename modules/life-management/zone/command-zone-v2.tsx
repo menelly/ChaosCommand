@@ -30,6 +30,7 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog'
+import { useConfirmDialog } from '@/components/ui/confirm-dialog'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Plus, Package, Clock, Sparkles, ChevronRight, ChevronDown, Backpack, Heart, Pencil, Trash2, ExternalLink, Settings2, Eye } from 'lucide-react'
@@ -152,6 +153,7 @@ function CollapsibleSection({ id, title, icon, sections, children }: {
 }
 
 export default function CommandZone() {
+  const { confirm, confirmDialog } = useConfirmDialog()
   const sections = useCollapsibleSections()
   const [hiddenSections, setHiddenSections] = useState<string[]>([])
   const [isCustomizeOpen, setIsCustomizeOpen] = useState(false)
@@ -496,10 +498,10 @@ export default function CommandZone() {
     saveTasks(updatedTasks)
   }
 
-  const clearCompletedTasks = () => {
+  const clearCompletedTasks = async () => {
     const completedCount = dailyTasks.filter(t => t.completed).length
     if (completedCount === 0) return
-    if (completedCount > 5 && !window.confirm(`Clear ${completedCount} completed tasks?`)) return
+    if (completedCount > 5 && !(await confirm({ title: `Clear ${completedCount} completed tasks?`, confirmText: 'Clear', destructive: true }))) return
     const remaining = dailyTasks.filter(t => !t.completed)
     setDailyTasks(remaining)
     saveTasks(remaining)
@@ -563,6 +565,7 @@ export default function CommandZone() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
+      {confirmDialog}
       <div className="text-center mb-8">
         <h1 className="text-4xl font-bold text-primary mb-2">Command Zone</h1>
         <p className="text-muted-foreground">Your daily quest hub - let's get stuff done! ✨</p>

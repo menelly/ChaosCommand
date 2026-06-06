@@ -554,9 +554,9 @@ export default function LabResultsPage() {
                     {isExpanded && (
                       <div className="mt-4 pt-4 border-t border-[var(--border-soft)]">
                         <div className="overflow-x-auto">
-                          <table className="w-full text-sm">
+                          <table className="w-full text-sm min-w-[680px]">
                             <thead>
-                              <tr className="text-left text-[var(--text-muted)]">
+                              <tr className="text-left text-[var(--text-muted)] whitespace-nowrap">
                                 <th className="py-2 pr-2">Test</th>
                                 <th className="py-2 pr-2">Result</th>
                                 <th className="py-2 pr-2">Unit</th>
@@ -656,7 +656,7 @@ export default function LabResultsPage() {
                                   return (
                                     <tr
                                       key={idx}
-                                      className={`border-t border-[var(--border-soft)] ${
+                                      className={`border-t border-[var(--border-soft)] whitespace-nowrap ${
                                         result.is_abnormal ? 'bg-destructive/10' : ''
                                       }`}
                                     >

@@ -37,6 +37,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useMedicationTracker } from '@/lib/hooks/use-medication-tracker';
 import { useGoblinMode } from '@/lib/goblin-mode-context';
 import { MedicationList } from './medication-list';
@@ -154,8 +155,10 @@ export function MedicationTracker() {
     setEditingMedication(null);
   };
 
+  const { confirm, confirmDialog } = useConfirmDialog();
+
   const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this medication? This action cannot be undone.')) {
+    if (await confirm({ title: 'Delete medication?', description: 'This action cannot be undone.', confirmText: 'Delete', destructive: true })) {
       try {
         await deleteMedication(id);
       } catch (err) {
@@ -224,6 +227,7 @@ export function MedicationTracker() {
 
   return (
     <div className="space-y-6">
+      {confirmDialog}
       {/* Error Display */}
       {error && (
         <Alert variant="destructive">
