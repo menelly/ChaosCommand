@@ -29,6 +29,7 @@
  */
 
 import { db, DailyDataRecord, CATEGORIES, getCurrentTimestamp } from './dexie-db';
+import { parseAndValidateImportPayload } from './import-schema';
 
 /**
  * Migrate localStorage journal entries to Dexie
@@ -193,7 +194,10 @@ export async function exportAllData(pin?: string): Promise<string> {
  */
 export async function importData(jsonData: string): Promise<void> {
   try {
-    const payload = JSON.parse(jsonData);
+    // CHA-137: validate shape before any DB write — a malformed backup must not
+    // crash mid-import or pollute the store. Throws a user-facing message that
+    // callers already surface via alert().
+    const payload = parseAndValidateImportPayload(jsonData);
 
     let dailyInserted = 0, dailyUpdated = 0, dailySkipped = 0;
     let tagsInserted = 0, tagsUpdated = 0, tagsSkipped = 0;
