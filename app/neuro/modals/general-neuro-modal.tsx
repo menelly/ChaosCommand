@@ -22,7 +22,7 @@ import { EntryDateTimePicker, todayISO, nowTime, dateTimeToISO, isoToDateTime } 
 
 // Symptoms that also belong in the MSK (joint) tracker — these show the
 // "⇄ also log under MSK" checkbox. Mirror of joint's neuro-facing set.
-const DUAL_LISTED: NeuroEpisodeType[] = ['weakness', 'spasticity-cramping', 'fasciculations']
+const DUAL_LISTED: NeuroEpisodeType[] = ['weakness', 'cramping', 'fasciculations']
 
 export function GeneralNeuroModal({ isOpen, onClose, onSave, editingEntry, presetType }: NeuroModalProps) {
   const [entryDate, setEntryDate] = useState(todayISO())
@@ -98,8 +98,9 @@ export function GeneralNeuroModal({ isOpen, onClose, onSave, editingEntry, prese
       treatments,
       duration: duration || undefined,
       erVisitRequired,
-      // Intent signal — the tracker turns this into a real cross-list write.
-      crossListedIn: showCrossList && crossList ? ['neuro', 'joint'] : undefined,
+      // Intent signal — keyed to the checkbox (which loads from the entry itself),
+      // NOT re-derived from the type, so editing never silently drops the link.
+      crossListedIn: crossList ? ['neuro', 'joint'] : undefined,
       notes: notes.trim() || undefined,
       tags: tags.length > 0 ? tags : undefined,
     }
@@ -126,7 +127,7 @@ export function GeneralNeuroModal({ isOpen, onClose, onSave, editingEntry, prese
               </Button>
             </CollapsibleTrigger>
             <CollapsibleContent className="pt-3">
-              <Select value={episodeType} onValueChange={(v) => setEpisodeType(v as NeuroEpisodeType)}>
+              <Select value={episodeType} onValueChange={(v) => { const t = v as NeuroEpisodeType; setEpisodeType(t); if (!DUAL_LISTED.includes(t)) setCrossList(false) }}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{EPISODE_TYPES.map(t => <SelectItem key={t.id} value={t.id} textValue={t.name}>{t.icon} {t.name}</SelectItem>)}</SelectContent>
               </Select>
@@ -135,7 +136,7 @@ export function GeneralNeuroModal({ isOpen, onClose, onSave, editingEntry, prese
 
           {/* ⇄ Cross-list — only for the dual-listed neuromuscular symptoms */}
           {showCrossList && (
-            <div className="flex items-start space-x-2 rounded-lg border-2 border-violet-200 bg-violet-50/50 dark:bg-violet-950/20 p-3">
+            <div className="flex items-start space-x-2 rounded-lg border-2 border-primary/40 bg-primary/10 p-3">
               <Checkbox id="crosslist" checked={crossList} onCheckedChange={(v) => setCrossList(!!v)} className="mt-0.5" />
               <Label htmlFor="crosslist" className="text-sm leading-snug">
                 ⇄ Also log under <strong>MSK / Joints &amp; Muscles</strong>

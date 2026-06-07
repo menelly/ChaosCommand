@@ -72,10 +72,22 @@ export function JointAnalytics({ refreshTrigger }: { refreshTrigger: number }) {
     const swellingCount = allEntries.filter(e => e.swellingPresent).length
     const bruisingCount = allEntries.filter(e => e.bruisingPresent).length
 
-    return { total, last7, typeCounts, jointCounts, triggerCounts, treatmentCounts, avgTreatmentResponse, selfReducedCount, erCount, subluxOrDislocCount, selfReducedRatio, severityBuckets, swellingCount, bruisingCount }
+    // ROM restriction (romImpactedPercent = % of normal; lower = worse). Core
+    // rheum/ortho progression signal — was never surfaced in analytics before.
+    const romValues = allEntries.map(e => e.romImpactedPercent).filter((v): v is number => typeof v === 'number')
+    const avgRom = romValues.length ? Math.round(romValues.reduce((a, b) => a + b, 0) / romValues.length) : null
+    const worstRom = romValues.length ? Math.min(...romValues) : null
+
+    // Muscle-group frequency (weakness / cramping / fasciculations) — the muscle
+    // analog of jointCounts; muscle events were never aggregated anywhere.
+    const muscleCounts: Record<string, number> = {}
+    for (const e of allEntries) for (const m of (e.musclesAffected || [])) muscleCounts[m] = (muscleCounts[m] || 0) + 1
+
+    return { total, last7, typeCounts, jointCounts, muscleCounts, triggerCounts, treatmentCounts, avgTreatmentResponse, selfReducedCount, erCount, subluxOrDislocCount, selfReducedRatio, severityBuckets, swellingCount, bruisingCount, romValues, avgRom, worstRom }
   }, [allEntries])
 
   const sortedJoints = Object.entries(stats.jointCounts).sort((a, b) => b[1] - a[1]).slice(0, 10)
+  const sortedMuscles = Object.entries(stats.muscleCounts).sort((a, b) => b[1] - a[1]).slice(0, 10)
   const sortedTriggers = Object.entries(stats.triggerCounts).sort((a, b) => b[1] - a[1]).slice(0, 8)
   const sortedTreatments = Object.entries(stats.treatmentCounts).sort((a, b) => b[1] - a[1]).slice(0, 8)
 
@@ -128,6 +140,36 @@ export function JointAnalytics({ refreshTrigger }: { refreshTrigger: number }) {
                 </div>
               )
             })}
+          </CardContent>
+        </Card>
+      )}
+
+      {sortedMuscles.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><Activity className="h-4 w-4" /> Most Affected Muscle Groups (weakness / cramping / fasciculations)</CardTitle></CardHeader>
+          <CardContent className="space-y-2">
+            {sortedMuscles.map(([m, c]) => {
+              const pct = (c / stats.total) * 100
+              return (
+                <div key={m} className="space-y-1">
+                  <div className="flex items-center justify-between text-sm"><span>{m}</span><span className="text-muted-foreground">{c} events ({pct.toFixed(0)}%)</span></div>
+                  <div className="w-full bg-muted rounded-full h-2 overflow-hidden"><div className="bg-primary h-2" style={{ width: `${pct}%` }} /></div>
+                </div>
+              )
+            })}
+          </CardContent>
+        </Card>
+      )}
+
+      {stats.romValues.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><Activity className="h-4 w-4" /> Range of Motion (rheum / ortho progression)</CardTitle></CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div className="text-center"><div className="text-xs uppercase text-muted-foreground">Mean ROM</div><div className="text-2xl font-bold">{stats.avgRom}%<span className="text-sm font-normal text-muted-foreground"> of normal</span></div></div>
+              <div className="text-center"><div className="text-xs uppercase text-muted-foreground">Worst ROM</div><div className="text-2xl font-bold text-destructive">{stats.worstRom}%<span className="text-sm font-normal text-muted-foreground"> of normal</span></div></div>
+            </div>
+            <p className="text-xs text-muted-foreground mt-3 text-center">Across {stats.romValues.length} event{stats.romValues.length !== 1 ? 's' : ''} where ROM was recorded. 100% = full normal motion; lower = more restricted.</p>
           </CardContent>
         </Card>
       )}

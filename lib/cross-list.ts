@@ -43,6 +43,11 @@ async function readEntries(fns: CrossListDataFns, date: string, sub: string): Pr
   return Array.isArray(entries) ? entries : []
 }
 
+// Optional translator: reshape the shared entry into the form NATIVE to each
+// target subcategory before writing, so trackers that store the same concepts
+// under different field names still render fully. Identity by default.
+export type CrossListTranslate = (entry: any, targetSub: string) => any
+
 // Upsert the entry (by id) into BOTH subcategories under the entry's own date,
 // tagged so each side knows it is shared. Idempotent: re-running replaces in place.
 export async function crossListSave(
@@ -50,12 +55,14 @@ export async function crossListSave(
   primarySub: string,
   secondarySub: string,
   entry: CrossListable,
+  translate?: CrossListTranslate,
 ): Promise<void> {
   const tagged = { ...entry, crossListedIn: [primarySub, secondarySub] }
   const date = tagged.date
   for (const sub of [primarySub, secondarySub]) {
     const existing = await readEntries(fns, date, sub)
-    const next = [...existing.filter((e: any) => e.id !== tagged.id), tagged]
+    const toWrite = translate ? translate(tagged, sub) : tagged
+    const next = [...existing.filter((e: any) => e.id !== tagged.id), toWrite]
     await fns.saveData(date, CATEGORIES.TRACKER, sub, { entries: next })
   }
 }
@@ -66,8 +73,9 @@ export async function crossListUpdate(
   primarySub: string,
   secondarySub: string,
   entry: CrossListable,
+  translate?: CrossListTranslate,
 ): Promise<void> {
-  return crossListSave(fns, primarySub, secondarySub, entry)
+  return crossListSave(fns, primarySub, secondarySub, entry, translate)
 }
 
 // Remove the shared id from both subcategories.

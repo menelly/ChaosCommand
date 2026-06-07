@@ -64,7 +64,7 @@ export function NeuroHistory({ onEdit, onDelete, refreshTrigger }: { onEdit: (e:
                       <span className="text-lg">{info.icon}</span>
                       <span className="font-semibold">{info.name}</span>
                       {entry.severity && <Badge variant="outline" className={getSeverityColor(entry.severity)}>{getSeverityLabel(entry.severity)} ({entry.severity}/10)</Badge>}
-                      {isCrossListed(entry) && <Badge variant="outline" className="bg-violet-100 text-violet-800 border-violet-200">⇄ MSK</Badge>}
+                      {isCrossListed(entry) && <Badge variant="outline" className="border-primary/50 text-primary">⇄ MSK</Badge>}
                       {entry.erVisitRequired && <Badge variant="destructive">ER</Badge>}
                     </div>
                     <div className="flex gap-1">

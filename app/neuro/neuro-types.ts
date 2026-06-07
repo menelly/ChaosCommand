@@ -11,7 +11,7 @@ export type NeuroEpisodeType =
   | 'gait-balance'
   | 'vision'
   | 'tremor'
-  | 'spasticity-cramping'
+  | 'cramping'
   | 'fasciculations'
   | 'speech-swallow'
   | 'sensory-episode'

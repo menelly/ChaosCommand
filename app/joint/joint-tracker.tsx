@@ -23,6 +23,7 @@ import { JointHistory } from './joint-history'
 import { JointAnalytics } from './joint-analytics'
 import { GeneralJointModal } from './modals/general-joint-modal'
 import { crossListSave, crossListDelete, isCrossListed } from '@/lib/cross-list'
+import { neuroJointTranslate } from '@/lib/cross-list-neuro-joint'
 
 export default function JointTracker() {
   const { saveData, getCategoryData } = useDailyData()
@@ -61,8 +62,8 @@ export default function JointTracker() {
     const { timestamp: ts, date: d, ...rest } = data
     const newEntry: JointEntry = { id: Date.now().toString(), timestamp: ts || new Date().toISOString(), date: d || selectedDate, ...rest }
     if (isCrossListed(newEntry)) {
-      // Shared write into BOTH joint + neuro; reload to resync local view.
-      await crossListSave({ saveData, getCategoryData }, 'joint', 'neuro', newEntry)
+      // Shared write into BOTH joint + neuro, each in its native field shape.
+      await crossListSave({ saveData, getCategoryData }, 'joint', 'neuro', newEntry, neuroJointTranslate)
     } else {
       await saveEntries([...entries, newEntry])
     }
@@ -79,7 +80,7 @@ export default function JointTracker() {
     const updated: JointEntry = { ...editingEntry, ...data, id: editingEntry.id }
     const fns = { saveData, getCategoryData }
     if (isCrossListed(updated)) {
-      await crossListSave(fns, 'joint', 'neuro', updated)
+      await crossListSave(fns, 'joint', 'neuro', updated, neuroJointTranslate)
     } else if (isCrossListed(editingEntry)) {
       // Was cross-listed, now isn't: pull from both, then re-add to joint only.
       await crossListDelete(fns, 'joint', 'neuro', editingEntry.date, editingEntry.id)
@@ -170,7 +171,7 @@ export default function JointTracker() {
                               {entry.jointAffected && entry.jointAffected.length > 0 && <Badge variant="outline">{entry.jointAffected.slice(0, 2).join(', ')}{entry.jointAffected.length > 2 ? '...' : ''}</Badge>}
                               {entry.attachmentImages && entry.attachmentImages.length > 0 && <Badge variant="outline" className="bg-info/10 text-info border-blue-300">📎 {entry.attachmentImages.length}</Badge>}
                               {entry.selfReducedFlag && <Badge variant="secondary">Self-reduced</Badge>}
-                              {isCrossListed(entry) && <Badge variant="outline" className="bg-violet-100 text-violet-800 border-violet-200">⇄ Neuro</Badge>}
+                              {isCrossListed(entry) && <Badge variant="outline" className="border-primary/50 text-primary">⇄ Neuro</Badge>}
                               {entry.erVisitRequired && <Badge variant="destructive">ER</Badge>}
                             </div>
                             <div className="text-xs text-muted-foreground">

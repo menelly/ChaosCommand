@@ -24,6 +24,7 @@ import { NeuroHistory } from './neuro-history'
 import { NeuroAnalytics } from './neuro-analytics'
 import { GeneralNeuroModal } from './modals/general-neuro-modal'
 import { crossListSave, crossListDelete, isCrossListed } from '@/lib/cross-list'
+import { neuroJointTranslate } from '@/lib/cross-list-neuro-joint'
 
 export default function NeuroTracker() {
   const { saveData, getCategoryData } = useDailyData()
@@ -62,8 +63,8 @@ export default function NeuroTracker() {
     const { timestamp: ts, date: d, ...rest } = data
     const newEntry: NeuroEntry = { id: Date.now().toString(), timestamp: ts || new Date().toISOString(), date: d || selectedDate, ...rest }
     if (isCrossListed(newEntry)) {
-      // Shared write into BOTH neuro + joint; reload to resync local view.
-      await crossListSave({ saveData, getCategoryData }, 'neuro', 'joint', newEntry)
+      // Shared write into BOTH neuro + joint, each in its native field shape.
+      await crossListSave({ saveData, getCategoryData }, 'neuro', 'joint', newEntry, neuroJointTranslate)
     } else {
       await saveEntries([...entries, newEntry])
     }
@@ -80,8 +81,8 @@ export default function NeuroTracker() {
     const updated: NeuroEntry = { ...editingEntry, ...data, id: editingEntry.id }
     const fns = { saveData, getCategoryData }
     if (isCrossListed(updated)) {
-      // Now cross-listed (or still): upsert by id in both subcategories.
-      await crossListSave(fns, 'neuro', 'joint', updated)
+      // Now cross-listed (or still): upsert by id in both subcategories (native shape each).
+      await crossListSave(fns, 'neuro', 'joint', updated, neuroJointTranslate)
     } else if (isCrossListed(editingEntry)) {
       // Was cross-listed, now isn't: pull from both, then re-add to neuro only.
       await crossListDelete(fns, 'neuro', 'joint', editingEntry.date, editingEntry.id)
@@ -186,7 +187,7 @@ export default function NeuroTracker() {
                               <span className="text-lg">{info.icon}</span>
                               <span className="font-semibold">{info.name}</span>
                               {entry.distribution && entry.distribution.length > 0 && <Badge variant="outline">{entry.distribution.slice(0, 2).join(', ')}{entry.distribution.length > 2 ? '...' : ''}</Badge>}
-                              {isCrossListed(entry) && <Badge variant="outline" className="bg-violet-100 text-violet-800 border-violet-200">⇄ MSK</Badge>}
+                              {isCrossListed(entry) && <Badge variant="outline" className="border-primary/50 text-primary">⇄ MSK</Badge>}
                               {entry.erVisitRequired && <Badge variant="destructive">ER</Badge>}
                             </div>
                             <div className="text-xs text-muted-foreground">

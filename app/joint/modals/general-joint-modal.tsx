@@ -18,7 +18,7 @@ import { EPISODE_TYPES, JOINTS, MUSCLES, isMuscleEpisode, TRIGGER_ACTIVITIES, TR
 
 // Muscle symptoms that also belong in the Neuro tracker — these show the
 // "⇄ also log under Neuro" checkbox. Mirror of neuro's MSK-facing set
-// (neuro's 'spasticity-cramping' corresponds to joint's 'cramping').
+// (the dual-listed ids — weakness/cramping/fasciculations — now match in both).
 const DUAL_LISTED: JointEpisodeType[] = ['weakness', 'cramping', 'fasciculations']
 import { TagInput } from '@/components/tag-input'
 import { KeyboardAvoidingWrapper } from '@/components/ui/keyboard-avoiding-wrapper'
@@ -123,8 +123,9 @@ export function GeneralJointModal({ isOpen, onClose, onSave, editingEntry, prese
       duration: duration || undefined,
       erVisitRequired,
       attachmentImages: attachmentImages.length > 0 ? attachmentImages : undefined,
-      // Intent signal — the tracker turns this into a real cross-list write.
-      crossListedIn: showCrossList && crossList ? ['joint', 'neuro'] : undefined,
+      // Intent signal — keyed to the checkbox (which loads from the entry itself),
+      // NOT re-derived from the type, so editing never silently drops the link.
+      crossListedIn: crossList ? ['joint', 'neuro'] : undefined,
       notes: notes.trim() || undefined,
       tags: tags.length > 0 ? tags : undefined
     }
@@ -156,7 +157,7 @@ export function GeneralJointModal({ isOpen, onClose, onSave, editingEntry, prese
               </Button>
             </CollapsibleTrigger>
             <CollapsibleContent className="pt-3">
-              <Select value={episodeType} onValueChange={(v) => setEpisodeType(v as JointEpisodeType)}>
+              <Select value={episodeType} onValueChange={(v) => { const t = v as JointEpisodeType; setEpisodeType(t); if (!DUAL_LISTED.includes(t)) setCrossList(false) }}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{EPISODE_TYPES.map(t => <SelectItem key={t.id} value={t.id} textValue={t.name}>{t.icon} {t.name}</SelectItem>)}</SelectContent>
               </Select>
@@ -165,7 +166,7 @@ export function GeneralJointModal({ isOpen, onClose, onSave, editingEntry, prese
 
           {/* ⇄ Cross-list — only for the dual-listed neuromuscular symptoms */}
           {showCrossList && (
-            <div className="flex items-start space-x-2 rounded-lg border-2 border-violet-200 bg-violet-50/50 dark:bg-violet-950/20 p-3">
+            <div className="flex items-start space-x-2 rounded-lg border-2 border-primary/40 bg-primary/10 p-3">
               <Checkbox id="crosslist" checked={crossList} onCheckedChange={(v) => setCrossList(!!v)} className="mt-0.5" />
               <Label htmlFor="crosslist" className="text-sm leading-snug">
                 ⇄ Also log under <strong>Neuro / Neuromuscular</strong>
