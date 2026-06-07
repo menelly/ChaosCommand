@@ -1070,6 +1070,10 @@ export function generateMedicalReport(data: ReportData): Blob {
     w.sectionHeader('Respiratory Assessment')
     let total = 0, redZone = 0, asthma = 0, allergic = 0, er = 0
     const types: Record<string, number> = {}
+    // Objective vitals — field names verified against respiratory modals
+    // (peakFlowReading L/min, spo2Lowest %); analytics flags desat at <92.
+    const peakFlows: number[] = []
+    const spo2Lows: number[] = []
     for (const r of respEntries) {
       const entries = Array.isArray(r.content?.entries) ? r.content.entries : [r.content]
       for (const e of entries) {
@@ -1080,10 +1084,25 @@ export function generateMedicalReport(data: ReportData): Blob {
         if (e.episodeType === 'allergic-reaction') allergic++
         if (e.erVisitRequired) er++
         if (e.episodeType) types[e.episodeType] = (types[e.episodeType] || 0) + 1
+        if (typeof e.peakFlowReading === 'number') peakFlows.push(e.peakFlowReading)
+        if (typeof e.spo2Lowest === 'number') spo2Lows.push(e.spo2Lowest)
       }
     }
     w.body(`${total} respiratory events. Asthma attacks: ${asthma}. Allergic reactions: ${allergic}. Red-zone peak flow: ${redZone}. ER: ${er}.`)
     if (redZone >= 1) w.finding(`Red-zone peak flow recorded ${redZone}× — uncontrolled asthma / step-up therapy discussion.`)
+    if (peakFlows.length) {
+      const pfMin = Math.min(...peakFlows)
+      const pfAvg = peakFlows.reduce((a, b) => a + b, 0) / peakFlows.length
+      w.body(`Peak expiratory flow: lowest ${pfMin} L/min, mean ${pfAvg.toFixed(0)} L/min (n=${peakFlows.length} recorded).`)
+    }
+    if (spo2Lows.length) {
+      const spo2Min = Math.min(...spo2Lows)
+      const spo2Avg = spo2Lows.reduce((a, b) => a + b, 0) / spo2Lows.length
+      const desat = spo2Lows.filter(v => v < 92).length
+      w.body(`Lowest SpO2 per episode: min ${spo2Min}%, mean ${spo2Avg.toFixed(0)}% (n=${spo2Lows.length} recorded).`)
+      if (desat) w.finding(`SpO2 below 92% on ${desat}/${spo2Lows.length} recorded episode${desat !== 1 ? 's' : ''}` +
+        (spo2Min < 88 ? `; nadir ${spo2Min}% is below the 88% red-flag threshold.` : '.'))
+    }
     const typeRows = Object.entries(types).sort((a, b) => b[1] - a[1]).map(([t, c]) => [t, String(c)])
     if (typeRows.length) w.table(['Episode type', 'Count'], typeRows, [240, 80])
   }
@@ -1664,14 +1683,18 @@ export function generateMedicalReport(data: ReportData): Blob {
   const sleepEntries = trackerData.filter(r => (r.subcategory || '').startsWith('sleep'))
   if (sleepEntries.length) {
     w.sectionHeader(isDoctor ? 'Sleep Assessment' : 'Sleep Summary')
-    const hoursList: number[] = []
 
+    // Parse each night's content once. Field names verified against
+    // app/sleep/sleep-form.tsx + sleep-constants.ts (SleepEntry shape).
+    const nights: any[] = []
     for (const r of sleepEntries) {
-      let content = r.content || {}
+      let content: any = r.content || {}
       if (typeof content === 'string') { try { content = JSON.parse(content) } catch { continue } }
-      if (content.hoursSlept) hoursList.push(Number(content.hoursSlept))
+      nights.push(content)
     }
 
+    // --- Duration ---
+    const hoursList = nights.map(n => Number(n.hoursSlept)).filter(h => !isNaN(h) && h > 0)
     if (hoursList.length) {
       const avg = hoursList.reduce((a, b) => a + b, 0) / hoursList.length
       if (isDoctor) {
@@ -1679,6 +1702,70 @@ export function generateMedicalReport(data: ReportData): Blob {
       } else {
         w.body(`Averaging ${avg.toFixed(1)} hours of sleep per night over ${hoursList.length} nights (worst: ${Math.min(...hoursList).toFixed(1)}h, best: ${Math.max(...hoursList).toFixed(1)}h).`)
       }
+    }
+
+    // --- Quality distribution (Great / Okay / Restless / Terrible) ---
+    const qualityCounts: Record<string, number> = {}
+    for (const n of nights) if (n.quality) qualityCounts[n.quality] = (qualityCounts[n.quality] || 0) + 1
+    const qualityKeys = Object.keys(qualityCounts)
+    if (qualityKeys.length) {
+      const total = qualityKeys.reduce((s, k) => s + qualityCounts[k], 0)
+      const dist = qualityKeys.sort((a, b) => qualityCounts[b] - qualityCounts[a]).map(k => `${k} (${qualityCounts[k]})`).join(', ')
+      w.body(`${isDoctor ? 'Self-rated sleep quality' : 'How sleep felt'}: ${dist}.`)
+      const poor = (qualityCounts['Restless'] || 0) + (qualityCounts['Terrible'] || 0)
+      if (isDoctor && poor && total) {
+        const pct = (poor / total * 100).toFixed(0)
+        if (poor / total >= 0.5) w.finding(`Poor-quality sleep (restless or terrible) reported on ${poor}/${total} nights (${pct}%).`)
+      }
+    }
+
+    // --- Fragmentation (wokeUpMultipleTimes / timesWoken) ---
+    const fragmentedNights = nights.filter(n => n.wokeUpMultipleTimes).length
+    const wokenCounts = nights.map(n => Number(n.timesWoken)).filter(v => !isNaN(v) && v > 0)
+    if (fragmentedNights) {
+      const meanWoken = wokenCounts.length ? wokenCounts.reduce((a, b) => a + b, 0) / wokenCounts.length : 0
+      const wokenPhrase = meanWoken ? ` (mean ${meanWoken.toFixed(1)} awakenings/night when recorded)` : ''
+      if (isDoctor) {
+        w.body(`Sleep fragmentation: multiple nighttime awakenings reported on ${fragmentedNights}/${nights.length} nights${wokenPhrase}.`)
+      } else {
+        w.body(`Woke up multiple times on ${fragmentedNights} of ${nights.length} nights${wokenPhrase}.`)
+      }
+    }
+
+    // --- Non-restorative sleep (wakeFeeling: groggy / exhausted / pain) — a diagnostic criterion ---
+    const nonRestorative = ['groggy', 'exhausted', 'pain']
+    const wakeCounts: Record<string, number> = {}
+    for (const n of nights) if (n.wakeFeeling) wakeCounts[n.wakeFeeling] = (wakeCounts[n.wakeFeeling] || 0) + 1
+    const wakeTotal = Object.values(wakeCounts).reduce((a, b) => a + b, 0)
+    if (wakeTotal) {
+      const nonRestCount = nonRestorative.reduce((s, k) => s + (wakeCounts[k] || 0), 0)
+      if (isDoctor) {
+        if (nonRestCount) {
+          const pct = (nonRestCount / wakeTotal * 100).toFixed(0)
+          w.finding(`Non-restorative sleep (waking groggy, exhausted, or in pain) on ${nonRestCount}/${wakeTotal} nights (${pct}%).` +
+            (wakeCounts['pain'] ? ` Woke in pain on ${wakeCounts['pain']} night${wakeCounts['pain'] !== 1 ? 's' : ''}.` : ''))
+        }
+      } else if (nonRestCount) {
+        w.body(`Woke up unrested (groggy, exhausted, or in pain) on ${nonRestCount} of ${wakeTotal} nights.`)
+      }
+    }
+
+    // --- Naps (hadNap / napDuration) ---
+    const napNights = nights.filter(n => n.hadNap)
+    if (napNights.length) {
+      const napDurations = napNights.map(n => Number(n.napDuration)).filter(v => !isNaN(v) && v > 0)
+      const avgNap = napDurations.length ? napDurations.reduce((a, b) => a + b, 0) / napDurations.length : 0
+      const napPhrase = avgNap ? ` (avg ${avgNap.toFixed(0)} min)` : ''
+      w.body(`${isDoctor ? 'Daytime naps' : 'Took daytime naps'}: ${napNights.length}/${nights.length} days${napPhrase}.`)
+    }
+
+    // --- Sleep aids used (sleepAids[]) ---
+    const aidCounts: Record<string, number> = {}
+    for (const n of nights) if (Array.isArray(n.sleepAids)) for (const a of n.sleepAids) aidCounts[a] = (aidCounts[a] || 0) + 1
+    const aidKeys = Object.keys(aidCounts)
+    if (aidKeys.length) {
+      const topAids = aidKeys.sort((a, b) => aidCounts[b] - aidCounts[a]).slice(0, 6).map(k => `${k} (${aidCounts[k]})`).join(', ')
+      w.body(`${isDoctor ? 'Sleep aids reported' : 'Sleep aids used'}: ${topAids}.`)
     }
   }
 
