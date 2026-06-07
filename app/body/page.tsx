@@ -36,6 +36,7 @@ import {
   Heart,
   Utensils,
   Shield,
+  Dna,
   Droplets,
   MapPin,
   Cloud,
@@ -269,6 +270,14 @@ export default function PhysicalHealthIndex() {
       icon: <Brain className="h-5 w-5" />,
       edition: 'cares'
     },
+    {
+      id: 'autoimmune',
+      name: 'Autoimmune / Connective Tissue',
+      shortDescription: 'Sicca, Raynaud’s, mechanic’s hands, inflammatory arthritis, flares',
+      helpContent: 'Track systemic autoimmune / connective-tissue-disease symptoms that don’t fit a single organ: sicca (dry eyes/mouth, hydration failure), Raynaud’s, mechanic’s hands, inflammatory (malar/photosensitive) rashes, inflammatory joint pain and morning stiffness, myalgia/inflammatory weakness, constitutional flares (fatigue/fever/malaise), oral & nasal ulcers, serositis (pleuritic chest pain), swollen glands, difficulty swallowing, and hair loss. Pattern-aware (flaring vs progressive vs sun/cold-triggered). Built-in rheumatology red flags including the immunosuppression-fever rule. Designed for Sjögren’s, lupus, MCTD, antisynthetase, and scleroderma-spectrum tracking. (Hypermobility, dislocations & subluxations from EDS-spectrum connective-tissue disorders live in Bones, Joints & Muscles.)',
+      icon: <Dna className="h-5 w-5" />,
+      edition: 'cares'
+    },
   ]
 
   // Filter trackers based on user's edition AND hidden preferences
@@ -285,7 +294,7 @@ export default function PhysicalHealthIndex() {
     { id: 'ent', label: '👂 Ear, Nose & Throat', trackerIds: ['ent'] },
     { id: 'heart-lungs', label: '❤️ Heart & Lungs', trackerIds: ['cardiac', 'respiratory'] },
     { id: 'gut', label: '🍽️ Gut & Digestive', trackerIds: ['upper-digestive', 'digestive-health'] },
-    { id: 'metabolic', label: '⚡ Metabolic & Immune', trackerIds: ['endocrine', 'food-allergens'] },
+    { id: 'metabolic', label: '⚡ Metabolic & Immune', trackerIds: ['endocrine', 'food-allergens', 'autoimmune'] },
     { id: 'skin', label: '🩹 Skin', trackerIds: ['skin'] },
     { id: 'msk', label: '🦴 Bones, Joints & Muscles', trackerIds: ['joint'] },
     { id: 'reproductive', label: '🌸 Reproductive', trackerIds: ['reproductive-health', 'postpartum', 'gu'] },
@@ -325,6 +334,7 @@ export default function PhysicalHealthIndex() {
       case 'head-pain': return '/head-pain'
       case 'dysautonomia': return '/dysautonomia'
       case 'neuro': return '/neuro'
+      case 'autoimmune': return '/autoimmune'
       case 'food-allergens': return '/food-allergens'
       case 'weather-environment': return '/weather-environment'
       case 'seizure-tracking': return '/seizure'
