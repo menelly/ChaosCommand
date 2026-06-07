@@ -668,18 +668,7 @@ export function generateMedicalReport(data: ReportData): Blob {
       ]
     })
     w.table(['Condition', 'ICD-10 Code', 'Days', 'Entries'], rows, [110, 230, 50, 50])
-    w.note('ICD-10 codes shown are suggestions based on tracked symptoms and may not match official diagnoses. Supporting evidence below.')
-
-    // Supporting evidence subsection — key signals that validate each ICD suggestion
-    w.spacer(4)
-    w.subSection('Supporting evidence (top symptoms/triggers per tracker)')
-    for (const [display] of sorted) {
-      const canonicalKey = displayToKey[display]
-      const evidence = collectEvidence(canonicalKey)
-      if (evidence) {
-        w.bulletBody(display, evidence)
-      }
-    }
+    w.note('ICD-10 codes shown are suggestions based on tracked symptoms and may not match official diagnoses. Detailed per-system findings follow below.')
     w.spacer(6)
   } else {
     w.sectionHeader('What Was Tracked')
@@ -1200,7 +1189,7 @@ export function generateMedicalReport(data: ReportData): Blob {
     }
     if (swelling > 0 || bruising > 0) w.body(`Swelling present: ${swelling}×. Bruising present: ${bruising}×.`)
     if (erVisits > 0) w.finding(`ER visit required for an MSK event ${erVisits}×.`)
-    if (crossListed > 0) w.note(`${crossListed} of these event${crossListed !== 1 ? 's are' : ' is'} also logged under Neuro (⇄ shared entries — same events shown for both specialties, not duplicates).`)
+    if (crossListed > 0) w.note(`${crossListed} of these event${crossListed !== 1 ? 's are' : ' is'} also logged under Neuro (cross-listed: shared entries shown for both specialties, not duplicates).`)
     if (treatmentResp.length) {
       const avgT = treatmentResp.reduce((a, b) => a + b, 0) / treatmentResp.length
       w.body(`Mean treatment response: ${avgT.toFixed(1)}/10 (n=${treatmentResp.length}).`)
@@ -1273,7 +1262,7 @@ export function generateMedicalReport(data: ReportData): Blob {
     if (bulbar) w.finding(`Bulbar symptoms (speech/swallow) logged ${bulbar}× — evaluate for neuromuscular / brainstem involvement.`)
     if (visionEvents) w.body(`Vision events (diplopia / transient loss / optic-neuritis-type): ${visionEvents}.`)
     if (erVisits) w.finding(`ER visit required for a neuro event ${erVisits}×.`)
-    if (crossListed) w.note(`${crossListed} of these event${crossListed !== 1 ? 's are' : ' is'} also logged under MSK / Joints (⇄ shared entries — same events shown for both specialties, not duplicates).`)
+    if (crossListed) w.note(`${crossListed} of these event${crossListed !== 1 ? 's are' : ' is'} also logged under MSK / Joints (cross-listed: shared entries shown for both specialties, not duplicates).`)
 
     const typeRows = Object.entries(types).sort((a, b) => b[1] - a[1]).map(([t, c]) => [t, String(c)])
     if (typeRows.length) {
@@ -1342,7 +1331,7 @@ export function generateMedicalReport(data: ReportData): Blob {
     if (types['lymphadenopathy']) w.body(`Swollen glands / lymphadenopathy: ${types['lymphadenopathy']}.`)
     if (types['alopecia']) w.body(`Autoimmune hair loss: ${types['alopecia']}.`)
     if (erVisits) w.finding(`ER visit required for an autoimmune event ${erVisits}×.`)
-    if (crossListed) w.note(`${crossListed} of these event${crossListed !== 1 ? 's are' : ' is'} also logged under Skin / Joints / Neuro (⇄ shared entries — same events shown for each specialty, not duplicates).`)
+    if (crossListed) w.note(`${crossListed} of these event${crossListed !== 1 ? 's are' : ' is'} also logged under Skin / Joints / Neuro (cross-listed: shared entries shown for each specialty, not duplicates).`)
 
     const typeRows = Object.entries(types).sort((a, b) => b[1] - a[1]).map(([t, c]) => [t, String(c)])
     if (typeRows.length) {
@@ -1358,6 +1347,66 @@ export function generateMedicalReport(data: ReportData): Blob {
     if (charRows.length) {
       w.subSection('Character / quality')
       w.table(['Quality', 'Count'], charRows, [240, 80])
+    }
+  }
+
+  // === AUTOIMMUNE / CONNECTIVE TISSUE (rheumatology) ===
+  // Renders for all audiences (not doctor-gated) so the tracker always exports.
+  // Field names verified against app/autoimmune/autoimmune-types.ts.
+  const aiEntries = trackerData.filter(r => r.subcategory === 'autoimmune')
+  if (aiEntries.length) {
+    w.sectionHeader('Autoimmune / Connective-Tissue Assessment')
+    const types: Record<string, number> = {}
+    const areaFreq: Record<string, number> = {}
+    const trigFreq: Record<string, number> = {}
+    const severities: number[] = []
+    let total = 0, erVisits = 0, flares = 0
+    let serositis = 0, sicca = 0, raynauds = 0, dysphagia = 0, mechanicHands = 0
+    for (const r of aiEntries) {
+      const entries = Array.isArray(r.content?.entries) ? r.content.entries : [r.content]
+      for (const e of entries) {
+        if (!e) continue
+        total++
+        const et = e.episodeType
+        if (et) types[et] = (types[et] || 0) + 1
+        ;(e.affectedAreas || []).forEach((a: string) => { areaFreq[a] = (areaFreq[a] || 0) + 1 })
+        ;(e.triggers || []).forEach((t: string) => { trigFreq[t] = (trigFreq[t] || 0) + 1 })
+        if (typeof e.severity === 'number') severities.push(e.severity)
+        if (e.erVisitRequired) erVisits++
+        if ((e.character || []).some((c: string) => c.includes('flaring') || c.includes('progressive'))) flares++
+        if (et === 'serositis') serositis++
+        if (et === 'sicca-eyes' || et === 'sicca-mouth') sicca++
+        if (et === 'raynauds') raynauds++
+        if (et === 'dysphagia') dysphagia++
+        if (et === 'mechanic-hands') mechanicHands++
+      }
+    }
+    const sevTxt = severities.length
+      ? ` Mean severity ${(severities.reduce((a, b) => a + b, 0) / severities.length).toFixed(1)}/10 (peak ${Math.max(...severities)}/10, n=${severities.length}).`
+      : ''
+    w.body(`${total} autoimmune / connective-tissue events.${sevTxt}${flares ? ` Flaring or progressive on ${flares}.` : ''}`)
+
+    if (sicca) w.body(`Sicca (dry eyes / dry mouth / hydration failure) logged ${sicca}× — Sjögren's / antisynthetase overlap.`)
+    if (mechanicHands) w.finding(`Mechanic's hands logged ${mechanicHands}× — an antisynthetase-specific cutaneous sign.`)
+    if (raynauds) w.body(`Raynaud's logged ${raynauds}×.`)
+    if (serositis) w.finding(`Serositis (pleuritic chest pain) logged ${serositis}× — evaluate for pleural/pericardial involvement.`)
+    if (dysphagia) w.finding(`Dysphagia logged ${dysphagia}× — esophageal dysmotility (scleroderma/myositis spectrum); aspiration risk if severe.`)
+    if (erVisits) w.finding(`ER / urgent care required for an autoimmune event ${erVisits}×.`)
+
+    const typeRows = Object.entries(types).sort((a, b) => b[1] - a[1]).map(([t, c]) => [t, String(c)])
+    if (typeRows.length) {
+      w.subSection('Episode type distribution')
+      w.table(['Type', 'Count'], typeRows, [240, 80])
+    }
+    const areaRows = Object.entries(areaFreq).sort((a, b) => b[1] - a[1]).slice(0, 12).map(([a, c]) => [a, String(c)])
+    if (areaRows.length) {
+      w.subSection('Affected areas')
+      w.table(['Area', 'Events'], areaRows, [240, 80])
+    }
+    const trigRows = Object.entries(trigFreq).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([t, c]) => [t, String(c)])
+    if (trigRows.length) {
+      w.subSection('Suspected triggers')
+      w.table(['Trigger', 'Count'], trigRows, [240, 80])
     }
   }
 
