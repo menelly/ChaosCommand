@@ -7,7 +7,7 @@
  */
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Printer, FileText, Stethoscope, Scale, ChevronRight, ChevronLeft, Download, Loader2, User, X, Lock, AlertTriangle } from "lucide-react"
+import { Printer, FileText, Stethoscope, Scale, ChevronRight, ChevronLeft, Download, Loader2, User, X, Lock, AlertTriangle, Eye } from "lucide-react"
 import { useDailyData } from "@/lib/database/hooks/use-daily-data"
 import { CATEGORIES, formatDateForStorage } from "@/lib/database/dexie-db"
 import { generateMedicalReport } from "@/lib/pdf-report-generator"
@@ -134,13 +134,47 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
   // Step 3: Generate
   const [isGenerating, setIsGenerating] = useState(false)
 
+  // Step 4: Review (preview-before-save). previewUrl drives the in-modal iframe;
+  // previewBlob is the UNENCRYPTED report shown for review. The gathered report
+  // input is cached so Save/Share can re-emit it WITH encryption (if the user
+  // turned password-protect on at the review screen) without refetching data.
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [previewBlob, setPreviewBlob] = useState<Blob | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
+  const reportInputRef = useRef<Omit<Parameters<typeof generateMedicalReport>[0], 'encryptionPassword'> | null>(null)
+
   // Derived report style from audience
   const reportStyle = audience === 'personal' ? 'human' : 'doctor'
+
+  // Tear down the preview object URL whenever we leave the review screen so a
+  // blob of medical data never lingers in memory longer than it's on screen.
+  const clearPreview = () => {
+    setPreviewUrl(prev => {
+      if (prev) URL.revokeObjectURL(prev)
+      return null
+    })
+    setPreviewBlob(null)
+    reportInputRef.current = null
+  }
+
+  // Always revoke on unmount as a backstop (e.g. app closed mid-review).
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl)
+    }
+  }, [previewUrl])
+
+  // Wrap close so dismissing the modal (X / overlay / Esc) also frees the blob.
+  const handleClose = () => {
+    clearPreview()
+    onClose()
+  }
 
   // Load providers + set default date range
   useEffect(() => {
     if (isOpen) {
       setStep(1)
+      clearPreview() // never reopen onto a stale preview from a prior export
       const start = new Date()
       start.setDate(start.getDate() - 90)
       setDateRangeStart(formatDateForStorage(start))
@@ -217,7 +251,7 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
     )
   }
 
-  const handleGenerate = async () => {
+  const handleGeneratePreview = async () => {
     setIsGenerating(true)
     try {
       // Gather all selected data
@@ -320,8 +354,13 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
         })
         .filter(Boolean)
 
-      // Generate PDF client-side
-      const blob = generateMedicalReport({
+      // Build the report input ONCE and cache it. The preview is always rendered
+      // UNENCRYPTED so it displays inline in the iframe — an encrypted PDF would
+      // just prompt for a password instead of showing the content you're trying
+      // to review. Encryption (if the user turns it on at the review screen) is
+      // applied at Save/Share time by re-emitting this same input with a password,
+      // so we never re-query the database just to add the lock.
+      const reportInput = {
         demographics,
         providerName,
         specialty: audience === 'attorney' ? 'ssdi' : specialty,
@@ -359,8 +398,37 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
         workData,
         medications,
         appointments,
-        encryptionPassword: passwordProtect ? pdfPassword : undefined,
-      })
+      }
+      reportInputRef.current = reportInput
+
+      // Generate the unencrypted preview blob and show it for review.
+      const blob = generateMedicalReport(reportInput)
+      clearPreview() // free any prior preview before replacing it
+      const url = URL.createObjectURL(blob)
+      setPreviewBlob(blob)
+      setPreviewUrl(url)
+      setStep(4)
+
+    } catch (e: any) {
+      console.error('Export preview failed:', e)
+      alert(`Export failed: ${e.message}`)
+    } finally {
+      setIsGenerating(false)
+    }
+  }
+
+  // Save / Share — only runs AFTER the user has reviewed the preview. If
+  // password-protect is on, re-emit the cached input WITH the password (the
+  // preview blob is unencrypted); otherwise the reviewed blob is exactly what
+  // gets saved.
+  const handleSaveShare = async () => {
+    const input = reportInputRef.current
+    if (!input || !previewBlob) return
+    setIsSaving(true)
+    try {
+      const blob = passwordProtect && pdfPassword.trim()
+        ? generateMedicalReport({ ...input, encryptionPassword: pdfPassword })
+        : previewBlob
 
       // Download or share the PDF.
       // Web Share API is great on actual phones (lets users send to email,
@@ -385,15 +453,21 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
         URL.revokeObjectURL(url)
       }
 
-      alert('Report generated!')
-      onClose()
-
+      alert('Report saved!')
+      handleClose()
     } catch (e: any) {
-      console.error('Export failed:', e)
+      console.error('Export save failed:', e)
       alert(`Export failed: ${e.message}`)
     } finally {
-      setIsGenerating(false)
+      setIsSaving(false)
     }
+  }
+
+  // Back from the review screen → return to content selection to adjust what's
+  // included, and drop the now-stale preview.
+  const handleBackFromPreview = () => {
+    clearPreview()
+    setStep(2)
   }
 
   const audienceLabel = audience === 'doctor'
@@ -401,7 +475,7 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
     : audience === 'attorney' ? 'Attorney / SSDI' : 'Personal'
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) handleClose() }}>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <KeyboardAvoidingWrapper>
         <DialogHeader>
@@ -414,16 +488,16 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
         <div className="py-4">
           {/* Progress indicator */}
           <div className="flex items-center justify-center gap-2 mb-6">
-            {[1, 2, 3].map(s => (
+            {[1, 2, 3, 4].map(s => (
               <div key={s} className={`flex items-center gap-2 ${s <= step ? 'text-primary' : 'text-muted-foreground'}`}>
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold
                   ${s === step ? 'bg-primary text-primary-foreground' : s < step ? 'bg-primary/30 text-primary' : 'bg-muted text-muted-foreground'}`}>
                   {s}
                 </div>
                 <span className="text-sm hidden sm:inline">
-                  {s === 1 ? 'Who' : s === 2 ? 'What' : 'Generate'}
+                  {s === 1 ? 'Who' : s === 2 ? 'What' : s === 3 ? 'Generate' : 'Review'}
                 </span>
-                {s < 3 && <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                {s < 4 && <ChevronRight className="h-4 w-4 text-muted-foreground" />}
               </div>
             ))}
           </div>
@@ -678,12 +752,67 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
                 </div>
               </div>
 
-              {/* Privacy / encryption — exported PDFs are PHI written to disk */}
+              <div className="flex items-start gap-2 rounded-lg border bg-muted/40 p-3">
+                <Eye className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                <p className="text-xs text-muted-foreground">
+                  Nothing leaves your device yet. The next screen shows the actual PDF so you can
+                  eyeball it — and back out if something's in there you didn't mean to share —
+                  before anything is saved or sent.
+                </p>
+              </div>
+
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setStep(2)} className="flex-1">
+                  <ChevronLeft className="h-4 w-4 mr-2" /> Back
+                </Button>
+                <Button
+                  onClick={handleGeneratePreview}
+                  className="flex-1"
+                  disabled={isGenerating}
+                >
+                  {isGenerating ? (
+                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Generating...</>
+                  ) : (
+                    <><Eye className="h-4 w-4 mr-2" /> Preview Report</>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Step 4: Review the generated PDF before it leaves the device */}
+          {step === 4 && (
+            <div className="space-y-4">
+              <div className="flex items-start gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3">
+                <Eye className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                <p className="text-xs text-foreground">
+                  This is exactly what will be saved/shared. Scroll through it. If something shouldn't
+                  be here, hit <strong>Back</strong> to deselect trackers or exclude tags, then preview again.
+                </p>
+              </div>
+
+              {/* The actual PDF, inline. Unencrypted on purpose so it renders here;
+                  the password (below) is applied to the file you save, not this view. */}
+              {previewUrl ? (
+                <iframe
+                  src={previewUrl}
+                  title="Report preview"
+                  className="w-full h-[55vh] rounded-lg border bg-white"
+                />
+              ) : (
+                <div className="flex items-center justify-center h-[40vh] rounded-lg border text-muted-foreground">
+                  <Loader2 className="h-5 w-5 mr-2 animate-spin" /> Preparing preview…
+                </div>
+              )}
+
+              {/* Privacy / encryption — exported PDFs are PHI written to disk.
+                  Lives on the review screen so the safety decision sits right next
+                  to the content it protects (CHA-247). */}
               <div className="rounded-lg border border-destructive bg-destructive/10 p-3 space-y-3">
                 <div className="flex items-start gap-2">
                   <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
                   <p className="text-xs text-foreground">
-                    This report is <strong>unencrypted medical data</strong> saved to your Downloads folder. Anyone with access to the file can read it. Password-protect it below before sharing or storing.
+                    Saving writes <strong>unencrypted medical data</strong> to your Downloads folder. Anyone with access to the file can read it. Password-protect it below before sharing or storing.
                   </p>
                 </div>
                 <div className="flex items-center justify-between">
@@ -710,18 +839,18 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
               </div>
 
               <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setStep(2)} className="flex-1">
+                <Button variant="outline" onClick={handleBackFromPreview} className="flex-1" disabled={isSaving}>
                   <ChevronLeft className="h-4 w-4 mr-2" /> Back
                 </Button>
                 <Button
-                  onClick={handleGenerate}
+                  onClick={handleSaveShare}
                   className="flex-1"
-                  disabled={isGenerating || (passwordProtect && !pdfPassword.trim())}
+                  disabled={isSaving || !previewBlob || (passwordProtect && !pdfPassword.trim())}
                 >
-                  {isGenerating ? (
-                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Generating...</>
+                  {isSaving ? (
+                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...</>
                   ) : (
-                    <><Download className="h-4 w-4 mr-2" /> Generate PDF</>
+                    <><Download className="h-4 w-4 mr-2" /> Save / Share</>
                   )}
                 </Button>
               </div>
