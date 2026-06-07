@@ -1523,18 +1523,25 @@ export function generateMedicalReport(data: ReportData): Blob {
   const dysEntries = trackerData.filter(r => r.subcategory === 'dysautonomia')
   if (dysEntries.length) {
     w.sectionHeader(isDoctor ? 'Autonomic Assessment' : 'Dysautonomia Summary')
-    const hrDeltas: number[] = []
 
+    // Flatten every saved episode. Storage = r.content.entries[] (DysautonomiaEntry),
+    // and either content OR content.entries can arrive as a JSON string (per dysautonomia-tracker.tsx).
+    const episodes: any[] = []
     for (const r of dysEntries) {
-      const content = r.content || {}
-      const entries = Array.isArray(content.entries) ? content.entries : []
-      for (const e of entries) {
-        if (e?.restingHeartRate && e?.standingHeartRate) {
-          hrDeltas.push(e.standingHeartRate - e.restingHeartRate)
-        }
-      }
+      let content: any = r.content || {}
+      if (typeof content === 'string') { try { content = JSON.parse(content) } catch { continue } }
+      let entries: any = content.entries
+      if (typeof entries === 'string') { try { entries = JSON.parse(entries) } catch { entries = [] } }
+      if (Array.isArray(entries)) episodes.push(...entries)
     }
 
+    // --- Orthostatic HR (POTS) ---
+    const hrDeltas: number[] = []
+    for (const e of episodes) {
+      if (e?.restingHeartRate && e?.standingHeartRate) {
+        hrDeltas.push(e.standingHeartRate - e.restingHeartRate)
+      }
+    }
     if (hrDeltas.length) {
       const avgDelta = hrDeltas.reduce((a, b) => a + b, 0) / hrDeltas.length
       const maxDelta = Math.max(...hrDeltas)
@@ -1551,6 +1558,104 @@ export function generateMedicalReport(data: ReportData): Blob {
           `Heart rate jumped an average of ${avgDelta.toFixed(0)} bpm when standing (worst: ${maxDelta} bpm). ` +
           `Out of ${hrDeltas.length} checks, ${potsDays} met POTS criteria (30+ bpm increase).`
         )
+      }
+    }
+
+    // --- Orthostatic BP (orthostatic hypotension — a distinct entity from POTS) ---
+    // BP saved as "sys/dia" strings (blood-pressure-modal.tsx / general-episode-modal.tsx).
+    const parseBP = (s: any): { sys: number; dia: number } | null => {
+      if (typeof s !== 'string') return null
+      const m = s.match(/(\d{2,3})\s*\/\s*(\d{2,3})/)
+      return m ? { sys: parseInt(m[1], 10), dia: parseInt(m[2], 10) } : null
+    }
+    const sysDrops: number[] = []
+    const diaDrops: number[] = []
+    let ohCount = 0
+    for (const e of episodes) {
+      const sit = parseBP(e?.bloodPressureSitting)
+      const stand = parseBP(e?.bloodPressureStanding)
+      if (sit && stand) {
+        const dSys = sit.sys - stand.sys
+        const dDia = sit.dia - stand.dia
+        sysDrops.push(dSys)
+        diaDrops.push(dDia)
+        // Consensus definition (AAN/AAS): sustained drop >=20 systolic OR >=10 diastolic on standing.
+        if (dSys >= 20 || dDia >= 10) ohCount++
+      }
+    }
+    if (sysDrops.length) {
+      const n = sysDrops.length
+      const avgSys = sysDrops.reduce((a, b) => a + b, 0) / n
+      const avgDia = diaDrops.reduce((a, b) => a + b, 0) / n
+      const maxSys = Math.max(...sysDrops)
+      const maxDia = Math.max(...diaDrops)
+      if (isDoctor) {
+        w.body(`Orthostatic BP change (sitting -> standing): mean drop ${avgSys.toFixed(0)}/${avgDia.toFixed(0)} mmHg (max ${maxSys}/${maxDia} mmHg, n=${n}).`)
+        if (ohCount) {
+          w.finding(
+            `Orthostatic hypotension criteria (systolic drop >= 20 or diastolic drop >= 10 mmHg) met on ` +
+            `${ohCount}/${n} assessments (${(ohCount / n * 100).toFixed(0)}%). ` +
+            `Orthostatic hypotension is distinct from POTS and the two may coexist.`
+          )
+        }
+      } else {
+        w.body(`Blood pressure dropped an average of ${avgSys.toFixed(0)}/${avgDia.toFixed(0)} points when standing (worst: ${maxSys}/${maxDia}).`)
+        if (ohCount) {
+          w.finding(`${ohCount} of ${n} checks showed a drop big enough to meet orthostatic hypotension criteria (a separate problem from POTS).`)
+        }
+      }
+    }
+
+    // --- SpO2 desaturation (spo2-episode-modal.tsx: restingSpO2 / standingSpO2 / lowestSpO2) ---
+    const lowestVals: number[] = []
+    const spo2Drops: number[] = []
+    for (const e of episodes) {
+      if (typeof e?.lowestSpO2 === 'number') lowestVals.push(e.lowestSpO2)
+      if (typeof e?.restingSpO2 === 'number' && typeof e?.standingSpO2 === 'number') {
+        spo2Drops.push(e.restingSpO2 - e.standingSpO2)
+      }
+    }
+    if (lowestVals.length) {
+      const minSpO2 = Math.min(...lowestVals)
+      const below90 = lowestVals.filter(v => v < 90).length
+      const below95 = lowestVals.filter(v => v < 95).length
+      if (isDoctor) {
+        w.body(`SpO2: lowest recorded ${minSpO2}% (n=${lowestVals.length} episodes with oximetry). Readings <95%: ${below95}; <90%: ${below90}.`)
+        if (below90) w.finding(`Desaturation below 90% documented on ${below90} occasion${below90 !== 1 ? 's' : ''}.`)
+      } else {
+        w.body(`Lowest oxygen level recorded: ${minSpO2}%${below90 ? ` (dropped below 90% on ${below90} occasion${below90 !== 1 ? 's' : ''})` : ''}.`)
+      }
+    }
+    if (spo2Drops.length) {
+      const maxDrop = Math.max(...spo2Drops)
+      if (maxDrop > 0) w.body(isDoctor ? `Max positional SpO2 drop (resting -> standing): ${maxDrop}% (n=${spo2Drops.length}).` : `Oxygen dropped by up to ${maxDrop}% when standing.`)
+    }
+
+    // --- Episode picture: type distribution, mean severity, top associated symptoms ---
+    if (episodes.length) {
+      const typeCounts: Record<string, number> = {}
+      const sevVals: number[] = []
+      const sxCounts: Record<string, number> = {}
+      for (const e of episodes) {
+        if (e?.episodeType) typeCounts[e.episodeType] = (typeCounts[e.episodeType] || 0) + 1
+        if (typeof e?.severity === 'number') sevVals.push(e.severity)
+        if (Array.isArray(e?.symptoms)) for (const s of e.symptoms) sxCounts[s] = (sxCounts[s] || 0) + 1
+      }
+      if (sevVals.length) {
+        const avgSev = sevVals.reduce((a, b) => a + b, 0) / sevVals.length
+        w.body(isDoctor
+          ? `Mean episode severity: ${avgSev.toFixed(1)}/10 (n=${sevVals.length}; ${episodes.length} total episodes logged).`
+          : `Average episode severity: ${avgSev.toFixed(1)}/10 across ${episodes.length} logged episodes.`)
+      }
+      const typeKeys = Object.keys(typeCounts)
+      if (typeKeys.length) {
+        const dist = typeKeys.sort((a, b) => typeCounts[b] - typeCounts[a]).map(k => `${k} (${typeCounts[k]})`).join(', ')
+        w.body(`${isDoctor ? 'Episode types' : 'Types of episodes'}: ${dist}.`)
+      }
+      const sxKeys = Object.keys(sxCounts)
+      if (sxKeys.length) {
+        const topSx = sxKeys.sort((a, b) => sxCounts[b] - sxCounts[a]).slice(0, 6).map(k => `${k} (${sxCounts[k]})`).join(', ')
+        w.body(`${isDoctor ? 'Most frequent associated symptoms' : 'Most common symptoms'}: ${topSx}.`)
       }
     }
   }
