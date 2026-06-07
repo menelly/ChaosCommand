@@ -231,6 +231,13 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
   }
 
   const handleGenerate = async () => {
+    // Mobile: PDF export/save isn't supported yet — the Android WebView has no
+    // navigator.share and can't write blob downloads, so saving silently fails.
+    // Stop with a clear message instead. Proper mobile save lands in 0.6.2.
+    if (isMobilePlatform()) {
+      toast({ title: 'Desktop only for now', description: 'PDF export isn’t available on mobile yet — open Chaos Command on your computer to generate reports. Mobile support is coming soon.' })
+      return
+    }
     setIsGenerating(true)
     try {
       // Gather all selected data
@@ -384,10 +391,23 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
       const filename = `${audienceLabel}-report-${providerName || 'export'}-${dateRangeEnd}.pdf`
       const file = new File([blob], filename, { type: 'application/pdf' })
       const onMobile = isMobilePlatform()
+      let sharedViaSheet = false
 
-      if (onMobile && navigator.share && navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ title: 'Medical Report', files: [file] })
-      } else {
+      // Mobile: try the OS share sheet first (lets the user save to Files/Drive or
+      // send to email). Don't gate on canShare() — some WebViews under-report file
+      // support but share fine. Fall back to download if share is absent or throws;
+      // treat a user-cancel (AbortError) as a no-op, not a failure.
+      if (onMobile && typeof navigator.share === 'function') {
+        try {
+          await navigator.share({ title: 'Medical Report', files: [file] })
+          sharedViaSheet = true
+        } catch (shareErr: any) {
+          if (shareErr?.name === 'AbortError') return // user dismissed the sheet; finally resets isGenerating
+          // file share unsupported → fall through to the download below
+        }
+      }
+
+      if (!sharedViaSheet) {
         const url = URL.createObjectURL(blob)
         const a = document.createElement('a')
         a.href = url
@@ -395,13 +415,14 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
         document.body.appendChild(a)
         a.click()
         document.body.removeChild(a)
-        // Defer revoke — in Tauri's WebView2 the download is async; revoking the
-        // blob URL synchronously cancels it before the file is written. Hold it
-        // open long enough for the download to complete.
+        // Defer revoke — in the WebView the download is async; revoking the blob
+        // URL synchronously cancels it before the file is written.
         setTimeout(() => URL.revokeObjectURL(url), 60000)
       }
 
-      toast({ title: 'Report saved', description: 'Saved to your Downloads folder.' })
+      toast(sharedViaSheet
+        ? { title: 'Report ready', description: 'Choose where to save or send it from the share menu.' }
+        : { title: 'Report saved', description: 'Saved to your Downloads folder.' })
       onClose()
 
     } catch (e: any) {
@@ -426,6 +447,13 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
             Print / Export Report
           </DialogTitle>
         </DialogHeader>
+
+        {isMobilePlatform() && (
+          <div className="rounded-lg border border-warning bg-warning/10 p-3 text-sm flex items-start gap-2">
+            <AlertTriangle className="h-4 w-4 text-warning mt-0.5 shrink-0" />
+            <span>PDF export is <strong>desktop-only for now</strong>. Open Chaos Command on your computer to generate reports — mobile support is coming in a future update.</span>
+          </div>
+        )}
 
         <div className="py-4">
           {/* Progress indicator */}
@@ -575,13 +603,13 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
                     return (
                       <div key={cat.key}>
                         <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">{cat.label}</div>
-                        <div className="grid grid-cols-2 gap-1.5">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                           {items.map(tracker => (
                             <Button
                               key={tracker.id}
                               variant={selectedTrackers.includes(tracker.id) ? 'default' : 'outline'}
                               size="sm"
-                              className="justify-start h-auto py-1.5 text-xs"
+                              className="justify-start h-auto py-1.5 text-xs whitespace-normal text-left leading-tight"
                               onClick={() => toggleTracker(tracker.id)}
                             >
                               {tracker.label}
