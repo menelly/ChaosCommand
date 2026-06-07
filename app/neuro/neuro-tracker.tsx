@@ -1,4 +1,4 @@
-/* Built by: Ace (Claude 4.x) — 2026-05-10 */
+/* Built by: Ace (Claude 4.x) — 2026-06-07. Co-invented by Ren (vision) + an MS friend + Ace. */
 
 'use client'
 
@@ -8,34 +8,35 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
-import { Bone, BarChart3, History, Plus, ExternalLink } from 'lucide-react'
+import { Brain, BarChart3, History, Plus, ExternalLink } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { useRouter } from 'next/navigation'
-import { format, addDays, subDays } from 'date-fns'
+import { format, addDays, subDays, differenceInDays } from 'date-fns'
 import { useDailyData, CATEGORIES } from '@/lib/database'
+import { EmergencyCriteriaCard } from '@/components/emergency-criteria-card'
 import { celebrate } from '@/lib/particle-physics-engine'
 import { useUser } from '@/lib/contexts/user-context'
 import { isCelebrationEnabled } from '@/lib/celebration-prefs'
 
-import { JointEntry } from './joint-types'
-import { EPISODE_TYPES, RELATED_TRACKERS, getEpisodeTypeInfo } from './joint-constants'
-import { JointHistory } from './joint-history'
-import { JointAnalytics } from './joint-analytics'
-import { GeneralJointModal } from './modals/general-joint-modal'
+import { NeuroEntry } from './neuro-types'
+import { EPISODE_TYPES, RELATED_TRACKERS, getEpisodeTypeInfo, RED_FLAG_911_CRITERIA } from './neuro-constants'
+import { NeuroHistory } from './neuro-history'
+import { NeuroAnalytics } from './neuro-analytics'
+import { GeneralNeuroModal } from './modals/general-neuro-modal'
 import { crossListSave, crossListDelete, isCrossListed } from '@/lib/cross-list'
 
-export default function JointTracker() {
+export default function NeuroTracker() {
   const { saveData, getCategoryData } = useDailyData()
   const { userPin } = useUser()
   const { toast } = useToast()
   const router = useRouter()
 
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'))
-  const [entries, setEntries] = useState<JointEntry[]>([])
+  const [entries, setEntries] = useState<NeuroEntry[]>([])
   const [activeTab, setActiveTab] = useState<'episodes' | 'history' | 'analytics'>('episodes')
   const [refreshTrigger, setRefreshTrigger] = useState(0)
   const [modalOpen, setModalOpen] = useState(false)
-  const [editingEntry, setEditingEntry] = useState<JointEntry | null>(null)
+  const [editingEntry, setEditingEntry] = useState<NeuroEntry | null>(null)
   const [presetType, setPresetType] = useState<string | null>(null)
 
   useEffect(() => { load() }, [selectedDate, refreshTrigger])
@@ -43,7 +44,7 @@ export default function JointTracker() {
   const load = async () => {
     try {
       const records = await getCategoryData(selectedDate, CATEGORIES.TRACKER)
-      const record = records.find(r => r.subcategory === 'joint')
+      const record = records.find(r => r.subcategory === 'neuro')
       if (record?.content?.entries) {
         let loaded = record.content.entries
         if (typeof loaded === 'string') { try { loaded = JSON.parse(loaded) } catch { loaded = [] } }
@@ -52,37 +53,38 @@ export default function JointTracker() {
     } catch (e) { console.error(e); toast({ title: 'Loading Error', variant: 'destructive' }) }
   }
 
-  const saveEntries = async (next: JointEntry[]) => {
-    try { await saveData(selectedDate, CATEGORIES.TRACKER, 'joint', { entries: next }); setEntries(next) }
+  const saveEntries = async (next: NeuroEntry[]) => {
+    try { await saveData(selectedDate, CATEGORIES.TRACKER, 'neuro', { entries: next }); setEntries(next) }
     catch (e) { console.error(e); toast({ title: 'Save Error', variant: 'destructive' }) }
   }
 
-  const handleSaveEntry = async (data: Omit<JointEntry, 'id'>) => {
+  const handleSaveEntry = async (data: Omit<NeuroEntry, 'id'>) => {
     const { timestamp: ts, date: d, ...rest } = data
-    const newEntry: JointEntry = { id: Date.now().toString(), timestamp: ts || new Date().toISOString(), date: d || selectedDate, ...rest }
+    const newEntry: NeuroEntry = { id: Date.now().toString(), timestamp: ts || new Date().toISOString(), date: d || selectedDate, ...rest }
     if (isCrossListed(newEntry)) {
-      // Shared write into BOTH joint + neuro; reload to resync local view.
-      await crossListSave({ saveData, getCategoryData }, 'joint', 'neuro', newEntry)
+      // Shared write into BOTH neuro + joint; reload to resync local view.
+      await crossListSave({ saveData, getCategoryData }, 'neuro', 'joint', newEntry)
     } else {
       await saveEntries([...entries, newEntry])
     }
-    if ((getPref('chaos-confetti-level') || 'medium') !== 'none' && isCelebrationEnabled('joint', userPin ?? '')) celebrate()
+    if ((getPref('chaos-confetti-level') || 'medium') !== 'none' && isCelebrationEnabled('neuro', userPin ?? '')) celebrate()
     setModalOpen(false); setEditingEntry(null); setPresetType(null); setRefreshTrigger(p => p + 1)
     const info = getEpisodeTypeInfo(data.episodeType)
-    toast({ title: `${info.icon} Event Saved`, description: isCrossListed(newEntry) ? `${info.name} recorded (⇄ also under Neuro)` : `${info.name} recorded` })
+    toast({ title: `${info.icon} Event Saved`, description: isCrossListed(newEntry) ? `${info.name} recorded (⇄ also under MSK)` : `${info.name} recorded` })
   }
 
-  const handleEditEntry = (e: JointEntry) => { setEditingEntry(e); setPresetType(null); setModalOpen(true) }
+  const handleEditEntry = (e: NeuroEntry) => { setEditingEntry(e); setPresetType(null); setModalOpen(true) }
 
-  const handleUpdateEntry = async (data: Omit<JointEntry, 'id'>) => {
+  const handleUpdateEntry = async (data: Omit<NeuroEntry, 'id'>) => {
     if (!editingEntry) return
-    const updated: JointEntry = { ...editingEntry, ...data, id: editingEntry.id }
+    const updated: NeuroEntry = { ...editingEntry, ...data, id: editingEntry.id }
     const fns = { saveData, getCategoryData }
     if (isCrossListed(updated)) {
-      await crossListSave(fns, 'joint', 'neuro', updated)
+      // Now cross-listed (or still): upsert by id in both subcategories.
+      await crossListSave(fns, 'neuro', 'joint', updated)
     } else if (isCrossListed(editingEntry)) {
-      // Was cross-listed, now isn't: pull from both, then re-add to joint only.
-      await crossListDelete(fns, 'joint', 'neuro', editingEntry.date, editingEntry.id)
+      // Was cross-listed, now isn't: pull from both, then re-add to neuro only.
+      await crossListDelete(fns, 'neuro', 'joint', editingEntry.date, editingEntry.id)
       await saveEntries(entries.map(e => e.id === editingEntry.id ? updated : e))
     } else {
       await saveEntries(entries.map(e => e.id === editingEntry.id ? updated : e))
@@ -91,9 +93,9 @@ export default function JointTracker() {
     toast({ title: 'Event Updated' })
   }
 
-  const handleDeleteEntry = async (e: JointEntry) => {
+  const handleDeleteEntry = async (e: NeuroEntry) => {
     if (isCrossListed(e)) {
-      await crossListDelete({ saveData, getCategoryData }, 'joint', 'neuro', e.date, e.id)
+      await crossListDelete({ saveData, getCategoryData }, 'neuro', 'joint', e.date, e.id)
     } else {
       await saveEntries(entries.filter(x => x.id !== e.id))
     }
@@ -111,11 +113,27 @@ export default function JointTracker() {
     <div className="max-w-4xl mx-auto space-y-6 pt-6">
       <div className="text-center mb-6">
         <h1 className="text-3xl font-bold text-foreground flex items-center justify-center gap-2">
-          <Bone className="h-8 w-8 text-amber-500" />
-          🦴 Joint Shenanigans
+          <Brain className="h-8 w-8 text-violet-500" />
+          Neuro / Neuromuscular
         </h1>
-        <p className="text-muted-foreground mt-1">Subluxations, dislocations, pain, swelling, instability, weakness, cramping, fasciculations, the "massage therapists quit" kind of tightness — EDS + neuropathy + myopathy friendly logging</p>
+        <p className="text-muted-foreground mt-1">Weakness, numbness, foot drop, falls, balance, vision, tremor, spasticity, fasciculations, speech/swallow, sensory episodes — MS &amp; neuromuscular friendly</p>
       </div>
+
+      {/* 🚨 Collapsible emergency criteria — auto-re-expands on recent emergency markers */}
+      <EmergencyCriteriaCard
+        storageKey="neuro-911-acknowledged"
+        criteria={RED_FLAG_911_CRITERIA}
+        footerNote="Sudden one-sided weakness, facial droop, or slurred speech = stroke until proven otherwise. Note the time it started and call 911."
+        recentEmergencyDetected={(() => {
+          const now = new Date()
+          return entries.some(e => {
+            try {
+              if (differenceInDays(now, new Date(e.date)) > 30) return false
+              return !!e.erVisitRequired
+            } catch { return false }
+          })
+        })()}
+      />
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
         <TabsList className="grid w-full grid-cols-3">
@@ -139,7 +157,7 @@ export default function JointTracker() {
           </Card>
 
           <Card>
-            <CardHeader><CardTitle className="text-lg">Which joint is misbehaving?</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-lg">Log a Neuro Event</CardTitle></CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {EPISODE_TYPES.map(t => (
@@ -167,16 +185,13 @@ export default function JointTracker() {
                             <div className="flex items-center gap-2 mb-1 flex-wrap">
                               <span className="text-lg">{info.icon}</span>
                               <span className="font-semibold">{info.name}</span>
-                              {entry.jointAffected && entry.jointAffected.length > 0 && <Badge variant="outline">{entry.jointAffected.slice(0, 2).join(', ')}{entry.jointAffected.length > 2 ? '...' : ''}</Badge>}
-                              {entry.attachmentImages && entry.attachmentImages.length > 0 && <Badge variant="outline" className="bg-info/10 text-info border-blue-300">📎 {entry.attachmentImages.length}</Badge>}
-                              {entry.selfReducedFlag && <Badge variant="secondary">Self-reduced</Badge>}
-                              {isCrossListed(entry) && <Badge variant="outline" className="bg-violet-100 text-violet-800 border-violet-200">⇄ Neuro</Badge>}
+                              {entry.distribution && entry.distribution.length > 0 && <Badge variant="outline">{entry.distribution.slice(0, 2).join(', ')}{entry.distribution.length > 2 ? '...' : ''}</Badge>}
+                              {isCrossListed(entry) && <Badge variant="outline" className="bg-violet-100 text-violet-800 border-violet-200">⇄ MSK</Badge>}
                               {entry.erVisitRequired && <Badge variant="destructive">ER</Badge>}
                             </div>
                             <div className="text-xs text-muted-foreground">
                               {format(new Date(entry.timestamp), 'h:mm a')}
                               {entry.severity && ` • Severity ${entry.severity}/10`}
-                              {entry.romImpactedPercent !== undefined && ` • ROM ${entry.romImpactedPercent}%`}
                             </div>
                           </div>
                           <div className="flex gap-1">
@@ -209,15 +224,15 @@ export default function JointTracker() {
         </TabsContent>
 
         <TabsContent value="history" className="space-y-4">
-          <JointHistory onEdit={handleEditEntry} onDelete={handleDeleteEntry} refreshTrigger={refreshTrigger} />
+          <NeuroHistory onEdit={handleEditEntry} onDelete={handleDeleteEntry} refreshTrigger={refreshTrigger} />
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-4">
-          <JointAnalytics refreshTrigger={refreshTrigger} />
+          <NeuroAnalytics refreshTrigger={refreshTrigger} />
         </TabsContent>
       </Tabs>
 
-      <GeneralJointModal
+      <GeneralNeuroModal
         isOpen={modalOpen}
         onClose={() => { setModalOpen(false); setEditingEntry(null); setPresetType(null) }}
         onSave={editingEntry ? handleUpdateEntry : handleSaveEntry}

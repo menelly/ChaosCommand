@@ -1150,7 +1150,7 @@ export function generateMedicalReport(data: ReportData): Blob {
     const romImpacts: number[] = []
     const treatmentResp: number[] = []
     let total = 0, subluxations = 0, dislocations = 0, selfReduced = 0
-    let swelling = 0, bruising = 0, erVisits = 0
+    let swelling = 0, bruising = 0, erVisits = 0, crossListed = 0
     for (const r of jointEntries) {
       const entries = Array.isArray(r.content?.entries) ? r.content.entries : [r.content]
       for (const e of entries) {
@@ -1158,6 +1158,7 @@ export function generateMedicalReport(data: ReportData): Blob {
         total++
         const et = e.episodeType
         if (et) types[et] = (types[et] || 0) + 1
+        if (e.crossListedIn?.length) crossListed++
         ;(e.jointAffected || []).forEach((j: string) => { jointFreq[j] = (jointFreq[j] || 0) + 1 })
         ;(e.musclesAffected || []).forEach((m: string) => { muscleFreq[m] = (muscleFreq[m] || 0) + 1 })
         if (et === 'subluxation') subluxations++
@@ -1199,6 +1200,7 @@ export function generateMedicalReport(data: ReportData): Blob {
     }
     if (swelling > 0 || bruising > 0) w.body(`Swelling present: ${swelling}×. Bruising present: ${bruising}×.`)
     if (erVisits > 0) w.finding(`ER visit required for an MSK event ${erVisits}×.`)
+    if (crossListed > 0) w.note(`${crossListed} of these event${crossListed !== 1 ? 's are' : ' is'} also logged under Neuro (⇄ shared entries — same events shown for both specialties, not duplicates).`)
     if (treatmentResp.length) {
       const avgT = treatmentResp.reduce((a, b) => a + b, 0) / treatmentResp.length
       w.body(`Mean treatment response: ${avgT.toFixed(1)}/10 (n=${treatmentResp.length}).`)
@@ -1222,6 +1224,71 @@ export function generateMedicalReport(data: ReportData): Blob {
     if (muscleRows.length) {
       w.subSection('Per-muscle-group frequency (weakness / cramping / fasciculations)')
       w.table(['Muscle group', 'Events'], muscleRows, [240, 80])
+    }
+  }
+
+  // === NEURO / NEUROMUSCULAR ===
+  // Field names verified against app/neuro/neuro-types.ts (NeuroEntry). Some
+  // events are cross-listed (shared id) with the MSK/joint section — they appear
+  // in BOTH sections by design (neurologist + rheumatologist each see them),
+  // badged "⇄ also logged under MSK" so they aren't read as duplicate problems.
+  const neuroEntries = trackerData.filter(r => r.subcategory === 'neuro')
+  if (neuroEntries.length && isDoctor) {
+    w.sectionHeader('Neuro / Neuromuscular Assessment')
+    const types: Record<string, number> = {}
+    const distFreq: Record<string, number> = {}
+    const charFreq: Record<string, number> = {}
+    const severities: number[] = []
+    let total = 0, erVisits = 0, crossListed = 0
+    let proximalWeakness = 0, distalWeakness = 0, bulbar = 0, visionEvents = 0
+    for (const r of neuroEntries) {
+      const entries = Array.isArray(r.content?.entries) ? r.content.entries : [r.content]
+      for (const e of entries) {
+        if (!e) continue
+        total++
+        const et = e.episodeType
+        if (et) types[et] = (types[et] || 0) + 1
+        ;(e.distribution || []).forEach((d: string) => { distFreq[d] = (distFreq[d] || 0) + 1 })
+        ;(e.character || []).forEach((c: string) => { charFreq[c] = (charFreq[c] || 0) + 1 })
+        if (typeof e.severity === 'number') severities.push(e.severity)
+        if (e.erVisitRequired) erVisits++
+        if (e.crossListedIn?.length) crossListed++
+        if (et === 'speech-swallow') bulbar++
+        if (et === 'vision') visionEvents++
+        if (et === 'weakness') {
+          const dist = (e.distribution || []).join(' ').toLowerCase()
+          if (dist.includes('proximal')) proximalWeakness++
+          if (dist.includes('distal') || dist.includes('stocking')) distalWeakness++
+        }
+      }
+    }
+    const sevTxt = severities.length
+      ? ` Mean severity ${(severities.reduce((a, b) => a + b, 0) / severities.length).toFixed(1)}/10 (peak ${Math.max(...severities)}/10, n=${severities.length}).`
+      : ''
+    w.body(`${total} neuro/neuromuscular events.${sevTxt}`)
+
+    // Localizing signals worth a neurologist's attention
+    if (proximalWeakness) w.finding(`Proximal weakness logged ${proximalWeakness}× — myopathy pattern; consider CK, EMG.`)
+    if (distalWeakness) w.finding(`Distal / stocking-glove weakness logged ${distalWeakness}× — peripheral neuropathy pattern.`)
+    if (bulbar) w.finding(`Bulbar symptoms (speech/swallow) logged ${bulbar}× — evaluate for neuromuscular / brainstem involvement.`)
+    if (visionEvents) w.body(`Vision events (diplopia / transient loss / optic-neuritis-type): ${visionEvents}.`)
+    if (erVisits) w.finding(`ER visit required for a neuro event ${erVisits}×.`)
+    if (crossListed) w.note(`${crossListed} of these event${crossListed !== 1 ? 's are' : ' is'} also logged under MSK / Joints (⇄ shared entries — same events shown for both specialties, not duplicates).`)
+
+    const typeRows = Object.entries(types).sort((a, b) => b[1] - a[1]).map(([t, c]) => [t, String(c)])
+    if (typeRows.length) {
+      w.subSection('Episode type distribution')
+      w.table(['Type', 'Count'], typeRows, [240, 80])
+    }
+    const distRows = Object.entries(distFreq).sort((a, b) => b[1] - a[1]).slice(0, 12).map(([d, c]) => [d, String(c)])
+    if (distRows.length) {
+      w.subSection('Symptom distribution (localization)')
+      w.table(['Distribution', 'Events'], distRows, [240, 80])
+    }
+    const charRows = Object.entries(charFreq).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([c, n]) => [c, String(n)])
+    if (charRows.length) {
+      w.subSection('Pattern / course')
+      w.table(['Pattern', 'Count'], charRows, [240, 80])
     }
   }
 

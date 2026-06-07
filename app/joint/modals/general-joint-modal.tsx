@@ -15,6 +15,11 @@ import { Bone, Plus, ChevronDown, ChevronRight } from 'lucide-react'
 
 import { JointEntry, JointEpisodeType, JointModalProps } from '../joint-types'
 import { EPISODE_TYPES, JOINTS, MUSCLES, isMuscleEpisode, TRIGGER_ACTIVITIES, TREATMENTS, getSeverityLabel, getSeverityColor } from '../joint-constants'
+
+// Muscle symptoms that also belong in the Neuro tracker — these show the
+// "⇄ also log under Neuro" checkbox. Mirror of neuro's MSK-facing set
+// (neuro's 'spasticity-cramping' corresponds to joint's 'cramping').
+const DUAL_LISTED: JointEpisodeType[] = ['weakness', 'cramping', 'fasciculations']
 import { TagInput } from '@/components/tag-input'
 import { KeyboardAvoidingWrapper } from '@/components/ui/keyboard-avoiding-wrapper'
 import { AttachmentUploader } from '../components/attachment-uploader'
@@ -38,6 +43,7 @@ export function GeneralJointModal({ isOpen, onClose, onSave, editingEntry, prese
   const [duration, setDuration] = useState('')
   const [erVisitRequired, setErVisitRequired] = useState(false)
   const [attachmentImages, setAttachmentImages] = useState<string[]>([])
+  const [crossList, setCrossList] = useState(false)
   const [notes, setNotes] = useState('')
   const [tags, setTags] = useState<string[]>([])
 
@@ -78,6 +84,7 @@ export function GeneralJointModal({ isOpen, onClose, onSave, editingEntry, prese
       setDuration(editingEntry.duration || '')
       setErVisitRequired(editingEntry.erVisitRequired || false)
       setAttachmentImages(editingEntry.attachmentImages || [])
+      setCrossList(!!editingEntry.crossListedIn?.length)
       setNotes(editingEntry.notes || '')
       setTags(editingEntry.tags || [])
     } else if (presetType) {
@@ -91,7 +98,7 @@ export function GeneralJointModal({ isOpen, onClose, onSave, editingEntry, prese
     setEpisodeType('subluxation'); setJointAffected([]); setMusclesAffected([]); setSeverity([5])
     setSelfReducedFlag(false); setSwellingPresent(false); setSwellingScale([0]); setBruisingPresent(false)
     setRomImpactedPercent([100]); setTriggerActivity([]); setTreatmentApplied([]); setTreatmentResponse([3])
-    setDuration(''); setErVisitRequired(false); setAttachmentImages([]); setNotes(''); setTags([])
+    setDuration(''); setErVisitRequired(false); setAttachmentImages([]); setCrossList(false); setNotes(''); setTags([])
   }
 
   const toggle = (arr: string[], setter: (v: string[]) => void) => (item: string) =>
@@ -116,6 +123,8 @@ export function GeneralJointModal({ isOpen, onClose, onSave, editingEntry, prese
       duration: duration || undefined,
       erVisitRequired,
       attachmentImages: attachmentImages.length > 0 ? attachmentImages : undefined,
+      // Intent signal — the tracker turns this into a real cross-list write.
+      crossListedIn: showCrossList && crossList ? ['joint', 'neuro'] : undefined,
       notes: notes.trim() || undefined,
       tags: tags.length > 0 ? tags : undefined
     }
@@ -126,6 +135,8 @@ export function GeneralJointModal({ isOpen, onClose, onSave, editingEntry, prese
 
   // Muscle event types show a muscle menu instead of the joint checklist.
   const muscleMode = isMuscleEpisode(episodeType)
+  // Dual-listed neuromuscular symptoms can also be sent to the Neuro tracker.
+  const showCrossList = DUAL_LISTED.includes(episodeType)
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -151,6 +162,17 @@ export function GeneralJointModal({ isOpen, onClose, onSave, editingEntry, prese
               </Select>
             </CollapsibleContent>
           </Collapsible>
+
+          {/* ⇄ Cross-list — only for the dual-listed neuromuscular symptoms */}
+          {showCrossList && (
+            <div className="flex items-start space-x-2 rounded-lg border-2 border-violet-200 bg-violet-50/50 dark:bg-violet-950/20 p-3">
+              <Checkbox id="crosslist" checked={crossList} onCheckedChange={(v) => setCrossList(!!v)} className="mt-0.5" />
+              <Label htmlFor="crosslist" className="text-sm leading-snug">
+                ⇄ Also log under <strong>Neuro / Neuromuscular</strong>
+                <span className="block text-xs text-muted-foreground mt-0.5">One event, surfaced in both the MSK and Neuro views — so your rheumatologist and neurologist each see it. Editing or deleting it in either place updates both.</span>
+              </Label>
+            </div>
+          )}
 
           <Collapsible open={openSections.joints} onOpenChange={() => toggleSection('joints')}>
             <CollapsibleTrigger asChild>

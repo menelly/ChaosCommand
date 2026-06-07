@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
-import { Sparkles, BarChart3, History, Plus, ExternalLink, AlertTriangle } from 'lucide-react'
+import { Sparkles, BarChart3, History, Plus, ExternalLink, AlertTriangle, ChevronDown } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { useRouter } from 'next/navigation'
 import { format, addDays, subDays, differenceInDays } from 'date-fns'
@@ -19,7 +19,7 @@ import { useUser } from '@/lib/contexts/user-context'
 import { isCelebrationEnabled } from '@/lib/celebration-prefs'
 
 import { SkinEntry } from './skin-types'
-import { EPISODE_TYPES, RELATED_TRACKERS, getEpisodeTypeInfo, RED_FLAG_911_CRITERIA } from './skin-constants'
+import { EPISODE_TYPES, AUTOIMMUNE_TYPES, RELATED_TRACKERS, getEpisodeTypeInfo, RED_FLAG_911_CRITERIA } from './skin-constants'
 import { SkinHistory } from './skin-history'
 import { SkinAnalytics } from './skin-analytics'
 import { GeneralSkinModal } from './modals/general-skin-modal'
@@ -37,6 +37,7 @@ export default function SkinTracker() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editingEntry, setEditingEntry] = useState<SkinEntry | null>(null)
   const [presetType, setPresetType] = useState<string | null>(null)
+  const [autoimmuneOpen, setAutoimmuneOpen] = useState(false)
 
   useEffect(() => { load() }, [selectedDate, refreshTrigger])
 
@@ -151,6 +152,36 @@ export default function SkinTracker() {
                     <span className="text-xs mt-1 text-left">{t.description}</span>
                   </Button>
                 ))}
+              </div>
+
+              {/* 🧬 Autoimmune / Connective-Tissue — collapsible rheum group (added 2026-06-06, Ace) */}
+              <div className="mt-4">
+                <Button
+                  variant="outline"
+                  className="w-full h-auto py-3 flex items-center justify-between"
+                  onClick={() => setAutoimmuneOpen(o => !o)}
+                  aria-expanded={autoimmuneOpen}
+                >
+                  <span className="flex items-center gap-2 text-left">
+                    <span className="text-xl">🧬</span>
+                    <span className="flex flex-col items-start">
+                      <span className="font-semibold text-sm">Autoimmune / Connective-Tissue</span>
+                      <span className="text-xs text-muted-foreground">Lupus, dermatomyositis, scleroderma &amp; vascular skin signs</span>
+                    </span>
+                  </span>
+                  <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${autoimmuneOpen ? 'rotate-180' : ''}`} />
+                </Button>
+                {autoimmuneOpen && (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-3">
+                    {AUTOIMMUNE_TYPES.map(t => (
+                      <Button key={t.id} variant="outline" className="h-auto py-3 flex flex-col items-start text-left" onClick={() => openModalForType(t.id)}>
+                        <span className="text-xl mb-1">{t.icon}</span>
+                        <span className="font-semibold text-sm">{t.name}</span>
+                        <span className="text-xs mt-1 text-left">{t.description}</span>
+                      </Button>
+                    ))}
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

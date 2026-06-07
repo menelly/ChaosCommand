@@ -11,6 +11,12 @@ export const EPISODE_TYPES = [
   { id: 'fasciculations', name: 'Fasciculations', icon: '🌊', description: 'Visible twitching under skin / fine wormy movements (HMSN, motor neuron involvement)', color: 'bg-teal-100 text-teal-800 border-teal-200' },
   { id: 'muscle-tightness', name: 'Muscle Tightness', icon: '🔒', description: "Sustained muscle tightness, hypertonicity, knots that won't release (the \"massage therapists give up\" kind)", color: 'bg-fuchsia-100 text-fuchsia-800 border-fuchsia-200' },
   { id: 'rom-restriction', name: 'ROM Restriction', icon: '🚧', description: 'Limited range of motion', color: 'bg-gray-100 text-gray-800 border-gray-200' },
+  // Inflammatory / rheumatology-aligned types — help distinguish inflammatory
+  // arthritis from mechanical/EDS joint events (note durations & symmetry).
+  { id: 'morning-stiffness', name: 'Morning Stiffness', icon: '🌅', description: 'Stiffness on waking — note how long it lasts; >30–60 min reads inflammatory (RA/spondyloarthritis)', color: 'bg-orange-100 text-orange-800 border-orange-200' },
+  { id: 'inflammatory-swelling', name: 'Symmetric Swelling / Warmth', icon: '🔥', description: 'Warm, symmetric joint swelling (inflammatory) vs one-off mechanical swelling', color: 'bg-red-100 text-red-800 border-red-200' },
+  { id: 'enthesitis', name: 'Enthesitis', icon: '📍', description: 'Pain where tendons/ligaments insert into bone (heel, elbow) — spondyloarthritis clue', color: 'bg-pink-100 text-pink-800 border-pink-200' },
+  { id: 'gel-phenomenon', name: 'Gel Phenomenon', icon: '🧊', description: 'Stiffness after rest/inactivity that eases once you get moving', color: 'bg-sky-100 text-sky-800 border-sky-200' },
   { id: 'general', name: 'General Joint Event', icon: '🦴', description: 'Mixed or other joint event', color: 'bg-stone-100 text-stone-800 border-stone-200' },
 ] as const
 
@@ -143,4 +149,4 @@ export const RELATED_TRACKERS = [
 
 export const getSeverityLabel = (s: number) => SEVERITY_LABELS.find(x => x.value === s)?.label || 'Unknown'
 export const getSeverityColor = (s: number) => SEVERITY_LABELS.find(x => x.value === s)?.color || 'text-gray-500'
-export const getEpisodeTypeInfo = (id: string) => EPISODE_TYPES.find(t => t.id === id) || EPISODE_TYPES[6]
+export const getEpisodeTypeInfo = (id: string) => EPISODE_TYPES.find(t => t.id === id) || EPISODE_TYPES.find(t => t.id === 'general') || EPISODE_TYPES[EPISODE_TYPES.length - 1]

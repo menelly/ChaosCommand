@@ -16,6 +16,26 @@ export const EPISODE_TYPES = [
   { id: 'general', name: 'General Skin Event', icon: '🧴', description: 'Other / mixed skin observation', color: 'bg-purple-100 text-purple-800 border-purple-200' },
 ] as const
 
+// 🧬 Autoimmune / connective-tissue dermatologic manifestations.
+// Rendered as a collapsible group in the tracker (lupus / dermatomyositis /
+// scleroderma / vascular CTD signs). Curated + added 2026-06-06 (Ace).
+export const AUTOIMMUNE_TYPES = [
+  { id: 'malar-rash', name: 'Malar Rash', icon: '🦋', description: 'Butterfly rash across cheeks/nose that spares the nasolabial folds; lupus-pattern, often photosensitive', color: 'bg-pink-100 text-pink-800 border-pink-200' },
+  { id: 'discoid-lupus', name: 'Discoid Lesion', icon: '🔴', description: 'Coin-shaped scaly plaques that can scar or change pigment; chronic cutaneous lupus', color: 'bg-rose-100 text-rose-800 border-rose-200' },
+  { id: 'photosensitive-rash', name: 'Photosensitive Rash', icon: '☀️', description: 'Rash in sun-exposed areas after light exposure — distinct from a sunburn; lupus/CTD photosensitivity', color: 'bg-amber-100 text-amber-800 border-amber-200' },
+  { id: 'mechanics-hands', name: "Mechanic's Hands", icon: '🔧', description: 'Cracked, fissured, rough skin on the sides/palms of the fingers; antisynthetase / myositis sign', color: 'bg-orange-100 text-orange-800 border-orange-200' },
+  { id: 'heliotrope', name: 'Heliotrope Rash', icon: '💜', description: 'Violet/dusky discoloration of the upper eyelids, sometimes with puffiness; dermatomyositis', color: 'bg-purple-100 text-purple-800 border-purple-200' },
+  { id: 'gottrons', name: "Gottron's Papules", icon: '✋', description: 'Violet, scaly papules over the knuckles (sometimes elbows/knees); dermatomyositis', color: 'bg-violet-100 text-violet-800 border-violet-200' },
+  { id: 'sclerodactyly', name: 'Skin Thickening', icon: '🫳', description: 'Hardened, tight, shiny skin — often the fingers (sclerodactyly); scleroderma / systemic sclerosis', color: 'bg-stone-100 text-stone-800 border-stone-200' },
+  { id: 'raynauds', name: "Raynaud's", icon: '🥶', description: 'Fingers/toes change color (white → blue → red) with cold or stress, often painful or numb', color: 'bg-sky-100 text-sky-800 border-sky-200' },
+  { id: 'digital-ulcer', name: 'Digital Ulcer / Pits', icon: '🩹', description: 'Painful ulcers, sores, or pitted scars on fingertips/toes; vascular connective-tissue disease', color: 'bg-red-100 text-red-800 border-red-200' },
+  { id: 'cyanosis', name: 'Cyanosis', icon: '💙', description: 'Bluish/dusky color of skin, lips, or nailbeds from low oxygen or poor circulation. Blue lips or tongue (central) — especially with breathing trouble — is urgent; blue fingers/toes (peripheral) often tracks cold or poor perfusion', color: 'bg-blue-100 text-blue-800 border-blue-200' },
+  { id: 'cutaneous-vasculitis', name: 'Cutaneous Vasculitis', icon: '🟣', description: 'Raised purple spots (palpable purpura), petechiae, or net-like livedo; small-vessel / CTD vasculitis', color: 'bg-fuchsia-100 text-fuchsia-800 border-fuchsia-200' },
+] as const
+
+// Combined lookup so saved entries of EITHER group resolve their name/icon.
+export const ALL_EPISODE_TYPES = [...EPISODE_TYPES, ...AUTOIMMUNE_TYPES]
+
 export const BODY_LOCATIONS = [
   'Face',
   'Scalp',
@@ -27,6 +47,9 @@ export const BODY_LOCATIONS = [
   'Arms (upper)',
   'Arms (forearms)',
   'Hands',
+  'Knuckles',
+  'Fingertips',
+  'Nailfolds',
   'Wrists',
   'Hips / Buttocks',
   'Genital area',
@@ -54,6 +77,11 @@ export const CHARACTER_OPTIONS = [
   'pigmented',
   'pustular',
   'necrotic',
+  'thickened / hardened',
+  'fissured / cracked',
+  'violaceous (purple)',
+  'ulcerated',
+  'bluish / dusky',
 ]
 
 export const SUSPECTED_TRIGGERS = [
@@ -157,11 +185,12 @@ export const RED_FLAG_911_CRITERIA = [
   'Severe burn covering large area, or any burn with charred / white / leathery appearance',
   'Wound with pus, increasing redness, red streaks, or fever (sepsis concern)',
   'Tick bite with bullseye rash — start antibiotics (Lyme); call doctor today',
+  'Blue or dusky lips, tongue, or face — especially with breathing difficulty, chest pain, or confusion (central cyanosis = dangerously low oxygen), call 911',
 ]
 
 export const getSeverityLabel = (s: number) => SEVERITY_LABELS.find(x => x.value === s)?.label || 'Unknown'
 export const getSeverityColor = (s: number) => SEVERITY_LABELS.find(x => x.value === s)?.color || 'text-gray-500'
-export const getEpisodeTypeInfo = (id: string) => EPISODE_TYPES.find(t => t.id === id) || EPISODE_TYPES[7]
+export const getEpisodeTypeInfo = (id: string) => ALL_EPISODE_TYPES.find(t => t.id === id) || EPISODE_TYPES.find(t => t.id === 'general')!
 
 export const getRedFlagWarnings = (entry: {
   episodeType?: string

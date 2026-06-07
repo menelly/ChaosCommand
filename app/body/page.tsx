@@ -261,6 +261,14 @@ export default function PhysicalHealthIndex() {
       icon: <Bone className="h-5 w-5" />,
       edition: 'cares'
     },
+    {
+      id: 'neuro',
+      name: 'Neuro / Neuromuscular',
+      shortDescription: 'Weakness, numbness, foot drop, falls, balance, vision, tremor',
+      helpContent: 'Track neurological and neuromuscular symptoms: weakness (proximal vs distal matters), numbness/tingling, foot drop, falls and near-falls, gait/balance, vision changes (diplopia, optic neuritis), tremor, spasticity/cramping, fasciculations, speech/swallowing, and MS-relevant sensory episodes (Lhermitte, MS hug, Uhthoff). Distribution-aware. Weakness, spasticity/cramping, and fasciculations can be cross-listed so they appear in BOTH this tracker and the MSK/Joints tracker — a neurologist and rheumatologist each find them. Built-in stroke/cord/GBS red flags.',
+      icon: <Brain className="h-5 w-5" />,
+      edition: 'cares'
+    },
   ]
 
   // Filter trackers based on user's edition AND hidden preferences
@@ -273,7 +281,7 @@ export default function PhysicalHealthIndex() {
 
   // Specialty groups â€” group trackers by body system for the accordion layout
   const SPECIALTY_GROUPS = [
-    { id: 'head-neuro', label: '🧠 Head & Nervous System', trackerIds: ['head-pain', 'seizure-tracking', 'dysautonomia'] },
+    { id: 'head-neuro', label: '🧠 Head & Nervous System', trackerIds: ['head-pain', 'seizure-tracking', 'dysautonomia', 'neuro'] },
     { id: 'ent', label: '👂 Ear, Nose & Throat', trackerIds: ['ent'] },
     { id: 'heart-lungs', label: '❤️ Heart & Lungs', trackerIds: ['cardiac', 'respiratory'] },
     { id: 'gut', label: '🍽️ Gut & Digestive', trackerIds: ['upper-digestive', 'digestive-health'] },
@@ -316,6 +324,7 @@ export default function PhysicalHealthIndex() {
       case 'pain-tracking': return '/pain'
       case 'head-pain': return '/head-pain'
       case 'dysautonomia': return '/dysautonomia'
+      case 'neuro': return '/neuro'
       case 'food-allergens': return '/food-allergens'
       case 'weather-environment': return '/weather-environment'
       case 'seizure-tracking': return '/seizure'

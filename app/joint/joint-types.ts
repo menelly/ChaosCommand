@@ -11,6 +11,10 @@ export type JointEpisodeType =
   | 'fasciculations'
   | 'muscle-tightness'
   | 'rom-restriction'
+  | 'morning-stiffness'
+  | 'inflammatory-swelling'
+  | 'enthesitis'
+  | 'gel-phenomenon'
   | 'general'
 
 export interface JointEntry {
@@ -34,6 +38,9 @@ export interface JointEntry {
   attachmentImages?: string[]
   duration?: string
   erVisitRequired?: boolean
+  // Cross-list marker — present when this event is ALSO logged under Neuro.
+  // Set/maintained by lib/cross-list.ts; do not edit by hand.
+  crossListedIn?: string[]
   notes?: string
   tags?: string[]
 }
