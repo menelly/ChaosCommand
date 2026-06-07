@@ -1292,6 +1292,75 @@ export function generateMedicalReport(data: ReportData): Blob {
     }
   }
 
+  // === AUTOIMMUNE / CONNECTIVE-TISSUE (rheumatology) ===
+  // Systemic CTD picture the other trackers don't hold: sicca, antisynthetase
+  // signs, inflammatory-vs-mechanical joint pattern, serositis, dysphagia.
+  // Findings are framed as differentials/work-up prompts for a rheumatologist.
+  const autoEntries = trackerData.filter(r => r.subcategory === 'autoimmune')
+  if (autoEntries.length && isDoctor) {
+    w.sectionHeader('Autoimmune / Connective-Tissue Assessment')
+    const types: Record<string, number> = {}
+    const areaFreq: Record<string, number> = {}
+    const charFreq: Record<string, number> = {}
+    const severities: number[] = []
+    let total = 0, erVisits = 0, crossListed = 0
+    for (const r of autoEntries) {
+      const entries = Array.isArray(r.content?.entries) ? r.content.entries : [r.content]
+      for (const e of entries) {
+        if (!e) continue
+        total++
+        const et = e.episodeType
+        if (et) types[et] = (types[et] || 0) + 1
+        ;(e.affectedAreas || []).forEach((a: string) => { areaFreq[a] = (areaFreq[a] || 0) + 1 })
+        ;(e.character || []).forEach((c: string) => { charFreq[c] = (charFreq[c] || 0) + 1 })
+        if (typeof e.severity === 'number') severities.push(e.severity)
+        if (e.erVisitRequired) erVisits++
+        if (e.crossListedIn?.length) crossListed++
+      }
+    }
+    const sevTxt = severities.length
+      ? ` Mean severity ${(severities.reduce((a, b) => a + b, 0) / severities.length).toFixed(1)}/10 (peak ${Math.max(...severities)}/10, n=${severities.length}).`
+      : ''
+    w.body(`${total} autoimmune / connective-tissue event${total !== 1 ? 's' : ''}.${sevTxt}`)
+
+    const sicca = (types['sicca-eyes'] || 0) + (types['sicca-mouth'] || 0)
+    if (sicca) w.finding(`Sicca symptoms (dry eyes / dry mouth) logged ${sicca}× — consider Schirmer test, anti-SSA/SSB (Ro/La), and lip-gland biopsy for Sjögren's / sicca complex.`)
+    if (types['raynauds']) w.finding(`Raynaud's logged ${types['raynauds']}× — with other CTD features, consider nailfold capillaroscopy and ANA / scleroderma (Scl-70, centromere) panel.`)
+    if (types['mechanic-hands'] || types['myalgia']) {
+      const mh = types['mechanic-hands'] || 0, my = types['myalgia'] || 0
+      w.finding(`Antisynthetase-pattern signs — mechanic's hands ${mh}×, inflammatory muscle pain/weakness ${my}× — consider myositis-antibody panel (Jo-1 / PL-7 / PL-12 etc.), CK, and aldolase.`)
+    }
+    if (types['inflammatory-rash']) w.finding(`Inflammatory / photosensitive rash (malar, heliotrope, Gottron's) logged ${types['inflammatory-rash']}× — lupus / dermatomyositis differential; ANA and dermatologic exam.`)
+    if (types['arthralgia'] || types['morning-stiffness']) {
+      const ar = types['arthralgia'] || 0, ms = types['morning-stiffness'] || 0
+      w.finding(`Inflammatory joint pattern — achy/swollen joints ${ar}×, morning stiffness ${ms}× (if typically >30–60 min, reads inflammatory) — consider RF, anti-CCP, ESR, CRP.`)
+    }
+    if (types['serositis']) w.finding(`Serositis (pleuritic chest pain) logged ${types['serositis']}× — pleuritis / pericarditis differential; needs evaluation if acute or severe.`)
+    if (types['dysphagia']) w.finding(`Dysphagia logged ${types['dysphagia']}× — esophageal dysmotility (scleroderma / myositis spectrum); consider barium swallow or manometry.`)
+    if (types['oral-ulcers']) w.body(`Oral / nasal ulcers: ${types['oral-ulcers']} (lupus / Behçet-associated SLE criterion).`)
+    if (types['constitutional']) w.body(`Constitutional flares (fatigue, low-grade fever, malaise): ${types['constitutional']}.`)
+    if (types['lymphadenopathy']) w.body(`Swollen glands / lymphadenopathy: ${types['lymphadenopathy']}.`)
+    if (types['alopecia']) w.body(`Autoimmune hair loss: ${types['alopecia']}.`)
+    if (erVisits) w.finding(`ER visit required for an autoimmune event ${erVisits}×.`)
+    if (crossListed) w.note(`${crossListed} of these event${crossListed !== 1 ? 's are' : ' is'} also logged under Skin / Joints / Neuro (⇄ shared entries — same events shown for each specialty, not duplicates).`)
+
+    const typeRows = Object.entries(types).sort((a, b) => b[1] - a[1]).map(([t, c]) => [t, String(c)])
+    if (typeRows.length) {
+      w.subSection('Episode type distribution')
+      w.table(['Type', 'Count'], typeRows, [240, 80])
+    }
+    const areaRows = Object.entries(areaFreq).sort((a, b) => b[1] - a[1]).slice(0, 12).map(([a, c]) => [a, String(c)])
+    if (areaRows.length) {
+      w.subSection('Affected areas')
+      w.table(['Area', 'Events'], areaRows, [240, 80])
+    }
+    const charRows = Object.entries(charFreq).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([c, n]) => [c, String(n)])
+    if (charRows.length) {
+      w.subSection('Character / quality')
+      w.table(['Quality', 'Count'], charRows, [240, 80])
+    }
+  }
+
   // === BATHROOM — Bristol distribution + red flags ===
   const bathEntries = trackerData.filter(r => r.subcategory === 'bathroom')
   if (bathEntries.length && isDoctor) {
