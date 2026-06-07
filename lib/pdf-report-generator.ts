@@ -616,45 +616,6 @@ export function generateMedicalReport(data: ReportData): Blob {
     }
   }
 
-  // Helper: pull top symptom/trigger evidence for a given tracker so doctors
-  // can validate the ICD-10 suggestion against actual tracked content.
-  const collectEvidence = (sub: string): string => {
-    const records = trackerData.filter((r: any) => canonicalSub(r.subcategory || '') === sub)
-    const counts: Record<string, number> = {}
-    for (const r of records) {
-      const c = r.content || {}
-      const entries = Array.isArray(c.entries) ? c.entries : [c]
-      for (const e of entries) {
-        const items = [
-          ...(e.symptoms || []),
-          ...(e.physicalSymptoms || []),
-          ...(e.painLocations || e.painLocation || []),
-          ...(e.painCharacter || e.painType || []),
-          ...(e.triggers || []),
-          ...(e.auraSymptoms || []),
-          ...(e.associatedSymptoms || []),
-        ]
-        for (const item of items) {
-          if (typeof item === 'string') counts[item] = (counts[item] || 0) + 1
-        }
-        // Boolean red flags get listed as evidence too
-        const flags: [boolean, string][] = [
-          [!!e.statusEpilepticus, 'status epilepticus'],
-          [!!e.tearingQuality, 'tearing pain'],
-          [!!e.thunderclapPattern || !!e.thunderclapOnset, 'thunderclap onset'],
-          [!!e.worstHeadacheOfLife, 'worst headache of life'],
-          [!!e.epipenUsed, 'EpiPen used'],
-          [!!e.suicidalIdeation, 'suicidal ideation flagged'],
-        ]
-        for (const [present, label] of flags) {
-          if (present) counts[label] = (counts[label] || 0) + 1
-        }
-      }
-    }
-    const top = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 4)
-    return top.length > 0 ? top.map(([k, v]) => `${k} (${v}×)`).join(', ') : ''
-  }
-
   if (isDoctor) {
     w.sectionHeader('Tracked Conditions (ICD-10)')
     const sorted = Object.entries(trackerCounts).sort((a, b) => b[1] - a[1])
