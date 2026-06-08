@@ -3,10 +3,15 @@
 # Usage:
 #   scripts/release.sh 0.4.9 "v0.4.9: short summary of what's in this release 🚀"
 #
-# Bumps package.json + tauri.conf.json + Cargo.toml versions, commits,
-# regenerates CHANGELOG, deploys to chaoscommand.center. Does NOT build the
-# installer — that's a separate step you do AFTER this confirms the version
-# bumps cleanly.
+# Bumps package.json + tauri.conf.json + Cargo.toml + lib/app-version.ts versions,
+# commits, tags, regenerates CHANGELOG, and deploys to chaoscommand.center:
+#   • changelog.html (generated)        — step 9
+#   • /download version pill            — step 10
+#   • /download inline "What's new" heading version — step 10b
+# Does NOT (you do these by hand): rewrite the /download benefit-bullets prose,
+# bump the live version.json manifest (use bump_version.py), or build installers.
+# RUN THIS for every release — the 0.6.0 pages went stale because a hand-deploy
+# skipped the script, so the pill/changelog/inline section all froze at 0.5.8.
 #
 # ⚠️ VERSION SOURCE OF TRUTH — read before releasing:
 #   scripts/bump_version.py is the CANONICAL bumper. It updates ALL SIX version spots
@@ -115,12 +120,25 @@ echo "→ Updating version pill on /download page"
 TODAY=$(date +%Y-%m-%d)
 ssh "$SERVER" "sudo sed -i -E 's|(v0\\.[0-9]+\\.[0-9]+) · [0-9]{4}-[0-9]{2}-[0-9]{2} · What changed\\?|v$NEW_VERSION · $TODAY · What changed?|' /var/www/chaoscommand.center/download/index.html"
 
+# 10b. Bump the INLINE "What's new in vX" heading on the /download page.
+#      ⚠️ THE BULLETS UNDER THIS HEADING ARE HAND-WRITTEN, BENEFIT-FRAMED PROSE —
+#      NOT the raw git log — so this only fixes the heading's version number, so it
+#      can't silently advertise the wrong release. You STILL have to rewrite the
+#      bullets by hand to describe what actually shipped.
+#      (This is the exact gap that bit us in 0.6.0: version.json + binaries shipped,
+#       but the /download page still said "What's new in v0.5.8" with 0.5.8 bullets.)
+echo "→ Bumping inline 'What's new' heading on /download page"
+ssh "$SERVER" "sudo sed -i -E 's|(What.rsquo.s new in )v0\\.[0-9]+\\.[0-9]+|\\1v$NEW_VERSION|' /var/www/chaoscommand.center/download/index.html"
+
 echo ""
 echo "✅ Release v$NEW_VERSION shipped:"
 echo "   📋 Changelog live at:  https://chaoscommand.center/changelog.html"
 echo "   📥 /download pill says: v$NEW_VERSION · $TODAY · What changed?"
 echo ""
-echo "   Next manual steps (not automated):"
+echo "   ⚠️  STILL MANUAL — easy to forget, do these now:"
+echo "   0. ✍️  Rewrite the /download 'What's new in v$NEW_VERSION' bullets — they're benefit-framed"
+echo "          prose (only the heading auto-bumped). Edit /var/www/chaoscommand.center/download/index.html."
 echo "   1. Build the Tauri binaries: pnpm tauri build (and android equivalent)"
 echo "   2. Copy installers to /var/www/chaoscommand.center/download/"
 echo "   3. Update the version-specific symlinks (ChaosCommand-setup.exe → setup-v$NEW_VERSION.exe etc.)"
+echo "   4. Confirm no drift:  python scripts/bump_version.py --check --live"
