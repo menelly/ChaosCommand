@@ -278,6 +278,14 @@ export default function PhysicalHealthIndex() {
       icon: <Dna className="h-5 w-5" />,
       edition: 'cares'
     },
+    {
+      id: 'vitals',
+      name: 'Vitals',
+      shortDescription: 'BP, heart rate, SpO₂, temp, resp rate, weight',
+      helpContent: 'Log your objective baseline measurements — blood pressure, heart rate, SpO₂, temperature, respiratory rate, and weight — in one quick form. The numbers a clinician scans first, and they appear on your doctor PDF export. (BP / SpO₂ / HR captured during a specific episode live in the relevant symptom trackers; this is your routine baseline.)',
+      icon: <Activity className="h-5 w-5" />,
+      edition: 'cares'
+    },
   ]
 
   // Filter trackers based on user's edition AND hidden preferences
@@ -299,7 +307,7 @@ export default function PhysicalHealthIndex() {
     { id: 'msk', label: '🦴 Bones, Joints & Muscles', trackerIds: ['joint'] },
     { id: 'reproductive', label: '🌸 Reproductive', trackerIds: ['reproductive-health', 'postpartum', 'gu'] },
     { id: 'environment', label: '🌦️ Environment', trackerIds: ['weather-environment'] },
-    { id: 'general', label: '📍 General', trackerIds: ['pain-tracking'] },
+    { id: 'general', label: '📍 General', trackerIds: ['pain-tracking', 'vitals'] },
   ]
 
   // Collapsed-group state persists to localStorage so it survives navigation.

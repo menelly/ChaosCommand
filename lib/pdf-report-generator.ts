@@ -111,6 +111,7 @@ const TRACKER_DISPLAY_NAMES: Record<string, string> = {
   'thyroid': 'Thyroid',
   'adrenal': 'Adrenal',
   'cardiac': 'Cardiac',
+  'vitals': 'Vitals',
   'respiratory': 'Respiratory',
   'skin': 'Skin',
   'joint': 'Joint / MSK',
@@ -1072,6 +1073,52 @@ export function generateMedicalReport(data: ReportData): Blob {
     }
     const typeRows = Object.entries(types).sort((a, b) => b[1] - a[1]).map(([t, c]) => [t, String(c)])
     if (typeRows.length) w.table(['Episode type', 'Count'], typeRows, [240, 80])
+  }
+
+  // === VITALS === (CHA-317) objective baseline measurements — shown in all report styles
+  const vitalsRecords = trackerData.filter(r => r.subcategory === 'vitals')
+  const vitalsReadings: any[] = []
+  for (const r of vitalsRecords) {
+    const arr = Array.isArray(r.content?.entries) ? r.content.entries : (r.content ? [r.content] : [])
+    for (const e of arr) { if (e) vitalsReadings.push(e) }
+  }
+  if (vitalsReadings.length) {
+    w.sectionHeader('Vitals')
+    vitalsReadings.sort((a, b) => String(a.timestamp || a.date || '').localeCompare(String(b.timestamp || b.date || '')))
+    const nums = (k: string): number[] => vitalsReadings.map((e: any) => e[k]).filter((v: any): v is number => typeof v === 'number')
+    const sys = nums('systolic'), dia = nums('diastolic'), hr = nums('heartRate'),
+          spo2 = nums('spo2'), temp = nums('temperature'), wt = nums('weight')
+    const rng = (a: number[], unit = ''): string => a.length ? `${Math.min(...a)}–${Math.max(...a)}${unit}` : '—'
+    let summary = `${vitalsReadings.length} reading${vitalsReadings.length !== 1 ? 's' : ''} recorded.`
+    if (sys.length && dia.length) summary += ` BP ${Math.min(...sys)}/${Math.min(...dia)}–${Math.max(...sys)}/${Math.max(...dia)} mmHg.`
+    if (hr.length) summary += ` HR ${rng(hr)} bpm.`
+    if (spo2.length) summary += ` SpO2 ${rng(spo2, '%')}.`
+    if (temp.length) summary += ` Temp ${rng(temp)}°.`
+    if (wt.length) summary += ` Weight ${rng(wt)}.`
+    w.body(summary)
+    if (spo2.length) {
+      const spo2Min = Math.min(...spo2)
+      const low = spo2.filter(v => v < 92).length
+      if (low) w.finding(`SpO2 below 92% on ${low}/${spo2.length} reading${low !== 1 ? 's' : ''}` +
+        (spo2Min < 88 ? `; nadir ${spo2Min}% is below the 88% red-flag threshold.` : '.'))
+    }
+    const when = (e: any): string => {
+      const d = e.date || (e.timestamp ? String(e.timestamp).slice(0, 10) : '')
+      let t = ''
+      if (e.timestamp) { const dt = new Date(e.timestamp); if (!isNaN(dt.getTime())) t = dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
+      return t ? `${d} ${t}` : d
+    }
+    const rows = vitalsReadings.slice(-30).map((e: any) => [
+      when(e),
+      (e.systolic != null && e.diastolic != null) ? `${e.systolic}/${e.diastolic}` : '—',
+      e.heartRate != null ? String(e.heartRate) : '—',
+      e.spo2 != null ? `${e.spo2}%` : '—',
+      e.temperature != null ? `${e.temperature}°${e.tempUnit || 'F'}` : '—',
+      e.respRate != null ? String(e.respRate) : '—',
+      e.weight != null ? `${e.weight}${e.weightUnit || 'lb'}` : '—',
+    ])
+    w.table(['Date/Time', 'BP', 'HR', 'SpO2', 'Temp', 'RR', 'Weight'], rows, [140, 65, 45, 50, 58, 42, 60])
+    if (vitalsReadings.length > 30) w.note(`Showing most recent 30 of ${vitalsReadings.length} readings.`)
   }
 
   // === SKIN ===
