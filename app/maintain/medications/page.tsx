@@ -26,6 +26,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { ArrowLeft, ArrowRight, Pill, CheckCircle2, AlertCircle, Clock } from "lucide-react"
 import { useMedicationTracker } from "@/lib/hooks/use-medication-tracker"
 import { getPref, setPref } from "@/lib/prefs"
+import { MEDICATION_KIND_META, medicationKind } from "@/lib/types/medication-types"
 import { formatDateForStorage, useDailyData, CATEGORIES } from "@/lib/database"
 import { ADHERENCE_SUBCATEGORY } from "@/lib/medications/adherence"
 
@@ -216,6 +217,12 @@ export default function MaintainMedicationsPage() {
               {med.dose ? <span className="text-muted-foreground font-normal"> · {med.dose}</span> : null}
             </div>
             <div className="text-xs text-muted-foreground flex items-center gap-1.5 flex-wrap">
+              {medicationKind(med) !== 'prescription' && (
+                <span className="inline-flex items-center gap-0.5 rounded bg-muted px-1.5 py-0.5 font-medium">
+                  <span aria-hidden>{MEDICATION_KIND_META[medicationKind(med)].icon}</span>
+                  {MEDICATION_KIND_META[medicationKind(med)].short}
+                </span>
+              )}
               {(med.time || med.requiresFood) && (
                 <span>{med.time}{med.time && med.requiresFood ? ' · ' : ''}{med.requiresFood ? 'with food' : ''}</span>
               )}

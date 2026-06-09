@@ -198,6 +198,7 @@ export function MedicationTracker() {
     return {
       brandName: editingMedication.brandName || '',
       genericName: editingMedication.genericName || '',
+      kind: editingMedication.kind || 'prescription',
       dose: editingMedication.dose || '',
       time: editingMedication.time || '',
       requiresFood: editingMedication.requiresFood || false,

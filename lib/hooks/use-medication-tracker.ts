@@ -131,6 +131,7 @@ export function useMedicationTracker(): UseMedicationTrackerReturn {
         id: uuidv4(),
         brandName: data.brandName.trim() || undefined,
         genericName: data.genericName.trim() || undefined,
+        kind: data.kind || 'prescription',
         dose: data.dose.trim() || undefined,
         time: data.time.trim() || undefined,
         requiresFood: data.requiresFood,

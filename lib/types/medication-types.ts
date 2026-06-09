@@ -29,6 +29,33 @@
  */
 
 // ============================================================================
+// MEDICATION KIND (CHA-307)
+// ============================================================================
+
+// What KIND of thing this is. Supplements & OTC interact with prescriptions
+// (e.g. 5-HTP + an SSRI, St. John's Wort ↔ tons of Rx, vitamin K ↔ warfarin),
+// so the med list / doctor PDF must capture them too — otherwise the picture is
+// incomplete at exactly the moment someone reviews for safety. The point here is
+// VISIBILITY/COMPLETENESS (show everything together for a human/pharmacist to
+// review), NOT auto-diagnosing interactions. A supplement is just a med that
+// isn't prescribed — same fields, different label.
+export type MedicationKind = 'prescription' | 'otc' | 'supplement';
+
+// Display metadata per kind — reused by the form toggle, the med card badge,
+// and the doctor PDF so the wording stays consistent everywhere.
+export const MEDICATION_KIND_META: Record<MedicationKind, { label: string; short: string; icon: string }> = {
+  prescription: { label: 'Prescription', short: 'Rx', icon: '℞' },
+  otc:          { label: 'Over-the-counter', short: 'OTC', icon: '🛒' },
+  supplement:   { label: 'Supplement', short: 'Supplement', icon: '🌿' },
+};
+
+// Back-compat: anything without a kind (everything created before CHA-307) is a
+// prescription. Use this everywhere instead of reading m.kind directly.
+export function medicationKind(m: { kind?: MedicationKind }): MedicationKind {
+  return m.kind || 'prescription';
+}
+
+// ============================================================================
 // CORE MEDICATION INTERFACE
 // ============================================================================
 
@@ -37,7 +64,11 @@ export interface Medication {
   id: string;                           // UUID for database
   brandName?: string;                   // "Tylenol", "Advil" - OPTIONAL
   genericName?: string;                 // "acetaminophen", "ibuprofen" - OPTIONAL
-  
+
+  // What kind of thing this is (CHA-307). Optional + defaults to 'prescription'
+  // (via medicationKind()) so existing records keep working unchanged.
+  kind?: MedicationKind;
+
   // Dosing information (all optional)
   dose?: string;                        // "500mg", "2 tablets"
   time?: string;                        // "Morning", "8:00 AM", "With dinner"
@@ -102,6 +133,7 @@ export interface MedicationFormData {
   // Same as Medication but without metadata
   brandName: string;
   genericName: string;
+  kind: MedicationKind;
   dose: string;
   time: string;
   requiresFood: boolean;
@@ -261,6 +293,7 @@ export const MEDICATION_SUBCATEGORIES = {
 export const DEFAULT_MEDICATION_FORM: MedicationFormData = {
   brandName: '',
   genericName: '',
+  kind: 'prescription',
   dose: '',
   time: '',
   requiresFood: false,

@@ -51,7 +51,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
-import { Medication } from '@/lib/types/medication-types';
+import { Medication, MEDICATION_KIND_META, medicationKind } from '@/lib/types/medication-types';
 import AddToCalendarButton from '@/components/add-to-calendar-button';
 import type { CalendarEventInput } from '@/lib/services/calendar-export';
 
@@ -156,6 +156,14 @@ export function MedicationCard({
                 <h3 className="text-lg font-semibold text-foreground truncate">
                   {displayName}
                 </h3>
+                {/* Flag non-prescriptions (CHA-307) so supplements/OTC read as
+                    what they are — completeness for the human reviewing the list. */}
+                {medicationKind(medication) !== 'prescription' && (
+                  <Badge variant="outline" className="shrink-0">
+                    <span className="mr-1" aria-hidden>{MEDICATION_KIND_META[medicationKind(medication)].icon}</span>
+                    {MEDICATION_KIND_META[medicationKind(medication)].short}
+                  </Badge>
+                )}
                 {medication.active === false && (
                   <Badge variant="secondary">Inactive</Badge>
                 )}

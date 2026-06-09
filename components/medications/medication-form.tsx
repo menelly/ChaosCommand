@@ -44,6 +44,8 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import {
   MedicationFormData,
+  MedicationKind,
+  MEDICATION_KIND_META,
   DEFAULT_MEDICATION_FORM,
   MEDICATION_VALIDATION
 } from '@/lib/types/medication-types';
@@ -337,6 +339,37 @@ export function MedicationForm({
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Kind: prescription / OTC / supplement (CHA-307). Supplements & OTC
+                  are tracked first-class so the doctor PDF + med list show the
+                  COMPLETE picture (a supplement can still interact with an Rx). */}
+              <div className="space-y-2">
+                <Label>Type</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  {(Object.keys(MEDICATION_KIND_META) as MedicationKind[]).map((k) => {
+                    const meta = MEDICATION_KIND_META[k];
+                    const selected = formData.kind === k;
+                    return (
+                      <Button
+                        key={k}
+                        type="button"
+                        variant={selected ? 'default' : 'outline'}
+                        onClick={() => handleInputChange('kind', k)}
+                        aria-pressed={selected}
+                        className="justify-center"
+                      >
+                        <span className="mr-1.5" aria-hidden>{meta.icon}</span>
+                        {meta.label}
+                      </Button>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Pick <span className="font-medium">Supplement</span> or <span className="font-medium">OTC</span> for anything
+                  not prescribed — vitamins, herbs, supplements, store-bought meds. They show up in your full list and the
+                  doctor PDF too, so the picture you hand a clinician or pharmacist is complete.
+                </p>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="brandName">

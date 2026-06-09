@@ -645,17 +645,34 @@ export function generateMedicalReport(data: ReportData): Blob {
   // context. From the MANAGE section (per Ren, 2026-05-30, CHA-246).
   const medications = data.medications || []
   if (medications.length) {
-    w.sectionHeader('Medications')
+    w.sectionHeader('Medications & Supplements')
     const isStopped = (m: any) => m.active === false || !!m.dateStopped
+    // CHA-307: supplements/OTC are tracked first-class so this list is COMPLETE
+    // — a clinician/pharmacist reviewing for interactions needs to see the
+    // non-prescribed items (5-HTP, St. John's Wort, vitamin K, etc.) too.
+    const isSupplementOrOtc = (m: any) => m.kind === 'supplement' || m.kind === 'otc'
     const active = medications.filter((m: any) => !isStopped(m))
     const stopped = medications.filter(isStopped)
     const nameOf = (m: any) => (m.brandName || m.genericName || 'Unnamed') + ((m.brandName && m.genericName) ? ` (${m.genericName})` : '')
-    if (active.length) {
-      w.subSection(`Current medications (${active.length})`)
-      const rows = active.map((m: any) => [nameOf(m), m.dose || '', m.time || '', m.conditionTreating || ''])
+    const activeRx = active.filter((m: any) => !isSupplementOrOtc(m))
+    const activeSupp = active.filter(isSupplementOrOtc)
+    if (activeRx.length) {
+      w.subSection(`Current medications (${activeRx.length})`)
+      const rows = activeRx.map((m: any) => [nameOf(m), m.dose || '', m.time || '', m.conditionTreating || ''])
       w.table(['Medication', 'Dose', 'Schedule', 'Treating'], rows, [180, 70, 75, 115])
+    }
+    if (activeSupp.length) {
+      w.subSection(`Supplements & OTC (${activeSupp.length})`)
+      const rows = activeSupp.map((m: any) => [
+        nameOf(m) + (m.kind === 'otc' ? ' [OTC]' : ''),
+        m.dose || '', m.time || '', m.conditionTreating || '',
+      ])
+      w.table(['Supplement / OTC', 'Dose', 'Schedule', 'For'], rows, [180, 70, 75, 115])
+      w.body('Supplements & over-the-counter products are listed for completeness — they can interact with prescriptions. Please review the full list with a pharmacist or prescriber.')
+    }
+    if (active.length) {
       const withReminders = active.filter((m: any) => m.enableReminders && (m.reminderTimes || []).length).length
-      if (withReminders > 0) w.body(`${withReminders} of ${active.length} current medications have scheduled reminders set — adherence support in place.`)
+      if (withReminders > 0) w.body(`${withReminders} of ${active.length} current items have scheduled reminders set — adherence support in place.`)
     }
     const sideFx = active.filter((m: any) => m.persistentSideEffects)
     if (sideFx.length && isDoctor) {
