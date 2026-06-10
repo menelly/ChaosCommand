@@ -1375,11 +1375,14 @@ export function generateMedicalReport(data: ReportData): Blob {
     }
   }
 
-  // === AUTOIMMUNE / CONNECTIVE TISSUE (rheumatology) ===
-  // Renders for all audiences (not doctor-gated) so the tracker always exports.
+  // === AUTOIMMUNE / CONNECTIVE TISSUE (rheumatology) — non-doctor audiences ===
+  // The doctor build is the rich block ABOVE (isDoctor-gated). This leaner
+  // version covers attorney/personal so the tracker always exports — but MUST
+  // be !isDoctor, or a doctor PDF renders the autoimmune section TWICE (the
+  // deluxe block, then this near-identical one). Bug caught 2026-06-10.
   // Field names verified against app/autoimmune/autoimmune-types.ts.
   const aiEntries = trackerData.filter(r => r.subcategory === 'autoimmune')
-  if (aiEntries.length) {
+  if (aiEntries.length && !isDoctor) {
     w.sectionHeader('Autoimmune / Connective-Tissue Assessment')
     const types: Record<string, number> = {}
     const areaFreq: Record<string, number> = {}
