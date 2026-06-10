@@ -26,6 +26,25 @@ function normalizeUnits(s: string): string {
 }
 
 /**
+ * 95% confidence interval for a Pearson correlation r, via the Fisher
+ * z-transformation: z = atanh(r), SE = 1/sqrt(n-3), back-transform with tanh.
+ * Needs n > 3 (the PDF only computes correlations at n >= 5). r is clamped just
+ * shy of ±1 so a perfect correlation doesn't send atanh to infinity.
+ *
+ * Why this matters on a doctor report: a CI that straddles 0 says "this
+ * correlation is not statistically distinguishable from no relationship at this
+ * sample size" — exactly what a clinician needs to not over-read an r=0.5 built
+ * on six days. Verified against textbook values (r=0.5,n=20 → [0.07, 0.77]).
+ */
+function pearsonCI95(r: number, n: number): [number, number] {
+  if (n <= 3) return [r, r]
+  const rc = Math.max(-0.999999, Math.min(0.999999, r))
+  const z = Math.atanh(rc)
+  const se = 1 / Math.sqrt(n - 3)
+  return [Math.tanh(z - 1.96 * se), Math.tanh(z + 1.96 * se)]
+}
+
+/**
  * Render a single lab value without duplicating the unit. If `value_text`
  * already contains a unit (i.e. has any letter / % / / character after the
  * number), trust it and skip appending `unit`. Otherwise append the unit.
@@ -2144,20 +2163,22 @@ export function generateMedicalReport(data: ReportData): Blob {
         correlations.sort((a, b) => Math.abs(b[2]) - Math.abs(a[2]))
         w.sectionHeader(isDoctor ? 'Symptom Correlations' : 'Patterns Found')
 
+        const label = (t: string) => t.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+
         if (isDoctor) {
-          w.note('Pearson correlations between daily symptom severity scores (|r| >= 0.3):')
+          w.note('Pearson correlations between daily symptom severity scores (|r| ≥ 0.3), with 95% confidence intervals (Fisher z). A CI that crosses 0 is not statistically distinguishable from no correlation at this sample size — wide intervals reflect few overlapping days, so keep tracking to narrow them.')
+          const rows = correlations.slice(0, 10).map(([t1, t2, rVal, n]) => {
+            const [lo, hi] = pearsonCI95(rVal, n)
+            return [label(t1), label(t2), rVal.toFixed(2), `${lo.toFixed(2)} to ${hi.toFixed(2)}`, String(n)]
+          })
+          w.table(['Symptom A', 'Symptom B', 'r', '95% CI', 'Days'], rows, [105, 105, 45, 110, 45], COLORS.correlationHeader)
+        } else {
+          const rows = correlations.slice(0, 10).map(([t1, t2, rVal, n]) => {
+            const rText = `${Math.abs(rVal) >= 0.7 ? 'strong' : 'moderate'} ${rVal > 0 ? 'positive' : 'inverse'}`
+            return [label(t1), label(t2), rText, String(n)]
+          })
+          w.table(['Symptom A', 'Symptom B', 'Correlation', 'Days'], rows, [120, 120, 100, 50], COLORS.correlationHeader)
         }
-
-        const rows = correlations.slice(0, 10).map(([t1, t2, rVal, n]) => {
-          const label1 = t1.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
-          const label2 = t2.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
-          const rText = isDoctor
-            ? `r=${rVal.toFixed(2)}`
-            : `${Math.abs(rVal) >= 0.7 ? 'strong' : 'moderate'} ${rVal > 0 ? 'positive' : 'inverse'}`
-          return [label1, label2, rText, String(n)]
-        })
-
-        w.table(['Symptom A', 'Symptom B', 'Correlation', 'Days'], rows, [120, 120, 100, 50], COLORS.correlationHeader)
         w.note('Correlations reflect co-occurrence patterns in patient-reported data and do not imply causation.')
         w.spacer(6)
       }
