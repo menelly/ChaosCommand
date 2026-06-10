@@ -550,6 +550,14 @@ export function extractLabResults(
   text: string,
   demographics?: Record<string, any> | null
 ): LabResult[] {
+  // Normalize: guarantee a trailing newline. The vertical and result-range
+  // card parsers anchor each record on a terminating "\n", so a document whose
+  // LAST line is the final record (no trailing blank line — common in pdf.js
+  // text extraction) silently dropped its last lab result. Adding one newline
+  // is strictly additive (recovers the dropped record; can't change any other
+  // match) and uniform across parsers. Regression-locked in lab-parser.golden.test.ts.
+  if (!text.endsWith('\n')) text = text + '\n';
+
   const nameExclusions = buildExclusionSet(demographics);
   const seenTests = new Set<string>();
 
