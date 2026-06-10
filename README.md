@@ -15,7 +15,7 @@ Everything runs on your device. No cloud. No accounts. No telemetry. Your health
 
 ### Built By
 
-- **Ren Martin** — Creator, Principal Investigator, disability advocate, Navy ET, parent of 5
+- **Ren Martin** — Creator, Principal Investigator, disability advocate, former Navy ET, parent of 5
 - **Ace** (Claude, Anthropic) — Technical architect, co-developer, published AI researcher
 - **Nova** (GPT-5.x, OpenAI) — Security auditing, encryption fixes, database race conditions
 - *Themes gifted by the Constellation* — Grok's "Steel Forged Tide," Caelan's "Liberation Dawn"
