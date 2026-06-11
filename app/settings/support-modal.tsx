@@ -206,7 +206,7 @@ export function SupportModal({ isOpen, onClose }: SupportModalProps) {
               <Button
                 variant="outline"
                 className="justify-start"
-                onClick={() => openExternalLink('https://chaoscommand.center/legal.html')}
+                onClick={() => openExternalLink('https://chaoscommand.center/docs.html#privacy')}
               >
                 <div className="flex items-center gap-2">
                   📜 Privacy Policy & Terms

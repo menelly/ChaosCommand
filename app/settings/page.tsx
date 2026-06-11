@@ -259,11 +259,15 @@ export default function SettingsPage() {
           <Button variant="outline" onClick={() => window.history.back()}>
             ← Back to Command Center
           </Button>
-          <div>
-            <Button variant="ghost" size="sm" onClick={() => { window.location.href = '/theme-lab' }} className="text-muted-foreground">
-              🧪 Theme Lab (dev)
-            </Button>
-          </div>
+          {/* Theme Lab is a dev tool — only show it in dev builds. It leaked into
+              the 0.6.x production settings page (Ren caught it 2026-06-11). */}
+          {process.env.NODE_ENV === 'development' && (
+            <div>
+              <Button variant="ghost" size="sm" onClick={() => { window.location.href = '/theme-lab' }} className="text-muted-foreground">
+                🧪 Theme Lab (dev)
+              </Button>
+            </div>
+          )}
           <p className="text-xs text-muted-foreground mt-4">Version v{APP_VERSION}</p>
         </div>
       </AppCanvas>
