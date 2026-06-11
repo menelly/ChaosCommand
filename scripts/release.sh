@@ -106,7 +106,10 @@ python scripts/gen_changelog.py --out-dir docs
 
 # 8. Push (optional — comment out if you want to push manually)
 echo "→ Pushing commits and tag"
-git push origin main
+# This repo's trunk is MASTER, not main — 'git push origin main' failed here and,
+# with set -e, killed the script before the changelog/pill deploys (likely the
+# real culprit behind the 0.6.0 stale-pages incident). HEAD = current branch.
+git push origin HEAD
 git push origin "v$NEW_VERSION" 2>/dev/null || true
 
 # 9. Deploy changelog to chaoscommand.center
