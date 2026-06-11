@@ -80,7 +80,19 @@ export const TRACKABLE_TRACKERS: readonly TrackableTracker[] = [
   { id: 'diabetes', label: 'Diabetes', emoji: '💉', href: '/diabetes', subcategory: 'diabetes', category: 'body', statusUnsupported: true },
   { id: 'thyroid', label: 'Thyroid', emoji: '🦋', href: '/thyroid', subcategory: 'thyroid', category: 'body', statusUnsupported: true },
   { id: 'adrenal', label: 'Adrenal', emoji: '🔥', href: '/adrenal', subcategory: 'adrenal', category: 'body', statusUnsupported: true },
+  // Vitals (CHA-317): full standard storage — vitals-tracker.tsx writes
+  // saveData(date, CATEGORIES.TRACKER, 'vitals', …), so status + copy both work.
+  // (A stale-base duplicate registration once flagged this statusUnsupported; the
+  // tracker page predates that flag. Merge-resolved 2026-06-11.)
   { id: 'vitals', label: 'Vitals', emoji: '🩺', href: '/vitals', subcategory: 'vitals', category: 'body' },
+  // Neuro & Autoimmune (CHA-314): standard tracker storage (verified — both write
+  // saveData(date, CATEGORIES.TRACKER, '<id>', …)), so full "logged today ✓" + copy.
+  { id: 'neuro', label: 'Neuro / Neuromuscular', emoji: '🪢', href: '/neuro', subcategory: 'neuro', category: 'body' },
+  { id: 'autoimmune', label: 'Autoimmune / Connective Tissue', emoji: '🧬', href: '/autoimmune', subcategory: 'autoimmune', category: 'body' },
+  // Endocrine (CHA-314, option A): /endocrine is a HUB (Diabetes + Thyroid + Adrenal)
+  // that writes no record of its own → nav-only umbrella for Body-UI parity. The
+  // granular diabetes/thyroid/adrenal entries above stay for routine-level control.
+  { id: 'endocrine', label: 'Endocrine', emoji: '⚗️', href: '/endocrine', subcategory: 'endocrine', category: 'body', statusUnsupported: true, copyUnsupported: true },
   // -- Mind --
   { id: 'brain-fog', label: 'Brain Fog', emoji: '🌫️', href: '/brain-fog', subcategory: 'brain-fog', category: 'mind' },
   { id: 'mental-health', label: 'Mind & Mood', emoji: '🧠', href: '/mental-health', subcategory: 'mental-health', category: 'mind' },
