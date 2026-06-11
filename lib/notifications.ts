@@ -26,11 +26,25 @@
  * Tauri-powered desktop notifications for health tracking alerts
  */
 
-// import { isPermissionGranted, requestPermission, sendNotification } from '@tauri-apps/plugin-notification'
-// TODO: Install @tauri-apps/plugin-notification package
-const isPermissionGranted = async () => true
-const requestPermission = async () => 'granted'
-const sendNotification = async (options: any) => console.log('Notification:', options)
+import { isTauri } from '@tauri-apps/api/core'
+
+// Real Tauri notification plugin, lazy-imported so web builds never choke.
+// (For MONTHS these were stubs that console.log'd — the entire desktop
+// notification pipeline existed (Cargo crate, lib.rs registration, capability
+// permission, JS package) except this last inch. Windows now gets real toasts.
+// Found during Ren's 2026-06-11 smoke test: "can we make Windows care?")
+const isPermissionGranted = async (): Promise<boolean> => {
+  const mod = await import('@tauri-apps/plugin-notification')
+  return mod.isPermissionGranted()
+}
+const requestPermission = async (): Promise<string> => {
+  const mod = await import('@tauri-apps/plugin-notification')
+  return mod.requestPermission()
+}
+const sendNotification = async (options: any): Promise<void> => {
+  const mod = await import('@tauri-apps/plugin-notification')
+  mod.sendNotification(options)
+}
 
 export interface NotificationOptions {
   title: string
@@ -40,7 +54,19 @@ export interface NotificationOptions {
 }
 
 export class HealthNotifications {
-  private static isDesktop = typeof window !== 'undefined' && window.__TAURI__
+  // window.__TAURI__ only exists when app.withGlobalTauri is enabled in
+  // tauri.conf.json — ours isn't, so that check was ALWAYS false and every
+  // notification fell through to the web API (which WebView2 ignores).
+  // isTauri() from the official API detects the runtime regardless.
+  private static get isDesktop(): boolean {
+    if (typeof window === 'undefined') return false
+    if ((window as any).__TAURI__) return true
+    try {
+      return isTauri()
+    } catch {
+      return false
+    }
+  }
 
   /**
    * Initialize notifications and request permissions
@@ -186,13 +212,12 @@ export class HealthNotifications {
   }
 }
 
-// Auto-initialize on import in desktop environment
-if (typeof window !== 'undefined' && window.__TAURI__) {
+// Auto-initialize on import in desktop environment. initialize() itself
+// checks isDesktop (real isTauri() detection now) and no-ops on web.
+if (typeof window !== 'undefined') {
   HealthNotifications.initialize().then(success => {
     if (success) {
       console.log('🔔 Desktop notifications initialized successfully')
-    } else {
-      console.warn('⚠️ Desktop notifications not available')
     }
   })
 }

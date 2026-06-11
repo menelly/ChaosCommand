@@ -33,6 +33,8 @@ import { Bell, Clock, Pill, Calendar, Database } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { KeyboardAvoidingWrapper } from '@/components/ui/keyboard-avoiding-wrapper'
 import { getBackupSettings, setBackupSettings, type BackupCadence } from "@/lib/backup-reminder"
+import { isTauri } from '@tauri-apps/api/core'
+import { ensureNotificationPermission, fireNotification } from '@/lib/services/notification-service'
 
 interface NotificationsModalProps {
   isOpen: boolean
@@ -77,12 +79,16 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
   const handleNotificationsToggle = (enabled: boolean) => {
     setNotificationsEnabled(enabled)
     localStorage.setItem('chaos-notifications-enabled', enabled.toString())
-    
+
     if (enabled) {
-      // Request notification permission
-      if ('Notification' in window && Notification.permission === 'default') {
-        Notification.requestPermission()
-      }
+      // Tauri (desktop/mobile app): request through the OS notification plugin —
+      // the web Notification API is a dead end inside WebView2 on Windows.
+      // Web/PWA: fall back to the browser permission flow.
+      ensureNotificationPermission().then(granted => {
+        if (!granted && 'Notification' in window && Notification.permission === 'default') {
+          Notification.requestPermission()
+        }
+      })
     }
   }
 
@@ -128,7 +134,19 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
     setBackupSettings({ entryThreshold: n })
   }
 
-  const testNotification = () => {
+  const testNotification = async () => {
+    // Try the Tauri OS plugin first (the only path Windows actually honors —
+    // WebView2 ignores the web Notification API). Falls back to the browser
+    // API for the web/PWA build.
+    if (isTauri()) {
+      const granted = await ensureNotificationPermission()
+      if (granted) {
+        await fireNotification('Chaos Command Test', 'Your notifications are working! 🎉')
+        return
+      }
+      alert('Notifications are blocked at the OS level — check Windows Settings → Notifications for Chaos Command.')
+      return
+    }
     if ('Notification' in window && Notification.permission === 'granted') {
       new Notification('Chaos Command Test', {
         body: 'Your notifications are working! 🎉',

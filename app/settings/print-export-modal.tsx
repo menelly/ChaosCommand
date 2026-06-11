@@ -15,7 +15,8 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Printer, FileText, Stethoscope, Scale, ChevronRight, ChevronLeft, Download, Loader2, User, X, Lock, AlertTriangle } from "lucide-react"
+import { Printer, FileText, Stethoscope, Scale, ChevronRight, ChevronLeft, ChevronDown, Download, Loader2, User, X, Lock, AlertTriangle } from "lucide-react"
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible"
 import { useDailyData } from "@/lib/database/hooks/use-daily-data"
 import { CATEGORIES, formatDateForStorage, db } from "@/lib/database/dexie-db"
 import { useToast } from "@/hooks/use-toast"
@@ -618,27 +619,39 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
 
               <div>
                 <Label className="mb-2 block">Include Trackers</Label>
-                <div className="space-y-3">
+                {/* Collapsed by default with an n/m count per group — the open wall of
+                    ~30 tracker buttons was overwhelming (Ren, 2026-06-11 smoke test).
+                    Everything's selected by default, so most users never need to open these. */}
+                <div className="space-y-2">
                   {CATEGORY_ORDER.map(cat => {
                     const items = TRACKER_OPTIONS.filter(t => t.category === cat.key)
                     if (items.length === 0) return null
+                    const selectedCount = items.filter(t => selectedTrackers.includes(t.id)).length
                     return (
-                      <div key={cat.key}>
-                        <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">{cat.label}</div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                          {items.map(tracker => (
-                            <Button
-                              key={tracker.id}
-                              variant={selectedTrackers.includes(tracker.id) ? 'default' : 'outline'}
-                              size="sm"
-                              className="justify-start h-auto py-1.5 text-xs whitespace-normal text-left leading-tight"
-                              onClick={() => toggleTracker(tracker.id)}
-                            >
-                              {tracker.label}
-                            </Button>
-                          ))}
-                        </div>
-                      </div>
+                      <Collapsible key={cat.key} defaultOpen={false} className="border rounded-lg">
+                        <CollapsibleTrigger className="w-full flex items-center justify-between gap-2 px-3 py-2 text-xs font-semibold uppercase tracking-wide hover:bg-muted/40 transition-colors [&[data-state=open]_.chev]:rotate-180">
+                          <span className="text-muted-foreground">{cat.label}</span>
+                          <span className="flex items-center gap-2 normal-case font-normal text-muted-foreground">
+                            {selectedCount}/{items.length} selected
+                            <ChevronDown className="chev h-4 w-4 shrink-0 transition-transform" />
+                          </span>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 p-2 pt-0">
+                            {items.map(tracker => (
+                              <Button
+                                key={tracker.id}
+                                variant={selectedTrackers.includes(tracker.id) ? 'default' : 'outline'}
+                                size="sm"
+                                className="justify-start h-auto py-1.5 text-xs whitespace-normal text-left leading-tight"
+                                onClick={() => toggleTracker(tracker.id)}
+                              >
+                                {tracker.label}
+                              </Button>
+                            ))}
+                          </div>
+                        </CollapsibleContent>
+                      </Collapsible>
                     )
                   })}
                 </div>

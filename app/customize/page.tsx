@@ -36,20 +36,31 @@ export default function CustomizePage() {
           </p>
         </header>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Palette className="h-5 w-5" />
-              Visual Settings
-            </CardTitle>
-            <CardDescription>
-              Theme, motion intensity, celebration level, font.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <VisualSettingsPanel />
-          </CardContent>
-        </Card>
+        {/* Collapsible like its siblings — was the only always-open card, which made
+            the page a wall (Ren, 2026-06-11 smoke test: "overwhelming"). */}
+        <Collapsible defaultOpen={false}>
+          <Card>
+            <CollapsibleTrigger asChild>
+              <CardHeader className="cursor-pointer select-none hover:bg-muted/30 transition-colors [&[data-state=open]_.chev]:rotate-180">
+                <CardTitle className="flex items-center justify-between gap-2">
+                  <span className="flex items-center gap-2">
+                    <Palette className="h-5 w-5" />
+                    Visual Settings
+                  </span>
+                  <ChevronDown className="chev h-5 w-5 shrink-0 transition-transform" />
+                </CardTitle>
+                <CardDescription>
+                  Theme, motion intensity, celebration level, font.
+                </CardDescription>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent>
+                <VisualSettingsPanel />
+              </CardContent>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
 
         <Collapsible defaultOpen={false}>
           <Card>
