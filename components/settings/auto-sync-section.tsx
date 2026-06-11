@@ -45,9 +45,13 @@ export default function AutoSyncSection() {
   }, [userPin])
 
   return (
-    <div className="p-4 border rounded-lg border-purple-200 bg-purple-50/50 dark:bg-purple-950/20">
+    // Theme tokens, not hardcoded palette colors — bg-purple-50 rendered as an
+    // opaque gray slab on dark themes (Wicked etc.) because our themes are
+    // body-class tokens, so Tailwind dark: variants never fire. Same lesson
+    // as the 0.5.6 danger-color de-jenga.
+    <div className="p-4 border rounded-lg border-primary/30 bg-primary/5">
       <div className="flex items-center gap-2 mb-3">
-        <RefreshCw className="h-4 w-4 text-purple-600" />
+        <RefreshCw className="h-4 w-4 text-primary" />
         <Label className="text-sm font-medium">Auto-Sync to Paired Devices</Label>
         <Badge variant="outline" className="text-xs">Opt-in</Badge>
       </div>

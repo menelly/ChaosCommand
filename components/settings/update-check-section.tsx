@@ -95,9 +95,11 @@ export default function UpdateCheckSection() {
   }
 
   return (
-    <div className="p-4 border rounded-lg border-blue-200 bg-blue-50/50 dark:bg-blue-950/20">
+    // Theme tokens, not hardcoded palette colors — bg-blue-50 rendered as an
+    // opaque gray slab on dark themes (Wicked etc.). See auto-sync-section.
+    <div className="p-4 border rounded-lg border-primary/30 bg-primary/5">
       <div className="flex items-center gap-2 mb-3">
-        <Cloud className="h-4 w-4 text-blue-600" />
+        <Cloud className="h-4 w-4 text-primary" />
         <Label className="text-sm font-medium">Check for Updates</Label>
         <Badge variant="outline" className="text-xs">Opt-in</Badge>
       </div>
@@ -112,7 +114,7 @@ export default function UpdateCheckSection() {
       <Button
         onClick={runCheck}
         disabled={state.kind === 'checking'}
-        className="w-full bg-blue-600 hover:bg-blue-700"
+        className="w-full"
       >
         {state.kind === 'checking' ? (
           <>
@@ -176,7 +178,7 @@ export default function UpdateCheckSection() {
       )}
 
       {/* Opt-in auto-check toggle */}
-      <label className="mt-4 pt-3 border-t border-blue-200/60 flex items-start gap-3 cursor-pointer">
+      <label className="mt-4 pt-3 border-t border-border flex items-start gap-3 cursor-pointer">
         <Checkbox
           checked={autoCheck}
           onCheckedChange={(checked) => {
