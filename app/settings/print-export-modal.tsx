@@ -17,7 +17,7 @@ import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Printer, FileText, Stethoscope, Scale, ChevronRight, ChevronLeft, Download, Loader2, User, X, Lock, AlertTriangle } from "lucide-react"
 import { useDailyData } from "@/lib/database/hooks/use-daily-data"
-import { CATEGORIES, formatDateForStorage } from "@/lib/database/dexie-db"
+import { CATEGORIES, formatDateForStorage, db } from "@/lib/database/dexie-db"
 import { useToast } from "@/hooks/use-toast"
 import { generateMedicalReport } from "@/lib/pdf-report-generator"
 import { KeyboardAvoidingWrapper } from '@/components/ui/keyboard-avoiding-wrapper'
@@ -340,6 +340,27 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
         })
         .filter(Boolean)
 
+      // Latest Patterns-page analysis snapshot — the insights the user actually
+      // generated and saw in-app. Per Ren (2026-06-11): when these exist they are
+      // the PDF's pattern source of truth; the generator only computes fresh
+      // engine runs as a fallback. (Generator is sync, Dexie is async — so the
+      // fetch lives here with the rest of the data assembly.)
+      let patternSnapshot: { runAt: string; v1?: any; v2?: any } | undefined
+      if (includePatterns) {
+        try {
+          const snap = await db.pattern_snapshots.orderBy('run_at').reverse().first()
+          if (snap?.snapshot_json) {
+            const parsed = JSON.parse(snap.snapshot_json)
+            if (parsed?.v1 || parsed?.v2) {
+              patternSnapshot = { runAt: snap.run_at, v1: parsed.v1, v2: parsed.v2 }
+            }
+          }
+        } catch {
+          // Table may not exist yet (older DB) or JSON unparseable — generator
+          // falls back to fresh engine computation, never blocks the export.
+        }
+      }
+
       // Generate PDF client-side
       const blob = generateMedicalReport({
         demographics,
@@ -376,6 +397,7 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
           return { date: r.date, ...content }
         }),
         includePatterns,
+        patternSnapshot,
         workData,
         medications,
         appointments,

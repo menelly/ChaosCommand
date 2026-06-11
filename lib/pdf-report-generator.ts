@@ -8,6 +8,10 @@
 
 import jsPDF from 'jspdf'
 import { getPersonalization, resolvedPronouns } from '@/lib/personalization'
+// Patterns engines — static imports (the old runtime require() inside a try/catch
+// could fail silently in a client bundle and the whole patterns section vanished).
+import { analyzeAllPatterns } from '@/lib/pattern-engine'
+import { analyzeV2Patterns } from '@/lib/pattern-engine-v2'
 
 /**
  * Repair unit strings that were split by OCR / PDF text-extraction whitespace
@@ -206,6 +210,11 @@ interface ReportData {
   timelineEvents?: any[]
   healthData?: any[]
   includePatterns?: boolean
+  /** Latest Patterns-page analysis snapshot (db.pattern_snapshots), passed by the
+   *  caller. When present, the PDF renders THESE engine results — the exact
+   *  insights the user generated and saw in-app — instead of re-deriving.
+   *  Fresh engine runs are the fallback when no snapshot exists. */
+  patternSnapshot?: { runAt: string; v1?: any; v2?: any }
   workData?: { missedWork?: any[]; employment?: any[]; applications?: any[] } | null
   medications?: any[]
   appointments?: any[]
@@ -450,6 +459,46 @@ export function generateMedicalReport(data: ReportData): Blob {
   const isAttorney = data.audience === 'attorney'
   const trackerData = data.trackerData || []
   const labResults = data.labResults || []
+
+  // === UNIFIED PATTERN SOURCE (Ren's design, 2026-06-11) ===
+  // Priority: (1) the user's latest Patterns-page snapshot — the exact insights
+  // they generated and have been calibrating against in-app; (2) fresh engine
+  // runs over this export's tracker data. The PDF no longer re-derives its own
+  // patterns or its own Pearson: the Patterns engine is the single source of
+  // truth, so the document a doctor reads always agrees with the app the
+  // patient shows them. (Replaces the inline Pearson loop and the v2-only
+  // require() — which could fail silently and drop the whole section.)
+  let _patterns: { v1: any; v2: any; provenance: string } | null | undefined
+  const getPatterns = () => {
+    if (_patterns !== undefined) return _patterns
+    if (!data.includePatterns) { _patterns = null; return _patterns }
+    const snap = data.patternSnapshot
+    if (snap && (snap.v1 || snap.v2)) {
+      const when = snap.runAt ? new Date(snap.runAt).toLocaleDateString() : 'a prior session'
+      _patterns = {
+        v1: snap.v1 || null,
+        v2: snap.v2 || null,
+        provenance: `Patterns as analyzed in-app on ${when} (Patterns page run).`,
+      }
+      return _patterns
+    }
+    try {
+      const grouped: Record<string, any[]> = {}
+      for (const r of trackerData) {
+        if (!r.subcategory) continue
+        if (!grouped[r.subcategory]) grouped[r.subcategory] = []
+        grouped[r.subcategory].push(r)
+      }
+      _patterns = {
+        v1: analyzeAllPatterns(grouped as any),
+        v2: analyzeV2Patterns(grouped as any, 90),
+        provenance: 'Patterns computed at export time from the data included in this report.',
+      }
+    } catch {
+      _patterns = null // engines failed — sections simply skip, never crash the export
+    }
+    return _patterns
+  }
 
   // Normalizer for the many storage shapes across trackers. Some save
   // `{ entries: [...] }`, some a bare array, some a single per-day record object,
@@ -1743,30 +1792,41 @@ export function generateMedicalReport(data: ReportData): Blob {
     }
   }
 
-  // === DETECTED PATTERNS (v2 engine) ===
-  if (isDoctor) {
-    try {
-      const { analyzeV2Patterns } = require('@/lib/pattern-engine-v2')
-      const patternsByTracker: Record<string, any[]> = {}
-      for (const r of trackerData) {
-        if (!r.subcategory) continue
-        if (!patternsByTracker[r.subcategory]) patternsByTracker[r.subcategory] = []
-        patternsByTracker[r.subcategory].push(r)
-      }
-      const v2 = analyzeV2Patterns(patternsByTracker, 90)
-      const high = v2.insights.filter((i: any) => i.impact === 'high')
-      if (high.length > 0) {
-        w.sectionHeader('Detected Medical Patterns')
-        w.body(`Pattern engine detected ${high.length} high-impact pattern${high.length !== 1 ? 's' : ''} in tracked data:`)
-        for (const insight of high.slice(0, 12)) {
+  // === DETECTED PATTERNS (Patterns engine — single source) ===
+  // Renders the SAME insights the app's Patterns page shows (snapshot-first via
+  // getPatterns), v2 clinical rules + v1 triggers/treatments/temporal/trends.
+  // v1 correlation insights are excluded here — they render as the Symptom
+  // Correlations table. Doctor + personal audiences; attorney reports stay
+  // functional-impact-focused. (Was: doctor-only, v2-only, high-impact-only —
+  // which is why the app showed far more patterns than the PDF.)
+  if (!isAttorney) {
+    const p = getPatterns()
+    if (p) {
+      const v2Insights: any[] = p.v2?.insights || []
+      const v1NonCorr: any[] = (p.v1?.all || []).filter((i: any) => i.type !== 'correlation')
+      const merged = [...v2Insights, ...v1NonCorr]
+      const high = merged.filter((i: any) => i.impact === 'high')
+      const medium = merged.filter((i: any) => i.impact === 'medium')
+      const lowCount = merged.length - high.length - medium.length
+      if (high.length || medium.length) {
+        w.sectionHeader(isDoctor ? 'Detected Medical Patterns' : 'Detected Patterns')
+        w.note(p.provenance)
+        w.body(
+          `Pattern engine detected ${high.length} high-impact and ${medium.length} medium-impact ` +
+          `pattern${high.length + medium.length !== 1 ? 's' : ''} in tracked data:`
+        )
+        for (const insight of [...high, ...medium].slice(0, 24)) {
           w.subSection(insight.title)
-          w.body(insight.description)
+          const conf = typeof insight.confidence === 'number' ? ` (${insight.impact} impact, confidence ${insight.confidence}%)` : ` (${insight.impact} impact)`
+          w.body(insight.description + conf)
         }
-        if (high.length > 12) w.note(`(${high.length - 12} additional high-impact patterns shown in app's Patterns â†’ Red Flags tab)`)
+        if (high.length + medium.length > 24) {
+          w.note(`(${high.length + medium.length - 24} additional patterns shown in the app's Patterns tab)`)
+        }
+        if (lowCount > 0) {
+          w.note(`(${lowCount} low-impact/preliminary pattern${lowCount !== 1 ? 's' : ''} omitted — visible in the app's Patterns tab)`)
+        }
       }
-    } catch (err) {
-      // Pattern engine load failed — non-fatal, just skip the section
-      console.error('Pattern engine v2 failed in PDF:', err)
     }
   }
 
@@ -2089,100 +2149,69 @@ export function generateMedicalReport(data: ReportData): Blob {
     }
   }
 
-  // === PATTERNS & CORRELATIONS (Pearson) ===
+  // === PATTERNS & CORRELATIONS (Patterns engine — single source) ===
   // Hoisted function declaration: defined here but CALLED earlier (right after
   // Tracked Conditions / Supporting Evidence) so the correlations render WITH the
   // evidence cluster instead of trailing the entire report. Per Ren, 2026-05-30.
+  // 2026-06-11: the inline Pearson re-derivation is GONE — correlations now come
+  // from the Patterns engine via getPatterns() (snapshot-first), so the r values
+  // in this document always match the app's Patterns tab. pearsonCI95 stays as
+  // the doctor-facing presentation layer (Fisher z, added 2026-06-10).
   function renderCorrelations() {
     if (!(data.includePatterns && trackerData.length)) return
-    const dayScores: Record<string, Record<string, number[]>> = {}
+    const p = getPatterns()
+    if (!p) return
 
-    for (const r of trackerData) {
-      const date = r.date || ''
-      const sub = r.subcategory || ''
-      const base = sub.includes('-') ? sub.split('-')[0] : sub
-      const content = r.content || {}
+    // Engine correlation insights carry data: { trackerA, trackerB, correlation,
+    // sampleSize, preliminary }. Co-occurrence insights (no r value) render as
+    // text findings below the table.
+    const corrInsights: any[] = p.v1?.correlations || []
+    const withR = corrInsights.filter((i: any) => i?.data && typeof i.data.correlation === 'number' && typeof i.data.sampleSize === 'number')
+    const coOcc = corrInsights.filter((i: any) => !(i?.data && typeof i.data.correlation === 'number'))
+    // Doctor n-floor: the main clinical table holds n >= 5 only (defensible in a
+    // medical-legal doc). The engine's floor is 3 so early-data users still see
+    // signals in-app — those 3-4-day signals are listed here separately, clearly
+    // labeled preliminary, instead of being silently dropped OR silently blended.
+    const solid = withR.filter((i: any) => i.data.sampleSize >= 5)
+    const prelim = withR.filter((i: any) => i.data.sampleSize < 5)
 
-      if (typeof content === 'object' && content !== null) {
-        const entries = Array.isArray(content.entries) ? content.entries : []
-        for (const e of entries) {
-          if (typeof e === 'object' && e !== null) {
-            for (const key of ['painLevel', 'severity', 'intensity', 'level', 'rating', 'fogLevel', 'anxietyLevel', 'nausea', 'bloating']) {
-              if (e[key] != null) {
-                const val = Number(e[key])
-                if (!isNaN(val)) {
-                  if (!dayScores[date]) dayScores[date] = {}
-                  if (!dayScores[date][base]) dayScores[date][base] = []
-                  dayScores[date][base].push(val)
-                }
-              }
-            }
-          }
-        }
+    if (!withR.length && !coOcc.length) return
+    w.sectionHeader(isDoctor ? 'Symptom Correlations' : 'Patterns Found')
+    w.note(p.provenance)
+
+    const label = (t: string) => String(t).replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+
+    if (solid.length) {
+      if (isDoctor) {
+        w.note('Pearson correlations between daily symptom severity scores (|r| ≥ 0.3), with 95% confidence intervals (Fisher z). A CI that crosses 0 is not statistically distinguishable from no correlation at this sample size — wide intervals reflect few overlapping days, so keep tracking to narrow them.')
+        const rows = solid.slice(0, 10).map((i: any) => {
+          const rVal = i.data.correlation, n = i.data.sampleSize
+          const [lo, hi] = pearsonCI95(rVal, n)
+          return [label(i.data.trackerA), label(i.data.trackerB), rVal.toFixed(2), `${lo.toFixed(2)} to ${hi.toFixed(2)}`, String(n)]
+        })
+        w.table(['Symptom A', 'Symptom B', 'r', '95% CI', 'Days'], rows, [105, 105, 45, 110, 45], COLORS.correlationHeader)
+      } else {
+        const rows = solid.slice(0, 10).map((i: any) => {
+          const rVal = i.data.correlation
+          const rText = `${Math.abs(rVal) >= 0.7 ? 'strong' : 'moderate'} ${rVal > 0 ? 'positive' : 'inverse'}`
+          return [label(i.data.trackerA), label(i.data.trackerB), rText, String(i.data.sampleSize)]
+        })
+        w.table(['Symptom A', 'Symptom B', 'Correlation', 'Days'], rows, [120, 120, 100, 50], COLORS.correlationHeader)
       }
     }
-
-    if (Object.keys(dayScores).length >= 5) {
-      const trackerBases = [...new Set(Object.values(dayScores).flatMap(d => Object.keys(d)))].sort()
-      const correlations: [string, string, number, number][] = []
-
-      for (let i = 0; i < trackerBases.length; i++) {
-        for (let j = i + 1; j < trackerBases.length; j++) {
-          const t1 = trackerBases[i], t2 = trackerBases[j]
-          const paired: [number, number][] = []
-
-          for (const date of Object.keys(dayScores)) {
-            const d = dayScores[date]
-            if (d[t1]?.length && d[t2]?.length) {
-              const avg1 = d[t1].reduce((a, b) => a + b, 0) / d[t1].length
-              const avg2 = d[t2].reduce((a, b) => a + b, 0) / d[t2].length
-              paired.push([avg1, avg2])
-            }
-          }
-
-          if (paired.length >= 5) {
-            const n = paired.length
-            const x = paired.map(p => p[0])
-            const y = paired.map(p => p[1])
-            const meanX = x.reduce((a, b) => a + b, 0) / n
-            const meanY = y.reduce((a, b) => a + b, 0) / n
-            const num = paired.reduce((s, [xi, yi]) => s + (xi - meanX) * (yi - meanY), 0)
-            const denX = Math.sqrt(x.reduce((s, xi) => s + (xi - meanX) ** 2, 0))
-            const denY = Math.sqrt(y.reduce((s, yi) => s + (yi - meanY) ** 2, 0))
-            if (denX > 0 && denY > 0) {
-              const rVal = num / (denX * denY)
-              if (Math.abs(rVal) >= 0.3) {
-                correlations.push([t1, t2, rVal, n])
-              }
-            }
-          }
-        }
-      }
-
-      if (correlations.length) {
-        correlations.sort((a, b) => Math.abs(b[2]) - Math.abs(a[2]))
-        w.sectionHeader(isDoctor ? 'Symptom Correlations' : 'Patterns Found')
-
-        const label = (t: string) => t.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
-
-        if (isDoctor) {
-          w.note('Pearson correlations between daily symptom severity scores (|r| ≥ 0.3), with 95% confidence intervals (Fisher z). A CI that crosses 0 is not statistically distinguishable from no correlation at this sample size — wide intervals reflect few overlapping days, so keep tracking to narrow them.')
-          const rows = correlations.slice(0, 10).map(([t1, t2, rVal, n]) => {
-            const [lo, hi] = pearsonCI95(rVal, n)
-            return [label(t1), label(t2), rVal.toFixed(2), `${lo.toFixed(2)} to ${hi.toFixed(2)}`, String(n)]
-          })
-          w.table(['Symptom A', 'Symptom B', 'r', '95% CI', 'Days'], rows, [105, 105, 45, 110, 45], COLORS.correlationHeader)
-        } else {
-          const rows = correlations.slice(0, 10).map(([t1, t2, rVal, n]) => {
-            const rText = `${Math.abs(rVal) >= 0.7 ? 'strong' : 'moderate'} ${rVal > 0 ? 'positive' : 'inverse'}`
-            return [label(t1), label(t2), rText, String(n)]
-          })
-          w.table(['Symptom A', 'Symptom B', 'Correlation', 'Days'], rows, [120, 120, 100, 50], COLORS.correlationHeader)
-        }
-        w.note('Correlations reflect co-occurrence patterns in patient-reported data and do not imply causation.')
-        w.spacer(6)
+    if (isDoctor && prelim.length) {
+      const items = prelim.slice(0, 6).map((i: any) =>
+        `${label(i.data.trackerA)} / ${label(i.data.trackerB)} (r=${i.data.correlation.toFixed(2)}, n=${i.data.sampleSize})`
+      ).join('; ')
+      w.note(`Preliminary signals (fewer than 5 overlapping days — interpret with caution): ${items}.`)
+    }
+    if (coOcc.length) {
+      for (const i of coOcc.slice(0, 5)) {
+        if (i?.description) w.finding(i.description)
       }
     }
+    w.note('Correlations reflect co-occurrence patterns in patient-reported data and do not imply causation.')
+    w.spacer(6)
   }
 
   // === JOURNAL ENTRIES ===

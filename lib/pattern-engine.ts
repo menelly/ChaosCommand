@@ -97,12 +97,20 @@ function toSev(v: any): number | null {
   return Number.isFinite(n) && n > 0 ? n : null
 }
 
-/** Extract numeric severity from various tracker formats. Returns null when nothing was recorded. */
+/** Extract numeric severity from various tracker formats. Returns null when nothing was recorded.
+ *  2026-06-11 unification (Ren-confirmed): field list is now the UNION of this engine's
+ *  original list and the richer one the PDF's (deleted) inline Pearson used —
+ *  fogLevel/anxietyLevel/nausea/bloating/level/rating count as severity signals too.
+ *  This engine is the single source of severity semantics for the app AND the PDF. */
 function extractSeverity(record: DailyDataRecord): number | null {
   const c = record.content
   if (!c) return null
   // Direct scalar fields (may arrive as a number OR a numeric string)
-  for (const v of [c.severity, c.painLevel, c.mood, c.energyLevel, c.energy]) {
+  for (const v of [
+    c.severity, c.painLevel, c.intensity, c.level, c.rating,
+    c.fogLevel, c.anxietyLevel, c.nausea, c.bloating,
+    c.mood, c.energyLevel, c.energy,
+  ]) {
     const n = toSev(v)
     if (n !== null) return n
   }
@@ -111,7 +119,10 @@ function extractSeverity(record: DailyDataRecord): number | null {
     const arr = (c as any)[key]
     if (Array.isArray(arr)) {
       const severities = arr
-        .map((e: any) => toSev(e.severity ?? e.painLevel ?? e.intensity))
+        .map((e: any) => toSev(
+          e.severity ?? e.painLevel ?? e.intensity ?? e.level ?? e.rating ??
+          e.fogLevel ?? e.anxietyLevel ?? e.nausea ?? e.bloating
+        ))
         .filter((v: number | null): v is number => v !== null)
       if (severities.length > 0) return severities.reduce((a: number, b: number) => a + b, 0) / severities.length
     }
