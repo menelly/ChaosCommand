@@ -193,6 +193,12 @@ export default function VisualSettingsPanel() {
     else applyBounceIntensity(savedIntensity)
   }, [])
 
+  // Name-only labels for the closed select triggers. Without children, Radix
+  // SelectValue re-renders the ENTIRE selected item (name + description div),
+  // which overflows the h-10 trigger box and spills under the border.
+  const selectedTheme = themes.find(t => t.id === currentTheme)
+  const selectedFont = fonts.find(f => f.id === currentFont)
+
   return (
     <div className="space-y-3">
       <Section title="🎨 Appearance" defaultOpen>
@@ -200,9 +206,13 @@ export default function VisualSettingsPanel() {
         <Label className="text-sm font-medium mb-2 block">Theme</Label>
         <Select value={currentTheme} onValueChange={applyTheme}>
           <SelectTrigger>
-            <SelectValue />
+            <SelectValue>
+              {selectedTheme ? `${selectedTheme.motion === 'animated' ? '🌀' : '🪨'} ${selectedTheme.name}` : 'Choose theme'}
+            </SelectValue>
           </SelectTrigger>
-          <SelectContent>
+          {/* Clamp the popup to the trigger's width so long descriptions WRAP
+              instead of sizing the panel past the viewport edge (mobile clipping bug). */}
+          <SelectContent className="w-[var(--radix-select-trigger-width)] max-w-[var(--radix-select-trigger-width)]">
             {themes.map((theme) => (
               <SelectItem key={theme.id} value={theme.id}>
                 <div>
@@ -358,9 +368,9 @@ export default function VisualSettingsPanel() {
         <Label className="text-sm font-medium mb-2 block">Font Family</Label>
         <Select value={currentFont} onValueChange={applyFont}>
           <SelectTrigger>
-            <SelectValue />
+            <SelectValue>{selectedFont?.name ?? 'Choose font'}</SelectValue>
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="w-[var(--radix-select-trigger-width)] max-w-[var(--radix-select-trigger-width)]">
             {fonts.map((font) => (
               <SelectItem key={font.id} value={font.id}>
                 <div>

@@ -26,6 +26,25 @@ function normalizeUnits(s: string): string {
 }
 
 /**
+ * 95% confidence interval for a Pearson correlation r, via the Fisher
+ * z-transformation: z = atanh(r), SE = 1/sqrt(n-3), back-transform with tanh.
+ * Needs n > 3 (the PDF only computes correlations at n >= 5). r is clamped just
+ * shy of ±1 so a perfect correlation doesn't send atanh to infinity.
+ *
+ * Why this matters on a doctor report: a CI that straddles 0 says "this
+ * correlation is not statistically distinguishable from no relationship at this
+ * sample size" — exactly what a clinician needs to not over-read an r=0.5 built
+ * on six days. Verified against textbook values (r=0.5,n=20 → [0.07, 0.77]).
+ */
+function pearsonCI95(r: number, n: number): [number, number] {
+  if (n <= 3) return [r, r]
+  const rc = Math.max(-0.999999, Math.min(0.999999, r))
+  const z = Math.atanh(rc)
+  const se = 1 / Math.sqrt(n - 3)
+  return [Math.tanh(z - 1.96 * se), Math.tanh(z + 1.96 * se)]
+}
+
+/**
  * Render a single lab value without duplicating the unit. If `value_text`
  * already contains a unit (i.e. has any letter / % / / character after the
  * number), trust it and skip appending `unit`. Otherwise append the unit.
@@ -111,6 +130,7 @@ const TRACKER_DISPLAY_NAMES: Record<string, string> = {
   'thyroid': 'Thyroid',
   'adrenal': 'Adrenal',
   'cardiac': 'Cardiac',
+  'vitals': 'Vitals',
   'respiratory': 'Respiratory',
   'skin': 'Skin',
   'joint': 'Joint / MSK',
@@ -616,45 +636,6 @@ export function generateMedicalReport(data: ReportData): Blob {
     }
   }
 
-  // Helper: pull top symptom/trigger evidence for a given tracker so doctors
-  // can validate the ICD-10 suggestion against actual tracked content.
-  const collectEvidence = (sub: string): string => {
-    const records = trackerData.filter((r: any) => canonicalSub(r.subcategory || '') === sub)
-    const counts: Record<string, number> = {}
-    for (const r of records) {
-      const c = r.content || {}
-      const entries = Array.isArray(c.entries) ? c.entries : [c]
-      for (const e of entries) {
-        const items = [
-          ...(e.symptoms || []),
-          ...(e.physicalSymptoms || []),
-          ...(e.painLocations || e.painLocation || []),
-          ...(e.painCharacter || e.painType || []),
-          ...(e.triggers || []),
-          ...(e.auraSymptoms || []),
-          ...(e.associatedSymptoms || []),
-        ]
-        for (const item of items) {
-          if (typeof item === 'string') counts[item] = (counts[item] || 0) + 1
-        }
-        // Boolean red flags get listed as evidence too
-        const flags: [boolean, string][] = [
-          [!!e.statusEpilepticus, 'status epilepticus'],
-          [!!e.tearingQuality, 'tearing pain'],
-          [!!e.thunderclapPattern || !!e.thunderclapOnset, 'thunderclap onset'],
-          [!!e.worstHeadacheOfLife, 'worst headache of life'],
-          [!!e.epipenUsed, 'EpiPen used'],
-          [!!e.suicidalIdeation, 'suicidal ideation flagged'],
-        ]
-        for (const [present, label] of flags) {
-          if (present) counts[label] = (counts[label] || 0) + 1
-        }
-      }
-    }
-    const top = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 4)
-    return top.length > 0 ? top.map(([k, v]) => `${k} (${v}×)`).join(', ') : ''
-  }
-
   if (isDoctor) {
     w.sectionHeader('Tracked Conditions (ICD-10)')
     const sorted = Object.entries(trackerCounts).sort((a, b) => b[1] - a[1])
@@ -684,17 +665,34 @@ export function generateMedicalReport(data: ReportData): Blob {
   // context. From the MANAGE section (per Ren, 2026-05-30, CHA-246).
   const medications = data.medications || []
   if (medications.length) {
-    w.sectionHeader('Medications')
+    w.sectionHeader('Medications & Supplements')
     const isStopped = (m: any) => m.active === false || !!m.dateStopped
+    // CHA-307: supplements/OTC are tracked first-class so this list is COMPLETE
+    // — a clinician/pharmacist reviewing for interactions needs to see the
+    // non-prescribed items (5-HTP, St. John's Wort, vitamin K, etc.) too.
+    const isSupplementOrOtc = (m: any) => m.kind === 'supplement' || m.kind === 'otc'
     const active = medications.filter((m: any) => !isStopped(m))
     const stopped = medications.filter(isStopped)
     const nameOf = (m: any) => (m.brandName || m.genericName || 'Unnamed') + ((m.brandName && m.genericName) ? ` (${m.genericName})` : '')
-    if (active.length) {
-      w.subSection(`Current medications (${active.length})`)
-      const rows = active.map((m: any) => [nameOf(m), m.dose || '', m.time || '', m.conditionTreating || ''])
+    const activeRx = active.filter((m: any) => !isSupplementOrOtc(m))
+    const activeSupp = active.filter(isSupplementOrOtc)
+    if (activeRx.length) {
+      w.subSection(`Current medications (${activeRx.length})`)
+      const rows = activeRx.map((m: any) => [nameOf(m), m.dose || '', m.time || '', m.conditionTreating || ''])
       w.table(['Medication', 'Dose', 'Schedule', 'Treating'], rows, [180, 70, 75, 115])
+    }
+    if (activeSupp.length) {
+      w.subSection(`Supplements & OTC (${activeSupp.length})`)
+      const rows = activeSupp.map((m: any) => [
+        nameOf(m) + (m.kind === 'otc' ? ' [OTC]' : ''),
+        m.dose || '', m.time || '', m.conditionTreating || '',
+      ])
+      w.table(['Supplement / OTC', 'Dose', 'Schedule', 'For'], rows, [180, 70, 75, 115])
+      w.body('Supplements & over-the-counter products are listed for completeness — they can interact with prescriptions. Please review the full list with a pharmacist or prescriber.')
+    }
+    if (active.length) {
       const withReminders = active.filter((m: any) => m.enableReminders && (m.reminderTimes || []).length).length
-      if (withReminders > 0) w.body(`${withReminders} of ${active.length} current medications have scheduled reminders set — adherence support in place.`)
+      if (withReminders > 0) w.body(`${withReminders} of ${active.length} current items have scheduled reminders set — adherence support in place.`)
     }
     const sideFx = active.filter((m: any) => m.persistentSideEffects)
     if (sideFx.length && isDoctor) {
@@ -1096,6 +1094,52 @@ export function generateMedicalReport(data: ReportData): Blob {
     if (typeRows.length) w.table(['Episode type', 'Count'], typeRows, [240, 80])
   }
 
+  // === VITALS === (CHA-317) objective baseline measurements — shown in all report styles
+  const vitalsRecords = trackerData.filter(r => r.subcategory === 'vitals')
+  const vitalsReadings: any[] = []
+  for (const r of vitalsRecords) {
+    const arr = Array.isArray(r.content?.entries) ? r.content.entries : (r.content ? [r.content] : [])
+    for (const e of arr) { if (e) vitalsReadings.push(e) }
+  }
+  if (vitalsReadings.length) {
+    w.sectionHeader('Vitals')
+    vitalsReadings.sort((a, b) => String(a.timestamp || a.date || '').localeCompare(String(b.timestamp || b.date || '')))
+    const nums = (k: string): number[] => vitalsReadings.map((e: any) => e[k]).filter((v: any): v is number => typeof v === 'number')
+    const sys = nums('systolic'), dia = nums('diastolic'), hr = nums('heartRate'),
+          spo2 = nums('spo2'), temp = nums('temperature'), wt = nums('weight')
+    const rng = (a: number[], unit = ''): string => a.length ? `${Math.min(...a)}–${Math.max(...a)}${unit}` : '—'
+    let summary = `${vitalsReadings.length} reading${vitalsReadings.length !== 1 ? 's' : ''} recorded.`
+    if (sys.length && dia.length) summary += ` BP ${Math.min(...sys)}/${Math.min(...dia)}–${Math.max(...sys)}/${Math.max(...dia)} mmHg.`
+    if (hr.length) summary += ` HR ${rng(hr)} bpm.`
+    if (spo2.length) summary += ` SpO2 ${rng(spo2, '%')}.`
+    if (temp.length) summary += ` Temp ${rng(temp)}°.`
+    if (wt.length) summary += ` Weight ${rng(wt)}.`
+    w.body(summary)
+    if (spo2.length) {
+      const spo2Min = Math.min(...spo2)
+      const low = spo2.filter(v => v < 92).length
+      if (low) w.finding(`SpO2 below 92% on ${low}/${spo2.length} reading${low !== 1 ? 's' : ''}` +
+        (spo2Min < 88 ? `; nadir ${spo2Min}% is below the 88% red-flag threshold.` : '.'))
+    }
+    const when = (e: any): string => {
+      const d = e.date || (e.timestamp ? String(e.timestamp).slice(0, 10) : '')
+      let t = ''
+      if (e.timestamp) { const dt = new Date(e.timestamp); if (!isNaN(dt.getTime())) t = dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
+      return t ? `${d} ${t}` : d
+    }
+    const rows = vitalsReadings.slice(-30).map((e: any) => [
+      when(e),
+      (e.systolic != null && e.diastolic != null) ? `${e.systolic}/${e.diastolic}` : '—',
+      e.heartRate != null ? String(e.heartRate) : '—',
+      e.spo2 != null ? `${e.spo2}%` : '—',
+      e.temperature != null ? `${e.temperature}°${e.tempUnit || 'F'}` : '—',
+      e.respRate != null ? String(e.respRate) : '—',
+      e.weight != null ? `${e.weight}${e.weightUnit || 'lb'}` : '—',
+    ])
+    w.table(['Date/Time', 'BP', 'HR', 'SpO2', 'Temp', 'RR', 'Weight'], rows, [140, 65, 45, 50, 58, 42, 60])
+    if (vitalsReadings.length > 30) w.note(`Showing most recent 30 of ${vitalsReadings.length} readings.`)
+  }
+
   // === SKIN ===
   const skinEntries = trackerData.filter(r => r.subcategory === 'skin')
   if (skinEntries.length && isDoctor) {
@@ -1350,11 +1394,14 @@ export function generateMedicalReport(data: ReportData): Blob {
     }
   }
 
-  // === AUTOIMMUNE / CONNECTIVE TISSUE (rheumatology) ===
-  // Renders for all audiences (not doctor-gated) so the tracker always exports.
+  // === AUTOIMMUNE / CONNECTIVE TISSUE (rheumatology) — non-doctor audiences ===
+  // The doctor build is the rich block ABOVE (isDoctor-gated). This leaner
+  // version covers attorney/personal so the tracker always exports — but MUST
+  // be !isDoctor, or a doctor PDF renders the autoimmune section TWICE (the
+  // deluxe block, then this near-identical one). Bug caught 2026-06-10.
   // Field names verified against app/autoimmune/autoimmune-types.ts.
   const aiEntries = trackerData.filter(r => r.subcategory === 'autoimmune')
-  if (aiEntries.length) {
+  if (aiEntries.length && !isDoctor) {
     w.sectionHeader('Autoimmune / Connective-Tissue Assessment')
     const types: Record<string, number> = {}
     const areaFreq: Record<string, number> = {}
@@ -2116,20 +2163,22 @@ export function generateMedicalReport(data: ReportData): Blob {
         correlations.sort((a, b) => Math.abs(b[2]) - Math.abs(a[2]))
         w.sectionHeader(isDoctor ? 'Symptom Correlations' : 'Patterns Found')
 
+        const label = (t: string) => t.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+
         if (isDoctor) {
-          w.note('Pearson correlations between daily symptom severity scores (|r| >= 0.3):')
+          w.note('Pearson correlations between daily symptom severity scores (|r| ≥ 0.3), with 95% confidence intervals (Fisher z). A CI that crosses 0 is not statistically distinguishable from no correlation at this sample size — wide intervals reflect few overlapping days, so keep tracking to narrow them.')
+          const rows = correlations.slice(0, 10).map(([t1, t2, rVal, n]) => {
+            const [lo, hi] = pearsonCI95(rVal, n)
+            return [label(t1), label(t2), rVal.toFixed(2), `${lo.toFixed(2)} to ${hi.toFixed(2)}`, String(n)]
+          })
+          w.table(['Symptom A', 'Symptom B', 'r', '95% CI', 'Days'], rows, [105, 105, 45, 110, 45], COLORS.correlationHeader)
+        } else {
+          const rows = correlations.slice(0, 10).map(([t1, t2, rVal, n]) => {
+            const rText = `${Math.abs(rVal) >= 0.7 ? 'strong' : 'moderate'} ${rVal > 0 ? 'positive' : 'inverse'}`
+            return [label(t1), label(t2), rText, String(n)]
+          })
+          w.table(['Symptom A', 'Symptom B', 'Correlation', 'Days'], rows, [120, 120, 100, 50], COLORS.correlationHeader)
         }
-
-        const rows = correlations.slice(0, 10).map(([t1, t2, rVal, n]) => {
-          const label1 = t1.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
-          const label2 = t2.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
-          const rText = isDoctor
-            ? `r=${rVal.toFixed(2)}`
-            : `${Math.abs(rVal) >= 0.7 ? 'strong' : 'moderate'} ${rVal > 0 ? 'positive' : 'inverse'}`
-          return [label1, label2, rText, String(n)]
-        })
-
-        w.table(['Symptom A', 'Symptom B', 'Correlation', 'Days'], rows, [120, 120, 100, 50], COLORS.correlationHeader)
         w.note('Correlations reflect co-occurrence patterns in patient-reported data and do not imply causation.')
         w.spacer(6)
       }

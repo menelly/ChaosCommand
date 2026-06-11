@@ -22,6 +22,12 @@ import { buildExclusionSet, type MedicalEvent } from './medical-ner';
 export interface LabResult {
   testName: string;
   value: number | null;
+  /**
+   * The value as text, WITHOUT the unit (e.g. "5", "<4", ">10"). The unit
+   * lives in `unit` and is appended by consumers (timeline title, PDF table,
+   * diagnostics). All four parsers MUST honor this — baking the unit in here
+   * is what produced "5 mg/dL mg/dL" (CHA-322).
+   */
   valueText: string;
   unit: string;
   referenceLow: number | null;
@@ -175,11 +181,15 @@ function parseVerticalFormat(
     if (seenTests.has(key)) continue;
     seenTests.add(key);
 
-    // Parse value
+    // Parse value. Keep valueText as the value ONLY (no unit) — `unit` is a
+    // separate field and consumers append it. Baking the unit in here is what
+    // produced "5 mg/dL mg/dL" downstream (CHA-322).
     let value: number | null = null;
     let unit = '';
+    let valueText = valueLine;
     const valueMatch = valueLine.match(/([<>]?\s*\d+(?:\.\d+)?)\s*(.+)/);
     if (valueMatch) {
+      valueText = valueMatch[1].trim();
       const valStr = valueMatch[1].replace(/[<>]/g, '').trim();
       try { value = parseFloat(valStr); if (isNaN(value)) value = null; } catch { value = null; }
       unit = valueMatch[2].trim();
@@ -211,7 +221,7 @@ function parseVerticalFormat(
     }
 
     results.push({
-      testName, value, valueText: valueLine, unit,
+      testName, value, valueText, unit,
       referenceLow: refLow, referenceHigh: refHigh,
       referenceText: refLow || refHigh ? rangeLine : '',
       flag, isAbnormal,
@@ -303,7 +313,9 @@ function parseMayoFormat(
         const valStr = vmatch[1];
         const flagStr = vmatch[2] || '';
         try { value = parseFloat(valStr); if (isNaN(value)) value = null; } catch { value = null; }
-        valueText = `${valStr} ${unit}`;
+        // valueText holds the value ONLY (no unit). `unit` is appended by
+        // consumers; baking it in here doubled the unit downstream (CHA-322).
+        valueText = valStr;
         if (flagStr) {
           flag = flagStr.toLowerCase() === 'low' ? 'L' : 'H';
           isAbnormal = true;
@@ -538,6 +550,14 @@ export function extractLabResults(
   text: string,
   demographics?: Record<string, any> | null
 ): LabResult[] {
+  // Normalize: guarantee a trailing newline. The vertical and result-range
+  // card parsers anchor each record on a terminating "\n", so a document whose
+  // LAST line is the final record (no trailing blank line — common in pdf.js
+  // text extraction) silently dropped its last lab result. Adding one newline
+  // is strictly additive (recovers the dropped record; can't change any other
+  // match) and uniform across parsers. Regression-locked in lab-parser.golden.test.ts.
+  if (!text.endsWith('\n')) text = text + '\n';
+
   const nameExclusions = buildExclusionSet(demographics);
   const seenTests = new Set<string>();
 
