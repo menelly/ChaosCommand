@@ -40,7 +40,8 @@ import {
   Users,
   Search,
   ExternalLink,
-  Star
+  Star,
+  Lock
 } from 'lucide-react'
 import { CRISIS_RESOURCES } from './crisis-constants'
 import { CrisisResource } from './crisis-types'
@@ -156,6 +157,23 @@ export function CrisisResources() {
             <Search className="h-5 w-5" />
             Find Crisis Resources
           </CardTitle>
+          {/* CHA-268: transparency notice — Command is local-first. The resource
+              list ships with the app and is filtered on-device, so browsing it
+              never phones home. The only moment anything leaves your device is
+              when YOU choose to reach out (Call / Visit), and that goes straight
+              to the service, not through us. Say so plainly, especially here. */}
+          <p className="flex items-start gap-2 text-xs text-muted-foreground mt-2">
+            <Lock className="h-3.5 w-3.5 shrink-0 mt-0.5" aria-hidden="true" />
+            <span>
+              <span className="font-medium text-foreground">Private by design:</span>{' '}
+              this list lives on your device — searching and filtering it uses no
+              internet and shares nothing. Tapping{' '}
+              <span className="font-medium">Call</span> or{' '}
+              <span className="font-medium">Visit</span> opens your phone or
+              browser to connect you directly with that service; Command never
+              tracks your location or sends your data anywhere.
+            </span>
+          </p>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
