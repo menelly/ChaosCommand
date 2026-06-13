@@ -62,6 +62,8 @@ export const SUSPECTED_TRIGGERS = [
   'Infection / illness',
   'Missed medication',
   'Menstrual cycle',
+  'Hormonal shift / perimenopause',
+  'Hormone therapy (HRT)',
   'Dehydration / electrolytes',
   'Poor sleep',
   'No identifiable trigger',

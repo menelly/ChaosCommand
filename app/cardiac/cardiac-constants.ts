@@ -185,10 +185,11 @@ export const CARDIAC_TRIGGERS = [
   'Fever / Infection',
   'Recent Illness',
 
-  // Female-specific
+  // Hormonal / cycle-related (NOT "female" — trans men, perimenopause & HRT belong here too)
   'Menstrual Cycle (PMS)',
   'Menstrual Cycle (Day 1-3)',
   'Hormonal Shift',
+  'Hormone therapy (HRT)',
 
   // Environmental / thermal
   'Heat / Hot Environment',

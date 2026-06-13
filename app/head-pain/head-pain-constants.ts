@@ -200,6 +200,8 @@ export const TRIGGERS: TriggerOption[] = [
   { value: 'menstruation', label: 'Menstruation', category: 'hormonal' },
   { value: 'ovulation', label: 'Ovulation', category: 'hormonal' },
   { value: 'hormone-changes', label: 'Hormone Changes', category: 'hormonal' },
+  { value: 'perimenopause', label: 'Perimenopause / hormonal shift', category: 'hormonal' },
+  { value: 'hormone-therapy', label: 'Hormone therapy (HRT)', category: 'hormonal' },
   
   // Stress & Sleep
   { value: 'stress', label: 'Stress', category: 'stress' },
