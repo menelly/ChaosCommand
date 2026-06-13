@@ -374,6 +374,37 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
         }
       }
 
+      // Custom (Forge/Built) trackers. Definitions live in user/custom-trackers
+      // (content.trackers[]); their daily entries live under body|mind|custom
+      // with subcategory custom-<id> — NOT the 'tracker' bucket the built-ins
+      // use — so the standard trackerData fetch misses them entirely. Gather
+      // both here so the user's own trackers actually appear in the report.
+      let customTrackers: { definitions: any[]; entries: any[] } | undefined
+      const customDefRec = (allUserDataFull || [])
+        .filter((r: any) => r.subcategory === 'custom-trackers' && !r.metadata?.deleted_at)
+        .sort((a: any, b: any) => String(b.date || '').localeCompare(String(a.date || '')))[0]
+      let customDefRaw: any = null
+      try {
+        customDefRaw = customDefRec
+          ? (typeof customDefRec.content === 'string' ? JSON.parse(customDefRec.content) : customDefRec.content)
+          : null
+      } catch { customDefRaw = null }
+      const customDefinitions = Array.isArray(customDefRaw?.trackers) ? customDefRaw.trackers : []
+      if (customDefinitions.length) {
+        const customCatData = (await Promise.all(
+          ['body', 'mind', 'custom'].map(c => getDateRange(dateRangeStart, dateRangeEnd, c))
+        )).flat()
+        const customEntries = customCatData
+          .filter(notDeleted)
+          .filter((r: any) => typeof r.subcategory === 'string' && r.subcategory.startsWith('custom-'))
+          .map((r: any) => {
+            try { return { date: r.date, content: typeof r.content === 'string' ? JSON.parse(r.content) : r.content } }
+            catch { return null }
+          })
+          .filter(Boolean)
+        customTrackers = { definitions: customDefinitions, entries: customEntries as any[] }
+      }
+
       // Generate PDF client-side
       const blob = generateMedicalReport({
         demographics,
@@ -414,6 +445,7 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
         workData,
         medications,
         appointments,
+        customTrackers,
         encryptionPassword: passwordProtect ? pdfPassword : undefined,
       })
 

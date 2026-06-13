@@ -12,6 +12,11 @@ import { getPersonalization, resolvedPronouns } from '@/lib/personalization'
 // could fail silently in a client bundle and the whole patterns section vanished).
 import { analyzeAllPatterns } from '@/lib/pattern-engine'
 import { analyzeV2Patterns } from '@/lib/pattern-engine-v2'
+// Seizure episode-type canon (single source of truth) so the report collapses
+// the slug ("focal-aware") and the legacy human label ("Focal Aware (Simple
+// Partial)") into ONE row instead of fragmenting — a case mergeVariants can't
+// catch because they're different WORDS, not just different casing.
+import { EPISODE_TYPES, LEGACY_TYPE_MAP } from '@/app/seizure/seizure-constants'
 
 /**
  * Repair unit strings that were split by OCR / PDF text-extraction whitespace
@@ -63,6 +68,19 @@ function mergeVariants(obj: Record<string, number>): [string, number][] {
   return Object.keys(counts)
     .map(key => [Object.entries(forms[key]).sort((a, b) => b[1] - a[1])[0][0], counts[key]] as [string, number])
     .sort((a, b) => b[1] - a[1])
+}
+
+// Seizure episode-type id -> display name, from the canonical constants.
+const SEIZURE_TYPE_NAME: Record<string, string> = Object.fromEntries(EPISODE_TYPES.map(t => [t.id, t.name]))
+/** Canonicalize a seizure episode-type value to one display name, whether it
+ *  arrives as the new slug ("focal-aware"), a legacy human label ("Focal Aware
+ *  (Simple Partial)"), or something unknown (passed through). Stops the
+ *  slug-vs-label fragmentation in the seizure episode-type table. */
+function canonicalSeizureType(raw: string): string {
+  const s = String(raw ?? '').trim()
+  if (!s) return s
+  const id = LEGACY_TYPE_MAP[s] || s
+  return SEIZURE_TYPE_NAME[id] || s
 }
 
 /** Collapse an accidentally-doubled unit in a value string ("5 mg/dL mg/dL" ->
@@ -292,6 +310,12 @@ interface ReportData {
   workData?: { missedWork?: any[]; employment?: any[]; applications?: any[] } | null
   medications?: any[]
   appointments?: any[]
+  /** Custom (Forge/Built) trackers the user defined themselves. definitions =
+   *  CustomTracker[] ({id, name, description, category, fields[]}); entries =
+   *  [{date, content:{trackerId, trackerName, values:{fieldId:value}, savedAt}}].
+   *  Built-in sections can't cover these, so without this block a custom
+   *  tracker's data is silently absent from the record. */
+  customTrackers?: { definitions: any[]; entries: any[] }
   /** If set, the exported PDF is encrypted with this password (real PDF
    *  encryption) so the file isn't plaintext PHI at rest in Downloads. */
   encryptionPassword?: string
@@ -1089,7 +1113,7 @@ export function generateMedicalReport(data: ReportData): Blob {
         if (e.emergencyServicesCalled) ems++
         if (e.injuriesOccurred) injuries++
         const t = e.episodeType || e.seizureType
-        if (t) types[t] = (types[t] || 0) + 1
+        if (t) { const ct = canonicalSeizureType(t); types[ct] = (types[ct] || 0) + 1 }
         ;(e.triggers || []).forEach((tr: string) => { triggers[tr] = (triggers[tr] || 0) + 1 })
         ;(e.symptoms || e.seizureSymptoms || []).forEach((s: string) => { symptoms[s] = (symptoms[s] || 0) + 1 })
       }
@@ -2191,9 +2215,17 @@ export function generateMedicalReport(data: ReportData): Blob {
       String(b.date || '').localeCompare(String(a.date || ''))
     )
 
+    // Dedup identical events. The same lab import can spawn several timeline
+    // events with the same date/title/description (seen as "VA-labs…dsDNA 17
+    // IU/mL" listed 3-4× under Tests & Procedures). Collapse byte-identical ones
+    // so the timeline reads once, not as accidental repeats.
     const groups: Record<string, any[]> = {}
+    const seenEvents = new Set<string>()
     for (const ev of sorted) {
       if (ev.type === 'dismissed_findings') continue
+      const dedupKey = `${ev.date || ''}|${ev.type || ''}|${String(ev.title || '').trim().toLowerCase()}|${String(ev.description || '').trim().toLowerCase()}`
+      if (seenEvents.has(dedupKey)) continue
+      seenEvents.add(dedupKey)
       const key = ev.type || 'other'
       if (!groups[key]) groups[key] = []
       groups[key].push(ev)
@@ -2308,6 +2340,70 @@ export function generateMedicalReport(data: ReportData): Blob {
     }
     w.note('Correlations reflect co-occurrence patterns in patient-reported data and do not imply causation.')
     w.spacer(6)
+  }
+
+  // === CUSTOM (FORGE / BUILT) TRACKERS ===
+  // The user's own trackers. Built-in assessment sections can't cover these, so
+  // without this block a custom tracker's data is silently missing from the
+  // record. Renders for every audience. Each field is summarized by its type:
+  // numbers -> mean/range, choices -> frequency, checkboxes -> yes-count.
+  if (data.customTrackers?.definitions?.length && Array.isArray(data.customTrackers.entries)) {
+    const defs = data.customTrackers.definitions
+    const byTracker: Record<string, any[]> = {}
+    for (const e of data.customTrackers.entries) {
+      const tid = e?.content?.trackerId
+      if (!tid) continue
+      ;(byTracker[tid] ||= []).push(e)
+    }
+    const defsWithData = defs.filter((d: any) => (byTracker[d.id] || []).length > 0)
+    if (defsWithData.length) {
+      w.sectionHeader('Custom Trackers')
+      w.note('Trackers the patient built themselves (Forge). Included for completeness; not part of the standard symptom set.')
+      for (const def of defsWithData) {
+        const entries = byTracker[def.id]
+        const dates = entries.map(e => e.date).filter(Boolean).sort()
+        const span = dates.length
+          ? (dates[0] === dates[dates.length - 1] ? dates[0] : `${dates[0]} to ${dates[dates.length - 1]}`)
+          : ''
+        w.subSection(def.name || 'Custom Tracker')
+        w.body(`${plural(entries.length, 'entry', 'entries')}${span ? `, ${span}` : ''}.${def.description ? ` ${def.description}` : ''}`)
+        for (const field of (def.fields || [])) {
+          const fid = field?.id
+          if (!fid) continue
+          const label = field.name || fid
+          const vals = entries
+            .map(e => e?.content?.values?.[fid])
+            .filter(v => v !== undefined && v !== null && v !== '')
+          if (!vals.length) continue
+          const t = field.type
+          if (t === 'scale' || t === 'number') {
+            const nums = vals.map(Number).filter(n => Number.isFinite(n))
+            if (!nums.length) continue
+            const mean = nums.reduce((a, b) => a + b, 0) / nums.length
+            w.bulletBody(label, `mean ${mean.toFixed(1)} (range ${Math.min(...nums)}-${Math.max(...nums)}, n=${nums.length})`)
+          } else if (t === 'checkbox') {
+            const yes = vals.filter(v => v === true || v === 'true').length
+            w.bulletBody(label, `yes on ${yes} of ${plural(vals.length, 'day')}`)
+          } else if (t === 'dropdown' || t === 'multiselect' || t === 'tags') {
+            const freq: Record<string, number> = {}
+            for (const v of vals) {
+              for (const x of (Array.isArray(v) ? v : [v])) {
+                const s = String(x).trim()
+                if (s) freq[s] = (freq[s] || 0) + 1
+              }
+            }
+            const top = mergeVariants(freq).slice(0, 8).map(([k, n]) => `${k} (${n}×)`).join(', ')
+            if (top) w.bulletBody(label, top)
+          } else if (t === 'text') {
+            w.bulletBody(label, `${plural(vals.length, 'text entry', 'text entries')} recorded`)
+          } else {
+            // date / time / datetime / anything else — just confirm it was logged
+            w.bulletBody(label, `${plural(vals.length, 'entry', 'entries')}`)
+          }
+        }
+        w.spacer(4)
+      }
+    }
   }
 
   // === JOURNAL ENTRIES ===
