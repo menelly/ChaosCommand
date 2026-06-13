@@ -241,13 +241,19 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
     }
     setIsGenerating(true)
     try {
-      // Gather all selected data
-      const allTrackerData = await getDateRange(dateRangeStart, dateRangeEnd, 'tracker')
-      const allUserData = await getDateRange(dateRangeStart, dateRangeEnd, 'user')
+      // Gather all selected data. DELETE MEANS DELETE: a soft-deleted record is
+      // tombstoned with metadata.deleted_at; it must NEVER appear in an exported
+      // medical/legal PDF (privacy-policy claim + the "ghost dose" bug where a
+      // deleted med resurrected in the printout). Filter tombstones at the source
+      // so every downstream section (trackers, meds, labs, timeline, journal)
+      // inherits the deletion.
+      const notDeleted = (r: any) => !r?.metadata?.deleted_at
+      const allTrackerData = (await getDateRange(dateRangeStart, dateRangeEnd, 'tracker')).filter(notDeleted)
+      const allUserData = (await getDateRange(dateRangeStart, dateRangeEnd, 'user')).filter(notDeleted)
       const allJournalData = includeJournal
-        ? await getDateRange(dateRangeStart, dateRangeEnd, 'journal')
+        ? (await getDateRange(dateRangeStart, dateRangeEnd, 'journal')).filter(notDeleted)
         : []
-      const allHealthData = await getDateRange(dateRangeStart, dateRangeEnd, 'health')
+      const allHealthData = (await getDateRange(dateRangeStart, dateRangeEnd, 'health')).filter(notDeleted)
 
       // Filter tracker data to selected trackers
       let filteredTrackers = allTrackerData.filter(r =>
@@ -317,6 +323,12 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
       const medById = new Map<string, any>()
       for (const r of (allTrackerData || [])) {
         if (!r.subcategory?.startsWith('medications-')) continue
+        // Honor soft-deletes: a med deleted in-app is tombstoned with
+        // metadata.deleted_at (use-medication-tracker filters the same way). The
+        // export was NOT checking this, so deleted meds resurrected into the PDF
+        // — a "ghost dose" the user couldn't see to re-delete, AND a delete-means-
+        // delete violation in a doc that goes to a doctor/attorney. Skip them.
+        if (r.metadata?.deleted_at) continue
         const prev = medById.get(r.subcategory)
         if (!prev || String(r.date || '') >= String(prev.date || '')) medById.set(r.subcategory, r)
       }
