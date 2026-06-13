@@ -18,10 +18,10 @@
  */
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname, useSearchParams, useRouter } from "next/navigation"
-import { ArrowLeft, ChevronRight, CheckCircle2, EyeOff, CopyPlus } from "lucide-react"
+import { ArrowLeft, ChevronRight, CheckCircle2, EyeOff, CopyPlus, Flag } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useUser } from "@/lib/contexts/user-context"
 import { useDailyData, formatDateForStorage } from "@/lib/database"
@@ -32,7 +32,7 @@ import { loadAllTrackables, indexTrackables } from "@/lib/routines/load-trackabl
 import { buildStatusMap } from "@/lib/routines/routine-status"
 import { getClearedTrackers } from "@/lib/routines/routine-cleared"
 import { getSkippedTrackers, markSkipped } from "@/lib/routines/routine-skipped"
-import { getRunStart } from "@/lib/routines/routine-session"
+import { getRunStart, endRun } from "@/lib/routines/routine-session"
 import { copyLastEntryToToday, buildCopyableMap } from "@/lib/routines/copy-last-entry"
 
 // Normalize trailing slashes — next.config has trailingSlash:true, so
@@ -68,13 +68,20 @@ export default function RoutineFlowBar() {
   // Track which routine members are "handled" today (logged OR nothing-to-log OR
   // skipped) so "Next" skips them and lands on the next thing actually needing
   // attention — and doesn't loop back to one you just skipped.
-  useEffect(() => {
-    if (!pin || !routine) return
+  //
+  // This bar is mounted ONCE in the persistent layout, so [pin, routine,
+  // trackables] don't change as you move tracker→tracker within a routine. We
+  // therefore re-fetch on every navigation (pathname) AND on window focus /
+  // visibility — otherwise logging a tracker and tapping Next leaves doneIds
+  // stale, and the bar loops you back to the one you JUST logged (CHA-167 bug,
+  // Ren caught it 2026-06-13). The run page already does this; the bar didn't.
+  const refreshDone = useCallback(() => {
+    if (!pin || !routine) return () => {}
     const idx = indexTrackables(trackables)
     const resolved = routine.trackers
       .map(t => idx.get(t.trackerId))
       .filter((t): t is TrackableTracker => t !== undefined)
-    if (resolved.length === 0) { setDoneIds(new Set()); return }
+    if (resolved.length === 0) { setDoneIds(new Set()); return () => {} }
     let alive = true
     const today = formatDateForStorage(new Date())
     const keys = resolved.map(t => ({ id: t.id, subcategory: t.subcategory, subcategoryPrefix: t.subcategoryPrefix }))
@@ -94,7 +101,22 @@ export default function RoutineFlowBar() {
       setCopyableIds(new Set(Object.keys(copyMap).filter(id => copyMap[id])))
     })
     return () => { alive = false }
-  }, [pin, routine, trackables, getDateRange])
+  }, [pin, routine, trackables, getDateRange, routineId])
+
+  // Re-fetch on navigation (pathname) and when the routine/trackables resolve.
+  useEffect(() => refreshDone(), [refreshDone, pathname])
+
+  // Re-fetch when the user returns to the window (came back from a tracker /
+  // logged via a modal without a route change).
+  useEffect(() => {
+    const onFocus = () => refreshDone()
+    window.addEventListener("focus", onFocus)
+    document.addEventListener("visibilitychange", onFocus)
+    return () => {
+      window.removeEventListener("focus", onFocus)
+      document.removeEventListener("visibilitychange", onFocus)
+    }
+  }, [refreshDone])
 
   // Not in a routine → render nothing.
   if (!routineId || !routine) return null
@@ -136,6 +158,14 @@ export default function RoutineFlowBar() {
     if (currentTracker) markSkipped(pin, routineId, today, currentTracker.id)
     goNext()
   }
+  // Explicit "I'm done" — end the run NO MATTER how much is left. The user owns
+  // when their own health routine is finished; they shouldn't have to satisfy
+  // every tracker (or fight done-detection) to get out. CHA-193/Ren 2026-06-13.
+  const finishRoutine = () => {
+    endRun(pin, routineId)
+    toast({ title: `${routine.emoji} ${routine.name} — done ✓`, description: "Routine finished. Run it again anytime." })
+    router.push("/routines")
+  }
   const setYesterday = async () => {
     if (!currentTracker) return
     const res = await copyLastEntryToToday(currentTracker, today, getDateRange, saveData)
@@ -151,20 +181,23 @@ export default function RoutineFlowBar() {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-      <div className="max-w-3xl mx-auto flex items-center justify-between gap-2 px-3 py-2">
-        <Link href={runHref}
-          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground shrink-0">
-          <ArrowLeft className="h-4 w-4" />
-          <span className="truncate">{routine.emoji} {routine.name}</span>
-        </Link>
+      {/* Stacks vertically on mobile (identity row over action row) so the
+          buttons never run off a narrow screen; single row on sm+. */}
+      <div className="max-w-3xl mx-auto flex flex-col gap-2 px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center justify-between gap-2 min-w-0">
+          <Link href={runHref}
+            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground min-w-0">
+            <ArrowLeft className="h-4 w-4 shrink-0" />
+            <span className="truncate">{routine.emoji} {routine.name}</span>
+          </Link>
+          {currentIndex >= 0 && (
+            <span className="text-xs text-muted-foreground shrink-0">
+              Step {currentIndex + 1} of {ordered.length}
+            </span>
+          )}
+        </div>
 
-        {currentIndex >= 0 && (
-          <span className="text-xs text-muted-foreground hidden sm:block">
-            Step {currentIndex + 1} of {ordered.length}
-          </span>
-        )}
-
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex flex-wrap items-center justify-end gap-1.5 sm:shrink-0">
           {currentTracker && (
             <>
               {!currentTracker.statusUnsupported && !currentTracker.copyUnsupported && copyableIds.has(currentTracker.id) && (
@@ -181,19 +214,29 @@ export default function RoutineFlowBar() {
               </button>
             </>
           )}
-          <Link href={nextHref}
-            className="flex items-center gap-1.5 rounded-md bg-primary text-primary-foreground px-3 py-1.5 text-sm font-medium hover:opacity-90">
-            {next ? (
-              <>
+          {/* Finish: always available so you can end the routine whenever you
+              decide you're done. Secondary while there's a Next, primary once
+              everything's handled. */}
+          {next ? (
+            <>
+              <button type="button" onClick={finishRoutine}
+                title="I'm done with this routine — finish now (you don't have to log everything)"
+                className="flex items-center gap-1 rounded-md border border-border px-2.5 py-1.5 text-xs text-muted-foreground hover:bg-muted">
+                <Flag className="h-4 w-4" /> <span className="hidden sm:inline">Finish</span>
+              </button>
+              <Link href={nextHref}
+                className="flex items-center gap-1.5 rounded-md bg-primary text-primary-foreground px-3 py-1.5 text-sm font-medium hover:opacity-90">
                 <span className="truncate max-w-[7rem] sm:max-w-[9rem]">Next: {next.emoji} {next.label}</span>
                 <ChevronRight className="h-4 w-4 shrink-0" />
-              </>
-            ) : (
-              <>
-                <CheckCircle2 className="h-4 w-4" /> <span className="truncate">Done — back to routine</span>
-              </>
-            )}
-          </Link>
+              </Link>
+            </>
+          ) : (
+            <button type="button" onClick={finishRoutine}
+              title="Finish this routine"
+              className="flex items-center gap-1.5 rounded-md bg-primary text-primary-foreground px-3 py-1.5 text-sm font-medium hover:opacity-90">
+              <CheckCircle2 className="h-4 w-4" /> <span className="truncate">All done ✓</span>
+            </button>
+          )}
         </div>
       </div>
     </div>

@@ -41,6 +41,22 @@ export function getRunStart(pin: string, routineId: string): number | null {
   }
 }
 
+/** End this routine's current run (called when the user taps Finish). Clears the
+ *  run stamp + this run's skip/"nothing" marks so the routine is no longer active
+ *  and a later Run starts clean. The flow bar is URL-param driven, so navigating
+ *  away hides it regardless — this is the state hygiene so nothing lingers. */
+export function endRun(pin: string, routineId: string): void {
+  if (typeof window === 'undefined' || !pin || !routineId) return
+  try {
+    localStorage.removeItem(storageKey(pin, routineId))
+    const date = formatDateForStorage(new Date())
+    clearAllSkipped(pin, routineId, date)
+    clearAllCleared(pin, routineId, date)
+  } catch (e) {
+    console.error('Failed to end routine run:', e)
+  }
+}
+
 /** Stamp a fresh run for this routine (called when the user taps Run). Returns
  *  the new start time. */
 export function startRun(pin: string, routineId: string): number {
