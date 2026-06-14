@@ -43,7 +43,7 @@ import { GeneralAnxietyModal } from './modals/general-anxiety-modal'
 import { EmergencyCriteriaCard } from '@/components/emergency-criteria-card'
 
 import { useDailyData, CATEGORIES, formatDateForStorage } from '@/lib/database'
-import { format, differenceInDays } from 'date-fns'
+import { format } from 'date-fns'
 import { celebrate } from '@/lib/particle-physics-engine'
 import { useUser } from '@/lib/contexts/user-context'
 import { isCelebrationEnabled } from '@/lib/celebration-prefs'
@@ -206,22 +206,6 @@ export default function AnxietyTrackerPage() {
           criteria={RED_FLAG_988_CRITERIA}
           title="💜 Crisis support — 988 (Suicide & Crisis Lifeline)"
           footerNote="988 is free, confidential, 24/7. Call or text. Reaching out is brave, not weak."
-          recentEmergencyDetected={(() => {
-            const now = new Date()
-            return entries.some(e => {
-              try {
-                if (differenceInDays(now, new Date(e.date)) > 30) return false
-                return !!(
-                  e.suicidalIdeation ||
-                  e.selfHarmUrges ||
-                  e.hospitalizationConsidered ||
-                  e.emergencyServicesCalled ||
-                  e.erVisitRequired ||
-                  ((e.panicLevel || 0) >= 9)
-                )
-              } catch { return false }
-            })
-          })()}
         />
 
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">

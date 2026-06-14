@@ -27,7 +27,7 @@ import { useToast } from '@/hooks/use-toast'
 import AppCanvas from '@/components/app-canvas'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { format, differenceInDays } from 'date-fns'
+import { format } from 'date-fns'
 
 import { MentalHealthEntry, MindMoodEpisodeType } from './mental-health-types'
 import {
@@ -190,21 +190,6 @@ export default function MindMoodPage() {
           criteria={RED_FLAG_988_CRITERIA}
           title="💜 Crisis support — 988 (Suicide & Crisis Lifeline)"
           footerNote="988 is free, confidential, 24/7. Call or text. Reaching out is brave, not weak."
-          recentEmergencyDetected={(() => {
-            const now = new Date()
-            return entries.some(e => {
-              try {
-                if (differenceInDays(now, new Date(e.date)) > 30) return false
-                const dep = e.depressionLevel || 0
-                const mania = e.maniaLevel || 0
-                return !!(
-                  (dep >= 8 && mania >= 6) ||
-                  mania >= 8 ||
-                  e.moodSwingDirection === 'rapid-cycling'
-                )
-              } catch { return false }
-            })
-          })()}
         />
 
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">

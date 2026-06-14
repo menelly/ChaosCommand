@@ -241,21 +241,6 @@ export default function BathroomPage() {
           storageKey="bathroom-911-acknowledged"
           criteria={RED_FLAG_911_CRITERIA}
           footerNote="Bowel/urinary red flags are easy to dismiss but matter. When in doubt, get evaluated."
-          recentEmergencyDetected={(() => {
-            const now = new Date()
-            return entries.some(e => {
-              try {
-                if (differenceInDays(now, new Date(e.date)) > 30) return false
-                return !!(
-                  e.erVisitRequired || e.emergencyServicesCalled ||
-                  e.bloodColor === 'black-tarry' ||
-                  (e.feverWithUrinary && e.flankPain) ||
-                  (e.cantPassGas && e.vomiting) ||
-                  e.episodeType === 'blood-or-red-flag'
-                )
-              } catch { return false }
-            })
-          })()}
         />
 
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">

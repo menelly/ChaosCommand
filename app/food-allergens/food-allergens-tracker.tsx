@@ -30,7 +30,7 @@ import { Badge } from '@/components/ui/badge'
 import { Utensils, BarChart3, History, Plus, ExternalLink, Shield } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { useRouter } from 'next/navigation'
-import { format, differenceInDays } from 'date-fns'
+import { format } from 'date-fns'
 
 import { FoodAllergenEntry, FoodReactionEpisodeType, KnownAllergen } from './food-allergens-types'
 import {
@@ -258,25 +258,6 @@ export function FoodAllergensTracker() {
         storageKey="food-allergens-911-acknowledged"
         criteria={RED_FLAG_911_CRITERIA}
         footerNote="Anaphylaxis kills via airway / circulatory collapse. EpiPen first if prescribed, THEN 911. Under-using epinephrine is the #1 cause of anaphylaxis death."
-        recentEmergencyDetected={(() => {
-          const now = new Date()
-          return entries.some(e => {
-            try {
-              if (differenceInDays(now, new Date(e.date || e.timestamp)) > 30) return false
-              return !!(
-                e.erVisitRequired ||
-                e.emergencyServicesCalled ||
-                e.epipenUsed ||
-                e.hospitalizedOvernight ||
-                e.episodeType === 'severe-anaphylaxis' ||
-                e.throatTightness ||
-                e.difficultyBreathing ||
-                e.lossOfConsciousness ||
-                e.reactionSeverity === 'Life-threatening'
-              )
-            } catch { return false }
-          })
-        })()}
       />
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">

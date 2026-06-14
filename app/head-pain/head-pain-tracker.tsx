@@ -25,7 +25,7 @@ import { Badge } from '@/components/ui/badge'
 import { Brain, BarChart3, History, Plus, ExternalLink } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { useRouter } from 'next/navigation'
-import { format, differenceInDays } from 'date-fns'
+import { format } from 'date-fns'
 
 import { HeadPainEntry, HeadPainEpisodeType } from './head-pain-types'
 import {
@@ -197,26 +197,6 @@ export function HeadPainTracker() {
         storageKey="head-pain-911-acknowledged"
         criteria={RED_FLAG_911_CRITERIA}
         footerNote="When in doubt, especially for sudden severe head pain, call 911."
-        recentEmergencyDetected={(() => {
-          const now = new Date()
-          return entries.some(e => {
-            try {
-              if (differenceInDays(now, new Date(e.date)) > 30) return false
-              return !!(
-                e.erVisitRequired ||
-                e.emergencyServicesCalled ||
-                e.worstHeadacheOfLife ||
-                e.thunderclapOnset ||
-                e.focalNeuroDeficit ||
-                e.oneSidedWeakness ||
-                e.speechDifficulty ||
-                (e.neckStiffness && e.fever) ||
-                e.episodeType === 'worst-of-life' ||
-                (e.painIntensity && e.painIntensity >= 9)
-              )
-            } catch { return false }
-          })
-        })()}
       />
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">

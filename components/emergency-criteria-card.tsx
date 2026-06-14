@@ -6,9 +6,6 @@
  * Behavior:
  *  - First view: fully expanded (forces user to read once)
  *  - After "Got it": collapses to small pill, persists ack to localStorage
- *  - If recentEmergencyDetected = true: re-expands automatically
- *    (e.g., a status epilepticus event in the last 30 days re-surfaces seizure
- *     red flags)
  *
  * The dynamic in-modal red-flag banner is independent — that banner watches
  * the current modal entry. This card watches the tracker's HISTORICAL state
@@ -31,12 +28,6 @@ interface Props {
   title?: string
   /** Footer note (e.g., "Status epilepticus is a neurological emergency.") */
   footerNote?: string
-  /**
-   * @deprecated No longer used. The card is read-once-then-collapsed; live emergency
-   * warning lives in the in-modal red-flag banner, not here. Kept so existing callers
-   * still compile; caller plumbing removal is tracked separately.
-   */
-  recentEmergencyDetected?: boolean
 }
 
 export function EmergencyCriteriaCard({
@@ -70,7 +61,6 @@ export function EmergencyCriteriaCard({
   // do NOT re-surface from history: the in-MODAL live red-flag banner warns the moment an emergency
   // value is actually entered — THAT is the safety net. Re-nagging about a past event isn't safety,
   // it's not trusting the user. Warn when it's real, then respect that they navigated it.
-  // (recentEmergencyDetected prop is kept but ignored — caller plumbing removal tracked separately.)
   const expanded = !hydrated ? true : !acknowledged
 
   // THEME-RELATIVE DANGER (2026-05-24): never hardcode red. Use --destructive as a
