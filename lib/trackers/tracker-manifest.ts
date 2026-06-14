@@ -102,6 +102,7 @@ export const TRACKER_MANIFEST: readonly TrackerDef[] = [
   { canonicalId: 'thyroid', label: 'Thyroid', emoji: '🦋', route: '/thyroid', section: 'body', subcategory: 'thyroid', routineEligible: true, statusSupported: false, isHubChild: true },
   { canonicalId: 'adrenal', label: 'Adrenal', emoji: '🔥', route: '/adrenal', section: 'body', subcategory: 'adrenal', routineEligible: true, statusSupported: false, isHubChild: true },
   { canonicalId: 'vitals', label: 'Vitals', emoji: '🩺', route: '/vitals', section: 'body', subcategory: 'vitals', routineEligible: true, statusSupported: true }, // built 2026-06-09 (CHA-317) — standard storage, status supported
+  { canonicalId: 'pulse-oximetry', label: 'Pulse Oximetry', emoji: '🫁', route: '/pulse-oximetry', section: 'body', subcategory: 'pulse-oximetry', routineEligible: true, statusSupported: true }, // built 2026-06-14 — recording pulse-ox session distributions (SpO2/pulse bands + ODI)
   { canonicalId: 'gu', label: 'Genitourinary', emoji: '💧', route: '/gu', section: 'body', subcategory: 'gu', routineEligible: true, statusSupported: false },
   { canonicalId: 'ent', label: 'Ear, Nose & Throat', emoji: '👂', route: '/ent', section: 'body', subcategory: 'ent', routineEligible: true, statusSupported: false },
   { canonicalId: 'postpartum', label: 'Postpartum & Newborn', emoji: '👶', route: '/postpartum', section: 'body', subcategory: 'postpartum', routineEligible: true, statusSupported: false },

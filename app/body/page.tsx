@@ -286,6 +286,14 @@ export default function PhysicalHealthIndex() {
       icon: <Activity className="h-5 w-5" />,
       edition: 'cares'
     },
+    {
+      id: 'pulse-oximetry',
+      name: 'Pulse Oximetry',
+      shortDescription: 'Pulse-ox from a ring / watch / fingertip — quick readings or full session reports',
+      helpContent: 'Log oxygen + pulse from any pulse-ox device. Quick reading: a single SpO₂ + pulse spot-check from a smartwatch, ring, or fingertip oximeter. Session report: the full summary a recording pulse-ox (e.g. O2Ring) produces — recording window, O₂ score, desaturation indices (ODI 3% / 4%), and the oxygen-level & pulse-rate distributions (% of session in each band). Trends over time and appears on your doctor PDF export. (Distinct from the Respiratory / Cardiac symptom trackers, which log single episodes with full context.)',
+      icon: <Activity className="h-5 w-5" />,
+      edition: 'cares'
+    },
   ]
 
   // Filter trackers based on user's edition AND hidden preferences
@@ -300,7 +308,7 @@ export default function PhysicalHealthIndex() {
   const SPECIALTY_GROUPS = [
     { id: 'head-neuro', label: '🧠 Head & Nervous System', trackerIds: ['head-pain', 'seizure-tracking', 'dysautonomia', 'neuro'] },
     { id: 'ent', label: '👂 Ear, Nose & Throat', trackerIds: ['ent'] },
-    { id: 'heart-lungs', label: '❤️ Heart & Lungs', trackerIds: ['cardiac', 'respiratory'] },
+    { id: 'heart-lungs', label: '❤️ Heart & Lungs', trackerIds: ['cardiac', 'respiratory', 'pulse-oximetry'] },
     { id: 'gut', label: '🍽️ Gut & Digestive', trackerIds: ['upper-digestive', 'digestive-health'] },
     { id: 'metabolic', label: '⚡ Metabolic & Immune', trackerIds: ['endocrine', 'food-allergens', 'autoimmune'] },
     { id: 'skin', label: '🩹 Skin', trackerIds: ['skin'] },
@@ -349,6 +357,7 @@ export default function PhysicalHealthIndex() {
       case 'diabetes-tracker': return '/diabetes'
       case 'endocrine': return '/endocrine'
       case 'vitals': return '/vitals'
+      case 'pulse-oximetry': return '/pulse-oximetry'
       case 'cardiac': return '/cardiac'
       case 'respiratory': return '/respiratory'
       case 'skin': return '/skin'

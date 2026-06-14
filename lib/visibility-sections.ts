@@ -50,6 +50,7 @@ const BODY_TRACKERS: VisibilityTracker[] = [
   { id: 'skin', name: 'Skin Tracker' },
   { id: 'joint', name: 'Joint / MSK Tracker' },
   { id: 'vitals', name: 'Vitals' },
+  { id: 'pulse-oximetry', name: 'Pulse Oximetry' },
 ]
 
 // Mirrors app/mind/page.tsx allTrackers
