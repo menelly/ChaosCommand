@@ -29,7 +29,7 @@ import { useDailyData, formatDateForStorage, CATEGORIES } from '@/lib/database'
 import { format } from 'date-fns'
 import { Cloud, TreePine } from 'lucide-react'
 import type { WeatherData, AllergenData } from './weather-types'
-import { WEATHER_ICONS, getWeatherColor, getSeverityColor } from './weather-constants'
+import { WEATHER_ICONS, getWeatherColor, getSeverityColor, impactDisplay } from './weather-constants'
 
 // Weather History Component
 export function WeatherHistory() {
@@ -134,7 +134,7 @@ export function WeatherHistory() {
                 )}
               </div>
               <p className="text-xs text-muted-foreground">
-                {entry.displayDate} • Impact: {entry.impact}
+                {entry.displayDate} • Impact: {impactDisplay(entry.impact)}
               </p>
             </div>
           </div>

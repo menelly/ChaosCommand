@@ -1872,11 +1872,22 @@ export function generateMedicalReport(data: ReportData): Blob {
     if ((wx.length || allg.length) && isDoctor) {
       w.sectionHeader('Weather & Environmental Triggers')
       if (wx.length) {
+        // Impact is a 1–10 scale; legacy entries are strings. Map both to an
+        // anchor word so the report reads "Yes (3)", never "7 (3)".
+        const impactWord = (v: unknown): string => {
+          const n = typeof v === 'number'
+            ? Math.min(10, Math.max(1, Math.round(v)))
+            : ({ 'Not at all': 1, 'A little': 4, 'Yes': 7, 'A LOT': 10 } as Record<string, number>)[String(v)] || 0
+          if (!n) return ''
+          const anchors: [number, string][] = [[1, 'Not at all'], [4, 'A little'], [7, 'Yes'], [10, 'A LOT']]
+          return anchors.reduce((b, a) => Math.abs(a[0] - n) < Math.abs(b[0] - n) ? a : b)[1]
+        }
         const types: Record<string, number> = {}, impact: Record<string, number> = {}
         for (const e of wx) {
           const wts: string[] = e.weatherTypes || (e.weatherType ? [e.weatherType] : [])
           wts.forEach((t: string) => { types[t] = (types[t] || 0) + 1 })
-          if (e.impact) impact[e.impact] = (impact[e.impact] || 0) + 1
+          const word = impactWord(e.impact)
+          if (word) impact[word] = (impact[word] || 0) + 1
         }
         w.body(`${plural(wx.length, 'weather log')}. Conditions: ${tn(types)}. Reported symptom impact: ${tn(impact)}.`)
       }
@@ -2171,12 +2182,32 @@ export function generateMedicalReport(data: ReportData): Blob {
     }
 
     // --- Sleep aids used (sleepAids[]) ---
+    // CLINICAL: null != none. An empty/missing array = NOT RECORDED; ['none'] =
+    // patient affirmatively used no aids. Never conflate them, and never count
+    // 'none' as a medication (that's what made this read like med non-adherence).
     const aidCounts: Record<string, number> = {}
-    for (const n of nights) if (Array.isArray(n.sleepAids)) for (const a of n.sleepAids) aidCounts[a] = (aidCounts[a] || 0) + 1
+    let aidsReportedNone = 0   // explicitly ['none']
+    let aidsNotRecorded = 0    // empty array or field missing
+    for (const n of nights) {
+      const realAids = Array.isArray(n.sleepAids) ? n.sleepAids.filter((a: string) => a !== 'none') : []
+      if (realAids.length) {
+        for (const a of realAids) aidCounts[a] = (aidCounts[a] || 0) + 1
+      } else if (Array.isArray(n.sleepAids) && n.sleepAids.length) {
+        aidsReportedNone++   // ['none'] — the patient said they took nothing
+      } else {
+        aidsNotRecorded++    // [] / missing — simply not logged
+      }
+    }
     const aidKeys = Object.keys(aidCounts)
     if (aidKeys.length) {
       const topAids = aidKeys.sort((a, b) => aidCounts[b] - aidCounts[a]).slice(0, 6).map(k => `${k} (${aidCounts[k]})`).join(', ')
       w.body(`${isDoctor ? 'Sleep aids reported' : 'Sleep aids used'}: ${topAids}.`)
+    }
+    if (isDoctor && (aidsReportedNone || aidsNotRecorded)) {
+      const parts: string[] = []
+      if (aidsReportedNone) parts.push(`reported no aids on ${aidsReportedNone} night${aidsReportedNone !== 1 ? 's' : ''}`)
+      if (aidsNotRecorded) parts.push(`not recorded on ${aidsNotRecorded} night${aidsNotRecorded !== 1 ? 's' : ''}`)
+      w.body(`Sleep aids — ${parts.join('; ')}.`)
     }
   }
 

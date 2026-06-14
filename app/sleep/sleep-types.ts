@@ -83,8 +83,8 @@ export function migrateLegacyEntry(legacy: LegacySleepEntry): SleepEntry {
     wakeFeeling: 'okay',
     dreamType: 'none',
     preSleepFactors: [],
-    sleepAids: ['none'],
-    environmentIssues: ['none'],
+    sleepAids: [], // legacy entries never captured aids → NOT RECORDED, not a false 'none'
+    environmentIssues: [], // ditto — legacy never captured environment → not recorded
     hadNap: false
   }
 }

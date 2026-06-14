@@ -62,7 +62,7 @@ export function SleepForm({
   // Disruptions
   const [wokeUpMultipleTimes, setWokeUpMultipleTimes] = useState(false)
   const [timesWoken, setTimesWoken] = useState([1])
-  const [disruptions, setDisruptions] = useState<DisruptionType[]>(['none'])
+  const [disruptions, setDisruptions] = useState<DisruptionType[]>([])
 
   // Wake feeling & dreams
   const [wakeFeeling, setWakeFeeling] = useState<WakeFeelingType>('okay')
@@ -72,11 +72,13 @@ export function SleepForm({
   // Pre-sleep factors
   const [preSleepFactors, setPreSleepFactors] = useState<PreSleepFactorType[]>([])
 
-  // Sleep aids
-  const [sleepAids, setSleepAids] = useState<SleepAidType[]>(['none'])
+  // Sleep aids — default EMPTY, not ['none']. Empty = "not recorded" (null);
+  // ['none'] only when the user explicitly taps None. Conflating the two made
+  // the export read like the user takes no meds when they just didn't log it.
+  const [sleepAids, setSleepAids] = useState<SleepAidType[]>([])
 
-  // Environment
-  const [environmentIssues, setEnvironmentIssues] = useState<EnvironmentIssueType[]>(['none'])
+  // Environment — empty = not recorded (null), same null-vs-none rule as aids
+  const [environmentIssues, setEnvironmentIssues] = useState<EnvironmentIssueType[]>([])
 
   // Naps
   const [hadNap, setHadNap] = useState(false)
@@ -118,13 +120,13 @@ export function SleepForm({
     setWakeTime("")
     setWokeUpMultipleTimes(false)
     setTimesWoken([1])
-    setDisruptions(['none'])
+    setDisruptions([])
     setWakeFeeling('okay')
     setDreamType('none')
     setDreamNotes("")
     setPreSleepFactors([])
-    setSleepAids(['none'])
-    setEnvironmentIssues(['none'])
+    setSleepAids([])
+    setEnvironmentIssues([])
     setHadNap(false)
     setNapDuration([30])
     setNotes("")
@@ -148,13 +150,13 @@ export function SleepForm({
     setWakeTime(entry.wakeTime || "")
     setWokeUpMultipleTimes(entry.wokeUpMultipleTimes)
     setTimesWoken([entry.timesWoken || 1])
-    setDisruptions(entry.disruptions || ['none'])
+    setDisruptions(entry.disruptions || [])
     setWakeFeeling(entry.wakeFeeling || 'okay')
     setDreamType(entry.dreamType || 'none')
     setDreamNotes(entry.dreamNotes || "")
     setPreSleepFactors(entry.preSleepFactors || [])
-    setSleepAids(entry.sleepAids || ['none'])
-    setEnvironmentIssues(entry.environmentIssues || ['none'])
+    setSleepAids(entry.sleepAids || [])
+    setEnvironmentIssues(entry.environmentIssues || [])
     setHadNap(entry.hadNap || false)
     setNapDuration([entry.napDuration || 30])
     setNotes(entry.notes)
