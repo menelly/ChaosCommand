@@ -49,6 +49,7 @@ import {
   Droplets
 } from 'lucide-react'
 import type { WeatherData, AllergenData } from './weather-types'
+import { impactToNumber, impactToLabel } from './weather-constants'
 import { filterForAnalytics } from '@/lib/utils/analytics-filters'
 
 interface WeatherAnalyticsProps {
@@ -140,11 +141,14 @@ export function WeatherAnalyticsDesktop({
         .map(([name, count]) => ({ name, count }))
         .sort((a, b) => b.count - a.count)
 
-      // Impact breakdown
+      // Impact breakdown — bucket by anchor word so legacy strings AND new 1–10
+      // numbers group together; skip not-recorded (impactToNumber → 0).
       const impactCounts: Record<string, number> = {}
       filteredWeatherEntries.forEach(e => {
-        if (e.impact) {
-          impactCounts[e.impact] = (impactCounts[e.impact] || 0) + 1
+        const n = impactToNumber(e.impact)
+        if (n) {
+          const label = impactToLabel(n)
+          impactCounts[label] = (impactCounts[label] || 0) + 1
         }
       })
       const impactBreakdown = Object.entries(impactCounts)
@@ -155,8 +159,8 @@ export function WeatherAnalyticsDesktop({
           return order.indexOf(a.impact) - order.indexOf(b.impact)
         })
 
-      // High impact days count
-      const highImpactDays = filteredWeatherEntries.filter(e => e.impact === 'Yes' || e.impact === 'A LOT').length
+      // High impact days count (7+ on the 1–10 scale ≈ old "Yes"/"A LOT")
+      const highImpactDays = filteredWeatherEntries.filter(e => impactToNumber(e.impact) >= 7).length
 
       // === ALLERGEN ANALYTICS ===
 
@@ -259,7 +263,7 @@ export function WeatherAnalyticsDesktop({
 
         // Find most impactful weather type
         const highImpactByType: Record<string, number> = {}
-        filteredWeatherEntries.filter(e => e.impact === 'Yes' || e.impact === 'A LOT').forEach(e => {
+        filteredWeatherEntries.filter(e => impactToNumber(e.impact) >= 7).forEach(e => {
           const types = e.weatherTypes || (e.weatherType ? [e.weatherType] : [])
           types.forEach(type => {
             highImpactByType[type] = (highImpactByType[type] || 0) + 1

@@ -28,24 +28,25 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Slider } from "@/components/ui/slider"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Cloud } from 'lucide-react'
 import { TagInput } from "@/components/tag-input"
 import type { WeatherType, WeatherImpact } from './weather-types'
-import { WEATHER_TYPES, WEATHER_IMPACTS, WEATHER_ICONS } from './weather-constants'
+import { WEATHER_TYPES, WEATHER_ICONS, IMPACT_ANCHORS, impactToNumber } from './weather-constants'
 
 interface WeatherFormProps {
   isOpen: boolean
   onClose: () => void
   onSave: (data: {
     weatherTypes: WeatherType[]
-    impact: WeatherImpact
+    impact?: number
     description: string
     tags: string[]
   }) => void
   initialData?: {
     weatherTypes: WeatherType[]
-    impact: WeatherImpact
+    impact?: number | WeatherImpact
     description: string
     tags: string[]
   } | null
@@ -54,7 +55,10 @@ interface WeatherFormProps {
 
 export function WeatherForm({ isOpen, onClose, onSave, initialData, isEditing = false }: WeatherFormProps) {
   const [weatherTypes, setWeatherTypes] = useState<WeatherType[]>(initialData?.weatherTypes || [])
-  const [weatherImpact, setWeatherImpact] = useState<WeatherImpact>(initialData?.impact || "Not at all")
+  // null = not recorded (user hasn't moved the slider). 1–10 once they do.
+  const [weatherImpact, setWeatherImpact] = useState<number | null>(
+    initialData?.impact != null ? impactToNumber(initialData.impact) : null
+  )
   const [weatherDescription, setWeatherDescription] = useState(initialData?.description || "")
   const [weatherTags, setWeatherTags] = useState<string[]>(initialData?.tags || [])
 
@@ -62,7 +66,7 @@ export function WeatherForm({ isOpen, onClose, onSave, initialData, isEditing = 
   useEffect(() => {
     if (initialData) {
       setWeatherTypes(initialData.weatherTypes || [])
-      setWeatherImpact(initialData.impact || "Not at all")
+      setWeatherImpact(initialData.impact != null ? impactToNumber(initialData.impact) : null)
       setWeatherDescription(initialData.description || "")
       setWeatherTags(initialData.tags || [])
     }
@@ -70,7 +74,7 @@ export function WeatherForm({ isOpen, onClose, onSave, initialData, isEditing = 
 
   const resetForm = () => {
     setWeatherTypes([])
-    setWeatherImpact("Not at all")
+    setWeatherImpact(null)
     setWeatherDescription("")
     setWeatherTags([])
   }
@@ -83,7 +87,7 @@ export function WeatherForm({ isOpen, onClose, onSave, initialData, isEditing = 
 
     onSave({
       weatherTypes,
-      impact: weatherImpact,
+      impact: weatherImpact ?? undefined, // null stays "not recorded"
       description: weatherDescription,
       tags: weatherTags
     })
@@ -145,22 +149,29 @@ export function WeatherForm({ isOpen, onClose, onSave, initialData, isEditing = 
             )}
           </div>
 
-          {/* Weather Impact */}
+          {/* Weather Impact — 1–10 scale with the old labels as anchor points */}
           <div className="space-y-3">
-            <Label className="text-base font-medium">Impact on You</Label>
-            <div className="grid grid-cols-2 gap-2">
-              {WEATHER_IMPACTS.map((impact) => (
-                <Button
-                  key={impact}
-                  type="button"
-                  variant={weatherImpact === impact ? "default" : "outline"}
-                  onClick={() => setWeatherImpact(impact)}
-                  className="justify-start text-sm"
-                >
-                  {impact}
-                </Button>
+            <Label className="text-base font-medium">
+              Impact on You: {weatherImpact == null ? "— (drag to set)" : `${weatherImpact}/10`}
+            </Label>
+            <Slider
+              value={[weatherImpact ?? 5]}
+              onValueChange={(v) => setWeatherImpact(v[0])}
+              min={1}
+              max={10}
+              step={1}
+              className="w-full"
+            />
+            <div className="flex justify-between text-xs text-muted-foreground">
+              {IMPACT_ANCHORS.map((a) => (
+                <span key={a.value} className="text-center">{a.label}</span>
               ))}
             </div>
+            {weatherImpact == null && (
+              <p className="text-xs text-muted-foreground italic">
+                Leave it untouched if you didn&apos;t track impact — that records &ldquo;not recorded,&rdquo; not &ldquo;no impact.&rdquo;
+              </p>
+            )}
           </div>
 
           {/* Description */}

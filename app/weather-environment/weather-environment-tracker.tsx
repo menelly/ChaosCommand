@@ -49,7 +49,8 @@ import { cn } from "@/lib/utils"
 // DailyDashboardToggle removed - feature deprecated
 
 // Import our modular components
-import type { WeatherData, AllergenData, WeatherEnvironmentTrackerProps, WeatherType, WeatherImpact, AllergenType, AllergenSeverity } from './weather-types'
+import type { WeatherData, AllergenData, WeatherEnvironmentTrackerProps, WeatherType, AllergenType, AllergenSeverity } from './weather-types'
+import { impactDisplay } from './weather-constants'
 import { WeatherHistory, AllergenHistory } from './weather-history'
 import { WeatherAnalyticsDesktop } from './weather-analytics-desktop'
 import { WeatherForm } from './weather-form'
@@ -228,7 +229,7 @@ export default function WeatherEnvironmentTracker({ selectedDate = new Date() }:
   // Weather form handlers
   const handleAddWeatherEntry = async (data: {
     weatherTypes: WeatherType[]
-    impact: WeatherImpact
+    impact?: number
     description: string
     tags: string[]
   }) => {
@@ -293,7 +294,7 @@ export default function WeatherEnvironmentTracker({ selectedDate = new Date() }:
 
   const handleEditWeatherEntry = async (data: {
     weatherTypes: WeatherType[]
-    impact: WeatherImpact
+    impact?: number
     description: string
     tags: string[]
   }) => {
@@ -705,7 +706,7 @@ export default function WeatherEnvironmentTracker({ selectedDate = new Date() }:
                               </Button>
                             </div>
                           </div>
-                          <p className="text-sm">Impact: <strong>{entry.impact}</strong></p>
+                          <p className="text-sm">Impact: <strong>{impactDisplay(entry.impact)}</strong></p>
                           {entry.description && (
                             <p className="text-sm text-muted-foreground mt-1">{entry.description}</p>
                           )}

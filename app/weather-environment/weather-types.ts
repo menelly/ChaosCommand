@@ -25,7 +25,10 @@
 // Extracted from weather-environment-tracker.tsx for modularization
 
 // Weather types from caresv3 - now supporting multiple selections
-export type WeatherType = "Sunny" | "Cloudy" | "Rainy" | "Windy" | "Stormy" | "Snowy" | "Pressure Hell" | "Humid" | "Dry"
+// "Pressure Hell" kept as the "ugh, pressure, who knows which" catch-all (and so
+// every old entry stays valid); High/Low/Swings let people who DO track the
+// barometer say which direction wrecks them — they hit people opposite ways.
+export type WeatherType = "Sunny" | "Cloudy" | "Rainy" | "Windy" | "Stormy" | "Snowy" | "High Pressure" | "Low Pressure" | "Pressure Swings" | "Pressure Hell" | "Humid" | "Dry"
 export type WeatherImpact = "Not at all" | "A little" | "Yes" | "A LOT"
 
 // Environmental allergen types
@@ -35,7 +38,10 @@ export type AllergenSeverity = "Mild" | "Moderate" | "Severe" | "Extreme"
 // Weather Entry Interface
 export interface WeatherData {
   weatherTypes: WeatherType[] // Changed to array for multiple selections
-  impact: WeatherImpact
+  // 1–10 scale. number = new entries; WeatherImpact string = legacy (auto-mapped
+  // via impactToNumber). undefined = NOT RECORDED (user never set it) — distinct
+  // from 1 / "Not at all".
+  impact?: number | WeatherImpact
   description: string
   tags: string[]
   timestamp: string
