@@ -232,13 +232,6 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
   }
 
   const handleGenerate = async () => {
-    // Mobile: PDF export/save isn't supported yet — the Android WebView has no
-    // navigator.share and can't write blob downloads, so saving silently fails.
-    // Stop with a clear message instead. Proper mobile save lands in 0.6.2.
-    if (isMobilePlatform()) {
-      toast({ title: 'Desktop only for now', description: 'PDF export isn’t available on mobile yet — open Chaos Command on your computer to generate reports. Mobile support is coming soon.' })
-      return
-    }
     setIsGenerating(true)
     try {
       // Gather all selected data. DELETE MEANS DELETE: a soft-deleted record is
@@ -449,47 +442,40 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
         encryptionPassword: passwordProtect ? pdfPassword : undefined,
       })
 
-      // Download or share the PDF.
-      // Web Share API is great on actual phones (lets users send to email,
-      // Drive, etc.) but on Tauri/Windows desktop it pops the OS share sheet
-      // instead of saving to Downloads — the user expected a download. Gate
-      // share to mobile only; desktop always downloads.
+      // Hand off the generated PDF.
       const audienceLabel = audience === 'attorney' ? 'legal' : audience === 'personal' ? 'personal' : 'medical'
       const filename = `${audienceLabel}-report-${providerName || 'export'}-${dateRangeEnd}.pdf`
-      const file = new File([blob], filename, { type: 'application/pdf' })
-      const onMobile = isMobilePlatform()
-      let sharedViaSheet = false
 
-      // Mobile: try the OS share sheet first (lets the user save to Files/Drive or
-      // send to email). Don't gate on canShare() — some WebViews under-report file
-      // support but share fine. Fall back to download if share is absent or throws;
-      // treat a user-cancel (AbortError) as a no-op, not a failure.
-      if (onMobile && typeof navigator.share === 'function') {
-        try {
-          await navigator.share({ title: 'Medical Report', files: [file] })
-          sharedViaSheet = true
-        } catch (shareErr: any) {
-          if (shareErr?.name === 'AbortError') return // user dismissed the sheet; finally resets isGenerating
-          // file share unsupported → fall through to the download below
-        }
+      if (isMobilePlatform()) {
+        // Mobile (Tauri Android WebView): blob downloads silently fail and the
+        // WebView has no working navigator.share. So write the PDF to app
+        // storage natively (tauri-plugin-fs) and open it with the OS
+        // (tauri-plugin-opener) — the device's PDF viewer carries its own
+        // share/save (to Files, Drive, email). Dynamic-import keeps the web/SSR
+        // bundle from touching Tauri internals.
+        const { writeFile, BaseDirectory } = await import('@tauri-apps/plugin-fs')
+        const { openPath } = await import('@tauri-apps/plugin-opener')
+        const { appDataDir, join } = await import('@tauri-apps/api/path')
+        const bytes = new Uint8Array(await blob.arrayBuffer())
+        await writeFile(filename, bytes, { baseDir: BaseDirectory.AppData })
+        await openPath(await join(await appDataDir(), filename))
+        toast({ title: 'Report ready', description: 'Opened in your PDF viewer — use its share button to save or send it.' })
+        onClose()
+        return
       }
 
-      if (!sharedViaSheet) {
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = filename
-        document.body.appendChild(a)
-        a.click()
-        document.body.removeChild(a)
-        // Defer revoke — in the WebView the download is async; revoking the blob
-        // URL synchronously cancels it before the file is written.
-        setTimeout(() => URL.revokeObjectURL(url), 60000)
-      }
+      // Desktop (WebView2 / desktop Tauri): a blob download lands in Downloads.
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      // Defer revoke — the download is async; revoking synchronously cancels it.
+      setTimeout(() => URL.revokeObjectURL(url), 60000)
 
-      toast(sharedViaSheet
-        ? { title: 'Report ready', description: 'Choose where to save or send it from the share menu.' }
-        : { title: 'Report saved', description: 'Saved to your Downloads folder.' })
+      toast({ title: 'Report saved', description: 'Saved to your Downloads folder.' })
       onClose()
 
     } catch (e: any) {
@@ -514,13 +500,6 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
             Print / Export Report
           </DialogTitle>
         </DialogHeader>
-
-        {isMobilePlatform() && (
-          <div className="rounded-lg border border-warning bg-warning/10 p-3 text-sm flex items-start gap-2">
-            <AlertTriangle className="h-4 w-4 text-warning mt-0.5 shrink-0" />
-            <span>PDF export is <strong>desktop-only for now</strong>. Open Chaos Command on your computer to generate reports — mobile support is coming in a future update.</span>
-          </div>
-        )}
 
         <div className="py-4">
           {/* Progress indicator */}

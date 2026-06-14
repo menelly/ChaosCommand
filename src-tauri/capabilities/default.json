@@ -9,7 +9,12 @@
     "core:default",
     "sql:default",
     "opener:default",
+    "opener:allow-open-path",
     "notification:default",
+    "fs:allow-write-file",
+    "fs:allow-mkdir",
+    "fs:allow-appdata-write-recursive",
+    "fs:allow-appdata-read-recursive",
     {
       "identifier": "http:default",
       "allow": [
