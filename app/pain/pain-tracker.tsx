@@ -25,7 +25,7 @@ import { Badge } from '@/components/ui/badge'
 import { Flame, BarChart3, History, Plus, ExternalLink } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { useRouter } from 'next/navigation'
-import { format, differenceInDays } from 'date-fns'
+import { format } from 'date-fns'
 
 import { PainEntry, PainEpisodeType } from './pain-types'
 import {
@@ -208,28 +208,6 @@ export default function PainTracker() {
         storageKey="pain-911-acknowledged"
         criteria={RED_FLAG_911_CRITERIA}
         footerNote="Pain tracker covers MI / AAA / cauda equina / dissection / SAH red flags. When in doubt, call 911."
-        recentEmergencyDetected={(() => {
-          const now = new Date()
-          return entries.some(e => {
-            try {
-              if (differenceInDays(now, new Date(e.date)) > 30) return false
-              // NOTE: raw painLevel >= 9 is intentionally NOT a trigger. High pain is not a
-              // 911 emergency (chronic-pain folks live at 7-9 daily) and it was force-keeping
-              // the "Call 911" card permanently expanded ("collapse won't work"). Only true
-              // red flags re-surface it.
-              return !!(
-                e.erVisitRequired ||
-                e.emergencyServicesCalled ||
-                e.tearingQuality ||
-                e.thunderclapPattern ||
-                e.legWeakness ||
-                e.bowelBladderChanges ||
-                e.saddleAnesthesia ||
-                e.pulsatileMass
-              )
-            } catch { return false }
-          })
-        })()}
       />
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">

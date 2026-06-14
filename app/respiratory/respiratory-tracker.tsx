@@ -24,7 +24,7 @@ import { AsthmaAttackModal } from './modals/asthma-attack-modal'
 import { EmergencyCriteriaCard } from '@/components/emergency-criteria-card'
 
 import { useDailyData, CATEGORIES } from '@/lib/database'
-import { format, addDays, subDays, differenceInDays } from 'date-fns'
+import { format, addDays, subDays } from 'date-fns'
 import { celebrate } from '@/lib/particle-physics-engine'
 import { useUser } from '@/lib/contexts/user-context'
 import { isCelebrationEnabled } from '@/lib/celebration-prefs'
@@ -122,20 +122,6 @@ export default function RespiratoryTracker() {
         storageKey="respiratory-911-acknowledged"
         criteria={RED_FLAG_911_CRITERIA}
         footerNote="When in doubt, call 911. Documentation can wait."
-        recentEmergencyDetected={(() => {
-          const now = new Date()
-          return entries.some(e => {
-            try {
-              if (differenceInDays(now, new Date(e.date)) > 30) return false
-              return !!(
-                e.erVisitRequired ||
-                e.peakFlowZone === 'red' ||
-                (e.episodeType === 'asthma-attack' && e.severity && e.severity >= 7) ||
-                (e.episodeType === 'allergic-reaction' && e.severity && e.severity >= 7)
-              )
-            } catch { return false }
-          })
-        })()}
       />
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">

@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge'
 import { Brain, BarChart3, History, Plus, ExternalLink } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { useRouter } from 'next/navigation'
-import { format, addDays, subDays, differenceInDays } from 'date-fns'
+import { format, addDays, subDays } from 'date-fns'
 import { useDailyData, CATEGORIES } from '@/lib/database'
 import { EmergencyCriteriaCard } from '@/components/emergency-criteria-card'
 import { celebrate } from '@/lib/particle-physics-engine'
@@ -125,15 +125,6 @@ export default function NeuroTracker() {
         storageKey="neuro-911-acknowledged"
         criteria={RED_FLAG_911_CRITERIA}
         footerNote="Sudden one-sided weakness, facial droop, or slurred speech = stroke until proven otherwise. Note the time it started and call 911."
-        recentEmergencyDetected={(() => {
-          const now = new Date()
-          return entries.some(e => {
-            try {
-              if (differenceInDays(now, new Date(e.date)) > 30) return false
-              return !!e.erVisitRequired
-            } catch { return false }
-          })
-        })()}
       />
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>

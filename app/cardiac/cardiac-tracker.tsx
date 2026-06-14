@@ -39,7 +39,6 @@ import { CardiacHistory } from './cardiac-history'
 import { CardiacAnalytics } from './cardiac-analytics'
 import { AlertTriangle } from 'lucide-react'
 import { EmergencyCriteriaCard } from '@/components/emergency-criteria-card'
-import { differenceInDays } from 'date-fns'
 
 // Modal imports
 import { GeneralCardiacModal } from './modals/general-cardiac-modal'
@@ -210,21 +209,6 @@ export default function CardiacTracker() {
         storageKey="cardiac-911-acknowledged"
         criteria={RED_FLAG_911_CRITERIA}
         footerNote="This tracker is for documentation, NOT for diagnosis. When in doubt, call 911. Better one false-alarm trip than a missed heart attack."
-        recentEmergencyDetected={(() => {
-          const now = new Date()
-          return entries.some(e => {
-            try {
-              if (differenceInDays(now, new Date(e.date)) > 30) return false
-              return !!(
-                e.erVisitRequired ||
-                e.episodeType === 'syncope' ||
-                e.rhythmType === 'VT' ||
-                (e.symptomSeverity && e.symptomSeverity >= 8) ||
-                (e.hrPeak && e.hrPeak >= 180)
-              )
-            } catch { return false }
-          })
-        })()}
       />
 
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="w-full">

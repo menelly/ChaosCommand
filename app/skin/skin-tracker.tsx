@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge'
 import { Sparkles, BarChart3, History, Plus, ExternalLink, AlertTriangle, ChevronDown } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { useRouter } from 'next/navigation'
-import { format, addDays, subDays, differenceInDays } from 'date-fns'
+import { format, addDays, subDays } from 'date-fns'
 import { useDailyData, CATEGORIES } from '@/lib/database'
 import { EmergencyCriteriaCard } from '@/components/emergency-criteria-card'
 import { celebrate } from '@/lib/particle-physics-engine'
@@ -105,19 +105,6 @@ export default function SkinTracker() {
         storageKey="skin-911-acknowledged"
         criteria={RED_FLAG_911_CRITERIA}
         footerNote="Skin reactions can escalate fast. When in doubt, call 911 — especially with breathing or swallowing changes."
-        recentEmergencyDetected={(() => {
-          const now = new Date()
-          return entries.some(e => {
-            try {
-              if (differenceInDays(now, new Date(e.date)) > 30) return false
-              return !!(
-                e.erVisitRequired ||
-                e.throatTightness ||
-                e.mucousMembraneInvolvement
-              )
-            } catch { return false }
-          })
-        })()}
       />
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
