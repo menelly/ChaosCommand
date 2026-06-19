@@ -99,7 +99,7 @@
         [data-mode="chaos"] .pro-label { opacity: 0.4; }
 
         nav {
-            padding: 1.5rem 2rem; display: flex; align-items: center;
+            padding: 1.5rem 13rem 1.5rem 2rem; display: flex; align-items: center;
             gap: 2rem; flex-wrap: wrap;
         }
         nav .logo {
@@ -111,6 +111,15 @@
             font-size: 0.9rem; transition: color var(--transition);
         }
         nav a:hover, nav a.active { color: var(--accent-1); }
+
+        /* Legal dropdown in nav */
+        .nav-legal { position: relative; display: inline-block; }
+        .nav-legal-btn { background: none; border: none; cursor: pointer; font: inherit; color: var(--text-secondary); font-size: 0.9rem; padding: 0; transition: color var(--transition); }
+        .nav-legal-btn:hover { color: var(--accent-1); }
+        .nav-legal-menu { position: absolute; top: 100%; right: 0; margin-top: 0.6rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 0.4rem; min-width: 190px; display: none; flex-direction: column; gap: 0.15rem; z-index: 1001; box-shadow: 0 10px 30px rgba(0,0,0,0.35); }
+        .nav-legal:hover .nav-legal-menu, .nav-legal:focus-within .nav-legal-menu { display: flex; }
+        .nav-legal-menu a { padding: 0.45rem 0.6rem; border-radius: 6px; white-space: nowrap; font-size: 0.9rem; }
+        .nav-legal-menu a:hover { background: rgba(127,127,127,0.15); color: var(--accent-1); }
 
         .hero {
             text-align: center; padding: 4rem 2rem 3rem;
@@ -258,6 +267,14 @@
         <a href="/#reports">Reports</a>
         <a href="/#pricing">Get It</a>
         <a href="/#about">About</a>
+        <div class="nav-legal">
+            <button class="nav-legal-btn" aria-haspopup="true" aria-expanded="false">Legal &#9662;</button>
+            <div class="nav-legal-menu">
+                <a href="/privacy.html">Privacy</a>
+                <a href="/terms.html">Terms</a>
+                <a href="/medical.html">Medical Disclaimer</a>
+            </div>
+        </div>
     </nav>
 
     <section class="hero">
