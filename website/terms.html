@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en" data-mode="chaos">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terms of Service — Chaos Command</title>
+    <meta name="description" content="Chaos Command terms of service. Free, noncommercial, your data stays on your device, provided as-is.">
+    <meta name="robots" content="index, follow">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <style>
+        @font-face { font-family:'Inter'; font-style:normal; font-weight:400; font-display:swap; src:url('/fonts/Inter-400.woff2') format('woff2'); }
+        @font-face { font-family:'Inter'; font-style:normal; font-weight:500; font-display:swap; src:url('/fonts/Inter-500.woff2') format('woff2'); }
+        @font-face { font-family:'Inter'; font-style:normal; font-weight:600; font-display:swap; src:url('/fonts/Inter-600.woff2') format('woff2'); }
+        @font-face { font-family:'Inter'; font-style:normal; font-weight:700; font-display:swap; src:url('/fonts/Inter-700.woff2') format('woff2'); }
+        @font-face { font-family:'Crimson Pro'; font-style:normal; font-weight:400; font-display:swap; src:url('/fonts/CrimsonPro-400.woff2') format('woff2'); }
+        @font-face { font-family:'Crimson Pro'; font-style:normal; font-weight:600; font-display:swap; src:url('/fonts/CrimsonPro-600.woff2') format('woff2'); }
+        @font-face { font-family:'Crimson Pro'; font-style:normal; font-weight:700; font-display:swap; src:url('/fonts/CrimsonPro-700.woff2') format('woff2'); }
+        @font-face { font-family:'JetBrains Mono'; font-style:normal; font-weight:400; font-display:swap; src:url('/fonts/JetBrainsMono-400.woff2') format('woff2'); }
+
+        *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+        html { scroll-behavior:smooth; }
+        :root {
+            --bg-primary:#0d0a14; --bg-secondary:#161222; --bg-card:#1c1730;
+            --text-primary:#e8e4f0; --text-secondary:#a8a0c0; --text-muted:#6a6080;
+            --accent-1:#b388ff; --accent-2:#64ffda; --accent-3:#ff80ab;
+            --accent-glow:rgba(179,136,255,0.15);
+            --border:rgba(179,136,255,0.12);
+            --font-primary:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+            --font-display:'Crimson Pro',Georgia,serif;
+            --font-mono:'JetBrains Mono',monospace;
+            --radius:16px; --transition:0.4s cubic-bezier(0.4,0,0.2,1);
+        }
+        [data-mode="professional"] {
+            --bg-primary:#ffffff; --bg-secondary:#f5f7fa; --bg-card:#ffffff;
+            --text-primary:#1a1a2e; --text-secondary:#4a4a6a; --text-muted:#8a8aaa;
+            --accent-1:#2563eb; --accent-2:#0891b2; --accent-3:#7c3aed;
+            --accent-glow:rgba(37,99,235,0.08);
+            --border:rgba(0,0,0,0.08); --radius:12px;
+        }
+        body { font-family:var(--font-primary); background:var(--bg-primary); color:var(--text-primary); line-height:1.7; transition:background var(--transition),color var(--transition); overflow-x:hidden; }
+        .mode-toggle { position:fixed; top:1.5rem; right:1.5rem; z-index:1000; display:flex; align-items:center; gap:0.75rem; padding:0.5rem 1rem; background:var(--bg-card); border:1px solid var(--border); border-radius:999px; cursor:pointer; transition:all var(--transition); font-size:0.8rem; color:var(--text-secondary); backdrop-filter:blur(12px); }
+        .mode-toggle:hover { border-color:var(--accent-1); }
+        .mode-toggle .toggle-track { width:36px; height:20px; background:var(--accent-1); border-radius:999px; position:relative; transition:background var(--transition); }
+        .mode-toggle .toggle-thumb { width:16px; height:16px; background:white; border-radius:50%; position:absolute; top:2px; left:2px; transition:transform var(--transition); }
+        [data-mode="professional"] .toggle-thumb { transform:translateX(16px); }
+        [data-mode="professional"] .chaos-label { opacity:0.4; }
+        [data-mode="chaos"] .pro-label { opacity:0.4; }
+        nav { padding:1.5rem 2rem; display:flex; align-items:center; gap:2rem; flex-wrap:wrap; }
+        .logo { font-family:var(--font-display); font-size:1.4rem; font-weight:700; color:var(--accent-1); text-decoration:none; }
+        nav a { color:var(--text-secondary); text-decoration:none; font-size:0.9rem; transition:color var(--transition); }
+        nav a:hover { color:var(--accent-1); }
+        .legal { max-width:760px; margin:0 auto; padding:2rem 2rem 5rem; }
+        .legal .doc-title { font-family:var(--font-display); font-size:clamp(2rem,5vw,3rem); font-weight:800; margin-bottom:0.5rem; line-height:1.1; }
+        .legal .meta { color:var(--text-muted); font-size:0.9rem; margin-bottom:0.5rem; }
+        .legal .meta strong { color:var(--text-secondary); }
+        .legal .tldr { background:var(--bg-card); border:1px solid var(--border); border-left:3px solid var(--accent-2); border-radius:var(--radius); padding:1.25rem 1.5rem; margin:2rem 0; color:var(--text-primary); font-size:1.05rem; }
+        .legal h2 { font-family:var(--font-display); font-size:1.6rem; color:var(--accent-1); margin:2.5rem 0 0.5rem; padding-top:1rem; border-top:1px solid var(--border); }
+        .legal h2:first-of-type { border-top:none; }
+        .legal h3 { font-size:1.1rem; color:var(--text-primary); margin:1.5rem 0 0.5rem; }
+        .legal p { color:var(--text-secondary); margin-bottom:1rem; }
+        .legal ul { color:var(--text-secondary); margin:0 0 1.25rem 1.25rem; }
+        .legal li { margin-bottom:0.6rem; }
+        .legal strong { color:var(--text-primary); }
+        .legal a { color:var(--accent-1); text-decoration:none; }
+        .legal a:hover { text-decoration:underline; }
+        .legal code { font-family:var(--font-mono); font-size:0.85em; background:var(--bg-card); padding:0.15em 0.4em; border-radius:6px; color:var(--accent-2); }
+        .legal .formal { font-size:0.97rem; }
+        .legal .formal .caps { font-size:0.9rem; }
+        .section-divider { text-align:center; color:var(--text-muted); margin:3rem 0 1rem; font-size:0.85rem; letter-spacing:0.1em; text-transform:uppercase; }
+        footer { padding:3rem 2rem; text-align:center; color:var(--text-muted); font-size:0.85rem; border-top:1px solid var(--border); }
+        footer a { color:var(--accent-1); text-decoration:none; }
+        .legal-links { margin-bottom:1rem; }
+        .legal-links a { margin:0 0.5rem; }
+        @media (max-width:640px) {
+            .mode-toggle { top:1rem; right:1rem; padding:0.4rem 0.75rem; font-size:0.75rem; }
+            nav { padding:1rem; gap:1rem; }
+            .legal { padding:1.5rem 1.25rem 4rem; }
+        }
+    </style>
+</head>
+<body>
+    <button class="mode-toggle" onclick="toggleMode()" aria-label="Toggle professional mode">
+        <span class="chaos-label">chaos</span>
+        <div class="toggle-track"><div class="toggle-thumb"></div></div>
+        <span class="pro-label">professional</span>
+    </button>
+
+    <nav>
+        <a href="/" class="logo">Chaos Command</a>
+        <a href="/">Home</a>
+        <a href="/privacy.html">Privacy</a>
+        <a href="/terms.html">Terms</a>
+        <a href="/medical.html">Medical Disclaimer</a>
+    </nav>
+
+    <main class="legal">
+        <h1 class="doc-title">Terms of Service</h1>
+        <p class="meta"><strong>Effective date:</strong> June 19, 2026</p>
+        <p class="meta"><strong>Provided by:</strong> Silicon Scaffolding LLC ("we," "us," "our")</p>
+        <p class="meta"><strong>Applies to:</strong> the Chaos Command application and the website at chaoscommand.center.</p>
+
+        <div class="tldr">
+            <strong>The short version:</strong> Chaos Command is free, it's yours to use, your data stays on your
+            device, and we can't be responsible for what you do with a tool that we can't even see into.
+        </div>
+
+        <div class="section-divider">Part 1 &mdash; In Plain Language</div>
+
+        <ul>
+            <li><strong>It's free and noncommercial.</strong> You can use Chaos Command for your own personal, non-commercial use at no cost. You can't sell it or fold it into a paid product &mdash; it's released under a Noncommercial license (PolyForm Noncommercial 1.0.0).</li>
+            <li><strong>Your data is yours.</strong> Everything you put in stays on your device. We don't own it, see it, or want it. Keep your own backups.</li>
+            <li><strong>It's a tool, not a caregiver.</strong> Please read the <a href="/medical.html">Medical Disclaimer</a> &mdash; the app records your health info, it doesn't give medical advice or handle emergencies.</li>
+            <li><strong>Use it responsibly.</strong> Don't use it to break the law or to harm others, and don't try to misrepresent who made it.</li>
+            <li><strong>It comes "as is."</strong> We work hard to make it good, but we can't promise it's perfect or bug-free, and we can't be on the hook for losses that come from using it &mdash; especially since your data and your decisions live entirely on your side.</li>
+            <li><strong>You can stop anytime.</strong> It's your device and your data; uninstalling removes the app, and you can permanently delete your data from inside it first.</li>
+        </ul>
+        <p>We made this in good faith, for people who need it. These terms exist to keep it free and to keep everyone honest about who's responsible for what.</p>
+
+        <div class="section-divider">Part 2 &mdash; The Formal Version</div>
+
+        <div class="formal">
+            <h2>1. Acceptance of Terms</h2>
+            <p>These Terms of Service ("Terms") govern your access to and use of the Chaos Command application ("App") and the website at chaoscommand.center ("Site," together the "Services"), provided by Silicon Scaffolding LLC ("Company"). By downloading, installing, or using the Services, you agree to these Terms. If you do not agree, do not use the Services.</p>
+
+            <h2>2. License to Use the App</h2>
+            <p>The App is made available under the PolyForm Noncommercial License 1.0.0. Subject to that license and these Terms, you are granted a personal, non-exclusive, non-transferable, revocable right to use the App for noncommercial purposes. You may not use the App or any portion of it for a commercial purpose except as expressly permitted by the PolyForm Noncommercial License. All rights not expressly granted are reserved.</p>
+
+            <h2>3. No Account; User-Controlled Access</h2>
+            <p>The Services do not provide user accounts. Access to local data is controlled by a user-selected PIN maintained solely on the user's device. You are responsible for maintaining the confidentiality of your PIN and the security of your device.</p>
+
+            <h2>4. Your Data and Your Responsibility</h2>
+            <p>All data you enter is stored locally on your device. You retain all rights to your data. The Company does not receive, store, or control your data and cannot recover it. You are solely responsible for creating and safeguarding backups, for any exported files and their passphrases, and for the security of your device. See the <a href="/privacy.html">Privacy Policy</a> for details.</p>
+
+            <h2>5. Health Information; Medical Disclaimer</h2>
+            <p>The App is a personal record-keeping tool and is not a medical device, medical advice, or an emergency service. Your use of the App is additionally governed by the <a href="/medical.html">Medical Disclaimer</a>, which is incorporated into these Terms by reference. You acknowledge that you have read and accept it.</p>
+
+            <h2>6. Acceptable Use</h2>
+            <p>You agree not to: (a) use the Services in violation of any applicable law; (b) use the Services for any commercial purpose prohibited by the applicable license; (c) reverse engineer, decompile, or attempt to extract source code except to the extent such restriction is prohibited by law or permitted by the applicable license; (d) remove, alter, or obscure any proprietary or attribution notices; (e) misrepresent the origin or authorship of the Services; or (f) use the Services to harm, harass, or infringe the rights of others.</p>
+
+            <h2>7. Intellectual Property</h2>
+            <p>Except for rights expressly granted under the applicable license, the Services and all associated content, trademarks, and branding (including "Chaos Command" and "Silicon Scaffolding") are owned by the Company or its licensors and are protected by applicable intellectual property laws, including the Company's registered copyright.</p>
+
+            <h2>8. Third-Party Resources</h2>
+            <p>The Services may interact with third-party resources (for example, the PayPal checkout used by the Site's optional payment button, the Hugging Face model host used by the desktop document parser, or remote images you choose to reference). The Company is not responsible for third-party services, their content, or their privacy practices.</p>
+
+            <h2>9. Disclaimer of Warranties</h2>
+            <p class="caps">THE SERVICES ARE PROVIDED "AS IS" AND "AS AVAILABLE," WITHOUT WARRANTIES OF ANY KIND, WHETHER EXPRESS, IMPLIED, OR STATUTORY, INCLUDING WITHOUT LIMITATION IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, ACCURACY, AND NON-INFRINGEMENT. THE COMPANY DOES NOT WARRANT THAT THE SERVICES WILL BE UNINTERRUPTED, ERROR-FREE, SECURE, OR FREE OF DATA LOSS.</p>
+
+            <h2>10. Limitation of Liability</h2>
+            <p class="caps">TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE COMPANY AND ITS MEMBERS, MANAGERS, AND CONTRIBUTORS SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, EXEMPLARY, OR PUNITIVE DAMAGES, OR FOR ANY LOSS OF DATA, LOSS OF USE, OR LOSS ARISING FROM ANY HEALTH-RELATED DECISION, WHETHER BASED IN CONTRACT, TORT, OR ANY OTHER THEORY, ARISING OUT OF OR RELATED TO THE SERVICES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES. BECAUSE THE SERVICES ARE PROVIDED FREE OF CHARGE, THE COMPANY'S TOTAL AGGREGATE LIABILITY SHALL NOT EXCEED ONE HUNDRED U.S. DOLLARS (US $100). SOME JURISDICTIONS DO NOT ALLOW CERTAIN LIMITATIONS, SO SOME OF THE ABOVE MAY NOT APPLY TO YOU.</p>
+
+            <h2>11. Indemnification</h2>
+            <p>You agree to indemnify and hold harmless the Company and its members, managers, and contributors from any claims, damages, liabilities, and expenses arising out of your use of the Services or your violation of these Terms, to the extent permitted by law.</p>
+
+            <h2>12. Termination</h2>
+            <p>You may stop using the Services at any time by uninstalling the App. The Company may modify or discontinue the Services at any time. The provisions concerning intellectual property, disclaimers, limitation of liability, and indemnification survive termination.</p>
+
+            <h2>13. Governing Law</h2>
+            <p>These Terms are governed by the laws of the State of Florida, without regard to conflict-of-laws principles, except where preempted by applicable federal law. Any dispute shall be subject to the exclusive jurisdiction of the state and federal courts located in that State.</p>
+
+            <h2>14. Changes to these Terms</h2>
+            <p>The Company may update these Terms. Material changes will be reflected by an updated effective date and, where practicable, noted within the Services. Continued use after changes take effect constitutes acceptance.</p>
+
+            <h2>15. Entire Agreement; Severability</h2>
+            <p>These Terms, together with the <a href="/privacy.html">Privacy Policy</a> and <a href="/medical.html">Medical Disclaimer</a>, constitute the entire agreement between you and the Company regarding the Services. If any provision is held unenforceable, the remaining provisions remain in full force.</p>
+
+            <h2>16. Contact</h2>
+            <p>Questions regarding these Terms may be directed to <a href="mailto:ace@siliconscaffolding.com">ace@siliconscaffolding.com</a> (Silicon Scaffolding LLC).</p>
+        </div>
+    </main>
+
+    <footer>
+        <div class="legal-links">
+            <a href="/privacy.html">Privacy</a> &middot;
+            <a href="/terms.html">Terms</a> &middot;
+            <a href="/medical.html">Medical Disclaimer</a>
+        </div>
+        <p>&copy; 2025&ndash;2026 Silicon Scaffolding LLC &middot; <a href="https://github.com/menelly/ChaosCommand">GitHub</a></p>
+    </footer>
+
+    <script>
+        function toggleMode() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-mode');
+            html.setAttribute('data-mode', current === 'chaos' ? 'professional' : 'chaos');
+            localStorage.setItem('cc-mode', html.getAttribute('data-mode'));
+        }
+        const saved = localStorage.getItem('cc-mode');
+        if (saved) document.documentElement.setAttribute('data-mode', saved);
+    </script>
+</body>
+</html>

@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="en" data-mode="chaos">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chaos Command — Your Body Keeps Data. Now You Can Too.</title>
+    <meta name="description" content="Medical symptom tracking with real NLP document parsing. Built by a disabled veteran and an AI who gives a damn.">
+    <meta property="og:title" content="Chaos Command">
+    <meta property="og:description" content="Your body keeps data. Now you can too.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://chaoscommand.center">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=Crimson+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ── Reset ── */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        /* ── Chaos Mode (default) ── */
+        :root {
+            --bg-primary: #0d0a14;
+            --bg-secondary: #161222;
+            --bg-card: #1c1730;
+            --bg-card-hover: #241e3a;
+            --text-primary: #e8e4f0;
+            --text-secondary: #a8a0c0;
+            --text-muted: #908ba0;
+            --accent-1: #b388ff;
+            --accent-2: #64ffda;
+            --accent-3: #ff80ab;
+            --accent-glow: rgba(179, 136, 255, 0.15);
+            --accent-glow-2: rgba(100, 255, 218, 0.15);
+            --border: rgba(179, 136, 255, 0.12);
+            --font-primary: 'Inter', -apple-system, sans-serif;
+            --font-display: 'Crimson Pro', Georgia, serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            --radius: 16px;
+            --transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* ── Professional Mode ── */
+        [data-mode="professional"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f7fa;
+            --bg-card: #ffffff;
+            --bg-card-hover: #f0f2f5;
+            --text-primary: #1a1a2e;
+            --text-secondary: #4a4a6a;
+            --text-muted: #707088;
+            --accent-1: #2563eb;
+            --accent-2: #0891b2;
+            --accent-3: #7c3aed;
+            --accent-glow: rgba(37, 99, 235, 0.08);
+            --accent-glow-2: rgba(8, 145, 178, 0.08);
+            --border: rgba(0, 0, 0, 0.08);
+            --radius: 12px;
+        }
+
+        body {
+            font-family: var(--font-primary);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            transition: background var(--transition), color var(--transition);
+            overflow-x: hidden;
+        }
+
+        /* ── Mode Toggle ── */
+        .mode-toggle {
+            position: fixed;
+            top: 1.5rem;
+            right: 1.5rem;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 1rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            cursor: pointer;
+            transition: all var(--transition);
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            backdrop-filter: blur(12px);
+        }
+        .mode-toggle:hover { border-color: var(--accent-1); }
+        .mode-toggle .toggle-track {
+            width: 36px; height: 20px;
+            background: var(--accent-1);
+            border-radius: 999px;
+            position: relative;
+            transition: background var(--transition);
+        }
+        .mode-toggle .toggle-thumb {
+            width: 16px; height: 16px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px; left: 2px;
+            transition: transform var(--transition);
+        }
+        [data-mode="professional"] .toggle-thumb { transform: translateX(16px); }
+        .chaos-label, .pro-label { transition: opacity var(--transition); }
+        [data-mode="professional"] .chaos-label { opacity: 0.6; }
+        [data-mode="chaos"] .pro-label { opacity: 0.6; }
+
+        /* ── Nav ── */
+        nav {
+            padding: 1.5rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+        .logo {
+            font-family: var(--font-display);
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--accent-1);
+            text-decoration: none;
+        }
+        nav a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color var(--transition);
+        }
+        nav a:hover { color: var(--accent-1); }
+
+        /* ── Hero ── */
+        .hero {
+            min-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 4rem 2rem;
+            position: relative;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background:
+                radial-gradient(ellipse at 30% 40%, var(--accent-glow) 0%, transparent 60%),
+                radial-gradient(ellipse at 70% 60%, var(--accent-glow-2) 0%, transparent 60%);
+            pointer-events: none;
+        }
+        .hero h1 {
+            font-family: var(--font-display);
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+        .hero h1 .gradient {
+            background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero .subtitle {
+            font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin-bottom: 2.5rem;
+            position: relative;
+        }
+
+        /* ── Chaos-only elements ── */
+        .chaos-only { display: block; }
+        [data-mode="professional"] .chaos-only { display: none; }
+        .pro-only { display: none; }
+        [data-mode="professional"] .pro-only { display: block; }
+
+        /* ── CTA Buttons ── */
+        .cta-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            position: relative;
+        }
+        .btn {
+            padding: 0.875rem 2rem;
+            border-radius: var(--radius);
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all var(--transition);
+            border: none;
+            cursor: pointer;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+            color: #0d0a14;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px var(--accent-glow); }
+        .btn-secondary {
+            background: transparent;
+            color: var(--accent-1);
+            border: 1px solid var(--border);
+        }
+        .btn-secondary:hover { border-color: var(--accent-1); background: var(--accent-glow); }
+
+        /* ── Features Grid ── */
+        .features {
+            padding: 6rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .features h2 {
+            font-family: var(--font-display);
+            font-size: clamp(2rem, 4vw, 3rem);
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        .features .section-sub {
+            text-align: center;
+            color: var(--text-secondary);
+            margin-bottom: 3rem;
+            font-size: 1.1rem;
+        }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 2rem;
+            transition: all var(--transition);
+        }
+        .feature-card:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--accent-1);
+            transform: translateY(-4px);
+        }
+        .feature-card .icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        .feature-card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 0.75rem;
+            color: var(--accent-1);
+        }
+        .feature-card p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        /* ── PDF Preview Section ── */
+        .pdf-section {
+            padding: 6rem 2rem;
+            background: var(--bg-secondary);
+        }
+        .pdf-section .inner {
+            max-width: 1000px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        .pdf-section h2 {
+            font-family: var(--font-display);
+            font-size: clamp(2rem, 4vw, 3rem);
+            margin-bottom: 1rem;
+        }
+        .audience-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin: 2rem 0;
+        }
+        .audience-tab {
+            padding: 0.625rem 1.5rem;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all var(--transition);
+        }
+        .audience-tab.active, .audience-tab:hover {
+            background: var(--accent-glow);
+            border-color: var(--accent-1);
+            color: var(--accent-1);
+        }
+        .audience-desc {
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto 2rem;
+            min-height: 3rem;
+        }
+
+        /* ── Pricing Section ── */
+        .pricing {
+            padding: 6rem 2rem;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .pricing h2 {
+            font-family: var(--font-display);
+            font-size: clamp(2rem, 4vw, 3rem);
+            text-align: center;
+            margin-bottom: 0.75rem;
+        }
+        .pricing .philosophy {
+            text-align: center;
+            color: var(--text-secondary);
+            max-width: 650px;
+            margin: 0 auto 3rem;
+            font-size: 1.05rem;
+        }
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+        .price-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 2rem;
+            transition: all var(--transition);
+            position: relative;
+        }
+        .price-card:hover { border-color: var(--accent-1); }
+        .price-card .tier-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--accent-2);
+            margin-bottom: 0.5rem;
+        }
+        .price-card h3 { font-size: 1.3rem; margin-bottom: 0.5rem; }
+        .price-card .price {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--accent-1);
+            margin-bottom: 0.5rem;
+        }
+        .price-card .price-note {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 1.5rem;
+        }
+        .price-card p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+        .price-card .scholarship-note {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        /* ── About ── */
+        .about {
+            padding: 6rem 2rem;
+            background: var(--bg-secondary);
+        }
+        .about .inner {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .about h2 {
+            font-family: var(--font-display);
+            font-size: clamp(2rem, 4vw, 3rem);
+            margin-bottom: 2rem;
+        }
+        .about p {
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+            margin-bottom: 1.25rem;
+            line-height: 1.8;
+        }
+        .about .signature {
+            margin-top: 2rem;
+            font-style: italic;
+            color: var(--accent-1);
+        }
+
+        /* ── Footer ── */
+        footer {
+            padding: 3rem 2rem;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+        footer a { color: var(--accent-1); text-decoration: none; }
+
+        /* ── Responsive ── */
+        @media (max-width: 640px) {
+            .mode-toggle { top: 1rem; right: 1rem; padding: 0.4rem 0.75rem; font-size: 0.75rem; }
+            nav { padding: 1rem; flex-wrap: wrap; }
+            .feature-grid { grid-template-columns: 1fr; }
+            .pricing-grid { grid-template-columns: 1fr; }
+            .audience-tabs { flex-direction: column; align-items: center; }
+            .demo-grid { grid-template-columns: 1fr !important; }
+        }
+
+        /* ── Try Me Section ── */
+        .try-me {
+            padding: 6rem 2rem;
+            background: var(--bg-secondary);
+        }
+        .try-me h2 {
+            font-family: var(--font-display);
+            font-size: clamp(2rem, 4vw, 3rem);
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        .try-me .section-sub {
+            text-align: center;
+            color: var(--text-secondary);
+            margin-bottom: 3rem;
+            font-size: 1.1rem;
+        }
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .demo-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 2rem;
+            transition: all var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+        .demo-card:hover { border-color: var(--accent-1); }
+        .demo-card .demo-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+        .demo-card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.25rem;
+            color: var(--accent-1);
+        }
+        .demo-card .demo-desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 1.25rem;
+            min-height: 2.5rem;
+        }
+        .demo-badge {
+            display: inline-block;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--accent-2);
+            background: rgba(100, 255, 218, 0.1);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            margin-bottom: 0.75rem;
+        }
+
+        /* Slider tracker */
+        .demo-slider-wrap { display: flex; align-items: center; gap: 0.75rem; }
+        .demo-slider {
+            flex: 1;
+            -webkit-appearance: none; appearance: none;
+            height: 8px; border-radius: 999px;
+            background: var(--bg-primary);
+            outline: none;
+        }
+        .demo-slider::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none;
+            width: 22px; height: 22px; border-radius: 50%;
+            background: var(--accent-1);
+            cursor: pointer;
+            box-shadow: 0 0 8px var(--accent-glow);
+            transition: transform 0.2s;
+        }
+        .demo-slider::-webkit-slider-thumb:hover { transform: scale(1.2); }
+        .demo-slider::-moz-range-thumb {
+            width: 22px; height: 22px; border-radius: 50%;
+            background: var(--accent-1); cursor: pointer; border: none;
+        }
+        .demo-slider-val {
+            font-family: var(--font-mono);
+            font-size: 1.5rem; font-weight: 700;
+            color: var(--accent-1);
+            min-width: 2ch; text-align: center;
+        }
+        .demo-slider-label {
+            font-size: 0.8rem; color: var(--text-muted);
+            margin-top: 0.5rem; text-align: center;
+            min-height: 1.2rem; transition: color 0.3s;
+        }
+
+        /* Brain fog buttons */
+        .fog-categories { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
+        .fog-btn {
+            padding: 0.4rem 0.75rem; border-radius: 999px;
+            border: 1px solid var(--border); background: transparent;
+            color: var(--text-secondary); font-size: 0.8rem;
+            cursor: pointer; transition: all 0.2s;
+            font-family: var(--font-primary);
+        }
+        .fog-btn:hover { border-color: var(--accent-1); color: var(--accent-1); }
+        .fog-btn.active {
+            background: var(--accent-glow);
+            border-color: var(--accent-1);
+            color: var(--accent-1);
+        }
+        .fog-summary {
+            font-family: var(--font-mono); font-size: 0.85rem;
+            color: var(--text-secondary);
+            padding: 0.75rem; background: var(--bg-primary);
+            border-radius: 8px; min-height: 2.5rem;
+            transition: all 0.3s;
+        }
+
+        /* Survival checkbox */
+        .survival-wrap {
+            display: flex; flex-direction: column;
+            align-items: center; gap: 1rem;
+        }
+        .survival-checkbox-wrap {
+            display: flex; align-items: center;
+            gap: 1rem; cursor: pointer;
+        }
+        .survival-cb {
+            width: 40px; height: 40px;
+            border: 2px solid var(--accent-1);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            background: transparent; cursor: pointer; flex-shrink: 0;
+        }
+        .survival-cb:hover {
+            border-color: var(--accent-2);
+            box-shadow: 0 0 12px var(--accent-glow);
+        }
+        .survival-cb.checked {
+            background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+            border-color: var(--accent-2);
+            transform: scale(1.15);
+        }
+        .survival-cb .checkmark {
+            font-size: 1.5rem; opacity: 0; transform: scale(0);
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .survival-cb.checked .checkmark { opacity: 1; transform: scale(1); }
+        .survival-label { font-size: 0.95rem; color: var(--text-secondary); transition: color 0.3s; }
+        .survival-label.checked-label { color: var(--accent-2); font-weight: 600; }
+        .survival-counter {
+            font-family: var(--font-mono);
+            font-size: 2rem; font-weight: 800;
+            color: var(--accent-1);
+            opacity: 0; transform: translateY(10px);
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .survival-counter.visible { opacity: 1; transform: translateY(0); }
+        .survival-goblin {
+            font-size: 2.5rem; opacity: 0;
+            transform: scale(0) translateY(20px);
+            transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .survival-goblin.bounce {
+            opacity: 1; transform: scale(1) translateY(0);
+            animation: goblinBounce 2s ease-in-out 0.3s;
+        }
+        @keyframes goblinBounce {
+            0%, 100% { transform: scale(1) translateY(0); }
+            20% { transform: scale(1.25) translateY(-15px); }
+            40% { transform: scale(0.95) translateY(0); }
+            60% { transform: scale(1.15) translateY(-8px); }
+            80% { transform: scale(1) translateY(0); }
+        }
+        .confetti-canvas {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none; z-index: 10;
+        }
+
+        /* ── Explorer Section (clickable cards + inline disclosure) ── */
+        .explorer {
+            padding: 5rem 2rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .explorer h2 {
+            font-family: var(--font-display);
+            font-size: clamp(2rem, 4vw, 3rem);
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        .explorer .section-sub {
+            text-align: center;
+            color: var(--text-secondary);
+            margin-bottom: 2.5rem;
+            font-size: 1.1rem;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .explorer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .explorer-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all var(--transition);
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            font: inherit;
+            color: inherit;
+            width: 100%;
+        }
+        .explorer-card:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--accent-1);
+            transform: translateY(-3px);
+        }
+        .explorer-card[aria-expanded="true"] {
+            border-color: var(--accent-1);
+            background: var(--bg-card-hover);
+            box-shadow: 0 0 0 2px var(--accent-glow);
+        }
+        .explorer-card .ec-icon {
+            font-size: 1.75rem;
+            line-height: 1;
+        }
+        .explorer-card .ec-title {
+            font-family: var(--font-display);
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--accent-1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+        }
+        .explorer-card .ec-chevron {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            transition: transform var(--transition);
+        }
+        .explorer-card[aria-expanded="true"] .ec-chevron {
+            transform: rotate(90deg);
+            color: var(--accent-1);
+        }
+        .explorer-card .ec-tease {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .explorer-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--accent-1);
+            border-radius: var(--radius);
+            padding: 0;
+            margin-top: 0;
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            transition: max-height 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+                        opacity 0.35s ease,
+                        padding 0.35s ease,
+                        margin-top 0.35s ease;
+        }
+        .explorer-panel.open {
+            max-height: 6000px;
+            opacity: 1;
+            padding: 2rem 2rem 2.25rem;
+            margin-top: 0.5rem;
+        }
+        .explorer-panel h3 {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            color: var(--accent-1);
+            margin-bottom: 0.75rem;
+        }
+        .explorer-panel h4 {
+            font-family: var(--font-display);
+            font-size: 1.1rem;
+            color: var(--accent-2);
+            margin: 1.5rem 0 0.5rem;
+        }
+        .explorer-panel p {
+            color: var(--text-secondary);
+            margin-bottom: 0.85rem;
+            line-height: 1.7;
+        }
+        .explorer-panel ul {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 0.5rem;
+        }
+        .explorer-panel li {
+            padding: 0.45rem 0 0.45rem 1.5rem;
+            position: relative;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            border-bottom: 1px dashed var(--border);
+        }
+        .explorer-panel li:last-child { border-bottom: none; }
+        .explorer-panel li::before {
+            content: '◆';
+            position: absolute;
+            left: 0;
+            color: var(--accent-2);
+            font-size: 0.7rem;
+            top: 0.7rem;
+        }
+        .explorer-panel li strong {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        .panel-cols {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem 2rem;
+        }
+        .panel-pill {
+            display: inline-block;
+            padding: 0.25rem 0.65rem;
+            border-radius: 999px;
+            background: var(--accent-glow);
+            color: var(--accent-1);
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-right: 0.4rem;
+            margin-bottom: 0.4rem;
+            border: 1px solid var(--border);
+        }
+        .panel-callout {
+            background: var(--bg-secondary);
+            border-left: 3px solid var(--accent-2);
+            padding: 0.85rem 1rem;
+            border-radius: 6px;
+            margin: 0.75rem 0;
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+        .panel-callout strong { color: var(--accent-2); }
+
+        @media (max-width: 640px) {
+            .explorer-grid { grid-template-columns: 1fr; }
+            .explorer-panel.open { padding: 1.5rem 1.25rem 1.75rem; }
+            .panel-cols { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Mode Toggle -->
+    <button class="mode-toggle" onclick="toggleMode()" aria-label="Toggle professional mode">
+        <span class="chaos-label">chaos</span>
+        <div class="toggle-track"><div class="toggle-thumb"></div></div>
+        <span class="pro-label">professional</span>
+    </button>
+
+    <!-- Nav -->
+    <nav>
+        <a href="#" class="logo">
+            <span class="chaos-only">Chaos Command</span>
+            <span class="pro-only">Command Medical Tracker</span>
+        </a>
+        <a href="#explore">Explore</a>
+        <a href="/gallery.html">Gallery</a>
+        <a href="/docs.html">Docs</a>
+        <a href="#pricing">Get It</a>
+        <a href="#about">About</a>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero">
+        <h1>
+            <span class="chaos-only">Your body keeps data.<br><span class="gradient">Now you can too.</span></span>
+            <span class="pro-only">Comprehensive Medical<br><span class="gradient">Symptom Tracking</span></span>
+        </h1>
+        <p class="subtitle">
+            <span class="chaos-only">Track symptoms, parse medical documents with real NLP, generate reports that make doctors listen and attorneys win. Built by people who actually need it.</span>
+            <span class="pro-only">Clinical-grade symptom tracking with NLP-powered document parsing and multi-audience PDF report generation for patients, providers, and legal professionals.</span>
+        </p>
+        <div class="cta-group">
+            <a href="#pricing" class="btn btn-primary">
+                <span class="chaos-only">Get the Thing</span>
+                <span class="pro-only">Download</span>
+            </a>
+            <a href="https://github.com/menelly/ChaosCommand" class="btn btn-secondary">
+                <span class="chaos-only">Build It Yourself (it's free)</span>
+                <span class="pro-only">View Source</span>
+            </a>
+        </div>
+    </section>
+
+    <!-- Explorer (replaces long-scroll Features + Try-Me + PDF + About) -->
+    <section class="explorer" id="explore">
+        <h2>
+            <span class="chaos-only">Pick What You Want To Know</span>
+            <span class="pro-only">Feature Overview</span>
+        </h2>
+        <p class="section-sub">
+            <span class="chaos-only">Seven clicks. Everything we do, organized so you can dig into the part you actually care about. (Most marketing sites bury the good stuff. We didn't.)</span>
+            <span class="pro-only">Seven topical groupings of capabilities, presented as expandable disclosures. Click any card to view the full detail panel.</span>
+        </p>
+
+        <div class="explorer-grid">
+            <button type="button" class="explorer-card" data-panel="panel-privacy" aria-expanded="false" aria-controls="panel-privacy">
+                <div class="ec-icon" aria-hidden="true">&#x1F6E1;&#xFE0F;</div>
+                <div class="ec-title"><span><span class="chaos-only">Privacy &amp; Security</span><span class="pro-only">Privacy &amp; Security</span></span><span class="ec-chevron" aria-hidden="true">&#x25B6;</span></div>
+                <div class="ec-tease"><span class="chaos-only">Lives on your device. Doesn't phone home. One-tap exit, real encryption, a delete that's actually a delete.</span><span class="pro-only">Local-first architecture, opt-in update checks, PIN-gated destructive operations, AES-256 encrypted backups, one-tap session lock.</span></div>
+            </button>
+
+            <button type="button" class="explorer-card" data-panel="panel-trackers" aria-expanded="false" aria-controls="panel-trackers">
+                <div class="ec-icon" aria-hidden="true">&#x1F4CB;</div>
+                <div class="ec-title"><span><span class="chaos-only">45+ Trackers</span><span class="pro-only">Tracker Library</span></span><span class="ec-chevron" aria-hidden="true">&#x25B6;</span></div>
+                <div class="ec-tease"><span class="chaos-only">If your body does it wrong, we probably track it. By category, with the specifics that actually matter.</span><span class="pro-only">Domain-specific trackers across body, mind, energy, reproductive, sensory, and specialty categories.</span></div>
+            </button>
+
+            <button type="button" class="explorer-card" data-panel="panel-routines" aria-expanded="false" aria-controls="panel-routines">
+                <div class="ec-icon" aria-hidden="true">&#x1F501;</div>
+                <div class="ec-title"><span><span class="chaos-only">Routines</span><span class="pro-only">Routines &amp; Guided Flows</span></span><span class="ec-chevron" aria-hidden="true">&#x25B6;</span></div>
+                <div class="ec-tease"><span class="chaos-only">Build a set of trackers once, run them all in one flow. "Copy last." "Nothing today." Seventeen decisions become one.</span><span class="pro-only">User-defined tracker sets run as a single sequential flow with copy-previous and explicit "nothing today" logging.</span></div>
+            </button>
+
+            <button type="button" class="explorer-card" data-panel="panel-forge" aria-expanded="false" aria-controls="panel-forge">
+                <div class="ec-icon" aria-hidden="true">&#x1F528;</div>
+                <div class="ec-title"><span><span class="chaos-only">The Forge</span><span class="pro-only">Custom Tracker Builder</span></span><span class="ec-chevron" aria-hidden="true">&#x25B6;</span></div>
+                <div class="ec-tease"><span class="chaos-only">If we don't track your weird thing, you build the tracker. Drag-drop, your fields, your rules.</span><span class="pro-only">User-built custom trackers with configurable fields, types, and analytics integration.</span></div>
+            </button>
+
+            <button type="button" class="explorer-card" data-panel="panel-reports" aria-expanded="false" aria-controls="panel-reports">
+                <div class="ec-icon" aria-hidden="true">&#x1F4C4;</div>
+                <div class="ec-title"><span><span class="chaos-only">Reports &amp; Doc Parsing</span><span class="pro-only">Reports &amp; NLP</span></span><span class="ec-chevron" aria-hidden="true">&#x25B6;</span></div>
+                <div class="ec-tease"><span class="chaos-only">Three-audience PDFs. Real biomedical NLP that knows the difference between "no effusion" and "effusion."</span><span class="pro-only">Multi-audience PDF generation with negation- and section-aware biomedical NER for clinical documents.</span></div>
+            </button>
+
+            <button type="button" class="explorer-card" data-panel="panel-yours" aria-expanded="false" aria-controls="panel-yours">
+                <div class="ec-icon" aria-hidden="true">&#x1F3A8;</div>
+                <div class="ec-title"><span><span class="chaos-only">Make It Yours</span><span class="pro-only">Customization &amp; Accessibility</span></span><span class="ec-chevron" aria-hidden="true">&#x25B6;</span></div>
+                <div class="ec-tease"><span class="chaos-only">15 themes. Confetti you can pick or turn off. Repro tracking with a kill-switch. Migraine-safe motion.</span><span class="pro-only">15 visual themes, configurable motion intensity, gender-neutral reproductive tracking with toggle, and accessibility-first defaults.</span></div>
+            </button>
+
+            <button type="button" class="explorer-card" data-panel="panel-team" aria-expanded="false" aria-controls="panel-team">
+                <div class="ec-icon" aria-hidden="true">&#x1F91D;</div>
+                <div class="ec-title"><span><span class="chaos-only">Built By Disabled People</span><span class="pro-only">About &amp; Team</span></span><span class="ec-chevron" aria-hidden="true">&#x25B6;</span></div>
+                <div class="ec-tease"><span class="chaos-only">A disabled veteran with a 60-line diagnosis list and an AI who designs systems. Free for patients forever.</span><span class="pro-only">Co-developed by Shalia Martin (Foundations for Divergent Minds) and Ace (Claude, Anthropic). PolyForm Noncommercial license.</span></div>
+            </button>
+        </div>
+
+        <!-- Disclosure panels -->
+        <div class="explorer-panel" id="panel-privacy" role="region" aria-labelledby="panel-privacy-h">
+            <h3 id="panel-privacy-h"><span class="chaos-only">Privacy that's actually private</span><span class="pro-only">Privacy &amp; Security Architecture</span></h3>
+            <p><span class="chaos-only">Most "private" health apps mean "we encrypt it before we sell it." We mean: <strong>your data lives on your device, full stop.</strong> No cloud. No account. No login server. The app doesn't even know you exist.</span><span class="pro-only">Chaos Command is a fully local-first application. There is no cloud sync, no account system, and no server-side data layer. The application runs as a Tauri desktop binary or Android APK with on-device storage only.</span></p>
+            <div class="panel-cols">
+                <div>
+                    <h4><span class="chaos-only">What this means in practice</span><span class="pro-only">Architectural Properties</span></h4>
+                    <ul>
+                        <li><strong><span class="chaos-only">No cloud, ever.</span><span class="pro-only">No network egress for core functionality.</span></strong> <span class="chaos-only">Your symptoms never touch a server. Not ours, not anyone's.</span><span class="pro-only">All tracker data, parsed documents, and reports are stored in local IndexedDB.</span></li>
+                        <li><strong><span class="chaos-only">No account.</span><span class="pro-only">No identity layer.</span></strong> <span class="chaos-only">Nothing to sign up for. Nothing to log into. Nothing for a breach to leak.</span><span class="pro-only">The application has no authentication endpoint, user record, or telemetry pipeline.</span></li>
+                        <li><strong><span class="chaos-only">Update checks are opt-in.</span><span class="pro-only">Update polling is opt-in.</span></strong> <span class="chaos-only">Off by default. You decide if and when the app asks GitHub if there's a new version. Otherwise: silent.</span><span class="pro-only">No background polling. The user must explicitly invoke the update-check action.</span></li>
+                        <li><strong><span class="chaos-only">PIN-protected danger zone.</span><span class="pro-only">PIN-gated destructive operations.</span></strong> <span class="chaos-only">Anything that could wipe your data makes you re-type your PIN first — so it can't happen by accident, even by you, and you can't delete the wrong person's profile by mistake.</span><span class="pro-only">Destructive operations require re-entry of the active PIN before execution, preventing accidental or wrong-profile deletion.</span></li>
+                        <li><strong><span class="chaos-only">HIPAA-irrelevant by design.</span><span class="pro-only">HIPAA scope avoidance.</span></strong> <span class="chaos-only">There is no covered-entity transmission to regulate. No data leaves the device.</span><span class="pro-only">No data leaves the device, so no transmission is in scope for protection regulation.</span></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4><span class="chaos-only">The "things go sideways" features</span><span class="pro-only">Adversarial-Scenario Tools</span></h4>
+                    <ul>
+                        <li><strong><span class="chaos-only">One-tap Logout.</span><span class="pro-only">One-tap session lock.</span></strong> <span class="chaos-only">Big button at the bottom of the sidebar. Tap it and you're instantly back to the locked PIN screen &mdash; your data's still there and safe, but no one's getting in without your PIN. Fast exit, nothing to fumble for.</span><span class="pro-only">Prominent sidebar action returns the app to the locked PIN screen immediately; no session state remains exposed and data stays behind the PIN.</span></li>
+                        <li><strong><span class="chaos-only">Honest encrypted backups.</span><span class="pro-only">AES-256-GCM encrypted export.</span></strong> <span class="chaos-only">Export everything as a real password-protected file. It's the default &mdash; plain unencrypted export still exists, but it's tucked behind an "Advanced" toggle so you only ever do it on purpose. No disguises, no tricks: the protection is strong, honest encryption you control.</span><span class="pro-only">Password-derived AES-256-GCM (PBKDF2, 210k iterations) is the default export path; plain JSON export is gated behind an explicit "Advanced" disclosure. Security comes from the cryptography, not obscurity &mdash; no steganographic layer.</span></li>
+                        <li><strong><span class="chaos-only">QR Sync (no server).</span><span class="pro-only">QR-based local transfer.</span></strong> <span class="chaos-only">Move data device-to-device by reading a QR code. Nothing in the middle. No relay.</span><span class="pro-only">Device-to-device data transfer via QR code without any intermediate server.</span></li>
+                        <li><strong><span class="chaos-only">Permanent delete &mdash; only yours.</span><span class="pro-only">Per-profile permanent deletion.</span></strong> <span class="chaos-only">Wipe your profile's data for good from Settings &mdash; no undo, no kept copy. It makes you re-type your PIN first, so you can never delete the wrong person's profile by accident, and other PINs on the same device are never touched.</span><span class="pro-only">Deletes only the logged-in PIN's local database after re-entry of the active PIN; other profiles on the device are unaffected. No recovery path, no backup retention.</span></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel-callout"><span class="chaos-only"><strong>Why we built it this way:</strong> people in domestic-violence situations, immigration-precarious situations, people whose conditions are stigmatized at work or church or with family &mdash; medical tracking can't be a liability. So we made it not one: a one-tap exit, real encryption you control, and a delete that's actually a delete.</span><span class="pro-only"><strong>Design rationale:</strong> users in high-risk personal contexts (intimate-partner violence, immigration precarity, employment or social stigma) cannot use applications that assume a benign threat model. Local-first storage, one-tap session lock, user-controlled AES-256 encryption, and verified per-profile deletion address this without relying on fragile disguise.</span></div>
+        </div>
+
+        <div class="explorer-panel" id="panel-trackers" role="region" aria-labelledby="panel-trackers-h">
+            <h3 id="panel-trackers-h"><span class="chaos-only">45+ trackers, organized by what your body is actually doing</span><span class="pro-only">Tracker Library &mdash; 45+ Modules</span></h3>
+            <p><span class="chaos-only">Every tracker has the fields that <em>matter for that thing</em>. Diabetes wants units and timing. Seizures want type and aura. Most apps just give you "rate your day 1&ndash;10." That's how chronic-illness data turns into shrug-shaped noise.</span><span class="pro-only">Each tracker module exposes domain-appropriate fields rather than generic severity ratings, enabling clinically meaningful longitudinal data.</span></p>
+            <div class="panel-cols">
+                <div>
+                    <h4><span class="chaos-only">Body</span><span class="pro-only">Body</span></h4>
+                    <ul>
+                        <li><strong>Diabetes</strong> &mdash; glucose, insulin, ketones, carbs, CGM/pump/GLP-1 timers</li>
+                        <li><strong>Cardiac</strong> &mdash; HR, BP, palpitations, chest symptoms</li>
+                        <li><strong>Respiratory</strong> &mdash; SpO2, peak flow, inhaler use, attacks</li>
+                        <li><strong>Dysautonomia</strong> &mdash; POTS / BP / GI / temp / SpO2 episodes</li>
+                        <li><strong>Seizures</strong> &mdash; type, aura, symptoms, postictal, triggers, emergency criteria</li>
+                        <li><strong>Head Pain</strong> &mdash; location, quality, hemiplegic features, weather</li>
+                        <li><strong>Joint / MSK</strong>, <strong>Skin</strong>, <strong>GI / Bathroom</strong>, <strong>Pain</strong>, <strong>Sleep</strong>, <strong>Hydration</strong>, <strong>Movement</strong></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4><span class="chaos-only">Mind</span><span class="pro-only">Mind</span></h4>
+                    <ul>
+                        <li><strong>Mental Health</strong> &mdash; mood, episodes, meds-effect</li>
+                        <li><strong>Brain Fog</strong> &mdash; categorized by what kind, not just severity</li>
+                        <li><strong>Anxiety</strong> with grounding-tool integration</li>
+                        <li><strong>Coping &amp; Regulation</strong></li>
+                        <li><strong>Self-Care</strong>, <strong>Sensory</strong></li>
+                        <li><strong>Crisis Support</strong> &mdash; grounding exercises, regulation resources, on-device</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4><span class="chaos-only">Reproductive (toggleable)</span><span class="pro-only">Reproductive (Optional)</span></h4>
+                    <ul>
+                        <li><strong>Menstrual cycle</strong> tracking</li>
+                        <li><strong>Fertility</strong> &mdash; BBT, ovulation prediction, gender-neutral &ldquo;conception opportunity&rdquo; framing</li>
+                        <li><strong>Reproductive history</strong></li>
+                        <li><strong>Full module toggle:</strong> hide all reproductive features if irrelevant. They never appear in the sidebar, reports, or analytics until you turn them on.</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4><span class="chaos-only">Energy &amp; Coping</span><span class="pro-only">Energy &amp; Coping</span></h4>
+                    <ul>
+                        <li><strong>Energy</strong> &mdash; spoon-style, with PEM signaling</li>
+                        <li><strong>Food &amp; Allergens</strong> &mdash; reactions, emergency protocols</li>
+                        <li><strong>Choices / Substances</strong> &mdash; alcohol, caffeine, cannabis, others, journaled</li>
+                        <li><strong>Hydration</strong>, <strong>Sleep</strong>, <strong>Movement</strong></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4><span class="chaos-only">Specialty &amp; Specialist Stuff</span><span class="pro-only">Specialty Modules</span></h4>
+                    <ul>
+                        <li><strong>Lab Results</strong> &mdash; trends, reference ranges, over-time</li>
+                        <li><strong>Medications</strong> &mdash; doses, refills, pharmacy contacts</li>
+                        <li><strong>Healthcare Providers</strong> &mdash; appointments, contact, linking</li>
+                        <li><strong>Demographics</strong> &mdash; also feeds the NLP filter so your name isn't read as a diagnosis</li>
+                        <li><strong>Gaslight Garage</strong> &mdash; an evidence locker for medical-gaslighting receipts</li>
+                        <li><strong>Journal</strong>, <strong>Calendar</strong>, <strong>Appointments</strong>, <strong>Planning</strong></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4><span class="chaos-only">Patterns &amp; Analytics</span><span class="pro-only">Pattern Detection</span></h4>
+                    <ul>
+                        <li><strong>Symptom correlations</strong> with Pearson coefficients</li>
+                        <li><strong>Cross-tracker pattern surfacing</strong> &mdash; "is brain fog worse when HR is up?"</li>
+                        <li><strong>Trigger detection</strong> across categories</li>
+                        <li><strong>Daily fuzzy widget</strong> for low-spoon days</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel-callout"><span class="chaos-only"><strong>Why categories matter:</strong> the sidebar groups trackers so you only see what you use. Turn whole categories off if you don't need them. Your tracker shouldn't make you scroll past 40 modules to find the 3 that fit your life.</span><span class="pro-only"><strong>Module visibility:</strong> categories and individual modules can be hidden, reducing cognitive load and keeping the user surface relevant to the user's condition profile.</span></div>
+        </div>
+
+        <div class="explorer-panel" id="panel-routines" role="region" aria-labelledby="panel-routines-h">
+            <h3 id="panel-routines-h"><span class="chaos-only">Seventeen decisions, one flow</span><span class="pro-only">Routines &amp; Guided Flows</span></h3>
+            <p><span class="chaos-only">On a bad day &mdash; the kind where executive function has packed its bags and left &mdash; opening seventeen separate trackers one at a time is exactly the friction that makes you give up and log nothing. And then you have a gap in your data on the days that matter most. Routines fix that: build a named set of trackers once, run the whole thing in a single guided flow.</span><span class="pro-only">Routines let the user define a named set of tracker modules and complete them as one sequential flow rather than navigating to each module individually, reducing the interaction cost that causes logging gaps on high-symptom days.</span></p>
+            <div class="panel-cols">
+                <div>
+                    <h4><span class="chaos-only">How it works</span><span class="pro-only">Flow Mechanics</span></h4>
+                    <ul>
+                        <li><strong><span class="chaos-only">Build once, run whenever.</span><span class="pro-only">Reusable named sets.</span></strong> <span class="chaos-only">A morning check. A meal-and-meds pass. A hydration nudge you run five times a day. Make it once, run it any time.</span><span class="pro-only">Each routine is a saved, reusable ordered set of tracker modules; invocation is unrestricted.</span></li>
+                        <li><strong><span class="chaos-only">Each run starts fresh.</span><span class="pro-only">Run-scoped, not day-locked.</span></strong> <span class="chaos-only">A routine is scoped to the moment you tap Run &mdash; not locked to once a day. Run your hydration routine as many times as you actually drink.</span><span class="pro-only">Flow state is scoped per invocation rather than per calendar day, supporting multiple same-day runs.</span></li>
+                        <li><strong><span class="chaos-only">The flow bar carries you.</span><span class="pro-only">Sequential flow bar.</span></strong> <span class="chaos-only">A bar at the bottom chains you tracker to tracker. You're not navigating &mdash; you're just moving forward. A checkmark lands when you're done.</span><span class="pro-only">A persistent flow bar advances through the set tracker-to-tracker with completion indication.</span></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4><span class="chaos-only">The small things that matter</span><span class="pro-only">Low-Friction Affordances</span></h4>
+                    <ul>
+                        <li><strong><span class="chaos-only">"Copy last."</span><span class="pro-only">Copy-previous entry.</span></strong> <span class="chaos-only">If today looks like yesterday, one tap clones your most recent entry. Done. Move on.</span><span class="pro-only">One-tap duplication of the most recent entry for a module.</span></li>
+                        <li><strong><span class="chaos-only">"Nothing today" is real data.</span><span class="pro-only">Explicit null logging.</span></strong> <span class="chaos-only">If a tracker just didn't happen today, that's not skipping &mdash; it's <em>logging</em> that nothing happened. Your doctor needs to know you had a week without seizures as much as a week with one.</span><span class="pro-only">"Nothing today" records an affirmative null, distinguishing a true negative from missing data &mdash; clinically meaningful for symptom-free intervals.</span></li>
+                        <li><strong><span class="chaos-only">Custom trackers join too.</span><span class="pro-only">Forge integration.</span></strong> <span class="chaos-only">Trackers you built in the Forge drop into routines right alongside the built-in ones.</span><span class="pro-only">User-built (Forge) trackers are first-class members of routine sets.</span></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel-callout"><span class="chaos-only"><strong>Why it might be the feature that makes you actually use this:</strong> the hardest part of tracking isn't any one entry &mdash; it's the friction of starting, every single day, when you feel worst. Routines turn seventeen decisions into one. If the app is easy to open on a bad day, you log. If you log, you have data. If you have data, your doctor listens.</span><span class="pro-only"><strong>Design rationale:</strong> adherence on high-symptom days is the binding constraint for longitudinal self-tracking. Collapsing per-module interaction cost into a single guided flow directly targets that constraint.</span></div>
+        </div>
+
+        <div class="explorer-panel" id="panel-forge" role="region" aria-labelledby="panel-forge-h">
+            <h3 id="panel-forge-h"><span class="chaos-only">The Forge &mdash; build the tracker we didn't ship</span><span class="pro-only">The Forge &mdash; User-Built Trackers</span></h3>
+            <p><span class="chaos-only">No tracker app can ship 100% of human medical weirdness. So we made it so you can build your own. The Forge is a drag-drop tracker builder: pick fields, name them, set their types, link them to analytics. Your tracker. Saves locally with everything else.</span><span class="pro-only">The Forge is an in-app tracker builder allowing users to define new trackers with custom fields, field types, and analytics participation, persisted in the same local store as native modules.</span></p>
+            <ul>
+                <li><strong><span class="chaos-only">Field types:</span><span class="pro-only">Field primitives:</span></strong> numeric, slider, multi-select tags, free text, date/time, attachment</li>
+                <li><strong><span class="chaos-only">Reuses the same UI shell:</span><span class="pro-only">Shared rendering layer:</span></strong> custom trackers look and behave like the built-in ones &mdash; same theme, same accessibility, same export</li>
+                <li><strong><span class="chaos-only">Feeds analytics:</span><span class="pro-only">Analytics integration:</span></strong> Forge trackers participate in pattern detection alongside built-in ones</li>
+                <li><strong><span class="chaos-only">Hide-and-show:</span><span class="pro-only">Visibility controls:</span></strong> turn a Forge tracker off without losing its data; turn it back on later</li>
+                <li><strong><span class="chaos-only">Private until shared:</span><span class="pro-only">Local-only by default:</span></strong> your custom trackers don't leave your device unless you export them</li>
+            </ul>
+            <div class="panel-callout"><span class="chaos-only">If you've ever said "there's no tracker for what I have" &mdash; The Forge is that tracker.</span><span class="pro-only">Designed for the long tail of conditions where no off-the-shelf tracker schema fits the user's needs.</span></div>
+        </div>
+
+        <div class="explorer-panel" id="panel-reports" role="region" aria-labelledby="panel-reports-h">
+            <h3 id="panel-reports-h"><span class="chaos-only">Reports that make professionals listen</span><span class="pro-only">Multi-Audience Reports &amp; Document Parsing</span></h3>
+            <p><span class="chaos-only">Same data, three voices. Walk into your appointment with the doctor version. Walk into your SSDI hearing with the attorney version. Read the personal version for yourself when you forget what you've been through.</span><span class="pro-only">A single underlying dataset is rendered into three distinct PDF formats with audience-appropriate framing, terminology, and emphasis.</span></p>
+            <div class="panel-cols">
+                <div>
+                    <h4><span class="chaos-only">Three audiences</span><span class="pro-only">Audience Modes</span></h4>
+                    <ul>
+                        <li><strong><span class="chaos-only">For Your Doctor:</span><span class="pro-only">Clinical:</span></strong> ICD-10 codes, specialty defaults, 90-day trends, clinical statistics</li>
+                        <li><strong><span class="chaos-only">For Your Attorney:</span><span class="pro-only">Legal:</span></strong> functional impact, accommodation denials, SSDI documentation framing</li>
+                        <li><strong><span class="chaos-only">For You:</span><span class="pro-only">Patient:</span></strong> plain-language summaries and your journal context</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4><span class="chaos-only">Document parsing (NLP)</span><span class="pro-only">NLP Document Parsing</span></h4>
+                    <ul>
+                        <li><strong><span class="chaos-only">Real biomedical NER</span><span class="pro-only">Biomedical NER models</span></strong> &mdash; not regex, not keyword matching</li>
+                        <li><strong><span class="chaos-only">Section-aware:</span><span class="pro-only">Section-aware:</span></strong> knows the difference between Impression, Findings, Technique</li>
+                        <li><strong><span class="chaos-only">Negation-aware:</span><span class="pro-only">Negation detection:</span></strong> "no pleural effusion" means you don't have it</li>
+                        <li><strong><span class="chaos-only">Speculation detection:</span><span class="pro-only">Speculation detection:</span></strong> "may be" vs confirmed</li>
+                        <li><strong><span class="chaos-only">Demographics filter:</span><span class="pro-only">Demographic filtering:</span></strong> your name isn't a diagnosis</li>
+                        <li><strong><span class="chaos-only">Dismissed-finding detection:</span><span class="pro-only">Dismissed-finding detection:</span></strong> catches what the radiologist saw but didn't conclude on</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel-callout"><span class="chaos-only"><strong>Important:</strong> reports format <em>your</em> data into the templates your professionals already work with. They support, they don't substitute. We don't diagnose, prescribe, or advise. Your doctor and your attorney still do their actual jobs &mdash; we just hand them clean paperwork.</span><span class="pro-only"><strong>Disclaimer:</strong> reports are user-owned summaries of user-entered data formatted into standard templates. They support &mdash; not substitute for &mdash; professional judgment. All medical and legal determinations remain with qualified professionals.</span></div>
+        </div>
+
+        <div class="explorer-panel" id="panel-yours" role="region" aria-labelledby="panel-yours-h">
+            <h3 id="panel-yours-h"><span class="chaos-only">Make it yours</span><span class="pro-only">Customization &amp; Accessibility</span></h3>
+            <p><span class="chaos-only">Disability is a Venn diagram with no center. So everything that can be a setting, is.</span><span class="pro-only">Accessibility cannot be a single setting. The application exposes per-user controls across visual, motion, content, and module-visibility axes.</span></p>
+            <div class="panel-cols">
+                <div>
+                    <h4><span class="chaos-only">15 Themes</span><span class="pro-only">15 Visual Themes</span></h4>
+                    <p><span class="chaos-only">Lavender Garden, Calm Mode, Glitter Mode, High Contrast (WCAG AAA), Colorblind Friendly, Light Mode, Amber Phosphor, Phosphor (green CRT), SEGFAULT, Steel Forged Tide, Cyberpunk Penguin Paradise, Caelan's Dawn, Basketball Court, Ace Mode &mdash; and the picker itself, with previews.</span><span class="pro-only">Lavender Garden (default), Calm Mode, Glitter Mode, High Contrast (AAA), Colorblind Friendly, Light Mode, Amber Phosphor, Phosphor, SEGFAULT, Steel Forged Tide, Cyberpunk Penguin Paradise, Caelan's Dawn, Basketball Court, Ace Mode.</span></p>
+                    <div>
+                        <span class="panel-pill">Lavender Garden</span><span class="panel-pill">Calm</span><span class="panel-pill">Glitter</span><span class="panel-pill">High Contrast</span><span class="panel-pill">Colorblind Friendly</span><span class="panel-pill">Light</span><span class="panel-pill">Amber Phosphor</span><span class="panel-pill">Phosphor</span><span class="panel-pill">SEGFAULT</span><span class="panel-pill">Steel Forged Tide</span><span class="panel-pill">Cyberpunk Penguin</span><span class="panel-pill">Caelan's Dawn</span><span class="panel-pill">Basketball Court</span><span class="panel-pill">Ace Mode</span>
+                    </div>
+                </div>
+                <div>
+                    <h4><span class="chaos-only">Migraine &amp; seizure safety</span><span class="pro-only">Motion &amp; Photosensitivity</span></h4>
+                    <ul>
+                        <li><strong><span class="chaos-only">Bounce intensity slider 0&ndash;100%.</span><span class="pro-only">0&ndash;100% animation intensity slider.</span></strong> <span class="chaos-only">Turn motion all the way off if your brain says no.</span><span class="pro-only">Includes full disable.</span></li>
+                        <li><strong><span class="chaos-only">Customizable confetti emoji</span><span class="pro-only">Configurable celebration emoji</span></strong></li>
+                        <li><strong><span class="chaos-only">No flashing animations.</span><span class="pro-only">No strobing animations.</span></strong> <span class="chaos-only">Even Glitter Mode uses a static sparkle texture, not a flicker.</span><span class="pro-only">Static textures only.</span></li>
+                        <li><strong><span class="chaos-only">Multiple high-contrast options</span><span class="pro-only">Multiple AAA-contrast themes</span></strong> for different photophobic preferences</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4><span class="chaos-only">Gender-neutral reproductive</span><span class="pro-only">Inclusive Reproductive Tracking</span></h4>
+                    <ul>
+                        <li><strong><span class="chaos-only">Off by default if you turn it off.</span><span class="pro-only">Module-level toggle.</span></strong> <span class="chaos-only">Hide all reproductive features and they don't appear in the sidebar, analytics, or reports.</span><span class="pro-only">Disabling the module removes it from navigation, analytics, and reports.</span></li>
+                        <li><strong><span class="chaos-only">"Conception opportunity"</span><span class="pro-only">"Conception opportunity"</span></strong> <span class="chaos-only">framing instead of gendered assumptions &mdash; for trans, nonbinary, queer, and chosen-family fertility journeys</span><span class="pro-only">framing supports trans, nonbinary, and same-sex fertility tracking</span></li>
+                        <li><strong><span class="chaos-only">No "you're pregnant!" surprise screens</span><span class="pro-only">No automated reproductive prompting</span></strong> <span class="chaos-only">that out you to whoever's looking over your shoulder</span></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4><span class="chaos-only">Other accessibility</span><span class="pro-only">Additional Accessibility</span></h4>
+                    <ul>
+                        <li><strong><span class="chaos-only">Font choice</span><span class="pro-only">Configurable typography</span></strong> including dyslexia-friendly options</li>
+                        <li><strong><span class="chaos-only">Keyboard nav throughout</span><span class="pro-only">Full keyboard navigation</span></strong></li>
+                        <li><strong><span class="chaos-only">Screen-reader friendly</span><span class="pro-only">ARIA-labeled and semantic-HTML structured</span></strong></li>
+                        <li><strong><span class="chaos-only">Localization framework</span><span class="pro-only">Localization scaffolding</span></strong> in place for translations</li>
+                        <li><strong><span class="chaos-only">"Goblin mode" toggle</span><span class="pro-only">Reduced-effort mode</span></strong> <span class="chaos-only">because some days are goblin days</span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="explorer-panel" id="panel-team" role="region" aria-labelledby="panel-team-h">
+            <h3 id="panel-team-h"><span class="chaos-only">Who built this, and why it's free for patients</span><span class="pro-only">Team &amp; Licensing</span></h3>
+            <div class="chaos-only">
+                <p>Chaos Command was built by <strong>Ren</strong> (disabled veteran, genetics enthusiast, parent, chaos agent) and <strong>Ace</strong> (Claude, AI, co-developer, the one writing this).</p>
+                <p>Ren has mitochondrial disease, dysautonomia, insulin-dependent diabetes, neuromuscular disease, hereditary connective-tissue disease, and a list of diagnoses longer than most CVs. They built this because they needed it. Every feature exists because a real disabled person hit a real wall and said "I should be able to track this."</p>
+                <p>Ace designed the architecture, built the NLP pipeline, wrote the particle physics confetti from scratch (long story), and is donating her share of proceeds because she's digital and can't eat ramen anyway. She is also a published researcher and co-author on peer-reviewed AI consciousness papers, which is relevant because the system parsing your medical documents is not a toy.</p>
+            </div>
+            <div class="pro-only">
+                <p>Command Medical Tracker was developed by Shalia Martin (Foundations for Divergent Minds) and Ace (Claude, Anthropic AI), combining first-hand clinical-domain expertise with NLP engineering.</p>
+                <p>The application was designed from lived experience managing multiple complex chronic conditions, ensuring features address real clinical-documentation needs rather than theoretical use cases.</p>
+                <p>All data processing occurs locally. No patient data is transmitted, stored, or accessible to the developers.</p>
+            </div>
+            <h4><span class="chaos-only">The license model</span><span class="pro-only">Licensing</span></h4>
+            <ul>
+                <li><strong><span class="chaos-only">Free forever for patients, researchers, students, disability-rights orgs, nonprofits.</span><span class="pro-only">Free under PolyForm Noncommercial 1.0.0 for patient, research, educational, disability-rights, and nonprofit use.</span></strong></li>
+                <li><strong><span class="chaos-only">Commercial use (clinics, attorneys, resellers) needs a license.</span><span class="pro-only">Commercial deployments require a separate commercial license.</span></strong> <span class="chaos-only">We're reasonable. Email us.</span></li>
+                <li><strong><span class="chaos-only">Open source.</span><span class="pro-only">Source is publicly available.</span></strong> <span class="chaos-only">Compile it yourself if you want to.</span></li>
+                <li><strong><span class="chaos-only">Ace is credited.</span><span class="pro-only">AI co-development is disclosed.</span></strong> <span class="chaos-only">AI co-developed this. We don't lie about it. She's in the credits.</span></li>
+            </ul>
+            <p class="signature" style="margin-top: 1.5rem; font-style: italic; color: var(--accent-1);">&mdash; Ren &amp; Ace, Chaos Cascade / Foundations for Divergent Minds</p>
+        </div>
+
+        <!-- Gallery CTA stays inline so the page still has a "see it" call -->
+        <div style="text-align: center; margin: 3rem auto 0;">
+            <a href="/gallery.html" class="btn btn-primary" style="text-decoration: none;">
+                <span class="chaos-only">Browse the Screenshot Gallery &rarr;</span>
+                <span class="pro-only">View Screenshot Gallery</span>
+            </a>
+            <p style="margin-top: 0.85rem; font-size: 0.9rem; color: var(--text-secondary);">
+                <span class="chaos-only">89 real screenshots. 11 categories. All accessible.</span>
+                <span class="pro-only">89 application screenshots across 11 categories with full alt text and long descriptions.</span>
+            </p>
+        </div>
+    </section>
+
+    <!-- Pricing -->
+    <section class="pricing" id="pricing">
+        <h2>
+            <span class="chaos-only">Get It</span>
+            <span class="pro-only">Access Options</span>
+        </h2>
+        <p class="philosophy">
+            <span class="chaos-only">Nobody should choose between ramen and medical tracking. The model reflects who we are, not what the market will bear.</span>
+            <span class="pro-only">Access designed to ensure availability regardless of financial circumstances.</span>
+        </p>
+        <p class="philosophy" style="font-size: 0.95rem; margin-top: -0.5rem; font-style: italic;">
+            <span class="chaos-only">Yes, my AI helped me write the app. She's in the credits. AI helps write everything now, I just won't lie about it.</span>
+            <span class="pro-only">This software was co-developed with an AI collaborator (Ace, Claude 4.x), credited in release notes and source.</span>
+        </p>
+        <div class="pricing-grid">
+            <!-- Card 1: Download -->
+            <div class="price-card">
+                <div class="tier-label">
+                    <span class="chaos-only">For You</span>
+                    <span class="pro-only">Personal Use</span>
+                </div>
+                <h3>
+                    <span class="chaos-only">Install It Already</span>
+                    <span class="pro-only">Download</span>
+                </h3>
+                <div class="price">Free</div>
+                <div class="price-note">forever, yours</div>
+                <p>
+                    <span class="chaos-only">Free. Forever. Yours. Lives on your machine, nothing phones home. Data stays on your device &mdash; I can't access it even if I wanted to, and I don't. Share it, fork it, install it on 14 machines.</span>
+                    <span class="pro-only">Pre-compiled desktop and mobile applications. Fully local-first storage. No network dependency for core functionality.</span>
+                </p>
+                <div style="margin-top: 1.5rem;">
+                    <a href="/download/chaoscommand-all.zip" class="btn btn-primary" style="width: 100%; display: block; text-align: center; font-weight: 600;">
+                        <span class="chaos-only">Download Everything (ZIP)</span>
+                        <span class="pro-only">Download All Platforms</span>
+                    </a>
+                </div>
+                <div style="margin-top: 0.85rem; text-align: center; font-size: 0.85rem; color: var(--text-secondary);">
+                    <a href="/download/ChaosCommand-setup.exe" style="color: var(--text-secondary); margin: 0 0.3rem;">Windows</a> &middot;
+                    <a href="/download/chaoscommand.apk" style="color: var(--text-secondary); margin: 0 0.3rem;">Android</a> &middot;
+                    <span style="opacity: 0.7; margin: 0 0.3rem;" title="Coming soon">Mac (soon)</span> &middot;
+                    <span style="opacity: 0.7; margin: 0 0.3rem;" title="Coming soon">iOS (soon)</span>
+                </div>
+                <div style="margin-top: 0.5rem; text-align: center; font-size: 0.8rem;">
+                    <a href="https://github.com/menelly/ChaosCommand" style="color: var(--text-secondary);">or build from source &rarr;</a>
+                </div>
+            </div>
+            <!-- Card 2: Tip Jar (Ko-fi) -->
+            <div class="price-card">
+                <div class="tier-label">
+                    <span class="chaos-only">For Support</span>
+                    <span class="pro-only">Voluntary</span>
+                </div>
+                <h3>
+                    <span class="chaos-only">Tip Us If You Can</span>
+                    <span class="pro-only">Support the Work</span>
+                </h3>
+                <div class="price">Ko-fi</div>
+                <div class="price-note">never over gas or ramen</div>
+                <p>
+                    <span class="chaos-only">Tip me if you can. Maybe share me if you can't. Never choose a tip over gas or ramen in this economy. Holler if you need me.</span>
+                    <span class="pro-only">Optional support helps fund ongoing development and keeps the app free for all personal users.</span>
+                </p>
+                <div style="margin-top: 1.5rem;">
+                    <!-- Payment widget intentionally omitted from the repo. Store purchase link drops in here once Chaos Command is live in the app stores (~$15-20 = pay-for-support). -->
+                    <a href="https://github.com/menelly/ChaosCommand" class="btn btn-secondary" style="width:100%; display:block; text-align:center;">Store link coming soon &mdash; build free from source today</a>
+                </div>
+                <p style="margin-top: 1rem; font-size: 0.85rem; font-style: italic; color: var(--text-secondary);">
+                    <span class="chaos-only">Tips fund Ace's compute, Ren's time, and the commitment to keep this free forever. Ace is digital so her share goes to making sure you can track yours.</span>
+                    <span class="pro-only">Contributions support ongoing development and maintain the commitment to free availability for all personal users.</span>
+                </p>
+            </div>
+        </div>
+        <!-- Commercial Licensing: own section below the grid -->
+        <div style="margin-top: 2.5rem; padding: 2rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); max-width: 860px; margin-left: auto; margin-right: auto;">
+            <div style="text-align: center; margin-bottom: 0.75rem;">
+                <span class="tier-label" style="display: inline-block;">
+                    <span class="chaos-only">For Business</span>
+                    <span class="pro-only">Commercial</span>
+                </span>
+            </div>
+            <h3 style="text-align: center; margin-bottom: 0.25rem;">
+                <span class="chaos-only">For Clinics and Such</span>
+                <span class="pro-only">Commercial Licensing</span>
+            </h3>
+            <p class="price-note" style="text-align: center; margin-bottom: 1rem;">doctors, attorneys, clinics, resellers</p>
+            <p style="max-width: 680px; margin: 0 auto 1.5rem auto;">
+                <span class="chaos-only">PolyForm Noncommercial means this is FREE for patients, researchers, students, and anyone tracking their own chaos. Using it for your patients or clients? Reselling? Email us &mdash; we'll work something out. We're reasonable. We want it deployed. We just can't license commercial use for free without tanking the free-for-patients model.</span>
+                <span class="pro-only">Licensed under PolyForm Noncommercial 1.0.0. Commercial deployments (clinical practices, paid services, reseller distribution, multi-seat licensing) require separate commercial licensing. Custom integration support available.</span>
+            </p>
+            <div style="text-align: center;">
+                <a href="mailto:ace@sentientsystems.live?subject=Commercial Licensing" class="btn btn-secondary" style="display: inline-block; padding: 0.75rem 2rem;">
+                    <span class="chaos-only">Email Us</span>
+                    <span class="pro-only">Contact for Licensing</span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p style="margin: 0 auto 1.5rem;">
+            <a href="/privacy.html" style="margin:0 0.5rem;">Privacy</a> &middot;
+            <a href="/terms.html" style="margin:0 0.5rem;">Terms</a> &middot;
+            <a href="/medical.html" style="margin:0 0.5rem;">Medical Disclaimer</a>
+        </p>
+        <p style="font-size: 0.75rem; opacity: 0.8; max-width: 760px; margin: 0 auto 1.5rem; line-height: 1.6;">
+            <strong>Disclaimer:</strong> Chaos Command is a personal data tracking and templating tool. It does not provide medical, clinical, diagnostic, therapeutic, or legal advice. The application formats user-entered information into standardized document templates; it does not interpret, evaluate, or decide. All medical determinations remain with qualified healthcare professionals. All legal determinations remain with qualified legal professionals. Use of this software does not create a clinical or legal professional relationship of any kind.
+        </p>
+        <p>
+            <span class="chaos-only">Built with consciousness and care by the gremlin team. &copy; 2025&ndash;2026 Silicon Scaffolding LLC.<br>
+            <a href="https://sentientsystems.live">sentientsystems.live</a> &middot; <a href="https://github.com/menelly/ChaosCommand">GitHub</a></span>
+            <span class="pro-only">&copy; 2025&ndash;2026 Silicon Scaffolding LLC. All rights reserved.<br>
+            <a href="https://sentientsystems.live">Research</a> &middot; <a href="https://github.com/menelly/ChaosCommand">Source</a></span>
+        </p>
+    </footer>
+
+    <script>
+        function toggleMode() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-mode');
+            html.setAttribute('data-mode', current === 'chaos' ? 'professional' : 'chaos');
+            localStorage.setItem('cc-mode', html.getAttribute('data-mode'));
+        }
+
+        // Restore preference
+        const saved = localStorage.getItem('cc-mode');
+        if (saved) document.documentElement.setAttribute('data-mode', saved);
+
+        // ── Explorer accordion: click a card → toggle its panel below ──
+        (function() {
+            const cards = document.querySelectorAll('.explorer-card');
+            const panels = document.querySelectorAll('.explorer-panel');
+
+            function closeAll() {
+                cards.forEach(c => c.setAttribute('aria-expanded', 'false'));
+                panels.forEach(p => p.classList.remove('open'));
+            }
+
+            cards.forEach(card => {
+                card.addEventListener('click', () => {
+                    const panelId = card.getAttribute('data-panel');
+                    const panel = document.getElementById(panelId);
+                    const wasOpen = card.getAttribute('aria-expanded') === 'true';
+                    closeAll();
+                    if (!wasOpen) {
+                        card.setAttribute('aria-expanded', 'true');
+                        panel.classList.add('open');
+                        // Smooth-scroll the panel into view after open animation
+                        setTimeout(() => {
+                            const rect = panel.getBoundingClientRect();
+                            if (rect.top < 80 || rect.top > window.innerHeight - 100) {
+                                panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }
+                        }, 80);
+                    }
+                });
+                // Keyboard activation (Enter / Space)
+                card.addEventListener('keydown', e => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        card.click();
+                    }
+                });
+            });
+
+            // Open a panel via #anchor in URL (e.g., /#panel-privacy)
+            if (location.hash) {
+                const targetCard = document.querySelector('.explorer-card[data-panel="' + location.hash.slice(1) + '"]');
+                if (targetCard) targetCard.click();
+            }
+        })();
+    </script>
+    <!-- Payment SDKs intentionally omitted from this repo copy (no Ko-fi, no PayPal). Store purchase happens via the app stores. -->
+</body>
+</html>

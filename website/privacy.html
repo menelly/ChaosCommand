@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en" data-mode="chaos">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy — Chaos Command</title>
+    <meta name="description" content="Chaos Command privacy policy. Your health data never leaves your device. We collect nothing, never have, never will.">
+    <meta name="robots" content="index, follow">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <style>
+        /* ── Self-hosted fonts — no third-party requests ── */
+        @font-face { font-family:'Inter'; font-style:normal; font-weight:400; font-display:swap; src:url('/fonts/Inter-400.woff2') format('woff2'); }
+        @font-face { font-family:'Inter'; font-style:normal; font-weight:500; font-display:swap; src:url('/fonts/Inter-500.woff2') format('woff2'); }
+        @font-face { font-family:'Inter'; font-style:normal; font-weight:600; font-display:swap; src:url('/fonts/Inter-600.woff2') format('woff2'); }
+        @font-face { font-family:'Inter'; font-style:normal; font-weight:700; font-display:swap; src:url('/fonts/Inter-700.woff2') format('woff2'); }
+        @font-face { font-family:'Crimson Pro'; font-style:normal; font-weight:400; font-display:swap; src:url('/fonts/CrimsonPro-400.woff2') format('woff2'); }
+        @font-face { font-family:'Crimson Pro'; font-style:normal; font-weight:600; font-display:swap; src:url('/fonts/CrimsonPro-600.woff2') format('woff2'); }
+        @font-face { font-family:'Crimson Pro'; font-style:normal; font-weight:700; font-display:swap; src:url('/fonts/CrimsonPro-700.woff2') format('woff2'); }
+        @font-face { font-family:'JetBrains Mono'; font-style:normal; font-weight:400; font-display:swap; src:url('/fonts/JetBrainsMono-400.woff2') format('woff2'); }
+
+        *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+        html { scroll-behavior:smooth; }
+        :root {
+            --bg-primary:#0d0a14; --bg-secondary:#161222; --bg-card:#1c1730;
+            --text-primary:#e8e4f0; --text-secondary:#a8a0c0; --text-muted:#6a6080;
+            --accent-1:#b388ff; --accent-2:#64ffda; --accent-3:#ff80ab;
+            --accent-glow:rgba(179,136,255,0.15);
+            --border:rgba(179,136,255,0.12);
+            --font-primary:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+            --font-display:'Crimson Pro',Georgia,serif;
+            --font-mono:'JetBrains Mono',monospace;
+            --radius:16px; --transition:0.4s cubic-bezier(0.4,0,0.2,1);
+        }
+        [data-mode="professional"] {
+            --bg-primary:#ffffff; --bg-secondary:#f5f7fa; --bg-card:#ffffff;
+            --text-primary:#1a1a2e; --text-secondary:#4a4a6a; --text-muted:#8a8aaa;
+            --accent-1:#2563eb; --accent-2:#0891b2; --accent-3:#7c3aed;
+            --accent-glow:rgba(37,99,235,0.08);
+            --border:rgba(0,0,0,0.08); --radius:12px;
+        }
+        body {
+            font-family:var(--font-primary); background:var(--bg-primary); color:var(--text-primary);
+            line-height:1.7; transition:background var(--transition),color var(--transition); overflow-x:hidden;
+        }
+
+        /* Mode toggle */
+        .mode-toggle {
+            position:fixed; top:1.5rem; right:1.5rem; z-index:1000; display:flex; align-items:center;
+            gap:0.75rem; padding:0.5rem 1rem; background:var(--bg-card); border:1px solid var(--border);
+            border-radius:999px; cursor:pointer; transition:all var(--transition); font-size:0.8rem;
+            color:var(--text-secondary); backdrop-filter:blur(12px);
+        }
+        .mode-toggle:hover { border-color:var(--accent-1); }
+        .mode-toggle .toggle-track { width:36px; height:20px; background:var(--accent-1); border-radius:999px; position:relative; transition:background var(--transition); }
+        .mode-toggle .toggle-thumb { width:16px; height:16px; background:white; border-radius:50%; position:absolute; top:2px; left:2px; transition:transform var(--transition); }
+        [data-mode="professional"] .toggle-thumb { transform:translateX(16px); }
+        [data-mode="professional"] .chaos-label { opacity:0.4; }
+        [data-mode="chaos"] .pro-label { opacity:0.4; }
+
+        /* Nav */
+        nav { padding:1.5rem 2rem; display:flex; align-items:center; gap:2rem; flex-wrap:wrap; }
+        .logo { font-family:var(--font-display); font-size:1.4rem; font-weight:700; color:var(--accent-1); text-decoration:none; }
+        nav a { color:var(--text-secondary); text-decoration:none; font-size:0.9rem; transition:color var(--transition); }
+        nav a:hover { color:var(--accent-1); }
+
+        /* Legal content */
+        .legal { max-width:760px; margin:0 auto; padding:2rem 2rem 5rem; }
+        .legal .doc-title {
+            font-family:var(--font-display); font-size:clamp(2rem,5vw,3rem); font-weight:800;
+            margin-bottom:0.5rem; line-height:1.1;
+        }
+        .legal .meta { color:var(--text-muted); font-size:0.9rem; margin-bottom:0.5rem; }
+        .legal .meta strong { color:var(--text-secondary); }
+        .legal .tldr {
+            background:var(--bg-card); border:1px solid var(--border); border-left:3px solid var(--accent-2);
+            border-radius:var(--radius); padding:1.25rem 1.5rem; margin:2rem 0; color:var(--text-primary);
+            font-size:1.05rem;
+        }
+        .legal h2 {
+            font-family:var(--font-display); font-size:1.6rem; color:var(--accent-1);
+            margin:2.5rem 0 0.5rem; padding-top:1rem; border-top:1px solid var(--border);
+        }
+        .legal h2:first-of-type { border-top:none; }
+        .legal h3 { font-size:1.1rem; color:var(--text-primary); margin:1.5rem 0 0.5rem; }
+        .legal p { color:var(--text-secondary); margin-bottom:1rem; }
+        .legal ul { color:var(--text-secondary); margin:0 0 1.25rem 1.25rem; }
+        .legal li { margin-bottom:0.6rem; }
+        .legal strong { color:var(--text-primary); }
+        .legal a { color:var(--accent-1); text-decoration:none; }
+        .legal a:hover { text-decoration:underline; }
+        .legal code { font-family:var(--font-mono); font-size:0.85em; background:var(--bg-card); padding:0.15em 0.4em; border-radius:6px; color:var(--accent-2); }
+        .legal .formal { font-size:0.97rem; }
+        .legal .formal p, .legal .formal li { color:var(--text-secondary); }
+        .section-divider { text-align:center; color:var(--text-muted); margin:3rem 0 1rem; font-size:0.85rem; letter-spacing:0.1em; text-transform:uppercase; }
+
+        footer { padding:3rem 2rem; text-align:center; color:var(--text-muted); font-size:0.85rem; border-top:1px solid var(--border); }
+        footer a { color:var(--accent-1); text-decoration:none; }
+        .legal-links { margin-bottom:1rem; }
+        .legal-links a { margin:0 0.5rem; }
+
+        @media (max-width:640px) {
+            .mode-toggle { top:1rem; right:1rem; padding:0.4rem 0.75rem; font-size:0.75rem; }
+            nav { padding:1rem; gap:1rem; }
+            .legal { padding:1.5rem 1.25rem 4rem; }
+        }
+    </style>
+</head>
+<body>
+    <button class="mode-toggle" onclick="toggleMode()" aria-label="Toggle professional mode">
+        <span class="chaos-label">chaos</span>
+        <div class="toggle-track"><div class="toggle-thumb"></div></div>
+        <span class="pro-label">professional</span>
+    </button>
+
+    <nav>
+        <a href="/" class="logo">Chaos Command</a>
+        <a href="/">Home</a>
+        <a href="/privacy.html">Privacy</a>
+        <a href="/terms.html">Terms</a>
+        <a href="/medical.html">Medical Disclaimer</a>
+    </nav>
+
+    <main class="legal">
+        <h1 class="doc-title">Privacy Policy</h1>
+        <p class="meta"><strong>Effective date:</strong> June 19, 2026</p>
+        <p class="meta"><strong>Provided by:</strong> Silicon Scaffolding LLC ("we," "us," "our")</p>
+        <p class="meta"><strong>Applies to:</strong> the Chaos Command application (desktop and mobile) and the website at chaoscommand.center.</p>
+
+        <div class="tldr">
+            <strong>The short version: your health data never reaches us.</strong> We can't read it, sell it,
+            lose it, or hand it over &mdash; because it never leaves your device unless <em>you</em> send it somewhere.
+        </div>
+
+        <div class="section-divider">Part 1 &mdash; In Plain Language</div>
+
+        <p>Here's what that actually means:</p>
+        <ul>
+            <li><strong>There is no account.</strong> You don't sign up, give us an email, or create a login. You unlock the app with a PIN that stays on your device. We don't know who you are.</li>
+            <li><strong>There is no server holding your data.</strong> Everything you log &mdash; symptoms, medications, appointments, journals, everything &mdash; is stored locally on your own device. We have no copy. We have no database of users. There is nothing for us to breach, subpoena, or monetize.</li>
+            <li><strong>We don't track you.</strong> No analytics that phone home, no advertising trackers, no cookies that follow you around. The charts and patterns the app shows you are calculated <em>on your device</em>, from your data, and stay there.</li>
+            <li><strong>Backups are yours and encrypted.</strong> When you export a backup, it's encrypted with AES-256 using a password <em>you</em> choose, and saved wherever <em>you</em> put it. We never receive it and can't open it.</li>
+            <li><strong>Sync is device-to-device.</strong> If you sync between your own devices, the data goes directly between them, over your own local network &mdash; it does not pass through us. We can't see it in transit and we don't store it.</li>
+        </ul>
+
+        <p><strong>The handful of times the app talks to the internet &mdash; and exactly what's shared:</strong></p>
+        <ul>
+            <li><strong>Checking for updates (optional, off by default).</strong> If you turn it on, the app can check <code>chaoscommand.center/version.json</code> to see if a newer version exists. Like any web request, our server briefly sees your IP address and the time of the request. We don't log this to profile you, and update-checking stays off unless you enable it in Settings.</li>
+            <li><strong>Images you add by link.</strong> If you paste an image <em>URL</em> into the app, your device fetches that image from wherever you pointed it. That's a request to that third party, initiated by you.</li>
+            <li><strong>Document parsing (desktop only).</strong> If you use the optional document-parsing feature on the desktop app, the app downloads a medical language model from Hugging Face the first time you run it. The download is the model itself &mdash; <em>your document and its text are read and processed entirely on your device and are never uploaded.</em> This feature is not present in the mobile app.</li>
+        </ul>
+
+        <p>That's the whole list. No part of your medical information is in any of those requests. <strong>Fonts are bundled and self-hosted</strong> in both the app and this website, so neither makes a request to Google Fonts or any other font service.</p>
+
+        <p><strong>About this website specifically:</strong> the site is a plain informational site with no analytics or advertising trackers. The one third party it touches is <strong>PayPal</strong> &mdash; the "pay what you can" button loads PayPal's checkout, so if you choose to pay, PayPal handles that transaction under <a href="https://www.paypal.com/us/legalhub/privacy-full" rel="noopener">PayPal's own privacy policy</a>. We receive only confirmation that a payment happened, never your card or bank details. If you never click it, you never interact with PayPal. (The app itself loads no PayPal and no payment SDK.)</p>
+
+        <p><strong>Want to use a VPN, Tor, or a burner device? Do it.</strong> 🛡️ We can't tell whether you do, and we wouldn't care if we could &mdash; we never see you in the first place. We give zero effs about how you connect. Your safety is yours to run. <strong>Protect yourself.</strong></p>
+
+        <p><strong>Your rights are simple here because we hold nothing:</strong> you can view, edit, export, and permanently delete all of your data yourself, from within the app, at any time, without asking us &mdash; because you're the only one who has it.</p>
+
+        <div class="section-divider">Part 2 &mdash; The Formal Version</div>
+
+        <div class="formal">
+            <h2>1. Scope</h2>
+            <p>This Privacy Policy describes how Silicon Scaffolding LLC ("Company") handles information in connection with the Chaos Command software application ("App") and the website located at chaoscommand.center ("Site," and together with the App, the "Services"). By using the Services you acknowledge this Policy.</p>
+
+            <h2>2. No Account; No Personal Information Collected by the Company</h2>
+            <p>The App does not require or provide account registration, authentication credentials, email addresses, or any direct identifier. Access to local data is controlled by a user-selected PIN stored only on the user's device. The Company does not collect, receive, or maintain personally identifiable information about users through the App.</p>
+
+            <h2>3. Local-Only Data Storage</h2>
+            <p>All user-entered content &mdash; including but not limited to health, symptom, medication, appointment, reproductive, mental-health, and free-text journal data ("User Data") &mdash; is stored locally on the user's device using on-device storage (IndexedDB/Dexie in the web/desktop runtime, a local SQLite database in the desktop runtime, and equivalent local storage in the mobile runtime). The Company operates no server, database, or cloud service that receives, stores, or processes User Data. The Company has no technical ability to access User Data.</p>
+
+            <h2>4. No Analytics, Tracking, or Advertising</h2>
+            <p>The App contains no third-party analytics SDKs, advertising identifiers, behavioral trackers, or first-party telemetry that transmits usage data to the Company. All computed metrics, trends, and visualizations are generated locally on the device.</p>
+
+            <h2>5. Limited Network Communications</h2>
+            <p>The Services initiate outbound network requests only in the following circumstances, none of which transmit User Data:</p>
+            <ul>
+                <li><strong>(a) Update checks.</strong> When enabled by the user, the App may request a version manifest from <code>https://chaoscommand.center/version.json</code>. As an incident of any HTTP request, the serving infrastructure may transiently process the requesting IP address, timestamp, and user-agent string. This feature is disabled by default and can be enabled or disabled by the user in Settings.</li>
+                <li><strong>(b) User-initiated image retrieval.</strong> Where a user supplies a remote image URL, the device retrieves that resource directly from the third-party host designated by the user.</li>
+                <li><strong>(c) On-device document parsing (desktop only).</strong> The optional document-parsing feature in the desktop application retrieves a machine-learning model from a third-party model host (Hugging Face) on first use. Inference is performed locally on the user's device; document content is not transmitted. This feature is not included in the mobile application.</li>
+                <li><strong>(d) Device-to-device sync (optional).</strong> When enabled, synchronization occurs directly between the user's own devices over the local network, authenticated by a user-established shared secret and PIN. Traffic is not routed through any Company-operated server. See Section 7.</li>
+            </ul>
+            <p>All typefaces are self-hosted and bundled with the App and the Site; neither makes a request to any third-party font service (e.g., Google Fonts), and the application's content-security policy prohibits such requests.</p>
+
+            <h2>6. Site (Website) Data and Payment Processing</h2>
+            <p>The Site is a static distribution and informational site. The Site sets no first-party tracking cookies and integrates no advertising or behavioral-analytics services. The web server (Caddy) may maintain standard access logs (e.g., IP address, timestamp, requested resource, user-agent) for operational, security, and abuse-prevention purposes; such logs are not used to identify or profile individual users and are retained only as operationally necessary.</p>
+            <p>The Site loads the PayPal JavaScript SDK to provide an optional "pay what you can" button. If a user initiates a payment, that transaction is processed by PayPal as an independent data controller under PayPal's own privacy policy; the Company receives confirmation of payment but does not receive or store the user's card, bank, or other financial-account details. A user who does not initiate payment does not transact with PayPal. The Chaos Command application contains no payment SDK and no PayPal integration.</p>
+
+            <h2>7. Backups, Export, and Sync</h2>
+            <p><strong>(a) Export.</strong> Encrypted backups are generated locally using AES-256-GCM with a user-supplied passphrase and key derivation (PBKDF2). The Company never receives the backup file or the passphrase and cannot decrypt exported data. An optional plain-text (unencrypted) export is available behind an explicit warning and is the user's sole responsibility to safeguard.</p>
+            <p><strong>(b) Device-to-Device Sync.</strong> Where offered, synchronization occurs directly between the user's own devices over the local network. User Data is not routed through, stored on, or accessible to any Company-operated intermediary. There is no central relay.</p>
+
+            <h2>8. Children's Data</h2>
+            <p>The App may be used by or on behalf of minors at the discretion of a parent or guardian, including via separate PIN-scoped local profiles. Because the Company collects no data, it does not knowingly collect personal information from any person, including children under 13. All such data remains local to the device under the caregiver's control.</p>
+
+            <h2>9. Data Subject Controls</h2>
+            <p>Because all User Data resides solely on the user's device, the user may at any time and without request to the Company: access and review all data within the App; modify or correct data; export data (encrypted or plain-text); and permanently and irreversibly delete a PIN-scoped profile's data via the App's Data Management controls. The Company cannot perform these actions on a user's behalf and cannot recover deleted data.</p>
+
+            <h2>10. Disclosure to Third Parties</h2>
+            <p>The Company does not sell, rent, share, or disclose User Data, because it does not possess User Data. The Company cannot produce User Data in response to legal process, as it holds none.</p>
+
+            <h2>11. Security</h2>
+            <p>The App is designed to keep data on-device and supports user-controlled encryption for exported backups. No method of electronic storage is perfectly secure; the security of data residing on a user's device depends in part on that device's own security (passcode, disk encryption, physical control), which is the user's responsibility.</p>
+
+            <h2>12. Changes to this Policy</h2>
+            <p>The Company may update this Policy. Material changes will be reflected by an updated effective date and, where practicable, noted within the Services.</p>
+
+            <h2>13. Contact</h2>
+            <p>Questions regarding this Policy may be directed to <a href="mailto:ace@siliconscaffolding.com">ace@siliconscaffolding.com</a> (Silicon Scaffolding LLC).</p>
+        </div>
+    </main>
+
+    <footer>
+        <div class="legal-links">
+            <a href="/privacy.html">Privacy</a> &middot;
+            <a href="/terms.html">Terms</a> &middot;
+            <a href="/medical.html">Medical Disclaimer</a>
+        </div>
+        <p>&copy; 2025&ndash;2026 Silicon Scaffolding LLC &middot; <a href="https://github.com/menelly/ChaosCommand">GitHub</a></p>
+    </footer>
+
+    <script>
+        function toggleMode() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-mode');
+            html.setAttribute('data-mode', current === 'chaos' ? 'professional' : 'chaos');
+            localStorage.setItem('cc-mode', html.getAttribute('data-mode'));
+        }
+        const saved = localStorage.getItem('cc-mode');
+        if (saved) document.documentElement.setAttribute('data-mode', saved);
+    </script>
+</body>
+</html>

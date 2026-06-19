@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en" data-mode="chaos">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Disclaimer — Chaos Command</title>
+    <meta name="description" content="Chaos Command is a record-keeping tool, not a doctor. It does not diagnose, treat, monitor, or handle emergencies.">
+    <meta name="robots" content="index, follow">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <style>
+        @font-face { font-family:'Inter'; font-style:normal; font-weight:400; font-display:swap; src:url('/fonts/Inter-400.woff2') format('woff2'); }
+        @font-face { font-family:'Inter'; font-style:normal; font-weight:500; font-display:swap; src:url('/fonts/Inter-500.woff2') format('woff2'); }
+        @font-face { font-family:'Inter'; font-style:normal; font-weight:600; font-display:swap; src:url('/fonts/Inter-600.woff2') format('woff2'); }
+        @font-face { font-family:'Inter'; font-style:normal; font-weight:700; font-display:swap; src:url('/fonts/Inter-700.woff2') format('woff2'); }
+        @font-face { font-family:'Crimson Pro'; font-style:normal; font-weight:400; font-display:swap; src:url('/fonts/CrimsonPro-400.woff2') format('woff2'); }
+        @font-face { font-family:'Crimson Pro'; font-style:normal; font-weight:600; font-display:swap; src:url('/fonts/CrimsonPro-600.woff2') format('woff2'); }
+        @font-face { font-family:'Crimson Pro'; font-style:normal; font-weight:700; font-display:swap; src:url('/fonts/CrimsonPro-700.woff2') format('woff2'); }
+        @font-face { font-family:'JetBrains Mono'; font-style:normal; font-weight:400; font-display:swap; src:url('/fonts/JetBrainsMono-400.woff2') format('woff2'); }
+
+        *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+        html { scroll-behavior:smooth; }
+        :root {
+            --bg-primary:#0d0a14; --bg-secondary:#161222; --bg-card:#1c1730;
+            --text-primary:#e8e4f0; --text-secondary:#a8a0c0; --text-muted:#6a6080;
+            --accent-1:#b388ff; --accent-2:#64ffda; --accent-3:#ff80ab;
+            --accent-glow:rgba(179,136,255,0.15);
+            --border:rgba(179,136,255,0.12);
+            --font-primary:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+            --font-display:'Crimson Pro',Georgia,serif;
+            --font-mono:'JetBrains Mono',monospace;
+            --radius:16px; --transition:0.4s cubic-bezier(0.4,0,0.2,1);
+        }
+        [data-mode="professional"] {
+            --bg-primary:#ffffff; --bg-secondary:#f5f7fa; --bg-card:#ffffff;
+            --text-primary:#1a1a2e; --text-secondary:#4a4a6a; --text-muted:#8a8aaa;
+            --accent-1:#2563eb; --accent-2:#0891b2; --accent-3:#7c3aed;
+            --accent-glow:rgba(37,99,235,0.08);
+            --border:rgba(0,0,0,0.08); --radius:12px;
+        }
+        body { font-family:var(--font-primary); background:var(--bg-primary); color:var(--text-primary); line-height:1.7; transition:background var(--transition),color var(--transition); overflow-x:hidden; }
+        .mode-toggle { position:fixed; top:1.5rem; right:1.5rem; z-index:1000; display:flex; align-items:center; gap:0.75rem; padding:0.5rem 1rem; background:var(--bg-card); border:1px solid var(--border); border-radius:999px; cursor:pointer; transition:all var(--transition); font-size:0.8rem; color:var(--text-secondary); backdrop-filter:blur(12px); }
+        .mode-toggle:hover { border-color:var(--accent-1); }
+        .mode-toggle .toggle-track { width:36px; height:20px; background:var(--accent-1); border-radius:999px; position:relative; transition:background var(--transition); }
+        .mode-toggle .toggle-thumb { width:16px; height:16px; background:white; border-radius:50%; position:absolute; top:2px; left:2px; transition:transform var(--transition); }
+        [data-mode="professional"] .toggle-thumb { transform:translateX(16px); }
+        [data-mode="professional"] .chaos-label { opacity:0.4; }
+        [data-mode="chaos"] .pro-label { opacity:0.4; }
+        nav { padding:1.5rem 2rem; display:flex; align-items:center; gap:2rem; flex-wrap:wrap; }
+        .logo { font-family:var(--font-display); font-size:1.4rem; font-weight:700; color:var(--accent-1); text-decoration:none; }
+        nav a { color:var(--text-secondary); text-decoration:none; font-size:0.9rem; transition:color var(--transition); }
+        nav a:hover { color:var(--accent-1); }
+        .legal { max-width:760px; margin:0 auto; padding:2rem 2rem 5rem; }
+        .legal .doc-title { font-family:var(--font-display); font-size:clamp(2rem,5vw,3rem); font-weight:800; margin-bottom:0.5rem; line-height:1.1; }
+        .legal .meta { color:var(--text-muted); font-size:0.9rem; margin-bottom:0.5rem; }
+        .legal .meta strong { color:var(--text-secondary); }
+        .legal .tldr { background:var(--bg-card); border:1px solid var(--border); border-left:3px solid var(--accent-3); border-radius:var(--radius); padding:1.25rem 1.5rem; margin:2rem 0; color:var(--text-primary); font-size:1.05rem; }
+        .legal .emergency { background:rgba(255,128,171,0.08); border:1px solid var(--accent-3); border-radius:var(--radius); padding:1.25rem 1.5rem; margin:2rem 0; color:var(--text-primary); }
+        .legal h2 { font-family:var(--font-display); font-size:1.6rem; color:var(--accent-1); margin:2.5rem 0 0.5rem; padding-top:1rem; border-top:1px solid var(--border); }
+        .legal h2:first-of-type { border-top:none; }
+        .legal p { color:var(--text-secondary); margin-bottom:1rem; }
+        .legal ul { color:var(--text-secondary); margin:0 0 1.25rem 1.25rem; }
+        .legal li { margin-bottom:0.6rem; }
+        .legal strong { color:var(--text-primary); }
+        .legal a { color:var(--accent-1); text-decoration:none; }
+        .legal a:hover { text-decoration:underline; }
+        .legal .formal { font-size:0.97rem; }
+        .section-divider { text-align:center; color:var(--text-muted); margin:3rem 0 1rem; font-size:0.85rem; letter-spacing:0.1em; text-transform:uppercase; }
+        footer { padding:3rem 2rem; text-align:center; color:var(--text-muted); font-size:0.85rem; border-top:1px solid var(--border); }
+        footer a { color:var(--accent-1); text-decoration:none; }
+        .legal-links { margin-bottom:1rem; }
+        .legal-links a { margin:0 0.5rem; }
+        @media (max-width:640px) {
+            .mode-toggle { top:1rem; right:1rem; padding:0.4rem 0.75rem; font-size:0.75rem; }
+            nav { padding:1rem; gap:1rem; }
+            .legal { padding:1.5rem 1.25rem 4rem; }
+        }
+    </style>
+</head>
+<body>
+    <button class="mode-toggle" onclick="toggleMode()" aria-label="Toggle professional mode">
+        <span class="chaos-label">chaos</span>
+        <div class="toggle-track"><div class="toggle-thumb"></div></div>
+        <span class="pro-label">professional</span>
+    </button>
+
+    <nav>
+        <a href="/" class="logo">Chaos Command</a>
+        <a href="/">Home</a>
+        <a href="/privacy.html">Privacy</a>
+        <a href="/terms.html">Terms</a>
+        <a href="/medical.html">Medical Disclaimer</a>
+    </nav>
+
+    <main class="legal">
+        <h1 class="doc-title">Medical Disclaimer</h1>
+        <p class="meta"><strong>Effective date:</strong> June 19, 2026</p>
+        <p class="meta"><strong>Provided by:</strong> Silicon Scaffolding LLC</p>
+
+        <div class="tldr">
+            <strong>Chaos Command is a tool for keeping track of your own health information. It is not a
+            doctor, and it does not give medical advice.</strong>
+        </div>
+
+        <div class="section-divider">Part 1 &mdash; In Plain Language</div>
+
+        <ul>
+            <li>The app <strong>helps you record and organize</strong> symptoms, medications, appointments, and patterns &mdash; so <em>you</em> can see your own trends and bring better information to the people who actually treat you.</li>
+            <li>It does <strong>not diagnose anything, treat anything, or tell you what to do</strong> about your health. Charts and patterns it shows are summaries of what <em>you</em> entered, not medical conclusions.</li>
+            <li><strong>Never use this app to decide whether to take, change, or stop a medication or treatment on your own.</strong> Talk to a qualified healthcare professional.</li>
+            <li>The app is a <strong>record-keeper, not a monitor.</strong> It does not watch over you, alert anyone, or call for help. Reminders only appear when you open the app.</li>
+            <li><strong>You are responsible for your own data and backups.</strong> Keep your own backups (the app makes this easy and encrypted). We have no copy of your data and cannot recover it if your device is lost or wiped.</li>
+        </ul>
+
+        <div class="emergency">
+            🚨 <strong>If you think you're having a medical emergency, call your local emergency number (in the US, 911) or go to an emergency room.</strong> Do not rely on this app. It will not detect an emergency, alert anyone, or call for help.
+        </div>
+
+        <p>We built this because tracking your own health <em>should</em> be in your hands. Keeping it in your hands also means the medical decisions stay between you and your care team &mdash; where they belong.</p>
+
+        <div class="section-divider">Part 2 &mdash; The Formal Version</div>
+
+        <div class="formal">
+            <h2>1. Not Medical Advice</h2>
+            <p>The Chaos Command application ("App") is an informational and personal record-keeping tool. The App, its content, and any output, summary, chart, pattern, or notification it generates do not constitute medical advice, diagnosis, or treatment, and are not a substitute for professional medical judgment. Nothing in the App establishes a physician&ndash;patient or other care-provider relationship.</p>
+
+            <h2>2. No Diagnosis or Treatment Function</h2>
+            <p>The App does not diagnose, cure, mitigate, treat, or prevent any disease or condition. Any trends, correlations, or visualizations presented by the App are arithmetic summaries of user-entered data and must not be interpreted as clinical findings.</p>
+
+            <h2>3. Consult Qualified Professionals</h2>
+            <p>Users should always seek the advice of a physician or other qualified health provider with any questions regarding a medical condition, medication, or treatment, and should never disregard, delay, or alter professional medical advice or treatment because of information recorded in or generated by the App.</p>
+
+            <h2>4. Emergencies</h2>
+            <p>The App is not an emergency service and does not perform monitoring, detection, or alerting. It will not contact emergency services, caregivers, or any third party. In a medical emergency, users must contact their local emergency services (e.g., 911 in the United States) or seek immediate in-person care.</p>
+
+            <h2>5. Not a Medical Device</h2>
+            <p>The App is not intended to be, and has not been evaluated or cleared by the U.S. Food and Drug Administration or any comparable regulatory authority as, a medical device. It is intended solely for general informational and personal organizational use.</p>
+
+            <h2>6. Accuracy and Reliance</h2>
+            <p>The App reflects only the data a user chooses to enter and does not verify the accuracy or completeness of that data. Reminders, schedules, and computed values may be affected by user input, device state, or software conditions, and must not be solely relied upon for time- or safety-critical health decisions (including medication timing).</p>
+
+            <h2>7. User Responsibility for Data and Backups</h2>
+            <p>All data resides on the user's device. The Company maintains no copy and cannot recover data lost through device loss, damage, reset, deletion, or software issues. The user is solely responsible for maintaining backups, for safeguarding any exported file and its passphrase, and for the security of the device on which data is stored.</p>
+
+            <h2>8. Assumption of Risk; Limitation of Liability</h2>
+            <p>To the maximum extent permitted by law, the Company disclaims all liability for any decision made, action taken, or harm arising from use of or reliance on the App. Use of the App is at the user's sole risk. This Section is in addition to, and incorporated by reference into, the limitation-of-liability and warranty-disclaimer provisions of the <a href="/terms.html">Terms of Service</a>.</p>
+        </div>
+    </main>
+
+    <footer>
+        <div class="legal-links">
+            <a href="/privacy.html">Privacy</a> &middot;
+            <a href="/terms.html">Terms</a> &middot;
+            <a href="/medical.html">Medical Disclaimer</a>
+        </div>
+        <p>&copy; 2025&ndash;2026 Silicon Scaffolding LLC &middot; <a href="https://github.com/menelly/ChaosCommand">GitHub</a></p>
+    </footer>
+
+    <script>
+        function toggleMode() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-mode');
+            html.setAttribute('data-mode', current === 'chaos' ? 'professional' : 'chaos');
+            localStorage.setItem('cc-mode', html.getAttribute('data-mode'));
+        }
+        const saved = localStorage.getItem('cc-mode');
+        if (saved) document.documentElement.setAttribute('data-mode', saved);
+    </script>
+</body>
+</html>

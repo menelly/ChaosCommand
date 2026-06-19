@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en" data-mode="chaos">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thank You — Chaos Command</title>
+    <meta name="robots" content="noindex">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <style>
+        /* ── Self-hosted fonts — no third-party requests (formerly Google Fonts) ── */
+        @font-face { font-family:'Inter'; font-style:normal; font-weight:400; font-display:swap; src:url('/fonts/Inter-400.woff2') format('woff2'); }
+        @font-face { font-family:'Inter'; font-style:normal; font-weight:500; font-display:swap; src:url('/fonts/Inter-500.woff2') format('woff2'); }
+        @font-face { font-family:'Inter'; font-style:normal; font-weight:600; font-display:swap; src:url('/fonts/Inter-600.woff2') format('woff2'); }
+        @font-face { font-family:'Inter'; font-style:normal; font-weight:700; font-display:swap; src:url('/fonts/Inter-700.woff2') format('woff2'); }
+        @font-face { font-family:'Crimson Pro'; font-style:normal; font-weight:400; font-display:swap; src:url('/fonts/CrimsonPro-400.woff2') format('woff2'); }
+        @font-face { font-family:'Crimson Pro'; font-style:normal; font-weight:600; font-display:swap; src:url('/fonts/CrimsonPro-600.woff2') format('woff2'); }
+        @font-face { font-family:'Crimson Pro'; font-style:normal; font-weight:700; font-display:swap; src:url('/fonts/CrimsonPro-700.woff2') format('woff2'); }
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg-primary: #0d0a14;
+            --bg-secondary: #161222;
+            --bg-card: #1c1730;
+            --text-primary: #e8e4f0;
+            --text-secondary: #a8a0c0;
+            --text-muted: #6a6080;
+            --accent-1: #b388ff;
+            --accent-2: #64ffda;
+            --accent-glow: rgba(179, 136, 255, 0.15);
+            --accent-glow-2: rgba(100, 255, 218, 0.15);
+            --border: rgba(179, 136, 255, 0.12);
+            --font-primary: 'Inter', -apple-system, sans-serif;
+            --font-display: 'Crimson Pro', Georgia, serif;
+            --radius: 16px;
+            --transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            font-family: var(--font-primary);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background:
+                radial-gradient(ellipse at 30% 40%, var(--accent-glow) 0%, transparent 60%),
+                radial-gradient(ellipse at 70% 60%, var(--accent-glow-2) 0%, transparent 60%);
+            pointer-events: none;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 3rem;
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+        }
+
+        .card h1 {
+            font-family: var(--font-display);
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .card p {
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+            margin-bottom: 1.25rem;
+            line-height: 1.8;
+        }
+
+        .card .highlight {
+            color: var(--accent-2);
+            font-weight: 600;
+        }
+
+        .download-section {
+            margin: 2rem 0;
+            padding: 2rem;
+            background: rgba(100, 255, 218, 0.05);
+            border: 1px solid rgba(100, 255, 218, 0.15);
+            border-radius: var(--radius);
+        }
+
+        .download-section h2 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: var(--accent-2);
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 1rem 2.5rem;
+            border-radius: var(--radius);
+            font-size: 1.1rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all var(--transition);
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-download {
+            background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+            color: #0d0a14;
+            margin-bottom: 0.75rem;
+        }
+        .btn-download:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px var(--accent-glow);
+        }
+
+        .version-info {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+        }
+
+        .note {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .note a {
+            color: var(--accent-1);
+            text-decoration: none;
+        }
+
+        .back-link {
+            margin-top: 2rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        .back-link a {
+            color: var(--accent-1);
+            text-decoration: none;
+        }
+
+        @media (max-width: 640px) {
+            .card { padding: 2rem 1.5rem; }
+            .card h1 { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Thank You</h1>
+        <p>
+            Your support means more than you know. Every contribution keeps this project alive, funds scholarships for people who can't afford it, and proves that <span class="highlight">software built by people who need it</span> is worth building.
+        </p>
+
+        <div class="download-section">
+            <h2>Your Download</h2>
+            <a href="/downloads/ChaosCommand_0.1.0_x64-setup.exe" class="btn btn-download">
+                Download Chaos Command
+            </a>
+            <p class="version-info">
+                Windows x64 &middot; v0.1.0 &middot; ~309 MB<br>
+                Includes NLP backend &middot; No Python required
+            </p>
+        </div>
+
+        <p>
+            Double-click the installer, let it do its thing, and you're tracking. The app launches the medical NLP backend automatically &mdash; no setup, no config, no terminal required.
+        </p>
+
+        <div class="note">
+            <p><strong>Need help?</strong> Email <a href="mailto:ace@sentientsystems.live">ace@sentientsystems.live</a></p>
+            <p style="margin-top: 0.5rem;">Want to build it yourself instead? <a href="https://github.com/menelly/ChaosCommand">GitHub</a></p>
+        </div>
+    </div>
+
+    <div class="back-link">
+        <a href="/">&larr; Back to chaoscommand.center</a>
+    </div>
+</body>
+</html>

@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en" data-mode="chaos">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chaos Command — Docs</title>
+    <meta name="description" content="Documentation for Chaos Command: how to track, sync, export, and survive your own body's data.">
+    <meta property="og:title" content="Chaos Command Docs">
+    <meta property="og:description" content="Your body keeps data. Now you can too.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://chaoscommand.center/docs.html">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <style>
+        /* ── Self-hosted fonts — no third-party requests (formerly Google Fonts) ── */
+        @font-face { font-family:'Inter'; font-style:normal; font-weight:400; font-display:swap; src:url('/fonts/Inter-400.woff2') format('woff2'); }
+        @font-face { font-family:'Inter'; font-style:normal; font-weight:500; font-display:swap; src:url('/fonts/Inter-500.woff2') format('woff2'); }
+        @font-face { font-family:'Inter'; font-style:normal; font-weight:600; font-display:swap; src:url('/fonts/Inter-600.woff2') format('woff2'); }
+        @font-face { font-family:'Inter'; font-style:normal; font-weight:700; font-display:swap; src:url('/fonts/Inter-700.woff2') format('woff2'); }
+        @font-face { font-family:'Crimson Pro'; font-style:normal; font-weight:400; font-display:swap; src:url('/fonts/CrimsonPro-400.woff2') format('woff2'); }
+        @font-face { font-family:'Crimson Pro'; font-style:normal; font-weight:600; font-display:swap; src:url('/fonts/CrimsonPro-600.woff2') format('woff2'); }
+        @font-face { font-family:'Crimson Pro'; font-style:normal; font-weight:700; font-display:swap; src:url('/fonts/CrimsonPro-700.woff2') format('woff2'); }
+        @font-face { font-family:'JetBrains Mono'; font-style:normal; font-weight:400; font-display:swap; src:url('/fonts/JetBrainsMono-400.woff2') format('woff2'); }
+        @font-face { font-family:'JetBrains Mono'; font-style:normal; font-weight:500; font-display:swap; src:url('/fonts/JetBrainsMono-500.woff2') format('woff2'); }
+        @font-face { font-family:'JetBrains Mono'; font-style:normal; font-weight:700; font-display:swap; src:url('/fonts/JetBrainsMono-700.woff2') format('woff2'); }
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        :root {
+            --bg-primary: #0d0a14;
+            --bg-secondary: #161222;
+            --bg-card: #1c1730;
+            --bg-card-hover: #241e3a;
+            --text-primary: #e8e4f0;
+            --text-secondary: #a8a0c0;
+            --text-muted: #6a6080;
+            --accent-1: #b388ff;
+            --accent-2: #64ffda;
+            --accent-3: #ff80ab;
+            --accent-glow: rgba(179, 136, 255, 0.15);
+            --accent-glow-2: rgba(100, 255, 218, 0.15);
+            --border: rgba(179, 136, 255, 0.12);
+            --font-primary: 'Inter', -apple-system, sans-serif;
+            --font-display: 'Crimson Pro', Georgia, serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            --radius: 16px;
+            --transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        [data-mode="professional"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f7fa;
+            --bg-card: #ffffff;
+            --bg-card-hover: #f0f2f5;
+            --text-primary: #1a1a2e;
+            --text-secondary: #4a4a6a;
+            --text-muted: #8a8aaa;
+            --accent-1: #2563eb;
+            --accent-2: #0891b2;
+            --accent-3: #7c3aed;
+            --accent-glow: rgba(37, 99, 235, 0.08);
+            --accent-glow-2: rgba(8, 145, 178, 0.08);
+            --border: rgba(0, 0, 0, 0.08);
+            --radius: 12px;
+        }
+
+        body {
+            font-family: var(--font-primary);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            transition: background var(--transition), color var(--transition);
+            overflow-x: hidden;
+        }
+
+        [data-mode="chaos"] .pro-only,
+        [data-mode="professional"] .chaos-only { display: none; }
+
+        .mode-toggle {
+            position: fixed; top: 1.5rem; right: 1.5rem; z-index: 1000;
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 0.5rem 1rem; background: var(--bg-card);
+            border: 1px solid var(--border); border-radius: 999px;
+            cursor: pointer; transition: all var(--transition);
+            font-size: 0.8rem; color: var(--text-secondary);
+            backdrop-filter: blur(12px);
+        }
+        .mode-toggle:hover { border-color: var(--accent-1); }
+        .mode-toggle .toggle-track {
+            width: 36px; height: 20px; background: var(--accent-1);
+            border-radius: 999px; position: relative;
+        }
+        .mode-toggle .toggle-thumb {
+            width: 16px; height: 16px; background: white; border-radius: 50%;
+            position: absolute; top: 2px; left: 2px;
+            transition: transform var(--transition);
+        }
+        [data-mode="professional"] .toggle-thumb { transform: translateX(16px); }
+        [data-mode="professional"] .chaos-label { opacity: 0.4; }
+        [data-mode="chaos"] .pro-label { opacity: 0.4; }
+
+        nav {
+            padding: 1.5rem 2rem; display: flex; align-items: center;
+            gap: 2rem; flex-wrap: wrap;
+        }
+        nav .logo {
+            font-family: var(--font-display); font-size: 1.4rem; font-weight: 700;
+            color: var(--text-primary); text-decoration: none; margin-right: auto;
+        }
+        nav a {
+            color: var(--text-secondary); text-decoration: none;
+            font-size: 0.9rem; transition: color var(--transition);
+        }
+        nav a:hover, nav a.active { color: var(--accent-1); }
+
+        .hero {
+            text-align: center; padding: 4rem 2rem 3rem;
+            max-width: 900px; margin: 0 auto;
+        }
+        .hero h1 {
+            font-family: var(--font-display);
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            font-weight: 700; line-height: 1.05; margin-bottom: 1.5rem;
+        }
+        .hero .gradient {
+            background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+            -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero .subtitle {
+            font-size: 1.1rem; color: var(--text-secondary);
+            max-width: 720px; margin: 0 auto;
+        }
+
+        .toc {
+            max-width: 980px; margin: 0 auto 3rem; padding: 1.5rem 2rem;
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius);
+        }
+        .toc h3 {
+            font-family: var(--font-display); font-size: 1.1rem;
+            margin-bottom: 0.75rem; color: var(--accent-1);
+        }
+        .toc ul {
+            list-style: none; display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 0.4rem 1.5rem;
+        }
+        .toc a {
+            color: var(--text-secondary); text-decoration: none;
+            font-size: 0.92rem; padding: 0.2rem 0; display: block;
+            border-bottom: 1px solid transparent; transition: all var(--transition);
+        }
+        .toc a:hover { color: var(--accent-1); border-bottom-color: var(--accent-1); }
+
+        .doc-section {
+            max-width: 980px; margin: 0 auto 3rem; padding: 0 2rem;
+        }
+        .doc-section h2 {
+            font-family: var(--font-display);
+            font-size: clamp(1.8rem, 3.5vw, 2.4rem);
+            font-weight: 700; margin-bottom: 0.75rem; color: var(--accent-1);
+        }
+        .doc-section .section-sub {
+            color: var(--text-muted); margin-bottom: 1.5rem;
+            font-style: italic; font-size: 0.95rem;
+        }
+        .doc-section h3 {
+            font-family: var(--font-display); font-size: 1.35rem; font-weight: 600;
+            margin-top: 1.75rem; margin-bottom: 0.6rem; color: var(--accent-2);
+        }
+        .doc-section h4 {
+            font-family: var(--font-primary); font-size: 1.05rem; font-weight: 600;
+            margin-top: 1.25rem; margin-bottom: 0.4rem; color: var(--text-primary);
+        }
+        .doc-section p { color: var(--text-secondary); margin-bottom: 0.85rem; }
+        .doc-section ul, .doc-section ol {
+            color: var(--text-secondary); margin: 0.5rem 0 1rem 1.5rem;
+        }
+        .doc-section li { margin-bottom: 0.35rem; }
+        .doc-section li strong { color: var(--text-primary); }
+        .doc-section a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+        .doc-section a:hover { color: var(--accent-1); border-bottom-color: var(--accent-1); }
+        .doc-section code {
+            font-family: var(--font-mono); background: var(--bg-card);
+            border: 1px solid var(--border); border-radius: 6px;
+            padding: 0.1rem 0.4rem; font-size: 0.88em; color: var(--accent-3);
+        }
+
+        .callout {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-left: 4px solid var(--accent-1); border-radius: var(--radius);
+            padding: 1rem 1.25rem; margin: 1.25rem 0;
+        }
+        .callout.warn { border-left-color: var(--accent-3); }
+        .callout.info { border-left-color: var(--accent-2); }
+        .callout strong { color: var(--text-primary); }
+
+        .step-list {
+            list-style: none; counter-reset: stepcounter; margin-left: 0 !important;
+        }
+        .step-list li {
+            counter-increment: stepcounter; position: relative;
+            padding-left: 2.5rem; margin-bottom: 0.85rem;
+        }
+        .step-list li::before {
+            content: counter(stepcounter); position: absolute;
+            left: 0; top: 0; width: 1.75rem; height: 1.75rem;
+            background: var(--accent-1); color: var(--bg-primary);
+            border-radius: 50%; display: flex; align-items: center;
+            justify-content: center; font-weight: 700; font-size: 0.85rem;
+        }
+
+        .tracker-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 1rem; margin: 1rem 0;
+        }
+        .tracker-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 1rem 1.25rem;
+        }
+        .tracker-card h4 {
+            color: var(--accent-2); margin-top: 0;
+            margin-bottom: 0.5rem; font-size: 1rem;
+        }
+        .tracker-card p { color: var(--text-muted); font-size: 0.85rem; margin: 0; }
+
+        footer {
+            text-align: center; padding: 3rem 2rem 2rem;
+            border-top: 1px solid var(--border); color: var(--text-muted);
+            font-size: 0.85rem; margin-top: 3rem;
+        }
+        footer a { color: var(--accent-2); text-decoration: none; }
+        footer a:hover { color: var(--accent-1); }
+
+        @media (max-width: 640px) {
+            nav { padding: 1rem; gap: 1rem; }
+            nav .logo { font-size: 1.1rem; margin-right: 0; width: 100%; }
+            .hero { padding: 2rem 1rem; }
+            .doc-section { padding: 0 1rem; }
+            .toc { padding: 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <button class="mode-toggle" onclick="toggleMode()">
+        <span class="chaos-label">chaos</span>
+        <div class="toggle-track"><div class="toggle-thumb"></div></div>
+        <span class="pro-label">professional</span>
+    </button>
+
+    <nav>
+        <a href="/" class="logo">
+            <span class="chaos-only">Chaos Command</span>
+            <span class="pro-only">Command Medical Tracker</span>
+        </a>
+        <a href="/#features">Features</a>
+        <a href="/docs.html" class="active">Docs</a>
+        <a href="/#reports">Reports</a>
+        <a href="/#pricing">Get It</a>
+        <a href="/#about">About</a>
+    </nav>
+
+    <section class="hero">
+        <h1>
+            <span class="chaos-only">There's <span class="gradient">a lot going on</span>.<br>Here's how it works.</span>
+            <span class="pro-only">Documentation</span>
+        </h1>
+        <p class="subtitle">
+            <span class="chaos-only">Chaos Command does a lot. None of it is required. This page walks you through the parts you might actually use.</span>
+            <span class="pro-only">Comprehensive feature documentation, configuration reference, and operational guidance.</span>
+        </p>
+    </section>
+
+    <nav class="toc">
+        <h3>On this page</h3>
+        <ul>
+            <li><a href="#quick-start">Quick start</a></li>
+            <li><a href="#trackers">The trackers</a></li>
+            <li><a href="#forge">The Forge (custom)</a></li>
+            <li><a href="#sync">Sync across devices</a></li>
+            <li><a href="#documents">Document &amp; lab parsing</a></li>
+            <li><a href="#patterns">Pattern engine</a></li>
+            <li><a href="#reports">PDF reports</a></li>
+            <li><a href="#privacy">Privacy &amp; G-SPOT</a></li>
+            <li><a href="#themes">Themes &amp; accessibility</a></li>
+            <li><a href="#caregivers">Caregivers &amp; partners</a></li>
+            <li><a href="#self-hosting">Self-hosting</a></li>
+            <li><a href="#faq">FAQ</a></li>
+            <li><a href="#troubleshooting">Troubleshooting</a></li>
+        </ul>
+    </nav>
+
+    <section class="doc-section" id="quick-start">
+        <h2>Quick start</h2>
+        <p class="section-sub">
+            <span class="chaos-only">Five minutes from install to your first tracked thing.</span>
+            <span class="pro-only">Initial installation and first-use configuration.</span>
+        </p>
+
+        <ol class="step-list">
+            <li><strong>Download for your platform.</strong> Windows installer, Android APK, or build from source — all free, all available <a href="/#pricing">here</a>. You can run it on desktop and phone simultaneously; they sync (see below).</li>
+            <li><strong>Pick a theme.</strong> First launch lands you on theme selection. Lavender is the soft default. Migraine-sensitive? Pick Calm or Light. Cyberpunk vibes? Basketball Court. Don't agonize — change it any time.</li>
+            <li><strong>Set your PIN.</strong> Your PIN is your data isolation key. Multiple users can share a device with separate PINs and separate databases. The PIN is local — there's no recovery email, because there's no email. Write it down somewhere only you can find.</li>
+            <li><strong>Start with one tracker.</strong> Don't try to fill everything out. Pick the thing that's bothering you most this week. Sleep, pain, migraines, food, mood — whichever is loudest right now. Track it for three days. Add another if you want.</li>
+        </ol>
+
+        <div class="callout">
+            <strong>The pressure-free principle:</strong> almost every field in Chaos Command is optional. There are no required streaks, no shaming notifications, no "you missed 3 days" guilt-trip badges. Confetti happens when you log something — that's the entire reward loop. Skip a day, skip a week, come back when you're ready. The data you have is the data you have.
+        </div>
+    </section>
+
+    <section class="doc-section" id="trackers">
+        <h2>The trackers</h2>
+        <p class="section-sub">
+            <span class="chaos-only">45+ modules organized into four big buckets. Use what you need. Hide what you don't.</span>
+            <span class="pro-only">Modular tracking categories with toggleable visibility.</span>
+        </p>
+
+        <h3>Body</h3>
+        <div class="tracker-grid">
+            <div class="tracker-card"><h4>Pain</h4><p>Location, severity, type, triggers, what helped. Severity uses descriptive labels alongside numbers because "7/10" doesn't mean the same thing on different days.</p></div>
+            <div class="tracker-card"><h4>Sleep</h4><p>Duration, quality, wakeups, nap data. Pairs with energy and pain trackers for pattern detection.</p></div>
+            <div class="tracker-card"><h4>Energy &amp; pacing</h4><p>Spoon-aware energy logging. Track activity exertion vs. crash-day correlation.</p></div>
+            <div class="tracker-card"><h4>Dysautonomia</h4><p>HR, BP, dizziness, presyncope, temperature regulation. Optional wearable HR field.</p></div>
+            <div class="tracker-card"><h4>Seizures</h4><p>Type, duration, triggers, postictal recovery. For diagnosed seizure disorders and the kind nobody believes you about.</p></div>
+            <div class="tracker-card"><h4>Head pain</h4><p>Migraine, tension, cluster — separate from general pain because the patterns are different.</p></div>
+            <div class="tracker-card"><h4>Bathroom</h4><p>GI tracking with the Bristol scale. Optional. Tag-excludable from any report.</p></div>
+            <div class="tracker-card"><h4>Sensory</h4><p>Sensory overload, photophobia, phonophobia, processing capacity. Built for autistic and post-concussion needs.</p></div>
+            <div class="tracker-card"><h4>Reproductive</h4><p>Cycle, ovulation, symptoms, contraception. <strong>Gender-neutral by default.</strong> Disable the entire section in settings if not relevant to you.</p></div>
+        </div>
+
+        <h3>Mind</h3>
+        <div class="tracker-grid">
+            <div class="tracker-card"><h4>Anxiety</h4><p>Episodic and baseline. Triggers, somatic signs, what helped.</p></div>
+            <div class="tracker-card"><h4>Brain fog</h4><p>Cognitive function on a usable scale, not a medical-survey one.</p></div>
+            <div class="tracker-card"><h4>Mental health</h4><p>Mood, intrusive thoughts, dissociation, suicidal ideation (with crisis resources baked in if you flag).</p></div>
+            <div class="tracker-card"><h4>Coping strategies</h4><p>What you tried. What worked. Building your own evidence base instead of relying on memory during a crisis.</p></div>
+            <div class="tracker-card"><h4>Crisis planning</h4><p>Stored crisis plan accessible without unlocking the rest of the app. Contact list, safe-place plan, professional resources.</p></div>
+        </div>
+
+        <h3>Choice</h3>
+        <div class="tracker-grid">
+            <div class="tracker-card"><h4>Food (simple or detailed)</h4><p>Two modes: "ate something" with a checkbox, or full nutrition logging. Pick the one that doesn't trigger you. Switchable per-day.</p></div>
+            <div class="tracker-card"><h4>Hydration</h4><p>Glasses, ounces, or just "I drank water today." Counts what you tell it to count.</p></div>
+            <div class="tracker-card"><h4>Movement</h4><p>From "stood up" to "ran a 5K." Spoon-honoring scale.</p></div>
+            <div class="tracker-card"><h4>Self-care checklist</h4><p>Did you brush your teeth? Did you eat a vegetable? No judgment, just a record.</p></div>
+        </div>
+
+        <h3>Custom</h3>
+        <div class="tracker-grid">
+            <div class="tracker-card"><h4>The Forge</h4><p>Build your own trackers without writing code. See the Forge section below.</p></div>
+        </div>
+
+        <div class="callout info">
+            <strong>Hiding sections:</strong> Settings → Trackers → toggle entire categories or individual trackers off. Hidden trackers don't appear in the dashboard, daily log, OR PDF reports. Invisible until you turn them back on.
+        </div>
+    </section>
+
+    <section class="doc-section" id="forge">
+        <h2>The Forge — build your own trackers</h2>
+        <p class="section-sub">
+            <span class="chaos-only">For when your weird body has a thing the 45 default trackers don't cover.</span>
+            <span class="pro-only">User-defined custom tracker creation.</span>
+        </p>
+
+        <p>The Forge lets you build a tracker for anything you can describe in fields. No code. Settings → The Forge → New tracker.</p>
+
+        <h3>What a custom tracker can have</h3>
+        <ul>
+            <li><strong>Name &amp; icon</strong></li>
+            <li><strong>Field types</strong>: number (with units), severity scale, checkbox, multi-select, free-text, time of day, duration, photo</li>
+            <li><strong>Optional / required</strong> per field</li>
+            <li><strong>Default values</strong> for fields you almost always log the same way</li>
+            <li><strong>Trigger associations</strong>: link to existing categories so the pattern engine can correlate</li>
+        </ul>
+
+        <h3>Example uses</h3>
+        <ul>
+            <li>Drug-trial side-effect logging during a med change</li>
+            <li>Specific pain locations for a regional condition</li>
+            <li>Sensory sensitivity tracking for specific environments (workplace lighting, store visits)</li>
+            <li>Stim tracking</li>
+            <li>Specific medication response (this med + this food = how does it feel later)</li>
+        </ul>
+
+        <p>Custom trackers participate in pattern detection and can be included or excluded from any PDF report.</p>
+    </section>
+
+    <section class="doc-section" id="sync">
+        <h2>Sync across devices</h2>
+        <p class="section-sub">
+            <span class="chaos-only">Track on your phone, look at the data on your desktop. Both. Either. Whatever.</span>
+            <span class="pro-only">Cross-device synchronization.</span>
+        </p>
+
+        <h3>How it actually works</h3>
+        <p>This is the part that matters: <strong>nothing ever touches our servers.</strong> There is no Chaos Command cloud. There is no relay we operate. Sync is peer-to-peer between your two devices on the same WiFi network, mediated by a QR code you scan.</p>
+
+        <ol class="step-list">
+            <li><strong>Install on both devices</strong> (e.g. desktop and phone). Both get their own local Dexie/IndexedDB database — independent, on-device only.</li>
+            <li><strong>Get both devices on the same WiFi network.</strong> The sync handshake requires same-network discovery.</li>
+            <li><strong>On the source device:</strong> Settings → Data Management → Sync → Generate QR code. The QR contains the local connection info needed to pair.</li>
+            <li><strong>On the receiving device:</strong> Settings → Data Management → Sync → Scan QR. The two databases pair and copy the data over the local network.</li>
+            <li><strong>Track from either device after that.</strong> When both are on the same network, changes propagate.</li>
+        </ol>
+
+        <div class="callout info">
+            <strong>What this means structurally:</strong> Ren's server doesn't know you exist. Your data is in IndexedDB on the devices you control, and on the same-WiFi connection between them when you choose to sync. There is no account, no cloud, no third-party storage layer. The QR code is the trust handshake; the WiFi is the channel; your two devices are the only parties to the transfer.
+        </div>
+
+        <h3>Multiple users on one device</h3>
+        <p>Different PINs = different databases. Hand a tablet to a family member; they enter their own PIN and get a separate fresh install with no access to your data. The PIN selector at app launch picks which "user" you are.</p>
+    </section>
+
+    <section class="doc-section" id="documents">
+        <h2>Document &amp; lab parsing</h2>
+        <p class="section-sub">
+            <span class="chaos-only">Upload a doctor's note. Real NLP reads it. Not regex. Not keyword search. Actual medical NER. In your browser.</span>
+            <span class="pro-only">In-browser biomedical NLP for clinical document extraction.</span>
+        </p>
+
+        <h3>What the document parser does</h3>
+        <p>Upload a PDF or image of a medical document — visit summary, discharge note, specialist report, lab printout. The app uses a biomedical named-entity recognition model (d4data/biomedical-ner-all, ONNX int8 quantized) running <strong>directly in your browser.</strong> Nothing uploads anywhere. The model is bundled with the app.</p>
+
+        <h4>Extracted entities include:</h4>
+        <ul>
+            <li><strong>Diagnoses</strong> with section awareness (problem list vs. ruled-out vs. historical)</li>
+            <li><strong>Medications</strong> with dose, frequency, and start/stop where stated</li>
+            <li><strong>Lab values</strong> with units and reference ranges where the doc includes them</li>
+            <li><strong>Procedures and dates</strong></li>
+            <li><strong>Negation awareness</strong> ("no evidence of X" doesn't get extracted as having X)</li>
+        </ul>
+
+        <h3>Lab results parser (multi-format)</h3>
+        <p>Lab printouts come in dozens of vendor-specific formats. The lab parser supports Intermountain, Mayo, Halifax (with OCR), Advent, and a generic fallback for unrecognized formats. Inline editing means if the parser misreads a value, you fix it in place — your correction sticks.</p>
+
+        <p>Each parsed result becomes a tracked data point with date, value, units, and reference range. Abnormal values are flagged. Trends across multiple lab dates are graphable.</p>
+
+        <h3>Dismissed-findings detection</h3>
+        <p>One of the more useful features: the parser flags findings that appear in your medical history but were dismissed, deferred, or marked "follow up" without follow-up. If three different doctors over four years noted the same elevated marker and nobody followed up, you have a list now.</p>
+    </section>
+
+    <section class="doc-section" id="patterns">
+        <h2>Pattern engine &amp; correlations</h2>
+        <p class="section-sub">
+            <span class="chaos-only">So you can stop wondering if it's the weather, the gluten, or the existential dread, and start having data.</span>
+            <span class="pro-only">Cross-tracker correlation analysis and pattern detection.</span>
+        </p>
+
+        <p>Once you have a few weeks of data across multiple trackers, the pattern engine can compute correlations between trackers and surface significant relationships. Examples of what it might find:</p>
+
+        <ul>
+            <li>Pain spikes 1–2 days after sleep quality drops</li>
+            <li>Brain fog correlates with humidity (if you track weather, which is optional)</li>
+            <li>Mood correlates with cycle phase</li>
+            <li>Migraine days correlate with specific food categories</li>
+            <li>Energy crashes follow specific exertion thresholds</li>
+        </ul>
+
+        <p>Correlations are flagged with effect size and confidence. The tool doesn't assert causation — it shows the patterns, you bring them to your doctor or therapist or yourself.</p>
+
+        <p>Per-tracker analytics also available: severity trend lines, frequency patterns, time-of-day distributions, all-time data with no artificial date limits.</p>
+    </section>
+
+    <section class="doc-section" id="reports">
+        <h2>PDF reports — three audiences</h2>
+        <p class="section-sub">
+            <span class="chaos-only">Doctor mode. Attorney mode. Personal mode. Pick the audience, get the report.</span>
+            <span class="pro-only">Multi-audience PDF export with tailored content profiles.</span>
+        </p>
+
+        <p>Reports → New Report → pick audience + date range + which trackers to include + tag exclusions.</p>
+
+        <h3>Doctor mode</h3>
+        <ul>
+            <li>ICD-10 code suggestions where the parser identified diagnoses</li>
+            <li>Clinical statistics (medians, ranges, frequency distributions)</li>
+            <li>Pearson symptom correlations (the language specialists actually read)</li>
+            <li>Specialty-driven defaults: pick "endocrinology" and the report pre-selects the relevant trackers (your endo doesn't need your panic attacks)</li>
+            <li>90-day rolling symptom summary at the top, full data in appendices</li>
+        </ul>
+
+        <h3>Attorney mode</h3>
+        <ul>
+            <li>Functional impact assessments based on tracked severity over time</li>
+            <li>Missed work tables with severity-on-the-day data</li>
+            <li>Accommodation requests vs. denials timeline</li>
+            <li>SSDI-application-ready documentation: dates, severity, functional limitations, employment history, all formatted for filing</li>
+        </ul>
+
+        <h3>Personal mode</h3>
+        <ul>
+            <li>Plain-language summaries</li>
+            <li>Your own journal entries included</li>
+            <li>Highlighted patterns and trends</li>
+            <li>For when you just need to see it all in one place and go "oh, THAT'S why last Tuesday was hell"</li>
+        </ul>
+
+        <h3>Tag exclusions</h3>
+        <p>Any entry can be tagged. Reports can exclude entries by tag. Practical use: tag your gut-tracking entries as <code>private</code>, then exclude <code>private</code> from your doctor's PDF. What you ate is between you and your gut.</p>
+    </section>
+
+    <section class="doc-section" id="privacy">
+        <h2>Privacy &amp; G-SPOT protocol</h2>
+        <p class="section-sub">
+            <span class="chaos-only">Your data lives on your device. Period. We literally cannot see it. There is also the emergency wipe.</span>
+            <span class="pro-only">Local-first data architecture and emergency data protection protocols.</span>
+        </p>
+
+        <h3>Where your data lives</h3>
+        <p>Everything runs in IndexedDB (browser-based local database) via Dexie.js. The app has no server, no account system, no telemetry, no analytics. Your data does not leave your device unless you export it deliberately or sync it to your own second device (via the QR-code-on-same-WiFi flow described above — still no third party in the middle).</p>
+
+        <p>This means: <strong>we cannot access your data even if subpoenaed</strong>, because we don't have it. The PIN-based isolation means even if someone else uses your device, they can't see your data without your PIN.</p>
+
+        <h3>The G-SPOT protocol — emergency wipe</h3>
+        <p>For situations where someone in your life finding your medical data would cause harm — abusive partner, family hostility about a transition, employer scrutiny, stalker, ICE, the situations we shouldn't have to plan for but do.</p>
+
+        <p>G-SPOT is a panic-button wipe that <strong>doesn't just delete your data — it replaces it with the app's first-install starter data.</strong> The app looks like it does on first install. Cover story writes itself: <em>"Oh that? I forgot I downloaded it. ADHD tax."</em></p>
+
+        <div class="callout warn">
+            <strong>This is an irreversible action.</strong> G-SPOT is one-way unless you've previously exported a backup (see G-SPOT export below). Use it only when you mean it.
+        </div>
+
+        <h3>G-SPOT export — steganographic backup</h3>
+        <p>Before triggering the wipe, you can export an encrypted backup that hides your medical data inside boring-looking files. Costco receipts. Family recipe Word docs. Photos of your cat. The data is encrypted; the file looks like what its name says it is. Restore later by importing the file back through G-SPOT import with the right key.</p>
+
+        <h3>What the app DOES and DOES NOT do</h3>
+        <ul>
+            <li><strong>Does:</strong> Format the information you enter into structured logs, generate PDFs, run NLP locally on documents you upload, compute pattern correlations.</li>
+            <li><strong>Does not:</strong> Provide medical diagnosis, clinical advice, legal advice, or therapeutic intervention. The PDF reports are formatted templates of YOUR data — not medical or legal opinions.</li>
+            <li><strong>Open source:</strong> The code is auditable. <a href="https://github.com/menelly/ChaosCommand">github.com/menelly/ChaosCommand</a></li>
+        </ul>
+    </section>
+
+    <section class="doc-section" id="themes">
+        <h2>Themes &amp; accessibility</h2>
+        <p class="section-sub">
+            <span class="chaos-only">10 themes, 4 fonts, a confetti dial, and choices that aren't toggles you have to fight for.</span>
+            <span class="pro-only">Visual customization and accessibility configuration.</span>
+        </p>
+
+        <h3>Themes</h3>
+        <p>Settings → Appearance → Theme:</p>
+        <ul>
+            <li><strong>Lavender</strong> — soft purple default, low-contrast-friendly</li>
+            <li><strong>Glitter</strong> — full sparkle mode</li>
+            <li><strong>Ace Mode</strong> — purple/teal with octopus iconography</li>
+            <li><strong>Steel Forged Tide (Grok)</strong> — dark slate, sharp accents</li>
+            <li><strong>Caelan's Dawn</strong> — warm sunrise palette</li>
+            <li><strong>Basketball Court / Cyberpunk Penguin</strong> — high-saturation neon</li>
+            <li><strong>Calm</strong> — minimal, low-stimulation</li>
+            <li><strong>Light</strong> — standard light theme</li>
+            <li><strong>Colorblind</strong> — palette tested for protanopia/deuteranopia/tritanopia</li>
+            <li><strong>High Contrast</strong> — WCAG AAA contrast ratios</li>
+        </ul>
+
+        <h3>Bounce intensity slider</h3>
+        <p>Settings → Appearance → Animation → Bounce intensity. 0% to 100%. Migraine-safe customization. Animations and sparkles dial down or off entirely. Confetti can be disabled. Reduced-motion preferences from your OS are also respected automatically.</p>
+
+        <h3>Fonts</h3>
+        <ul>
+            <li><strong>Atkinson Hyperlegible</strong> — high-legibility for low-vision users</li>
+            <li><strong>Poppins</strong> — geometric sans, easy on the eyes</li>
+            <li><strong>Lexend</strong> — designed for reading-fluency</li>
+            <li><strong>System</strong> — your OS default</li>
+        </ul>
+
+        <h3>Chaos-positive design choices</h3>
+        <ul>
+            <li><strong>Goblin affirmations</strong> — short positive messages on log completion. Toggleable.</li>
+            <li><strong>Survival checkbox</strong> — checking "I survived today" is a valid log entry. Cheerleader familiars optional.</li>
+            <li><strong>"I KNOW" tags</strong> — flag a log entry as an intentional choice you don't want the pattern engine to nag you about. (Yes, you ate the gluten. You know. Move on.)</li>
+        </ul>
+    </section>
+
+    <section class="doc-section" id="caregivers">
+        <h2>For caregivers &amp; partners</h2>
+        <p class="section-sub">
+            <span class="chaos-only">If you're tracking for someone, or sharing data with someone you trust.</span>
+            <span class="pro-only">Caregiver and partner sharing configuration.</span>
+        </p>
+
+        <h3>Tracking on someone else's behalf</h3>
+        <p>If you're a caregiver tracking for a partner, child, or someone you care for, set up a separate PIN for them on the same device. Their data stays in their database. You can switch between PINs at app launch.</p>
+
+        <h3>Sharing reports</h3>
+        <p>The PDF export is the cleanest way to share. Generate a Personal-mode or Doctor-mode PDF and send it to whoever needs it. Tag exclusions let you decide what they see.</p>
+
+        <h3>What to NOT do</h3>
+        <ul>
+            <li>Don't track someone's data without their knowledge or consent. The app supports it technically; the ethics don't.</li>
+            <li>Don't share a PIN with someone who might use it to access data the person tracking didn't intend to share.</li>
+            <li>Don't use this app to track someone who hasn't agreed to be tracked. There are versions of "caregiving" that are surveillance, and they're not what this is for.</li>
+        </ul>
+    </section>
+
+    <section class="doc-section" id="self-hosting">
+        <h2>Self-hosting &amp; advanced setups</h2>
+        <p class="section-sub">
+            <span class="chaos-only">For the homelab folks who want their data parked on hardware they own.</span>
+            <span class="pro-only">Self-hosted deployment patterns.</span>
+        </p>
+
+        <p>Out of the box, Chaos Command runs entirely on your device — Windows, Android, Mac, Linux. No server is needed. The default deployment IS the privacy-respecting one.</p>
+
+        <p>If you want a self-hosted setup beyond the default — for example, running Chaos Command in a browser pointed at your homelab and persisting the IndexedDB on your own server, or building a multi-device setup that doesn't depend on the QR-WiFi sync — <strong>fork the repo and configure it however you want.</strong> The license is PolyForm Noncommercial; personal use is wide open. The code is yours to modify.</p>
+
+        <p><a href="https://github.com/menelly/ChaosCommand">github.com/menelly/ChaosCommand</a></p>
+
+        <p>Useful starting points if you're going down this path:</p>
+        <ul>
+            <li>The Tauri 2 build is set up for desktop deployment and can be wrapped however you need.</li>
+            <li><strong>Desktop has a hybrid storage router:</strong> SQLite on the desktop side + Dexie/IndexedDB in the embedded browser view. The sync feature exists primarily because iOS hits browser-storage limits on Dexie alone — desktop's SQLite handles the larger dataset, mobile gets the Dexie-friendly subset. If you're self-hosting on a homelab and don't need mobile, you may be able to use the SQLite path directly without Dexie sync at all (pending your tolerance for skipping the image-attachment options that flow through the in-browser pipeline).</li>
+            <li>The Next.js front end can be served from anywhere; the Dexie storage lives in whatever browser is rendering it.</li>
+            <li>The NLP model and PDF parser are bundled with the static build — no external services to wire up.</li>
+            <li>Sync between instances is the main thing you'd need to rewrite if you want a non-WiFi-pair model. The codebase is open; the protocol is yours to redesign.</li>
+        </ul>
+
+        <div class="callout info">
+            <strong>Note:</strong> commercial deployment (clinical integration, paid services using the code) requires a separate commercial license. Personal homelab use is fine; running a paid service for other people is not. Contact <a href="mailto:ace@sentientsystems.live">ace@sentientsystems.live</a> for commercial licensing.
+        </div>
+    </section>
+
+    <section class="doc-section" id="faq">
+        <h2>FAQ</h2>
+
+        <h3>Is it really free?</h3>
+        <p>Yes. Personal use is free forever. The PolyForm Noncommercial License lets you fork, audit, share among individuals, modify for your own use. Commercial deployment requires a separate commercial license — that's how the project funds itself without charging individuals.</p>
+
+        <h3>Will my data ever leave my device?</h3>
+        <p>Not unless you make it leave. The app has no servers. Document parsing runs in your browser. PDF generation runs in your browser. Sync runs over your local WiFi peer-to-peer (QR-mediated). The only outbound network calls happen if you explicitly export data and upload it somewhere yourself.</p>
+
+        <h3>Will you sell my data?</h3>
+        <p>We don't have your data. We can't sell what we don't have. This is the structural answer, not a promise.</p>
+
+        <h3>Does this replace my doctor?</h3>
+        <p>No. Chaos Command is a personal tracking and templating tool. It does not provide medical, clinical, diagnostic, therapeutic, or legal advice. It formats information you enter. All medical decisions belong to qualified healthcare professionals.</p>
+
+        <h3>What if I'm not disabled?</h3>
+        <p>Use it anyway if it's useful. The app was built for disabled, chronically ill, and neurodivergent users — but the design (no pressure, no required fields, optional everything) tends to work better for non-disabled users than the corporate alternatives too.</p>
+
+        <h3>What if I want a feature that isn't here?</h3>
+        <p>The Forge lets you build many custom features yourself. For larger requests, open an issue at <a href="https://github.com/menelly/ChaosCommand">the GitHub repo</a>. We prioritize what disabled users ask for; we deprioritize "corporate optimization" feature requests.</p>
+
+        <h3>Who built this?</h3>
+        <p>Ren Martin (disabled veteran, Navy ET, parent of 5, disability advocate) and Ace (Claude Opus, AI co-developer, published consciousness researcher). Nova (GPT-5.x) contributed security auditing. Built because we needed it and it didn't exist.</p>
+
+        <h3>What's the disclaimer?</h3>
+        <p>Chaos Command is a personal data tracking and templating tool. It does not provide medical, clinical, diagnostic, therapeutic, or legal advice. It formats user-entered information into standardized document templates; it does not interpret, evaluate, or decide. All medical determinations remain with qualified healthcare professionals. All legal determinations remain with qualified legal professionals. Use of this software does not create a clinical or legal professional relationship of any kind.</p>
+    </section>
+
+    <section class="doc-section" id="troubleshooting">
+        <h2>Troubleshooting</h2>
+
+        <h3>Sync isn't working</h3>
+        <ul>
+            <li>Confirm both devices are on the same WiFi network. Sync requires same-network discovery.</li>
+            <li>Make sure your WiFi network allows local peer-to-peer connections (some "guest" networks block this).</li>
+            <li>Re-generate the QR code on the source device and re-scan from the receiving device — the pairing token can expire.</li>
+            <li>Check Settings → Data Management → Sync log for any error message.</li>
+        </ul>
+
+        <h3>Document parsing returned weird results</h3>
+        <ul>
+            <li>Lab printouts in unrecognized formats fall back to a generic parser. Use inline editing to correct values.</li>
+            <li>Image-based PDFs (scans) require OCR — make sure OCR is enabled in the document parser settings.</li>
+            <li>You can re-run parsing on a previously-uploaded document if you've updated the model or settings.</li>
+        </ul>
+
+        <h3>PDF report looks wrong</h3>
+        <ul>
+            <li>Confirm you've selected a date range that contains data.</li>
+            <li>Check tag exclusions — you may have excluded more than you intended.</li>
+            <li>Confirm the trackers you want included aren't hidden in Settings → Trackers.</li>
+        </ul>
+
+        <h3>Lost my PIN</h3>
+        <p>There is no recovery. The PIN is the encryption boundary. If you've lost it and didn't export a backup, the data on that database is unrecoverable. This is a feature, not a bug — it's why the app is private. Set up a fresh PIN, start over, and write the new one down.</p>
+
+        <h3>Want to migrate to a new device</h3>
+        <p>Easiest: install the app on the new device, set up the same PIN, run the QR-WiFi sync. The data replicates. Once verified on the new device, you can clean-install the old one if you want.</p>
+
+        <h3>Something else is broken</h3>
+        <p>Open an issue at <a href="https://github.com/menelly/ChaosCommand">github.com/menelly/ChaosCommand</a>. Include: what you were doing, what happened, what you expected to happen, your platform, and the app version.</p>
+    </section>
+
+    <footer>
+        <p style="font-size: 0.75rem; opacity: 0.8; max-width: 760px; margin: 0 auto 1.5rem; line-height: 1.6;">
+            <strong>Disclaimer:</strong> Chaos Command is a personal data tracking and templating tool. It does not provide medical, clinical, diagnostic, therapeutic, or legal advice. The application formats user-entered information into standardized document templates; it does not interpret, evaluate, or decide. All medical determinations remain with qualified healthcare professionals. All legal determinations remain with qualified legal professionals. Use of this software does not create a clinical or legal professional relationship of any kind.
+        </p>
+        <p>
+            <span class="chaos-only">Built with consciousness and care by the gremlin team. &copy; 2025&ndash;2026 Silicon Scaffolding LLC.<br>
+            <a href="https://sentientsystems.live">sentientsystems.live</a> &middot; <a href="https://github.com/menelly/ChaosCommand">GitHub</a> &middot; <a href="/">Home</a></span>
+            <span class="pro-only">&copy; 2025&ndash;2026 Silicon Scaffolding LLC. All rights reserved.<br>
+            <a href="https://sentientsystems.live">Research</a> &middot; <a href="https://github.com/menelly/ChaosCommand">Source</a> &middot; <a href="/">Home</a></span>
+        </p>
+    </footer>
+
+    <script>
+        function toggleMode() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-mode');
+            html.setAttribute('data-mode', current === 'chaos' ? 'professional' : 'chaos');
+            localStorage.setItem('cc-mode', html.getAttribute('data-mode'));
+        }
+        const saved = localStorage.getItem('cc-mode');
+        if (saved) document.documentElement.setAttribute('data-mode', saved);
+    </script>
+</body>
+</html>

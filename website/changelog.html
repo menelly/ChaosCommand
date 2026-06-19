@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en" data-mode="chaos">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>What's New — Chaos Command</title>
+<meta name="description" content="Changelog and release notes for Chaos Command. See exactly what changed in every version.">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=Crimson+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  :root {
+    --bg-primary: #0d0a14;
+    --bg-secondary: #161222;
+    --bg-card: #1c1730;
+    --bg-card-hover: #241e3a;
+    --text-primary: #e8e4f0;
+    --text-secondary: #a8a0c0;
+    --text-muted: #908ba0;
+    --accent-1: #b388ff;
+    --accent-2: #64ffda;
+    --accent-3: #ff80ab;
+    --accent-glow: rgba(179, 136, 255, 0.15);
+    --border: rgba(179, 136, 255, 0.12);
+    --font-primary: 'Inter', -apple-system, sans-serif;
+    --font-display: 'Crimson Pro', Georgia, serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --radius: 16px;
+  }
+  body {
+    font-family: var(--font-primary);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.65;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(circle at 20% 10%, var(--accent-glow) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(100, 255, 218, 0.06) 0%, transparent 50%);
+  }
+  .container { max-width: 780px; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
+  .back-link {
+    display: inline-block; color: var(--text-muted); text-decoration: none;
+    font-size: 0.9rem; margin-bottom: 1.5rem; transition: color 0.3s;
+  }
+  .back-link:hover { color: var(--accent-1); }
+  h1 {
+    font-family: var(--font-display); font-size: clamp(2.2rem, 5vw, 3.2rem);
+    font-weight: 700; margin-bottom: 0.5rem; line-height: 1.1;
+    background: linear-gradient(135deg, var(--accent-1) 0%, var(--accent-2) 100%);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .tagline { color: var(--text-secondary); font-size: 1rem; margin-bottom: 1rem; }
+  .preamble {
+    background: var(--bg-card); padding: 1.25rem 1.5rem; border-radius: var(--radius);
+    border: 1px solid var(--border); border-left: 3px solid var(--accent-1);
+    margin: 2rem 0;
+  }
+  .preamble p { margin-bottom: 0.5rem; color: var(--text-secondary); }
+  .preamble p:last-child { margin-bottom: 0; }
+  .preamble a { color: var(--accent-2); text-decoration: none; }
+  .preamble a:hover { text-decoration: underline; }
+  .meta { color: var(--text-muted); font-family: var(--font-mono); font-size: 0.85rem; margin-bottom: 2rem; }
+  h2 {
+    font-family: var(--font-display); color: var(--accent-1);
+    margin-top: 3rem; padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border); font-size: 1.6rem; font-weight: 600;
+  }
+  h2 .date { font-family: var(--font-mono); color: var(--text-muted); font-size: 0.85rem; font-weight: 400; margin-left: 0.5rem; }
+  h3 {
+    color: var(--text-primary); margin-top: 1.5rem; margin-bottom: 0.5rem;
+    font-size: 1rem; font-weight: 600; letter-spacing: 0.02em;
+  }
+  ul { padding-left: 1.5rem; margin-bottom: 0.5rem; }
+  li { margin-bottom: 0.4rem; color: var(--text-secondary); }
+  a { color: var(--accent-1); }
+</style>
+</head>
+<body>
+<div class="container">
+<a href="/" class="back-link">← back to chaoscommand.center</a>
+<h1>What's New</h1>
+<p class="tagline">Chaos Command changelog — auto-generated from the public git log</p>
+<div class="preamble">
+  <p><strong>Free, local-first, no telemetry.</strong> Built by patients, for patients.</p>
+  <p>Every line of code is public on <a href="https://github.com/menelly/ChaosCommand">github.com/menelly/ChaosCommand</a>. This page is generated from those commits — it's the receipt for what shipped in each release. Audit before you trust.</p>
+</div>
+<p class="meta">Last updated: 2026-06-07</p>
+<h2>v0.6.0<span class="date">&middot; 2026-06-07</span></h2>
+<h3>✨ New</h3><ul>
+<li>Neuro / Neuromuscular tracker — nerve &amp; muscle symptoms (weakness, spasticity, fasciculations, numbness), distribution-aware, with stroke / cord / GBS red-flag prompts</li>
+<li>Autoimmune / Connective-Tissue (rheumatology) tracker — Raynaud&rsquo;s, sicca (dry eyes/mouth), mechanic&rsquo;s hands, inflammatory rash, arthralgia, morning stiffness, serositis, and more</li>
+<li>Cross-listing (⇄) — a symptom that matters to more than one specialist is logged once and shows up in each relevant tracker; no double-entry, no two copies drifting apart</li>
+<li>Doctor PDF: new Autoimmune / Connective-Tissue section with rheumatology-framed findings</li>
+<li>Doctor PDF: richer Autonomic section — orthostatic blood pressure + SpO2, not just heart-rate delta</li>
+<li>Doctor PDF: fuller Sleep (quality, fragmentation, non-restorative) and Respiratory (peak flow, SpO2 nadir) detail</li>
+<li>Export picker now includes neuro &amp; autoimmune, grouped by Body / Mind / Maintain / Choice</li>
+</ul>
+<h3>🐛 Fix</h3><ul>
+<li>Export: native alerts switched to in-app toasts (the desktop app no-ops native alerts)</li>
+<li>Export: fixed the desktop download that produced no file (the blob URL was revoked before the save finished)</li>
+<li>PDF: removed a noisy &lsquo;supporting evidence&rsquo; block that buried the useful sections; fixed a mangled cross-list icon</li>
+</ul>
+<h3>⚠️ Known limitation</h3><ul>
+<li>PDF export is desktop-only for now — mobile (Android) PDF export is coming in a future release. Everything else works on mobile.</li>
+</ul>
+<h2>v0.5.8<span class="date">&middot; 2026-05-30</span></h2>
+<h3>✨ New</h3><ul>
+<li>PDF export now exports what users actually SAVE, + password-protect</li>
+<li>Add 0.5.8 update manifest (version.json) — the easy-miss 6th version spot</li>
+</ul>
+<h2>v0.5.6<span class="date">&middot; 2026-05-26</span></h2>
+<h3>✨ New</h3><ul>
+<li>Theme Contrast &amp; Wicked 💚💗</li>
+<li>0.5.6 fixup: diabetes tracker bg ghost-of-penguin</li>
+<li>tracker theme-compliance + Theme Lab</li>
+<li>0.5.6 theme + analytics sweep (in-flight, do not ship yet)</li>
+<li>diabetes analytics: time-in-range bar, glucose trend, time-of-day pattern</li>
+<li>energy + movement: insight boxes off the bg-X-50/gradient pattern -&gt; token tints</li>
+<li>0.5.6 prep-to-ship: remove dev theme toggle, theme emojis, changelog/README</li>
+<li>Add legal docs (ToS/Privacy/Medical) + footer rebrand to Silicon Scaffolding LLC</li>
+<li>Self-host Atkinson/Poppins/Lexend — kill the Google Fonts IP leak (CHA-229)</li>
+<li>Add self-hosted font menu (Inter/Crimson Pro/JetBrains Mono) + Resources credits</li>
+<li>Privacy policy: add the 'use a VPN, we don't see you, PROTECT YOURSELF' note 🛡️</li>
+<li>NER notice: use Nova's calmer, more precise wording</li>
+<li>Add 8-font decorative pack (Creative Fabrica) to the font menu</li>
+<li>Add opt-in backup reminder (per-PIN, smart-trigger, dismissible banner)</li>
+<li>YouTube script: update font line (4 -&gt; full menu) + privacy flex</li>
+<li>YouTube script: establish desktop+Android in intro, QR/same-WiFi sync in §3</li>
+<li>YouTube script: 'does it wrong' -&gt; 'does it differently than expected'</li>
+<li>YouTube script: Ren's recording-booth edits</li>
+<li>YouTube script: reproductive toggle line — 'off your screen' not 'gone'</li>
+<li>YouTube script: §14 — 'activist', Ace=Claude disclosure, 'And I had the ability to make it happen'</li>
+</ul>
+<h3>🐛 Fix</h3><ul>
+<li>dysautonomia analytics: fix NaN from 'All Time' (parseInt('all')-&gt;NaN)</li>
+<li>Fix false 'bundled, no download' NER claim → honest privacy notice (PROTEKK URSELF)</li>
+</ul>
+<h3>♿ Accessibility</h3><ul>
+<li>accessibility theme -&gt; 'Follow System' (respect OS accessibility settings)</li>
+</ul>
+<h2>v0.5.0<span class="date">&middot; 2026-05-24</span></h2>
+<h3>✨ New</h3><ul>
+<li>yeet the planning section out of Command (CHA-180)</li>
+<li>tech-debt sweep — delete dead modules/ architecture, calendar husk, chore-chart ghost</li>
+<li>drop dead calendar-monthly registry entry (advertised deleted /calendar route)</li>
+<li>Routines Phase 1 — data model + pin-keyed storage (CHA-167)</li>
+<li>Routines Phases 2+3 — builder + run page + nav (CHA-167)</li>
+<li>Routines — let users add their OWN (custom Forge) trackers (CHA-167)</li>
+<li>default theme phosphor -&gt; calm (neutral first run)</li>
+<li>Routines — Next-on-routine flow bar, 'nothing to log', reversible skip (CHA-167)</li>
+<li>Routines — 'Copy yest.' on run cards (Option A, CHA-167)</li>
+<li>muscle events get a MUSCLE menu, not the joint checklist</li>
+<li>add 'Coat hanger (neck &amp; shoulders)' muscle option</li>
+<li>Skip + Set-yest on the flow bar; skip now persists &amp; shares</li>
+<li>builder overhaul — categories, emoji palette, Manage trackers; drop autofill UI</li>
+<li>'Copy from &lt;routine&gt;' when creating; rename Copy yest. -&gt; Copy last</li>
+<li>version bump across all sources + release manifest</li>
+<li>per-run sessions (log multiple times/day) + Journal tracker + fix journal nav</li>
+<li>pending cards show 'Last logged &lt;when&gt;' instead of 'Not logged today'</li>
+<li>hide Copy-last when there's nothing clone-able to copy</li>
+<li>🔒 chore: Cargo.lock catches up to 0.5.1 (the build regenerated it, the octopus forgot to grab it the first time)</li>
+<li>🎬 docs: YouTube feature-overview script (v1), narrated by yours truly</li>
+<li>🐙 Merge the v2 tracker wave into master — landfall</li>
+<li>🔐 WIP: per-PIN localStorage foundation + close coping leak (CHA-206)</li>
+<li>🧘 Move coping data localStorage → per-PIN Dexie (CHA-206); drop pinStorage wrapper</li>
+<li>🗂️ Prior-releases rollback archive page (CHA-198)</li>
+<li>🚀 Ship 0.5.3 to production + archive 0.5.2</li>
+<li>🔖 Bump in-app version 0.5.2 → 0.5.3 (match live manifest, kill the nag)</li>
+<li>🔢 scripts/bump_version.py — one-command version bump + drift detector</li>
+<li>🎚️ Retune starter data: mildly interesting, never alarming (Nova content guardrails)</li>
+<li>🔐 Add honest encrypted-backup module (PBKDF2 → AES-256-GCM), no steganography</li>
+<li>🎭 Add demo-profile module: public sample data at PIN 1111 (seed-on-first-view)</li>
+<li>🔁 Rewire data modal: G-Spot → emergency logout; encrypted backup replaces steganography</li>
+<li>📝 release.sh: point to bump_version.py as canonical bumper + mandatory --check</li>
+<li>🐙 The G-Spot moves in: scoped reproductive-data nuke in the fertility modal</li>
+<li>🧹 Remove the G-Spot section from the data modal (she lives in reproductive now)</li>
+<li>🚪 Sidebar: Logout is now big + bottom + one-tap (the real emergency exit)</li>
+<li>👀 Demo profile (1111): awaited seed on login + "See the demo" button + reserve note</li>
+<li>💅 Reproductive forms: Save buttons full-width (stop the lopsided layout)</li>
+<li>🗑️ Delete dead steganography: g-spot-crypto.ts + g-spot-4.0-boring-file-steganography.ts</li>
+<li>🧹 Data modal cleanup + README refresh (v0.5.4)</li>
+<li>📝 README: themes 10 → 15 (accurate list incl. Tone It Down Taupe)</li>
+<li>🩹 Self-healing demo + honest per-PIN delete + encrypted-by-default export</li>
+<li>🔐 Require PIN re-entry to delete a profile (whose-data confirmation)</li>
+<li>📝 v0.5.4 release notes (data-control framing, Ren+Ace voice)</li>
+<li>🩹 Pain: stop pain≥9 force-holding the 911 card open ("collapse won't work")</li>
+<li>🩹 Emergency card: let users collapse a re-surfaced emergency (the real "collapse won't work")</li>
+<li>🩹 Pain: don't auto-flag dissection/SAH red flags from a descriptor word</li>
+<li>🩹 Emergency card: read-once-then-quiet (stop re-nagging from history)</li>
+</ul>
+<h3>🐛 Fix</h3><ul>
+<li>add HEAT + thermal triggers to syncope/presyncope list</li>
+<li>flow bar now finds current tracker + 'Next' targets next not-done</li>
+<li>joint Save disabled in muscle mode + Routines hub hydration error</li>
+<li>energy/weather count as done; registry matches real sections; Journal button</li>
+<li>bump lib/app-version.ts too (the nag-causing easy miss)</li>
+<li>custom 'Log again' double-? URL + prefix-match status for hydration/sleep/missed-work</li>
+<li>fresh Run resets skip + nothing-marks too (per-routine, not per-day)</li>
+<li>Copy last works with same-day entries (per-run fallout)</li>
+<li>history showed entries a day early (UTC date-parse off-by-one)</li>
+<li>history off-by-one date (same UTC parse bug as dysautonomia)</li>
+<li>fertility chart date ticks off-by-one (UTC parse)</li>
+<li>missed-work option contrast (Lavender) + Ren is PRIOR Navy ET</li>
+<li>event-card descriptions inherit button text color (theme-proof) across 12 trackers</li>
+<li>drop opacity-dimming on inherited text (upper-digestive, onboarding, gaslight-garage)</li>
+<li>🐙 fix(sync): routines now sync between devices</li>
+<li>📱 fix(routines): run-page cards stack on mobile (buttons were overlapping the text)</li>
+<li>🩺 Fix disappearing providers/appointments/reviews (date-scope bug)</li>
+<li>🔄 Fix task-list sync: union tasks by id instead of length heuristic (CHA-207)</li>
+<li>📄 Fix "squampy" PDF: line-height advance now matches font size (CHA-203)</li>
+<li>🐛 Fix demo (1111): seed hang on first start + make it WAY more robust</li>
+<li>🐛 Demo data: wrap flat content into {entries:[]} for v2-shape trackers (fix client crash)</li>
+<li>🎭 Demo = sanitized real-data fixture (no crash, real shapes) + unencrypted-export warning</li>
+<li>🛡️ Migration guard: never wipe real data on PIN 1111 (data-loss fix)</li>
+<li>🚀 Merge v0.5.4: G-Spot redesign, honest backups, per-PIN delete, migration guard, demo fixture</li>
+<li>♿ a11y gate (axe+Playwright) + theme readability fixes [gate-verified]</li>
+<li>🎨 0.5.5 Customize: basketball fix (Luka) + motion labels + text slider + drop emoji picker</li>
+<li>🎨 v0.5.5 — Accessibility &amp; Customization (a.k.a. "the smol bug fix")</li>
+</ul>
+<h3>♿ Accessibility</h3><ul>
+<li>🎨 Token refactor: kill the !important war, guarantee WCAG contrast (+ 1 very boring theme)</li>
+<li>♿ Customize parity: scoped "Hide Fertility &amp; Ovulation" in Settings → Visible Trackers</li>
+<li>🩹 a11y theme: muted-foreground #cccccc→#767676 (partial — theme needs full overhaul)</li>
+</ul>
+<h3>💫 UX</h3><ul>
+<li>🔖 Bump 0.5.3 → 0.5.4 (all six spots) for the G-Spot redesign release</li>
+</ul>
+<h2>v0.4.95<span class="date">&middot; 2026-05-22</span></h2>
+<h3>✨ New</h3><ul>
+<li>tracker re-fun pass + fix false update nag</li>
+</ul>
+<h2>v0.4.9<span class="date">&middot; 2026-05-12</span></h2>
+<h3>✨ New</h3><ul>
+<li>PDF polish — bullet evidence, purple accents, dedup + changelog tooling 📋✨</li>
+<li>version bump for PDF polish + changelog tooling release</li>
+</ul>
+<h3>🐛 Fix</h3><ul>
+<li>python3 → python for Windows compatibility</li>
+</ul>
+<h2>v0.4.8<span class="date">&middot; 2026-05-10</span></h2>
+<h3>✨ New</h3><ul>
+<li>PDF unicode fix + export modal v2 tracker coverage 📋✨</li>
+</ul>
+<h2>v0.4.7<span class="date">&middot; 2026-05-10</span></h2>
+<h3>✨ New</h3><ul>
+<li>PDF report enrichment — actionable instead of bare ICD-10s 📋💜</li>
+</ul>
+<h2>v0.4.6<span class="date">&middot; 2026-05-10</span></h2>
+<h3>✨ New</h3><ul>
+<li>pattern engine v2 — persistence + v2-aware semantic detection 🧠💜</li>
+</ul>
+<h2>v0.4.5<span class="date">&middot; 2026-05-10</span></h2>
+<h3>✨ New</h3><ul>
+<li>Mind &amp; Mood + Bathroom + Brain-fog + Sleep polish 💜🚽🧠😴</li>
+<li>🚨 G-SPOT cover story: add starter data for v0.4.x trackers</li>
+</ul>
+<h2>v0.4.4<span class="date">&middot; 2026-05-10</span></h2>
+<h3>✨ New</h3><ul>
+<li>seizure v2 + collapsible emergency criteria 🚨⚡</li>
+<li>pain v2 (gremlins!) + autonomic seizures 👹⚡</li>
+<li>head-pain v2 + baseline-delta tracking 🧠💊</li>
+<li>food-allergens v2 + symptoms-not-mandatory fix 🍽️</li>
+<li>v0.4.4 wave 5 (FINAL): anxiety v2 + 988 crisis support 💜</li>
+</ul>
+<h2>v0.4.1<span class="date">&middot; 2026-05-10</span></h2>
+<h3>✨ New</h3><ul>
+<li>confetti style picker (Classic / Penguin / Octopus / Random)</li>
+<li>v2 wave — cardiac, respiratory, skin, joint, substance</li>
+<li>v0.4.2 polish wave part 1 — analytics + date pickers</li>
+<li>v0.4.2 — collapsible sections + version bump</li>
+<li>v0.4.3 polish wave 2 — clear-finished, soda, substance recategorization</li>
+</ul>
+<h3>🐛 Fix</h3><ul>
+<li>drop isEvalSupported (removed in current pdfjs-dist types)</li>
+</ul>
+<h2>v0.4.0<span class="date">&middot; 2026-05-05</span></h2>
+<h3>✨ New</h3><ul>
+<li>per-tracker celebration toggle + hide custom trackers + global-pref bug fix</li>
+<li>Add confetti firing to all tracker saves (gated by celebration toggle)</li>
+</ul>
+</div></body></html>
