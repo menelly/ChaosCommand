@@ -9,15 +9,27 @@
  */
 
 // pdf.js is loaded dynamically to avoid SSG prerender issues
-// (DOMMatrix and other browser APIs don't exist in Node.js)
+// (DOMMatrix and other browser APIs don't exist in Node.js).
+//
+// IMPORTANT: we load pdf.js as a NATIVE browser ES module from public/, NOT
+// through webpack. Bundling pdfjs (either build) through Next's webpack mangles
+// its module object → "Object.defineProperty called on non-object" inside
+// __webpack_require__.r at load time. The `webpackIgnore: true` magic comment
+// makes webpack leave this import untouched, so the WebView imports the
+// self-contained bundle (public/pdf.min.mjs) directly — no bundler interop, no
+// crash. public/pdf.worker.min.mjs is the version-matched worker.
+// (Both files are copied from pdfjs-dist/legacy/build at the project's pdfjs
+// version; if pdfjs is upgraded, re-copy both: see scripts/sync-pdfjs-assets.)
 let _pdfjsLib: typeof import('pdfjs-dist') | null = null;
 async function getPdfjs() {
   if (!_pdfjsLib) {
-    _pdfjsLib = await import('pdfjs-dist');
-    // Point to the worker file bundled in public/pdf.worker.min.mjs.
-    // In Tauri, static files from public/ are served at the root path.
-    // We use window.location.origin to build the full URL so pdf.js accepts it.
+    // In Tauri, public/ static files are served at the root path. Build an
+    // absolute URL from the current origin so the native import resolves in
+    // both dev (http://localhost:PORT) and the packaged app (tauri://localhost).
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    _pdfjsLib = (await import(
+      /* webpackIgnore: true */ `${origin}/pdf.min.mjs`
+    )) as unknown as typeof import('pdfjs-dist');
     _pdfjsLib.GlobalWorkerOptions.workerSrc = `${origin}/pdf.worker.min.mjs`;
   }
   return _pdfjsLib;
@@ -107,17 +119,32 @@ function cleanExtractedText(text: string): string {
 // PDF EXTRACTION
 // ============================================================================
 
+/** One positioned text token straight from pdf.js (page space, y grows upward). */
+export interface PdfToken {
+  x: number;
+  y: number;
+  str: string;
+}
+
 /**
- * Extract text from a PDF file (as ArrayBuffer or Uint8Array).
+ * Core single pass over a PDF. ONE getDocument + ONE page loop produces BOTH
+ * products: `text` (flattened, spatially-aware, unit-protected — for NER / rad
+ * findings) and `tokens` (raw per-page {x,y,str}, PRE-clean — for the geometry
+ * lab-grid extractor). Built this way on purpose so a big PDF is only parsed
+ * once even though two very different consumers need two different views of it.
  */
-export async function extractTextFromPdf(data: ArrayBuffer | Uint8Array): Promise<string> {
+export async function extractTextAndTokensFromPdf(
+  data: ArrayBuffer | Uint8Array
+): Promise<{ text: string; tokens: PdfToken[][] }> {
   const pdfjsLib = await getPdfjs();
   const pdf = await pdfjsLib.getDocument({
     data,
     useWorkerFetch: false,
     disableAutoFetch: false,
   } as any).promise;
+
   const pages: string[] = [];
+  const tokens: PdfToken[][] = [];
 
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i);
@@ -126,10 +153,16 @@ export async function extractTextFromPdf(data: ArrayBuffer | Uint8Array): Promis
     // Build text with spatial awareness
     let lastY: number | null = null;
     let pageText = '';
+    const pageToks: PdfToken[] = [];
 
     for (const item of content.items) {
       if ('str' in item) {
-        const y = (item as any).transform?.[5] || 0;
+        const tf = (item as any).transform;
+        const x = tf?.[4] ?? 0;
+        const y = tf?.[5] ?? 0;
+
+        // Raw token (untouched, pre-clean) for the geometry extractor.
+        if (item.str.trim()) pageToks.push({ x, y, str: item.str.trim() });
 
         // New line if Y position changed significantly
         if (lastY !== null && Math.abs(y - lastY) > 5) {
@@ -144,10 +177,64 @@ export async function extractTextFromPdf(data: ArrayBuffer | Uint8Array): Promis
     }
 
     pages.push(pageText.trim());
+    tokens.push(pageToks);
   }
 
   const rawText = pages.join('\n\n--- Page Break ---\n\n');
-  return cleanExtractedText(rawText);
+  return { text: cleanExtractedText(rawText), tokens };
+}
+
+/**
+ * Extract text from a PDF file (as ArrayBuffer or Uint8Array). Thin wrapper over
+ * the single-pass core — the flattened-prose product only.
+ */
+export async function extractTextFromPdf(data: ArrayBuffer | Uint8Array): Promise<string> {
+  return (await extractTextAndTokensFromPdf(data)).text;
+}
+
+// ============================================================================
+// GEOMETRY EXTRACTION (lab grids)
+// ============================================================================
+//
+// The flattened-text path above is right for narrative/rad reports, but it
+// DISCARDS the per-token x-position and then `cleanExtractedText` mangles units
+// (`x10E3/uL` → `x10E3/u L`). Lab GRID tables (LabCorp, CareSpace/Epic) need the
+// raw geometry to reconstruct columns by x. So this second exit returns the
+// untouched per-page tokens from the SAME pdf.js pass — no flatten, no clean.
+// `lab-geometry.ts` consumes these; the prose path keeps using extractTextFromPdf.
+
+/** Raw, unmodified positioned tokens per page (PRE-clean). Thin wrapper over the
+ *  single-pass core — the geometry product only. */
+export async function extractPdfTokens(
+  data: ArrayBuffer | Uint8Array
+): Promise<PdfToken[][]> {
+  return (await extractTextAndTokensFromPdf(data)).tokens;
+}
+
+/** Decode a base64 file to bytes (PDFs, text, images all start here). */
+function base64ToBytes(base64Data: string): Uint8Array {
+  const binaryString = atob(base64Data);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
+  return bytes;
+}
+
+/**
+ * Extract BOTH products from a base64 file in one pass: flattened `text` (for
+ * NER/rad findings) and per-page `tokens` (for the geometry lab extractor).
+ * Non-PDF inputs return their text with `tokens: []` (geometry needs a PDF).
+ * This is the entry point the document uploader uses so the file is parsed once.
+ */
+export async function extractDocFromBase64(
+  base64Data: string,
+  fileType: string,
+  filename: string
+): Promise<{ text: string; tokens: PdfToken[][] }> {
+  if (fileType === 'application/pdf' || filename.toLowerCase().endsWith('.pdf')) {
+    return extractTextAndTokensFromPdf(base64ToBytes(base64Data));
+  }
+  // Non-PDF: reuse the text-only path, no geometry tokens.
+  return { text: await extractTextFromBase64(base64Data, fileType, filename), tokens: [] };
 }
 
 /**

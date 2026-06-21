@@ -11,7 +11,7 @@
  */
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import AppCanvas from "@/components/app-canvas"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -52,6 +52,18 @@ export default function ImportRecordsPage() {
   const [lastBatch, setLastBatch] = useState<string | null>(null)
   const [lastLabBatch, setLastLabBatch] = useState<string | null>(null)
   const isMobile = useIsMobilePlatform()
+
+  // Lab-only entry point: the Labs dashboard's "Import from PDF" links here with
+  // ?mode=lab, so we run the uploader lab-only (NER skipped — a panel name like
+  // "Myositis Panel" can't be misread as a diagnosis) and show lab-focused copy.
+  // Read from window (not useSearchParams) to avoid the static-export Suspense
+  // requirement; this route is desktop client-only anyway.
+  const [labOnly, setLabOnly] = useState(false)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setLabOnly(new URLSearchParams(window.location.search).get("mode") === "lab")
+    }
+  }, [])
 
   // Mobile guard — rendered instead of the uploader on mobile builds.
   if (isMobile) {
@@ -188,16 +200,31 @@ export default function ImportRecordsPage() {
       <div className="max-w-4xl mx-auto space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-main)] flex items-center gap-2">
-            <FileText className="h-6 w-6" />
-            Import Medical Records
+            {labOnly ? <FlaskConical className="h-6 w-6" /> : <FileText className="h-6 w-6" />}
+            {labOnly ? "Import Lab Results" : "Import Medical Records"}
           </h1>
           <p className="text-sm text-[var(--text-muted)] mt-1">
-            Two paths: medical documents (visit notes, summaries, imaging) go
-            through the NER extractor and land on your timeline. Lab panels go
-            through a number-anchored parser and land on your Labs dashboard.
-            Pick the right one — lab panels through the medical parser will
-            try to diagnose you with the test name. Runs locally — your
-            documents never leave this computer.
+            {labOnly ? (
+              <>
+                Lab panels run through a number-anchored parser that reads each
+                value, unit, and reference range by its position on the page,
+                then land on your Labs dashboard with trends. NER is skipped here
+                so a panel name like “Myositis Panel” can’t be misread as a
+                diagnosis. Runs locally — your documents never leave this computer.
+              </>
+            ) : (
+              <>
+                Drop any medical document — visit notes, summaries, imaging,
+                even lab panels. Every file runs through both the NER extractor
+                and the lab parser, then a review screen lets you uncheck anything
+                that doesn’t belong before it lands on your timeline or Labs
+                dashboard. Have a pure lab panel?{" "}
+                <a href="/import?mode=lab" className="underline text-[var(--text-main)]">
+                  Use the lab-only importer
+                </a>{" "}
+                to skip NER. Runs locally — your documents never leave this computer.
+              </>
+            )}
           </p>
         </div>
 
@@ -246,18 +273,16 @@ export default function ImportRecordsPage() {
 
         <section className="space-y-2">
           <h2 className="text-lg font-semibold text-[var(--text-main)] flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            Upload Medical Records
+            {labOnly ? <FlaskConical className="h-5 w-5" /> : <FileText className="h-5 w-5" />}
+            {labOnly ? "Upload Lab Panels" : "Upload Medical Records"}
           </h2>
           <p className="text-xs text-[var(--text-muted)]">
-            Visit notes, after-visit summaries, imaging reports, lab panels —
-            drop them all here. The parser runs both medical (NER) and lab
-            (number-anchored) extraction on every document, then shows you a
-            review screen with checkboxes so you can uncheck anything that
-            doesn't belong before it lands on your timeline or Lab Results.
+            {labOnly
+              ? "Drop your LabCorp / Quest / hospital lab PDFs here. We read the columns by position — value, unit, reference range, abnormal flag — and surface them on your Labs dashboard with trends. Upload the PDF (don't paste text): the column positions only exist in the file."
+              : "Visit notes, after-visit summaries, imaging reports, lab panels — drop them all here. The parser runs both medical (NER) and lab (number-anchored) extraction on every document, then shows you a review screen with checkboxes so you can uncheck anything that doesn't belong before it lands on your timeline or Lab Results."}
           </p>
           <DocumentUploader
-            mode="auto"
+            mode={labOnly ? "lab" : "auto"}
             onEventsExtracted={handleEventsExtracted}
             onLabsExtracted={handleLabsExtracted}
           />

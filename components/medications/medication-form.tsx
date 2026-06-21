@@ -438,7 +438,7 @@ export function MedicationForm({
                 />
                 <Label htmlFor="requiresFood" className="cursor-pointer">
                   Take with food:{" "}
-                  <span className={`font-semibold ${formData.requiresFood ? 'text-[var(--accent-primary)]' : 'text-[var(--text-muted)]'}`}>
+                  <span className={`font-semibold ${formData.requiresFood ? 'text-primary' : 'text-[var(--text-muted)]'}`}>
                     {formData.requiresFood ? 'Yes' : 'No'}
                   </span>
                 </Label>

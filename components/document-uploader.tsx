@@ -39,8 +39,8 @@ import { CATEGORIES, SUBCATEGORIES, formatDateForStorage } from '@/lib/database/
 
 // 🧠 Local NER — Transformers.js, no backend needed
 import { extractMedicalEvents, isModelLoaded } from '@/lib/services/medical-ner';
-import { extractLabResults, labResultsToEvents } from '@/lib/services/lab-parser';
-import { extractTextFromBase64 } from '@/lib/services/text-extractor';
+import { extractLabResults, extractLabResultsSmart, labResultsToEvents } from '@/lib/services/lab-parser';
+import { extractDocFromBase64 } from '@/lib/services/text-extractor';
 
 // 🧠 Medical Document Parser interfaces
 interface ParsedMedicalEvent {
@@ -108,6 +108,22 @@ export interface ExtractedLabResult {
   is_abnormal: boolean;
   context: string;
   confidence: number;
+  /** ISO collection date parsed from the report (e.g. CareSpace per-result
+   *  "Date/Time"), when present. Used to default the file's collection date. */
+  collection_date?: string;
+}
+
+/** Most common collection_date across a file's rows (reports usually share one
+ *  collection date). Returns null if none of the rows carried a parsed date. */
+function mostCommonCollectionDate(labs: ExtractedLabResult[]): string | null {
+  const counts = new Map<string, number>();
+  for (const l of labs) {
+    if (l.collection_date) counts.set(l.collection_date, (counts.get(l.collection_date) ?? 0) + 1);
+  }
+  let best: string | null = null;
+  let bestN = 0;
+  for (const [d, n] of counts) if (n > bestN) { best = d; bestN = n; }
+  return best;
 }
 
 export interface ExtractedLabBatch {
@@ -280,12 +296,14 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
           _included: true,
         }))
         setAllParsedLabs(prev => [...prev, ...queued]);
-        // Initialize this file's date to today so the date input has a
-        // sensible default; user can edit before approving.
+        // Default this file's collection date to the date parsed FROM the report
+        // (CareSpace per-result "Date/Time") when present, else today. User can
+        // still edit before approving.
+        const parsedFileDate = mostCommonCollectionDate(result.mappedLabs);
         setLabFileDates(prev =>
           prev[uploadedFile.file.name]
             ? prev
-            : { ...prev, [uploadedFile.file.name]: new Date().toISOString().split('T')[0] }
+            : { ...prev, [uploadedFile.file.name]: parsedFileDate || new Date().toISOString().split('T')[0] }
         );
       }
 
@@ -343,11 +361,16 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
         console.log('ℹ️ No demographics data found — parsing without personal info filter');
       }
 
-      // Step 1: Extract text from file
+      // Step 1: Extract text from file. One pdf.js pass yields BOTH the
+      // flattened text (for NER) and the positioned tokens (for the geometry
+      // lab-grid extractor).
       let extractedText: string;
+      let pdfTokens: import('@/lib/services/text-extractor').PdfToken[][] = [];
       try {
-        extractedText = await extractTextFromBase64(base64Data, file.type, file.name);
-        console.log(`📄 Extracted ${extractedText.length} characters from ${file.name}`);
+        const doc = await extractDocFromBase64(base64Data, file.type, file.name);
+        extractedText = doc.text;
+        pdfTokens = doc.tokens;
+        console.log(`📄 Extracted ${extractedText.length} characters (${pdfTokens.length} page(s) of tokens) from ${file.name}`);
       } catch (pdfErr) {
         console.error('PDF extraction failed:', pdfErr);
         throw new Error(`PDF text extraction failed: ${pdfErr instanceof Error ? pdfErr.message : 'Unknown error'}`);
@@ -375,7 +398,7 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
 
       // Step 3: Extract lab results (skipped in medical-only mode — lab
       // panels go through their own dedicated upload path).
-      const labResults = mode === 'medical' ? [] : extractLabResults(extractedText, demographics);
+      const labResults = mode === 'medical' ? [] : await extractLabResultsSmart(pdfTokens, extractedText, demographics);
 
       // Map LabResult → ExtractedLabResult (consumer-friendly snake_case).
       const mappedLabs: ExtractedLabResult[] = labResults.map(l => ({
@@ -390,6 +413,7 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
         is_abnormal: l.isAbnormal,
         context: l.context,
         confidence: l.confidence,
+        collection_date: l.date,
       }));
 
       // 'auto' mode: surface labs in the review queue (handled by caller via
@@ -400,7 +424,7 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
       if (mode === 'lab' && onLabsExtracted && mappedLabs.length > 0) {
         onLabsExtracted({
           filename: file.name,
-          date: new Date().toISOString().split('T')[0],
+          date: mostCommonCollectionDate(mappedLabs) || new Date().toISOString().split('T')[0],
           results: mappedLabs,
         });
         console.log(`🧪 ${mappedLabs.length} lab results auto-saved (lab mode)`);
@@ -720,6 +744,7 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
           is_abnormal: l.isAbnormal,
           context: l.context,
           confidence: l.confidence,
+          collection_date: l.date,
         }));
         onLabsExtracted({
           filename: 'Pasted Notes',
@@ -1236,7 +1261,7 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
                           type="text"
                           value={event.title}
                           onChange={(e) => handleEditEvent(event.id, 'title', e.target.value)}
-                          className="font-semibold text-[var(--text-main)] bg-white border border-blue-300 rounded px-2 py-1 flex-1"
+                          className="font-semibold text-[var(--text-main)] bg-[var(--surface-2)] border border-blue-300 rounded px-2 py-1 flex-1"
                           placeholder="Event title..."
                         />
                       ) : (
@@ -1263,7 +1288,7 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
                             type="date"
                             value={event.date}
                             onChange={(e) => handleEditEvent(event.id, 'date', e.target.value)}
-                            className="ml-2 text-[var(--text-main)] bg-white border border-blue-300 rounded px-1"
+                            className="ml-2 text-[var(--text-main)] bg-[var(--surface-2)] border border-blue-300 rounded px-1"
                           />
                         ) : (
                           <span className="ml-2 text-[var(--text-main)] cursor-pointer hover:text-blue-600"
@@ -1278,7 +1303,7 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
                           <select
                             value={event.type}
                             onChange={(e) => handleEditEvent(event.id, 'type', e.target.value)}
-                            className="ml-2 text-[var(--text-main)] bg-white border border-blue-300 rounded px-1"
+                            className="ml-2 text-[var(--text-main)] bg-[var(--surface-2)] border border-blue-300 rounded px-1"
                           >
                             <option value="diagnosis">Diagnosis</option>
                             <option value="surgery">Surgery</option>
@@ -1388,13 +1413,13 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
 
                               handleEditEvent(event.id, 'incidentalFindings', updatedFindings);
                             }}
-                            className="w-full text-sm text-destructive bg-white border border-destructive/30 rounded p-2 min-h-32"
+                            className="w-full text-sm text-destructive bg-[var(--surface-2)] border border-destructive/30 rounded p-2 min-h-32"
                             placeholder="Edit findings... Format: Finding text\nWhy it matters (significance level)"
                           />
                         ) : (
                           <div className="space-y-2 cursor-pointer hover:bg-destructive/5" onClick={() => toggleEditMode(event.id)}>
                             {event.incidentalFindings.slice(0, 3).map((finding, idx) => (
-                              <div key={idx} className="bg-white/50 rounded p-2 border border-destructive/20">
+                              <div key={idx} className="bg-[var(--surface-2)]/50 rounded p-2 border border-destructive/20">
                                 <div className="font-medium text-destructive text-sm">{finding.finding}</div>
                                 <div className="text-xs text-destructive/80">{finding.whyItMatters}</div>
                                 <div className="flex gap-1 mt-1">
@@ -1423,11 +1448,11 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
                       <textarea
                         value={event.description}
                         onChange={(e) => handleEditEvent(event.id, 'description', e.target.value)}
-                        className="w-full text-sm text-[var(--text-main)] mb-2 bg-white border border-blue-300 rounded p-2 min-h-20"
+                        className="w-full text-sm text-[var(--text-main)] mb-2 bg-[var(--surface-2)] border border-blue-300 rounded p-2 min-h-20"
                         placeholder="Event description..."
                       />
                     ) : (
-                      <p className="text-sm text-[var(--text-main)] mb-2 bg-gray-50 rounded p-2 max-h-20 overflow-y-auto cursor-pointer hover:bg-blue-50"
+                      <p className="text-sm text-[var(--text-main)] mb-2 bg-[var(--surface-2)] rounded p-2 max-h-20 overflow-y-auto cursor-pointer hover:bg-[var(--surface-1)]"
                          onClick={() => toggleEditMode(event.id)}>
                         {event.description.length > 200 ?
                           `${event.description.substring(0, 200)}...` :
@@ -1491,8 +1516,7 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
                 <div className="flex gap-2 mt-2">
                   <Button
                     size="sm"
-                    className="bg-[var(--accent-primary)] text-[var(--accent-text,white)] hover:opacity-90 flex-1 font-medium"
-                    style={{ color: 'white', textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}
+                    className="bg-primary text-primary-foreground hover:bg-primary/90 flex-1 font-medium"
                     onClick={() => {
                       handleConfirmSingleEvent(event);
                       setAllParsedEvents(prev => prev.filter(e => e.id !== event.id));
@@ -1572,7 +1596,7 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
                               onChange={(e) =>
                                 setLabFileDates(prev => ({ ...prev, [filename]: e.target.value }))
                               }
-                              className="border border-[var(--border-soft)] rounded px-2 py-0.5 bg-white text-[var(--text-main)]"
+                              className="border border-[var(--border-soft)] rounded px-2 py-0.5 bg-[var(--surface-2)] text-[var(--text-main)]"
                             />
                           </label>
                         </div>
@@ -1582,7 +1606,7 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
                               key={lab._id}
                               className={`flex items-center gap-2 p-2 rounded border text-sm transition-colors ${
                                 lab._included
-                                  ? 'border-[var(--border-soft)] bg-white dark:bg-[var(--surface-2)]'
+                                  ? 'border-[var(--border-soft)] bg-[var(--surface-2)] dark:bg-[var(--surface-2)]'
                                   : 'border-dashed border-[var(--border-soft)] opacity-50'
                               }`}
                             >
@@ -1608,7 +1632,7 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
                                     )
                                   )
                                 }
-                                className="font-medium text-[var(--text-main)] bg-transparent border border-transparent hover:border-[var(--border-soft)] focus:border-blue-300 focus:bg-white rounded px-1 py-0.5 flex-1 min-w-0"
+                                className="font-medium text-[var(--text-main)] bg-transparent border border-transparent hover:border-[var(--border-soft)] focus:border-blue-300 focus:bg-[var(--surface-2)] rounded px-1 py-0.5 flex-1 min-w-0"
                                 title="Edit test name"
                               />
                               <input
@@ -1621,7 +1645,7 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
                                     )
                                   )
                                 }
-                                className="font-mono text-[var(--text-main)] bg-transparent border border-transparent hover:border-[var(--border-soft)] focus:border-blue-300 focus:bg-white rounded px-1 py-0.5 w-24 text-right"
+                                className="font-mono text-[var(--text-main)] bg-transparent border border-transparent hover:border-[var(--border-soft)] focus:border-blue-300 focus:bg-[var(--surface-2)] rounded px-1 py-0.5 w-24 text-right"
                                 title="Edit value"
                               />
                               <input
@@ -1634,7 +1658,7 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
                                     )
                                   )
                                 }
-                                className="font-mono text-[var(--text-muted)] bg-transparent border border-transparent hover:border-[var(--border-soft)] focus:border-blue-300 focus:bg-white rounded px-1 py-0.5 w-20 text-xs"
+                                className="font-mono text-[var(--text-muted)] bg-transparent border border-transparent hover:border-[var(--border-soft)] focus:border-blue-300 focus:bg-[var(--surface-2)] rounded px-1 py-0.5 w-20 text-xs"
                                 title="Edit unit"
                                 placeholder="unit"
                               />
@@ -1657,7 +1681,7 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
             <div className="flex gap-3 justify-center pt-4 border-t border-[var(--border-soft)] flex-wrap">
               <Button
                 onClick={handleConfirmEvents}
-                className="bg-[var(--accent-primary,#a78bfa)] text-white hover:opacity-90 font-semibold"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
               >
                 <CheckCircle className="h-4 w-4 mr-2" />
                 Save Approved

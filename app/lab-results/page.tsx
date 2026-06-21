@@ -344,7 +344,7 @@ export default function LabResultsPage() {
       <div className="max-w-4xl mx-auto">
         <header className="text-center mb-6">
           <h1 className="text-3xl font-bold text-[var(--text-main)] mb-2 flex items-center justify-center gap-2">
-            <TestTube className="h-8 w-8 text-blue-500" />
+            <TestTube className="h-8 w-8 text-primary" />
             Lab Results
           </h1>
           <p className="text-sm text-[var(--text-muted)]">
@@ -358,7 +358,7 @@ export default function LabResultsPage() {
             <div className="flex flex-col sm:flex-row gap-3">
               <Button
                 asChild
-                className="flex-1 h-12 text-base bg-[var(--accent-primary)] text-[var(--text-main)] hover:opacity-90 font-medium border-2 border-[var(--accent-primary)]"
+                className="flex-1 h-12 text-base font-medium"
               >
                 <a href="/add">
                   <Plus className="h-5 w-5 mr-2" />
@@ -370,7 +370,7 @@ export default function LabResultsPage() {
                 variant="outline"
                 className="flex-1 h-12 text-base border-[var(--border-soft)] text-[var(--text-main)]"
               >
-                <a href="/import">
+                <a href="/import?mode=lab">
                   <FileText className="h-5 w-5 mr-2" />
                   Import from PDF (desktop)
                 </a>
@@ -512,7 +512,7 @@ export default function LabResultsPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/20 h-9 w-9 p-0"
+                          className="text-primary hover:opacity-80 hover:bg-[var(--surface-2)] h-9 w-9 p-0"
                           onClick={(e) => {
                             e.stopPropagation()
                             handleAddToTimeline(report, false)
@@ -704,7 +704,7 @@ export default function LabResultsPage() {
                                       </td>
                                       <td className="py-2">
                                         <div className="flex gap-1">
-                                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 min-h-[44px] min-w-[44px] text-blue-500"
+                                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 min-h-[44px] min-w-[44px] text-primary"
                                             onClick={() => startEdit(report.id, idx, result)} title="Edit">
                                             <Edit3 className="h-3 w-3" />
                                           </Button>

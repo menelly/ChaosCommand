@@ -14,6 +14,8 @@
  */
 
 import { buildExclusionSet, type MedicalEvent } from './medical-ner';
+import { extractLabResultsGeometry, resolveLabNamesWithNer } from './lab-geometry';
+import type { PdfToken } from './text-extractor';
 
 // ============================================================================
 // TYPES
@@ -37,6 +39,10 @@ export interface LabResult {
   isAbnormal: boolean;
   context: string;
   confidence: number;
+  /** ISO collection date (YYYY-MM-DD) parsed from a per-result "Date/Time …"
+   *  field when the report carries one (CareSpace). Undefined otherwise — the
+   *  consumer falls back to the file-level / today's date. */
+  date?: string;
 }
 
 // ============================================================================
@@ -606,6 +612,62 @@ export function extractLabResults(
 
   console.log(`🧪 Lab parser: ${finalResults.length} results via ${finalParser}`)
   return sortLabResults(finalResults)
+}
+
+/**
+ * Geometry-first lab extraction for PDFs (CHA-367). Runs the column-aware
+ * geometry extractor on the PDF's positioned tokens; if it finds grid rows
+ * (LabCorp, CareSpace/Epic), those win — they read units raw and reconstruct
+ * columns by x instead of regexing flattened text. If geometry finds nothing
+ * (inline-prose formats like Quest, or a non-grid doc), falls through to the
+ * existing text parsers via extractLabResults().
+ *
+ * `tokens` comes from extractTextAndTokensFromPdf (same single pdf.js pass that
+ * produced `text`). Callers without a PDF (pasted text) keep calling
+ * extractLabResults directly — geometry needs the geometry.
+ */
+export async function extractLabResultsSmart(
+  tokens: PdfToken[][],
+  text: string,
+  demographics?: Record<string, any> | null
+): Promise<LabResult[]> {
+  const nameExclusions = buildExclusionSet(demographics);
+  const rawGeometry =
+    tokens.length > 0 ? extractLabResultsGeometry(tokens, nameExclusions) : [];
+  // Clean metadata-polluted names with the NER model (geometry does columns; the
+  // model decides which token is the analyte). Falls back to raw names on failure.
+  const geometryResults =
+    rawGeometry.length > 0 ? await resolveLabNamesWithNer(rawGeometry) : [];
+
+  if (geometryResults.length > 0) {
+    // Persist a diagnostic trace so the import page can show geometry won and
+    // how many rows it pulled (parity with the text-parser trace below).
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const diag: LabParserDiagnostics = {
+          timestamp: new Date().toISOString(),
+          textLength: text.length,
+          textSample: text.slice(0, 3000),
+          attempts: [{
+            parser: 'result-range', // closest existing enum; label clarifies
+            detectionPassed: true,
+            detectionReason: `Geometry grid extractor: ${geometryResults.length} rows from ${tokens.length} page(s)`,
+            resultsFound: geometryResults.length,
+            sampleResults: geometryResults.slice(0, 3).map(r => `${r.testName}: ${r.valueText} ${r.unit}`),
+          }],
+          finalResultsCount: geometryResults.length,
+          finalParser: 'result-range',
+        };
+        localStorage.setItem(DIAG_KEY, JSON.stringify(diag));
+      }
+    } catch { /* localStorage full or blocked — fail silent */ }
+
+    console.log(`🧪 Lab parser: ${geometryResults.length} results via geometry`);
+    return sortLabResults(geometryResults);
+  }
+
+  // No grid → existing text-parser dispatch (writes its own diagnostics).
+  return extractLabResults(text, demographics);
 }
 
 /** Read the most recent parser diagnostic trace, if any. */

@@ -84,3 +84,6 @@ src-tauri/binaries/
 HANDOFF*.md
 HANDOFF*.txt
 a11y-report.md
+
+# Real medical PDFs for NER recon — NEVER COMMIT (PHI). Synthetic fixtures only in tests.
+.phi-scratch/

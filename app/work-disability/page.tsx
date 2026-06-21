@@ -423,7 +423,7 @@ export default function WorkDisabilityPage() {
               <div className="flex gap-2 mb-4">
                 <Button
                   onClick={() => setShowMissedForm(true)}
-                  className="flex-1 bg-[var(--accent-primary)] text-[var(--text-main)] hover:opacity-90 font-medium border-2 border-[var(--accent-primary)]"
+                  className="flex-1 bg-primary text-[var(--text-main)] hover:opacity-90 font-medium border-2 border-primary"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Log Missed Work Day
@@ -503,7 +503,7 @@ export default function WorkDisabilityPage() {
                           onClick={() => setMissedForm(f => ({ ...f, workType: wt.value }))}
                           className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-sm border transition-all ${
                             missedForm.workType === wt.value
-                              ? 'bg-[var(--accent-primary)] text-[var(--text-main)] border-[var(--accent-primary)] font-medium'
+                              ? 'bg-primary text-[var(--text-main)] border-primary font-medium'
                               : 'bg-[var(--bg-card)] text-[var(--text-main)] border-[var(--border-soft)]'
                           }`}
                         >
@@ -555,7 +555,7 @@ export default function WorkDisabilityPage() {
                             onClick={() => setMissedForm(f => ({ ...f, duration: d }))}
                             className={`flex-1 px-3 py-2 rounded-lg text-sm border transition-all ${
                               missedForm.duration === d
-                                ? 'bg-[var(--accent-primary)] text-[var(--text-main)] border-[var(--accent-primary)] font-medium'
+                                ? 'bg-primary text-[var(--text-main)] border-primary font-medium'
                                 : 'bg-[var(--bg-card)] text-[var(--text-main)] border-[var(--border-soft)]'
                             }`}
                                                       >
@@ -627,7 +627,7 @@ export default function WorkDisabilityPage() {
                     <Button
                       onClick={saveMissedDay}
                       disabled={!missedForm.reason.trim()}
-                      className="flex-1 bg-[var(--accent-primary)] text-[var(--text-main)] hover:opacity-90 font-medium border-2 border-[var(--accent-primary)]"
+                      className="flex-1 bg-primary text-[var(--text-main)] hover:opacity-90 font-medium border-2 border-primary"
                     >
                       <CheckCircle className="h-4 w-4 mr-2" />
                       {editingMissedId ? 'Update Day' : 'Log Day'}
@@ -714,7 +714,7 @@ export default function WorkDisabilityPage() {
             {!showEmploymentForm && (
               <Button
                 onClick={() => setShowEmploymentForm(true)}
-                className="w-full mb-4 bg-[var(--accent-primary)] text-[var(--text-main)] hover:opacity-90 font-medium border-2 border-[var(--accent-primary)]"
+                className="w-full mb-4 bg-primary text-[var(--text-main)] hover:opacity-90 font-medium border-2 border-primary"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Employment
@@ -804,7 +804,7 @@ export default function WorkDisabilityPage() {
                   </div>
                   <div className="flex gap-3">
                     <Button onClick={saveEmployment} disabled={!employmentForm.employer.trim()}
-                      className="flex-1 bg-[var(--accent-primary)] text-[var(--text-main)] hover:opacity-90 font-medium border-2 border-[var(--accent-primary)]">
+                      className="flex-1 bg-primary text-[var(--text-main)] hover:opacity-90 font-medium border-2 border-primary">
                       <CheckCircle className="h-4 w-4 mr-2" /> {editingEmploymentId ? 'Update Employment' : 'Save Employment'}
                     </Button>
                     <Button variant="outline" onClick={() => setShowEmploymentForm(false)}
@@ -875,7 +875,7 @@ export default function WorkDisabilityPage() {
             {!showAppForm && (
               <Button
                 onClick={() => setShowAppForm(true)}
-                className="w-full mb-4 bg-[var(--accent-primary)] text-[var(--text-main)] hover:opacity-90 font-medium border-2 border-[var(--accent-primary)]"
+                className="w-full mb-4 bg-primary text-[var(--text-main)] hover:opacity-90 font-medium border-2 border-primary"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Application
@@ -894,7 +894,7 @@ export default function WorkDisabilityPage() {
                             onClick={() => setAppForm(f => ({ ...f, applicationType: t }))}
                             className={`px-3 py-1 rounded-full text-sm border transition-all ${
                               appForm.applicationType === t
-                                ? 'bg-[var(--accent-primary)] text-[var(--text-main)] border-[var(--accent-primary)] font-medium'
+                                ? 'bg-primary text-[var(--text-main)] border-primary font-medium'
                                 : 'bg-[var(--bg-card)] text-[var(--text-main)] border-[var(--border-soft)]'
                             }`}
                                                       >{t}</button>
@@ -985,7 +985,7 @@ export default function WorkDisabilityPage() {
                   </div>
                   <div className="flex gap-3">
                     <Button onClick={saveApplication}
-                      className="flex-1 bg-[var(--accent-primary)] text-[var(--text-main)] hover:opacity-90 font-medium border-2 border-[var(--accent-primary)]">
+                      className="flex-1 bg-primary text-[var(--text-main)] hover:opacity-90 font-medium border-2 border-primary">
                       <CheckCircle className="h-4 w-4 mr-2" /> {editingAppId ? 'Update Application' : 'Save Application'}
                     </Button>
                     <Button variant="outline" onClick={() => setShowAppForm(false)}

@@ -134,7 +134,7 @@ export default function SettingsPage() {
                     openModal(category.id)
                   }
                 }}
-                className="cursor-pointer hover:shadow-lg hover:ring-2 hover:ring-[var(--accent-primary)] transition-all"
+                className="cursor-pointer hover:shadow-lg hover:ring-2 hover:ring-primary transition-all"
               >
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -163,7 +163,7 @@ export default function SettingsPage() {
                 window.location.href = '/sync'
               }
             }}
-            className="cursor-pointer hover:shadow-lg hover:ring-2 hover:ring-[var(--accent-primary)] transition-all"
+            className="cursor-pointer hover:shadow-lg hover:ring-2 hover:ring-primary transition-all"
           >
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -189,7 +189,7 @@ export default function SettingsPage() {
                 openModal('updates')
               }
             }}
-            className="cursor-pointer hover:shadow-lg hover:ring-2 hover:ring-[var(--accent-primary)] transition-all"
+            className="cursor-pointer hover:shadow-lg hover:ring-2 hover:ring-primary transition-all"
           >
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -224,7 +224,7 @@ export default function SettingsPage() {
                 }
               }
             }}
-            className="cursor-pointer hover:shadow-lg hover:ring-2 hover:ring-[var(--accent-primary)] transition-all"
+            className="cursor-pointer hover:shadow-lg hover:ring-2 hover:ring-primary transition-all"
           >
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

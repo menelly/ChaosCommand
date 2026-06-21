@@ -264,14 +264,14 @@ export default function AddToTimelinePage() {
           <TabsList className="grid grid-cols-2 w-full h-12 bg-[var(--bg-card)] border border-[var(--border-soft)]">
             <TabsTrigger
               value="event"
-              className="text-base data-[state=active]:bg-[var(--accent-primary)] data-[state=active]:text-[var(--text-main)]"
+              className="text-base data-[state=active]:bg-primary data-[state=active]:text-[var(--text-main)]"
             >
               <Stethoscope className="h-4 w-4 mr-2" />
               Event
             </TabsTrigger>
             <TabsTrigger
               value="lab"
-              className="text-base data-[state=active]:bg-[var(--accent-primary)] data-[state=active]:text-[var(--text-main)]"
+              className="text-base data-[state=active]:bg-primary data-[state=active]:text-[var(--text-main)]"
             >
               <FlaskConical className="h-4 w-4 mr-2" />
               Lab Result
@@ -446,7 +446,7 @@ export default function AddToTimelinePage() {
                 <Button
                   onClick={handleSaveEvent}
                   disabled={!eventForm.title.trim() || eventSaving}
-                  className="w-full h-12 text-base bg-[var(--accent-primary)] text-[var(--text-main)] hover:opacity-90 font-medium border-2 border-[var(--accent-primary)]"
+                  className="w-full h-12 text-base bg-primary text-[var(--text-main)] hover:opacity-90 font-medium border-2 border-primary"
                 >
                   <CheckCircle className="h-5 w-5 mr-2" />
                   {eventSaving ? "Saving…" : "Save Event"}
@@ -580,7 +580,7 @@ export default function AddToTimelinePage() {
                 <Button
                   onClick={handleSaveLab}
                   disabled={!labForm.test_name.trim() || labSaving}
-                  className="w-full h-12 text-base bg-[var(--accent-primary)] text-[var(--text-main)] hover:opacity-90 font-medium border-2 border-[var(--accent-primary)]"
+                  className="w-full h-12 text-base bg-primary text-[var(--text-main)] hover:opacity-90 font-medium border-2 border-primary"
                 >
                   <CheckCircle className="h-5 w-5 mr-2" />
                   {labSaving ? "Saving…" : "Save Lab Result"}

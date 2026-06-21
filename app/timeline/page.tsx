@@ -1020,7 +1020,7 @@ export default function TimelinePage() {
                     selectMode ? 'cursor-pointer' : ''
                   } ${
                     selectMode && selectedIds.has(event.id)
-                      ? 'ring-2 ring-[var(--accent-primary,#a78bfa)] bg-[var(--surface-2)]'
+                      ? 'ring-2 ring-primary bg-[var(--surface-2)]'
                       : ''
                   } ${
                   event.type === 'dismissed_findings' ? 'border-l-4 border-l-muted-foreground bg-muted/50' : ''
@@ -1093,7 +1093,7 @@ export default function TimelinePage() {
                           <div
                             className={`h-6 w-6 rounded border-2 flex items-center justify-center ${
                               selectedIds.has(event.id)
-                                ? 'bg-[var(--accent-primary,#a78bfa)] border-[var(--accent-primary,#a78bfa)]'
+                                ? 'bg-primary border-primary'
                                 : 'border-[var(--border-soft)]'
                             }`}
                             aria-label={selectedIds.has(event.id) ? 'Selected' : 'Not selected'}
