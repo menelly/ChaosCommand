@@ -261,7 +261,7 @@ export default function ImportRecordsPage() {
                   )}
                 </div>
               </div>
-              <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white shrink-0">
+              <Button asChild className="shrink-0">
                 <a href="/lab-results">
                   <FlaskConical className="h-4 w-4 mr-2" />
                   Open Lab Results

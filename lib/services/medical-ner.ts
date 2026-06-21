@@ -10,6 +10,8 @@
  * Same model the Python backend used — just in ONNX format.
  */
 
+import { classifyAssertion } from './assertion';
+
 // Transformers.js is loaded dynamically to avoid SSG prerender issues
 // (new URL() calls in onnxruntime-web fail during Node.js-based static generation)
 type TokenClassificationPipeline = any;
@@ -670,7 +672,15 @@ export async function extractMedicalEvents(
     // impressions win over fragment-level NER tags.
     if (impressionTextLower && impressionTextLower.includes(key)) continue;
 
-    if (isNegated(chunk, ent.start, ent.end)) {
+    // Assertion (NegEx/ConText). Replaces the old 40-char window, which both
+    // surfaced negatives as positives AND — the dangerous one — suppressed real
+    // findings via pseudo-negation: "no change in thyroid nodule" matched a bare
+    // "no" and DROPPED the nodule, so a tracked finding the patient may never
+    // have been told about silently vanished. The engine's pseudo-negation guard
+    // keeps "no change in X" AFFIRMED. Only a TRUE negation ("no evidence of
+    // fracture") is dropped. (CHA-367 §3.B)
+    const { assertion } = classifyAssertion(chunk, ent.start, ent.end);
+    if (assertion === 'negated') {
       console.log(`🚫 NEGATED: '${ent.text}' — skipping`);
       continue;
     }
@@ -680,7 +690,26 @@ export async function extractMedicalEvents(
 
     if (section === 'technique') continue;
 
-    const speculative = isSpeculative(chunk, ent.start, ent.end);
+    // DISMISSED-FINDING SIGNALS — words clinicians use to WAVE OFF a finding the
+    // patient often was never actually told about. These do NOT mean harmless:
+    //   • "stable / no change"      → a finding that's being TRACKED (so it
+    //                                  exists, and someone is watching it).
+    //   • "congenital / developmental" → "you've always had it" — used to dismiss,
+    //                                  but it means LIFELONG and uninvestigated,
+    //                                  not benign. (Ren's record literally reads
+    //                                  "congenital nonunion of the posterior arch
+    //                                  of C1" — the canonical buried finding.)
+    //   • "normal/anatomic variant" → categorized-away as not-worth-discussing.
+    //   • "incidental"              → an unexpected finding noted in passing.
+    // All get flagged for review with language that does NOT wave them off.
+    const aroundEntity = chunk.slice(Math.max(0, ent.start - 70), ent.end + 25);
+    let dismissalSignal: '' | 'stability' | 'congenital' | 'variant' | 'incidental' = '';
+    if (/\b(?:no\s+(?:significant\s+)?(?:interval\s+)?change|stable|unchanged)\b/i.test(aroundEntity)) dismissalSignal = 'stability';
+    else if (/\b(?:congenital|developmental)\b/i.test(aroundEntity)) dismissalSignal = 'congenital';
+    else if (/\b(?:normal\s+variant|anatomic(?:al)?\s+variant|developmental\s+variant)\b/i.test(aroundEntity)) dismissalSignal = 'variant';
+    else if (/\bincidental(?:ly)?\b/i.test(aroundEntity)) dismissalSignal = 'incidental';
+
+    const speculative = assertion === 'speculative' || isSpeculative(chunk, ent.start, ent.end);
     seenKeys.add(key);
 
     let eventType = LABEL_TO_EVENT_TYPE[ent.label] || 'finding';
@@ -704,15 +733,25 @@ export async function extractMedicalEvents(
     const tags = [eventType, 'imported', 'ner'];
     if (section !== 'unknown') tags.push(`section:${section}`);
     if (speculative) tags.push('speculative');
+    if (dismissalSignal) { tags.push('potential-dismissed-finding'); tags.push(`dismissed:${dismissalSignal}`); }
 
     const suggestions: string[] = [];
     if (!nearestDate && !docDate) suggestions.push('Verify date', 'Add provider information');
     if (speculative) suggestions.push('Described as possible/suspected — confirm with provider');
+    // Dismissed-finding prompts — worded to NOT wave the finding off.
+    if (dismissalSignal === 'stability') suggestions.push('Described as "stable/unchanged" — a finding that\'s being tracked. Confirm a provider actually told you about it.');
+    else if (dismissalSignal === 'congenital') suggestions.push('Described as "congenital/developmental" — often used to wave a finding off, but it means lifelong, NOT harmless. Worth understanding and confirming it was ever explained to you.');
+    else if (dismissalSignal === 'variant') suggestions.push('Called a "variant" — make sure you understand what it is and whether it needs monitoring; don\'t let it be filed away unexplained.');
+    else if (dismissalSignal === 'incidental') suggestions.push('Noted as "incidental" — an unexpected finding that may still warrant follow-up. Ask whether it does.');
 
     // Confidence floor — skip noisy low-confidence detections rather than
     // surfacing them to the user-review queue. d4data on radiology / specialist
     // text produces a long tail of weak detections that overwhelm signal.
-    if (confidence < MIN_EVENT_CONFIDENCE) continue;
+    // EXCEPTION: a dismissal-flagged finding (congenital/stable/variant/
+    // incidental) is the whole point of this tool — never let the floor bury it.
+    // Findings-section weight (0.7) drops these to ~63%, under the 70 floor,
+    // which is exactly how the buried C1 non-union stayed buried.
+    if (confidence < MIN_EVENT_CONFIDENCE && !dismissalSignal) continue;
 
     const eventDate = nearestDate || docDate || new Date().toISOString().split('T')[0];
 
@@ -730,7 +769,7 @@ export async function extractMedicalEvents(
       tags,
       confidence,
       sources: ['ner'],
-      needs_review: (!nearestDate && !docDate) || speculative,
+      needs_review: (!nearestDate && !docDate) || speculative || !!dismissalSignal,
       suggestions,
       raw_text: context,
       dosage: null,
@@ -759,9 +798,23 @@ export async function extractMedicalEvents(
 
       const key = title.toLowerCase().trim();
       if (seenKeys.has(key)) continue;
+
+      // Assertion check — the impression parser used to surface EVERY bullet,
+      // including negatives ("No evidence of acute fracture" → a 95% diagnosis).
+      // Classify the title's assertion within its sentence and DROP negated
+      // ones. Pseudo-negation ("no interval change in the mass") is NOT negated,
+      // so real findings survive. (CHA-367 §3.B)
+      const titleStart = item.text.toLowerCase().indexOf(key);
+      const assertion = titleStart >= 0
+        ? classifyAssertion(item.text, titleStart, titleStart + key.length).assertion
+        : 'affirmed';
+      if (assertion === 'negated') {
+        console.log(`🚫 NEGATED impression item: '${title}' — skipping`);
+        continue;
+      }
       seenKeys.add(key);
 
-      const speculative = isSpeculative(item.text, 0, item.text.length);
+      const speculative = assertion === 'speculative' || isSpeculative(item.text, 0, item.text.length);
       const nearestDate = findNearestDate(item.text, datesFound, excludedDates);
 
       let eventType = 'diagnosis';
@@ -814,6 +867,84 @@ export async function extractMedicalEvents(
           event.suggestions.push('Finding in report body but NOT in impression — ask your provider');
         }
       }
+    }
+  }
+
+  // --- §3.C SENTENCE-LEVEL FINDINGS SCAN ---
+  // d4data is unreliable on radiology prose, so relying on it to TAG
+  // "congenital nonunion of the posterior arch of C1" is how that finding stayed
+  // buried. This pass reads the FINDINGS section sentence-by-sentence and
+  // surfaces any AFFIRMED finding carrying a dismissal word (congenital / stable
+  // / variant / incidental) whose content does NOT appear in the impression —
+  // regardless of whether NER tagged it. Gated on a dismissal word + not-in-
+  // impression so it stays low-noise (it isn't trying to surface every sentence).
+  if (findingsSection) {
+    const imprLow = impressionTextLower; // already lowercased, '|'-joined
+    const DISMISS_SENT = /\bcongenital\b|\bdevelopmental\b|\bnormal\s+variant\b|\banatomic(?:al)?\s+variant\b|\bincidental(?:ly)?\b|\bno\s+(?:significant\s+)?(?:interval\s+)?change\b|\bunchanged\b|\bstable\b/i;
+    // Hard negation that ISN'T pseudo — a real "no evidence of X" is not a finding.
+    const HARD_NEG = /\bno\s+evidence\s+of\b|\bnegative\s+for\b|\bruled?\s+out\b|\bnot\s+(?:seen|identified|present|appreciated)\b|\bis\s+absent\b/i;
+    const PSEUDO = /\bno\s+(?:significant\s+)?(?:interval\s+)?change\b|\bno\s+new\b/i;
+
+    const sentences = findingsSection.text
+      .split(/(?<=[.;])\s+|\n+/)
+      .map(s => s.trim())
+      .filter(s => s.length > 15);
+
+    for (const sent of sentences) {
+      const low = sent.toLowerCase();
+      const dm = low.match(DISMISS_SENT);
+      if (!dm) continue;
+      // Skip true negations (but keep "no change" — that's a dismissal signal).
+      if (HARD_NEG.test(low) && !PSEUDO.test(low)) continue;
+
+      // Reflected in the impression already? (significant words overlap)
+      const sigWords = low.match(/\b[a-z]{5,}\b/g) || [];
+      const overlap = sigWords.filter(w => imprLow.includes(w)).length;
+      const reflected = sigWords.length > 0 && overlap / sigWords.length >= 0.5;
+      if (reflected) continue;
+
+      // Dedupe against what we already surfaced.
+      let title = sent.replace(/^(?:there\s+is|there\s+are|note\s+is\s+made\s+of|noted\s+is|seen\s+is)\s+/i, '').trim();
+      title = title.replace(/\.$/, '').trim();
+      if (title.length > 90) title = title.slice(0, 87) + '...';
+      const titleKey = title.toLowerCase();
+      if (seenKeys.has(titleKey)) continue;
+      if (Array.from(seenKeys).some(k => k.length >= 6 && titleKey.includes(k))) continue;
+      seenKeys.add(titleKey);
+
+      const signal: 'congenital' | 'variant' | 'incidental' | 'stability' =
+        /congenital|developmental/i.test(dm[0]) ? 'congenital'
+        : /variant/i.test(dm[0]) ? 'variant'
+        : /incidental/i.test(dm[0]) ? 'incidental'
+        : 'stability';
+      const msg: Record<typeof signal, string> = {
+        congenital: 'In your report\'s FINDINGS but not the impression, described as "congenital" — lifelong does NOT mean harmless. Ask your provider to explain it and whether it needs monitoring.',
+        variant: 'In your report\'s FINDINGS but not the impression, filed as a "variant" — make sure you understand what it is and whether it matters for you.',
+        incidental: 'In your report\'s FINDINGS but not the impression, noted as "incidental" — an unexpected finding that may still warrant follow-up.',
+        stability: 'In your report\'s FINDINGS but not the impression, described as "stable/unchanged" — it\'s a tracked finding. Confirm a provider actually told you about it.',
+      };
+      const nearestDate = findNearestDate(sent, datesFound, excludedDates);
+
+      events.push({
+        id: `nlp-${Date.now()}-${eventCounter++}`,
+        type: 'finding',
+        title: `🔎 ${title}`,
+        date: nearestDate || docDate || new Date().toISOString().split('T')[0],
+        end_date: null,
+        provider: null,
+        location: null,
+        description: sent.slice(0, 300),
+        status: 'active',
+        severity: null,
+        tags: ['finding', 'imported', 'findings-scan', 'section:findings', 'potentially-dismissed', `dismissed:${signal}`],
+        confidence: 80,
+        sources: ['findings-scan'],
+        needs_review: true,
+        suggestions: [msg[signal]],
+        raw_text: sent,
+        dosage: null,
+        incidental_findings: [],
+      });
     }
   }
 

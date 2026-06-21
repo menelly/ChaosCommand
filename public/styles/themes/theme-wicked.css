@@ -157,6 +157,16 @@ body.theme-wicked select:focus {
 body.theme-wicked a { color: hsl(330 90% 70%); }
 body.theme-wicked a:hover { color: hsl(145 75% 62%); text-shadow: 0 0 8px rgba(120, 230, 160, 0.6); }
 
+/* …but a Button rendered asChild is an <a> with .bg-primary — it's a BUTTON, not
+   a link. Keep the deep-green Elphaba text on the pink Glinda button at rest AND
+   hover (the link pink→green rule above was washing pink-on-pink, then flipping
+   to green on hover). More specific than `a:hover`, so it wins. */
+body.theme-wicked a.bg-primary,
+body.theme-wicked a.bg-primary:hover {
+  color: hsl(var(--primary-foreground));
+  text-shadow: none;
+}
+
 /* Scrollbar — pink → green */
 body.theme-wicked ::-webkit-scrollbar { width: 12px; height: 12px; }
 body.theme-wicked ::-webkit-scrollbar-track { background: #160a1f; }

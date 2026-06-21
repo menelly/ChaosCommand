@@ -602,7 +602,31 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
 
     // 🔍 SMART LIST DETECTION: Check if this looks like a simple line-by-line list
     // (short lines, one item per line, typical of diagnosis/condition lists)
-    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    let lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+
+    // Run-together history-list recovery: a pasted condition list sometimes loses
+    // its newlines (Keep/clipboard quirks), arriving as one long line like
+    // "Diabetic - 2022 Lupus (SLE) - 2020 MCTD - 2012 …". LINES are the reliable
+    // delimiter — when they survive, each entry is already its own line and this
+    // never fires. ONLY when newlines are gone (≤2 lines) but several
+    // year-anchored entries exist do we recover by splitting on the
+    // "year → space → next-entry" boundary.
+    //
+    // The split point is a year followed by WHITESPACE then a NON-year token. So:
+    //   - "1998, 2012, 2015 Hx of…"  → the commas keep the three years together
+    //     (a comma after a year is not a split — it's a multi-date entry like
+    //     "3 c sections - 1998, 2012, 2015"); only "2015 Hx" splits.
+    //   - "2022 3 c sections"        → splits before "3" even though the next
+    //     entry starts with a digit ((?=\S), not a letter requirement).
+    const yearCount = (text.match(/\b(?:19|20)\d{2}\b/g) || []).length;
+    if (lines.length <= 2 && yearCount >= 3) {
+      const reSplit = text
+        .split(/(?<=\b(?:19|20)\d{2})\s+(?!(?:19|20)\d{2}\b)(?=\S)/)
+        .map(s => s.trim())
+        .filter(s => s.length > 2);
+      if (reSplit.length > lines.length) lines = reSplit;
+    }
+
     const avgLineLength = lines.reduce((sum, l) => sum + l.length, 0) / (lines.length || 1);
     const isSimpleList = lines.length >= 3 && avgLineLength < 60 && lines.every(l => l.length < 100);
 
@@ -663,6 +687,7 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
 
       // Try to extract a date
       let eventDate = new Date().toISOString().split('T')[0]; // Default to today
+      let dateFound = false;
       for (const pattern of datePatterns) {
         const match = chunk.match(pattern);
         if (match) {
@@ -670,11 +695,23 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
             const parsed = new Date(match[1]);
             if (!isNaN(parsed.getTime())) {
               eventDate = parsed.toISOString().split('T')[0];
+              dateFound = true;
               break;
             }
           } catch (e) {
             // Keep default date
           }
+        }
+      }
+      // Bare-year fallback: history entries are often just "Condition - 2012".
+      // If no fuller date matched, anchor the event to Jan 1 of that year (1900–
+      // current) instead of today. (A multi-year entry like "1998, 2012, 2015"
+      // takes the first — the user can adjust on the review screen.)
+      if (!dateFound) {
+        const yearMatch = chunk.match(/\b(19\d{2}|20\d{2})\b/);
+        if (yearMatch) {
+          const y = parseInt(yearMatch[1], 10);
+          if (y >= 1900 && y <= new Date().getFullYear()) eventDate = `${yearMatch[1]}-01-01`;
         }
       }
 
@@ -785,21 +822,29 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
       let events = await parseTextWithBackend(pastedText);
 
       if (events.length === 0) {
-        // If no structured events found, create a single generic event
-        const singleEvent: ParsedMedicalEvent = {
-          id: `paste-${Date.now()}`,
-          type: 'diagnosis',
-          title: 'Imported from notes',
-          date: new Date().toISOString().split('T')[0],
-          description: pastedText,
-          status: 'active',
-          tags: ['pasted', 'needs-review'],
-          confidence: 50,
-          sources: ['paste-text'],
-          needsReview: true,
-          rawText: pastedText
-        };
-        events.push(singleEvent);
+        // NER found nothing structured — terse history lists ("Diabetic - 2022
+        // Lupus (SLE) - 2020 MCTD - 2012 …") aren't the prose the model is tuned
+        // for. Fall back to the line/pattern splitter, which turns each entry
+        // into its own event (and dates it from its year). Only if THAT also
+        // finds nothing do we keep the whole note as a single reviewable event.
+        const splitEvents = parseTextFromPaste(pastedText);
+        if (splitEvents.length > 0) {
+          events = splitEvents;
+        } else {
+          events.push({
+            id: `paste-${Date.now()}`,
+            type: 'diagnosis',
+            title: 'Imported from notes',
+            date: new Date().toISOString().split('T')[0],
+            description: pastedText,
+            status: 'active',
+            tags: ['pasted', 'needs-review'],
+            confidence: 50,
+            sources: ['paste-text'],
+            needsReview: true,
+            rawText: pastedText,
+          });
+        }
       }
 
       setParsedFromPaste(events);
@@ -926,33 +971,38 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
               <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
                 <Button
                   onClick={() => fileInputRef.current?.click()}
-                  className="bg-[var(--btn-bg)] text-[var(--btn-text)] border-[var(--btn-border)] hover:bg-[var(--btn-hover-bg)] hover:text-[var(--btn-hover-text)] hover:border-[var(--btn-hover-border)]"
+                  className="gap-2"
                 >
                   <Upload className="h-4 w-4 mr-2" />
                   Choose Files
                 </Button>
 
-                {/* 📋 PASTE TEXT BUTTON - For Google Keep etc! */}
+                {/* 📋 PASTE TEXT — Google Keep / notes apps / MyChart. Medical-event
+                    extraction (NER) only runs in the medical importer; lab-only mode
+                    is PDF-geometry (pasted text has no column positions), so paste is
+                    hidden there to avoid offering extraction it won't perform. */}
                 <Dialog open={showPasteModal} onOpenChange={(open) => {
                   setShowPasteModal(open);
                   if (!open) {
                     setParseError(null);
                   }
                 }}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" className="gap-2">
-                      <ClipboardPaste className="h-4 w-4" />
-                      Paste Text
-                    </Button>
-                  </DialogTrigger>
+                  {mode !== 'lab' && (
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="gap-2">
+                        <ClipboardPaste className="h-4 w-4" />
+                        Paste Text
+                      </Button>
+                    </DialogTrigger>
+                  )}
                   <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
                     <DialogHeader>
                       <DialogTitle className="flex items-center gap-2">
-                        <ClipboardPaste className="h-5 w-5 text-blue-500" />
+                        <ClipboardPaste className="h-5 w-5 text-primary" />
                         Paste Medical Notes
                       </DialogTitle>
                       <DialogDescription>
-                        Paste from Google Keep, notes apps, emails, MyChart, or anywhere! The NER parser will extract medical events, detect dismissed findings, and identify providers.
+                        Paste from Google Keep, a notes app, an email, or MyChart. The parser pulls out medical events, flags dismissed findings, and notes providers — then shows you everything for review before anything is saved.
                       </DialogDescription>
                     </DialogHeader>
 
@@ -965,9 +1015,9 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
                             <button
                               key={idx}
                               onClick={() => setPastedText(prev => prev ? prev + '\n\n' + template.example : template.example)}
-                              className="flex items-center gap-2 p-2 text-left text-sm border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors"
+                              className="flex items-center gap-2 p-2 text-left text-sm border border-[var(--border-soft)] rounded-lg hover:bg-[var(--surface-2)] hover:border-primary transition-colors"
                             >
-                              <template.icon className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                              <template.icon className="h-4 w-4 text-primary flex-shrink-0" />
                               <span className="text-foreground">{template.name}</span>
                             </button>
                           ))}
@@ -1011,16 +1061,17 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
                         </div>
                       )}
 
-                      <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-3">
-                        <div className="flex items-center gap-2 text-blue-700 text-sm font-medium mb-1">
+                      <div className="bg-[var(--surface-2)] border border-[var(--border-soft)] rounded-lg p-3">
+                        <div className="flex items-center gap-2 text-[var(--text-main)] text-sm font-medium mb-1">
                           <Sparkles className="h-4 w-4" />
-                          Revolutionary Parser Powers
+                          What the parser looks for
                         </div>
-                        <div className="text-xs text-blue-600 space-y-1">
-                          <p>✨ <strong>Multi-layer detection:</strong> Diagnoses, surgeries, medications, tests, treatments, hospitalizations</p>
-                          <p>🚨 <strong>Dismissed findings:</strong> Flags things doctors called "incidental" or "normal variant"</p>
-                          <p>🏥 <strong>Provider extraction:</strong> Automatically detects doctor names and organizations</p>
-                          <p>📅 <strong>Smart dates:</strong> Handles most date formats (MM/DD/YYYY, Jan 15 2024, etc.)</p>
+                        <div className="text-xs text-[var(--text-muted)] space-y-1">
+                          <p><strong className="text-[var(--text-main)]">Events:</strong> diagnoses, surgeries, medications, tests, treatments, hospitalizations</p>
+                          <p><strong className="text-[var(--text-main)]">Dismissed findings:</strong> things noted as "incidental" or "normal variant" that may be worth a second look</p>
+                          <p><strong className="text-[var(--text-main)]">Providers:</strong> doctor names and organizations</p>
+                          <p><strong className="text-[var(--text-main)]">Dates:</strong> most formats (MM/DD/YYYY, Jan 15 2024, etc.)</p>
+                          <p className="pt-1 italic">Everything lands on a review screen first — nothing is saved until you approve it.</p>
                         </div>
                       </div>
 
@@ -1261,11 +1312,11 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
                           type="text"
                           value={event.title}
                           onChange={(e) => handleEditEvent(event.id, 'title', e.target.value)}
-                          className="font-semibold text-[var(--text-main)] bg-[var(--surface-2)] border border-blue-300 rounded px-2 py-1 flex-1"
+                          className="font-semibold text-[var(--text-main)] bg-[var(--surface-2)] border border-primary rounded px-2 py-1 flex-1"
                           placeholder="Event title..."
                         />
                       ) : (
-                        <h4 className="font-semibold text-[var(--text-main)] cursor-pointer hover:text-blue-600"
+                        <h4 className="font-semibold text-[var(--text-main)] cursor-pointer hover:text-primary"
                             onClick={() => toggleEditMode(event.id)}>
                           {event.title}
                         </h4>
@@ -1288,10 +1339,10 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
                             type="date"
                             value={event.date}
                             onChange={(e) => handleEditEvent(event.id, 'date', e.target.value)}
-                            className="ml-2 text-[var(--text-main)] bg-[var(--surface-2)] border border-blue-300 rounded px-1"
+                            className="ml-2 text-[var(--text-main)] bg-[var(--surface-2)] border border-primary rounded px-1"
                           />
                         ) : (
-                          <span className="ml-2 text-[var(--text-main)] cursor-pointer hover:text-blue-600"
+                          <span className="ml-2 text-[var(--text-main)] cursor-pointer hover:text-primary"
                                 onClick={() => toggleEditMode(event.id)}>
                             {event.date}
                           </span>
@@ -1303,7 +1354,7 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
                           <select
                             value={event.type}
                             onChange={(e) => handleEditEvent(event.id, 'type', e.target.value)}
-                            className="ml-2 text-[var(--text-main)] bg-[var(--surface-2)] border border-blue-300 rounded px-1"
+                            className="ml-2 text-[var(--text-main)] bg-[var(--surface-2)] border border-primary rounded px-1"
                           >
                             <option value="diagnosis">Diagnosis</option>
                             <option value="surgery">Surgery</option>
@@ -1314,7 +1365,7 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
                             <option value="dismissed_findings">Dismissed Finding</option>
                           </select>
                         ) : (
-                          <span className="ml-2 text-[var(--text-main)] cursor-pointer hover:text-blue-600"
+                          <span className="ml-2 text-[var(--text-main)] cursor-pointer hover:text-primary"
                                 onClick={() => toggleEditMode(event.id)}>
                             {event.type}
                           </span>
@@ -1324,25 +1375,24 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
 
                     {/* 🏥 GORGEOUS PROVIDER DISPLAY */}
                     {event.provider_info && (
-                      <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-3 mb-3">
+                      <div className="bg-[var(--surface-2)] border border-[var(--border-soft)] rounded-lg p-3 mb-3">
                         <div className="flex items-center gap-2 mb-2">
-                          <Stethoscope className="h-4 w-4 text-blue-600" />
-                          <span className="font-medium text-blue-800">Auto-Detected Provider</span>
-                          <Sparkles className="h-3 w-3 text-purple-500" />
+                          <Stethoscope className="h-4 w-4 text-primary" />
+                          <span className="font-medium text-[var(--text-main)]">Detected provider</span>
                         </div>
                         <div className="grid grid-cols-2 gap-2 text-xs">
                           <div>
-                            <span className="text-blue-600 font-medium">{event.provider_info.name}</span>
+                            <span className="text-[var(--text-main)] font-medium">{event.provider_info.name}</span>
                             {event.provider_info.specialty && (
-                              <div className="text-blue-500">{event.provider_info.specialty}</div>
+                              <div className="text-[var(--text-muted)]">{event.provider_info.specialty}</div>
                             )}
                           </div>
                           <div>
                             {event.provider_info.organization && (
-                              <div className="text-blue-500">{event.provider_info.organization}</div>
+                              <div className="text-[var(--text-muted)]">{event.provider_info.organization}</div>
                             )}
                             {event.provider_info.phone && (
-                              <div className="text-blue-500">{event.provider_info.phone}</div>
+                              <div className="text-[var(--text-muted)]">{event.provider_info.phone}</div>
                             )}
                           </div>
                         </div>
@@ -1448,7 +1498,7 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
                       <textarea
                         value={event.description}
                         onChange={(e) => handleEditEvent(event.id, 'description', e.target.value)}
-                        className="w-full text-sm text-[var(--text-main)] mb-2 bg-[var(--surface-2)] border border-blue-300 rounded p-2 min-h-20"
+                        className="w-full text-sm text-[var(--text-main)] mb-2 bg-[var(--surface-2)] border border-primary rounded p-2 min-h-20"
                         placeholder="Event description..."
                       />
                     ) : (
@@ -1480,7 +1530,7 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
                     <Button
                       variant="ghost"
                       size="sm"
-                      className={`${editingEventId === event.id ? 'text-green-600 hover:text-green-700' : 'text-blue-600 hover:text-blue-700'}`}
+                      className={`${editingEventId === event.id ? 'text-green-600 hover:text-green-700' : 'text-primary hover:opacity-80'}`}
                       onClick={() => toggleEditMode(event.id)}
                     >
                       {editingEventId === event.id ? (
@@ -1632,7 +1682,7 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
                                     )
                                   )
                                 }
-                                className="font-medium text-[var(--text-main)] bg-transparent border border-transparent hover:border-[var(--border-soft)] focus:border-blue-300 focus:bg-[var(--surface-2)] rounded px-1 py-0.5 flex-1 min-w-0"
+                                className="font-medium text-[var(--text-main)] bg-transparent border border-transparent hover:border-[var(--border-soft)] focus:border-primary focus:bg-[var(--surface-2)] rounded px-1 py-0.5 flex-1 min-w-0"
                                 title="Edit test name"
                               />
                               <input
@@ -1645,7 +1695,7 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
                                     )
                                   )
                                 }
-                                className="font-mono text-[var(--text-main)] bg-transparent border border-transparent hover:border-[var(--border-soft)] focus:border-blue-300 focus:bg-[var(--surface-2)] rounded px-1 py-0.5 w-24 text-right"
+                                className="font-mono text-[var(--text-main)] bg-transparent border border-transparent hover:border-[var(--border-soft)] focus:border-primary focus:bg-[var(--surface-2)] rounded px-1 py-0.5 w-24 text-right"
                                 title="Edit value"
                               />
                               <input
@@ -1658,7 +1708,7 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
                                     )
                                   )
                                 }
-                                className="font-mono text-[var(--text-muted)] bg-transparent border border-transparent hover:border-[var(--border-soft)] focus:border-blue-300 focus:bg-[var(--surface-2)] rounded px-1 py-0.5 w-20 text-xs"
+                                className="font-mono text-[var(--text-muted)] bg-transparent border border-transparent hover:border-[var(--border-soft)] focus:border-primary focus:bg-[var(--surface-2)] rounded px-1 py-0.5 w-20 text-xs"
                                 title="Edit unit"
                                 placeholder="unit"
                               />

@@ -26,15 +26,25 @@ import type { PdfToken } from './text-extractor';
 // pdf.js returns each header CELL as one combined token ("Current Result and
 // Flag"), so we match substrings. 'ignore' (previous) is checked before 'value'
 // so "Previous Result and Date" doesn't register as a value column.
+//
+// 'name' matches "TEST"/"TESTS" (plural — \btest\b alone missed LabCorp's "TESTS"
+// header, which let the rightmost "LAB" code column wrongly claim the name role
+// and silently dropped real results). 'name' is listed BEFORE the `^lab\b` case
+// matters because tokens are scanned left→right and the first token to claim a
+// role wins (seen-set): CareSpace's leftmost "Lab" header still becomes name,
+// while LabCorp's leftmost "TESTS" wins and its rightmost "LAB" code column is
+// (correctly) ignored. 'flag' is its own column (LabCorp FLAG) so "High"/"Low"
+// don't mis-bucket into units.
 const ROLE: Array<[RegExp, ColRole]> = [
   [/previous/i, 'ignore'],
-  [/\btest\b|analyte|component|^lab\b|^name\b/i, 'name'],
+  [/\btests?\b|analyte|component|^lab\b|^name\b/i, 'name'],
+  [/^flags?\b/i, 'flag'],
   [/current|your|^value|^result/i, 'value'],
   [/^units?\b/i, 'unit'],
   [/reference|normal|range|interval/i, 'range'],
 ];
 
-type ColRole = 'name' | 'value' | 'unit' | 'range' | 'ignore';
+type ColRole = 'name' | 'value' | 'flag' | 'unit' | 'range' | 'ignore';
 
 const VAL = /^[<>]?=?\s*\d+(?:\.\d+)?$/;
 const RANGE =
@@ -168,6 +178,7 @@ function parsePageGeometry(
     const buckets: Record<ColRole, string[]> = {
       name: [],
       value: [],
+      flag: [],
       unit: [],
       range: [],
       ignore: [],
@@ -190,7 +201,8 @@ function parsePageGeometry(
     if (nameExclusions.has(key)) continue;
     if (seenTests.has(key)) continue;
 
-    // value column may carry value + flag
+    // value column carries the value (and, on grids with no separate FLAG
+    // column, the flag too).
     let valueText = '';
     let flagRaw = '';
     for (const t of buckets.value) {
@@ -198,6 +210,13 @@ function parsePageGeometry(
       else if (FLAG.test(t) && !flagRaw) flagRaw = t;
     }
     if (!valueText) continue; // a lab row requires a numeric value
+
+    // dedicated FLAG column (LabCorp) — prefer it when present.
+    if (!flagRaw) {
+      for (const t of buckets.flag) {
+        if (FLAG.test(t)) { flagRaw = t; break; }
+      }
+    }
 
     // range column may carry the range + (CareSpace) a trailing unit
     let rangeText = '';

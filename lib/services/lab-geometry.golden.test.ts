@@ -172,6 +172,41 @@ console.log('\n📐 lab-geometry golden suite\n');
   check('date: unit ng/mL intact', fer?.unit === 'ng/mL', fer?.unit);
 }
 
+// ============================================================================
+// FIXTURE 6 — LabCorp "TESTS | RESULT | FLAG | UNITS | REFERENCE INTERVAL | LAB"
+//   The real-world miss Ren caught: an abnormal RA Factor (21.2 HIGH, ref
+//   0.0-13.9) was silently dropped to "0 results" because:
+//     (a) the header "TESTS" (plural) didn't match \btest\b, so the rightmost
+//         "LAB" code column wrongly claimed the name role; and
+//     (b) the FLAG column had no role, so "High" mis-bucketed into units.
+//   This locks both: TESTS→name, dedicated FLAG column, LAB code ignored.
+//   SAFETY-CRITICAL: a dropped abnormal is the exact failure the product exists
+//   to prevent.
+// ============================================================================
+{
+  const p = page(
+    row(700, [720, 'TESTS'], [890, 'RESULT'], [990, 'FLAG'], [1090, 'UNITS'],
+            [1180, 'REFERENCE'], [1280, 'INTERVAL'], [1360, 'LAB']),
+    // Category header line — name only, no value → correctly skipped.
+    row(685, [595, 'Rheumatoid'], [660, 'Arthritis'], [710, 'Factor']),
+    // The result line. "01" at far right is the specimen/lab code (dropped).
+    row(670, [595, 'RA'], [640, 'Latex'], [700, 'Turbid.'],
+            [910, '21.2'], [990, 'High'], [1095, 'IU/mL'], [1190, '0.0-13.9'], [1355, '01']),
+  );
+  const rows = extractLabResultsGeometry([p], NO_EXCLUSIONS);
+
+  check('labcorp-flag: exactly 1 row (NOT 0 — the dropped-abnormal bug)', rows.length === 1, `got ${rows.length}`);
+  const ra = rows[0];
+  check('labcorp-flag: name = "RA Latex Turbid."', ra?.testName === 'RA Latex Turbid.', ra?.testName);
+  check('labcorp-flag: value 21.2', ra?.valueText === '21.2', ra?.valueText);
+  check('labcorp-flag: FLAG column → High→H', ra?.flag === 'H', ra?.flag);
+  check('labcorp-flag: abnormal', ra?.isAbnormal === true);
+  check('labcorp-flag: unit IU/mL (not polluted by "High")', ra?.unit === 'IU/mL', ra?.unit);
+  check('labcorp-flag: ref 0.0-13.9', ra?.referenceLow === 0 && ra?.referenceHigh === 13.9,
+    `${ra?.referenceLow}-${ra?.referenceHigh}`);
+  check('labcorp-flag: name not "01" (lab code did not claim name)', ra?.testName !== '01');
+}
+
 // --- summary ----------------------------------------------------------------
 console.log('\n──────────────────────────────────────────');
 console.log(`PASS: ${pass}   FAIL: ${fail}`);
