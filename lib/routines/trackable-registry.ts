@@ -110,7 +110,10 @@ export const TRACKABLE_TRACKERS: readonly TrackableTracker[] = [
   { id: 'movement', label: 'Movement', emoji: '🏃', href: '/movement', subcategory: 'movement', category: 'choice', statusUnsupported: true },
   { id: 'coping-regulation', label: 'Coping & Regulation', emoji: '🧘', href: '/coping-regulation', subcategory: 'coping-regulation', category: 'choice', statusUnsupported: true },
   // -- Manage (daily-loggable only) --
-  { id: 'medications', label: 'Medications', emoji: '💊', href: '/medications', subcategory: 'medications', category: 'manage', statusUnsupported: true },
+  // href → the daily "mark you took it" checklist, NOT /medications (the add/manage
+  // registry). statusUnsupported stays until adherence-based "logged today ✓" is
+  // wired without false-✓ from merely opening the page (CHA-192).
+  { id: 'medications', label: 'Medications', emoji: '💊', href: '/maintain/medications', subcategory: 'medications', category: 'manage', statusUnsupported: true },
   { id: 'missed-work', label: 'Missed Work', emoji: '💼', href: '/work-disability', subcategory: 'missed-work', subcategoryPrefix: 'missed-work-', category: 'manage', copyUnsupported: true },
   // Genitourinary + ENT (Maintain/Body) + the single Command Zone step
   { id: 'gu', label: 'Genitourinary', emoji: '💧', href: '/gu', subcategory: 'gu', category: 'body', statusUnsupported: true },

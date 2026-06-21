@@ -29,12 +29,13 @@ import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Bell, Clock, Pill, Calendar, Database } from "lucide-react"
+import { Bell, Clock, Pill, Calendar, Database, Monitor } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { KeyboardAvoidingWrapper } from '@/components/ui/keyboard-avoiding-wrapper'
 import { getBackupSettings, setBackupSettings, type BackupCadence } from "@/lib/backup-reminder"
-import { isTauri } from '@tauri-apps/api/core'
+import { isTauri, invoke } from '@tauri-apps/api/core'
 import { ensureNotificationPermission, fireNotification } from '@/lib/services/notification-service'
+import { syncDailyCheckinSchedule } from '@/lib/services/daily-checkin-scheduler'
 
 interface NotificationsModalProps {
   isOpen: boolean
@@ -48,6 +49,12 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
   const [dailyCheckIns, setDailyCheckIns] = useState(false)
   const [reminderTime, setReminderTime] = useState("20:00")
   const [reminderFrequency, setReminderFrequency] = useState("daily")
+
+  // Desktop-only "keep running in the background so reminders fire" — OFF by
+  // default, opt-in. Only shown on the desktop app (not web, not mobile, which
+  // delivers via the OS schedule). See desktop-reminder-firer.tsx.
+  const [desktopBackground, setDesktopBackground] = useState(false)
+  const [showDesktopToggle, setShowDesktopToggle] = useState(false)
 
   // Backup reminder (opt-in, per-PIN, in-app banner — works without OS notifications)
   const [backupReminderEnabled, setBackupReminderEnabled] = useState(false)
@@ -74,7 +81,26 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
     setDailyCheckIns(savedDailyCheckIns)
     setReminderTime(savedReminderTime)
     setReminderFrequency(savedReminderFrequency)
+
+    setDesktopBackground(localStorage.getItem('chaos-desktop-background') === 'true')
+    // Desktop app only — not web, not the Android/iOS app (which uses the OS schedule).
+    const ua = typeof navigator !== 'undefined' ? navigator.userAgent : ''
+    setShowDesktopToggle(isTauri() && !/Android|iPhone|iPad|iPod/i.test(ua))
   }, [])
+
+  const handleDesktopBackgroundToggle = async (enabled: boolean) => {
+    setDesktopBackground(enabled)
+    localStorage.setItem('chaos-desktop-background', enabled.toString())
+    // Tell Rust to hide-to-tray (instead of quit) when enabled, so the reminder
+    // ticker keeps running.
+    try { await invoke('set_background_mode', { enabled }) } catch { /* not desktop */ }
+    // Launch-on-login so reminders survive a reboot.
+    try {
+      const auto = await import('@tauri-apps/plugin-autostart')
+      if (enabled) { if (!(await auto.isEnabled())) await auto.enable() }
+      else if (await auto.isEnabled()) { await auto.disable() }
+    } catch { /* autostart not available (web/mobile) */ }
+  }
 
   const handleNotificationsToggle = (enabled: boolean) => {
     setNotificationsEnabled(enabled)
@@ -88,13 +114,26 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
         if (!granted && 'Notification' in window && Notification.permission === 'default') {
           Notification.requestPermission()
         }
+        // Reconcile the check-in schedule once permission settles (arms it if
+        // daily check-ins are on; the master switch is the global off-ramp).
+        void syncDailyCheckinSchedule()
+        // Let the medication-reminder sync (which holds the med list) re-arm too.
+        window.dispatchEvent(new Event('chaos-notif-settings-changed'))
       })
+    } else {
+      // Master off → cancel everything, including the daily check-in + meds.
+      void syncDailyCheckinSchedule()
+      window.dispatchEvent(new Event('chaos-notif-settings-changed'))
     }
   }
 
   const handleMedicationRemindersToggle = (enabled: boolean) => {
     setMedicationReminders(enabled)
     localStorage.setItem('chaos-medication-reminders', enabled.toString())
+    // Re-arm/cancel OS med alarms (the MedicationReminderSync component holds
+    // the med list and reconciles on this event). Per-med times are set in the
+    // Manage → Medications form; this is the category-level on/off.
+    window.dispatchEvent(new Event('chaos-notif-settings-changed'))
   }
 
   const handleAppointmentAlertsToggle = (enabled: boolean) => {
@@ -105,16 +144,20 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
   const handleDailyCheckInsToggle = (enabled: boolean) => {
     setDailyCheckIns(enabled)
     localStorage.setItem('chaos-daily-checkins', enabled.toString())
+    // Arm (or cancel) the OS-scheduled nudge to match the toggle.
+    void syncDailyCheckinSchedule()
   }
 
   const handleReminderTimeChange = (time: string) => {
     setReminderTime(time)
     localStorage.setItem('chaos-reminder-time', time)
+    void syncDailyCheckinSchedule()
   }
 
   const handleReminderFrequencyChange = (frequency: string) => {
     setReminderFrequency(frequency)
     localStorage.setItem('chaos-reminder-frequency', frequency)
+    void syncDailyCheckinSchedule()
   }
 
   const handleBackupReminderToggle = (enabled: boolean) => {
@@ -216,12 +259,12 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
                 <div>
                   <div className="font-medium">Medication Reminders</div>
                   <div className="text-xs text-muted-foreground">
-                    Remind you to take medications and supplements
+                    Fires at the times you set per medication (multiple per day OK).
+                    Set times in <span className="italic">Manage → Medications</span>.
                   </div>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Badge variant="secondary">Coming Soon</Badge>
                 <Switch
                   checked={medicationReminders}
                   onCheckedChange={handleMedicationRemindersToggle}
@@ -268,6 +311,29 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
                 disabled={!notificationsEnabled}
               />
             </div>
+
+            {/* Desktop background reminders — desktop app only, opt-in, OFF by default */}
+            {showDesktopToggle && (
+              <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/30">
+                <div className="flex items-center gap-2">
+                  <Monitor className="h-4 w-4" />
+                  <div>
+                    <div className="font-medium">Remind me on this computer</div>
+                    <div className="text-xs text-muted-foreground">
+                      Turn this <strong>on</strong> if you want desktop reminders to
+                      fire even when the window is closed — Chaos Command keeps a small
+                      icon in your system tray and starts with your computer. Leave it{" "}
+                      <strong>off</strong> and the desktop won&apos;t remind you. (Your
+                      phone reminds you either way.)
+                    </div>
+                  </div>
+                </div>
+                <Switch
+                  checked={desktopBackground}
+                  onCheckedChange={handleDesktopBackgroundToggle}
+                />
+              </div>
+            )}
           </div>
 
           {/* Backup Reminder — opt-in, in-app banner (does NOT need the master toggle) */}

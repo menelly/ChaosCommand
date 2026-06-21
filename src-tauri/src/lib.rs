@@ -11,21 +11,64 @@ mod peers;
 mod server;
 mod sync;
 
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use tauri::Manager;
 
+/// Desktop "keep running in the tray so reminders keep firing" flag. OFF by
+/// default — the user opts in via Settings → Notifications. The frontend syncs
+/// this from the stored setting on startup and on toggle via `set_background_mode`.
+/// When true, closing the window hides it to the tray instead of quitting, so
+/// the in-app reminder ticker stays alive (desktop has no OS-scheduled
+/// notifications — see notification-service.ts).
+pub struct BackgroundMode(pub AtomicBool);
+
+/// Frontend → backend: reflect the user's "remind me on desktop" choice into the
+/// close-to-tray behaviour. (Autostart-on-login is toggled separately from JS
+/// via the autostart plugin.)
+#[tauri::command]
+fn set_background_mode(enabled: bool, state: tauri::State<BackgroundMode>) {
+  state.0.store(enabled, Ordering::Relaxed);
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-  tauri::Builder::default()
+  #[allow(unused_mut)]
+  let mut builder = tauri::Builder::default()
     .manage(sync::SyncState {
       session: Mutex::new(None),
     })
+    .manage(BackgroundMode(AtomicBool::new(false)))
     .plugin(tauri_plugin_http::init())
     .plugin(tauri_plugin_notification::init())
     .plugin(tauri_plugin_log::Builder::default().build())
     .plugin(tauri_plugin_sql::Builder::default().build())
     .plugin(tauri_plugin_opener::init())
-    .plugin(tauri_plugin_fs::init())
+    .plugin(tauri_plugin_fs::init());
+
+  // Desktop-only: autostart-on-login + close-to-tray. Both gated so the Android
+  // build (which has neither concept) never compiles them.
+  #[cfg(desktop)]
+  {
+    builder = builder
+      .plugin(tauri_plugin_autostart::init(
+        tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+        None::<Vec<&str>>,
+      ))
+      .on_window_event(|window, event| {
+        if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+          let bg = window.state::<BackgroundMode>();
+          if bg.0.load(Ordering::Relaxed) {
+            // Opted into background reminders → hide to tray, keep the process
+            // (and its reminder ticker) alive instead of exiting.
+            api.prevent_close();
+            let _ = window.hide();
+          }
+        }
+      });
+  }
+
+  builder
     .setup(|app| {
       // Persistent peer registry + auto-sync HTTP server. We load the
       // registry from disk (creating a fresh one with a self_peer_id on
@@ -50,9 +93,55 @@ pub fn run() {
       }
       app.manage(server_state);
       app.manage(peer_store);
+
+      // Desktop tray: lets the user reopen the window after close-to-tray, and
+      // fully quit. Built unconditionally on desktop (cheap); the window only
+      // actually hides-to-tray when the user opted into background reminders.
+      #[cfg(desktop)]
+      {
+        use tauri::menu::{MenuBuilder, MenuItemBuilder};
+        use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
+
+        let show = MenuItemBuilder::with_id("show", "Show Chaos Command").build(app)?;
+        let quit = MenuItemBuilder::with_id("quit", "Quit").build(app)?;
+        let menu = MenuBuilder::new(app).items(&[&show, &quit]).build()?;
+
+        TrayIconBuilder::with_id("main")
+          .icon(app.default_window_icon().cloned().expect("default window icon"))
+          .tooltip("Chaos Command")
+          .menu(&menu)
+          .on_menu_event(|app, event| match event.id().as_ref() {
+            "show" => {
+              if let Some(w) = app.get_webview_window("main") {
+                let _ = w.show();
+                let _ = w.set_focus();
+              }
+            }
+            "quit" => app.exit(0),
+            _ => {}
+          })
+          .on_tray_icon_event(|tray, event| {
+            // Left-click the tray icon → restore the window.
+            if let TrayIconEvent::Click {
+              button: MouseButton::Left,
+              button_state: MouseButtonState::Up,
+              ..
+            } = event
+            {
+              let app = tray.app_handle();
+              if let Some(w) = app.get_webview_window("main") {
+                let _ = w.show();
+                let _ = w.set_focus();
+              }
+            }
+          })
+          .build(app)?;
+      }
+
       Ok(())
     })
     .invoke_handler(tauri::generate_handler![
+      set_background_mode,
       license::validate_license,
       license::activate_license,
       license::deactivate_license,

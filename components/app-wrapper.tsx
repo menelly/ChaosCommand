@@ -17,6 +17,9 @@ import { Toaster } from '@/components/ui/toaster'
 import PinLogin from '@/components/pin-login'
 import KonamiEasterEgg from '@/components/konami-easter-egg'
 import ReminderTicker from '@/components/reminder-ticker'
+import DailyCheckinRouter from '@/components/daily-checkin-router'
+import MedicationReminderSync from '@/components/medication-reminder-sync'
+import DesktopReminderFirer from '@/components/desktop-reminder-firer'
 import PersonalizationWelcome from '@/components/personalization-welcome'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -309,6 +312,9 @@ function AppContent({ children }: AppWrapperProps) {
     <>
       {children}
       <ReminderTicker />
+      <DailyCheckinRouter />
+      <MedicationReminderSync />
+      <DesktopReminderFirer />
       <KonamiEasterEgg />
       <Toaster />
     </>

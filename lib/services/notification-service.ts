@@ -152,6 +152,52 @@ export async function cancelOsNotification(key: string): Promise<void> {
   } catch { /* not in Tauri or nothing to cancel */ }
 }
 
+/**
+ * Schedule a RECURRING OS notification using a calendar-matching interval
+ * (e.g. every day at 20:00, or every Monday at 09:00). Unlike
+ * scheduleOsNotification (one-shot), this fires repeatedly and keeps firing
+ * even when the app is closed — the OS owns the schedule (iOS
+ * UNCalendarNotificationTrigger repeats:true / Android calendar alarm).
+ *
+ * `match` is a partial set of calendar components; the notification fires
+ * whenever the wall clock matches all provided fields. Omitting `weekday`
+ * → every day; setting `weekday` (1=Sun … 7=Sat) → that day each week.
+ *
+ * Idempotent: cancels any prior notification under the same string key first,
+ * so re-syncing on a settings change never stacks duplicates.
+ *
+ * `actionTypeId` tags the notification so the tap-router can recognise it as
+ * ours and route accordingly. Returns true if handed to the OS.
+ */
+export async function scheduleRecurringOsNotification(opts: {
+  key: string
+  title: string
+  body: string
+  match: { hour?: number; minute?: number; weekday?: number; day?: number }
+  actionTypeId?: string
+}): Promise<boolean> {
+  const granted = await ensureNotificationPermission()
+  if (!granted) return false
+  try {
+    const mod = await import('@tauri-apps/plugin-notification')
+    const id = notificationIdFor(opts.key)
+    try { await mod.cancel([id]) } catch { /* nothing scheduled yet */ }
+    mod.sendNotification({
+      id,
+      title: opts.title,
+      body: opts.body,
+      actionTypeId: opts.actionTypeId,
+      // allowWhileIdle:true → fire through Android Doze using an exact alarm.
+      schedule: mod.Schedule.interval(opts.match, true),
+    })
+    console.log(`🔁 OS-scheduled recurring "${opts.title}" @ ${JSON.stringify(opts.match)} (id ${id})`)
+    return true
+  } catch (e) {
+    console.warn('scheduleRecurringOsNotification failed (not in Tauri?):', e)
+    return false
+  }
+}
+
 // ============================================================================
 // SCHEDULE (queue in Dexie)
 // ============================================================================
