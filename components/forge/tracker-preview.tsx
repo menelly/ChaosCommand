@@ -149,6 +149,38 @@ export default function TrackerPreview({ tracker }: TrackerPreviewProps) {
           </div>
         );
 
+      case 'percentage':
+        return (
+          <div className="space-y-2">
+            <Label>{field.name}</Label>
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                placeholder={`Enter ${field.name.toLowerCase()}`}
+                value={value}
+                onChange={(e) => setPreviewData(prev => ({ ...prev, [field.id]: e.target.value }))}
+                min={field.min ?? 0}
+                max={field.max ?? 100}
+                className="w-32"
+              />
+              <span className="text-muted-foreground">%</span>
+            </div>
+          </div>
+        );
+
+      case 'duration':
+        return (
+          <div className="space-y-2">
+            <Label>{field.name}</Label>
+            <div className="flex items-center gap-2">
+              <Input type="number" placeholder="0" min={0} className="w-20" disabled />
+              <span className="text-muted-foreground">h</span>
+              <Input type="number" placeholder="0" min={0} max={59} className="w-20" disabled />
+              <span className="text-muted-foreground">m</span>
+            </div>
+          </div>
+        );
+
       case 'text':
         return (
           <div className="space-y-2">

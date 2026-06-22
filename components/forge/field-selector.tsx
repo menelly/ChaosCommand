@@ -43,7 +43,9 @@ import {
   Type,
   Hash,
   Calendar,
-  Clock
+  Clock,
+  Percent,
+  Timer
 } from 'lucide-react';
 import { TrackerField } from './tracker-builder';
 
@@ -102,6 +104,18 @@ const FIELD_TYPES = {
     icon: <Hash className="h-4 w-4" />,
     description: 'Numeric input (vitals, measurements)',
     defaultConfig: { min: 0, max: 1000 }
+  },
+  percentage: {
+    name: 'Percentage',
+    icon: <Percent className="h-4 w-4" />,
+    description: 'A 0–100% value (O₂ sat, humidity, charge…)',
+    defaultConfig: { min: 0, max: 100 }
+  },
+  duration: {
+    name: 'Duration',
+    icon: <Timer className="h-4 w-4" />,
+    description: 'How long something lasted (hours + minutes)',
+    defaultConfig: {}
   },
   multiselect: {
     name: 'Multi-Select',
@@ -231,7 +245,7 @@ export default function FieldSelector({ onAddField }: FieldSelectorProps) {
           <div>
             <Label className="text-xs text-muted-foreground">Add as field type:</Label>
             <div className="flex flex-wrap gap-1 mt-1">
-              {(['scale', 'checkbox', 'dropdown', 'number', 'text'] as const).map((type) => (
+              {(['scale', 'percentage', 'duration', 'number', 'checkbox', 'dropdown', 'text'] as const).map((type) => (
                 <Button
                   key={type}
                   variant={medicalFieldType === type ? 'default' : 'outline'}

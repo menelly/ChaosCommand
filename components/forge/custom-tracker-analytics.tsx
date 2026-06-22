@@ -91,7 +91,9 @@ function CustomTrackerAnalyticsInner({ tracker, entries }: CustomTrackerAnalytic
       try {
         switch (field.type) {
           case 'scale':
-          case 'number': {
+          case 'number':
+          case 'percentage':
+          case 'duration': {
             const numericData = fieldData
               .map(val => Number(val))
               .filter(val => Number.isFinite(val));
@@ -192,6 +194,19 @@ function CustomTrackerAnalyticsInner({ tracker, entries }: CustomTrackerAnalytic
     }
   };
 
+  // Format a numeric stat for display: percentages get a %, durations (stored as
+  // total minutes) render as "1h 20m".
+  const fmtStat = (v: number, type: string): string => {
+    if (v === undefined || v === null || Number.isNaN(v)) return '—';
+    if (type === 'percentage') return `${v}%`;
+    if (type === 'duration') {
+      const h = Math.floor(v / 60);
+      const m = Math.round(v % 60);
+      return h ? `${h}h ${m}m` : `${m}m`;
+    }
+    return String(v);
+  };
+
   if (loading) {
     return (
       <Card>
@@ -275,20 +290,20 @@ function CustomTrackerAnalyticsInner({ tracker, entries }: CustomTrackerAnalytic
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {/* Numeric Fields */}
-                {(field.type === 'scale' || field.type === 'number') && fieldStats.average && (
+                {/* Numeric Fields (scale / number / percentage / duration) */}
+                {(field.type === 'scale' || field.type === 'number' || field.type === 'percentage' || field.type === 'duration') && fieldStats.average !== undefined && (
                   <div className="space-y-3">
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-center">
                       <div>
-                        <div className="text-xl font-bold">{fieldStats.average}</div>
+                        <div className="text-xl font-bold">{fmtStat(fieldStats.average, field.type)}</div>
                         <div className="text-xs text-muted-foreground">Average</div>
                       </div>
                       <div>
-                        <div className="text-xl font-bold text-red-500">{fieldStats.max}</div>
+                        <div className="text-xl font-bold text-red-500">{fmtStat(fieldStats.max, field.type)}</div>
                         <div className="text-xs text-muted-foreground">Highest</div>
                       </div>
                       <div>
-                        <div className="text-xl font-bold text-green-500">{fieldStats.min}</div>
+                        <div className="text-xl font-bold text-green-500">{fmtStat(fieldStats.min, field.type)}</div>
                         <div className="text-xs text-muted-foreground">Lowest</div>
                       </div>
                     </div>

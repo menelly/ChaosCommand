@@ -261,14 +261,72 @@ export default function CustomTrackerPage() {
             {field.description && <p className="text-xs text-muted-foreground">{field.description}</p>}
             <Input
               type="number"
-              value={values[field.id] || ''}
-              onChange={(e) => updateValue(field.id, parseFloat(e.target.value) || '')}
+              value={values[field.id] ?? ''}
+              // Don't coerce a valid 0 to '' (|| drops zeros — clinically real values).
+              onChange={(e) => updateValue(field.id, e.target.value === '' ? '' : parseFloat(e.target.value))}
               placeholder={`Enter ${field.name}...`}
               min={field.min}
               max={field.max}
             />
           </div>
         )
+
+      case 'percentage':
+        return (
+          <div key={field.id} className="space-y-2">
+            <Label className="font-medium">{field.name} {field.required && <span className="text-red-500">*</span>}</Label>
+            {field.description && <p className="text-xs text-muted-foreground">{field.description}</p>}
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                value={values[field.id] ?? ''}
+                onChange={(e) => updateValue(field.id, e.target.value === '' ? '' : parseFloat(e.target.value))}
+                placeholder={`Enter ${field.name}...`}
+                min={field.min ?? 0}
+                max={field.max ?? 100}
+                className="w-32"
+              />
+              <span className="text-muted-foreground">%</span>
+            </div>
+          </div>
+        )
+
+      case 'duration': {
+        // Stored as total MINUTES (a number); entered as hours + minutes.
+        const totalMin = typeof values[field.id] === 'number' ? values[field.id] : 0
+        const hrs = Math.floor(totalMin / 60)
+        const mins = totalMin % 60
+        const setDuration = (h: number, m: number) => updateValue(field.id, Math.max(0, h) * 60 + Math.max(0, Math.min(59, m)))
+        return (
+          <div key={field.id} className="space-y-2">
+            <Label className="font-medium">{field.name} {field.required && <span className="text-red-500">*</span>}</Label>
+            {field.description && <p className="text-xs text-muted-foreground">{field.description}</p>}
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                aria-label={`${field.name} hours`}
+                value={hrs || ''}
+                onChange={(e) => setDuration(parseInt(e.target.value, 10) || 0, mins)}
+                placeholder="0"
+                min={0}
+                className="w-20"
+              />
+              <span className="text-muted-foreground">h</span>
+              <Input
+                type="number"
+                aria-label={`${field.name} minutes`}
+                value={mins || ''}
+                onChange={(e) => setDuration(hrs, parseInt(e.target.value, 10) || 0)}
+                placeholder="0"
+                min={0}
+                max={59}
+                className="w-20"
+              />
+              <span className="text-muted-foreground">m</span>
+            </div>
+          </div>
+        )
+      }
 
       case 'date':
         return (

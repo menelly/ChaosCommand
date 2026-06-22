@@ -2407,11 +2407,17 @@ export function generateMedicalReport(data: ReportData): Blob {
             .filter(v => v !== undefined && v !== null && v !== '')
           if (!vals.length) continue
           const t = field.type
-          if (t === 'scale' || t === 'number') {
+          if (t === 'scale' || t === 'number' || t === 'percentage' || t === 'duration') {
             const nums = vals.map(Number).filter(n => Number.isFinite(n))
             if (!nums.length) continue
             const mean = nums.reduce((a, b) => a + b, 0) / nums.length
-            w.bulletBody(label, `mean ${mean.toFixed(1)} (range ${Math.min(...nums)}-${Math.max(...nums)}, n=${nums.length})`)
+            // Format per type so the doctor PDF reads right: SpO2 as %, durations
+            // as "1h 20m" (stored as total minutes), others one decimal.
+            const fmt = (n: number) =>
+              t === 'percentage' ? `${Math.round(n)}%`
+              : t === 'duration' ? (Math.floor(n / 60) ? `${Math.floor(n / 60)}h ${Math.round(n % 60)}m` : `${Math.round(n % 60)}m`)
+              : `${Math.round(n * 10) / 10}`
+            w.bulletBody(label, `mean ${fmt(mean)} (range ${fmt(Math.min(...nums))}-${fmt(Math.max(...nums))}, n=${nums.length})`)
           } else if (t === 'checkbox') {
             const yes = vals.filter(v => v === true || v === 'true').length
             w.bulletBody(label, `yes on ${yes} of ${plural(vals.length, 'day')}`)

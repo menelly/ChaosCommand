@@ -59,7 +59,7 @@ import TrackerPreview from './tracker-preview';
 export interface TrackerField {
   id: string;
   name: string;
-  type: 'scale' | 'dropdown' | 'checkbox' | 'text' | 'number' | 'multiselect' | 'tags' | 'date' | 'time' | 'datetime';
+  type: 'scale' | 'dropdown' | 'checkbox' | 'text' | 'number' | 'percentage' | 'duration' | 'multiselect' | 'tags' | 'date' | 'time' | 'datetime';
   required: boolean;
   options?: string[];
   min?: number;
