@@ -10,6 +10,7 @@ mod license;
 mod peers;
 mod server;
 mod sync;
+mod trial;
 
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
@@ -146,6 +147,7 @@ pub fn run() {
       license::activate_license,
       license::deactivate_license,
       license::get_cached_license,
+      trial::get_trial_status,
       // Deprecated one-shot commands — return a clear error for any
       // frontend that hasn't been migrated yet.
       sync::sync_start_host,
