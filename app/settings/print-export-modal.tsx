@@ -455,11 +455,16 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
         // bundle from touching Tauri internals.
         const { writeFile, BaseDirectory } = await import('@tauri-apps/plugin-fs')
         const { openPath } = await import('@tauri-apps/plugin-opener')
-        const { appDataDir, join } = await import('@tauri-apps/api/path')
+        const { downloadDir, join } = await import('@tauri-apps/api/path')
         const bytes = new Uint8Array(await blob.arrayBuffer())
-        await writeFile(filename, bytes, { baseDir: BaseDirectory.AppData })
-        await openPath(await join(await appDataDir(), filename))
-        toast({ title: 'Report ready', description: 'Opened in your PDF viewer — use its share button to save or send it.' })
+        // Write to PUBLIC Downloads, not private AppData: Android forbids other
+        // apps (the PDF viewer) from opening a file:// in our private dir, so
+        // openPath on an AppData path threw — the v0.7.1 "Export failed" bug.
+        // A public Downloads file is openable AND it's where the user expects it
+        // (and matches the "saved to your Downloads folder" notice on this screen).
+        await writeFile(filename, bytes, { baseDir: BaseDirectory.Download })
+        await openPath(await join(await downloadDir(), filename))
+        toast({ title: 'Report saved', description: 'Saved to your Downloads folder and opened in your PDF viewer.' })
         onClose()
         return
       }
