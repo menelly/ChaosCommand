@@ -44,6 +44,9 @@ const TRACKER_SUBCATEGORIES = [
   // them here is what lets medication-adherence correlate against symptoms
   // (e.g. a skipped dose → worse symptoms next day), which is the whole point.
   'gu', 'ent', 'postpartum', 'thyroid', 'adrenal', 'lines-tubes', 'medication-adherence',
+  // Vitals + pulse-ox: numeric baselines now feed correlations via a headline
+  // metric (systolic BP / SpO2 desaturation) — see extractSeverity in pattern-engine.
+  'vitals', 'pulse-oximetry',
   'other'
 ] as const
 

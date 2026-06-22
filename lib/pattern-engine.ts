@@ -97,6 +97,17 @@ function toSev(v: any): number | null {
   return Number.isFinite(n) && n > 0 ? n : null
 }
 
+/** Average a numeric field over a record's `entries[]` (used by the vitals /
+ *  pulse-ox headline-metric extraction). Returns null when nothing was recorded. */
+function avgEntryField(content: any, pick: (e: any) => any): number | null {
+  const arr = Array.isArray(content?.entries) ? content.entries : []
+  const vals = arr
+    .map((e: any) => toSev(pick(e)))
+    .filter((v: number | null): v is number => v !== null)
+  if (vals.length === 0) return null
+  return vals.reduce((a: number, b: number) => a + b, 0) / vals.length
+}
+
 /** Extract numeric severity from various tracker formats. Returns null when nothing was recorded.
  *  2026-06-11 unification (Ren-confirmed): field list is now the UNION of this engine's
  *  original list and the richer one the PDF's (deleted) inline Pearson used —
@@ -105,6 +116,24 @@ function toSev(v: any): number | null {
 function extractSeverity(record: DailyDataRecord): number | null {
   const c = record.content
   if (!c) return null
+
+  // Vitals + pulse-ox store numeric readings, not a 1-10 "severity" — give the
+  // correlation engine ONE headline metric per day so "BP up on bad days" /
+  // "O2 dips on bad days" actually surface. (Per-metric correlation for
+  // HR/temp/weight is a 1.1+ enhancement.) Branch by subcategory so we never
+  // change how OTHER trackers extract severity.
+  if (record.subcategory === 'vitals') {
+    // Average systolic across the day's readings. Higher trends ~ worse (the
+    // common hypertension direction); Pearson surfaces either-way correlation.
+    return avgEntryField(c, e => e.systolic)
+  }
+  if (record.subcategory === 'pulse-oximetry') {
+    // Desaturation magnitude: 100 − SpO2 so HIGHER = worse, matching the rest of
+    // the engine's severity direction (so trends/correlations read correctly).
+    const spo2 = avgEntryField(c, e => e.spo2 ?? e.spo2Min)
+    return spo2 === null ? null : Math.max(0, 100 - spo2)
+  }
+
   // Direct scalar fields (may arrive as a number OR a numeric string)
   for (const v of [
     c.severity, c.painLevel, c.intensity, c.level, c.rating,

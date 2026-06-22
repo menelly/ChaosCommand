@@ -13,15 +13,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
-import { Activity, HeartPulse, Wind, Thermometer, Scale, Droplet } from 'lucide-react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Activity, HeartPulse, Wind, Thermometer, Scale, Droplet, History as HistoryIcon, BarChart3, ClipboardList } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { format, addDays, subDays } from 'date-fns'
 import { useDailyData, CATEGORIES } from '@/lib/database'
 import { celebrate } from '@/lib/particle-physics-engine'
 import { useUser } from '@/lib/contexts/user-context'
 import { isCelebrationEnabled } from '@/lib/celebration-prefs'
+import { VitalsHistory } from './vitals-history'
+import { VitalsAnalytics } from './vitals-analytics'
 
-interface VitalsEntry {
+export interface VitalsEntry {
   id: string
   timestamp: string
   date: string
@@ -59,6 +62,7 @@ export default function VitalsTracker() {
   const [form, setForm] = useState({ ...blankForm })
   const [tempUnit, setTempUnit] = useState<'F' | 'C'>('F')
   const [weightUnit, setWeightUnit] = useState<'lb' | 'kg'>('lb')
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
 
   useEffect(() => { load() }, [selectedDate]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -73,7 +77,7 @@ export default function VitalsTracker() {
   }
 
   const saveEntries = async (next: VitalsEntry[]) => {
-    try { await saveData(selectedDate, CATEGORIES.TRACKER, 'vitals', { entries: next }); setEntries(next) }
+    try { await saveData(selectedDate, CATEGORIES.TRACKER, 'vitals', { entries: next }); setEntries(next); setRefreshTrigger(n => n + 1) }
     catch (e) { console.error(e); toast({ title: 'Save Error', variant: 'destructive' }) }
   }
 
@@ -140,6 +144,14 @@ export default function VitalsTracker() {
         <p className="text-muted-foreground mt-1">Your objective baseline measurements — the numbers a clinician scans first. Log whatever you measured; leave the rest blank.</p>
       </div>
 
+      <Tabs defaultValue="log" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="log" className="flex items-center gap-2"><ClipboardList className="h-4 w-4" />Log</TabsTrigger>
+          <TabsTrigger value="history" className="flex items-center gap-2"><HistoryIcon className="h-4 w-4" />History</TabsTrigger>
+          <TabsTrigger value="analytics" className="flex items-center gap-2"><BarChart3 className="h-4 w-4" />Analytics</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="log" className="space-y-6 mt-4">
       {/* Date nav */}
       <Card>
         <CardHeader className="pb-3">
@@ -221,6 +233,16 @@ export default function VitalsTracker() {
           </CardContent>
         </Card>
       )}
+        </TabsContent>
+
+        <TabsContent value="history" className="mt-4">
+          <VitalsHistory refreshTrigger={refreshTrigger} onChanged={() => setRefreshTrigger(n => n + 1)} />
+        </TabsContent>
+
+        <TabsContent value="analytics" className="mt-4">
+          <VitalsAnalytics refreshTrigger={refreshTrigger} />
+        </TabsContent>
+      </Tabs>
 
       <p className="text-center text-xs text-muted-foreground">
         <Badge variant="outline" className="mr-1">📄</Badge>

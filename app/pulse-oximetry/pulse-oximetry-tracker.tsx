@@ -24,17 +24,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
-import { Activity, Droplet, HeartPulse, TrendingDown, Clock, Watch, FileText } from 'lucide-react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Activity, Droplet, HeartPulse, TrendingDown, Clock, Watch, FileText, History as HistoryIcon, BarChart3, ClipboardList } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { format, addDays, subDays } from 'date-fns'
 import { useDailyData, CATEGORIES } from '@/lib/database'
 import { celebrate } from '@/lib/particle-physics-engine'
 import { useUser } from '@/lib/contexts/user-context'
 import { isCelebrationEnabled } from '@/lib/celebration-prefs'
+import { PulseOximetryHistory } from './pulse-oximetry-history'
+import { PulseOximetryAnalytics } from './pulse-oximetry-analytics'
 
 type ReadingContext = 'rest' | 'active' | 'sleep'
 
-interface PulseOxEntry {
+export interface PulseOxEntry {
   id: string
   timestamp: string
   date: string
@@ -95,6 +98,7 @@ export default function PulseOximetryTracker() {
   const [form, setForm] = useState({ ...blankForm })
   const [mode, setMode] = useState<'spot' | 'session'>('spot')
   const [context, setContext] = useState<ReadingContext>('rest')
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
 
   useEffect(() => { load() }, [selectedDate]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -109,7 +113,7 @@ export default function PulseOximetryTracker() {
   }
 
   const saveEntries = async (next: PulseOxEntry[]) => {
-    try { await saveData(selectedDate, CATEGORIES.TRACKER, 'pulse-oximetry', { entries: next }); setEntries(next) }
+    try { await saveData(selectedDate, CATEGORIES.TRACKER, 'pulse-oximetry', { entries: next }); setEntries(next); setRefreshTrigger(n => n + 1) }
     catch (e) { console.error(e); toast({ title: 'Save Error', variant: 'destructive' }) }
   }
 
@@ -205,6 +209,14 @@ export default function PulseOximetryTracker() {
         <p className="text-muted-foreground mt-1">Oxygen + pulse from any device — a smartwatch, ring, or fingertip clip. Log a quick reading, or a full recording-session report. Command trends it over time.</p>
       </div>
 
+      <Tabs defaultValue="log" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="log" className="flex items-center gap-2"><ClipboardList className="h-4 w-4" />Log</TabsTrigger>
+          <TabsTrigger value="history" className="flex items-center gap-2"><HistoryIcon className="h-4 w-4" />History</TabsTrigger>
+          <TabsTrigger value="analytics" className="flex items-center gap-2"><BarChart3 className="h-4 w-4" />Analytics</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="log" className="space-y-6 mt-4">
       {/* Date nav */}
       <Card>
         <CardHeader className="pb-3">
@@ -391,6 +403,16 @@ export default function PulseOximetryTracker() {
           </CardContent>
         </Card>
       )}
+        </TabsContent>
+
+        <TabsContent value="history" className="mt-4">
+          <PulseOximetryHistory refreshTrigger={refreshTrigger} onChanged={() => setRefreshTrigger(n => n + 1)} />
+        </TabsContent>
+
+        <TabsContent value="analytics" className="mt-4">
+          <PulseOximetryAnalytics refreshTrigger={refreshTrigger} />
+        </TabsContent>
+      </Tabs>
 
       <p className="text-center text-xs text-muted-foreground">
         <Badge variant="outline" className="mr-1">📄</Badge>
