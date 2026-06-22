@@ -112,14 +112,18 @@ export default function DesktopReminderFirer() {
       if (medsCategoryOn()) {
         for (const med of medsRef.current) {
           if (!med.enableReminders || med.active === false) continue
-          const name = med.brandName || med.genericName || 'your medication'
+          // PRIVACY: the real drug name never goes in a popup — use the user's
+          // discreet label if set, else the generic word "medication". (Keep in
+          // sync with medication-reminder-scheduler.ts + medication-tracker.tsx.)
+          const label = (med.reminderLabel || '').trim()
+          const displayName = label || 'medication'
           const dose = med.dose ? ` · ${med.dose}` : ''
           for (const t of med.reminderTimes || []) {
             const hm = parseReminderTime(t)
             if (!hm) continue
             const key = `med-${med.id}-${hm.hour}-${hm.minute}`
             if (dueNow(now, hm.hour, hm.minute) && !alreadyFired(key)) {
-              void fireNotification(`💊 Time for ${name}`, `Take your dose${dose}.`)
+              void fireNotification(`💊 Time for your ${displayName}`, `Take your dose${dose}. Tap to mark it taken.`)
               markFired(key)
             }
           }

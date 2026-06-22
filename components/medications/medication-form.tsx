@@ -523,6 +523,33 @@ export function MedicationForm({
                   </Label>
                 </div>
 
+                {/* PRIVACY: discreet reminder label. We never put the real drug
+                    name in a popup by default — notifications say "medication" so
+                    "Lithium"/"Zyprexa" can't surface on a screen when someone's
+                    nearby. The user can opt into a custom word (incl. the real
+                    name if they want). Only relevant when reminders are on. */}
+                {formData.enableReminders && (
+                  <div className="space-y-2 rounded-lg border border-border bg-background/60 p-3">
+                    <Label htmlFor="reminderLabel" className="text-sm">
+                      🔒 What should the reminder say?{" "}
+                      <span className="text-muted-foreground font-normal">(optional, for privacy)</span>
+                    </Label>
+                    <Input
+                      id="reminderLabel"
+                      placeholder='e.g. "morning meds", "vitamin", "the blue one"'
+                      value={formData.reminderLabel}
+                      onChange={(e) => handleInputChange('reminderLabel', e.target.value)}
+                      maxLength={40}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Your notifications never show the real medication name unless you put it here.
+                      Leave blank and the popup just says <span className="italic">&ldquo;Time for your
+                      medication&rdquo;</span> (with the dose). Type something here to use your own
+                      wording instead — so nobody glancing at your screen sees what it actually is.
+                    </p>
+                  </div>
+                )}
+
                 <p className="text-xs text-muted-foreground">
                   <strong>Maintain</strong> = a quick "taken today" check, grouped by time of day.
                   <strong> Notifications</strong> = a reminder at each time. Leave both off for

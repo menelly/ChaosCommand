@@ -251,7 +251,20 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
           {/* Notification Types */}
           <div className="space-y-4">
             <Label className="text-sm font-medium">Notification Types</Label>
-            
+
+            {/* Desktop open/closed disclosure — desktop app only. Phone delivers
+                via the OS schedule even when closed, so this caveat doesn't apply
+                there. Points at the "Remind me on this computer" toggle below. */}
+            {showDesktopToggle && (
+              <div className="text-xs text-muted-foreground p-3 border border-dashed rounded-lg bg-muted/20">
+                💻 <strong>On this desktop:</strong> reminders fire while Command is
+                open — minimizing is fine, but fully quitting stops them. To get
+                reminders even when it&apos;s closed, turn on{" "}
+                <strong>&ldquo;Remind me on this computer&rdquo;</strong> below (keeps a
+                small tray icon running). Your phone reminds you either way.
+              </div>
+            )}
+
             {/* Medication Reminders */}
             <div className="flex items-center justify-between p-3 border rounded-lg">
               <div className="flex items-center gap-2">

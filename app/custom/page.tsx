@@ -46,6 +46,7 @@ import {
   Rocket,
   Settings,
   EyeOff,
+  Pencil,
 } from "lucide-react"
 import { useState, useEffect } from 'react'
 import { useDailyData } from '@/lib/database'
@@ -422,20 +423,36 @@ function TrackerCard({
           </div>
         </CardContent>
       </Link>
-      <Button
-        variant="ghost"
-        size="sm"
-        className="absolute bottom-2 right-2 h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
-        aria-label={`Hide ${tracker.name}`}
-        title="Hide from this list"
-        onClick={(e) => {
-          e.preventDefault()
-          e.stopPropagation()
-          onHide()
-        }}
-      >
-        <EyeOff className="h-4 w-4" />
-      </Button>
+      <div className="absolute bottom-2 right-2 flex items-center gap-1">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+          aria-label={`Edit ${tracker.name} fields`}
+          title="Edit fields in Forge"
+          onClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            window.location.href = `/forge?edit=${tracker.id}`
+          }}
+        >
+          <Pencil className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+          aria-label={`Hide ${tracker.name}`}
+          title="Hide from this list"
+          onClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            onHide()
+          }}
+        >
+          <EyeOff className="h-4 w-4" />
+        </Button>
+      </div>
     </Card>
   )
 }

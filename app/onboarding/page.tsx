@@ -18,11 +18,13 @@ import {
   AlertCircle,
   Zap,
   Palette,
-  Cloud
+  Cloud,
+  Bell
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { getAutoUpdatePref, setAutoUpdatePref } from '@/lib/auto-update-check'
 import { getAutoSyncPref, setAutoSyncPref } from '@/lib/auto-sync'
+import { ensureNotificationPermission } from '@/lib/services/notification-service'
 import PersonalizationPanel from '@/components/customize/personalization-panel'
 import { UserRound } from 'lucide-react'
 
@@ -48,7 +50,12 @@ function applyTheme(themeId: string) {
   const oldTheme = document.querySelector('link[data-theme]')
   if (oldTheme) oldTheme.remove()
 
-  if (themeId !== 'theme-lavender') {
+  // theme-calm is the ONLY theme bundled statically (layout.tsx) — every other
+  // theme, INCLUDING lavender, loads its CSS on demand from /styles/themes/.
+  // (This used to skip 'theme-lavender' from when lavender was the bundled
+  // default; that was stale, so picking Lavender Garden in onboarding added the
+  // body class but never loaded its stylesheet — the one theme that wouldn't apply.)
+  if (themeId !== 'theme-calm') {
     const link = document.createElement('link')
     link.rel = 'stylesheet'
     link.href = `/styles/themes/${themeId}.css`
@@ -427,13 +434,30 @@ const TRACKER_NAMES: Record<string, string> = {
 export default function OnboardingPage() {
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState(0) // 0 = theme, 1 = intro, 2-N+1 = categories, last = results
-  const [selectedTheme, setSelectedTheme] = useState(getPref('chaos-theme') || 'theme-lavender')
+  const [selectedTheme, setSelectedTheme] = useState(getPref('chaos-theme') || 'theme-calm')
   const [bounceIntensity, setBounceIntensity] = useState(parseInt(getPref('chaos-bounce-intensity') || '10'))
   const [confettiLevel, setConfettiLevel] = useState<'none' | 'low' | 'medium' | 'high'>(
     (getPref('chaos-confetti-level') as any) || 'medium'
   )
   const [autoUpdate, setAutoUpdate] = useState<boolean>(getAutoUpdatePref())
   const [autoSync, setAutoSync] = useState<boolean>(getAutoSyncPref())
+  const [enableNotifs, setEnableNotifs] = useState<boolean>(
+    typeof window !== 'undefined' && localStorage.getItem('chaos-notifications-enabled') === 'true'
+  )
+
+  // Onboarding notification opt-in. Turning it on flips the master switch + the
+  // medication-reminder category and asks the OS for permission right here (the
+  // natural moment to prompt). Times are still set per-med in Manage; this just
+  // makes sure reminders are allowed to fire. Off by default — opt-in.
+  const handleEnableNotifs = (v: boolean) => {
+    setEnableNotifs(v)
+    if (typeof window === 'undefined') return
+    localStorage.setItem('chaos-notifications-enabled', v ? 'true' : 'false')
+    localStorage.setItem('chaos-medication-reminders', v ? 'true' : 'false')
+    if (v) void ensureNotificationPermission()
+    // Let any mounted reminder-sync components reconcile to the new setting.
+    window.dispatchEvent(new Event('chaos-notif-settings-changed'))
+  }
   const [selectedSymptoms, setSelectedSymptoms] = useState<Set<string>>(new Set())
 
   const totalSteps = SYMPTOM_CATEGORIES.length + 3 // theme + personalization + intro + categories + results
@@ -608,6 +632,27 @@ export default function OnboardingPage() {
 
             {/* Connectivity prefs — opt-in, off by default */}
             <div className="space-y-3 pt-2 border-t">
+              <label className="flex items-start gap-3 p-3 rounded-lg border cursor-pointer hover:bg-muted/50">
+                <Checkbox
+                  checked={enableNotifs}
+                  onCheckedChange={(checked) => handleEnableNotifs(checked === true)}
+                  className="mt-0.5"
+                />
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Bell className="h-4 w-4 text-pink-600" />
+                    <span className="text-sm font-medium">Remind me to take my meds</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Off by default. Turn this on to let Chaos Command send you medication
+                    reminders. For privacy, popups never show the drug name unless you ask them
+                    to — by default they just say "time for your medication." You'll set the
+                    times per-med later; this just allows reminders. Change anytime in
+                    Settings → Notifications.
+                  </p>
+                </div>
+              </label>
+
               <label className="flex items-start gap-3 p-3 rounded-lg border cursor-pointer hover:bg-muted/50">
                 <Checkbox
                   checked={autoUpdate}

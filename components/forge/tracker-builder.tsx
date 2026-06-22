@@ -23,7 +23,7 @@
  */
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -78,7 +78,7 @@ export interface CustomTracker {
   updatedAt: string;
 }
 
-export default function TrackerBuilder() {
+export default function TrackerBuilder({ editId }: { editId?: string }) {
   // 🎯 STATE MANAGEMENT
   const [activeTab, setActiveTab] = useState('builder');
   const [tracker, setTracker] = useState<Partial<CustomTracker>>({
@@ -92,9 +92,64 @@ export default function TrackerBuilder() {
   const [expandedFieldId, setExpandedFieldId] = useState<string | null>(null);
   const [newOptionText, setNewOptionText] = useState('');
 
+  // ✏️ EDIT MODE — when editId is present we load that tracker into the
+  // builder and SAVE replaces it in-place (same id, same field ids) so
+  // every logged entry stays valid. Adding a field is non-destructive:
+  // old entries just have no value for the new field. We never mint a new
+  // id in edit mode, and we preserve the original createdAt.
+  const [editingId, setEditingId] = useState<string | null>(editId || null);
+  const [loadingExisting, setLoadingExisting] = useState<boolean>(!!editId);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
   // 🔨 HOOKS
   const { toast } = useToast();
   const { saveData, getCategoryData, getAllCategoryData } = useDailyData();
+
+  // 📥 LOAD AN EXISTING TRACKER FOR EDITING
+  useEffect(() => {
+    if (!editId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        setLoadingExisting(true);
+        setLoadError(null);
+        const allRecords = await getAllCategoryData('user');
+        const customRecords = (allRecords || []).filter(
+          (record: any) => record.subcategory === 'custom-trackers'
+        );
+        const latest = customRecords.length > 0
+          ? customRecords.sort((a: any, b: any) => String(b.date).localeCompare(String(a.date)))[0]
+          : null;
+        const list: CustomTracker[] = latest?.content?.trackers && Array.isArray(latest.content.trackers)
+          ? latest.content.trackers
+          : [];
+        const found = list.find(t => t.id === editId);
+        if (cancelled) return;
+        if (found) {
+          // Hydrate the builder with the full existing tracker (incl. id,
+          // createdAt, category) so deploy can replace it cleanly.
+          setTracker({
+            id: found.id,
+            name: found.name,
+            description: found.description || '',
+            category: found.category || 'custom',
+            fields: found.fields || [],
+            createdAt: found.createdAt,
+            updatedAt: found.updatedAt,
+          });
+          setEditingId(found.id);
+        } else {
+          setLoadError('That tracker could not be found — it may have been removed.');
+        }
+      } catch (err) {
+        console.error('Error loading tracker for edit:', err);
+        if (!cancelled) setLoadError('Failed to load the tracker for editing.');
+      } finally {
+        if (!cancelled) setLoadingExisting(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [editId]);
 
   // 🔨 TRACKER MANAGEMENT
   const updateTracker = (updates: Partial<CustomTracker>) => {
@@ -139,15 +194,18 @@ export default function TrackerBuilder() {
     setIsDeploying(true);
 
     try {
-      // Create complete tracker object
+      const now = new Date().toISOString();
+      // In edit mode we REUSE the existing id + createdAt so all logged
+      // entries (which reference this tracker's id and its field ids) stay
+      // wired up. Only a brand-new tracker mints a fresh id.
       const completeTracker: CustomTracker = {
-        id: `custom-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        id: editingId || `custom-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         name: tracker.name,
         description: tracker.description || '',
-        category: tracker.category || 'body',
+        category: tracker.category || 'custom',
         fields: tracker.fields,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        createdAt: (editingId && tracker.createdAt) ? tracker.createdAt : now,
+        updatedAt: now
       };
 
       // 🔥 LOAD EXISTING TRACKERS AND ADD TO ARRAY
@@ -175,8 +233,13 @@ export default function TrackerBuilder() {
         allTrackers = existingRecord.content.trackers;
       }
 
-      // Add new tracker to array
-      allTrackers.push(completeTracker);
+      // Replace-in-place when editing; otherwise append a new tracker.
+      const existingIdx = editingId ? allTrackers.findIndex(t => t.id === editingId) : -1;
+      if (existingIdx >= 0) {
+        allTrackers[existingIdx] = completeTracker;
+      } else {
+        allTrackers.push(completeTracker);
+      }
 
       // Save array of trackers instead of single tracker
       await saveData(
@@ -191,20 +254,26 @@ export default function TrackerBuilder() {
       setActiveTab('save');
 
       toast({
-        title: "🚀 Tracker Deployed!",
-        description: `${tracker.name} has been added to your CUSTOM section!`,
+        title: editingId ? "✅ Tracker Updated!" : "🚀 Tracker Deployed!",
+        description: editingId
+          ? `${tracker.name} has been updated. Your existing data is intact.`
+          : `${tracker.name} has been added to your CUSTOM section!`,
       });
 
-      // Reset form after successful deploy
-      setTimeout(() => {
-        setTracker({
-          name: '',
-          description: '',
-          category: 'custom',
-          fields: []
-        });
-        setDeploySuccess(false);
-      }, 3000);
+      // Reset the form only for brand-new trackers. In edit mode we keep the
+      // builder populated so the user can keep tweaking, and offer a button
+      // back to the tracker from the success panel.
+      if (!editingId) {
+        setTimeout(() => {
+          setTracker({
+            name: '',
+            description: '',
+            category: 'custom',
+            fields: []
+          });
+          setDeploySuccess(false);
+        }, 3000);
+      }
 
     } catch (error) {
       console.error('Error deploying tracker:', error);
@@ -241,12 +310,29 @@ export default function TrackerBuilder() {
       <header className="text-center mb-8">
         <h1 className="text-3xl font-bold text-foreground mb-2 flex items-center justify-center gap-2">
           <Hammer className="h-8 w-8 text-orange-500" />
-          🔨 Forge: Custom Tracker Builder
+          {editingId ? '✏️ Forge: Edit Tracker' : '🔨 Forge: Custom Tracker Builder'}
         </h1>
         <p className="text-lg text-muted-foreground">
-          Build your own medical trackers using smart components and medical dictionaries
+          {editingId
+            ? 'Add, rename, or remove fields. Your existing logged entries stay intact.'
+            : 'Build your own medical trackers using smart components and medical dictionaries'}
         </p>
       </header>
+
+      {/* ⏳ / ⚠️ EDIT-LOAD STATES */}
+      {loadingExisting && (
+        <div className="text-center py-6">
+          <div className="inline-flex items-center gap-2 text-muted-foreground">
+            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
+            Loading tracker for editing...
+          </div>
+        </div>
+      )}
+      {loadError && (
+        <div className="max-w-xl mx-auto mb-6 bg-destructive/10 border border-destructive/30 text-destructive p-3 rounded-lg text-center text-sm">
+          {loadError}
+        </div>
+      )}
 
       {/* 🎛️ MAIN BUILDER INTERFACE */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -520,27 +606,63 @@ export default function TrackerBuilder() {
               <CardContent className="pt-6">
                 <div className="text-center space-y-4">
                   <CheckCircle className="h-16 w-16 mx-auto text-success" />
-                  <h2 className="text-2xl font-bold text-success">Tracker Deployed! 🎉</h2>
+                  <h2 className="text-2xl font-bold text-success">
+                    {editingId ? 'Changes Saved! ✅' : 'Tracker Deployed! 🎉'}
+                  </h2>
                   <p className="text-foreground">
-                    <strong>{tracker.name}</strong> has been successfully added to your <strong>CUSTOM</strong> section!
+                    {editingId ? (
+                      <><strong>{tracker.name}</strong> has been updated.</>
+                    ) : (
+                      <><strong>{tracker.name}</strong> has been successfully added to your <strong>CUSTOM</strong> section!</>
+                    )}
                   </p>
                   <div className="bg-card p-4 rounded-lg border border-success/30">
-                    <p className="text-sm text-success">
-                      🎯 Your custom tracker is now live and ready to use!<br/>
-                      📊 Data will be saved alongside your other trackers<br/>
-                      🔄 You can build more trackers anytime
-                    </p>
+                    {editingId ? (
+                      <p className="text-sm text-success">
+                        ✏️ Your field changes are saved!<br/>
+                        🛡️ Every entry you'd already logged is intact<br/>
+                        ➕ Any new fields will start collecting data going forward
+                      </p>
+                    ) : (
+                      <p className="text-sm text-success">
+                        🎯 Your custom tracker is now live and ready to use!<br/>
+                        📊 Data will be saved alongside your other trackers<br/>
+                        🔄 You can build more trackers anytime
+                      </p>
+                    )}
                   </div>
-                  <Button
-                    onClick={() => {
-                      setActiveTab('builder');
-                      setDeploySuccess(false);
-                    }}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Build Another Tracker
-                  </Button>
+                  {editingId ? (
+                    <div className="flex flex-wrap gap-2 justify-center">
+                      <Button
+                        onClick={() => { window.location.href = `/custom-tracker?id=${editingId}`; }}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        <Target className="h-4 w-4 mr-2" />
+                        Back to Tracker
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setActiveTab('builder');
+                          setDeploySuccess(false);
+                        }}
+                      >
+                        <Settings className="h-4 w-4 mr-2" />
+                        Keep Editing
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      onClick={() => {
+                        setActiveTab('builder');
+                        setDeploySuccess(false);
+                      }}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Build Another Tracker
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -549,18 +671,20 @@ export default function TrackerBuilder() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Rocket className="h-5 w-5 text-orange-500" />
-                  Deploy Your Custom Tracker
+                  {editingId ? <Save className="h-5 w-5 text-orange-500" /> : <Rocket className="h-5 w-5 text-orange-500" />}
+                  {editingId ? 'Save Your Changes' : 'Deploy Your Custom Tracker'}
                 </CardTitle>
                 <CardDescription>
-                  Your tracker will be added to the CUSTOM section and ready to use immediately
+                  {editingId
+                    ? 'Your edits will update the tracker in place — already-logged data stays put'
+                    : 'Your tracker will be added to the CUSTOM section and ready to use immediately'}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="bg-muted p-4 rounded-lg">
                   <h3 className="font-semibold mb-2 flex items-center gap-2">
                     <Target className="h-4 w-4" />
-                    Ready to Deploy:
+                    {editingId ? 'Ready to Save:' : 'Ready to Deploy:'}
                   </h3>
                   <div className="space-y-1 text-sm">
                     <p><strong>Name:</strong> {tracker.name || 'Unnamed Tracker'}</p>
@@ -593,12 +717,12 @@ export default function TrackerBuilder() {
                   {isDeploying ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Deploying...
+                      {editingId ? 'Saving...' : 'Deploying...'}
                     </>
                   ) : (
                     <>
-                      <Rocket className="h-5 w-5 mr-2" />
-                      🚀 Deploy Custom Tracker
+                      {editingId ? <Save className="h-5 w-5 mr-2" /> : <Rocket className="h-5 w-5 mr-2" />}
+                      {editingId ? '💾 Save Changes' : '🚀 Deploy Custom Tracker'}
                     </>
                   )}
                 </Button>

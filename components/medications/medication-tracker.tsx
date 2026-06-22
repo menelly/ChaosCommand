@@ -127,11 +127,15 @@ export function MedicationTracker() {
               const fireAt = new Date(date);
               fireAt.setHours(h || 0, m || 0, 0, 0);
               if (fireAt.getTime() <= now.getTime()) continue; // skip past-due today
-              const medName = data.brandName || data.genericName || 'medication';
+              // PRIVACY: never put the real drug name in a popup. Use the user's
+              // discreet label if set, else the generic word "medication". (Same
+              // rule as medication-reminder-scheduler.ts — keep both in sync.)
+              const label = (data.reminderLabel || '').trim();
+              const displayName = label || 'medication';
               await scheduleReminder({
                 id: `med-${medId}-${d}-${time}`,
-                title: `Medication: ${medName}`,
-                body: `Time for ${data.dose || 'your dose'}${data.requiresFood ? ' (take with food)' : ''}.`,
+                title: `💊 Time for your ${displayName}`,
+                body: `Take your dose${data.dose ? ` · ${data.dose}` : ''}${data.requiresFood ? ' (with food)' : ''}. Tap to mark it taken.`,
                 fireAt: fireAt.toISOString(),
                 source: `medication-${medId}`,
               });
@@ -219,6 +223,7 @@ export function MedicationTracker() {
       active: editingMedication.active !== false,
       enableReminders: editingMedication.enableReminders || false,
       reminderTimes: editingMedication.reminderTimes || [],
+      reminderLabel: editingMedication.reminderLabel || '',
       // THESE THREE were dropped on edit-load, so editing a med reset them to off
       // and the save then wrote the off value back — the "Maintain toggle won't
       // stick" + "refill reminder won't stick" bugs, one root cause.

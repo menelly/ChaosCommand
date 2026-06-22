@@ -13,9 +13,12 @@ import TrackerBuilder from "@/components/forge/tracker-builder"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useIsPhoneOnly } from "@/lib/platform"
 import { Hammer, Tablet } from "lucide-react"
+import { useSearchParams } from "next/navigation"
 
 export default function ForgePage() {
   const isPhone = useIsPhoneOnly()
+  const searchParams = useSearchParams()
+  const editId = searchParams.get("edit") || undefined
 
   if (isPhone) {
     return (
@@ -59,7 +62,7 @@ export default function ForgePage() {
 
   return (
     <AppCanvas currentPage="forge">
-      <TrackerBuilder />
+      <TrackerBuilder editId={editId} />
       <div className="mt-8 text-center">
         <a href="/" className="text-sm text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors">
           ← Back to Command Center

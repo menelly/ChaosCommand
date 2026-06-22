@@ -112,6 +112,11 @@ export interface Medication {
                                         // rescue inhaler) — stays in the Manage registry only.
   enableReminders?: boolean;            // Should we send reminders?
   reminderTimes?: string[];             // ["8:00 AM", "6:30 PM"]
+  reminderLabel?: string;               // PRIVACY: what the notification popup says
+                                        // instead of the real drug name. Empty/undefined
+                                        // = use the real name (back-compat). Lets someone
+                                        // call it "morning meds" so "Lithium"/"Zyprexa"
+                                        // never surfaces on a screen when others are around.
 
   // Refill reminder system (optional)
   enableRefillReminders?: boolean;      // Should we send refill reminders?
@@ -157,6 +162,7 @@ export interface MedicationFormData {
   dailyMaintain: boolean;
   enableReminders: boolean;
   reminderTimes: string[];
+  reminderLabel: string;
   enableRefillReminders: boolean;
   refillReminderDays: number;
   refillIntervalDays: number;
@@ -317,6 +323,7 @@ export const DEFAULT_MEDICATION_FORM: MedicationFormData = {
   dailyMaintain: false,
   enableReminders: false,
   reminderTimes: [],
+  reminderLabel: '',
   enableRefillReminders: false,
   refillReminderDays: 3,
   refillIntervalDays: 30,

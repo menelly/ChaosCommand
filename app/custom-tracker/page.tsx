@@ -446,10 +446,20 @@ export default function CustomTrackerPage() {
   return (
     <AppCanvas currentPage="custom-trackers">
       <div className="max-w-2xl mx-auto space-y-6">
-        <Button onClick={() => window.location.href = '/custom'} variant="outline" className="mb-4">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Custom Trackers
-        </Button>
+        <div className="flex items-center justify-between mb-4 gap-2">
+          <Button onClick={() => window.location.href = '/custom'} variant="outline">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Custom Trackers
+          </Button>
+          <Button
+            onClick={() => window.location.href = `/forge?edit=${tracker.id}`}
+            variant="outline"
+            title="Add, rename, or remove fields in Forge"
+          >
+            <Pencil className="h-4 w-4 mr-2" />
+            Edit Fields
+          </Button>
+        </div>
 
         <div className="text-center space-y-2">
           <h1 className="text-2xl font-bold">{tracker.name}</h1>

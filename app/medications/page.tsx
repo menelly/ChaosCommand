@@ -30,12 +30,24 @@
 
 'use client';
 
+import { useEffect, useState } from 'react';
 import { Pill } from 'lucide-react';
+import { isTauri } from '@tauri-apps/api/core';
 import { MedicationTracker } from '@/components/medications/medication-tracker';
 import { Button } from '@/components/ui/button';
 import AppCanvas from '@/components/app-canvas';
 
 export default function MedicationsPage() {
+  // Desktop app only (not web, not the phone build). The phone delivers
+  // reminders via the OS schedule even when closed; the desktop fires them
+  // from an in-app ticker, so the window has to be running. We disclose that
+  // honestly and point at the opt-in tray mode that makes closed-fire work.
+  const [showDesktopNote, setShowDesktopNote] = useState(false);
+  useEffect(() => {
+    const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+    setShowDesktopNote(isTauri() && !/Android|iPhone|iPad|iPod/i.test(ua));
+  }, []);
+
   return (
     <AppCanvas currentPage="medications">
       <div className="max-w-6xl mx-auto space-y-6">
@@ -47,6 +59,15 @@ export default function MedicationsPage() {
           <p className="text-lg text-muted-foreground">
             Keep track of your medications, dosages, refill dates, and set up reminders
           </p>
+          {showDesktopNote && (
+            <p className="text-xs text-muted-foreground mt-3 max-w-2xl mx-auto">
+              💻 On desktop, reminders fire while Command is running — minimizing is
+              fine, but fully quitting stops them. Want reminders even when it&apos;s
+              closed? Turn on <span className="italic">&ldquo;Remind me on this
+              computer&rdquo;</span> in Settings&nbsp;→&nbsp;Notifications to keep Command
+              tucked in your system tray. (On your phone, reminders fire either way.)
+            </p>
+          )}
         </header>
 
         <MedicationTracker />

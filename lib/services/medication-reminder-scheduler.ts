@@ -92,10 +92,6 @@ function medsCategoryOn(): boolean {
   )
 }
 
-function medName(m: Medication): string {
-  return m.brandName || m.genericName || 'your medication'
-}
-
 // Desktop fires med reminders through the in-app ticker (fires once at the due
 // minute, then marks itself fired — no spam), so we pre-arm a rolling window.
 const DESKTOP_WINDOW_DAYS = 2
@@ -135,15 +131,20 @@ export async function syncMedicationReminders(medications: Medication[]): Promis
     const times = med.reminderTimes || []
     if (times.length === 0) continue
 
-    const name = medName(med)
+    // PRIVACY: the real drug name NEVER goes in a notification unless the user
+    // explicitly typed it as reminderLabel. Default popups say the generic word
+    // "medication" (+ dose), so "Lithium"/"Zyprexa" can't surface on a screen
+    // when someone's nearby. A custom label (e.g. "morning meds") is used verbatim.
+    const label = (med.reminderLabel || '').trim()
+    const displayName = label || 'medication'
     const dose = med.dose ? ` · ${med.dose}` : ''
-    const title = `💊 Time for ${name}`
+    const title = `💊 Time for your ${displayName}`
     const body = `Take your dose${dose}. Tap to mark it taken.`
 
     for (const timeStr of times) {
       const hm = parseReminderTime(timeStr)
       if (!hm) {
-        console.warn(`[med-reminder] could not parse time "${timeStr}" for ${name} — skipped`)
+        console.warn(`[med-reminder] could not parse time "${timeStr}" for ${displayName} — skipped`)
         continue
       }
 
