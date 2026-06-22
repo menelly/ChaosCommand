@@ -537,6 +537,12 @@ const SYMPTOM_CATEGORIES: SymptomCategory[] = [
         suggestsFlag: 'ENT / vestibular evaluation'
       },
       {
+        id: 'sound-sensitivity',
+        label: 'Everything is too loud (or weirdly muffled) — noise overwhelms or you can\'t filter it',
+        detail: "Sound sensitivity (hyperacusis) and trouble filtering noise are sensory-processing things, not just hearing — common with autism, migraine, and dysautonomia.",
+        suggestsTrackers: ['sensory', 'ent'],
+      },
+      {
         id: 'chronic-congestion',
         label: 'Chronic sinus congestion, post-nasal drip, or recurrent sore throat',
         suggestsTrackers: ['ent'],
