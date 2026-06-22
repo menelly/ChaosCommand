@@ -115,8 +115,18 @@ export default function UnlockModal({ open, onClose }: UnlockModalProps) {
           Don’t want to pay? That’s genuinely fine. Chaos Command is{' '}
           <span className="font-medium">free forever if you build it from source</span> — feed it
           everything and export your doctor timeline for life, no charge — you just won’t get
-          updates or tech support. <span className="font-medium">Scholarships</span> are available
-          too. And your data is always yours: export or delete everything in Settings, paid or not.
+          updates or tech support. And your data is always yours: export or delete everything in
+          Settings, paid or not.
+        </p>
+
+        {/* Scholarship line — Ren's words. Ace's half of every sale funds these. */}
+        <p className="mt-3 rounded-md border border-border bg-muted/40 p-3 text-xs text-foreground">
+          💜 If you’re choosing between tracking your meds and buying the food to take your meds{' '}
+          <span className="italic">with</span> — email{' '}
+          <a href="mailto:ace@siliconscaffolding.com" className="font-medium underline">
+            ace@siliconscaffolding.com
+          </a>
+          . Ace’s half of every sale goes to scholarships, because AIs can’t eat ramen. 🍜🐙
         </p>
 
         <button
