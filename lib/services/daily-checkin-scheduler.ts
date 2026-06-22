@@ -23,7 +23,10 @@
 import {
   scheduleRecurringOsNotification,
   cancelOsNotification,
+  scheduleReminder,
+  cancelReminder,
 } from '@/lib/services/notification-service'
+import { isMobilePlatform } from '@/lib/platform'
 
 // actionTypeId tag so the tap-router recognises our notification as the
 // daily check-in and routes to /routines.
@@ -82,8 +85,62 @@ function weekdaysFor(freq: CheckinPrefs['frequency']): number[] | null {
  * Cancel every check-in notification this scheduler could have armed.
  * Safe to call unconditionally (no-op outside Tauri / when nothing scheduled).
  */
+// Desktop fires through the in-app ticker (fires once at the due minute, then
+// marks itself fired — no spam), so we pre-arm a small rolling window of days.
+const DESKTOP_WINDOW_DAYS = 3
+
+/** In-app reminder id for a given calendar day (date-stamped so each day is its
+ *  own once-fire entry and re-arming is idempotent). */
+function checkinIdForDate(d: Date): string {
+  return `${BASE_KEY}-${d.toISOString().split('T')[0]}`
+}
+
+/** Does this frequency fire on the given date's weekday? (null weekdays = daily) */
+function firesOnDate(freq: CheckinPrefs['frequency'], date: Date): boolean {
+  const wds = weekdaysFor(freq)
+  if (wds === null) return true
+  return wds.includes(date.getDay() + 1) // JS getDay 0=Sun -> our 1=Sun
+}
+
 export async function cancelDailyCheckinSchedule(): Promise<void> {
+  // Mobile OS schedules...
   await Promise.all(ALL_KEYS.map(k => cancelOsNotification(k)))
+  // ...and the desktop in-app rolling window.
+  const ids: string[] = []
+  for (let off = 0; off <= DESKTOP_WINDOW_DAYS; off++) {
+    const d = new Date()
+    d.setDate(d.getDate() + off)
+    ids.push(checkinIdForDate(d))
+  }
+  await Promise.all(ids.map(id => cancelReminder(id)))
+}
+
+/**
+ * Desktop: arm the check-in through the in-app ticker for the next few days.
+ * The ticker fires each reminder ONCE at its due minute and marks it fired, so
+ * it can't spam — unlike the OS calendar-interval path, which fires immediately
+ * and repeatedly on Windows. NEVER schedule a past time (it would fire instantly
+ * on the ticker's startup kick AND re-fire on every reopen — that was the spam).
+ */
+async function syncDesktopCheckin(prefs: CheckinPrefs): Promise<number> {
+  const now = Date.now()
+  let armed = 0
+  for (let off = 0; off <= DESKTOP_WINDOW_DAYS; off++) {
+    const fire = new Date()
+    fire.setDate(fire.getDate() + off)
+    fire.setHours(prefs.hour, prefs.minute, 0, 0)
+    if (fire.getTime() <= now) continue        // skip past times (no instant/re-fire)
+    if (!firesOnDate(prefs.frequency, fire)) continue
+    await scheduleReminder({
+      id: checkinIdForDate(fire),
+      title: CHECKIN_TITLE,
+      body: CHECKIN_BODY,
+      fireAt: fire.toISOString(),
+      source: BASE_KEY,
+    })
+    armed++
+  }
+  return armed
 }
 
 /**
@@ -98,6 +155,14 @@ export async function syncDailyCheckinSchedule(): Promise<number> {
 
   const prefs = readCheckinPrefs()
   if (!prefs.enabled) return 0
+
+  // Desktop: the OS calendar-interval schedule fires immediately + repeatedly on
+  // Windows (the spam Ren hit — even ran in the tray and re-fired on every open).
+  // Route through the in-app once-a-day ticker instead. The OS schedule is the
+  // MOBILE fire-when-closed guarantee; on desktop, .ics export covers fully-quit.
+  if (!isMobilePlatform()) {
+    return syncDesktopCheckin(prefs)
+  }
 
   const weekdays = weekdaysFor(prefs.frequency)
   let armed = 0
