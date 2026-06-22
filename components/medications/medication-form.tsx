@@ -344,7 +344,9 @@ export function MedicationForm({
                   COMPLETE picture (a supplement can still interact with an Rx). */}
               <div className="space-y-2">
                 <Label>Type</Label>
-                <div className="grid grid-cols-3 gap-2">
+                {/* Stack full-width on phones (so "Over-the-counter" fits on one
+                    line instead of wrapping into confetti); 3-across on tablet+. */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   {(Object.keys(MEDICATION_KIND_META) as MedicationKind[]).map((k) => {
                     const meta = MEDICATION_KIND_META[k];
                     const selected = formData.kind === k;
@@ -355,7 +357,7 @@ export function MedicationForm({
                         variant={selected ? 'default' : 'outline'}
                         onClick={() => handleInputChange('kind', k)}
                         aria-pressed={selected}
-                        className="justify-center"
+                        className="justify-center h-auto py-2 whitespace-normal text-center leading-tight"
                       >
                         <span className="mr-1.5" aria-hidden>{meta.icon}</span>
                         {meta.label}
