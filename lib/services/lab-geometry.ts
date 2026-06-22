@@ -53,6 +53,34 @@ const FLAG = /^(High|Low|Abnormal|HH|LL|H|L|A)$/i;
 // LabCorp prints a specimen-indicator code (01/02) in its own narrow column
 // between name and value; it is NOT a lab value. Drop it everywhere.
 const SPEC = /^0\d$/;
+// 2-column reports (Quest et al.) have no separate flag column, so pdf.js fuses
+// the value and its abnormal flag into ONE token: "5 L", "13.0 H", "25.5 LL".
+// Split them — otherwise the bare-numeric VAL test rejects the cell and the
+// whole (abnormal!) row is silently dropped.
+const VAL_FLAG = /^([<>]?=?\s*\d+(?:\.\d+)?)\s+(HH|LL|H|L|A|High|Low|Abnormal)$/i;
+// A bare unit token that collapsed into the value bucket on a 2-column report
+// ("%", "mg/dL", "ng/mL", "cells/uL"). Requires a "%" or a "/" so a stray word
+// can never be mistaken for a unit.
+const UNIT = /^(?:%|[A-Za-zµ][A-Za-z0-9µ.]*\/[A-Za-z0-9µ./]+)$/;
+
+/** Pull a reference range + trailing unit out of a fused cell like
+ *  "Reference Range: 16-154 ng/mL" or "65-99 mg/dL". On 2-column reports the
+ *  whole reference (range AND unit) arrives as a single pdf.js token that
+ *  collapses into the value bucket; this disentangles it. */
+function absorbRangeAndUnit(
+  token: string,
+  setRange: (r: string) => void,
+  setUnit: (u: string) => void,
+): void {
+  const body = token.replace(/^.*?reference\s*range:?\s*/i, '').trim();
+  const rm = body.match(
+    /[<>]?=?\s*(?:or\s*=\s*)?\d+(?:\.\d+)?\s*[-–]\s*\d+(?:\.\d+)?|[<>]?=?\s*(?:or\s*=\s*)?\d+(?:\.\d+)?/i,
+  );
+  if (!rm) return;
+  setRange(rm[0].trim());
+  const after = body.slice((rm.index ?? 0) + rm[0].length).trim();
+  if (after && /[A-Za-z%]/.test(after)) setUnit(after);
+}
 
 const Y_ROW_TOLERANCE = 3; // tokens within 3pt of y are the same table row
 
@@ -202,12 +230,34 @@ function parsePageGeometry(
     if (seenTests.has(key)) continue;
 
     // value column carries the value (and, on grids with no separate FLAG
-    // column, the flag too).
+    // column, the flag too). On 2-COLUMN reports (Quest) there are no separate
+    // flag/unit/range anchors, so the flag, the reference range, and the unit
+    // ALL collapse into this bucket — often fused into single pdf.js tokens
+    // ("5 L", "Reference Range: 16-154 ng/mL"). Disentangle them here so abnormal
+    // rows aren't dropped and units aren't lost. (On true grids the bucket holds
+    // one clean number, so none of the extra branches fire — grids unaffected.)
     let valueText = '';
     let flagRaw = '';
+    let rangeText = '';
+    let unitFromRange = '';
     for (const t of buckets.value) {
-      if (VAL.test(t) && !valueText) valueText = t;
-      else if (FLAG.test(t) && !flagRaw) flagRaw = t;
+      const vf = t.match(VAL_FLAG);
+      if (vf) {
+        if (!valueText) valueText = vf[1].trim();
+        if (!flagRaw) flagRaw = vf[2];
+        continue;
+      }
+      if (VAL.test(t) && !valueText) { valueText = t; continue; }
+      if (FLAG.test(t) && !flagRaw) { flagRaw = t; continue; }
+      if (/reference|range|interval|normal/i.test(t) || RANGE.test(t)) {
+        absorbRangeAndUnit(
+          t,
+          (r) => { if (!rangeText) rangeText = r; },
+          (u) => { if (!unitFromRange) unitFromRange = u; },
+        );
+        continue;
+      }
+      if (UNIT.test(t) && !unitFromRange) unitFromRange = t; // bare unit ("%", "ng/mL")
     }
     if (!valueText) continue; // a lab row requires a numeric value
 
@@ -218,9 +268,9 @@ function parsePageGeometry(
       }
     }
 
-    // range column may carry the range + (CareSpace) a trailing unit
-    let rangeText = '';
-    let unitFromRange = '';
+    // range column (true grids) may carry the range + (CareSpace) a trailing
+    // unit. (For 2-column reports this bucket is empty — range/unit were already
+    // absorbed from the value bucket above.)
     for (const t of buckets.range) {
       if (RANGE.test(t) && !rangeText) rangeText = t;
       else if (/[A-Za-z%]/.test(t)) unitFromRange += (unitFromRange ? ' ' : '') + t;

@@ -207,6 +207,56 @@ console.log('\n📐 lab-geometry golden suite\n');
   check('labcorp-flag: name not "01" (lab code did not claim name)', ra?.testName !== '01');
 }
 
+// ============================================================================
+// FIXTURE 7 — Quest 2-column (Analyte | Value), FUSED value+flag and FUSED
+//   "Reference Range: lo-hi unit" tokens. The real-world bug Ren caught on a
+//   Quest CBC/panel: a ferritin of 5 (flag L, ref 16-154 ng/mL) was SILENTLY
+//   DROPPED — pdf.js emits the value cell as ONE token "5 L", which the bare-
+//   numeric VAL test rejected, so the row produced no value and was discarded.
+//   Every ABNORMAL Quest row (the clinically important ones) vanished this way,
+//   and ALL units were lost because the unit lives inside the fused reference
+//   token (or as a bare "%" token) that collapsed into the value bucket.
+//   Mirrors the real pdf.js geometry: name@~68, "N FLAG"@~344, fused ref@~368,
+//   under a 2-anchor "Analyte | Value" header.
+// ============================================================================
+{
+  const p = page(
+    row(700, [57, 'Analyte'], [335, 'Value']),
+    row(680, [68, 'FERRITIN'], [344, '5 L'], [368, 'Reference Range: 16-154 ng/mL']),
+    row(640, [57, 'Analyte'], [335, 'Value']),
+    row(620, [57, 'NEUTROPHILS'], [341, '64.9'], [368, '%']),
+    row(600, [57, 'GLUCOSE'], [341, '82'], [368, 'Reference Range: 65-99 mg/dL']),
+    row(580, [57, 'POTASSIUM'], [341, '13.0 H'], [368, 'Reference Range: 3.5-5.1 mmol/L']),
+  );
+  const rows = extractLabResultsGeometry([p], NO_EXCLUSIONS);
+
+  const fer = find(rows, 'FERRITIN');
+  check('quest: ferritin row NOT dropped (the abnormal-drop bug)', !!fer,
+    `extracted: [${rows.map((r) => r.testName).join(', ')}]`);
+  check('quest: ferritin value = 5', fer?.valueText === '5', fer?.valueText);
+  check('quest: ferritin flag L', fer?.flag === 'L', fer?.flag);
+  check('quest: ferritin abnormal', fer?.isAbnormal === true);
+  check('quest: ferritin unit ng/mL (from fused ref token)', fer?.unit === 'ng/mL', fer?.unit);
+  check('quest: ferritin ref 16-154', fer?.referenceLow === 16 && fer?.referenceHigh === 154,
+    `${fer?.referenceLow}-${fer?.referenceHigh}`);
+
+  const neu = find(rows, 'NEUTROPHILS');
+  check('quest: CBC bare-unit "%" captured', neu?.unit === '%', neu?.unit);
+  check('quest: neutrophils value 64.9', neu?.valueText === '64.9', neu?.valueText);
+
+  const glu = find(rows, 'GLUCOSE');
+  check('quest: glucose unit mg/dL (fused ref)', glu?.unit === 'mg/dL', glu?.unit);
+  check('quest: glucose ref 65-99', glu?.referenceLow === 65 && glu?.referenceHigh === 99,
+    `${glu?.referenceLow}-${glu?.referenceHigh}`);
+  check('quest: glucose in-range → not abnormal', glu?.isAbnormal === false);
+
+  const k = find(rows, 'POTASSIUM');
+  check('quest: potassium row NOT dropped (fused "13.0 H")', !!k);
+  check('quest: potassium value 13.0 + flag H', k?.valueText === '13.0' && k?.flag === 'H',
+    `${k?.valueText}/${k?.flag}`);
+  check('quest: potassium unit mmol/L', k?.unit === 'mmol/L', k?.unit);
+}
+
 // --- summary ----------------------------------------------------------------
 console.log('\n──────────────────────────────────────────');
 console.log(`PASS: ${pass}   FAIL: ${fail}`);
