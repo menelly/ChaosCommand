@@ -31,7 +31,8 @@ import { db, CATEGORIES, SUBCATEGORIES, formatDateForStorage, getCurrentTimestam
 import { useDailyData } from '@/lib/database/hooks/use-daily-data'
 import { toast } from '@/hooks/use-toast'
 import AddToCalendarButton from '@/components/add-to-calendar-button'
-import { scheduleOsNotification, cancelOsNotification } from '@/lib/services/notification-service'
+import { scheduleOsNotification, cancelOsNotification, scheduleReminder, cancelReminder } from '@/lib/services/notification-service'
+import { isMobilePlatform } from '@/lib/platform'
 import {
   DeviceTimer,
   DeviceEvent,
@@ -137,23 +138,50 @@ export function DeviceTimerManager({ timers, onTimersChange, currentUserId }: De
     const cfg = getDeviceConfig(timer.type, timer.customName)
     const expires = new Date(timer.expires_at)
     const leadAt = new Date(expires.getTime() - 24 * 60 * 60 * 1000)
-    await scheduleOsNotification({
-      key: `device-timer-${timer.id}-lead`,
-      title: `${cfg.icon} ${timer.name} expires tomorrow`,
-      body: `Your ${cfg.name} is due for a change soon — grab supplies.`,
-      fireAt: leadAt,
-    })
-    await scheduleOsNotification({
-      key: `device-timer-${timer.id}`,
-      title: `${cfg.icon} Time to change ${timer.name}`,
-      body: `Your ${cfg.name} is due now.`,
-      fireAt: expires,
-    })
+    const events = [
+      {
+        key: `device-timer-${timer.id}-lead`,
+        title: `${cfg.icon} ${timer.name} expires tomorrow`,
+        body: `Your ${cfg.name} is due for a change soon — grab supplies.`,
+        fireAt: leadAt,
+      },
+      {
+        key: `device-timer-${timer.id}`,
+        title: `${cfg.icon} Time to change ${timer.name}`,
+        body: `Your ${cfg.name} is due now.`,
+        fireAt: expires,
+      },
+    ]
+    if (isMobilePlatform()) {
+      // Mobile: OS-scheduled, fires even when fully closed.
+      for (const e of events) await scheduleOsNotification(e)
+    } else {
+      // Desktop: scheduleOsNotification misfires (sendNotification ignores the
+      // schedule and fires immediately), so route through the in-app ticker —
+      // fires once at the due minute. Skip already-past events so reopening the
+      // app doesn't re-notify an expiry that already happened.
+      const now = Date.now()
+      for (const e of events) {
+        if (e.fireAt.getTime() <= now) continue
+        await scheduleReminder({
+          id: e.key,
+          title: e.title,
+          body: e.body,
+          fireAt: e.fireAt.toISOString(),
+          source: 'device-timer',
+        })
+      }
+    }
   }
 
   const cancelTimerNotifications = async (id: string) => {
-    await cancelOsNotification(`device-timer-${id}-lead`)
-    await cancelOsNotification(`device-timer-${id}`)
+    // Cancel both the OS alarm (mobile) and the in-app reminder (desktop).
+    await Promise.all([
+      cancelOsNotification(`device-timer-${id}-lead`),
+      cancelOsNotification(`device-timer-${id}`),
+      cancelReminder(`device-timer-${id}-lead`),
+      cancelReminder(`device-timer-${id}`),
+    ])
   }
 
   const resetTimerForm = () => {

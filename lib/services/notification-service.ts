@@ -125,6 +125,11 @@ export async function scheduleOsNotification(opts: {
 }): Promise<boolean> {
   if (!(opts.fireAt instanceof Date) || isNaN(opts.fireAt.getTime())) return false
   if (opts.fireAt.getTime() <= Date.now()) return false
+  // DESKTOP GUARD: sendNotification ignores `schedule` on desktop and misfires
+  // (fires immediately, not at fireAt). Scheduled delivery is a mobile capability,
+  // so refuse on desktop — callers route desktop through the in-app ticker
+  // (scheduleReminder). Backstop so no future caller reintroduces the bug.
+  if (!isMobilePlatform()) return false
   const granted = await ensureNotificationPermission()
   if (!granted) return false
   try {
