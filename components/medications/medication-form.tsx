@@ -448,87 +448,87 @@ export function MedicationForm({
                 </Label>
               </div>
 
-              {/* Daily Maintain opt-in — the friendly prompt so users don't juggle a flag */}
-              <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-2">
-                <div className="flex items-center space-x-2">
+              {/* SCHEDULE — one set of dose times is the source of truth. The times
+                  drive BOTH the daily Maintain checklist (a med with two times shows
+                  in two slots, e.g. morning + night) AND, optionally, notifications.
+                  Two independent toggles layer on top of the same times. */}
+              <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-3">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">
+                    Dose times <span className="text-muted-foreground font-normal">(optional)</span>
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="time"
+                      value={newReminderTime}
+                      onChange={(e) => setNewReminderTime(e.target.value)}
+                      className="w-40"
+                      aria-label="New dose time"
+                    />
+                    <Button type="button" variant="secondary" onClick={addReminderTime}>
+                      + Add time
+                    </Button>
+                  </div>
+                  {formData.reminderTimes.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {formData.reminderTimes.map((t, i) => (
+                        <span key={i} className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1 text-sm">
+                          ⏰ {t}
+                          <button
+                            type="button"
+                            onClick={() => removeReminderTime(i)}
+                            className="ml-1 text-muted-foreground hover:text-destructive"
+                            aria-label={`Remove dose time ${t}`}
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      Add one or more times (e.g. 8:00 AM, 9:00 PM). A med with two times shows up in
+                      two Maintain slots — morning AND night — each with its own "taken" check.
+                    </p>
+                  )}
+                </div>
+
+                {/* Layer 1: daily checklist */}
+                <div className="flex items-center space-x-2 pt-1">
                   <Switch
                     id="dailyMaintain"
                     checked={formData.dailyMaintain}
                     onCheckedChange={(checked) => handleInputChange('dailyMaintain', checked)}
                   />
                   <Label htmlFor="dailyMaintain" className="cursor-pointer">
-                    Add to my daily Maintain tracker?{" "}
+                    Add to my daily Maintain checklist?{" "}
                     <span className={`font-semibold ${formData.dailyMaintain ? 'text-primary' : 'text-muted-foreground'}`}>
                       {formData.dailyMaintain ? 'Yes' : 'No'}
                     </span>
                   </Label>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Turn on for meds you take on a daily schedule — they'll show up in Maintain with a quick
-                  "taken today" check. Leave off for as-needed or emergency meds (like an EpiPen, Baqsimi, or
-                  rescue inhaler) — those stay here in your full medication list.
-                </p>
-              </div>
 
-              {/* Dose reminder times — the ACTUAL "remind me to take this" scheduler.
-                  Distinct from the free-text "When to Take" note above (which is just
-                  a human note like "with breakfast"): these are real times the reminder
-                  system fires on, and the calendar collapses shared times into one event. */}
-              <div className="space-y-3 rounded-lg border border-border p-3">
-                <div className="flex items-center gap-3">
+                {/* Layer 2: notifications (optional, same times) */}
+                <div className="flex items-center space-x-2">
                   <Switch
                     id="enableReminders"
                     checked={formData.enableReminders}
                     onCheckedChange={(checked) => handleInputChange('enableReminders', checked)}
                   />
                   <Label htmlFor="enableReminders" className="cursor-pointer">
-                    Remind me to take this?{" "}
+                    Send me a notification at these times?{" "}
                     <span className={`font-semibold ${formData.enableReminders ? 'text-primary' : 'text-muted-foreground'}`}>
                       {formData.enableReminders ? 'Yes' : 'No'}
                     </span>
                   </Label>
                 </div>
 
-                {formData.enableReminders && (
-                  <div className="space-y-2">
-                    <Label className="text-sm">Reminder times</Label>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        type="time"
-                        value={newReminderTime}
-                        onChange={(e) => setNewReminderTime(e.target.value)}
-                        className="w-40"
-                        aria-label="New reminder time"
-                      />
-                      <Button type="button" variant="secondary" onClick={addReminderTime}>
-                        + Add time
-                      </Button>
-                    </div>
-                    {formData.reminderTimes.length > 0 ? (
-                      <div className="flex flex-wrap gap-2">
-                        {formData.reminderTimes.map((t, i) => (
-                          <span key={i} className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1 text-sm">
-                            ⏰ {t}
-                            <button
-                              type="button"
-                              onClick={() => removeReminderTime(i)}
-                              className="ml-1 text-muted-foreground hover:text-destructive"
-                              aria-label={`Remove reminder at ${t}`}
-                            >
-                              ×
-                            </button>
-                          </span>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-xs text-muted-foreground">
-                        Add one or more times (e.g. 8:00 AM, 9:00 PM). The app fires a reminder at each — and
-                        they show on your calendar. (Reminders fire while the app is open; it replays anything
-                        you missed when you reopen it.)
-                      </p>
-                    )}
-                  </div>
-                )}
+                <p className="text-xs text-muted-foreground">
+                  <strong>Maintain</strong> = a quick "taken today" check, grouped by time of day.
+                  <strong> Notifications</strong> = a reminder at each time. Leave both off for
+                  as-needed or emergency meds (EpiPen, Baqsimi, rescue inhaler) — they stay in your
+                  full med list.
+                </p>
               </div>
 
               <div className="space-y-2">
