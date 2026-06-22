@@ -113,7 +113,7 @@ function avgEntryField(content: any, pick: (e: any) => any): number | null {
  *  original list and the richer one the PDF's (deleted) inline Pearson used —
  *  fogLevel/anxietyLevel/nausea/bloating/level/rating count as severity signals too.
  *  This engine is the single source of severity semantics for the app AND the PDF. */
-function extractSeverity(record: DailyDataRecord): number | null {
+export function extractSeverity(record: DailyDataRecord): number | null {
   const c = record.content
   if (!c) return null
 

@@ -25,6 +25,7 @@ import {
   Trash2, Search, ChevronDown, ChevronUp, AlertTriangle, Clock,
   Building2, GraduationCap, Heart, Home
 } from "lucide-react"
+import { MissedWorkAnalytics } from "./missed-work-analytics"
 
 // ============================================================================
 // TYPES
@@ -329,23 +330,6 @@ export default function WorkDisabilityPage() {
   }
 
   // ============================================================================
-  // STATS
-  // ============================================================================
-
-  const missedStats = {
-    total: missedDays.length,
-    totalDisabled: missedDays.filter(d => d.couldNotDoAnythingElse).length,
-    byType: WORK_TYPES.map(wt => ({
-      ...wt,
-      count: missedDays.filter(d => d.workType === wt.value).length,
-    })),
-    byImpact: IMPACT_LEVELS.map(il => ({
-      ...il,
-      count: missedDays.filter(d => d.impactLevel === il.value).length,
-    })),
-  }
-
-  // ============================================================================
   // RENDER
   // ============================================================================
 
@@ -385,40 +369,6 @@ export default function WorkDisabilityPage() {
         {/* ================================================================ */}
         {activeTab === "missed-work" && (
           <div>
-            {/* Stats Bar */}
-            {missedDays.length > 0 && (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-                <Card className="border-[var(--border-soft)] bg-[var(--bg-card)]">
-                  <CardContent className="py-3 text-center">
-                    <div className="text-2xl font-bold text-[var(--text-main)]">{missedStats.total}</div>
-                    <div className="text-xs text-[var(--text-muted)]">Total Days</div>
-                  </CardContent>
-                </Card>
-                <Card className="border-[var(--border-soft)] bg-[var(--bg-card)]">
-                  <CardContent className="py-3 text-center">
-                    <div className="text-2xl font-bold text-destructive">{missedStats.totalDisabled}</div>
-                    <div className="text-xs text-[var(--text-muted)]">Completely Unable</div>
-                  </CardContent>
-                </Card>
-                <Card className="border-[var(--border-soft)] bg-[var(--bg-card)]">
-                  <CardContent className="py-3 text-center">
-                    <div className="text-2xl font-bold text-destructive">
-                      {missedStats.byImpact.find(i => i.value === "severe")?.count || 0}
-                    </div>
-                    <div className="text-xs text-[var(--text-muted)]">Severe Days</div>
-                  </CardContent>
-                </Card>
-                <Card className="border-[var(--border-soft)] bg-[var(--bg-card)]">
-                  <CardContent className="py-3 text-center">
-                    <div className="text-2xl font-bold text-blue-600">
-                      {missedStats.byType.find(t => t.value === "paid job")?.count || 0}
-                    </div>
-                    <div className="text-xs text-[var(--text-muted)]">Paid Work Days</div>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-
             {!showMissedForm && (
               <div className="flex gap-2 mb-4">
                 <Button
@@ -431,52 +381,10 @@ export default function WorkDisabilityPage() {
               </div>
             )}
 
-            {/* Analytics Summary */}
-            {missedDays.length >= 3 && !showMissedForm && (
-              <Card className="mb-4 border-[var(--border-soft)] bg-[var(--bg-card)]">
-                <CardContent className="py-4">
-                  <h3 className="font-semibold text-[var(--text-main)] mb-3 flex items-center gap-2">
-                    <Search className="h-4 w-4" />
-                    Pattern Summary
-                  </h3>
-                  <div className="space-y-2 text-sm">
-                    {/* By work type */}
-                    <div>
-                      <span className="text-[var(--text-muted)]">Most missed: </span>
-                      <span className="text-[var(--text-main)] font-medium">
-                        {missedStats.byType.sort((a, b) => b.count - a.count)[0]?.label} ({missedStats.byType.sort((a, b) => b.count - a.count)[0]?.count} days)
-                      </span>
-                    </div>
-                    {/* Severe percentage */}
-                    <div>
-                      <span className="text-[var(--text-muted)]">Severe or total limitation: </span>
-                      <span className="text-[var(--text-main)] font-medium">
-                        {Math.round(((missedStats.byImpact.find(i => i.value === "severe")?.count || 0) + missedStats.totalDisabled) / missedStats.total * 100)}% of days
-                      </span>
-                    </div>
-                    {/* Monthly breakdown */}
-                    {(() => {
-                      const months: Record<string, number> = {}
-                      missedDays.forEach(d => {
-                        const m = d.date.substring(0, 7)
-                        months[m] = (months[m] || 0) + 1
-                      })
-                      const sorted = Object.entries(months).sort((a, b) => b[0].localeCompare(a[0])).slice(0, 3)
-                      return sorted.length > 0 && (
-                        <div>
-                          <span className="text-[var(--text-muted)]">Recent months: </span>
-                          <span className="text-[var(--text-main)]">
-                            {sorted.map(([m, c]) => `${m}: ${c} days`).join(' · ')}
-                          </span>
-                        </div>
-                      )
-                    })()}
-                  </div>
-                  <p className="text-xs text-[var(--text-muted)] mt-3 italic">
-                    This data is what wins SSDI cases. Keep logging.
-                  </p>
-                </CardContent>
-              </Card>
+            {/* Analytics — frequency, the WHY, impact distribution, and the
+                symptom-correlation that matters for a disability claim. */}
+            {missedDays.length > 0 && !showMissedForm && (
+              <MissedWorkAnalytics missedDays={missedDays} />
             )}
 
             {showMissedForm && (
