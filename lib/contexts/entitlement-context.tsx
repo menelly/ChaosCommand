@@ -56,6 +56,25 @@ export function EntitlementProvider({ children }: { children: React.ReactNode })
   const resolve = useCallback(async () => {
     setIsChecking(true)
     try {
+      // DEV/QA override — force a state via ?entitlement=trial|expired|licensed
+      // so the lock UI can be eyeballed in the browser without a Tauri build or
+      // waiting 14 days. Only fires when the param is explicitly present.
+      const override = typeof window !== 'undefined'
+        ? new URLSearchParams(window.location.search).get('entitlement')
+        : null
+      if (override === 'expired') {
+        setEntitlement(resolveEntitlement({ hasKey: false, hasStoreIAP: false, trialExpired: true, trialDaysRemaining: 0 }))
+        return
+      }
+      if (override === 'trial') {
+        setEntitlement(resolveEntitlement({ hasKey: false, hasStoreIAP: false, trialExpired: false, trialDaysRemaining: 7 }))
+        return
+      }
+      if (override === 'licensed') {
+        setEntitlement(resolveEntitlement({ hasKey: true, hasStoreIAP: false, trialExpired: true, trialDaysRemaining: 0 }))
+        return
+      }
+
       // Web / dev outside Tauri: nothing to gate — fully usable.
       if (!inTauri()) {
         setEntitlement(resolveEntitlement({
