@@ -84,6 +84,24 @@ function timeBucket(time?: string): TimeBucketKey {
   return "anytime"
 }
 
+// A DOSE = one med at one time. A med with reminderTimes ["8:00 AM","8:00 PM"]
+// becomes TWO doses (morning + night), each bucketed + checked independently, so
+// a BID med shows in both Maintain slots. A med with no times = one dose, keyed
+// by med id (legacy "taken" data, which used the bare id, still reads cleanly).
+interface MedDose<M> { med: M; key: string; time?: string; bucket: TimeBucketKey }
+function buildDoses<M extends { id: string; time?: string; reminderTimes?: string[] }>(meds: M[]): MedDose<M>[] {
+  const out: MedDose<M>[] = []
+  for (const m of meds) {
+    const times = (Array.isArray(m.reminderTimes) ? m.reminderTimes : []).filter(Boolean)
+    if (times.length > 0) {
+      for (const t of times) out.push({ med: m, key: `${m.id}@${t}`, time: t, bucket: timeBucket(t) })
+    } else {
+      out.push({ med: m, key: m.id, time: m.time, bucket: timeBucket(m.time) })
+    }
+  }
+  return out
+}
+
 function fmtTime(iso: string): string {
   if (!iso) return ""
   const d = new Date(iso)
@@ -115,6 +133,8 @@ export default function MaintainMedicationsPage() {
 
   // Daily meds = opted into the daily checklist AND not discontinued
   const dailyMeds = medications.filter(m => m.dailyMaintain && m.active !== false)
+  // Expand into DOSES (one per reminder time) — the unit Maintain tracks.
+  const doses = useMemo(() => buildDoses(dailyMeds), [dailyMeds])
 
   useEffect(() => {
     setTakenMap(readTakenMap(selectedDate))
@@ -125,10 +145,11 @@ export default function MaintainMedicationsPage() {
   // meds were expected that day so "missed" stays computable later. Runs
   // alongside the localStorage pref (which drives the instant UI). Fire-and-forget.
   const persistAdherence = (date: string, taken: Record<string, string>) => {
-    const expected = dailyMeds.map(m => ({
-      id: m.id,
-      name: m.brandName || m.genericName || "Medication",
-      dose: m.dose,
+    const expected = doses.map(d => ({
+      id: d.key,
+      name: d.med.brandName || d.med.genericName || "Medication",
+      dose: d.med.dose,
+      time: d.time,
     }))
     try {
       void saveData(date, CATEGORIES.TRACKER, ADHERENCE_SUBCATEGORY, { date, expected, taken }, [])
@@ -148,30 +169,30 @@ export default function MaintainMedicationsPage() {
     persistAdherence(selectedDate, next)
   }
 
-  const takeAllInGroup = (meds: { id: string }[]) => {
+  const takeAllInGroup = (keys: string[]) => {
     const next = { ...takenMap }
     const stamp = selectedDate === today ? new Date().toISOString() : `${selectedDate}T12:00:00`
-    for (const m of meds) if (!(m.id in next)) next[m.id] = stamp
+    for (const k of keys) if (!(k in next)) next[k] = stamp
     setTakenMap(next)
     try { setPref(takenKey(selectedDate), JSON.stringify(next)) } catch {}
     persistAdherence(selectedDate, next)
   }
-  const takenCount = dailyMeds.filter(m => m.id in takenMap).length
-  const allTaken = dailyMeds.length > 0 && takenCount === dailyMeds.length
+  const takenCount = doses.filter(d => d.key in takenMap).length
+  const allTaken = doses.length > 0 && takenCount === doses.length
 
   // 7-day adherence strip (selectedDate going back 6 days)
   const history = useMemo(() => {
-    if (dailyMeds.length === 0) return []
+    if (doses.length === 0) return []
     const rows: { date: string; taken: number; total: number }[] = []
     for (let i = 0; i < 7; i++) {
       const d = addDays(selectedDate, -i)
       const map = readTakenMap(d)
-      const taken = dailyMeds.filter(m => m.id in map).length
-      rows.push({ date: d, taken, total: dailyMeds.length })
+      const taken = doses.filter(dose => dose.key in map).length
+      rows.push({ date: d, taken, total: doses.length })
     }
     return rows
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDate, dailyMeds.length, showHistory])
+  }, [selectedDate, doses.length, showHistory])
 
   const refillInfo = (refillDate?: string): { days: number; label: string } | null => {
     if (!refillDate) return null
@@ -186,31 +207,32 @@ export default function MaintainMedicationsPage() {
   // Cluster the daily meds by time-of-day; only show headers when there's more
   // than one group (so a 2-med day stays a clean flat list).
   const groups = (() => {
-    const byBucket: Record<TimeBucketKey, typeof dailyMeds> = {
+    const byBucket: Record<TimeBucketKey, typeof doses> = {
       morning: [], afternoon: [], evening: [], bedtime: [], anytime: [],
     }
-    for (const m of dailyMeds) byBucket[timeBucket(m.time)].push(m)
+    for (const d of doses) byBucket[d.bucket].push(d)
     return (Object.keys(byBucket) as TimeBucketKey[])
       .filter(k => byBucket[k].length > 0)
       .sort((a, b) => BUCKET_META[a].order - BUCKET_META[b].order)
-      .map(k => ({ key: k, label: BUCKET_META[k].label, meds: byBucket[k] }))
+      .map(k => ({ key: k, label: BUCKET_META[k].label, doses: byBucket[k] }))
   })()
   const showHeaders = groups.length > 1
 
-  const renderMedCard = (med: typeof dailyMeds[number]) => {
+  const renderDoseCard = (dose: typeof doses[number]) => {
+    const med = dose.med
     const name = med.brandName || med.genericName || 'Medication'
-    const takenAt = takenMap[med.id]
-    const taken = med.id in takenMap
+    const takenAt = takenMap[dose.key]
+    const taken = dose.key in takenMap
     const refill = refillInfo(med.refillDate)
     const timeStr = fmtTime(takenAt)
     return (
       <Card
-        key={med.id}
+        key={dose.key}
         className={`cursor-pointer transition-colors ${taken ? 'bg-success/5 border-success/20' : 'hover:bg-accent/40'}`}
-        onClick={() => toggleTaken(med.id)}
+        onClick={() => toggleTaken(dose.key)}
       >
         <CardContent className="py-3 flex items-center gap-3">
-          <Checkbox checked={taken} onCheckedChange={() => toggleTaken(med.id)} onClick={(e) => e.stopPropagation()} />
+          <Checkbox checked={taken} onCheckedChange={() => toggleTaken(dose.key)} onClick={(e) => e.stopPropagation()} />
           <div className="flex-1 min-w-0">
             <div className={`font-medium ${taken ? 'line-through text-muted-foreground' : ''}`}>
               {name}
@@ -223,8 +245,10 @@ export default function MaintainMedicationsPage() {
                   {MEDICATION_KIND_META[medicationKind(med)].short}
                 </span>
               )}
-              {(med.time || med.requiresFood) && (
-                <span>{med.time}{med.time && med.requiresFood ? ' · ' : ''}{med.requiresFood ? 'with food' : ''}</span>
+              {/* Per-dose: show THIS dose's time (e.g. "8:00 PM"); fall back to the
+                  med's free-text note for untimed meds. */}
+              {(dose.time || med.requiresFood) && (
+                <span>{dose.time}{dose.time && med.requiresFood ? ' · ' : ''}{med.requiresFood ? 'with food' : ''}</span>
               )}
               {taken && timeStr && (
                 <span className="inline-flex items-center gap-1 text-success">
@@ -270,12 +294,12 @@ export default function MaintainMedicationsPage() {
           </Button>
         </div>
 
-        {ready && dailyMeds.length > 0 && (
+        {ready && doses.length > 0 && (
           <div className={`rounded-lg border p-3 text-center text-sm font-medium ${allTaken ? 'bg-success/10 border-success/20 text-success' : 'bg-muted/40 border-border text-foreground'}`}>
             {allTaken ? (
-              <span className="flex items-center justify-center gap-1.5"><CheckCircle2 className="h-4 w-4" /> All {dailyMeds.length} taken {selectedDate === today ? 'today' : 'this day'} — nice. 💜</span>
+              <span className="flex items-center justify-center gap-1.5"><CheckCircle2 className="h-4 w-4" /> All {doses.length} taken {selectedDate === today ? 'today' : 'this day'} — nice. 💜</span>
             ) : (
-              <>{takenCount} of {dailyMeds.length} taken {selectedDate === today ? 'today' : 'this day'}</>
+              <>{takenCount} of {doses.length} taken {selectedDate === today ? 'today' : 'this day'}</>
             )}
           </div>
         )}
@@ -295,21 +319,21 @@ export default function MaintainMedicationsPage() {
 
         <div className="space-y-4">
           {groups.map(g => {
-            const allInGroupTaken = g.meds.every(m => m.id in takenMap)
-            const showRow = showHeaders || g.meds.length > 1
+            const allInGroupTaken = g.doses.every(d => d.key in takenMap)
+            const showRow = showHeaders || g.doses.length > 1
             return (
               <div key={g.key} className="space-y-2">
                 {showRow && (
                   <div className="flex items-center justify-between px-1 min-h-7">
                     <h2 className="text-sm font-semibold text-muted-foreground">{showHeaders ? g.label : ''}</h2>
                     {!allInGroupTaken && (
-                      <Button variant="ghost" size="sm" className="h-7 text-xs text-primary" onClick={() => takeAllInGroup(g.meds)}>
+                      <Button variant="ghost" size="sm" className="h-7 text-xs text-primary" onClick={() => takeAllInGroup(g.doses.map(d => d.key))}>
                         <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Take all{showHeaders ? '' : ' for today'}
                       </Button>
                     )}
                   </div>
                 )}
-                {g.meds.map(renderMedCard)}
+                {g.doses.map(renderDoseCard)}
               </div>
             )
           })}
