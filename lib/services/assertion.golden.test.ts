@@ -18,7 +18,7 @@
  *   node .tmp-out/lib/services/assertion.golden.test.js
  */
 
-import { classifyAssertion, type Assertion } from './assertion';
+import { classifyAssertion, classifyStatement, type Assertion } from './assertion';
 
 let pass = 0, fail = 0;
 
@@ -70,6 +70,20 @@ expect('Family history of breast cancer.', 'breast cancer', 'family', 'family hi
 // --- "normal"/"unremarkable" are NOT negation cues (blunt — spec §3.B) ------
 expect('The liver is normal. A simple cyst is present.', 'cyst', 'affirmed', 'normal does not negate co-mentioned finding');
 expect('Unremarkable study. Mild degenerative changes noted.', 'degenerative changes', 'affirmed', 'unremarkable not a negation');
+
+// --- classifyStatement: whole impression bullets (cue INSIDE the statement) ---
+function expectStmt(statement: string, want: Assertion, note?: string) {
+  const got = classifyStatement(statement);
+  if (got.assertion === want) { pass++; }
+  else { fail++; console.log(`  ✗ FAIL stmt [${want} expected, got ${got.assertion}${got.cue ? ` via "${got.cue}"` : ''}] "${statement}" — ${note || ''}`); }
+}
+expectStmt('No evidence of acute fracture of the cervical spine.', 'negated', 'the exact impression-parser bug');
+expectStmt('No acute intracranial abnormality.', 'negated', 'leading no');
+expectStmt('Fracture is ruled out.', 'negated', 'trailing post-negation');
+expectStmt('No interval change in the known liver mass.', 'affirmed', 'pseudo stays affirmed');
+expectStmt('Nodule of the left thyroid, appears stable.', 'affirmed', 'real finding');
+expectStmt('Congenital nonunion of the posterior arch of C1.', 'affirmed', 'the finding that must surface');
+expectStmt('Status post cholecystectomy.', 'historical', 'historical bullet');
 
 console.log('\n──────────────────────────────────────────');
 console.log(`PASS: ${pass}   FAIL: ${fail}`);

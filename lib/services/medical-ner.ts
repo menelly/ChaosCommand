@@ -10,7 +10,7 @@
  * Same model the Python backend used — just in ONNX format.
  */
 
-import { classifyAssertion } from './assertion';
+import { classifyAssertion, classifyStatement } from './assertion';
 
 // Transformers.js is loaded dynamically to avoid SSG prerender issues
 // (new URL() calls in onnxruntime-web fail during Node.js-based static generation)
@@ -500,17 +500,31 @@ function standardizeDate(dateStr: string): string {
 }
 
 function findDocumentDate(text: string, excludedDates: Set<string>): string | null {
-  const docDatePatterns = [
-    /(?:Date\/?Time\s+(?:Exam\s+)?Perform\w*|Date\s+of\s+(?:Exam|Study|Procedure|Service|Report))\s*[:\-]?\s*(\d{1,2}\s+\w+\s+\d{4}(?:\s*@\s*\d{4})?)/i,
-    /(?:Date\/?Time\s+(?:Exam\s+)?Perform\w*|Date\s+of\s+(?:Exam|Study|Procedure|Service|Report))\s*[:\-]?\s*(\d{1,2}\/\d{1,2}\/\d{2,4})/i,
-    /(?:Date\/?Time\s+(?:Exam\s+)?Perform\w*|Date\s+of\s+(?:Exam|Study|Procedure|Service|Report))\s*[:\-]?\s*(\w+\s+\d{1,2},?\s+\d{4})/i,
-    /(?:Date\/?Time\s+(?:Exam\s+)?Perform\w*|Date\s+of\s+(?:Exam|Study|Procedure|Service|Report))\s*[:\-]?\s*(\d{4}-\d{2}-\d{2})/i,
+  // Date labels in PRIORITY order — the clinical-event date (when the scan/draw
+  // happened) wins over report-processing dates (received/reported). DOB is never
+  // a label here AND is in excludedDates, so the patient's birthday can't leak in.
+  // Broad on purpose: the C1 CT defaulted to "today" because its header label
+  // wasn't covered (only "Date of Exam"/"Performed" were). Now covers the common
+  // radiology + lab header labels.
+  const DATE_LABELS = [
+    'Date\\s+of\\s+(?:Exam|Study|Procedure|Service)',
+    // "Exam Date", "Exam Date/Time", "Examination Date/Time" (the C1 CT label).
+    'Exam(?:ination)?\\s+Date(?:\\s*\\/?\\s*Time)?',
+    'Study\\s+Date(?:\\s*\\/?\\s*Time)?', 'Acquisition\\s+Date', 'Date\\s+Acquired',
+    'Date\\/?Time\\s+(?:Exam\\s+)?Perform\\w*', 'Date\\s+Performed', 'Performed\\s+on',
+    'Date\\s+collected', 'Collected(?:\\s+on)?', 'Specimen\\s+collected',
+    'DOS', 'Date\\s+of\\s+Service',
+    // Encounter dates — fallback when no explicit exam/collection label.
+    'Admit(?:ted)?\\s+Date', 'Discharge\\s+Date', 'Service\\s+Date',
+    'Date\\s+received', 'Date\\s+reported', 'Date\\s+of\\s+Report', 'Reported(?:\\s+on)?',
   ];
+  const DATE_VALUE =
+    '(\\d{1,2}\\s+\\w+\\s+\\d{4}(?:\\s*@\\s*\\d{4})?|\\d{1,2}\\/\\d{1,2}\\/\\d{2,4}|\\w+\\s+\\d{1,2},?\\s+\\d{4}|\\d{4}-\\d{2}-\\d{2})';
 
-  for (const pattern of docDatePatterns) {
-    const match = text.match(pattern);
-    if (match) {
-      const raw = match[1].split('@')[0].trim();
+  for (const label of DATE_LABELS) {
+    const m = text.match(new RegExp(`${label}\\s*[:\\-]?\\s*${DATE_VALUE}`, 'i'));
+    if (m) {
+      const raw = m[1].split('@')[0].trim();
       const std = standardizeDate(raw);
       if (!excludedDates.has(std)) return std;
     }
@@ -573,6 +587,20 @@ function parseImpressionItems(impressionText: string): { number: string; text: s
     if (text.length >= 5) {
       items.push({ number: match[1], text });
     }
+  }
+
+  // Fall-through: many reports (Intermountain US/MRI, lots of pediatric
+  // formats) write a single prose IMPRESSION paragraph instead of a numbered
+  // list. With no numbers, the loop above returns 0 → the impression parser
+  // produced no events at all → the file showed "Found 0 medical events".
+  // Sentence-split as a second-chance pass, capped to a few items to keep
+  // the review queue clean.
+  if (items.length === 0 && impressionText.trim().length >= 10) {
+    const sentences = impressionText
+      .split(/(?<=[.;])\s+(?=[A-Z])|\n+/)
+      .map((s) => s.replace(/\s+/g, ' ').trim().replace(/\.$/, ''))
+      .filter((s) => s.length >= 8 && /[a-z]/i.test(s));
+    sentences.slice(0, 6).forEach((s, i) => items.push({ number: String(i + 1), text: s }));
   }
   return items;
 }
@@ -784,30 +812,32 @@ export async function extractMedicalEvents(
     console.log(`📋 ${impressionItems.length} numbered impression items found`);
 
     for (const item of impressionItems) {
-      const itemLower = item.text.toLowerCase();
-      const alreadyCaptured = Array.from(seenKeys).some(
-        k => k.length >= 5 && itemLower.includes(k)
-      );
-      if (alreadyCaptured) continue;
-
+      // Title FIRST (so the dedup compares titles, not body prose).
       const titleMatch = item.text.match(
         /^(.+?)(?:\.\s|(?:in|of|with)\s+(?:the\s+)?(?:right|left|bilateral))/i
       );
       let title = titleMatch ? titleMatch[1].trim() : item.text.split('.')[0].trim();
       if (title.length > 80) title = title.slice(0, 77) + '...';
-
       const key = title.toLowerCase().trim();
+
+      // Dedupe ONLY on title — not on substring-overlap with the body. The old
+      // check dropped any item whose body contained a 5+ char word already
+      // seen. Synthesizing impressions (#4 in the PE report: "In the setting of
+      // pulmonary emboli, pulmonary nodules, mediastinal adenopathy, and
+      // hepatosplenomegaly, a lympho-proliferative disorder including lymphoma
+      // is a concern.") legitimately reference prior items — and that's the
+      // MOST IMPORTANT item, the one tying everything together. So a body that
+      // mentions earlier findings must NOT delete the item; only a duplicate
+      // TITLE does.
       if (seenKeys.has(key)) continue;
 
       // Assertion check — the impression parser used to surface EVERY bullet,
       // including negatives ("No evidence of acute fracture" → a 95% diagnosis).
-      // Classify the title's assertion within its sentence and DROP negated
-      // ones. Pseudo-negation ("no interval change in the mass") is NOT negated,
-      // so real findings survive. (CHA-367 §3.B)
-      const titleStart = item.text.toLowerCase().indexOf(key);
-      const assertion = titleStart >= 0
-        ? classifyAssertion(item.text, titleStart, titleStart + key.length).assertion
-        : 'affirmed';
+      // The bullet IS the statement (the negation is inside it), so use the
+      // statement-level classifier (probes both ends) rather than entity-scoped
+      // classifyAssertion. DROP negated ones; pseudo-negation ("no interval
+      // change in the mass") stays affirmed so real findings survive. (§3.B)
+      const assertion = classifyStatement(item.text).assertion;
       if (assertion === 'negated') {
         console.log(`🚫 NEGATED impression item: '${title}' — skipping`);
         continue;
@@ -817,6 +847,7 @@ export async function extractMedicalEvents(
       const speculative = assertion === 'speculative' || isSpeculative(item.text, 0, item.text.length);
       const nearestDate = findNearestDate(item.text, datesFound, excludedDates);
 
+      const itemLower = item.text.toLowerCase();
       let eventType = 'diagnosis';
       if (/status post|post-|s\/p/.test(itemLower)) eventType = 'surgery';
       else if (/recommend|follow-up|follow up/.test(itemLower)) eventType = 'finding';

@@ -212,6 +212,33 @@ export function classifyAssertion(
   return { assertion: 'affirmed' };
 }
 
+/**
+ * Classify a whole short STATEMENT (e.g. an impression bullet) where the cue
+ * lives INSIDE the text rather than before an external entity. classifyAssertion
+ * scopes relative to an entity span, so for "No evidence of acute fracture" — a
+ * statement that IS the negation — it found nothing before the (whole-bullet)
+ * span and called it affirmed. Here we probe BOTH ends: the first token (catches
+ * trailing post-negation, "Fracture is ruled out") and the last token (catches
+ * leading pre-negation, "No evidence of fracture"). Pseudo-negation still wins,
+ * so "No interval change in the mass" stays affirmed.
+ */
+export function classifyStatement(statement: string): AssertionResult {
+  const text = statement.trim();
+  if (!text) return { assertion: 'affirmed' };
+  const firstStart = Math.max(0, text.search(/\S/));
+  const firstLen = (text.slice(firstStart).match(/^\S+/)?.[0].length) || 1;
+  const lastStart = Math.max(0, text.search(/\S+\s*$/));
+
+  const a = classifyAssertion(text, firstStart, firstStart + firstLen);
+  const b = classifyAssertion(text, lastStart, text.length);
+
+  for (const want of ['negated', 'speculative', 'historical', 'family'] as const) {
+    if (a.assertion === want) return a;
+    if (b.assertion === want) return b;
+  }
+  return { assertion: 'affirmed' };
+}
+
 /** Convenience booleans mirroring the old API so callers migrate cleanly. */
 export function isNegatedAssertion(text: string, start: number, end: number): boolean {
   return classifyAssertion(text, start, end).assertion === 'negated';
