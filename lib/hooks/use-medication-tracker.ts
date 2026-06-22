@@ -153,6 +153,10 @@ export function useMedicationTracker(): UseMedicationTrackerReturn {
         dailyMaintain: data.dailyMaintain,
         enableReminders: data.enableReminders,
         reminderTimes: data.reminderTimes || [],
+        // Were dropped here, so a NEW med never saved its refill-reminder setting
+        // (edit persisted it via ...data, add silently lost it).
+        enableRefillReminders: data.enableRefillReminders,
+        refillReminderDays: data.refillReminderDays ?? 3,
         createdAt: now,
         updatedAt: now,
       };

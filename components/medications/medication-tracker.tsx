@@ -219,6 +219,12 @@ export function MedicationTracker() {
       active: editingMedication.active !== false,
       enableReminders: editingMedication.enableReminders || false,
       reminderTimes: editingMedication.reminderTimes || [],
+      // THESE THREE were dropped on edit-load, so editing a med reset them to off
+      // and the save then wrote the off value back — the "Maintain toggle won't
+      // stick" + "refill reminder won't stick" bugs, one root cause.
+      dailyMaintain: editingMedication.dailyMaintain || false,
+      enableRefillReminders: editingMedication.enableRefillReminders || false,
+      refillReminderDays: editingMedication.refillReminderDays ?? 3,
     };
   };
 

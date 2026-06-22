@@ -419,14 +419,18 @@ export function MedicationForm({
                 
                 <div className="space-y-2">
                   <Label htmlFor="time">
-                    When to Take <span className="text-muted-foreground">(optional)</span>
+                    When to Take <span className="text-muted-foreground">(optional note)</span>
                   </Label>
                   <Input
                     id="time"
-                    placeholder="e.g., Morning, 8:00 AM, With dinner"
+                    placeholder="e.g., Morning, With dinner"
                     value={formData.time}
                     onChange={(e) => handleInputChange('time', e.target.value)}
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Just a note for your records. To get an actual reminder at a set time, use
+                    “Remind me to take this?” below.
+                  </p>
                 </div>
               </div>
 
@@ -464,6 +468,67 @@ export function MedicationForm({
                   "taken today" check. Leave off for as-needed or emergency meds (like an EpiPen, Baqsimi, or
                   rescue inhaler) — those stay here in your full medication list.
                 </p>
+              </div>
+
+              {/* Dose reminder times — the ACTUAL "remind me to take this" scheduler.
+                  Distinct from the free-text "When to Take" note above (which is just
+                  a human note like "with breakfast"): these are real times the reminder
+                  system fires on, and the calendar collapses shared times into one event. */}
+              <div className="space-y-3 rounded-lg border border-border p-3">
+                <div className="flex items-center gap-3">
+                  <Switch
+                    id="enableReminders"
+                    checked={formData.enableReminders}
+                    onCheckedChange={(checked) => handleInputChange('enableReminders', checked)}
+                  />
+                  <Label htmlFor="enableReminders" className="cursor-pointer">
+                    Remind me to take this?{" "}
+                    <span className={`font-semibold ${formData.enableReminders ? 'text-primary' : 'text-muted-foreground'}`}>
+                      {formData.enableReminders ? 'Yes' : 'No'}
+                    </span>
+                  </Label>
+                </div>
+
+                {formData.enableReminders && (
+                  <div className="space-y-2">
+                    <Label className="text-sm">Reminder times</Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="time"
+                        value={newReminderTime}
+                        onChange={(e) => setNewReminderTime(e.target.value)}
+                        className="w-40"
+                        aria-label="New reminder time"
+                      />
+                      <Button type="button" variant="secondary" onClick={addReminderTime}>
+                        + Add time
+                      </Button>
+                    </div>
+                    {formData.reminderTimes.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {formData.reminderTimes.map((t, i) => (
+                          <span key={i} className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1 text-sm">
+                            ⏰ {t}
+                            <button
+                              type="button"
+                              onClick={() => removeReminderTime(i)}
+                              className="ml-1 text-muted-foreground hover:text-destructive"
+                              aria-label={`Remove reminder at ${t}`}
+                            >
+                              ×
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">
+                        Add one or more times (e.g. 8:00 AM, 9:00 PM). The app fires a reminder at each — and
+                        they show on your calendar. (Reminders fire while the app is open; it replays anything
+                        you missed when you reopen it.)
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
