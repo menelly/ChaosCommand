@@ -1,0 +1,6 @@
+{
+  "version": "0.7.0",
+  "released": "2026-06-22",
+  "url": "https://chaoscommand.center/download",
+  "notes": "v0.7.0 \u2014 The Store Release \ud83d\udd12\ud83d\udc9c Humane 14-day trial + $25 one-time unlock (never gates your data) + no-means-test scholarships. Medical-doc parser overhaul: Quest/2-column labs no longer drop abnormal results or lose units, real specimen collection dates, NegEx assertion engine, and the impression LLM can no longer invent diagnoses. Daily check-in + desktop reminders. Theme autofill fix."
+}
