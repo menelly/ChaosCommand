@@ -24,13 +24,25 @@
 
 param(
   [ValidateSet('desktop','android','both')]
-  [string]$Target = 'desktop'
+  [string]$Target = 'desktop',
+  # -Store builds the STORE edition: trial + entitlement gating ON. WITHOUT it,
+  # the build is the FREE source edition (unlocked, no gating) - that's what the
+  # public GitHub build is, so "free if you build from source" stays true.
+  [switch]$Store
 )
 
 $ErrorActionPreference = 'Stop'
 # Project root = parent of this script's folder
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
+
+if ($Store) {
+  $env:NEXT_PUBLIC_STORE_BUILD = 'true'
+  Write-Host "STORE edition: trial + entitlement gating is ON." -ForegroundColor Yellow
+} else {
+  $env:NEXT_PUBLIC_STORE_BUILD = ''
+  Write-Host "FREE/source edition: fully unlocked, no gating (the public-GitHub build)." -ForegroundColor Cyan
+}
 
 function Clear-NextCache {
   if (Test-Path "$root\.next") {

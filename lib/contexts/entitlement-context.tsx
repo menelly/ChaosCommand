@@ -37,6 +37,15 @@ const EntitlementContext = createContext<EntitlementContextType | undefined>(und
 
 const inTauri = () => typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
 
+// Only a build explicitly flagged at compile time arms the trial + entitlement.
+// The DEFAULT (a plain `next build`, i.e. anyone who builds from the public
+// GitHub source — the free PolyForm path) is UNLOCKED, no gating at all. So the
+// lock code being public is inert: building it yourself IS the free product, by
+// design. Only the store/MSIX build sets NEXT_PUBLIC_STORE_BUILD=true, and its
+// real money-gate is the store receipt (StoreContext), which can't be faked on a
+// distributed binary. We sell convenience + updates + support, not secrecy.
+const STORE_BUILD = process.env.NEXT_PUBLIC_STORE_BUILD === 'true'
+
 /** Store-purchase check. Real implementation (Windows StoreContext / Apple
  *  StoreKit) lands with the MSIX/App Store packaging; until then there is no
  *  store build, so "not purchased" is the correct, safe answer (the trial + key
@@ -77,6 +86,13 @@ export function EntitlementProvider({ children }: { children: React.ReactNode })
       }
       if (override === 'licensed') {
         setEntitlement(resolveEntitlement({ hasKey: true, hasStoreIAP: false, trialExpired: true, trialDaysRemaining: 0 }))
+        return
+      }
+
+      // Source / self-build (NOT a store build): no gating ever — fully unlocked.
+      // This is the free PolyForm path; the lock only exists in the store edition.
+      if (!STORE_BUILD) {
+        setEntitlement(resolveEntitlement({ hasKey: true, hasStoreIAP: false, trialExpired: false, trialDaysRemaining: 0 }))
         return
       }
 
