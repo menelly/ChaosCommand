@@ -85,7 +85,7 @@ export default function ScholarshipModal({ open, onClose }: ScholarshipModalProp
               can’t swing the $25.
             </li>
             <li>
-              That’s it. No defending your poverty to us. That would be stupid and unfair, and we
+              That’s it. No defending your poverty to us. That would be cruel and unfair, and we
               won’t do it to you.
             </li>
           </ol>
