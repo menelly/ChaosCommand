@@ -23,7 +23,7 @@
  */
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import AppCanvas from "@/components/app-canvas"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -51,6 +51,15 @@ export default function SettingsPage() {
 
   const openModal = (modalName: string) => setActiveModal(modalName)
   const closeModal = () => setActiveModal(null)
+
+  // Deep-link support: /settings?section=<id> opens that section's modal
+  // directly (e.g. the backup reminder routes straight into Data Management
+  // instead of dumping the user at the Settings front door).
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const section = new URLSearchParams(window.location.search).get('section')
+    if (section) setActiveModal(section)
+  }, [])
 
   // Settings categories with their modal components
   const settingsCategories = [

@@ -49,7 +49,7 @@ export default function BackupReminderBanner() {
           <div className="mt-2 flex flex-wrap gap-2">
             <Button
               size="sm"
-              onClick={() => router.push("/settings")}
+              onClick={() => router.push("/settings?section=data")}
             >
               Back up now
             </Button>
