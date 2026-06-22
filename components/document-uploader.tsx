@@ -91,6 +91,9 @@ interface UploadedFile {
   parsedEvents?: ParsedMedicalEvent[];
   parsedLabCount?: number;
   error?: string;
+  // Sanity check: demographics are filled in but the user's name wasn't found
+  // anywhere in this document — maybe it's someone else's. Soft, save-anyway.
+  nameMismatch?: boolean;
 }
 
 // Structured lab result shape passed through to onLabsExtracted. Mirrors the
@@ -138,6 +141,55 @@ export interface ExtractedLabBatch {
   results: ExtractedLabResult[];
 }
 
+// ── UPLOAD SANITY CHECKS ────────────────────────────────────────────────────
+// Two "save the tired person from themselves" guards, both soft (Save-anyway):
+//  1. duplicate results — same test+value+unit+collection-date already in records
+//     (catches re-uploading "no_really_the_real_one(3).pdf"), and
+//  2. wrong-name — demographics filled in but the user's FIRST name isn't on the
+//     doc (catches accidentally importing a family member's labs). We match the
+//     first name, NOT the last: families share a surname, so a last-name match
+//     would let a relative's results through. The warning is generic — it never
+//     echoes the conflicting name (no deadnaming, no exposing whose it is).
+
+/** Content fingerprint for ONE lab result, independent of filename. Same reading
+ *  on the same collection date == same key, no matter how the file was named. */
+function labResultKey(
+  r: { test_name?: string; value_text?: string; value?: number | null; unit?: string; collection_date?: string },
+  batchDate: string
+): string {
+  const name = (r.test_name || '').trim().toLowerCase();
+  const val = (r.value_text ?? (r.value != null ? String(r.value) : '')).trim().toLowerCase();
+  const unit = (r.unit || '').trim().toLowerCase();
+  const date = String(r.collection_date || batchDate || '').slice(0, 10);
+  return `${name}|${val}|${unit}|${date}`;
+}
+
+/** The user's FIRST-name tokens (legal first name + preferred name). We match on
+ *  the first name, never the surname — a relative shares the last name, so a
+ *  surname match would let their labs through. Preferred name is included so a
+ *  user's own docs pass under whichever name they actually use (never gate them
+ *  by a legal/deadname). ≥2 chars to allow short first names. */
+function demographicFirstNameTokens(demo: any): string[] {
+  if (!demo) return [];
+  const tokens: string[] = [];
+  const legalFirst = String(demo.legalName || '').trim().split(/\s+/)[0] || '';
+  if (legalFirst) tokens.push(legalFirst);
+  for (const t of String(demo.preferredName || '').trim().split(/\s+/)) if (t) tokens.push(t);
+  return Array.from(new Set(
+    tokens
+      .map(s => s.replace(/[^\p{L}\p{N}'-]/gu, '').toLowerCase())
+      .filter(s => s.length >= 2)
+  ));
+}
+
+/** True if at least one of the user's first-name tokens appears in the doc text.
+ *  Returns true (no warning) when there's nothing to check against. */
+function docMentionsUser(text: string, firstNameTokens: string[]): boolean {
+  if (firstNameTokens.length === 0) return true;
+  const hay = (text || '').toLowerCase();
+  return firstNameTokens.some(t => hay.includes(t));
+}
+
 interface DocumentUploaderProps {
   onEventsExtracted: (events: ParsedMedicalEvent[]) => void;
   /**
@@ -183,6 +235,8 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
   const [extractedProviders, setExtractedProviders] = useState<any[]>([]);
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  // Pre-save sanity warning (duplicate results and/or wrong-name docs). Null = clear.
+  const [sanityWarning, setSanityWarning] = useState<{ dupCount: number; dupExamples: string[]; nameFiles: string[] } | null>(null);
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
   const [providerToggleStates, setProviderToggleStates] = useState<Record<string, boolean>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -287,7 +341,8 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
         parsedEvents: result.events,
         parsedLabCount: result.labCount,
         status: 'parsed',
-        progress: 100
+        progress: 100,
+        nameMismatch: result.nameMismatch,
       });
 
       // Add to global parsed events for preview
@@ -337,7 +392,7 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
 
   // 🔥 LOCAL NER PROCESSING — Browser-side, no sidecar, no port, no CORS!
   // Transformers.js runs the same d4data/biomedical-ner-all model directly in the browser.
-  const processFileWithBackend = async (file: File): Promise<{extractedText: string, events: ParsedMedicalEvent[], labCount: number, mappedLabs: ExtractedLabResult[]}> => {
+  const processFileWithBackend = async (file: File): Promise<{extractedText: string, events: ParsedMedicalEvent[], labCount: number, mappedLabs: ExtractedLabResult[], nameMismatch: boolean}> => {
     try {
       // Read file to base64
       const arrayBuffer = await file.arrayBuffer();
@@ -463,11 +518,17 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
 
       console.log(`🎉 LOCAL NER SUCCESS: ${allEvents.length} events + ${mappedLabs.length} labs from ${file.name}`);
 
+      // Wrong-name guard: demographics filled in but the user's first name is
+      // nowhere in the doc → maybe it's someone else's (a relative's labs).
+      const firstNames = demographicFirstNameTokens(demographics);
+      const nameMismatch = firstNames.length > 0 && !docMentionsUser(extractedText, firstNames);
+
       return {
         extractedText,
         events: allEvents as any,
         labCount: mappedLabs.length,
         mappedLabs,
+        nameMismatch,
       };
 
     } catch (error) {
@@ -499,8 +560,8 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
     setShowPreview(true);
   };
 
-  // ✅ CONFIRM AND ADD TO TIMELINE + AUTO-CREATE PROVIDERS
-  const handleConfirmEvents = async () => {
+  // ✅ THE ACTUAL SAVE (runs once the sanity gate passes / the user overrides it).
+  const persistApproved = async () => {
     try {
       // 🏥 AUTO-CREATE PROVIDERS FROM EXTRACTED DATA
       const providersToCreate = new Map();
@@ -618,10 +679,65 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
       setAllParsedLabs([]);
       setLabFileDates({});
       setShowPreview(false);
+      setSanityWarning(null);
 
       console.log(`🎉 Successfully processed ${allParsedEvents.length} events + ${allParsedLabs.filter(l => l._included).length} labs and auto-created ${providersToCreate.size} providers!`);
     } catch (error) {
       console.error('❌ Error processing events and providers:', error);
+    }
+  };
+
+  // 🛟 PRE-SAVE SANITY GATE — checks for duplicate results + wrong-name docs,
+  // shows ONE soft warning if anything's off, then lets the user save anyway.
+  // This is the entry point the Confirm button calls; persistApproved() is the
+  // real save and runs either directly (all clear) or from "Save anyway".
+  const handleConfirmEvents = async () => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const includedLabs = allParsedLabs.filter(l => l._included);
+
+      // 1) Duplicate results — fingerprint incoming labs (test|value|unit|date)
+      //    and compare against everything already saved. Filename is irrelevant.
+      let dupCount = 0;
+      const dupExamples: string[] = [];
+      if (includedLabs.length > 0) {
+        const savedKeys = new Set<string>();
+        try {
+          const recs = await getAllCategoryData(CATEGORIES.USER);
+          for (const r of (recs || []) as any[]) {
+            if (!r.subcategory?.startsWith('lab-results')) continue;
+            let content = r.content;
+            if (typeof content === 'string') { try { content = JSON.parse(content); } catch { continue; } }
+            const batchDate = content?.date || r.date;
+            for (const res of (content?.results || [])) savedKeys.add(labResultKey(res, batchDate));
+          }
+        } catch (e) {
+          console.warn('Dup-check: could not read saved labs', e);
+        }
+        for (const l of includedLabs) {
+          const batchDate = labFileDates[l._filename] || today;
+          if (savedKeys.has(labResultKey(l, batchDate))) {
+            dupCount++;
+            if (dupExamples.length < 3) {
+              dupExamples.push(`${l.test_name} ${l.value_text}${l.unit ? ' ' + l.unit : ''} (${String(l.collection_date || batchDate).slice(0, 10)})`);
+            }
+          }
+        }
+      }
+
+      // 2) Wrong-name — files where the user's first name wasn't found.
+      const nameFiles = Array.from(new Set(files.filter(f => f.nameMismatch).map(f => f.file.name)));
+
+      if (dupCount > 0 || nameFiles.length > 0) {
+        setSanityWarning({ dupCount, dupExamples, nameFiles });
+        return; // hold; the dialog's "Save anyway" calls persistApproved()
+      }
+
+      await persistApproved();
+    } catch (e) {
+      // A sanity-check failure must never block a legit save.
+      console.error('Sanity gate errored — saving anyway:', e);
+      await persistApproved();
     }
   };
 
@@ -958,6 +1074,48 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
           </div>
         </div>
       )}
+      {/* 🛟 PRE-SAVE SANITY WARNING (duplicates + wrong-name) */}
+      <Dialog open={!!sanityWarning} onOpenChange={(open) => { if (!open) setSanityWarning(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-warning" />
+              Quick gut-check before saving
+            </DialogTitle>
+            <DialogDescription>
+              Nothing's saved yet — a couple of things looked off. Your call.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            {sanityWarning && sanityWarning.dupCount > 0 && (
+              <div className="rounded-lg border border-warning/30 bg-warning/10 p-3">
+                <p className="font-medium text-[var(--text-main)]">⚠️ Possible duplicate{sanityWarning.dupCount === 1 ? '' : 's'}</p>
+                <p className="text-[var(--text-muted)] mt-1">
+                  {sanityWarning.dupCount} of these result{sanityWarning.dupCount === 1 ? ' is' : 's are'} already in your records
+                  {sanityWarning.dupExamples.length > 0 && <> — e.g. {sanityWarning.dupExamples.join('; ')}</>}.
+                  Saving again would double-count them on your trends.
+                </p>
+              </div>
+            )}
+            {sanityWarning && sanityWarning.nameFiles.length > 0 && (
+              <div className="rounded-lg border border-warning/30 bg-warning/10 p-3">
+                <p className="font-medium text-[var(--text-main)]">⚠️ A name doesn't match your demographics</p>
+                <p className="text-[var(--text-muted)] mt-1">
+                  A name on {sanityWarning.nameFiles.length === 1
+                    ? <strong className="text-[var(--text-main)]">{sanityWarning.nameFiles[0]}</strong>
+                    : `${sanityWarning.nameFiles.length} of these files`} doesn't match your demographics —
+                  sure {sanityWarning.nameFiles.length === 1 ? "it's" : "they're"} yours and not a family member's?
+                </p>
+              </div>
+            )}
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => setSanityWarning(null)}>Go back</Button>
+            <Button onClick={() => { setSanityWarning(null); void persistApproved(); }}>Save anyway</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* 🎨✨ GORGEOUS SPARKLY UPLOAD AREA */}
       <Card className={`border-2 border-dashed transition-all duration-500 transform ${
         isDragOver
@@ -1221,6 +1379,12 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
                       <Badge className="bg-green-100 text-green-800 border-green-200">
                         <CheckCircle className="h-3 w-3 mr-1" />
                         Parsed
+                      </Badge>
+                    )}
+                    {file.status === 'parsed' && file.nameMismatch && (
+                      <Badge className="bg-warning/10 text-warning border-warning/30" title="Your name wasn't found on this document">
+                        <AlertCircle className="h-3 w-3 mr-1" />
+                        Name?
                       </Badge>
                     )}
                     {file.status === 'error' && (
