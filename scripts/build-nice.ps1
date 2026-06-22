@@ -43,6 +43,12 @@ function Clear-NextCache {
 function Invoke-NiceBuild([string]$label, [string]$cmd) {
   Write-Host "==> $label  (IDLE priority - your desktop stays responsive)" -ForegroundColor Green
   $p = Start-Process cmd.exe -ArgumentList '/c', $cmd -PassThru -NoNewWindow
+  # Cache the handle BEFORE waiting. Without this, Start-Process -PassThru leaves
+  # $p.ExitCode null after the process exits (a long-standing PowerShell bug), so
+  # `($p.ExitCode -ne 0)` was true even on a clean build and threw a false failure
+  # AFTER both installers were already produced. Caching .Handle makes ExitCode
+  # populate correctly.
+  $null = $p.Handle
   try { $p.PriorityClass = 'Idle' } catch { Write-Warning "couldn't set Idle priority: $_" }
   $p.WaitForExit()
   if ($p.ExitCode -ne 0) { throw "$label failed (exit $($p.ExitCode))" }
