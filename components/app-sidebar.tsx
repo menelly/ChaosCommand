@@ -30,9 +30,19 @@ import { homeImageData } from "@/lib/home-image"
 import { openDisclaimer } from "@/components/medical-disclaimer-bar"
 import { getPref } from "@/lib/prefs"
 import { SIDEBAR_NAV_ITEMS, SIDEBAR_HIDDEN_KEY, SIDEBAR_NAV_CHANGED_EVENT } from "@/lib/sidebar-nav"
+import { useEntitlement } from "@/lib/contexts/entitlement-context"
+import UnlockModal from "@/components/unlock-modal"
 
 
 export default function AppSidebar() {
+  // Entitlement: when the trial has expired and nothing's unlocked, the TRACKER
+  // nav locks (tap → unlock modal). Home, Settings, Customize, Disclaimer, and
+  // Logout stay free ALWAYS — a user must be able to reach, export, and DELETE
+  // their own data whether or not they pay. We never hold data hostage.
+  const { entitlement } = useEntitlement()
+  const trackersLocked = entitlement ? !entitlement.appUsable : false
+  const [showUnlock, setShowUnlock] = useState(false)
+
   // Start with undefined to prevent hydration mismatch
   const [showSidebar, setShowSidebar] = useState<boolean | undefined>(undefined)
   const [isMobile, setIsMobile] = useState(false) // Default to desktop to prevent mobile backdrop flash
@@ -234,19 +244,31 @@ export default function AppSidebar() {
           </Link>
 
 
-          {/* Trackers section */}
+          {/* Trackers section — locked when the trial's up and nothing's unlocked. */}
           <div className="mt-2">
             {sidebarItems.filter(item => !hiddenNav.includes(item.id)).map((item) => (
-              <Link
-                key={item.id}
-                href={getHref(item.targetPageId)}
-                className={`w-full rounded font-medium py-1.5 px-1 text-center text-xs hover:opacity-80 mb-1 block border border-border ${item.buttonClass}`}
-                title={item.text}
-                onClick={() => isMobile && setShowSidebar(false)}
-              >
-                {item.emoji && <span style={{ marginRight: '4px' }}>{item.emoji}</span>}
-                {item.text}
-              </Link>
+              trackersLocked ? (
+                <button
+                  key={item.id}
+                  onClick={() => setShowUnlock(true)}
+                  className={`w-full rounded font-medium py-1.5 px-1 text-center text-xs mb-1 block border border-border opacity-60 hover:opacity-90 ${item.buttonClass}`}
+                  title={`${item.text} — unlock to use`}
+                >
+                  <span style={{ marginRight: '4px' }}>🔒</span>
+                  {item.text}
+                </button>
+              ) : (
+                <Link
+                  key={item.id}
+                  href={getHref(item.targetPageId)}
+                  className={`w-full rounded font-medium py-1.5 px-1 text-center text-xs hover:opacity-80 mb-1 block border border-border ${item.buttonClass}`}
+                  title={item.text}
+                  onClick={() => isMobile && setShowSidebar(false)}
+                >
+                  {item.emoji && <span style={{ marginRight: '4px' }}>{item.emoji}</span>}
+                  {item.text}
+                </Link>
+              )
             ))}
           </div>
 
@@ -277,6 +299,28 @@ export default function AppSidebar() {
             ⚙️ Settings
           </Link>
 
+          {/* Trial / unlock status — present, not pushy. Under Settings/Logout.
+              trial → gentle countdown; expired → the unlock button; unlocked →
+              nothing (a paid user never sees a countdown). */}
+          {entitlement && entitlement.state === 'trial' && (
+            <button
+              onClick={() => setShowUnlock(true)}
+              className="mt-2 w-full rounded text-[11px] text-muted-foreground transition-all py-1 px-1 hover:text-foreground block text-center"
+              title="Unlock Chaos Command"
+            >
+              🔓 Trial: {entitlement.trialDaysRemaining} day{entitlement.trialDaysRemaining === 1 ? '' : 's'} left
+            </button>
+          )}
+          {entitlement && entitlement.state === 'expired' && (
+            <button
+              onClick={() => setShowUnlock(true)}
+              className="mt-2 w-full rounded text-xs font-semibold transition-all py-2 px-1 hover:opacity-90 block text-center sidebar-btn-custom"
+              title="Unlock Chaos Command — $25 once, yours forever"
+            >
+              🔒 Unlock — $25
+            </button>
+          )}
+
           {/* Medical disclaimer — opens the "not medical care" dialog (also auto-shows once on first launch) */}
           <button
             onClick={() => { openDisclaimer(); isMobile && setShowSidebar(false) }}
@@ -298,6 +342,7 @@ export default function AppSidebar() {
           </Link>
         </div>
       )}
+      <UnlockModal open={showUnlock} onClose={() => setShowUnlock(false)} />
     </>
   )
 }

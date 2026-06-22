@@ -12,6 +12,7 @@ import { getPref } from '@/lib/prefs'
 import { useDatabase } from '@/lib/database/hooks/use-database'
 import { LicenseProvider } from '@/lib/contexts/license-context'
 import LicenseGate from '@/components/license-gate'
+import { EntitlementProvider } from '@/lib/contexts/entitlement-context'
 import { UserProvider, useUser } from '@/lib/contexts/user-context'
 import { Toaster } from '@/components/ui/toaster'
 import PinLogin from '@/components/pin-login'
@@ -333,8 +334,10 @@ export function AppWrapper({ children }: AppWrapperProps) {
   //   </LicenseProvider>
   // )
   return (
-    <UserProvider>
-      <AppContent>{children}</AppContent>
-    </UserProvider>
+    <EntitlementProvider>
+      <UserProvider>
+        <AppContent>{children}</AppContent>
+      </UserProvider>
+    </EntitlementProvider>
   )
 }
