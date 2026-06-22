@@ -69,6 +69,41 @@ export interface LabResult {
   typo_check_severity?: 'critical' | 'extreme';
 }
 
+/**
+ * Document-level specimen COLLECTION date from a lab-report header.
+ *
+ * A lab is dated by when the specimen was DRAWN, not when the file was uploaded.
+ * Quest/LabCorp print one header date ("Collected: 06/10/2020"); when no per-row
+ * date exists (geometry's `date` field), the consumer was defaulting to *today*,
+ * which stamps a 2020 panel as current and FABRICATES a trend on the timeline.
+ * (Ren caught it dogfooding quest5.pdf — 2020 labs landing on 2026-06-22.)
+ *
+ * Priority: Collected/Drawn > Received > Reported. We deliberately do NOT match
+ * the patient DOB ("Date of Birth", "DOB") or a print/footer date — only dates
+ * sitting right after a specimen-event label. Returns ISO YYYY-MM-DD or null.
+ */
+export function extractCollectionDate(text: string): string | null {
+  const toIso = (mm: string, dd: string, yy: string): string => {
+    let year = yy;
+    if (year.length === 2) year = (parseInt(year, 10) > 50 ? '19' : '20') + year;
+    return `${year}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
+  };
+  // Each tier: a specimen-event label, then up to 15 non-digit, non-newline
+  // chars (": ", ":  "), then the date. The bounded gap keeps the match on the
+  // same line so a label can't pair with an unrelated date below it.
+  const DATE = '(\\d{1,2})\\/(\\d{1,2})\\/(\\d{2,4})';
+  const tiers = [
+    new RegExp(`(?:date\\s+collected|collected|collection\\s+date|specimen\\s+(?:collected|date)|drawn)\\b[^\\n\\d]{0,15}${DATE}`, 'i'),
+    new RegExp(`received\\b[^\\n\\d]{0,15}${DATE}`, 'i'),
+    new RegExp(`(?:reported|report\\s+date|result\\s+date)\\b[^\\n\\d]{0,15}${DATE}`, 'i'),
+  ];
+  for (const re of tiers) {
+    const m = text.match(re);
+    if (m) return toIso(m[1], m[2], m[3]);
+  }
+  return null;
+}
+
 // ============================================================================
 // CONSTANTS
 // ============================================================================

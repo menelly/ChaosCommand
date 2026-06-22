@@ -39,7 +39,7 @@ import { CATEGORIES, SUBCATEGORIES, formatDateForStorage } from '@/lib/database/
 
 // 🧠 Local NER — Transformers.js, no backend needed
 import { extractMedicalEvents, isModelLoaded } from '@/lib/services/medical-ner';
-import { extractLabResults, extractLabResultsSmart, labResultsToEvents } from '@/lib/services/lab-parser';
+import { extractLabResults, extractLabResultsSmart, labResultsToEvents, extractCollectionDate } from '@/lib/services/lab-parser';
 import { extractDocFromBase64 } from '@/lib/services/text-extractor';
 
 // 🧠 Medical Document Parser interfaces
@@ -406,6 +406,11 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
       // panels go through their own dedicated upload path).
       const labResults = mode === 'medical' ? [] : await extractLabResultsSmart(pdfTokens, extractedText, demographics);
 
+      // Document-level specimen collection date ("Collected: 06/10/2020") — the
+      // date the labs were DRAWN. Used to date rows that carry no per-row date,
+      // so a 2020 panel isn't stamped "today" (which would fabricate a trend).
+      const headerCollectionDate = extractCollectionDate(extractedText);
+
       // Map LabResult → ExtractedLabResult (consumer-friendly snake_case).
       const mappedLabs: ExtractedLabResult[] = labResults.map(l => ({
         test_name: l.testName,
@@ -419,7 +424,9 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
         is_abnormal: l.isAbnormal,
         context: l.context,
         confidence: l.confidence,
-        collection_date: l.date,
+        // per-row date (CareSpace "Date/Time") wins; else the document header
+        // collection date; the consumer falls back to today only if BOTH are absent.
+        collection_date: l.date || headerCollectionDate || undefined,
         needs_typo_check: l.needs_typo_check,
         typo_check_reason: l.typo_check_reason,
         typo_check_severity: l.typo_check_severity,

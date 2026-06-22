@@ -23,7 +23,7 @@
  * vitest/jest verbatim when one is adopted.
  */
 
-import { extractLabResults, labResultsToEvents, type LabResult } from './lab-parser';
+import { extractLabResults, labResultsToEvents, extractCollectionDate, type LabResult } from './lab-parser';
 
 // ============================================================================
 // TINY ASSERT HARNESS (no framework dependency)
@@ -262,6 +262,29 @@ HIGH
     check(`[${label}] Glucose flagged H (Interpretation HIGH)`, glu.flag === 'H' && glu.isAbnormal);
   }
   assertNoUnitDoubling(label, res);
+}
+
+// ============================================================================
+// COLLECTION DATE — a lab is dated by when the specimen was DRAWN, not uploaded.
+//   The bug Ren caught: a 2020 Quest panel stamped "today" (2026), fabricating a
+//   trend. extractCollectionDate pulls the document header date, preferring
+//   Collected > Received > Reported, and NEVER the patient DOB or a footer date.
+// ============================================================================
+{
+  const quest = [
+    'Patient: Test  DOB: 11/06/1979',
+    'Specimen: TM700762G',
+    'Collected: 06/10/2020 09:34',
+    'Received: 06/10/2020 09:36',
+    'Reported: 06/16/2020 14:40',
+    'FERRITIN 5 L  Reference Range: 16-154 ng/mL',
+  ].join('\n');
+  check('collection-date: Quest "Collected:" → 2020-06-10', extractCollectionDate(quest) === '2020-06-10', extractCollectionDate(quest) ?? 'null');
+  check('collection-date: does NOT grab the patient DOB (1979)', extractCollectionDate(quest) !== '1979-11-06');
+  check('collection-date: DOB-only text → null (no specimen-event label)', extractCollectionDate('Patient DOB: 11/06/1979\nName: X') === null);
+  check('collection-date: falls back to Received when no Collected', extractCollectionDate('Received: 03/15/2021 08:00\nReported: 03/20/2021') === '2021-03-15');
+  check('collection-date: "Date Collected" label + 2-digit year', extractCollectionDate('Date Collected: 1/5/22') === '2022-01-05');
+  check('collection-date: no date present → null', extractCollectionDate('Glucose 90 mg/dL\nNormal') === null);
 }
 
 // ============================================================================
