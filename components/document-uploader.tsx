@@ -111,6 +111,12 @@ export interface ExtractedLabResult {
   /** ISO collection date parsed from the report (e.g. CareSpace per-result
    *  "Date/Time"), when present. Used to default the file's collection date. */
   collection_date?: string;
+  /** Sanity-check signal — value looks like it MIGHT be a typo or extraction
+   *  error (panic-zone value or >5× reference). The review UI surfaces a
+   *  "verify this reading?" prompt. NOT a diagnosis. */
+  needs_typo_check?: boolean;
+  typo_check_reason?: string;
+  typo_check_severity?: 'critical' | 'extreme';
 }
 
 /** Most common collection_date across a file's rows (reports usually share one
@@ -414,6 +420,9 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
         context: l.context,
         confidence: l.confidence,
         collection_date: l.date,
+        needs_typo_check: l.needs_typo_check,
+        typo_check_reason: l.typo_check_reason,
+        typo_check_severity: l.typo_check_severity,
       }));
 
       // 'auto' mode: surface labs in the review queue (handled by caller via
@@ -782,6 +791,9 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
           context: l.context,
           confidence: l.confidence,
           collection_date: l.date,
+          needs_typo_check: l.needs_typo_check,
+          typo_check_reason: l.typo_check_reason,
+          typo_check_severity: l.typo_check_severity,
         }));
         onLabsExtracted({
           filename: 'Pasted Notes',
@@ -1654,7 +1666,7 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
                           {fileLabs.map(lab => (
                             <div
                               key={lab._id}
-                              className={`flex items-center gap-2 p-2 rounded border text-sm transition-colors ${
+                              className={`flex flex-wrap items-center gap-2 p-2 rounded border text-sm transition-colors ${
                                 lab._included
                                   ? 'border-[var(--border-soft)] bg-[var(--surface-2)] dark:bg-[var(--surface-2)]'
                                   : 'border-dashed border-[var(--border-soft)] opacity-50'
@@ -1716,6 +1728,21 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
                                 <Badge className="bg-destructive/10 text-destructive text-xs shrink-0">
                                   {lab.flag || 'ABNL'}
                                 </Badge>
+                              )}
+                              {/* Typo-check banner — wraps to its own line below the row. Soft
+                                  prompt to verify the EXTRACTION, not the patient's value. */}
+                              {lab.needs_typo_check && lab._included && (
+                                <div className={`basis-full mt-1 flex items-start gap-2 text-xs rounded px-2 py-1.5 ${
+                                  lab.typo_check_severity === 'critical'
+                                    ? 'bg-destructive/10 text-destructive border border-destructive/30'
+                                    : 'bg-warning/10 text-warning border border-warning/30'
+                                }`}>
+                                  <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-px" />
+                                  <span className="flex-1">
+                                    <span className="font-medium">Verify reading: </span>
+                                    {lab.typo_check_reason || 'value looks unusually far from expected — please double-check it came through correctly'}
+                                  </span>
+                                </div>
                               )}
                             </div>
                           ))}

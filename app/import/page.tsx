@@ -25,8 +25,10 @@ import {
   SUBCATEGORIES,
   formatDateForStorage,
 } from "@/lib/database"
-import { FileText, CheckCircle, Monitor, FlaskConical } from "lucide-react"
+import { FileText, CheckCircle, Monitor, FlaskConical, Sparkles } from "lucide-react"
 import { useIsMobilePlatform } from "@/lib/platform"
+import { loadImpressionLLM, isImpressionLLMReady, isImpressionLLMLoading, didImpressionLLMFail } from "@/lib/services/impression-llm-transformers"
+import { getNerPipeline, isModelLoaded as isNerLoaded } from "@/lib/services/medical-ner"
 
 // Shape the uploader hands back (matches components/document-uploader.tsx)
 interface ExtractedEvent {
@@ -64,6 +66,52 @@ export default function ImportRecordsPage() {
       setLabOnly(new URLSearchParams(window.location.search).get("mode") === "lab")
     }
   }, [])
+
+  // AI extraction (Qwen3.5-0.8B-ONNX q4, ~440MB one-time download). Opt-in
+  // EAGER LOAD — click downloads the model NOW so the first impression
+  // upload uses Qwen instead of falling through to regex while loading.
+  // Persisted in localStorage so the load auto-resumes on next visit.
+  type AiState = 'idle' | 'loading' | 'ready' | 'failed'
+  const AI_KEY = 'chaos-import-ai-enabled'
+  const [aiState, setAiState] = useState<AiState>('idle')
+
+  // Load BOTH models in parallel: Qwen (impression LLM) AND d4data NER.
+  // NER auto-loads on first upload anyway but doing it here means the FIRST
+  // upload is just inference, no "model loading 0%..100%" noise mid-import.
+  const startLoad = () => {
+    if (typeof window !== 'undefined') localStorage.setItem(AI_KEY, '1')
+    setAiState('loading')
+    Promise.all([
+      loadImpressionLLM(),
+      getNerPipeline().catch((e) => { console.warn('NER preload failed (will retry on upload):', e); }),
+    ])
+      .then(() => setAiState('ready'))
+      .catch(() => setAiState('failed'))
+  }
+
+  // On mount, if previously opted in, auto-resume the load. Also poll module
+  // state so if HMR or a parallel tab progressed the load, the UI updates.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (isImpressionLLMReady() && isNerLoaded()) { setAiState('ready'); return }
+    if (didImpressionLLMFail()) { setAiState('failed'); return }
+    if (isImpressionLLMLoading()) { setAiState('loading'); return }
+    if (localStorage.getItem(AI_KEY) === '1') {
+      // user previously opted in but model isn't loaded (fresh session) —
+      // resume the download automatically rather than make them click again.
+      startLoad()
+    }
+  }, [])
+
+  useEffect(() => {
+    if (aiState !== 'loading') return
+    const tick = setInterval(() => {
+      // Ready when BOTH are loaded — first upload is then pure inference.
+      if (isImpressionLLMReady() && isNerLoaded()) setAiState('ready')
+      else if (didImpressionLLMFail()) setAiState('failed')
+    }, 1000)
+    return () => clearInterval(tick)
+  }, [aiState])
 
   // Mobile guard — rendered instead of the uploader on mobile builds.
   if (isMobile) {
@@ -281,6 +329,55 @@ export default function ImportRecordsPage() {
               ? "Drop your LabCorp / Quest / hospital lab PDFs here. We read the columns by position — value, unit, reference range, abnormal flag — and surface them on your Labs dashboard with trends. Upload the PDF (don't paste text): the column positions only exist in the file."
               : "Visit notes, after-visit summaries, imaging reports, lab panels — drop them all here. The parser runs both medical (NER) and lab (number-anchored) extraction on every document, then shows you a review screen with checkboxes so you can uncheck anything that doesn't belong before it lands on your timeline or Lab Results."}
           </p>
+          {!labOnly && (
+            <div className="rounded-lg border border-[var(--border-soft)] bg-[var(--surface-2)] p-3 flex items-center gap-3 flex-wrap">
+              <Sparkles className="h-4 w-4 text-primary shrink-0" />
+              <div className="flex-1 min-w-[200px] text-sm text-[var(--text-main)]">
+                {aiState === 'idle' && (
+                  <>
+                    <span className="font-medium">AI-enhanced extraction (optional)</span>
+                    <div className="text-xs text-[var(--text-muted)] mt-0.5">
+                      Loads BOTH on-device models once: Qwen 2.5 (impression parser, ~250MB) AND the medical NER (~65MB). Local-only. Click Load to download both now — then every upload after that is pure inference, no model-loading mid-import.
+                    </div>
+                  </>
+                )}
+                {aiState === 'loading' && (
+                  <>
+                    <span className="font-medium">⏳ Loading AI models (Qwen + NER)…</span>
+                    <div className="text-xs text-[var(--text-muted)] mt-0.5">
+                      ~315MB combined, one-time. Open DevTools console (F12) to watch progress. The button flips to &ldquo;ready&rdquo; when BOTH are loaded.
+                    </div>
+                  </>
+                )}
+                {aiState === 'ready' && (
+                  <>
+                    <span className="font-medium">🧠 AI models ready — Qwen + NER loaded</span>
+                    <div className="text-xs text-[var(--text-muted)] mt-0.5">
+                      Impression items extracted with synthesis-detection. Falls back to regex if anything fails.
+                    </div>
+                  </>
+                )}
+                {aiState === 'failed' && (
+                  <>
+                    <span className="font-medium text-destructive">❌ AI model load failed</span>
+                    <div className="text-xs text-[var(--text-muted)] mt-0.5">
+                      Regex parser is still active. Check DevTools console for the error and click Retry to try again.
+                    </div>
+                  </>
+                )}
+              </div>
+              {aiState === 'idle' && (
+                <Button onClick={startLoad} size="sm" className="shrink-0">
+                  Load AI Models
+                </Button>
+              )}
+              {aiState === 'failed' && (
+                <Button onClick={startLoad} size="sm" variant="outline" className="shrink-0">
+                  Retry
+                </Button>
+              )}
+            </div>
+          )}
           <DocumentUploader
             mode={labOnly ? "lab" : "auto"}
             onEventsExtracted={handleEventsExtracted}

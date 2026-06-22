@@ -15,7 +15,24 @@
 
 import { buildExclusionSet, type MedicalEvent } from './medical-ner';
 import { extractLabResultsGeometry, resolveLabNamesWithNer } from './lab-geometry';
+import { checkLabValueSanity } from './lab-sanity-check';
 import type { PdfToken } from './text-extractor';
+
+/** Tag every result with sanity-check metadata. Called on the final result
+ *  list from any extractor (geometry, text-fallback, etc.) so the UI gets
+ *  consistent "verify this value?" prompts regardless of extraction path. */
+function applySanityChecks(results: LabResult[]): LabResult[] {
+  return results.map((r) => {
+    const check = checkLabValueSanity(r);
+    if (check.ok) return r;
+    return {
+      ...r,
+      needs_typo_check: true,
+      typo_check_reason: check.reason,
+      typo_check_severity: check.severity,
+    };
+  });
+}
 
 // ============================================================================
 // TYPES
@@ -43,6 +60,13 @@ export interface LabResult {
    *  field when the report carries one (CareSpace). Undefined otherwise — the
    *  consumer falls back to the file-level / today's date. */
   date?: string;
+  /** Set by lab-sanity-check when a value looks like it MIGHT be a typo or
+   *  extraction error — e.g. inside a panic zone OR >5× the reference range.
+   *  Surfaces a "verify this reading?" prompt in the review UI. Not a
+   *  diagnosis — we're asking the parser/typist, not the patient. */
+  needs_typo_check?: boolean;
+  typo_check_reason?: string;
+  typo_check_severity?: 'critical' | 'extreme';
 }
 
 // ============================================================================
@@ -611,7 +635,7 @@ export function extractLabResults(
   } catch { /* localStorage full or blocked — fail silent */ }
 
   console.log(`🧪 Lab parser: ${finalResults.length} results via ${finalParser}`)
-  return sortLabResults(finalResults)
+  return applySanityChecks(sortLabResults(finalResults))
 }
 
 /**
@@ -663,7 +687,7 @@ export async function extractLabResultsSmart(
     } catch { /* localStorage full or blocked — fail silent */ }
 
     console.log(`🧪 Lab parser: ${geometryResults.length} results via geometry`);
-    return sortLabResults(geometryResults);
+    return applySanityChecks(sortLabResults(geometryResults));
   }
 
   // No grid → existing text-parser dispatch (writes its own diagnostics).

@@ -66,19 +66,40 @@ export const IMPRESSION_SYSTEM_PROMPT =
   'You are a clinical-report parser. You DO NOT diagnose. Output ONLY valid JSON.';
 
 export function buildImpressionUserPrompt(impressionText: string): string {
-  return `Parse this radiology IMPRESSION into a JSON list. Surface EVERY numbered item — never merge, never drop, ESPECIALLY synthesis/concern items even if they reference earlier items.
+  // Qwen2.5 doesn't use a <think> reasoning block — that's a Qwen3 feature.
+  // Tuned for Qwen2.5-0.5B (smaller model — needs explicit skip-list + split
+  // rule because the model follows simple rules better than nuanced ones):
+  //   - SKIP non-clinical text the section detector swept in (patient name,
+  //     page footers, "End of Report", "Primary Diagnostic Code:", page
+  //     numbers, signatures).
+  //   - SPLIT a numbered item into MULTIPLE objects when it contains a
+  //     synthesis sentence ("In the setting of X, Y, Z, … is a concern.")
+  //     so the synthesis becomes its own surfaceable card.
+  return `Extract clinical FINDINGS from this radiology impression as a JSON array.
 
-For each item emit ONE object:
-- "finding": short noun-phrase title. For a synthesis item like "in the setting of X, Y, Z, lymphoma is a concern" the title is "Lymphoma concern" or "Possible lymphoproliferative disorder".
-- "negated": true if the item is a negation (e.g. "no evidence of X"), else false.
+DO NOT EMIT entries for:
+- patient names, DOB, MRN, demographics
+- page footers, page numbers, "End of Report", boilerplate
+- LABEL-ONLY fragments with no actual finding after them, including but not
+  limited to: "Primary Diagnostic Code:", "Diagnostic Code:", "Final Report",
+  "Status:", "Impression:" (the heading itself), "Report:". If a label has
+  no clinical content following it on the same line, SKIP it entirely.
+- signatures or "Electronically signed by..."
+- empty headings, single colons, page-break markers
+
+DO emit one object per distinct clinical finding. If a numbered item contains a SYNTHESIS sentence (e.g. "In the setting of X, Y, Z, a Z disorder is a concern"), emit it as a SEPARATE object with a short title like "Lymphoma concern" — do NOT bury it inside the primary finding's body.
+
+Schema (every field required):
+- "finding": short noun-phrase title (e.g. "Pulmonary emboli", "Lymphoma concern", "Renal stone")
+- "negated": true if a negation ("no evidence of X"), else false
 - "dismissal_language": "none" | "stable" | "incidental" | "congenital" | "variant" | "reactive"
-- "is_synthesis": true if this item ties together / references OTHER items (e.g. "in the setting of …"), else false.
-- "is_historical": true if status-post / prior / resolved, else false.
-
-Output a JSON array, one object per numbered item, in order.
+- "is_synthesis": true if this references multiple OTHER findings ("in the setting of..."), else false
+- "is_historical": true if status-post / prior, else false
 
 IMPRESSION:
 ${impressionText}
+
+Output ONLY the JSON array. No prose.
 
 JSON:`;
 }
@@ -170,8 +191,13 @@ function isDismissal(x: unknown): boolean {
 export async function extractImpressionItemsLLM(
   impressionText: string,
 ): Promise<ImpressionItem[] | null> {
-  if (!_runner.isReady()) return null;
+  // ALWAYS call run() — the runner itself decides whether to actually
+  // invoke the model, queue a load, or no-op. Gating on isReady() here
+  // meant the real runner's load was never KICKED OFF because run()
+  // never got called, so isReady() stayed false forever — deadlock.
+  console.log(`🧠 impression LLM: calling runner (impression: ${impressionText.length} chars)...`);
   let raw: string | null = null;
+  const t0 = Date.now();
   try {
     raw = await _runner.run(
       IMPRESSION_SYSTEM_PROMPT,
@@ -179,10 +205,16 @@ export async function extractImpressionItemsLLM(
       { maxTokens: 900 },
     );
   } catch (e) {
-    console.warn('impression LLM threw, falling back to regex:', e);
+    console.warn('🧠 impression LLM threw, falling back to regex:', e);
     return null;
   }
-  if (!raw) return null;
+  if (!raw) {
+    // Three possible reasons: stub runner, real runner not opted in, real
+    // runner still downloading. The runner logs which one applied.
+    console.log('🧠 impression LLM returned null → falling back to regex (see runner logs above for why)');
+    return null;
+  }
   const items = parseImpressionLLMResponse(raw);
+  console.log(`🧠 impression LLM: ${items.length} items extracted in ${Date.now() - t0}ms`);
   return items.length > 0 ? items : null;
 }
