@@ -1,8 +1,8 @@
 <#
-  build-nice.ps1 — build Chaos Command WITHOUT murdering Ren's desktop.
+  build-nice.ps1 - build Chaos Command WITHOUT murdering Ren's desktop.
 
   Born 2026-06-14, after Ren out-debugged Ace: builds were freezing the whole
-  computer, and it wasn't code size — it was `.next/cache/webpack` quietly
+  computer, and it wasn't code size - it was .next/cache/webpack quietly
   compounding to ~900 MB across builds. Every `next build` then deserialized
   300 MB cache packs into Node's heap (memory spike) while pegging every core
   (CPU starvation) -> taskbar + mouse freeze.
@@ -12,10 +12,14 @@
     2. Runs at IDLE priority -> the build yields CPU to the desktop, so the UI
        stays responsive even while every core is busy.
 
+  ASCII-only on purpose: Windows PowerShell 5.1 reads .ps1 as the ANSI codepage
+  unless the file has a BOM, so UTF-8 punctuation/emoji broke the parser when run
+  without pwsh (which isn't installed on this box). Keep it plain ASCII.
+
   Usage (from the command-mobile2 folder):
-    pwsh scripts/build-nice.ps1            # desktop .exe/.msi
-    pwsh scripts/build-nice.ps1 -Target android   # .apk
-    pwsh scripts/build-nice.ps1 -Target both      # desktop then android
+    powershell -File scripts\build-nice.ps1                  # desktop .exe/.msi
+    powershell -File scripts\build-nice.ps1 -Target android  # .apk
+    powershell -File scripts\build-nice.ps1 -Target both     # desktop then android
 #>
 
 param(
@@ -37,7 +41,7 @@ function Clear-NextCache {
 }
 
 function Invoke-NiceBuild([string]$label, [string]$cmd) {
-  Write-Host "==> $label  (IDLE priority — your desktop stays responsive)" -ForegroundColor Green
+  Write-Host "==> $label  (IDLE priority - your desktop stays responsive)" -ForegroundColor Green
   $p = Start-Process cmd.exe -ArgumentList '/c', $cmd -PassThru -NoNewWindow
   try { $p.PriorityClass = 'Idle' } catch { Write-Warning "couldn't set Idle priority: $_" }
   $p.WaitForExit()
@@ -56,4 +60,4 @@ if ($Target -in 'android','both') {
   Invoke-NiceBuild 'Android build (.apk)' 'npx tauri android build --apk'
 }
 
-Write-Host "`nAll done. Desktop survived. 🐙" -ForegroundColor Magenta
+Write-Host "`nAll done. Desktop survived." -ForegroundColor Magenta
