@@ -182,6 +182,7 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
   const [labFileDates, setLabFileDates] = useState<Record<string, string>>({});
   const [extractedProviders, setExtractedProviders] = useState<any[]>([]);
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
   const [providerToggleStates, setProviderToggleStates] = useState<Record<string, boolean>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -544,11 +545,14 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
         }
       }
 
-      // Add extracted events to timeline
-      onEventsExtracted(allParsedEvents);
-
-      // Also emit any approved (still _included=true) lab results, grouped
-      // by source filename so each upload becomes its own /lab-results card.
+      // Save approved (still _included=true) lab results to /lab-results,
+      // grouped by source filename so each upload becomes its own card. AND
+      // promote each file's ABNORMAL results to the timeline as a summary event
+      // — abnormal labs are clinically significant, so they belong on the
+      // timeline, not just the Labs dashboard. (Ren: "there should be a way to
+      // add abnormal results from the parser to your timeline.")
+      const labTimelineEvents: any[] = [];
+      let abnormalLabCount = 0;
       if (onLabsExtracted) {
         const includedLabs = allParsedLabs.filter(l => l._included);
         const byFile = new Map<string, ExtractedLabResult[]>();
@@ -562,14 +566,46 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
         for (const [filename, results] of byFile.entries()) {
           if (results.length === 0) continue;
           const fileDate = labFileDates[filename] || new Date().toISOString().split('T')[0];
-          onLabsExtracted({
-            filename,
-            date: fileDate,
-            results,
-          });
+          onLabsExtracted({ filename, date: fileDate, results });
           console.log(`🧪 ${results.length} approved lab results saved from ${filename} (date=${fileDate})`);
+
+          const abnormal = results.filter(r => r.is_abnormal);
+          if (abnormal.length > 0) {
+            abnormalLabCount += abnormal.length;
+            const summary = abnormal
+              .map(r => `${r.test_name}: ${r.value_text}${r.unit ? ' ' + r.unit : ''}${r.flag ? ` (${r.flag})` : ''}`)
+              .join(', ');
+            labTimelineEvents.push({
+              id: `lab-abn-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+              type: 'test',
+              title: `Abnormal labs: ${filename}`,
+              date: fileDate,
+              description: `${abnormal.length} abnormal result${abnormal.length === 1 ? '' : 's'}. ${summary}`,
+              status: 'needs_review',
+              severity: abnormal.some(r => r.flag === 'LL' || r.flag === 'CRITICAL') ? 'severe' : 'moderate',
+              tags: ['lab-results', 'abnormal', 'auto-added'],
+            });
+          }
         }
       }
+
+      // Add the NER events + the abnormal-lab summary events to the timeline.
+      onEventsExtracted([...allParsedEvents, ...labTimelineEvents]);
+
+      // Build a success message that reflects what ACTUALLY happened — no more
+      // "Added 0 events" on a labs-only upload (the old text also read state that
+      // gets cleared below, so it always showed 0).
+      const timelineCount = allParsedEvents.length + labTimelineEvents.length;
+      const labsSaved = allParsedLabs.filter(l => l._included).length;
+      const msgParts: string[] = [];
+      if (labsSaved > 0) msgParts.push(`Saved ${labsSaved} lab result${labsSaved === 1 ? '' : 's'} to your Labs dashboard`);
+      if (timelineCount > 0) {
+        msgParts.push(
+          `Added ${timelineCount} item${timelineCount === 1 ? '' : 's'} to your timeline` +
+          (abnormalLabCount > 0 ? ` (incl. ${abnormalLabCount} abnormal lab${abnormalLabCount === 1 ? '' : 's'})` : '')
+        );
+      }
+      setSuccessMessage(msgParts.length ? msgParts.join(' • ') : 'Nothing new to save.');
 
       // 🎉 SHOW SUCCESS ANIMATION
       setShowSuccessAnimation(true);
@@ -906,7 +942,7 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
               </div>
               <h3 className="text-2xl font-bold">🎉 SUCCESS! 🎉</h3>
               <p className="text-lg">
-                Added {allParsedEvents.length} events to your timeline!
+                {successMessage || 'All done!'}
               </p>
               {extractedProviders.length > 0 && (
                 <p className="text-sm opacity-90">
