@@ -303,12 +303,29 @@ function deduplicateEntities(entities: NerEntity[]): NerEntity[] {
 // SECTION DETECTION (ported from Python)
 // ============================================================================
 
+// A real section header sits at the START of a line and is terminated by a
+// COLON/DASH, a line break, or end-of-text — e.g. "IMPRESSION:", "Interpretation:",
+// or "IMPRESSION" alone on its line. It is NEVER a prose word mid-sentence.
+//
+// The old patterns allowed a PERIOD as a header-start and made the colon optional
+// (`(?:^|\n|\.)…[:\-]?`), so a lab report's interpretive prose —
+// "…supplementation. Interpretation and therapy are based on…" — was mis-read as a
+// radiology IMPRESSION section. That false section then fed the vitamin-D
+// commentary, the lab disclaimer, and the TSH pregnancy-range text to the
+// diagnosis parser + NER, which hallucinated events ("pregnancy", "Second"
+// trimester, "TSH Analysis:") onto a medical timeline. (Quest lab report, caught
+// by Ren 2026-06-22.) Requiring the header SHAPE — line-anchored + colon/break
+// terminator — keeps real radiology headers (with OR without a colon) while
+// rejecting lab prose, for every doc type at once.
+const sectionHeader = (alternation: string): RegExp =>
+  new RegExp(`(?:^|\\n)[ \\t\\r]*(?:${alternation})[ \\t\\r]*(?:[:\\-]|(?=\\n)|$)`, 'gi');
+
 const SECTION_PATTERNS: Record<string, RegExp> = {
-  indication: /(?:^|\n|\.)\s*(?:INDICATION|Clinical\s+(?:History|Indication)|Reason\s+for\s+(?:Exam|Study))\s*[:\-]?\s*/gi,
-  technique: /(?:^|\n|\.)\s*(?:TECHNIQUE|Protocol|Procedure\s+Description)\s*[:\-]?\s*/gi,
-  comparison: /(?:^|\n|\.)\s*(?:COMPARISON|Prior\s+(?:Studies?|Exams?))\s*[:\-]?\s*/gi,
-  findings: /(?:^|\n|\.)\s*(?:FINDINGS?|Observations?|Description|Body\s+of\s+Report)\s*[:\-]?\s*/gi,
-  impression: /(?:^|\n|\.)\s*(?:IMPRESSION|CONCLUSION|ASSESSMENT|INTERPRETATION|SUMMARY|DIAGNOS[EI]S)\s*[:\-]?\s*/gi,
+  indication: sectionHeader('INDICATION|Clinical\\s+(?:History|Indication)|Reason\\s+for\\s+(?:Exam|Study)'),
+  technique: sectionHeader('TECHNIQUE|Protocol|Procedure\\s+Description'),
+  comparison: sectionHeader('COMPARISON|Prior\\s+(?:Studies?|Exams?)'),
+  findings: sectionHeader('FINDINGS?|Observations?|Description|Body\\s+of\\s+Report'),
+  impression: sectionHeader('IMPRESSION|CONCLUSION|ASSESSMENT|INTERPRETATION|SUMMARY|DIAGNOS[EI]S'),
 };
 
 const SECTION_WEIGHTS: Record<string, number> = {
