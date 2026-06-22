@@ -124,6 +124,25 @@
     overflow-wrap: anywhere;
     word-break: break-word;
   }
+  /* Chrome/WebKit autofill ignores the theme and forces a white background +
+     black text on recognized fields (name, address, email) — it kicks in the
+     moment you focus/type in them, so on dark custom themes the Demographics
+     name/address inputs flashed white & unreadable. There's no property to
+     un-set the autofill background directly; the box-shadow inset trick paints
+     over it with the themed colour, and a 9999s transition keeps it from
+     flickering back. Token-based, so it follows whatever theme is active. */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active,
+  textarea:-webkit-autofill,
+  select:-webkit-autofill {
+    -webkit-text-fill-color: hsl(var(--foreground));
+    caret-color: hsl(var(--foreground));
+    -webkit-box-shadow: 0 0 0 1000px hsl(var(--background)) inset;
+    box-shadow: 0 0 0 1000px hsl(var(--background)) inset;
+    transition: background-color 9999s ease-in-out 0s;
+  }
 }
 
 /* Custom scrollbar for sidebar */
