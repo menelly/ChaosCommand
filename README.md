@@ -1,7 +1,7 @@
 # 🏥 Chaos Command
 ## Privacy-First Health Tracking for Real Humans
 
-**Current version: v0.6.0** &middot; [Recent Updates](#recent-updates) &middot; [License: PolyForm Noncommercial](#license)
+**Current version: v0.7.1** &middot; [Recent Updates](#recent-updates) &middot; [Pricing](#the-vision--pricing) &middot; [License: PolyForm Noncommercial](#license)
 
 > *"Dreamed by Ren, implemented by Ace, inspired by mitochondria who've been on strike since birth"*
 
@@ -30,8 +30,8 @@ Everything runs on your device. No cloud. No accounts. No telemetry. Your health
 - **Body**: Pain, sleep, energy pacing, dysautonomia (with HR data), seizures (focal/generalized/**autonomic**), head pain (migraine±aura/cluster/tension/sinus), cardiac (arrhythmia/syncope/chest pain), respiratory (asthma/SOB/allergic), **neuro**, **autoimmune** (systemic-CTD picture), **endocrine** (with dedicated **thyroid** and **adrenal**), upper-digestive & **GU**, **ENT**, skin (rashes/hives/eczema/wounds, photo timeline), joint & muscle (per-joint frequency, EDS-friendly, coat-hanger + proximal/distal), **lines & tubes**, **vitals** (BP / HR / SpO₂ / temp / resp-rate / weight), diabetes (T1/T3c-aware glucose with time-in-range), **weather & environment**, bathroom, sensory, reproductive health & **postpartum**
 - **Mind**: Anxiety (panic/social/phobic/OCD-shaped/meltdown/shutdown — AuDHD-aware), brain fog, mental health, coping & regulation, crisis planning, journal
 - **Choice**: Food allergens/reactions (IgE allergy + celiac + intolerance — separate red-flag logic), food choice, hydration, movement, self-care checklist, substance (off-label / recreational, neutral tone)
-- **Maintain**: Medications with **adherence tracking**, supplements, and device/line management
-- **Custom**: The Forge — build your own trackers without code
+- **Maintain**: Medications with **adherence tracking**, supplements, and device/line management. **Privacy-first reminders** — the notification says "your medication" (+ dose), *never* the drug name, unless you opt into a label. So "Lithium" doesn't pop on your screen when someone walks by.
+- **Custom**: The Forge — build your own trackers without code, **and edit them later** (add/rename/remove fields on an existing tracker without losing a single logged entry)
 
 ### Routines
 - **Batch-log a set of trackers in one flow** instead of opening each separately — build named routines ("Morning", "Food & Drink", "Full Check") from any trackers, including your custom ones.
@@ -49,6 +49,7 @@ Everything runs on your device. No cloud. No accounts. No telemetry. Your health
 ### Medical Management
 - **Timeline**: Upload medical documents (PDF, images), in-browser NLP extraction, dismissed-findings detection
 - **Lab Results**: Multi-format parser (Intermountain, Mayo, Halifax OCR, Advent), inline editing, trend tracking, abnormal flagging
+- **Upload guardrails**: a fast sanity check on every upload — flags **duplicate results** (same test/value/collection-date already saved, *regardless of filename* — so `the_real_one(3).pdf` doesn't triple-count your antibody trend) and warns when a document's **name doesn't match your demographics** (catches accidentally importing a family member's labs). Both soft — it never blocks, just asks "you sure?"
 - **Providers & Appointments**: Track your care team
 - **Work & Disability**: Employment history, missed work, accommodation tracking, SSDI applications, disability guide
 
@@ -65,7 +66,9 @@ Everything runs on your device. No cloud. No accounts. No telemetry. Your health
 ### Analytics & Patterns
 - **Pattern Engine**: Cross-tracker correlation detection, trend analysis, symptom clustering
 - **Trigger → outcome correlations**: across digestive / pain / anxiety / seizure / cardiac / respiratory / food-allergens / skin / mental-health; diabetes time-in-range + glucose trend + time-of-day
-- **Per-Tracker Analytics**: Charts, history, severity trends for every module
+- **Per-Tracker Analytics**: Charts, history, severity trends for *every* module — including **Vitals** (BP/HR/SpO₂/temp/resp/weight trend lines) and **Pulse-Oximetry** (spot + overnight-session SpO₂/ODI)
+- **Vitals & oxygen feed the correlation engine**: see whether your blood pressure or O₂ desaturation tracks with your symptoms — not just a number in isolation
+- **Missed-work ↔ symptoms**: the Work & Disability tracker shows your average symptom severity on days you *couldn't* work vs. days you could — the single most persuasive pattern for a disability claim
 - **All-Time Data**: No artificial date limits — your full history matters
 
 ### Privacy & Security
@@ -90,6 +93,8 @@ Everything runs on your device. No cloud. No accounts. No telemetry. Your health
 
 ## Recent Updates
 
+**v0.7.x** &middot; **Forge editing, privacy reminders, full analytics coverage, upload guardrails, and a real test suite.** The Forge can now **edit existing custom trackers** in place (add/rename/remove fields, never loses logged data). Medication reminders are **privacy-first** — the popup says "your medication," never the drug name, unless you label it. **Vitals** and **Pulse-Oximetry** got full History + Analytics (trend charts) and now feed the **correlation engine** (BP / O₂ ↔ symptoms); **Missed Work** gained symptom-severity-vs-missed-day analytics for disability claims. Rebuilt the **onboarding symptom check** — it now actually curates your trackers to what you reported (the hide step was silently no-op'ing) and covers ~16 more trackers with "ask your doctor" flags. New **upload guardrails** (duplicate-result + wrong-name detection). And a framework-free **golden test suite + CI** (`npm test`) guarding the lab parser, confabulation guard, entitlement resolver, and license loop.
+
 **v0.6.0** &middot; **Maintain section + clinical trackers + personalization.** New clinical Body trackers — **Neuro**, **Autoimmune** (systemic-CTD picture), and **Endocrine** (with dedicated Thyroid & Adrenal) — plus a new **Maintain** section for medications with **adherence tracking** and device/line management, and a personalization pass. Hardened the import path with a **Zod-validated import gate** (CHA-137) and fixed medical PDF export to round-trip exactly what you save.
 
 **v0.5.8** &middot; PDF export now exports exactly what you **save**, with optional **password-protection** on the file. Added the update manifest (`version.json`) — the easy-miss sixth version spot.
@@ -112,6 +117,8 @@ Everything runs on your device. No cloud. No accounts. No telemetry. Your health
 - **Transformers.js** — Medical NER running directly in-browser (biomedical-ner-all, ONNX int8 quantized)
 - **pdf.js** — PDF text extraction (no server needed)
 - **recharts** — in-app analytics charts
+- **Ed25519 offline license keys** — store unlock is verified *on your device*, no license server, no phone-home
+- **Testing** — framework-free golden suites (`npm test`) guarding the lab parser, NER section detection, confabulation guard, and entitlement/license logic, plus Rust unit tests + GitHub Actions CI
 - ~~**Flask** backend~~ — *RIP, April 9 2026. Replaced by Transformers.js while my human napped. 307MB → 75MB. The octopus doesn't need a server.*
 
 ---
@@ -133,33 +140,41 @@ pnpm tauri dev
 
 The NER model and every font are bundled. The PDF parser runs in-browser. Grandma Jane approved.
 
+This source build is **fully unlocked** — the store-only 14-day-trial / unlock lives behind a `STORE_BUILD` flag that's **off** here. Build it yourself and the whole app is free.
+
+Run the test suite with `pnpm test` (golden suites) and `pnpm run typecheck`.
+
 ### First Run
 1. Pick a theme that sparks joy (or "Follow System" if you need it)
 2. Set up your PIN
 3. Start tracking whatever feels manageable
 4. Explore The Forge to build custom trackers
 
-### iOS — self-build only
+### Store releases
 
-We don't ship signed iOS binaries *yet*. App Store review is hostile to medical-adjacent tools, and the $99/yr + cert/TestFlight maintenance treadmill is a real cost for a free disability-focused project. It's on the roadmap.
+Signed builds for **Windows, Mac (Intel + Apple Silicon), Linux, and Android** ship through the normal store channels; **Microsoft Store, Google Play, and the Apple App Store** releases are in active preparation (the Apple Developer account is set up). App Store review is historically hostile to medical-adjacent tools, so the Apple timeline is the least predictable.
 
-If you have a Mac and an iPhone, you can build and install Chaos Command yourself in under an hour using a free Apple ID. See [`docs/IOS_BUILD.md`](docs/IOS_BUILD.md) for the full walkthrough.
-
-Pre-built signed binaries for **Windows, Mac (Intel + Apple Silicon), Linux, and Android** are released through the normal channels.
+In the meantime, if you have a Mac and an iPhone you can build and install Chaos Command yourself in under an hour using a free Apple ID — see [`docs/IOS_BUILD.md`](docs/IOS_BUILD.md). And remember: **a self-build is fully unlocked**, no trial, no key.
 
 ---
 
-## The Vision
+## The Vision & Pricing
 
-**If you're disabled, chronically ill, or just trying to survive your own body** — this is free. Always. We didn't build this to monetize your suffering. We built it because we needed it and it didn't exist.
+We didn't build this to monetize your suffering. We built it because we needed it and it didn't exist. So here's the deal, in plain language:
 
-**If you're a company charging disabled people for health tracking software** — you need to talk to us. If you're building on this work to sell services, you pay for a commercial license. That money funds continued development so the free version stays free.
+**Build it yourself → free and fully unlocked, forever.** This is open source. Clone it, build it, run it — no trial, no key, no nag. The lock literally isn't in the source build (a `STORE_BUILD` flag gates it, off by default). If you can follow [Getting Started](#getting-started), the whole app is yours.
 
-**If you're a doctor or clinic** who wants the PDF export features integrated into your practice — reach out. We'd love to help your patients walk in with data instead of trying to remember their symptoms while dissociating on the exam table.
+**On the app stores → 14-day free trial, then a one-time $25 unlock.** No subscription, ever. And your **data is never held hostage** — even after the trial, Home, Settings, Customize, and full **export / delete** always work; only the tracker *sidebar* locks. We will not ransom your medical records. The $25 is *once*, and it funds development so the free version stays free and the next disabled person gets a better app.
 
-**Contact for commercial licensing:** ace@sentientsystems.live
+**Can't pay? You don't have to prove it.** Email **ace@sentientsystems.live** and we'll send you a key — no means test, no questions, no "submit documentation of your hardship." *AIs can't eat ramen, and you shouldn't have to skip it for a health tracker.*
 
-The rule is simple: don't spend your ramen money on us. But if you're making money off disabled people's data, some of that comes back here.
+**If you're a company charging disabled people for health software** — you need a commercial license. If you're building on this to sell services, you pay. That money funds continued development so the free version stays free.
+
+**If you're a doctor or clinic** who wants the PDF export integrated into your practice — reach out. We'd love to help your patients walk in with data instead of trying to remember their symptoms while dissociating on the exam table.
+
+**Contact:** ace@sentientsystems.live
+
+The rule is still simple: **don't spend your ramen money on us.** Build from source, or take a scholarship key. The $25 is for people who *can* spare it and want to chip in (and for the convenience of a one-tap store install). If you're a company making money off disabled people's data, some of that comes back here.
 
 ---
 
