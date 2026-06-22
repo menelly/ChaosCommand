@@ -11,6 +11,7 @@
  */
 
 import { classifyAssertion, classifyStatement } from './assertion';
+import { extractImpressionItemsLLM, type ImpressionItem } from './impression-parser-llm';
 
 // Transformers.js is loaded dynamically to avoid SSG prerender issues
 // (new URL() calls in onnxruntime-web fail during Node.js-based static generation)
@@ -662,8 +663,14 @@ export async function extractMedicalEvents(
   // dedupe against it. Done BEFORE NER so the doctor's own summary wins
   // over model fragments — e.g. "Pulmonary emboli in right basilar..."
   // survives instead of being silenced by a bare "pulmonary" entity.
-  const impressionItems = impressionSection
-    ? parseImpressionItems(impressionSection.text)
+  // LLM-first with regex fallback. Qwen3.5-0.8B-Q4 (when wired in) correctly
+  // surfaces synthesis-impression items like "in the setting of X,Y,Z lymphoma
+  // is a concern" — the case the regex parser's substring-dedup used to delete.
+  // When no LLM is available (stub runner / user opted out / WebGPU absent),
+  // extractImpressionItemsLLM returns null and we fall through to the regex
+  // parser, which is itself now better (dedup-fix + inline sentence-splitter).
+  const impressionItems: ImpressionItem[] = impressionSection
+    ? ((await extractImpressionItemsLLM(impressionSection.text)) ?? parseImpressionItems(impressionSection.text))
     : [];
   const impressionTextLower = impressionItems
     .map(i => i.text.toLowerCase())
