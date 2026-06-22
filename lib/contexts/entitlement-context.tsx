@@ -67,7 +67,12 @@ export function EntitlementProvider({ children }: { children: React.ReactNode })
         return
       }
       if (override === 'trial') {
-        setEntitlement(resolveEntitlement({ hasKey: false, hasStoreIAP: false, trialExpired: false, trialDaysRemaining: 7 }))
+        // ?entitlement=trial&trialdays=2 lets the 3-/1-day reminder be tested.
+        const dParam = typeof window !== 'undefined'
+          ? Number(new URLSearchParams(window.location.search).get('trialdays'))
+          : NaN
+        const trialDaysRemaining = Number.isFinite(dParam) && dParam > 0 ? dParam : 7
+        setEntitlement(resolveEntitlement({ hasKey: false, hasStoreIAP: false, trialExpired: false, trialDaysRemaining }))
         return
       }
       if (override === 'licensed') {

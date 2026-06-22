@@ -19,6 +19,7 @@ import PinLogin from '@/components/pin-login'
 import KonamiEasterEgg from '@/components/konami-easter-egg'
 import ReminderTicker from '@/components/reminder-ticker'
 import DailyCheckinRouter from '@/components/daily-checkin-router'
+import TrialReminder from '@/components/trial-reminder'
 import MedicationReminderSync from '@/components/medication-reminder-sync'
 import DesktopReminderFirer from '@/components/desktop-reminder-firer'
 import PersonalizationWelcome from '@/components/personalization-welcome'
@@ -317,6 +318,7 @@ function AppContent({ children }: AppWrapperProps) {
       <MedicationReminderSync />
       <DesktopReminderFirer />
       <KonamiEasterEgg />
+      <TrialReminder />
       <Toaster />
     </>
   )
