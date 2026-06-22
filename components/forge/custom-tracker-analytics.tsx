@@ -38,9 +38,16 @@ import {
   Activity,
   PieChart
 } from 'lucide-react';
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+} from 'recharts';
 import { useDailyData, CATEGORIES } from '@/lib/database';
 import { CustomTracker } from './tracker-builder';
 import AnalyticsErrorBoundary from './analytics-error-boundary';
+
+// Line colors for the multi-field trend chart (themed-friendly, distinct).
+const SERIES_COLORS = ['#a855f7', '#22d3ee', '#f472b6', '#34d399', '#fbbf24', '#fb7185'];
+const NUMERIC_TYPES = ['scale', 'number', 'percentage', 'duration'];
 
 interface CustomTrackerAnalyticsProps {
   tracker: CustomTracker;
@@ -236,6 +243,24 @@ function CustomTrackerAnalyticsInner({ tracker, entries }: CustomTrackerAnalytic
     );
   }
 
+  // Multi-field trend chart: every numeric field plotted over time, so two values
+  // (e.g. SpO2 + pulse) finally appear TOGETHER. This is Ren's "two values at once".
+  const numericFields = safeFields.filter((f: any) => f && f.id && NUMERIC_TYPES.includes(f.type));
+  const chartData = [...safeEntries]
+    .filter((e: any) => e && e.date)
+    .sort((a: any, b: any) => String(a.date).localeCompare(String(b.date)))
+    .map((e: any) => {
+      const row: any = { date: typeof e.date === 'string' ? e.date.slice(5) : e.date }; // MM-DD
+      for (const f of numericFields) {
+        const v = Number(e[f.id]);
+        if (Number.isFinite(v)) row[f.id] = v;
+      }
+      return row;
+    });
+  const nameToType: Record<string, string> = {};
+  for (const f of numericFields) nameToType[f.name] = f.type;
+  const showChart = numericFields.length > 0 && chartData.length >= 2;
+
   return (
     <div className="space-y-6">
       {/* 📊 OVERVIEW STATS */}
@@ -270,6 +295,46 @@ function CustomTrackerAnalyticsInner({ tracker, entries }: CustomTrackerAnalytic
           </div>
         </CardContent>
       </Card>
+
+      {/* 📈 TREND CHART — numeric fields over time (the "two values together" view) */}
+      {showChart && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <TrendingUp className="h-4 w-4 text-primary" /> Trends over time
+            </CardTitle>
+            <CardDescription>
+              Each numeric field plotted over time — see how they move together
+              {numericFields.length >= 2 ? ' (e.g. O₂ sat + pulse).' : '.'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={240}>
+              <LineChart data={chartData} margin={{ top: 8, right: 12, left: -12, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                <XAxis dataKey="date" tick={{ fontSize: 10 }} />
+                <YAxis tick={{ fontSize: 11 }} />
+                <Tooltip
+                  formatter={(value: any, name: any) => [fmtStat(Number(value), nameToType[name] || 'number'), name]}
+                />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+                {numericFields.map((f: any, i: number) => (
+                  <Line
+                    key={f.id}
+                    type="monotone"
+                    dataKey={f.id}
+                    name={f.name}
+                    stroke={SERIES_COLORS[i % SERIES_COLORS.length]}
+                    strokeWidth={2}
+                    dot={false}
+                    connectNulls
+                  />
+                ))}
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      )}
 
       {/* 🎯 FIELD ANALYTICS */}
       <div className="grid gap-4">
