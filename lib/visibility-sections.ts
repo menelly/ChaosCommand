@@ -49,6 +49,8 @@ const BODY_TRACKERS: VisibilityTracker[] = [
   { id: 'respiratory', name: 'Respiratory Tracker' },
   { id: 'skin', name: 'Skin Tracker' },
   { id: 'joint', name: 'Joint / MSK Tracker' },
+  { id: 'neuro', name: 'Neuro / Neuromuscular' },
+  { id: 'autoimmune', name: 'Autoimmune / Connective Tissue' },
   { id: 'vitals', name: 'Vitals' },
   { id: 'pulse-oximetry', name: 'Pulse Oximetry' },
 ]

@@ -25,6 +25,7 @@ import { useRouter } from 'next/navigation'
 import { getAutoUpdatePref, setAutoUpdatePref } from '@/lib/auto-update-check'
 import { getAutoSyncPref, setAutoSyncPref } from '@/lib/auto-sync'
 import { ensureNotificationPermission } from '@/lib/services/notification-service'
+import { VISIBILITY_SECTIONS } from '@/lib/visibility-sections'
 import PersonalizationPanel from '@/components/customize/personalization-panel'
 import { UserRound } from 'lucide-react'
 
@@ -142,27 +143,27 @@ const SYMPTOM_CATEGORIES: SymptomCategory[] = [
         id: 'palpitations-rest',
         label: 'Heart palpitations at rest (racing, pounding, fluttering)',
         detail: "Not from exercise or standing — just sitting there and your heart decides to freestyle",
-        suggestsTrackers: ['dysautonomia'],
+        suggestsTrackers: ['cardiac', 'dysautonomia'],
         suggestsFlag: 'Holter monitor or event monitor if palpitations are frequent'
       },
       {
         id: 'heartbeat-skip',
         label: 'Feeling your heartbeat skip, pause, or do a flip',
         detail: "PVCs/PACs — usually benign but worth documenting frequency and triggers",
-        suggestsTrackers: ['dysautonomia'],
+        suggestsTrackers: ['cardiac', 'dysautonomia'],
         suggestsFlag: 'ECG and possible Holter monitor'
       },
       {
         id: 'chest-pain',
         label: 'Chest pain or tightness (not during a panic attack)',
-        suggestsTrackers: ['dysautonomia', 'pain'],
+        suggestsTrackers: ['cardiac', 'dysautonomia', 'pain'],
         suggestsFlag: 'Cardiac workup — don\'t let anyone dismiss chest pain as anxiety without testing first'
       },
       {
         id: 'sob-minimal',
         label: 'Short of breath with minimal effort',
         detail: "Winded from walking across the room or climbing a few stairs",
-        suggestsTrackers: ['dysautonomia', 'energy'],
+        suggestsTrackers: ['respiratory', 'dysautonomia', 'energy'],
         suggestsFlag: 'Pulmonary function test and/or echocardiogram'
       },
       {
@@ -175,13 +176,13 @@ const SYMPTOM_CATEGORIES: SymptomCategory[] = [
       {
         id: 'bp-swings',
         label: 'Blood pressure swings (too high, too low, or both)',
-        suggestsTrackers: ['dysautonomia'],
+        suggestsTrackers: ['cardiac', 'dysautonomia', 'vitals'],
       },
       {
         id: 'random-tachycardia',
         label: 'Heart rate spikes randomly — eating, showering, lying down',
         detail: "Inappropriate sinus tachycardia or autonomic dysfunction — not 'just anxiety'",
-        suggestsTrackers: ['dysautonomia'],
+        suggestsTrackers: ['cardiac', 'dysautonomia'],
         suggestsFlag: 'Autonomic function testing if tachycardia occurs in multiple contexts'
       },
     ]
@@ -399,11 +400,198 @@ const SYMPTOM_CATEGORIES: SymptomCategory[] = [
         suggestsTrackers: ['reproductive', 'mental-health'],
         suggestsFlag: 'PMDD screening if mood symptoms are severe and cycle-linked'
       },
+      {
+        id: 'postpartum-recovery',
+        label: 'Recently gave birth — tracking recovery (yours or baby\'s)',
+        detail: "Postpartum bodies (and newborns) deserve their own log, not a footnote.",
+        suggestsTrackers: ['postpartum', 'reproductive'],
+      },
+    ]
+  },
+  {
+    id: 'msk-neuro',
+    title: 'Joints, Muscles & Nerves',
+    icon: '🦴',
+    description: "Bendy joints, weak muscles, and nerve weirdness",
+    symptoms: [
+      {
+        id: 'joints-hypermobile',
+        label: 'Joints that bend too far, dislocate, or "pop out"',
+        detail: "Hypermobility isn't just being 'flexible' — subluxations and dislocations are tracked for a reason",
+        suggestsTrackers: ['joint', 'autoimmune'],
+        suggestsFlag: 'Hypermobility / EDS assessment (Beighton score)'
+      },
+      {
+        id: 'joints-migrating-pain',
+        label: 'Joint pain that moves around, or flares unpredictably',
+        suggestsTrackers: ['joint', 'autoimmune'],
+        suggestsFlag: 'Inflammatory / autoimmune panel (ANA, RF, anti-CCP) if joints swell or flare'
+      },
+      {
+        id: 'muscle-weakness',
+        label: 'Muscle weakness, or limbs that "give out"',
+        suggestsTrackers: ['neuro'],
+        suggestsFlag: 'Neuromuscular workup (EMG / nerve conduction) if weakness is real, not just fatigue'
+      },
+      {
+        id: 'twitching-cramps',
+        label: 'Muscle twitching, cramps, or fasciculations',
+        suggestsTrackers: ['neuro', 'joint'],
+      },
+      {
+        id: 'numbness-tingling',
+        label: 'Numbness, tingling, or "pins and needles" that isn\'t from sitting wrong',
+        suggestsTrackers: ['neuro'],
+        suggestsFlag: 'Neuropathy workup if persistent or spreading'
+      },
+    ]
+  },
+  {
+    id: 'skin',
+    title: 'Skin & Healing',
+    icon: '🩹',
+    description: "Skin reactions, slow healing, and connective-tissue clues",
+    symptoms: [
+      {
+        id: 'rashes-recurrent',
+        label: 'Rashes, hives, or skin reactions that keep coming back',
+        suggestsTrackers: ['skin', 'autoimmune'],
+      },
+      {
+        id: 'slow-healing-bruising',
+        label: 'Slow-healing wounds, or bruising more easily than seems normal',
+        suggestsTrackers: ['skin'],
+        suggestsFlag: 'Clotting / connective-tissue / nutrient workup if frequent'
+      },
+      {
+        id: 'stretchy-skin',
+        label: 'Skin that\'s unusually stretchy or soft, or scars that heal strangely',
+        detail: "Soft/hyperextensible skin + bendy joints can point to a connective-tissue condition",
+        suggestsTrackers: ['skin', 'autoimmune', 'joint'],
+        suggestsFlag: 'Connective-tissue (EDS) assessment'
+      },
+    ]
+  },
+  {
+    id: 'endocrine',
+    title: 'Blood Sugar, Thyroid & Hormones',
+    icon: '🧪',
+    description: "Metabolic and endocrine patterns",
+    symptoms: [
+      {
+        id: 'blood-sugar-swings',
+        label: 'Shaky, sweaty, or foggy when you haven\'t eaten — or crash after meals',
+        detail: "Blood-sugar swings (including reactive lows after eating) are worth a log + a glucose check",
+        suggestsTrackers: ['diabetes', 'energy'],
+        suggestsFlag: 'Fasting glucose + HbA1c (and reactive-hypoglycemia eval if it\'s post-meal)'
+      },
+      {
+        id: 'temp-intolerance',
+        label: 'Can\'t tolerate heat or cold the way other people seem to',
+        suggestsTrackers: ['thyroid', 'dysautonomia'],
+        suggestsFlag: 'Thyroid panel (TSH, free T4/T3)'
+      },
+      {
+        id: 'hair-weight-changes',
+        label: 'Unexplained hair loss, weight changes, or temperature shifts',
+        suggestsTrackers: ['thyroid'],
+        suggestsFlag: 'Thyroid + metabolic panel'
+      },
+      {
+        id: 'salt-craving-crashes',
+        label: 'Intense salt cravings, or big crashes with stress or standing',
+        suggestsTrackers: ['adrenal', 'dysautonomia', 'hydration'],
+        suggestsFlag: 'Consider adrenal/cortisol evaluation if persistent (esp. with low BP)'
+      },
+    ]
+  },
+  {
+    id: 'gu',
+    title: 'Bladder & Plumbing',
+    icon: '💧',
+    description: "Urinary symptoms (bowel stuff lives in Gut Stuff)",
+    symptoms: [
+      {
+        id: 'urinary-urgency',
+        label: 'Urinary urgency, frequency, or "gotta go NOW"',
+        suggestsTrackers: ['gu'],
+      },
+      {
+        id: 'bladder-pain-retention',
+        label: 'Bladder pain, or trouble fully emptying',
+        suggestsTrackers: ['gu'],
+        suggestsFlag: 'Urology referral (e.g. interstitial cystitis or retention) if persistent'
+      },
+    ]
+  },
+  {
+    id: 'ent',
+    title: 'Ears, Nose & Throat',
+    icon: '👂',
+    description: "Sinus, hearing, balance, and swallowing",
+    symptoms: [
+      {
+        id: 'tinnitus-vertigo',
+        label: 'Ringing ears, vertigo, or room-spinning dizziness',
+        suggestsTrackers: ['ent', 'dysautonomia'],
+        suggestsFlag: 'ENT / vestibular evaluation'
+      },
+      {
+        id: 'chronic-congestion',
+        label: 'Chronic sinus congestion, post-nasal drip, or recurrent sore throat',
+        suggestsTrackers: ['ent'],
+      },
+      {
+        id: 'swallowing-trouble',
+        label: 'Trouble swallowing, or food/pills "getting stuck"',
+        suggestsTrackers: ['ent', 'upper-digestive'],
+        suggestsFlag: 'Swallow study if persistent'
+      },
+    ]
+  },
+  {
+    id: 'respiratory-oxygen',
+    title: 'Breathing & Oxygen',
+    icon: '🫁',
+    description: "Breathing patterns and oxygen — beyond just 'winded'",
+    symptoms: [
+      {
+        id: 'breathless-lying',
+        label: 'Breathless lying flat, or waking up gasping',
+        suggestsTrackers: ['respiratory'],
+        suggestsFlag: 'Sleep study + cardiac/pulmonary evaluation'
+      },
+      {
+        id: 'oxygen-drops',
+        label: 'Oxygen levels dip (if you\'ve checked with a pulse oximeter)',
+        detail: "If your O2 drops with activity or sleep, that's data worth charting",
+        suggestsTrackers: ['pulse-oximetry', 'respiratory'],
+        suggestsFlag: 'Overnight oximetry / sleep study'
+      },
+      {
+        id: 'chronic-cough-wheeze',
+        label: 'Chronic cough or wheeze',
+        suggestsTrackers: ['respiratory'],
+      },
+    ]
+  },
+  {
+    id: 'substances',
+    title: 'Substances & Intake',
+    icon: '🧪',
+    description: "Track how what you take affects how you feel (no judgment)",
+    symptoms: [
+      {
+        id: 'substance-effects',
+        label: 'Want to track how alcohol, caffeine, nicotine, or cannabis affect your symptoms',
+        detail: "Caffeine and alcohol genuinely move dysautonomia, sleep, and migraine — tracking ≠ judgment",
+        suggestsTrackers: ['substance'],
+      },
     ]
   },
 ]
 
-// Map subcategory IDs to human-readable names
+// Map onboarding short-ids to human-readable names (shown on the results screen).
 const TRACKER_NAMES: Record<string, string> = {
   'dysautonomia': 'Dysautonomia Tracker',
   'seizure': 'Seizure Tracker',
@@ -416,15 +604,86 @@ const TRACKER_NAMES: Record<string, string> = {
   'food-choice': 'Food Tracker',
   'food-allergens': 'Food Allergens',
   'bathroom': 'Bathroom Tracker',
-  'mental-health': 'Mental Health',
+  'mental-health': 'Mind & Mood',
   'anxiety': 'Anxiety Tracker',
   'sensory': 'Sensory Tracker',
   'coping': 'Coping & Regulation',
-  'crisis': 'Crisis Tracker',
+  'crisis': 'Crisis Support',
   'movement': 'Movement Tracker',
   'weather': 'Weather & Environment',
   'reproductive': 'Reproductive Health',
   'self-care': 'Self-Care Tracker',
+  // Newer trackers (CHA-314/315 era) — were never reachable from onboarding.
+  'cardiac': 'Heart / Cardiac',
+  'respiratory': 'Respiratory',
+  'joint': 'Joint & MSK',
+  'neuro': 'Neuro / Neuromuscular',
+  'autoimmune': 'Autoimmune / Connective Tissue',
+  'skin': 'Skin',
+  'endocrine': 'Endocrine (Diabetes/Thyroid/Adrenal)',
+  'diabetes': 'Blood Sugar / Diabetes',
+  'thyroid': 'Thyroid',
+  'adrenal': 'Adrenal',
+  'gu': 'Genitourinary (GU)',
+  'ent': 'Ear, Nose & Throat',
+  'postpartum': 'Postpartum & Newborn',
+  'pulse-oximetry': 'Pulse Oximetry',
+  'vitals': 'Vitals',
+  'hydration': 'Hydration',
+  'substance': 'Substances',
+}
+
+// THE RECONCILIATION MAP (load-bearing). Onboarding speaks in short ids; the
+// section pages + /customize panel hide trackers by a per-section "visibility
+// id" stored in chaos-<section>-hidden-trackers (see lib/visibility-sections.ts
+// and the manifest's id-alias rule). These two namespaces DIFFER (pain ↔
+// pain-tracking, coping ↔ coping-regulation, bathroom ↔ digestive-health …),
+// so onboarding's old hide step — short ids written to the wrong single key —
+// silently did nothing. Translate every recommended short id to its real
+// visibility id here before writing the hide lists.
+// diabetes/thyroid/adrenal collapse to the 'endocrine' hub (how the Body page
+// surfaces them).
+const VIS_ID: Record<string, string> = {
+  // Body
+  pain: 'pain-tracking',
+  'head-pain': 'head-pain',
+  cardiac: 'cardiac',
+  dysautonomia: 'dysautonomia',
+  respiratory: 'respiratory',
+  seizure: 'seizure-tracking',
+  joint: 'joint',
+  neuro: 'neuro',
+  autoimmune: 'autoimmune',
+  bathroom: 'digestive-health',
+  'upper-digestive': 'upper-digestive',
+  skin: 'skin',
+  reproductive: 'reproductive-health',
+  'food-allergens': 'food-allergens',
+  weather: 'weather-environment',
+  endocrine: 'endocrine',
+  diabetes: 'endocrine',
+  thyroid: 'endocrine',
+  adrenal: 'endocrine',
+  gu: 'gu',
+  ent: 'ent',
+  postpartum: 'postpartum',
+  'pulse-oximetry': 'pulse-oximetry',
+  vitals: 'vitals',
+  // Mind
+  'brain-fog': 'brain-fog',
+  'mental-health': 'mental-health-general',
+  anxiety: 'anxiety-tracker',
+  sensory: 'sensory-tracker',
+  'self-care': 'self-care-tracker',
+  coping: 'coping-regulation',
+  crisis: 'crisis-support',
+  // Choice
+  sleep: 'sleep',
+  hydration: 'hydration',
+  'food-choice': 'food-choice',
+  movement: 'movement',
+  energy: 'energy',
+  substance: 'substance',
 }
 
 // ============================================================================
@@ -502,16 +761,29 @@ export default function OnboardingPage() {
 
   const finishOnboarding = () => {
     const { trackers } = getRecommendations()
-    const recommendedIds = trackers.map(t => t.tracker)
+    const recommendedShortIds = trackers.map(t => t.tracker)
 
-    // All possible tracker subcategories
-    const allTrackerIds = Object.keys(TRACKER_NAMES)
+    // Translate onboarding short-ids -> the REAL per-section visibility ids that
+    // the section pages + /customize actually hide by. (Old code wrote short ids
+    // to a single wrong key, so curation silently no-op'd — see VIS_ID above.)
+    const recommendedViz = new Set(
+      recommendedShortIds.map(id => VIS_ID[id]).filter(Boolean)
+    )
 
-    // Hide trackers that AREN'T recommended (user can always re-enable from manage page)
-    const hiddenTrackers = allTrackerIds.filter(id => !recommendedIds.includes(id))
+    // Write each section's hidden list to ITS OWN key. Curate a section ONLY if
+    // the user surfaced at least one symptom relevant to it — otherwise leave it
+    // fully visible, so picking (say) heart symptoms doesn't nuke the whole Mind
+    // page to empty. Manage (medications/records/admin) is never auto-hidden.
+    // Everything stays re-enableable from each section page or /customize.
+    for (const section of VISIBILITY_SECTIONS) {
+      if (section.id === 'manage') continue
+      const sectionHasRecommendation = section.trackers.some(t => recommendedViz.has(t.id))
+      const hidden = sectionHasRecommendation
+        ? section.trackers.filter(t => !recommendedViz.has(t.id)).map(t => t.id)
+        : []
+      localStorage.setItem(section.storageKey, JSON.stringify(hidden))
+    }
 
-    // Save to localStorage (same pattern as manage page)
-    localStorage.setItem('chaos-manage-hidden-trackers', JSON.stringify(hiddenTrackers))
     // Mark complete globally AND per-PIN
     localStorage.setItem('chaos-onboarding-complete', 'true')
     const pin = localStorage.getItem('chaos-user-pin')
