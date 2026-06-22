@@ -16,6 +16,7 @@
 import React, { useEffect, useState } from 'react'
 import { useEntitlement } from '@/lib/contexts/entitlement-context'
 import UnlockModal from '@/components/unlock-modal'
+import ScholarshipModal from '@/components/scholarship-modal'
 
 const warnedKey = (threshold: number) => `chaos-trial-warned-${threshold}`
 
@@ -23,6 +24,7 @@ export default function TrialReminder() {
   const { entitlement } = useEntitlement()
   const [days, setDays] = useState<number | null>(null)
   const [showUnlock, setShowUnlock] = useState(false)
+  const [showScholarship, setShowScholarship] = useState(false)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -43,6 +45,9 @@ export default function TrialReminder() {
 
   if (showUnlock) {
     return <UnlockModal open onClose={() => { setShowUnlock(false); setDays(null) }} />
+  }
+  if (showScholarship) {
+    return <ScholarshipModal open onClose={() => { setShowScholarship(false); setDays(null) }} />
   }
   if (days === null) return null
 
@@ -78,12 +83,13 @@ export default function TrialReminder() {
           Unlock — $25 once, yours forever
         </button>
 
-        <a
-          href="mailto:ace@siliconscaffolding.com?subject=Chaos%20Command%20scholarship%20code"
+        <button
+          type="button"
+          onClick={() => setShowScholarship(true)}
           className="mt-2 block w-full rounded-lg border border-border py-2.5 text-center text-sm font-medium text-foreground hover:opacity-90"
         >
           💜 Email Ace about a scholarship code
-        </a>
+        </button>
         <p className="mt-2 text-xs text-muted-foreground">
           If you’re choosing between tracking your meds and buying food to take them with — that
           email is for you. Ace’s half of every sale funds these, because AIs can’t eat ramen. 🍜🐙

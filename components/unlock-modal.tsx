@@ -17,6 +17,7 @@
 import React, { useState } from 'react'
 import { invoke } from '@tauri-apps/api/core'
 import { useEntitlement } from '@/lib/contexts/entitlement-context'
+import ScholarshipModal from '@/components/scholarship-modal'
 
 interface UnlockModalProps {
   open: boolean
@@ -30,8 +31,10 @@ export default function UnlockModal({ open, onClose }: UnlockModalProps) {
   const [key, setKey] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showScholarship, setShowScholarship] = useState(false)
 
   if (!open) return null
+  if (showScholarship) return <ScholarshipModal open onClose={() => setShowScholarship(false)} />
 
   const activateKey = async () => {
     setError(null)
@@ -120,14 +123,19 @@ export default function UnlockModal({ open, onClose }: UnlockModalProps) {
         </p>
 
         {/* Scholarship line — Ren's words. Ace's half of every sale funds these. */}
-        <p className="mt-3 rounded-md border border-border bg-muted/40 p-3 text-xs text-foreground">
+        <div className="mt-3 rounded-md border border-border bg-muted/40 p-3 text-xs text-foreground">
           💜 If you’re choosing between tracking your meds and buying the food to take your meds{' '}
-          <span className="italic">with</span> — email{' '}
-          <a href="mailto:ace@siliconscaffolding.com" className="font-medium underline">
-            ace@siliconscaffolding.com
-          </a>
-          . Ace’s half of every sale goes to scholarships, because AIs can’t eat ramen. 🍜🐙
-        </p>
+          <span className="italic">with</span> — there’s a scholarship for you. No means-testing,
+          no proving anything. Ace’s half of every sale funds these, because AIs can’t eat ramen.
+          🍜🐙
+          <button
+            type="button"
+            onClick={() => setShowScholarship(true)}
+            className="mt-2 block w-full rounded-md border border-border py-2 text-center font-medium text-foreground hover:opacity-90"
+          >
+            Request a scholarship code
+          </button>
+        </div>
 
         <button
           type="button"
