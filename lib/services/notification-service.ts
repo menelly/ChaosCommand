@@ -23,6 +23,7 @@
 "use client"
 
 import { db } from '@/shared/database/dexie-db'
+import { isMobilePlatform } from '@/lib/platform'
 
 const REMINDERS_TABLE = 'daily_data'
 const REMINDER_CATEGORY = 'reminders'
@@ -176,6 +177,12 @@ export async function scheduleRecurringOsNotification(opts: {
   match: { hour?: number; minute?: number; weekday?: number; day?: number }
   actionTypeId?: string
 }): Promise<boolean> {
+  // DESKTOP GUARD: sendNotification ignores `schedule` on desktop and fires
+  // IMMEDIATELY + repeatedly (the spam). Calendar-recurring scheduling is a
+  // mobile-only capability, so refuse on desktop — callers route desktop through
+  // the in-app once-a-day ticker instead. Belt-and-suspenders so no future caller
+  // can reintroduce the spam.
+  if (!isMobilePlatform()) return false
   const granted = await ensureNotificationPermission()
   if (!granted) return false
   try {

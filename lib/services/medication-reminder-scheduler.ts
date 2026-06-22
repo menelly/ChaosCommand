@@ -23,7 +23,10 @@
 import {
   scheduleRecurringOsNotification,
   cancelOsNotification,
+  scheduleReminder,
+  cancelReminder,
 } from '@/lib/services/notification-service'
+import { isMobilePlatform } from '@/lib/platform'
 import type { Medication } from '@/lib/types/medication-types'
 
 export const MED_REMINDER_ACTION_TYPE = 'chaos-med-reminder'
@@ -93,10 +96,16 @@ function medName(m: Medication): string {
   return m.brandName || m.genericName || 'your medication'
 }
 
-/** Cancel every medication reminder we previously armed (manifest-driven). */
+// Desktop fires med reminders through the in-app ticker (fires once at the due
+// minute, then marks itself fired — no spam), so we pre-arm a rolling window.
+const DESKTOP_WINDOW_DAYS = 2
+
+/** Cancel every medication reminder we previously armed (manifest-driven). Each
+ *  key may be an OS alarm (mobile) OR an in-app ticker reminder (desktop), so we
+ *  cancel BOTH — whichever doesn't exist is a harmless no-op. */
 export async function cancelAllMedicationReminders(): Promise<void> {
   const prior = readManifest()
-  await Promise.all(prior.map(k => cancelOsNotification(k)))
+  await Promise.all(prior.flatMap(k => [cancelOsNotification(k), cancelReminder(k)]))
   writeManifest([])
 }
 
@@ -113,6 +122,11 @@ export async function syncMedicationReminders(medications: Medication[]): Promis
 
   if (!medsCategoryOn()) return 0
 
+  // Mobile: OS calendar-recurring alarms (fire even when fully closed). Desktop:
+  // the OS interval path fires immediately + repeatedly on Windows (that was
+  // Lyrica spamming), so route through the in-app ticker, which fires each dose
+  // ONCE at its due minute and marks it fired.
+  const mobile = isMobilePlatform()
   const armedKeys: string[] = []
   let armed = 0
 
@@ -123,6 +137,8 @@ export async function syncMedicationReminders(medications: Medication[]): Promis
 
     const name = medName(med)
     const dose = med.dose ? ` · ${med.dose}` : ''
+    const title = `💊 Time for ${name}`
+    const body = `Take your dose${dose}. Tap to mark it taken.`
 
     for (const timeStr of times) {
       const hm = parseReminderTime(timeStr)
@@ -130,17 +146,32 @@ export async function syncMedicationReminders(medications: Medication[]): Promis
         console.warn(`[med-reminder] could not parse time "${timeStr}" for ${name} — skipped`)
         continue
       }
-      // Key is stable per med+time, so re-syncing an unchanged med re-arms the
-      // same id (cancel-then-add inside the helper = no duplicate).
-      const key = `med-reminder-${med.id}-${hm.hour}-${hm.minute}`
-      const ok = await scheduleRecurringOsNotification({
-        key,
-        title: `💊 Time for ${name}`,
-        body: `Take your dose${dose}. Tap to mark it taken.`,
-        match: { hour: hm.hour, minute: hm.minute },
-        actionTypeId: MED_REMINDER_ACTION_TYPE,
-      })
-      if (ok) { armedKeys.push(key); armed++ }
+
+      if (mobile) {
+        // Stable key per med+time → re-syncing an unchanged med re-arms the same
+        // id (cancel-then-add inside the helper = no duplicate).
+        const key = `med-reminder-${med.id}-${hm.hour}-${hm.minute}`
+        const ok = await scheduleRecurringOsNotification({
+          key, title, body,
+          match: { hour: hm.hour, minute: hm.minute },
+          actionTypeId: MED_REMINDER_ACTION_TYPE,
+        })
+        if (ok) { armedKeys.push(key); armed++ }
+      } else {
+        // Desktop in-app ticker: pre-arm a rolling window, fires once per dose.
+        // NEVER schedule a PAST time — it would fire instantly on the ticker's
+        // startup kick and re-fire on every reopen (the constant firing).
+        const now = Date.now()
+        for (let off = 0; off <= DESKTOP_WINDOW_DAYS; off++) {
+          const fire = new Date()
+          fire.setDate(fire.getDate() + off)
+          fire.setHours(hm.hour, hm.minute, 0, 0)
+          if (fire.getTime() <= now) continue
+          const id = `med-reminder-${med.id}-${hm.hour}-${hm.minute}-${fire.toISOString().split('T')[0]}`
+          await scheduleReminder({ id, title, body, fireAt: fire.toISOString(), source: 'med-reminder' })
+          armedKeys.push(id); armed++
+        }
+      }
     }
   }
 
