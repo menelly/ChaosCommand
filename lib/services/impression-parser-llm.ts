@@ -185,12 +185,61 @@ function isDismissal(x: unknown): boolean {
 // PUBLIC API
 // ============================================================================
 
+/** Minimum impression text we'll hand to a 0.5B model. A real radiology
+ *  impression is a sentence or numbered list; a stray column header
+ *  ("Analyte Value") or a 14-char fragment is not — and a tiny instruct model
+ *  given near-empty input CONFABULATES (observed: it invented "elevated
+ *  creatinine" + "a history of hypertension and diabetes" from "Analyte Value"
+ *  on a Quest ANA report — findings that appear NOWHERE in the document). */
+const MIN_IMPRESSION_CHARS = 25;
+const MIN_IMPRESSION_WORDS = 4;
+
+/** Words that are clinical FILLER — they appear in confabulated boilerplate
+ *  ("an elevated level of X was detected in the blood sample") and must NOT
+ *  count as the finding being "grounded" in the source text. Only DISTINCTIVE
+ *  content words (the actual analyte/condition) prove grounding. */
+const GROUNDING_STOPWORDS = new Set([
+  'the', 'and', 'was', 'were', 'has', 'had', 'have', 'been', 'with', 'from',
+  'this', 'that', 'are', 'for', 'not', 'any', 'level', 'levels', 'elevated',
+  'detected', 'found', 'present', 'patient', 'blood', 'sample', 'history',
+  'noted', 'show', 'shows', 'within', 'normal', 'value', 'values', 'result',
+  'results', 'test', 'tests', 'high', 'low', 'positive', 'negative',
+]);
+
+/** A finding is GROUNDED only if its distinctive content words actually appear
+ *  in the source impression text. This is the safety net against LLM
+ *  confabulation: no matter what the model is handed, it cannot inject a
+ *  diagnosis ("creatinine", "hypertension") that isn't in the patient's
+ *  document. Returns the subset of items that are grounded. */
+function groundedItems(items: ImpressionItem[], sourceText: string): ImpressionItem[] {
+  const src = sourceText.toLowerCase();
+  return items.filter((it) => {
+    const probe = `${it.finding ?? ''} ${it.text ?? ''}`.toLowerCase();
+    const content = (probe.match(/[a-z]{4,}/g) ?? []).filter((w) => !GROUNDING_STOPWORDS.has(w));
+    if (content.length === 0) return false; // nothing distinctive to verify → reject
+    const hits = content.filter((w) => src.includes(w)).length;
+    // Majority of the finding's distinctive words must appear in the source.
+    return hits / content.length >= 0.5;
+  });
+}
+
 /** Run the LLM impression extraction. Returns null on any failure
  *  (no runner, runner error, malformed JSON, empty array) — caller falls back
  *  to the regex parser. */
 export async function extractImpressionItemsLLM(
   impressionText: string,
 ): Promise<ImpressionItem[] | null> {
+  // GUARD 1 — never feed the model text too short / non-prose to hold a real
+  // finding. A 0.5B model confabulates diagnoses from fragments like a column
+  // header ("Analyte Value"). Skip → caller's regex fallback (which slices
+  // verbatim from the text, so it cannot hallucinate) handles it.
+  const clean = impressionText.trim();
+  const wordCount = (clean.match(/[A-Za-z]{3,}/g) ?? []).length;
+  if (clean.length < MIN_IMPRESSION_CHARS || wordCount < MIN_IMPRESSION_WORDS) {
+    console.log(`🧠 impression LLM: SKIP — impression too short to be real (${clean.length} chars, ${wordCount} words); regex fallback`);
+    return null;
+  }
+
   // ALWAYS call run() — the runner itself decides whether to actually
   // invoke the model, queue a load, or no-op. Gating on isReady() here
   // meant the real runner's load was never KICKED OFF because run()
@@ -214,7 +263,14 @@ export async function extractImpressionItemsLLM(
     console.log('🧠 impression LLM returned null → falling back to regex (see runner logs above for why)');
     return null;
   }
-  const items = parseImpressionLLMResponse(raw);
-  console.log(`🧠 impression LLM: ${items.length} items extracted in ${Date.now() - t0}ms`);
+  const parsed = parseImpressionLLMResponse(raw);
+
+  // GUARD 2 — ground every finding in the source. Drops confabulated items
+  // whose distinctive words aren't in the document. Medical-safety critical:
+  // an LLM must never put a diagnosis on the timeline that isn't in the record.
+  const items = groundedItems(parsed, impressionText);
+  const dropped = parsed.length - items.length;
+  if (dropped > 0) console.warn(`🧠 impression LLM: dropped ${dropped} UNGROUNDED item(s) (not present in source — confabulation guard)`);
+  console.log(`🧠 impression LLM: ${items.length} grounded items extracted in ${Date.now() - t0}ms`);
   return items.length > 0 ? items : null;
 }
