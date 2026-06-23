@@ -57,7 +57,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <link rel="manifest" href="/manifest.json" />
+        {/* No manifest in the web "try me" demo: it would let Chrome offer a PWA
+            "Install" of the sandboxed demo (no real DB, our security model), and a
+            misbehaving installed demo would read as our fault. Real builds keep it. */}
+        {process.env.NEXT_PUBLIC_DEMO_MODE !== 'true' && (
+          <link rel="manifest" href="/manifest.json" />
+        )}
         <meta name="theme-color" content="#7c3aed" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
 
