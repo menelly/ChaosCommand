@@ -44,6 +44,16 @@ import {
   MEDICATION_VALIDATION
 } from '@/lib/types/medication-types';
 
+// Broadcast on any medication mutation so every useMedicationTracker instance
+// (notably the invisible MedicationReminderSync that arms OS alarms) reloads and
+// stays in sync — see the listener in the hook below.
+export const MEDICATIONS_CHANGED_EVENT = 'chaos-medications-changed';
+function notifyMedicationsChanged(): void {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event(MEDICATIONS_CHANGED_EVENT));
+  }
+}
+
 export function useMedicationTracker(): UseMedicationTrackerReturn {
   // ============================================================================
   // STATE MANAGEMENT
@@ -113,6 +123,20 @@ export function useMedicationTracker(): UseMedicationTrackerReturn {
     loadMedications();
   }, [loadMedications]);
 
+  // CROSS-INSTANCE SYNC. Every component that calls useMedicationTracker gets its
+  // OWN medications state. The invisible MedicationReminderSync component (which
+  // arms the OS alarms) has a separate copy from the Medications page — so a med
+  // you add/edit on the page never reached the scheduler's copy, and its reminder
+  // was never scheduled (the "I set the med, no alarm" bug). Broadcast a change
+  // event on every mutation; every instance reloads from the DB so they all agree
+  // — including the scheduler, which then arms the new/edited med.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const onChange = () => { void loadMedications(); };
+    window.addEventListener(MEDICATIONS_CHANGED_EVENT, onChange);
+    return () => window.removeEventListener(MEDICATIONS_CHANGED_EVENT, onChange);
+  }, [loadMedications]);
+
   // ============================================================================
   // CRUD OPERATIONS
   // ============================================================================
@@ -179,6 +203,7 @@ export function useMedicationTracker(): UseMedicationTrackerReturn {
 
       // Update local state
       setMedications(prev => [newMedication, ...prev]);
+      notifyMedicationsChanged(); // re-arm reminders in the scheduler's instance
 
       console.log(`💊 Added medication: ${newMedication.brandName || newMedication.genericName}`);
     } catch (err) {
@@ -280,6 +305,7 @@ export function useMedicationTracker(): UseMedicationTrackerReturn {
       setMedications(prev =>
         prev.map(med => med.id === id ? updatedMedication : med)
       );
+      notifyMedicationsChanged(); // re-arm reminders in the scheduler's instance
 
       console.log(`💊 Updated medication: ${updatedMedication.brandName || updatedMedication.genericName}`);
     } catch (err) {
@@ -326,6 +352,7 @@ export function useMedicationTracker(): UseMedicationTrackerReturn {
 
       // Update local state
       setMedications(prev => prev.filter(med => med.id !== id));
+      notifyMedicationsChanged(); // re-arm reminders in the scheduler's instance
 
       console.log(`💊 Deleted medication: ${medication.brandName || medication.genericName}`);
     } catch (err) {

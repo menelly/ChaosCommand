@@ -112,11 +112,33 @@ export async function cancelAllMedicationReminders(): Promise<void> {
  *
  * Returns the number of alarms armed (0 when the category is off / not in Tauri).
  */
-export async function syncMedicationReminders(medications: Medication[]): Promise<number> {
+// Fingerprint of the last-armed med set, so a re-sync with identical data is a
+// NO-OP. WHY: this is called on every change to the `medications` array, which
+// can re-fire with a fresh array identity but identical content (Dexie live
+// query / re-render). The old code cancelled + recreated EVERY med alarm on each
+// call — the same churn that ate the daily check-in: a re-sync landing near a
+// dose's fire minute cancelled the about-to-fire alarm and recreated it for
+// tomorrow. Only re-arm when the meds/times/toggles actually change.
+let _lastMedFingerprint: string | null = null
+let _lastMedArmed = 0
+
+export async function syncMedicationReminders(medications: Medication[], force = false): Promise<number> {
+  const fingerprint = JSON.stringify([
+    medsCategoryOn(),
+    isMobilePlatform(),
+    (medications || []).map(m => [m.id, m.enableReminders, m.active, m.reminderTimes, m.reminderLabel, m.dose]),
+  ])
+  // Nothing changed since the last arm → leave the live alarms untouched.
+  if (!force && fingerprint === _lastMedFingerprint) return _lastMedArmed
+
   // Always clear the prior set first so edits/deletes/toggles never orphan alarms.
   await cancelAllMedicationReminders()
 
-  if (!medsCategoryOn()) return 0
+  if (!medsCategoryOn()) {
+    _lastMedFingerprint = fingerprint
+    _lastMedArmed = 0
+    return 0
+  }
 
   // Mobile: OS calendar-recurring alarms (fire even when fully closed). Desktop:
   // the OS interval path fires immediately + repeatedly on Windows (that was
@@ -177,5 +199,7 @@ export async function syncMedicationReminders(medications: Medication[]): Promis
   }
 
   writeManifest(armedKeys)
+  _lastMedFingerprint = fingerprint
+  _lastMedArmed = armed
   return armed
 }

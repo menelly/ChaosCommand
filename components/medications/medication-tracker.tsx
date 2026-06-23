@@ -95,56 +95,20 @@ export function MedicationTracker() {
 
   const handleFormSubmit = async (data: MedicationFormData) => {
     try {
-      let medId: string | null = null;
       if (editingMedication) {
         await updateMedication(editingMedication.id, data);
-        medId = editingMedication.id;
       } else {
         await addMedication(data);
-        // Use medication name as ID suffix for new meds (no returned ID from addMedication)
-        const medName = data.brandName || data.genericName || 'medication';
-        medId = `new-${medName}-${Date.now()}`;
       }
 
-      // Schedule today's remaining doses + tomorrow's doses as reminders.
-      // Future doses get scheduled daily by a separate roll-forward pass
-      // (TODO: cron-style daily roll-forward — for now, user gets ~24h of coverage).
-      if (data.enableReminders && Array.isArray(data.reminderTimes) && data.reminderTimes.length > 0) {
-        try {
-          const { scheduleReminder, cancelReminder } = await import('@/lib/services/notification-service');
-          // Clear any previous reminders for this medication
-          for (let d = 0; d < 2; d++) {
-            for (const t of data.reminderTimes) {
-              await cancelReminder(`med-${medId}-${d}-${t}`);
-            }
-          }
-          const now = new Date();
-          for (let d = 0; d < 2; d++) {
-            const date = new Date(now);
-            date.setDate(now.getDate() + d);
-            for (const time of data.reminderTimes) {
-              const [h, m] = String(time).split(':').map(n => parseInt(n, 10));
-              const fireAt = new Date(date);
-              fireAt.setHours(h || 0, m || 0, 0, 0);
-              if (fireAt.getTime() <= now.getTime()) continue; // skip past-due today
-              // PRIVACY: never put the real drug name in a popup. Use the user's
-              // discreet label if set, else the generic word "medication". (Same
-              // rule as medication-reminder-scheduler.ts — keep both in sync.)
-              const label = (data.reminderLabel || '').trim();
-              const displayName = label || 'medication';
-              await scheduleReminder({
-                id: `med-${medId}-${d}-${time}`,
-                title: `💊 Time for your ${displayName}`,
-                body: `Take your dose${data.dose ? ` · ${data.dose}` : ''}${data.requiresFood ? ' (with food)' : ''}. Tap to mark it taken.`,
-                fireAt: fireAt.toISOString(),
-                source: `medication-${medId}`,
-              });
-            }
-          }
-        } catch (remErr) {
-          console.warn('Failed to schedule medication reminders:', remErr);
-        }
-      }
+      // Reminder scheduling is OWNED by MedicationReminderSync via
+      // syncMedicationReminders (OS calendar alarm on mobile, in-app ticker on
+      // desktop) — armed automatically because addMedication/updateMedication
+      // broadcast MEDICATIONS_CHANGED_EVENT. The old inline block here was a
+      // SECOND, competing scheduler that (a) fired the in-app ticker even on
+      // mobile (doesn't fire when the app is closed) and (b) parsed "9:15 PM"
+      // as 09:15 — it split on ":" and dropped the "PM", scheduling every
+      // reminder in the MORNING. Deleted; the scheduler is the single source.
 
       setIsFormOpen(false);
       setEditingMedication(null);

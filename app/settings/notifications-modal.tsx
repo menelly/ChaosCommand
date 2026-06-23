@@ -61,6 +61,26 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
   const [backupCadence, setBackupCadence] = useState<BackupCadence>("entries")
   const [backupThreshold, setBackupThreshold] = useState(20)
 
+  // Live notification-permission status, queried FRESH from the OS each time the
+  // modal opens (not the stale window.Notification.permission the plugin caches
+  // at startup — that's what made the badge say "denied" after the user granted).
+  const [permStatus, setPermStatus] = useState<'granted' | 'denied' | 'prompt' | 'unknown'>('unknown')
+
+  const refreshPermStatus = async () => {
+    if (typeof window === 'undefined') return
+    if (!isTauri()) {
+      setPermStatus('Notification' in window ? (Notification.permission as 'granted' | 'denied' | 'default') === 'default' ? 'prompt' : (Notification.permission as 'granted' | 'denied') : 'unknown')
+      return
+    }
+    try {
+      // Raw command = current OS truth, bypassing the plugin's startup cache.
+      const res = await invoke<boolean | null>('plugin:notification|is_permission_granted')
+      setPermStatus(res === true ? 'granted' : res === false ? 'denied' : 'prompt')
+    } catch {
+      setPermStatus('unknown')
+    }
+  }
+
   // Load saved notification settings on component mount
   useEffect(() => {
     const bs = getBackupSettings()
@@ -87,6 +107,12 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
     const ua = typeof navigator !== 'undefined' ? navigator.userAgent : ''
     setShowDesktopToggle(isTauri() && !/Android|iPhone|iPad|iPod/i.test(ua))
   }, [])
+
+  // Re-query the real OS permission whenever the modal opens, so the status badge
+  // reflects what the user actually granted (not a stale startup snapshot).
+  useEffect(() => {
+    if (isOpen) void refreshPermStatus()
+  }, [isOpen])
 
   const handleDesktopBackgroundToggle = async (enabled: boolean) => {
     setDesktopBackground(enabled)
@@ -187,7 +213,8 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
         await fireNotification('Chaos Command Test', 'Your notifications are working! 🎉')
         return
       }
-      alert('Notifications are blocked at the OS level — check Windows Settings → Notifications for Chaos Command.')
+      alert('Notifications are turned off for Chaos Command. Enable them in your device\'s Settings → Apps → Chaos Command → Notifications, then try again.')
+      await refreshPermStatus()
       return
     }
     if ('Notification' in window && Notification.permission === 'granted') {
@@ -448,21 +475,30 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
             </div>
           )}
 
-          {/* Browser Notification Status */}
+          {/* Notification permission status — queried fresh from the OS */}
           <div className="p-3 bg-muted rounded-lg">
-            <Label className="text-sm font-medium mb-2 block">Browser Status</Label>
+            <div className="flex items-center justify-between mb-2">
+              <Label className="text-sm font-medium">Notification permission</Label>
+              <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => void refreshPermStatus()}>
+                Re-check
+              </Button>
+            </div>
             <div className="text-sm">
-              {typeof window !== 'undefined' && 'Notification' in window ? (
-                <>
-                  Permission: <Badge variant={
-                    Notification.permission === 'granted' ? 'default' : 
-                    Notification.permission === 'denied' ? 'destructive' : 'secondary'
-                  }>
-                    {Notification.permission}
-                  </Badge>
-                </>
-              ) : (
-                <Badge variant="destructive">Not Supported</Badge>
+              Status:{' '}
+              <Badge variant={
+                permStatus === 'granted' ? 'default' :
+                permStatus === 'denied' ? 'destructive' : 'secondary'
+              }>
+                {permStatus === 'granted' ? 'Allowed'
+                  : permStatus === 'denied' ? 'Blocked'
+                  : permStatus === 'prompt' ? 'Not asked yet'
+                  : 'Unknown'}
+              </Badge>
+              {permStatus === 'denied' && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  Turn notifications on for Chaos Command in your device&apos;s Settings → Apps →
+                  Notifications, then tap Re-check.
+                </p>
               )}
             </div>
           </div>

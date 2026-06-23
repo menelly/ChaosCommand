@@ -44,26 +44,88 @@ export interface ReminderRecord {
 // PERMISSION
 // ============================================================================
 
-let _permissionChecked = false
+// Cache ONLY the positive. We must never cache a "denied" — the old code did
+// (`_permissionChecked`) and it created the "granted at the OS level but the app
+// insists it's blocked" bug: the reminder ticker checks permission on mount,
+// often before the user has granted, that first `false` got cached for the whole
+// session, and nothing re-checked it — not even an app restart, because the early
+// check races the same way every launch.
 let _permissionGranted = false
 
 export async function ensureNotificationPermission(): Promise<boolean> {
-  if (_permissionChecked) return _permissionGranted
+  if (_permissionGranted) return true
   try {
-    const mod = await import('@tauri-apps/plugin-notification')
-    let granted = await mod.isPermissionGranted()
-    if (!granted) {
-      const p = await mod.requestPermission()
-      granted = p === 'granted'
+    // Query the OS DIRECTLY via the raw plugin command. The plugin's JS
+    // `isPermissionGranted()` short-circuits on `window.Notification.permission`,
+    // a value cached once at webview startup that goes stale the moment the user
+    // grants in system settings — so it keeps returning the startup answer. The
+    // raw command always reflects current OS state.
+    const { invoke } = await import('@tauri-apps/api/core')
+    let granted = false
+    try {
+      // Returns true (granted), false (denied), or null (prompt — not yet asked).
+      const res = await invoke<boolean | null>('plugin:notification|is_permission_granted')
+      if (res === true) {
+        granted = true
+      } else if (res === null) {
+        // Never been asked → ask now.
+        const p = await invoke<string>('plugin:notification|request_permission')
+        granted = p === 'granted'
+      } else {
+        // OS reports denied. Re-confirm via requestPermission (a no-op prompt if
+        // already decided) so a just-granted permission is picked up immediately.
+        const p = await invoke<string>('plugin:notification|request_permission')
+        granted = p === 'granted'
+      }
+    } catch {
+      // Not Tauri (plain browser / web build) — use the JS wrapper.
+      const mod = await import('@tauri-apps/plugin-notification')
+      granted = await mod.isPermissionGranted()
+      if (!granted) granted = (await mod.requestPermission()) === 'granted'
     }
     _permissionGranted = granted
-    _permissionChecked = true
     return granted
   } catch (e) {
     console.warn('Notification permission check failed (not in Tauri?):', e)
-    _permissionChecked = true
-    _permissionGranted = false
     return false
+  }
+}
+
+// ============================================================================
+// HIGH-PRIORITY CHANNEL (heads-up banner + sound + vibration)
+// ============================================================================
+//
+// Android 8+ delivers a notification's sound/vibration/heads-up behavior from
+// its CHANNEL, not the notification. The Tauri plugin's implicit "default"
+// channel is Importance.Default → it posts silently-ish into the shade with no
+// heads-up banner, which is how a med reminder slid past unnoticed. We create a
+// dedicated High-importance channel so reminders pop a banner, play a sound, and
+// vibrate — a med reminder has to be impossible to miss. NOTE: the plugin warns
+// a notification whose channelId doesn't exist WON'T FIRE, so every scheduler
+// awaits ensureReminderChannel() before sending with this id.
+
+export const REMINDER_CHANNEL_ID = 'chaos-reminders'
+let _reminderChannelReady = false
+
+export async function ensureReminderChannel(): Promise<void> {
+  if (_reminderChannelReady) return
+  try {
+    const mod = await import('@tauri-apps/plugin-notification')
+    await mod.createChannel({
+      id: REMINDER_CHANNEL_ID,
+      name: 'Reminders',
+      description: 'Medication reminders and daily check-ins',
+      importance: mod.Importance.High,     // heads-up banner
+      visibility: mod.Visibility.Private,  // PHI: hide content on lock screen
+      sound: 'default',
+      vibration: true,
+      lights: true,
+    })
+    _reminderChannelReady = true
+  } catch (e) {
+    // createChannel is unavailable outside Tauri / on web — don't block firing;
+    // callers fall back to no channelId (default channel) if this never set the flag.
+    console.warn('ensureReminderChannel failed (not in Tauri?):', e)
   }
 }
 
@@ -79,7 +141,8 @@ export async function fireNotification(title: string, body: string): Promise<voi
   }
   try {
     const mod = await import('@tauri-apps/plugin-notification')
-    mod.sendNotification({ title, body })
+    await ensureReminderChannel()
+    mod.sendNotification({ title, body, channelId: _reminderChannelReady ? REMINDER_CHANNEL_ID : undefined })
   } catch (e) {
     console.error('Failed to fire notification:', e)
   }
@@ -134,12 +197,14 @@ export async function scheduleOsNotification(opts: {
   if (!granted) return false
   try {
     const mod = await import('@tauri-apps/plugin-notification')
+    await ensureReminderChannel()
     const id = notificationIdFor(opts.key)
     try { await mod.cancel([id]) } catch { /* nothing scheduled yet */ }
     mod.sendNotification({
       id,
       title: opts.title,
       body: opts.body,
+      channelId: _reminderChannelReady ? REMINDER_CHANNEL_ID : undefined,
       schedule: mod.Schedule.at(opts.fireAt, false, true), // allowWhileIdle
     })
     console.log(`🔔 OS-scheduled "${opts.title}" for ${opts.fireAt.toISOString()} (id ${id})`)
@@ -192,6 +257,7 @@ export async function scheduleRecurringOsNotification(opts: {
   if (!granted) return false
   try {
     const mod = await import('@tauri-apps/plugin-notification')
+    await ensureReminderChannel()
     const id = notificationIdFor(opts.key)
     try { await mod.cancel([id]) } catch { /* nothing scheduled yet */ }
     mod.sendNotification({
@@ -199,6 +265,7 @@ export async function scheduleRecurringOsNotification(opts: {
       title: opts.title,
       body: opts.body,
       actionTypeId: opts.actionTypeId,
+      channelId: _reminderChannelReady ? REMINDER_CHANNEL_ID : undefined,
       // allowWhileIdle:true → fire through Android Doze using an exact alarm.
       schedule: mod.Schedule.interval(opts.match, true),
     })

@@ -150,11 +150,35 @@ async function syncDesktopCheckin(prefs: CheckinPrefs): Promise<number> {
  *
  * Returns the number of schedules armed (0 when disabled or not in Tauri).
  */
-export async function syncDailyCheckinSchedule(): Promise<number> {
+// Fingerprint of what we last armed. Repeated syncs with identical prefs are a
+// NO-OP — we do NOT cancel+re-arm an alarm that's already correctly scheduled.
+// WHY THIS EXISTS: syncDailyCheckinSchedule is called on mount, on every
+// settings touch, and from lifecycle components. The old code cancelled and
+// recreated the alarm on EVERY call. When a call landed near the fire time it
+// cancelled the about-to-fire alarm and recreated it — and if the recreate
+// landed even a second after the target minute, nextTrigger rolled it to
+// TOMORROW. That's the "set it for 8:50, nothing fired, it's scheduled for
+// tomorrow" bug: the churn ate the alarm seconds before it would have fired.
+// The OS calendar-interval alarm re-arms itself after firing, so once it's set
+// correctly we must leave it alone.
+let _lastCheckinFingerprint: string | null = null
+let _lastCheckinArmed = 0
+
+export async function syncDailyCheckinSchedule(force = false): Promise<number> {
+  const prefs = readCheckinPrefs()
+  const fingerprint = JSON.stringify([
+    prefs.enabled, prefs.hour, prefs.minute, prefs.frequency, isMobilePlatform(),
+  ])
+  // Nothing changed since we last armed → don't touch the live alarm.
+  if (!force && fingerprint === _lastCheckinFingerprint) return _lastCheckinArmed
+
   await cancelDailyCheckinSchedule()
 
-  const prefs = readCheckinPrefs()
-  if (!prefs.enabled) return 0
+  if (!prefs.enabled) {
+    _lastCheckinFingerprint = fingerprint
+    _lastCheckinArmed = 0
+    return 0
+  }
 
   // Desktop: the OS calendar-interval schedule fires immediately + repeatedly on
   // Windows (the spam Ren hit — even ran in the tray and re-fired on every open).
@@ -192,5 +216,7 @@ export async function syncDailyCheckinSchedule(): Promise<number> {
     }
   }
 
+  _lastCheckinFingerprint = fingerprint
+  _lastCheckinArmed = armed
   return armed
 }
