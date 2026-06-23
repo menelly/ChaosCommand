@@ -12,12 +12,16 @@ const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 
 // the marketing site. NEXT_PUBLIC_DEMO_MODE drives the demo banners; the
 // existing demo PIN (1111) + ensureDemoSeeded already provide the data.
 const DEMO = process.env.DEMO_BUILD === 'true'
-const DEMO_BASE = process.env.DEMO_BASE_PATH || '/staging/try'
+// Empty/unset DEMO_BASE_PATH = ROOT-served (the subdomain, the good path — every
+// /medications, /fonts, /_next path resolves correctly). A non-empty value (e.g.
+// "/try") subpaths it, which only works if every link/asset is basePath-aware
+// (the app's are NOT — that's why the subpath broke nav + fonts).
+const DEMO_BASE = process.env.DEMO_BASE_PATH || ''
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Subpath the static export so /_next/* assets resolve under the demo dir.
-  ...(DEMO ? { basePath: DEMO_BASE, assetPrefix: DEMO_BASE } : {}),
+  // Only subpath when a base is explicitly given; otherwise serve at root.
+  ...(DEMO && DEMO_BASE ? { basePath: DEMO_BASE, assetPrefix: DEMO_BASE } : {}),
   env: {
     NEXT_PUBLIC_APP_VERSION: pkg.version,
     NEXT_PUBLIC_BUILD_DATE: new Date().toISOString().slice(0, 10),
