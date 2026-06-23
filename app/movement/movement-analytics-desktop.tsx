@@ -29,6 +29,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend } from 'recharts'
+import { saveExportFile } from '@/lib/export-file'
 import { Calendar, TrendingUp, Heart, Download, Activity, Zap, Clock, Target } from 'lucide-react'
 import { useDailyData, CATEGORIES } from '@/lib/database'
 import { format, subDays, parseISO, eachDayOfInterval } from 'date-fns'
@@ -247,7 +248,7 @@ export function MovementAnalyticsDesktop({ className }: AnalyticsProps) {
   const topBodyFeel = bodyFeelData[0]?.feel || 'None'
 
   // Export data
-  const exportAnalyticsData = () => {
+  const exportAnalyticsData = async () => {
     const analyticsData = {
       summary: {
         totalSessions,
@@ -283,15 +284,9 @@ export function MovementAnalyticsDesktop({ className }: AnalyticsProps) {
       }))
     }
 
-    const blob = new Blob([JSON.stringify(analyticsData, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `movement-analytics-${format(new Date(), 'yyyy-MM-dd')}.json`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    // Native save picker — works on desktop + Android scoped storage.
+    const filename = `movement-analytics-${format(new Date(), 'yyyy-MM-dd')}.json`
+    await saveExportFile(filename, JSON.stringify(analyticsData, null, 2), [{ name: 'JSON Data', extensions: ['json'] }])
   }
 
   if (loading) {

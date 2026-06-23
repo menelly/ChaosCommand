@@ -16,7 +16,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Database, Download, Upload, Trash2 } from "lucide-react"
 import { exportAllData, importData } from "@/lib/database/migration-helper"
-import { encryptBackup, decryptBackup, downloadBackup } from "@/lib/database/encrypted-export"
+import { encryptBackup, decryptBackup, downloadBackup, ENCRYPTED_BACKUP_FORMAT } from "@/lib/database/encrypted-export"
+import { openImportFile } from "@/lib/export-file"
 import { deleteCurrentProfile } from "@/lib/database/dexie-db"
 import { recordBackup } from "@/lib/backup-reminder"
 import { KeyboardAvoidingWrapper } from '@/components/ui/keyboard-avoiding-wrapper'
@@ -51,12 +52,13 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
       const json = await exportAllData()
       const date = new Date().toISOString().slice(0, 10)
       const filename = `chaos-command-data-${date}.json`
-      downloadBackup(filename, json)
+      const { saved, location } = await downloadBackup(filename, json)
+      if (!saved) return // user cancelled the save picker — nothing written, don't claim success
       await recordBackup() // any export counts as a backup — reset the reminder clock
       alert(
-        `✅ Saved: ${filename}\n\n` +
-        'It\'s in your Downloads folder and is NOT encrypted — anyone with the file can read ' +
-        'it. Move it somewhere safe or delete it when you\'re done.'
+        `✅ Saved: ${location || filename}\n\n` +
+        'It\'s NOT encrypted — anyone with the file can read it. Move it somewhere safe ' +
+        'or delete it when you\'re done.'
       )
     } catch (error) {
       console.error('JSON export failed:', error)
@@ -73,34 +75,57 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
     try {
       const payloadJson = await exportAllData() // full export: daily_data + tags + image blobs
       const { filename, content } = await encryptBackup(payloadJson, exportPassword)
-      downloadBackup(filename, content)
+      const { saved, location } = await downloadBackup(filename, content)
+      if (!saved) return // user cancelled the save picker — nothing written, don't claim success
       await recordBackup() // any export counts as a backup — reset the reminder clock
-      alert(`🔐 Encrypted backup saved: ${filename}\n\nKeep the password — it's the only way to open this file. The default (1234) is weak on purpose; set your own for anything you'll store or share.`)
+      alert(`🔐 Encrypted backup saved: ${location || filename}\n\nKeep the password — it's the only way to open this file. The default (1234) is weak on purpose; set your own for anything you'll store or share.`)
     } catch (error) {
       console.error('Encrypted export failed:', error)
       alert(`❌ Export failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 
-  // Encrypted backup import — decrypt, then merge via importData (non-destructive: it merges
-  // into existing data rather than wiping it, so a restore can't clobber a profile).
+  // Backup import — native file picker (so .ccbackup is selectable on Android),
+  // then SMART-DETECT encrypted vs plain JSON and route accordingly. Both bugs
+  // this fixes were real on the S26: the old <input type=file accept=".ccbackup">
+  // greyed out the backup file (no MIME), and the handler ALWAYS tried to decrypt
+  // so a plain JSON export was rejected as "not a Chaos Command backup".
+  // importData merges (non-destructive) so a restore can't clobber a profile.
   const handleImportBackup = async () => {
-    if (!importFile || !importPassword) {
-      alert('Choose a backup file and enter its password.')
-      return
-    }
     try {
-      const fileContent = await importFile.text()
-      const restoredJson = await decryptBackup(fileContent, importPassword)
+      const picked = await openImportFile()
+      if (!picked) return // user cancelled the picker
+      const text = picked.text
+
+      let parsed: any = null
+      try { parsed = JSON.parse(text) } catch { /* handled below */ }
+
+      let restoredJson: string
+      if (parsed?.format === ENCRYPTED_BACKUP_FORMAT) {
+        // Encrypted backup → needs the password from the field.
+        if (!importPassword) {
+          alert('That\'s an encrypted backup — enter its password first, then choose the file again.')
+          return
+        }
+        restoredJson = await decryptBackup(text, importPassword) // throws on wrong password
+      } else if (parsed && typeof parsed === 'object' && (parsed.daily_data !== undefined || parsed.tags !== undefined)) {
+        // Plain (unencrypted) export JSON → import directly; password not needed.
+        restoredJson = text
+      } else {
+        alert('❌ That file isn\'t a Chaos Command backup (couldn\'t recognize it). Pick a .ccbackup or the exported .json.')
+        return
+      }
+
       await importData(restoredJson)
-      alert('✅ Backup restored.')
+      alert(`✅ Backup restored from ${picked.name}.`)
       setImportFile(null)
       setImportPassword('1234')
       setShowImportDialog(false)
       onClose()
     } catch (error) {
-      console.error('Encrypted import failed:', error)
-      alert(`❌ Import failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      console.error('Import failed:', error)
+      const msg = error instanceof Error ? error.message : 'Unknown error'
+      alert(`❌ Import failed: ${msg}\n\nIf this is an encrypted backup, double-check the password.`)
     }
   }
 
@@ -245,17 +270,13 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
                   </Button>
                 ) : (
                   <div className="space-y-3 p-3 border rounded bg-muted/50">
+                    <p className="text-xs text-muted-foreground">
+                      Tap below to pick your backup file. Works with both <code>.ccbackup</code>
+                      {' '}(encrypted) and <code>.json</code> (unencrypted) exports — we detect which
+                      automatically. For an encrypted backup, enter its password first.
+                    </p>
                     <div>
-                      <Label htmlFor="import-file">Backup file</Label>
-                      <Input
-                        id="import-file"
-                        type="file"
-                        accept=".ccbackup,.json"
-                        onChange={(e) => setImportFile(e.target.files?.[0] || null)}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="import-password">Backup password</Label>
+                      <Label htmlFor="import-password">Password (encrypted backups only)</Label>
                       <Input
                         id="import-password"
                         type="text"
@@ -265,9 +286,9 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
                       />
                     </div>
                     <div className="flex gap-2">
-                      <Button onClick={handleImportBackup} className="flex-1" disabled={!importFile || !importPassword}>
+                      <Button onClick={handleImportBackup} className="flex-1">
                         <Upload className="h-4 w-4 mr-2" />
-                        Restore Backup
+                        Choose File &amp; Restore
                       </Button>
                       <Button
                         onClick={() => {

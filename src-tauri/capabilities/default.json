@@ -10,6 +10,8 @@
     "sql:default",
     "opener:default",
     "opener:allow-open-path",
+    "dialog:default",
+    "dialog:allow-save",
     "notification:default",
     "fs:allow-write-file",
     "fs:allow-mkdir",

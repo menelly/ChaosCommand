@@ -22,7 +22,7 @@ import { CATEGORIES, formatDateForStorage, db } from "@/lib/database/dexie-db"
 import { useToast } from "@/hooks/use-toast"
 import { generateMedicalReport } from "@/lib/pdf-report-generator"
 import { KeyboardAvoidingWrapper } from '@/components/ui/keyboard-avoiding-wrapper'
-import { isMobilePlatform } from "@/lib/platform"
+import { saveExportFile } from "@/lib/export-file"
 
 interface PrintExportModalProps {
   isOpen: boolean
@@ -442,46 +442,23 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
         encryptionPassword: passwordProtect ? pdfPassword : undefined,
       })
 
-      // Hand off the generated PDF.
+      // Hand off the generated PDF. ONE path for desktop + Android + browser:
+      // saveExportFile pops the native "Save As" picker (Storage Access
+      // Framework on Android, a real save dialog on desktop) so the user
+      // chooses where it lands, then writes through the content URI / path.
+      // Replaces the old isMobilePlatform fork — the mobile branch (writeFile to
+      // Downloads + openPath) was doubly broken on Android scoped storage
+      // (EACCES write + FileUriExposedException open). See lib/export-file.ts.
       const audienceLabel = audience === 'attorney' ? 'legal' : audience === 'personal' ? 'personal' : 'medical'
       const filename = `${audienceLabel}-report-${providerName || 'export'}-${dateRangeEnd}.pdf`
 
-      if (isMobilePlatform()) {
-        // Mobile (Tauri Android WebView): blob downloads silently fail and the
-        // WebView has no working navigator.share. So write the PDF to app
-        // storage natively (tauri-plugin-fs) and open it with the OS
-        // (tauri-plugin-opener) — the device's PDF viewer carries its own
-        // share/save (to Files, Drive, email). Dynamic-import keeps the web/SSR
-        // bundle from touching Tauri internals.
-        const { writeFile, BaseDirectory } = await import('@tauri-apps/plugin-fs')
-        const { openPath } = await import('@tauri-apps/plugin-opener')
-        const { downloadDir, join } = await import('@tauri-apps/api/path')
-        const bytes = new Uint8Array(await blob.arrayBuffer())
-        // Write to PUBLIC Downloads, not private AppData: Android forbids other
-        // apps (the PDF viewer) from opening a file:// in our private dir, so
-        // openPath on an AppData path threw — the v0.7.1 "Export failed" bug.
-        // A public Downloads file is openable AND it's where the user expects it
-        // (and matches the "saved to your Downloads folder" notice on this screen).
-        await writeFile(filename, bytes, { baseDir: BaseDirectory.Download })
-        await openPath(await join(await downloadDir(), filename))
-        toast({ title: 'Report saved', description: 'Saved to your Downloads folder and opened in your PDF viewer.' })
+      const { saved } = await saveExportFile(filename, blob, [{ name: 'PDF Document', extensions: ['pdf'] }])
+      if (saved) {
+        toast({ title: 'Report saved', description: 'Saved to the location you chose.' })
         onClose()
-        return
       }
-
-      // Desktop (WebView2 / desktop Tauri): a blob download lands in Downloads.
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = filename
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      // Defer revoke — the download is async; revoking synchronously cancels it.
-      setTimeout(() => URL.revokeObjectURL(url), 60000)
-
-      toast({ title: 'Report saved', description: 'Saved to your Downloads folder.' })
-      onClose()
+      // saved === false → user cancelled the save dialog; leave the modal open
+      // so they can try again. Not an error, so no destructive toast.
 
     } catch (e: any) {
       console.error('Export failed:', e)

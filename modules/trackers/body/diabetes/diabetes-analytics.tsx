@@ -36,6 +36,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend } from 'recharts'
 import { Calendar, TrendingUp, AlertTriangle, Clock, Target, Download, Activity, Loader2 } from 'lucide-react'
 import { DiabetesEntry, DiabetesAnalyticsProps } from './diabetes-types'
+import { saveExportFile } from '@/lib/export-file'
 import { BG_RANGES, KETONE_RANGES, getBGRangeInfo, getKetoneRangeInfo } from './diabetes-constants'
 import { filterForAnalytics } from '@/lib/utils/analytics-filters'
 
@@ -91,7 +92,7 @@ export function DiabetesAnalytics({ entries, currentDate }: DiabetesAnalyticsPro
     loadAnalyticsData()
   }, [filteredEntries.length, timeRange])
 
-  const exportAnalyticsData = () => {
+  const exportAnalyticsData = async () => {
     if (!analyticsData) return
 
     const exportData = {
@@ -100,15 +101,9 @@ export function DiabetesAnalytics({ entries, currentDate }: DiabetesAnalyticsPro
       ...analyticsData
     }
 
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `diabetes-analytics-${new Date().toISOString().split('T')[0]}.json`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    // Native save picker — works on desktop + Android scoped storage.
+    const filename = `diabetes-analytics-${new Date().toISOString().split('T')[0]}.json`
+    await saveExportFile(filename, JSON.stringify(exportData, null, 2), [{ name: 'JSON Data', extensions: ['json'] }])
   }
 
   // Loading state

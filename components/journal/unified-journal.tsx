@@ -41,6 +41,7 @@ import {
 } from 'lucide-react';
 import { useDailyData, CATEGORIES, formatDateForStorage } from '@/lib/database';
 import { format, addDays, subDays } from 'date-fns';
+import { saveExportFile } from '@/lib/export-file';
 import { RichJournalEditor } from './rich-journal-editor';
 
 // Old editor component removed - now using RichJournalEditor
@@ -204,16 +205,10 @@ export default function UnifiedJournal() {
         exportText += '---\n\n';
       }
 
-      // Create and download file
-      const blob = new Blob([exportText], { type: 'text/markdown' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `journal-export-${format(new Date(), 'yyyy-MM-dd')}.md`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      // Save via the native picker — works on desktop AND Android scoped
+      // storage (the old blob <a download> silently no-op'd on mobile).
+      const filename = `journal-export-${format(new Date(), 'yyyy-MM-dd')}.md`;
+      await saveExportFile(filename, exportText, [{ name: 'Markdown', extensions: ['md'] }]);
 
       console.log('📖 Journal exported successfully');
     } catch (error) {

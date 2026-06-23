@@ -35,6 +35,12 @@ tauri-plugin-sql = { version = "2.4", features = ["sqlite"] }
 tauri-plugin-opener = "2.5"
 tauri-plugin-http = "2"
 tauri-plugin-fs = "2"
+# File-save via the OS picker (Storage Access Framework on Android). The ONLY
+# scoped-storage-correct way to export a file the user can keep: save() returns a
+# content:// URI we writeFile() to. Replaces the broken blob-download / writeFile-
+# to-Download / openPath path that silently no-op'd (backup) or crashed with
+# FileUriExposedException (PDF) on Android 11+. See lib/export-file.ts.
+tauri-plugin-dialog = "2"
 
 tokio = { version = "1.0", features = ["full"] }
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }

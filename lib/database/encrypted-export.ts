@@ -21,7 +21,11 @@
  * "this is an encrypted backup; you need the password to read it."
  */
 
-const FORMAT_TAG = 'chaoscommand-encrypted-backup'
+import { saveExportFile } from '@/lib/export-file'
+
+/** Public format tag so importers can detect an encrypted backup vs plain JSON. */
+export const ENCRYPTED_BACKUP_FORMAT = 'chaoscommand-encrypted-backup'
+const FORMAT_TAG = ENCRYPTED_BACKUP_FORMAT
 const FORMAT_VERSION = 1
 const PBKDF2_ITERATIONS = 210_000 // OWASP 2023 floor for PBKDF2-HMAC-SHA256
 const SALT_BYTES = 16
@@ -160,16 +164,25 @@ export async function decryptBackup(
   return new TextDecoder().decode(plaintext)
 }
 
-/** Trigger a browser download of the encrypted backup file. */
-export function downloadBackup(filename: string, content: string): void {
-  const blob = new Blob([content], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = filename
-  a.style.display = 'none'
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
-  URL.revokeObjectURL(url)
+/**
+ * Save the backup file to disk via the native "Save As" picker (Storage Access
+ * Framework on Android, real save dialog on desktop, blob download in a plain
+ * browser). Delegates to the shared saveExportFile so every export in the app
+ * uses ONE scoped-storage-correct path.
+ *
+ * Returns { saved, location }: saved=false means the user cancelled the picker
+ * (callers must NOT claim success in that case — the v0.7.1 backup bug was
+ * exactly "we said it saved when nothing was written").
+ */
+export async function downloadBackup(
+  filename: string,
+  content: string,
+): Promise<{ saved: boolean; location: string | null }> {
+  const isBackup = filename.endsWith('.ccbackup')
+  const filters = [
+    isBackup
+      ? { name: 'Chaos Command Backup', extensions: ['ccbackup', 'json'] }
+      : { name: 'JSON Data', extensions: ['json'] },
+  ]
+  return saveExportFile(filename, content, filters)
 }

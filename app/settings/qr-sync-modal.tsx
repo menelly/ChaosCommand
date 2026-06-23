@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button'
 import { Smartphone, Wifi, CheckCircle2, AlertCircle, RefreshCw, Upload, Download } from 'lucide-react'
 import { useUser } from '@/lib/contexts/user-context'
 import { exportAllData, importData } from '@/shared/database/migration-helper'
+import { saveExportFile, openImportFile } from '@/lib/export-file'
 
 interface QRSyncModalProps {
   isOpen: boolean
@@ -105,13 +106,11 @@ export function QRSyncModal({ isOpen, onClose }: QRSyncModalProps) {
         setSyncState('done')
         setStatusMessage('Backup shared! Import it on your other device.')
       } else {
-        // Fallback: download file (desktop)
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = filename
-        a.click()
-        URL.revokeObjectURL(url)
+        // Fallback: native save picker. Works on desktop AND Android scoped
+        // storage — the old blob <a download> silently no-op'd on mobile when
+        // navigator.share is unavailable (common in the Tauri Android WebView).
+        const { saved } = await saveExportFile(filename, data, [{ name: 'JSON Data', extensions: ['json'] }])
+        if (!saved) { setSyncState('idle'); return } // user cancelled the picker
         setSyncState('done')
         setStatusMessage('Backup exported! Transfer the file to your other device and import it there.')
       }
@@ -128,21 +127,15 @@ export function QRSyncModal({ isOpen, onClose }: QRSyncModalProps) {
 
   const manualImport = async () => {
     try {
-      const input = document.createElement('input')
-      input.type = 'file'
-      input.accept = '.json'
-      input.onchange = async (e) => {
-        const file = (e.target as HTMLInputElement).files?.[0]
-        if (!file) return
-
-        setSyncState('syncing')
-        setStatusMessage('Importing data...')
-        const text = await file.text()
-        await importData(text)
-        setSyncState('done')
-        setStatusMessage(`Imported data from ${file.name}!`)
-      }
-      input.click()
+      // Native picker — works on Android (the old <input type=file> filtered out
+      // the backup file). Sync exports are plain JSON, so import directly.
+      const picked = await openImportFile()
+      if (!picked) return // user cancelled
+      setSyncState('syncing')
+      setStatusMessage('Importing data...')
+      await importData(picked.text)
+      setSyncState('done')
+      setStatusMessage(`Imported data from ${picked.name}!`)
     } catch (e: any) {
       setError(e.message)
       setSyncState('error')

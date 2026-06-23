@@ -29,6 +29,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend } from 'recharts'
+import { saveExportFile } from '@/lib/export-file'
 import { Calendar, TrendingUp, AlertTriangle, Clock, Target, Download, Loader2 } from 'lucide-react'
 import { useDailyData, CATEGORIES } from '@/lib/database'
 import { filterForAnalytics } from '@/lib/utils/analytics-filters'
@@ -167,21 +168,15 @@ export default function UpperDigestiveAnalyticsDesktop({ className }: AnalyticsP
   // No more manual calculations needed - handled by analytics service!
 
   // Export analytics data
-  const exportAnalyticsData = () => {
+  const exportAnalyticsData = async () => {
     if (!analyticsData) {
       console.error('No analytics data to export')
       return
     }
 
-    const blob = new Blob([JSON.stringify(analyticsData, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `upper-digestive-analytics-${format(new Date(), 'yyyy-MM-dd')}.json`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    // Native save picker — works on desktop + Android scoped storage.
+    const filename = `upper-digestive-analytics-${format(new Date(), 'yyyy-MM-dd')}.json`
+    await saveExportFile(filename, JSON.stringify(analyticsData, null, 2), [{ name: 'JSON Data', extensions: ['json'] }])
   }
 
   if (loading) {

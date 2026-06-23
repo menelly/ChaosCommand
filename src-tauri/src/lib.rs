@@ -45,7 +45,8 @@ pub fn run() {
     .plugin(tauri_plugin_log::Builder::default().build())
     .plugin(tauri_plugin_sql::Builder::default().build())
     .plugin(tauri_plugin_opener::init())
-    .plugin(tauri_plugin_fs::init());
+    .plugin(tauri_plugin_fs::init())
+    .plugin(tauri_plugin_dialog::init());
 
   // Desktop-only: autostart-on-login + close-to-tray. Both gated so the Android
   // build (which has neither concept) never compiles them.

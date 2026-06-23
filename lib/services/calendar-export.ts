@@ -17,6 +17,8 @@
  * future notification delivery. We're not in the loop after that.
  */
 
+import { saveExportFile } from '@/lib/export-file'
+
 export interface CalendarEventInput {
   title: string
   description?: string
@@ -205,23 +207,16 @@ export function toMultipleIcsString(events: CalendarEventInput[]): string {
  * calendar (Apple Calendar on macOS/iOS, Outlook on Windows, etc.) which
  * offers to add the events.
  */
-export function downloadIcs(
+export async function downloadIcs(
   input: CalendarEventInput | CalendarEventInput[],
   filename = 'chaos-command-reminder.ics',
-): void {
+): Promise<void> {
   if (typeof window === 'undefined') return
   const content = Array.isArray(input) ? toMultipleIcsString(input) : toIcsString(input)
-  const blob = new Blob([content], { type: 'text/calendar;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = filename
-  document.body.appendChild(a)
-  a.click()
-  setTimeout(() => {
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-  }, 100)
+  // Native save picker — works on desktop AND Android scoped storage (the old
+  // blob <a download> silently no-op'd on mobile). The user's OS opens the
+  // saved .ics with their default calendar to add the events.
+  await saveExportFile(filename, content, [{ name: 'Calendar', extensions: ['ics'] }])
 }
 
 /**
