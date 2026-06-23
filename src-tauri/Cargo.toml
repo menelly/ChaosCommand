@@ -63,3 +63,9 @@ getrandom = "0.2"
 # #[cfg(desktop)]-gated to match.
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-autostart = "2"
+
+# Windows-only: real Microsoft Store entitlement via WinRT StoreContext — the
+# anti-share gate for the paid Store build (src/store.rs). Ported from the Chaos
+# Clean-Up pipeline that already passed MS Store cert.
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.58", features = ["Services_Store", "Foundation"] }

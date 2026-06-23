@@ -13,7 +13,8 @@
     "test:rust": "cargo test --manifest-path src-tauri/Cargo.toml",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build"
+    "tauri:build": "tauri build",
+    "tauri:build:store": "cross-env NEXT_PUBLIC_STORE_BUILD=true tauri build"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
@@ -79,6 +80,7 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/uuid": "^10.0.0",
+    "cross-env": "^10.1.0",
     "eslint": "^9.0.0",
     "eslint-config-next": "15.0.0",
     "playwright": "^1.60.0",

@@ -104,19 +104,22 @@ export function EntitlementProvider({ children }: { children: React.ReactNode })
         return
       }
 
-      const [license, trial, hasStoreIAP] = await Promise.all([
+      // C1 (pay-to-download): NO in-app trial. The web demo at
+      // tryme.chaoscommand.center IS the try-before-buy, so entitlement is
+      // purely: a valid scholarship key OR a Microsoft Store purchase.
+      // (trial.rs + get_trial_status stay in the tree, unused, so a timed trial
+      // can be re-enabled later by restoring the get_trial_status call here and
+      // the trialExpired/trialDaysRemaining wiring below.)
+      const [license, hasStoreIAP] = await Promise.all([
         invoke<RustLicenseStatus>('validate_license').catch(() => ({ valid: false })),
-        invoke<RustTrialStatus>('get_trial_status').catch(() => null),
         checkStoreIAP(),
       ])
 
       setEntitlement(resolveEntitlement({
         hasKey: !!license?.valid,
         hasStoreIAP,
-        // If the trial clock can't be read, fail OPEN (treat as in-trial) rather
-        // than locking a legitimate user out over a transient backend error.
-        trialExpired: trial ? trial.expired : false,
-        trialDaysRemaining: trial ? trial.days_remaining : 0,
+        trialExpired: true,      // C1: no in-app trial
+        trialDaysRemaining: 0,
       }))
     } finally {
       setIsChecking(false)

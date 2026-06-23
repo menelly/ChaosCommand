@@ -9,6 +9,7 @@
 mod license;
 mod peers;
 mod server;
+mod store;
 mod sync;
 mod trial;
 
@@ -149,6 +150,7 @@ pub fn run() {
       license::deactivate_license,
       license::get_cached_license,
       trial::get_trial_status,
+      store::check_store_entitlement,
       // Deprecated one-shot commands — return a clear error for any
       // frontend that hasn't been migrated yet.
       sync::sync_start_host,
