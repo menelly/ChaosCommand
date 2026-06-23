@@ -315,7 +315,7 @@
         </p>
 
         <ol class="step-list">
-            <li><strong>Download for your platform.</strong> Windows installer, Android APK, or build from source — all free, all available <a href="/#pricing">here</a>. You can run it on desktop and phone simultaneously; they sync (see below).</li>
+            <li><strong>Get it.</strong> Build from source for free, or grab the app-store version (Windows, Android, Mac — landing soon; a one-time $25, with scholarships if you can't pay). Details <a href="/#pricing">here</a>. You can run it on desktop and phone simultaneously; they sync (see below).</li>
             <li><strong>Pick a theme.</strong> First launch lands you on theme selection. Lavender is the soft default. Migraine-sensitive? Pick Calm or Light. Cyberpunk vibes? Basketball Court. Don't agonize — change it any time.</li>
             <li><strong>Set your PIN.</strong> Your PIN is your data isolation key. Multiple users can share a device with separate PINs and separate databases. The PIN is local — there's no recovery email, because there's no email. Write it down somewhere only you can find.</li>
             <li><strong>Start with one tracker.</strong> Don't try to fill everything out. Pick the thing that's bothering you most this week. Sleep, pain, migraines, food, mood — whichever is loudest right now. Track it for three days. Add another if you want.</li>
@@ -329,38 +329,64 @@
     <section class="doc-section" id="trackers">
         <h2>The trackers</h2>
         <p class="section-sub">
-            <span class="chaos-only">45+ modules organized into four big buckets. Use what you need. Hide what you don't.</span>
+            <span class="chaos-only">50+ modules organized into five big buckets. Use what you need. Hide what you don't.</span>
             <span class="pro-only">Modular tracking categories with toggleable visibility.</span>
         </p>
 
         <h3>Body</h3>
         <div class="tracker-grid">
-            <div class="tracker-card"><h4>Pain</h4><p>Location, severity, type, triggers, what helped. Severity uses descriptive labels alongside numbers because "7/10" doesn't mean the same thing on different days.</p></div>
-            <div class="tracker-card"><h4>Sleep</h4><p>Duration, quality, wakeups, nap data. Pairs with energy and pain trackers for pattern detection.</p></div>
-            <div class="tracker-card"><h4>Energy &amp; pacing</h4><p>Spoon-aware energy logging. Track activity exertion vs. crash-day correlation.</p></div>
-            <div class="tracker-card"><h4>Dysautonomia</h4><p>HR, BP, dizziness, presyncope, temperature regulation. Optional wearable HR field.</p></div>
-            <div class="tracker-card"><h4>Seizures</h4><p>Type, duration, triggers, postictal recovery. For diagnosed seizure disorders and the kind nobody believes you about.</p></div>
-            <div class="tracker-card"><h4>Head pain</h4><p>Migraine, tension, cluster — separate from general pain because the patterns are different.</p></div>
-            <div class="tracker-card"><h4>Bathroom</h4><p>GI tracking with the Bristol scale. Optional. Tag-excludable from any report.</p></div>
-            <div class="tracker-card"><h4>Sensory</h4><p>Sensory overload, photophobia, phonophobia, processing capacity. Built for autistic and post-concussion needs.</p></div>
-            <div class="tracker-card"><h4>Reproductive</h4><p>Cycle, ovulation, symptoms, contraception. <strong>Gender-neutral by default.</strong> Disable the entire section in settings if not relevant to you.</p></div>
+            <div class="tracker-card"><h4>Pain</h4><p>Location, severity, type, triggers, what helped — with a full 911 red-flag engine (MI, aortic dissection, cauda equina, AAA). Severity uses descriptive labels alongside numbers because "7/10" doesn't mean the same thing on different days.</p></div>
+            <div class="tracker-card"><h4>Sleep</h4><p>Duration, quality, wakeups, nap data, pre-sleep factors. Surfaces factor-to-quality correlations (caffeine, screens, relaxation).</p></div>
+            <div class="tracker-card"><h4>Energy &amp; pacing</h4><p>Spoon-theory daily budget with a PEM-risk meter. Track activity exertion vs. crash-day correlation.</p></div>
+            <div class="tracker-card"><h4>Vitals</h4><p>Routine baseline BP, HR, SpO&#8322;, temperature, respiratory rate, weight — with at-a-glance thresholds. Feeds the doctor PDF.</p></div>
+            <div class="tracker-card"><h4>Dysautonomia</h4><p>POTS/IST, BP, GI, temperature, and SpO&#8322; episodes. Lite-vitals capture (resting/sitting/standing HR + delta), interventions like box breathing and electrolytes.</p></div>
+            <div class="tracker-card"><h4>Cardiac</h4><p>Arrhythmia, chest pain, syncope, palpitations — a 15-value rhythm picker, home-ECG fields, and a 911 engine (MI/PE/VT, dissection). Cross-links to dysautonomia and labs.</p></div>
+            <div class="tracker-card"><h4>Respiratory</h4><p>Asthma, shortness of breath, cough, wheeze, pleuritic pain. Peak-flow zones, SpO&#8322; low, inhaler response, and an anaphylaxis detector (EpiPen + 911).</p></div>
+            <div class="tracker-card"><h4>Pulse oximetry</h4><p>Spot readings <em>or</em> overnight session reports from recording oximeters — O&#8322; score, ODI desaturation indices (3% / 4%), SpO&#8322; and pulse distribution bands. Feeds the doctor PDF.</p></div>
+            <div class="tracker-card"><h4>Seizures</h4><p>Eight types including <strong>autonomic</strong> (the kind misdiagnosed as POTS/MCAS/panic), aura&#8594;ictal&#8594;postictal phases, status-epilepticus detection, and seizure first-aid for witnesses.</p></div>
+            <div class="tracker-card"><h4>Neuro</h4><p>Weakness, numbness, tremor, gait/balance, fasciculations, speech/swallow — with distribution patterns (coat-hanger, stocking-glove) and MS-aware framing. Cross-lists with Joint &amp; muscle.</p></div>
+            <div class="tracker-card"><h4>Head pain</h4><p>Seven episode types (migraine &plusmn; aura, cluster, tension, sinus, worst-of-life), aura mapping, baseline-vs-flare delta, and SNOOP red flags (SAH, meningitis, stroke, GCA).</p></div>
+            <div class="tracker-card"><h4>Autoimmune / connective tissue</h4><p>Systemic CTD/rheum picture — sicca, Raynaud's, mechanic's hands, inflammatory rash, arthralgia, serositis. Cross-lists into Skin, Joints, and Neuro.</p></div>
+            <div class="tracker-card"><h4>Thyroid</h4><p>Hypo/hyper symptoms, labs (TSH/free T4/T3/TPO/TRAb), meds and dose response, with thyroid-storm / myxedema / Graves'-eye warnings.</p></div>
+            <div class="tracker-card"><h4>Adrenal</h4><p>Addison's/Cushing's symptoms, cortisol pattern, a <strong>sick-day / stress-dose log</strong>, and an adrenal-crisis warning engine.</p></div>
+            <div class="tracker-card"><h4>Diabetes</h4><p>Glucose, ketones, insulin, carbs — with <strong>time-in-range</strong> (low/normal/high), distribution, and coaching. T1/T3c-aware.</p></div>
+            <div class="tracker-card"><h4>Upper digestive</h4><p>Nausea, reflux/GERD, gastroparesis, indigestion. Triggers, treatments, severity, duration. Cross-links to dysautonomia, food, bathroom.</p></div>
+            <div class="tracker-card"><h4>Bathroom</h4><p>Bowel and urinary episodes with the full Bristol Stool Scale 1&ndash;7, blood-color mapping, and a GI 911 engine. Optional, tag-excludable from any report.</p></div>
+            <div class="tracker-card"><h4>Genitourinary</h4><p>Voiding, retention, incontinence, infection — a nine-scenario infection triage, fluid balance / catheter output, gender-neutral pain locations.</p></div>
+            <div class="tracker-card"><h4>Skin</h4><p>Rash, hives, eczema, wounds, lesions, plus an autoimmune-lesion group (malar, discoid, Gottron's). ABCDE mole module, photo timeline, and a 911 engine for anaphylaxis and SJS/TEN/DRESS.</p></div>
+            <div class="tracker-card"><h4>Joint &amp; muscle</h4><p>Per-joint tracking across 30+ named joints with laterality, plus a separate muscle model (coat-hanger, proximal/distal). EDS-friendly (subluxation, self-reduction, ROM impact). Cross-lists with Neuro.</p></div>
+            <div class="tracker-card"><h4>Lines &amp; tubes</h4><p>Complications of indwelling devices — PICC/port/central lines, ostomies, Foley/suprapubic, NG/G/GJ feeding tubes, trach, drains. Red-flag engine for CLABSI, air embolism, and dislodged immature-tract tubes.</p></div>
+            <div class="tracker-card"><h4>Weather &amp; environment</h4><p>Barometric pressure as a first-class trigger (high/low/swings/"pressure hell") plus environmental-allergen reactions, on a 1&ndash;10 impact scale.</p></div>
+            <div class="tracker-card"><h4>Reproductive</h4><p>Cycle, flow, symptoms, libido, and full fertility tracking — BBT charting, OPK, cervical fluid, and a multi-factor ovulation predictor. <strong>Gender-neutral by default.</strong> Includes the G-Spot scoped delete (see Privacy). Disable the whole section if it's not relevant to you.</p></div>
+            <div class="tracker-card"><h4>Postpartum &amp; newborn</h4><p>Clinician-reviewed. Recovery (lochia, fundus), feeding (latch, sides, pump/bottle), and baby (diapers, weight, jaundice) — with live red-flag banners for postpartum hemorrhage, mood crisis, and newborn fever. Gender-neutral parent/feeding language.</p></div>
         </div>
 
         <h3>Mind</h3>
         <div class="tracker-grid">
-            <div class="tracker-card"><h4>Anxiety</h4><p>Episodic and baseline. Triggers, somatic signs, what helped.</p></div>
-            <div class="tracker-card"><h4>Brain fog</h4><p>Cognitive function on a usable scale, not a medical-survey one.</p></div>
-            <div class="tracker-card"><h4>Mental health</h4><p>Mood, intrusive thoughts, dissociation, suicidal ideation (with crisis resources baked in if you flag).</p></div>
-            <div class="tracker-card"><h4>Coping strategies</h4><p>What you tried. What worked. Building your own evidence base instead of relying on memory during a crisis.</p></div>
-            <div class="tracker-card"><h4>Crisis planning</h4><p>Stored crisis plan accessible without unlocking the rest of the app. Contact list, safe-place plan, professional resources.</p></div>
+            <div class="tracker-card"><h4>Anxiety</h4><p>Eleven episode types including panic, social, OCD-shaped, and <strong>meltdown vs. shutdown</strong> (AuDHD-aware). Somatic and mental signs, triggers, what helped, and a full 988 crisis-marker set if you flag.</p></div>
+            <div class="tracker-card"><h4>Brain fog</h4><p>Cognitive function on a usable scale, not a medical-survey one. Triggers, treatments, and trend windows.</p></div>
+            <div class="tracker-card"><h4>Mind &amp; mood</h4><p>Mood, cognition, energy, motivation, and regulation — including rapid-cycling and the mixed-state window. Crisis resources baked in if you flag.</p></div>
+            <div class="tracker-card"><h4>Coping &amp; regulation</h4><p>A guided technique runner with a timer — box breathing, PMR, 5-4-3-2-1, DBT opposite-action and more — that you rate helpful or not, so it learns what actually works for you.</p></div>
+            <div class="tracker-card"><h4>Crisis support</h4><p>An editable safety plan, hope reminders, and 988/911 plus US and international resources — accessible fast when you need it.</p></div>
+            <div class="tracker-card"><h4>Sensory</h4><p>Overload events (triggers, symptoms, recovery, shutdown flag) and a comfort toolkit, across 12 modalities including vestibular, proprioceptive, and interoceptive. Built for autistic and post-concussion needs.</p></div>
+            <div class="tracker-card"><h4>Journal</h4><p>Per-day entries with brain-dump, therapy, gratitude, and creative spaces. Markdown export, inline images, search.</p></div>
         </div>
 
         <h3>Choice</h3>
         <div class="tracker-grid">
+            <div class="tracker-card"><h4>Food allergens &amp; reactions</h4><p>Three separate pathways with their own logic: <strong>IgE allergy</strong> (two-organ anaphylaxis rule &rarr; EpiPen + 911), <strong>celiac/autoimmune</strong> (delayed brain-fog/joint/fatigue, doesn't respond to EpiPen), and <strong>intolerance</strong> (FODMAP/lactose/histamine, GI-dominant). Photo upload for hives and labels.</p></div>
             <div class="tracker-card"><h4>Food (simple or detailed)</h4><p>Two modes: "ate something" with a checkbox, or full nutrition logging. Pick the one that doesn't trigger you. Switchable per-day.</p></div>
-            <div class="tracker-card"><h4>Hydration</h4><p>Glasses, ounces, or just "I drank water today." Counts what you tell it to count.</p></div>
-            <div class="tracker-card"><h4>Movement</h4><p>From "stood up" to "ran a 5K." Spoon-honoring scale.</p></div>
+            <div class="tracker-card"><h4>Hydration</h4><p>Effective-hydration multipliers per drink (water counts full, coffee less). Glasses, ounces, or just "I drank water today." Counts what you tell it to count.</p></div>
+            <div class="tracker-card"><h4>Movement</h4><p>From "stood up" to "ran a 5K," with energy before/after. Chronic-illness-aware types (bed/chair exercises, PT). Spoon-honoring scale.</p></div>
             <div class="tracker-card"><h4>Self-care checklist</h4><p>Did you brush your teeth? Did you eat a vegetable? No judgment, just a record.</p></div>
+            <div class="tracker-card"><h4>Substance</h4><p>Deliberately non-moralizing logging — alcohol, cannabis, nicotine, recreational/off-label. Method, context, effects, intensity. Neutral tone, no lectures.</p></div>
+        </div>
+
+        <h3>Maintain</h3>
+        <div class="tracker-grid">
+            <div class="tracker-card"><h4>Medications &amp; adherence</h4><p>A per-<em>dose</em> checklist — a twice-daily med shows up in both morning and night — with a 7-day adherence record, refill flow, and privacy labels so your lock screen never shows the real drug name. Supplements live here too.</p></div>
+            <div class="tracker-card"><h4>Devices &amp; timers</h4><p>Change-reminders for CGMs, pumps, PICC/central dressings, ostomy wafers, Foley catheters, CPAP filters, and feeding tubes — with lead-time alerts, calendar events, and a warranty / early-failure log.</p></div>
+            <div class="tracker-card"><h4>Lines &amp; tubes</h4><p>The device-management side of indwelling lines and tubes; the complication-tracking side lives in Body, and the two link to each other.</p></div>
         </div>
 
         <h3>Custom</h3>
@@ -376,7 +402,7 @@
     <section class="doc-section" id="forge">
         <h2>The Forge — build your own trackers</h2>
         <p class="section-sub">
-            <span class="chaos-only">For when your weird body has a thing the 45 default trackers don't cover.</span>
+            <span class="chaos-only">For when your weird body has a thing the 50+ default trackers don't cover.</span>
             <span class="pro-only">User-defined custom tracker creation.</span>
         </p>
 
@@ -437,7 +463,7 @@
         </p>
 
         <h3>What the document parser does</h3>
-        <p>Upload a PDF or image of a medical document — visit summary, discharge note, specialist report, lab printout. The app uses a biomedical named-entity recognition model (d4data/biomedical-ner-all, ONNX int8 quantized) running <strong>directly in your browser.</strong> Nothing uploads anywhere. The model is bundled with the app.</p>
+        <p>Upload a PDF or image of a medical document — visit summary, discharge note, specialist report, lab printout. The app uses a biomedical named-entity recognition model (d4data/biomedical-ner-all, ONNX int8 quantized) running <strong>directly in your browser.</strong> The model downloads once from Hugging Face the first time you use document parsing (desktop only), then runs entirely on your device — your documents are processed locally and never uploaded.</p>
 
         <h4>Extracted entities include:</h4>
         <ul>
@@ -447,6 +473,9 @@
             <li><strong>Procedures and dates</strong></li>
             <li><strong>Negation awareness</strong> ("no evidence of X" doesn't get extracted as having X)</li>
         </ul>
+
+        <h4>Optional impression reader (Qwen 0.5B)</h4>
+        <p>For the free-text "impression" section of radiology and specialist reports, you can opt into a small on-device language model (Qwen2.5-0.5B) that distills the narrative into structured findings. It's <strong>off by default</strong> (a lightweight rule-based reader handles it otherwise), downloads from Hugging Face only if you switch it on, and runs entirely on your device — your documents never leave it.</p>
 
         <h3>Lab results parser (multi-format)</h3>
         <p>Lab printouts come in dozens of vendor-specific formats. The lab parser supports Intermountain, Mayo, Halifax (with OCR), Advent, and a generic fallback for unrecognized formats. Inline editing means if the parser misreads a value, you fix it in place — your correction sticks.</p>
@@ -518,10 +547,10 @@
     </section>
 
     <section class="doc-section" id="privacy">
-        <h2>Privacy &amp; G-SPOT protocol</h2>
+        <h2>Privacy &amp; the G-Spot</h2>
         <p class="section-sub">
-            <span class="chaos-only">Your data lives on your device. Period. We literally cannot see it. There is also the emergency wipe.</span>
-            <span class="pro-only">Local-first data architecture and emergency data protection protocols.</span>
+            <span class="chaos-only">Your data lives on your device. Period. We literally cannot see it. And you've got honest emergency tools when you need them.</span>
+            <span class="pro-only">Local-first data architecture and honest emergency data controls.</span>
         </p>
 
         <h3>Where your data lives</h3>
@@ -529,17 +558,18 @@
 
         <p>This means: <strong>we cannot access your data even if subpoenaed</strong>, because we don't have it. The PIN-based isolation means even if someone else uses your device, they can't see your data without your PIN.</p>
 
-        <h3>The G-SPOT protocol — emergency wipe</h3>
-        <p>For situations where someone in your life finding your medical data would cause harm — abusive partner, family hostility about a transition, employer scrutiny, stalker, ICE, the situations we shouldn't have to plan for but do.</p>
+        <h3>Emergency tools — honest, not hidden</h3>
+        <p>For situations where someone in your life finding your medical data would cause harm — an abusive partner, family hostility about a transition, employer scrutiny, a stalker, the situations we shouldn't have to plan for but do — Chaos Command gives you tools that are exactly what they say they are. No disguises, no cover stories, no steganography. Security comes from the cryptography, not from pretending to be something else.</p>
 
-        <p>G-SPOT is a panic-button wipe that <strong>doesn't just delete your data — it replaces it with the app's first-install starter data.</strong> The app looks like it does on first install. Cover story writes itself: <em>"Oh that? I forgot I downloaded it. ADHD tax."</em></p>
+        <ul>
+            <li><strong>Emergency logout</strong> — one tap from the sidebar drops you straight to the PIN lock screen. Non-destructive; your data stays put in its profile.</li>
+            <li><strong>The G-Spot</strong> — a deliberate, two-step, irreversible delete of <em>only</em> your reproductive-health data, leaving everything else untouched. For when that one category is the dangerous thing to carry. It's a real deletion, not concealment.</li>
+            <li><strong>Per-profile delete</strong> — permanently remove an entire PIN profile and its database, gated behind re-entering that PIN.</li>
+            <li><strong>Plausible deniability</strong> comes from the built-in public demo (PIN <code>1111</code>) — there's nothing to "catch you hiding," because anyone can open the app to sample data.</li>
+        </ul>
 
-        <div class="callout warn">
-            <strong>This is an irreversible action.</strong> G-SPOT is one-way unless you've previously exported a backup (see G-SPOT export below). Use it only when you mean it.
-        </div>
-
-        <h3>G-SPOT export — steganographic backup</h3>
-        <p>Before triggering the wipe, you can export an encrypted backup that hides your medical data inside boring-looking files. Costco receipts. Family recipe Word docs. Photos of your cat. The data is encrypted; the file looks like what its name says it is. Restore later by importing the file back through G-SPOT import with the right key.</p>
+        <h3>Encrypted backups</h3>
+        <p>Export your data as a password-protected file (PBKDF2 &rarr; AES-256-GCM). The encryption <em>is</em> the protection — there's no hidden layer, no disguised files, no time-based keys. A plain, readable export is also available behind an Advanced toggle if you'd rather have something you can open yourself.</p>
 
         <h3>What the app DOES and DOES NOT do</h3>
         <ul>
@@ -552,23 +582,28 @@
     <section class="doc-section" id="themes">
         <h2>Themes &amp; accessibility</h2>
         <p class="section-sub">
-            <span class="chaos-only">10 themes, 4 fonts, a confetti dial, and choices that aren't toggles you have to fight for.</span>
+            <span class="chaos-only">15 themes, 10 fonts, a confetti dial, and choices that aren't toggles you have to fight for.</span>
             <span class="pro-only">Visual customization and accessibility configuration.</span>
         </p>
 
         <h3>Themes</h3>
         <p>Settings → Appearance → Theme:</p>
         <ul>
-            <li><strong>Lavender</strong> — soft purple default, low-contrast-friendly</li>
-            <li><strong>Glitter</strong> — full sparkle mode</li>
-            <li><strong>Ace Mode</strong> — purple/teal with octopus iconography</li>
-            <li><strong>Steel Forged Tide (Grok)</strong> — dark slate, sharp accents</li>
-            <li><strong>Caelan's Dawn</strong> — warm sunrise palette</li>
-            <li><strong>Basketball Court / Cyberpunk Penguin</strong> — high-saturation neon</li>
-            <li><strong>Calm</strong> — minimal, low-stimulation</li>
-            <li><strong>Light</strong> — standard light theme</li>
-            <li><strong>Colorblind</strong> — palette tested for protanopia/deuteranopia/tritanopia</li>
-            <li><strong>High Contrast</strong> — WCAG AAA contrast ratios</li>
+            <li><strong>Calm</strong> — soft, low-stimulation light blue; the gentle default</li>
+            <li><strong>Lavender Garden</strong> — light pastel lavender with mint, coral &amp; peach accents</li>
+            <li><strong>Glitter</strong> — all-pink sparkle: soft pink gradient, glittery</li>
+            <li><strong>Ace</strong> — deep purple with teal/cyan octopus accents 🐙</li>
+            <li><strong>Steel Forged Tide</strong> (Grok) — steel-slate dark base, molten-orange &amp; tidal-teal accents</li>
+            <li><strong>Caelan's Liberation Dawn</strong> — deep navy lit by a vibrant sunrise spectrum (pink, gold, blue, orange)</li>
+            <li><strong>Pink Goes Good With Green</strong> — dark base with Wicked-coded pink &amp; green 💚💗</li>
+            <li><strong>Basketball Court</strong> — warm hardwood cream with basketball-orange &amp; brown</li>
+            <li><strong>Phosphor</strong> — green-on-black CRT phosphor glow</li>
+            <li><strong>Amber</strong> — amber-on-black, warm monochrome terminal</li>
+            <li><strong>Segfault</strong> — matrix-green hacker terminal: monospace, <code>$</code> prompts, a little 💀</li>
+            <li><strong>Light</strong> — clean white background, black text, bright primary-color accents</li>
+            <li><strong>Colorblind Friendly</strong> — high-contrast, near-grayscale palette readable without relying on hue (protanopia/deuteranopia/tritanopia)</li>
+            <li><strong>Tone It Down Taupe</strong> — muted taupe/beige/sage earth tones; no motion, no sparkle, no glow</li>
+            <li><strong>Follow System</strong> — mirrors your OS contrast/accessibility theme (forced-colors), for low-vision &amp; screen-reader users</li>
         </ul>
 
         <h3>Bounce intensity slider</h3>
@@ -576,11 +611,18 @@
 
         <h3>Fonts</h3>
         <ul>
-            <li><strong>Atkinson Hyperlegible</strong> — high-legibility for low-vision users</li>
-            <li><strong>Poppins</strong> — geometric sans, easy on the eyes</li>
+            <li><strong>Atkinson Hyperlegible</strong> — high-legibility for low-vision users (default)</li>
+            <li><strong>OpenDyslexic</strong> — weighted letterforms for dyslexia</li>
             <li><strong>Lexend</strong> — designed for reading-fluency</li>
+            <li><strong>Poppins</strong> — geometric sans, easy on the eyes</li>
+            <li><strong>Inter</strong> — clean UI sans</li>
+            <li><strong>Crimson Pro</strong> — readable serif</li>
+            <li><strong>JetBrains Mono</strong> — monospace</li>
+            <li><strong>Cute Charm</strong> — decorative display, for when your eyes want joy</li>
+            <li><strong>Live Simple</strong> — soft rounded display</li>
             <li><strong>System</strong> — your OS default</li>
         </ul>
+        <p class="muted">Every font is self-hosted — no Google Fonts request, no IP leak.</p>
 
         <h3>Chaos-positive design choices</h3>
         <ul>
@@ -629,7 +671,7 @@
             <li>The Tauri 2 build is set up for desktop deployment and can be wrapped however you need.</li>
             <li><strong>Desktop has a hybrid storage router:</strong> SQLite on the desktop side + Dexie/IndexedDB in the embedded browser view. The sync feature exists primarily because iOS hits browser-storage limits on Dexie alone — desktop's SQLite handles the larger dataset, mobile gets the Dexie-friendly subset. If you're self-hosting on a homelab and don't need mobile, you may be able to use the SQLite path directly without Dexie sync at all (pending your tolerance for skipping the image-attachment options that flow through the in-browser pipeline).</li>
             <li>The Next.js front end can be served from anywhere; the Dexie storage lives in whatever browser is rendering it.</li>
-            <li>The NLP model and PDF parser are bundled with the static build — no external services to wire up.</li>
+            <li>The PDF parser runs in-browser with no external services. The biomedical NLP model downloads once from Hugging Face on first use, then runs locally — the only first-run network fetch in the document pipeline.</li>
             <li>Sync between instances is the main thing you'd need to rewrite if you want a non-WiFi-pair model. The codebase is open; the protocol is yours to redesign.</li>
         </ul>
 
@@ -642,7 +684,7 @@
         <h2>FAQ</h2>
 
         <h3>Is it really free?</h3>
-        <p>Yes. Personal use is free forever. The PolyForm Noncommercial License lets you fork, audit, share among individuals, modify for your own use. Commercial deployment requires a separate commercial license — that's how the project funds itself without charging individuals.</p>
+        <p>The <strong>source is free forever</strong> — build it yourself from GitHub at zero cost, for any noncommercial use (PolyForm Noncommercial License: fork, audit, share, modify). The convenience of an <strong>app-store install is a one-time $25</strong>, and that price funds <em>support</em> — one chronically-ill dev can't answer the whole internet for free, so paying funds the human who answers you. <strong>Can't afford the store version?</strong> Email <a href="mailto:ace@siliconscaffolding.com">ace@siliconscaffolding.com</a> and say "I can't afford it" — we run a limited number of scholarships each quarter, per store. (The stores cap how many free codes we get; we don't pad it. First come, and when they're gone for the quarter, they're gone.) Commercial deployment requires a separate commercial license.</p>
 
         <h3>Will my data ever leave my device?</h3>
         <p>Not unless you make it leave. The app has no servers. Document parsing runs in your browser. PDF generation runs in your browser. Sync runs over your local WiFi peer-to-peer (QR-mediated). The only outbound network calls happen if you explicitly export data and upload it somewhere yourself.</p>
