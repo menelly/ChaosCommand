@@ -373,10 +373,14 @@ export function useMedicationTracker(): UseMedicationTrackerReturn {
     times?: string[]
   ): Promise<void> => {
     try {
-      await updateMedication(id, {
-        enableReminders: enabled,
-        reminderTimes: enabled ? (times || []) : [],
-      });
+      // REMINDERS MUST NOT EAT TIMES. Turning reminders OFF only flips the flag —
+      // it must NOT wipe reminderTimes, because Maintain (the daily dose schedule)
+      // reads those times too. The old code set reminderTimes:[] on disable, which
+      // deleted the user's dose schedule the moment they silenced reminders. Now:
+      // only write times when ENABLING with a new set; otherwise leave them intact.
+      const patch: Partial<Medication> = { enableReminders: enabled }
+      if (enabled && times) patch.reminderTimes = times
+      await updateMedication(id, patch);
     } catch (err) {
       console.error('Failed to update reminders:', err);
       throw err;
