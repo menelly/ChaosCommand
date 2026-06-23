@@ -6,11 +6,23 @@ import { readFileSync } from 'node:fs'
 // stamped at build time so it's always real, never a hand-edited lie.
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'))
 
+// Web "try me" demo build. `DEMO_BUILD=true npm run build` produces the public
+// interactive demo: the same app, served as a website (no Tauri), under a
+// subpath so it can live at chaoscommand.center/<base>/ without colliding with
+// the marketing site. NEXT_PUBLIC_DEMO_MODE drives the demo banners; the
+// existing demo PIN (1111) + ensureDemoSeeded already provide the data.
+const DEMO = process.env.DEMO_BUILD === 'true'
+const DEMO_BASE = process.env.DEMO_BASE_PATH || '/staging/try'
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Subpath the static export so /_next/* assets resolve under the demo dir.
+  ...(DEMO ? { basePath: DEMO_BASE, assetPrefix: DEMO_BASE } : {}),
   env: {
     NEXT_PUBLIC_APP_VERSION: pkg.version,
     NEXT_PUBLIC_BUILD_DATE: new Date().toISOString().slice(0, 10),
+    NEXT_PUBLIC_DEMO_MODE: DEMO ? 'true' : 'false',
+    NEXT_PUBLIC_DEMO_BASE: DEMO ? DEMO_BASE : '',
   },
   // Build configuration for Tauri desktop + mobile
   eslint: {

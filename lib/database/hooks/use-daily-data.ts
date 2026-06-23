@@ -30,13 +30,18 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { 
-  db, 
-  DailyDataRecord, 
-  formatDateForStorage, 
+import {
+  db,
+  DailyDataRecord,
+  formatDateForStorage,
   getCurrentTimestamp,
-  generateDataKey 
+  generateDataKey
 } from '../dexie-db';
+
+// Web "try me" demo: visitor writes are no-ops so nothing they type persists.
+// The demo seed loads via demo-profile (direct db.bulkAdd), which bypasses this
+// hook — so the seeded sample data still appears; only user-initiated saves drop.
+const IS_DEMO = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 
 export interface UseDailyDataReturn {
   // Data access
@@ -149,12 +154,13 @@ export function useDailyData(): UseDailyDataReturn {
     content: any,
     tags?: string[]
   ): Promise<void> => {
+    if (IS_DEMO) return; // demo: don't persist visitor writes
     try {
       setIsLoading(true);
       setError(null);
 
       const now = getCurrentTimestamp();
-      
+
       // Check if record already exists
       const existing = await getSpecificData(date, category, subcategory);
       
@@ -201,6 +207,7 @@ export function useDailyData(): UseDailyDataReturn {
   }, [getSpecificData]);
 
   const updateData = useCallback(async (id: number, content: any, tags?: string[]): Promise<void> => {
+    if (IS_DEMO) return; // demo: don't persist visitor writes
     try {
       setIsLoading(true);
       setError(null);
@@ -242,6 +249,7 @@ export function useDailyData(): UseDailyDataReturn {
     category: string,
     subcategory: string
   ): Promise<void> => {
+    if (IS_DEMO) return; // demo: don't persist visitor deletes
     try {
       setIsLoading(true);
       setError(null);
@@ -269,6 +277,7 @@ export function useDailyData(): UseDailyDataReturn {
   const saveBulkData = useCallback(async (
     records: Omit<DailyDataRecord, 'id' | 'metadata'>[]
   ): Promise<void> => {
+    if (IS_DEMO) return; // demo: don't persist visitor writes
     try {
       setIsLoading(true);
       setError(null);
@@ -378,6 +387,7 @@ export function useDailyData(): UseDailyDataReturn {
   const secureOverwriteAllData = useCallback(async (
     newRecords: Omit<DailyDataRecord, 'id' | 'metadata'>[]
   ): Promise<void> => {
+    if (IS_DEMO) return; // demo: don't wipe/overwrite the seeded sample data
     try {
       setIsLoading(true);
       setError(null);

@@ -41,6 +41,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { AppWrapper } from "@/components/app-wrapper"
 import RoutineFlowBar from "@/components/routines/routine-flow-bar"
 import MedicalDisclaimerBar from "@/components/medical-disclaimer-bar"
+import { DemoBanner } from "@/components/demo-banner"
 // import AddyChatBubble from "@/components/addy-chat-bubble" // Commented out - AI module for later
 
 export const metadata = {
@@ -77,6 +78,7 @@ export default function RootLayout({
           <GoblinModeProvider>
             <div className="flex h-screen">
               <div className="flex-1 overflow-y-auto overflow-x-hidden">
+                <DemoBanner />
                 {children}
                 {/* Footer */}
                 <footer className="mt-8 py-4 text-center text-xs text-muted-foreground border-t border-border/50">

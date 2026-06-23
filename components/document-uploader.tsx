@@ -42,6 +42,9 @@ import { extractMedicalEvents, isModelLoaded } from '@/lib/services/medical-ner'
 import { extractLabResults, extractLabResultsSmart, labResultsToEvents, extractCollectionDate } from '@/lib/services/lab-parser';
 import { extractDocFromBase64 } from '@/lib/services/text-extractor';
 
+// Web "try me" demo: file import is gated (see the early return in the component).
+const IS_DEMO = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
+
 // 🧠 Medical Document Parser interfaces
 interface ParsedMedicalEvent {
   id: string;
@@ -1045,6 +1048,33 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
     if (fileType.startsWith('image/')) return <Image className="h-5 w-5" />;
     return <FileText className="h-5 w-5" />;
   };
+
+  // Web "try me" demo: gate file import. The parser would pull a ~64MB NER model
+  // into the visitor's browser, and real medical records must never be uploaded to
+  // a public page. Everything else stays fully clickable; this one feature points
+  // people to the installed app, which runs the parsing entirely on their device.
+  if (IS_DEMO) {
+    return (
+      <div className={`space-y-4 ${className}`}>
+        <Card>
+          <CardContent className="p-6 text-center space-y-3">
+            <FileText className="h-8 w-8 mx-auto text-muted-foreground" />
+            <h3 className="font-semibold">📄 File import lives in the installed app</h3>
+            <p className="text-sm text-muted-foreground">
+              Uploading lab results &amp; medical records and auto-parsing them works in the
+              downloadable Chaos Command — it runs entirely on <em>your</em> device, nothing
+              uploaded anywhere. It&apos;s switched off in this public web demo so nothing
+              leaves your browser (and so you don&apos;t download a large parsing model just
+              to look around).
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Everything else here is fully clickable — explore away.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className={`space-y-6 ${className} relative`}>
