@@ -213,7 +213,14 @@ export function MedicationForm({
         savePharmacyAsLast(formData.pharmacy, formData.pharmacyPhone);
       }
 
-      await onSubmit(formData);
+      // CHA-377: normalize the pharmacy website to a real URL so it stores clean and
+      // opens correctly later (the field accepts scheme-less input like "www.cvs.com").
+      const website = formData.pharmacyWebsite?.trim();
+      const normalized: MedicationFormData = website && !/^https?:\/\//i.test(website)
+        ? { ...formData, pharmacyWebsite: `https://${website}` }
+        : formData;
+
+      await onSubmit(normalized);
       onClose();
     } catch (error) {
       console.error('Form submission error:', error);
@@ -379,6 +386,11 @@ export function MedicationForm({
                   </Label>
                   <Input
                     id="brandName"
+                    // CHA-376: suppress Chromium's autofill UI. When the field had saved
+                    // history the browser painted its suggestions box pale-white (contrast
+                    // fail on dark themes) AND duplicated our own saved pickers. We provide
+                    // better in-app history, so the browser's is pure downside here.
+                    autoComplete="off"
                     placeholder="e.g., Tylenol, Advil"
                     value={formData.brandName}
                     onChange={(e) => handleInputChange('brandName', e.target.value)}
@@ -392,6 +404,7 @@ export function MedicationForm({
                   </Label>
                   <Input
                     id="genericName"
+                    autoComplete="off" // CHA-376 — see brandName
                     placeholder="e.g., acetaminophen, ibuprofen"
                     value={formData.genericName}
                     onChange={(e) => handleInputChange('genericName', e.target.value)}
@@ -751,6 +764,7 @@ export function MedicationForm({
                   </Label>
                   <Input
                     id="prescribingDoctor"
+                    autoComplete="off" // CHA-376 — see brandName (this is the field Ren repro'd)
                     placeholder="e.g., Dr. Sarah Johnson"
                     value={formData.prescribingDoctor}
                     onChange={(e) => handleInputChange('prescribingDoctor', e.target.value)}
@@ -810,6 +824,7 @@ export function MedicationForm({
                   </Label>
                   <Input
                     id="pharmacy"
+                    autoComplete="off" // CHA-376 — see brandName
                     placeholder="e.g., CVS, Walgreens"
                     value={formData.pharmacy}
                     onChange={(e) => handleInputChange('pharmacy', e.target.value)}
@@ -838,8 +853,14 @@ export function MedicationForm({
                   </Label>
                   <Input
                     id="pharmacyWebsite"
-                    type="url"
-                    placeholder="https://www.cvs.com"
+                    // CHA-377: type="url" made the browser reject scheme-less input like
+                    // "www.cvs.com" and block the whole save. Use a lenient text field
+                    // (inputMode="url" still gives the right mobile keyboard) and normalize
+                    // to a real URL on save instead of gatekeeping what the user types.
+                    type="text"
+                    inputMode="url"
+                    autoComplete="off"
+                    placeholder="www.cvs.com"
                     value={formData.pharmacyWebsite}
                     onChange={(e) => handleInputChange('pharmacyWebsite', e.target.value)}
                   />

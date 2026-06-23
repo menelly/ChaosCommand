@@ -25,6 +25,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useDailyData, CATEGORIES, SUBCATEGORIES, formatDateForStorage, db } from '@/lib/database';
+import { latestLiveBySubcategory } from '@/lib/database/dedupe';
 // 🏖️ VACATION MODE: Hybrid system commented out
 // import { useHybridDatabase } from '@/lib/database/hybrid-router';
 // import type { MedicalEvent as SQLiteMedicalEvent, Provider as SQLiteProvider } from '@/lib/database/sqlite-db';
@@ -138,9 +139,13 @@ export default function TimelinePage() {
         console.log('🔍 ALL USER DATA:', allUserData);
 
         // 🐉 FIXED: Handle compound subcategories like 'medical-events-medical-XXXXX'
+        // CHA-378: skip soft-deleted (tombstoned) records so a deleted event doesn't
+        // keep projecting onto the timeline.
         const eventData = allUserData.filter(item =>
-          item.subcategory === SUBCATEGORIES.MEDICAL_EVENTS ||
-          item.subcategory.startsWith(SUBCATEGORIES.MEDICAL_EVENTS + '-')
+          !item.metadata?.deleted_at && (
+            item.subcategory === SUBCATEGORIES.MEDICAL_EVENTS ||
+            item.subcategory.startsWith(SUBCATEGORIES.MEDICAL_EVENTS + '-')
+          )
         );
         console.log('🔍 RAW EVENT DATA:', eventData);
         console.log('🔍 EVENT DATA LENGTH:', eventData.length);
@@ -161,9 +166,12 @@ export default function TimelinePage() {
         }).filter(Boolean) as MedicalEvent[];
 
         // Load providers for linking
+        // CHA-378: skip tombstoned providers so a deleted provider doesn't linger.
         const providerData = allUserData.filter(item =>
-          item.subcategory === SUBCATEGORIES.PROVIDERS ||
-          item.subcategory.startsWith(SUBCATEGORIES.PROVIDERS + '-')
+          !item.metadata?.deleted_at && (
+            item.subcategory === SUBCATEGORIES.PROVIDERS ||
+            item.subcategory.startsWith(SUBCATEGORIES.PROVIDERS + '-')
+          )
         );
         const providerList = (providerData.map((item: any) => {
           let provider: any;
@@ -184,8 +192,14 @@ export default function TimelinePage() {
         // Load medications and project them onto the timeline.
         // Tracker uses category 'tracker' + subcategory 'medications-{id}', so
         // re-fetch over the tracker category instead of relying on USER data.
+        // CHA-378: a med can have several physical rows (date-spawned dupes from the
+        // pre-CHA-273 write path) and soft-deleted rows carry a deleted_at tombstone.
+        // latestLiveBySubcategory drops tombstones and collapses to one row per med
+        // (the newest), so deleted meds vanish and live meds appear exactly once.
         const medRecords = await getAllCategoryData('tracker');
-        const medItems = medRecords.filter((r: any) => r.subcategory.startsWith('medications-'));
+        const medItems = latestLiveBySubcategory(
+          medRecords.filter((r: any) => r.subcategory.startsWith('medications-'))
+        );
         const medEvents: MedicalEvent[] = [];
         for (const r of medItems) {
           let med: any;

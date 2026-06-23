@@ -32,6 +32,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { useDailyData, formatDateForStorage } from '@/lib/database';
 import { getDB } from '@/lib/database/dexie-db';
+import { latestLiveBySubcategory, staleDuplicates } from '@/lib/database/dedupe';
 import { 
   Medication, 
   MedicationFormData, 
@@ -87,11 +88,30 @@ export function useMedicationTracker(): UseMedicationTrackerReturn {
       // Get all medication records from database
       // We'll search across all dates since medications can be stored on different dates
       const records = await searchByContent('', MEDICATION_CATEGORIES.TRACKER);
-      
-      const medicationRecords = records.filter(
+
+      const medRows = records.filter(
         record => record.subcategory?.startsWith(MEDICATION_SUBCATEGORIES.MEDICATIONS)
-          && !record.metadata?.deleted_at
       );
+
+      // CHA-378: one med can have several physical rows (date-spawned duplicates from
+      // the pre-CHA-273 write path). Collapse to one live row per med, dropping
+      // tombstones. SELF-HEAL: tombstone the leftover duplicate rows in the DB so the
+      // dupe stops re-projecting on the timeline/reports and never returns on reload —
+      // an idempotent, sync-safe migration that runs naturally on load.
+      const medicationRecords = latestLiveBySubcategory(medRows);
+      const dupes = staleDuplicates(medRows);
+      if (dupes.length > 0) {
+        const db = getDB();
+        const now = new Date().toISOString();
+        for (const dupe of dupes) {
+          if (dupe?.id != null) {
+            await db.daily_data.update(dupe.id, {
+              metadata: { ...dupe.metadata, created_at: dupe.metadata?.created_at ?? now, deleted_at: now, updated_at: now }
+            });
+          }
+        }
+        console.log(`💊 Healed ${dupes.length} duplicate medication row(s)`);
+      }
 
       const loadedMedications: Medication[] = medicationRecords.map(record => {
         // Check if content is already an object or needs parsing

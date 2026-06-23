@@ -339,6 +339,7 @@ export function MedicationForm({
                   </Label>
                   <Input
                     id="brandName"
+                    autoComplete="off" // CHA-376 — suppress Chromium autofill white-box on dark themes
                     placeholder="e.g., Tylenol, Advil"
                     value={formData.brandName}
                     onChange={(e) => handleInputChange('brandName', e.target.value)}
@@ -352,6 +353,7 @@ export function MedicationForm({
                   </Label>
                   <Input
                     id="genericName"
+                    autoComplete="off" // CHA-376
                     placeholder="e.g., acetaminophen, ibuprofen"
                     value={formData.genericName}
                     onChange={(e) => handleInputChange('genericName', e.target.value)}
@@ -506,6 +508,7 @@ export function MedicationForm({
                   </Label>
                   <Input
                     id="prescribingDoctor"
+                    autoComplete="off" // CHA-376
                     placeholder="e.g., Dr. Sarah Johnson"
                     value={formData.prescribingDoctor}
                     onChange={(e) => handleInputChange('prescribingDoctor', e.target.value)}
@@ -565,6 +568,7 @@ export function MedicationForm({
                   </Label>
                   <Input
                     id="pharmacy"
+                    autoComplete="off" // CHA-376
                     placeholder="e.g., CVS, Walgreens"
                     value={formData.pharmacy}
                     onChange={(e) => handleInputChange('pharmacy', e.target.value)}
