@@ -55,6 +55,17 @@ yarn-error.log*
 src-tauri/target/
 src-tauri/gen/
 
+# Built app binaries — NEVER commit (huge, and we ship to stores from CI/local
+# builds, not from the repo). The 0.5.7 .ipa got tracked once; untracked + ignored.
+*.ipa
+*.apk
+*.aab
+*.msix
+*.appx
+*.dmg
+*.exe
+*.app/
+
 # Database files (keep user data private)
 *.db
 *.sqlite
