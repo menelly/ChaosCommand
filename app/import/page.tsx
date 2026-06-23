@@ -16,6 +16,10 @@ import AppCanvas from "@/components/app-canvas"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import DocumentUploader, { ExtractedLabBatch } from "@/components/document-uploader"
+
+// Web "try me" demo: hide the on-device AI-model loader (it would pull ~315MB
+// into a visitor's browser). The DocumentUploader is gated separately.
+const IS_DEMO = process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
 // Diagnostics panel — kept on the shelf, uncomment when chasing lab
 // parser regressions. See the commented section below for the UI block.
 // import LabParserDiagnosticsPanel from "@/components/lab-parser-diagnostics-panel"
@@ -329,7 +333,7 @@ export default function ImportRecordsPage() {
               ? "Drop your LabCorp / Quest / hospital lab PDFs here. We read the columns by position — value, unit, reference range, abnormal flag — and surface them on your Labs dashboard with trends. Upload the PDF (don't paste text): the column positions only exist in the file."
               : "Visit notes, after-visit summaries, imaging reports, lab panels — drop them all here. The parser runs both medical (NER) and lab (number-anchored) extraction on every document, then shows you a review screen with checkboxes so you can uncheck anything that doesn't belong before it lands on your timeline or Lab Results."}
           </p>
-          {!labOnly && (
+          {!labOnly && !IS_DEMO && (
             <div className="rounded-lg border border-[var(--border-soft)] bg-[var(--surface-2)] p-3 flex items-center gap-3 flex-wrap">
               <Sparkles className="h-4 w-4 text-primary shrink-0" />
               <div className="flex-1 min-w-[200px] text-sm text-[var(--text-main)]">
