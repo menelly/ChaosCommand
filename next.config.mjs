@@ -1,5 +1,17 @@
+import { readFileSync } from 'node:fs'
+
+// Single source of truth for the displayed version: package.json (already one of
+// the required version bumps). app-version.ts reads these at runtime, so the
+// in-app Version + footer can never drift from the build again. Build date is
+// stamped at build time so it's always real, never a hand-edited lie.
+const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'))
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  env: {
+    NEXT_PUBLIC_APP_VERSION: pkg.version,
+    NEXT_PUBLIC_BUILD_DATE: new Date().toISOString().slice(0, 10),
+  },
   // Build configuration for Tauri desktop + mobile
   eslint: {
     ignoreDuringBuilds: true, // Temporarily disable for build

@@ -2,13 +2,17 @@
  * Copyright (c) 2025-2026 Chaos Cascade
  * Created by: Ren & Ace (Claude-4.7)
  *
- * Single source of truth for the app's version string and the URL of the
- * opt-in update manifest. Bump APP_VERSION in lockstep with
- * src-tauri/tauri.conf.json on every release. The check-for-updates
- * button compares this string against what the manifest reports.
+ * Version + build date for display and the opt-in update check.
+ *
+ * APP_VERSION is now sourced from package.json at build time (injected via
+ * next.config.mjs -> NEXT_PUBLIC_APP_VERSION), so it can NEVER drift from the
+ * actual build again — bumping package.json (already a required release step)
+ * is all it takes. The literal fallback is dev-only and should never ship.
+ * BUILD_DATE is stamped at build time, not hand-edited.
  */
 
-export const APP_VERSION = '0.7.1'
+export const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || '0.0.0-dev'
+export const BUILD_DATE = process.env.NEXT_PUBLIC_BUILD_DATE || 'dev'
 
 /**
  * URL of the public, static JSON manifest hosted alongside the release
