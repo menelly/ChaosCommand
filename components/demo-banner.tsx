@@ -38,7 +38,10 @@ export function DemoBanner() {
         textAlign: 'center',
         position: 'sticky',
         top: 0,
-        zIndex: 1000,
+        // Below the nav layer so it never buries the fixed top-right hamburger /
+        // home controls on mobile: content(0) < banner(30) < backdrop(40) <
+        // menu button + open sidebar(50). Was 1000. (Ren caught it, 2026-06-23.)
+        zIndex: 30,
         boxShadow: '0 1px 6px rgba(0,0,0,0.25)',
       }}
     >
