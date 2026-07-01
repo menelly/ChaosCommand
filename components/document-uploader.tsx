@@ -1206,8 +1206,8 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
                 {mode === 'lab'
                   ? 'Upload lab panels and blood work. Pulls test names, values, units, and reference ranges into your Labs dashboard. Skips the diagnosis-extraction model so a panel name (like "Myositis Panel") never gets mistaken for a diagnosis.'
                   : mode === 'medical'
-                    ? 'Upload visit notes, after-visit summaries, imaging reports, or other medical records. The NER engine extracts events, flags dismissed findings, and builds your timeline. For lab panels, use the Lab Result uploader instead.'
-                    : 'Upload medical documents, lab reports, imaging results, or any medical records. Our NER engine will extract events, flag dismissed findings, and build your timeline.'}
+                    ? 'Upload visit notes, after-visit summaries, imaging reports, or other medical records. MedGemma reads the whole document, extracts events, flags dismissed findings, and builds your timeline. For lab panels, use the Lab Result uploader instead.'
+                    : 'Upload medical documents, lab reports, imaging results, or any medical records. MedGemma reads the whole document, extracts events, flags dismissed findings, and builds your timeline.'}
               </p>
 
               {/* Demographics hint + first-time model download */}

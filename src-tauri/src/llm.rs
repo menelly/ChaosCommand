@@ -414,7 +414,18 @@ mod real {
     }
     ctx.decode(&mut batch).map_err(|e| format!("prompt decode: {e}"))?;
 
-    let mut sampler = LlamaSampler::greedy();
+    // Repetition penalty THEN greedy. Pure greedy (temp 0) on an enumeration
+    // task ("list every abnormal value") makes a small model fall into a
+    // degenerate loop — it emitted "Elevated Glucose (77 mg/dL)" ~100 times on
+    // an ED note until it hit the token ceiling (468s of nothing). A mild
+    // repeat penalty over the recent window breaks the loop while keeping
+    // selection deterministic (greedy still picks the argmax of the penalized
+    // logits). last_n=128, repeat=1.15; freq/present left 0 so legitimately
+    // repeated medical terms ("mg/dL" across real lab lines) aren't distorted.
+    let mut sampler = LlamaSampler::chain_simple([
+      LlamaSampler::penalties(128, 1.15, 0.0, 0.0),
+      LlamaSampler::greedy(),
+    ]);
     let mut decoder = encoding_rs::UTF_8.new_decoder();
     let mut out = String::new();
     let mut n_cur = n_prompt as i32;
