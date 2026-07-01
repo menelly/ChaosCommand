@@ -435,6 +435,26 @@ export default function ImportRecordsPage() {
                       )}
                     </div>
                   )}
+
+                  {/* Small-local-model reality check. MedGemma is medically
+                      trained but it's a 4B model running on your own computer —
+                      it will sometimes miss a finding or word one oddly. This
+                      is a first-pass assist to review, never a substitute for
+                      your own eyes or your clinician's. */}
+                  {aiEnabled && aiState === 'ready' && (
+                    <div className="mt-3 rounded-lg border border-[var(--accent-orange)]/40 bg-[var(--accent-orange)]/10 p-3 text-xs text-[var(--text-main)] flex items-start gap-2">
+                      <span aria-hidden className="mt-0.5">⚠️</span>
+                      <span>
+                        <span className="font-medium">Double-check everything before you save it.</span>{" "}
+                        MedGemma is a medically trained AI, but she’s small and runs entirely on your
+                        computer — she can miss a finding or word one oddly. Treat the results as a
+                        <span className="font-medium"> first-pass draft to review</span>, not a diagnosis.
+                        You’ll get a checkbox screen to confirm each item before anything lands on your
+                        timeline — read it, and never pass results to your doctors without checking them
+                        against the original document yourself.
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

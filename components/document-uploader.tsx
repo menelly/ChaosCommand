@@ -2001,8 +2001,15 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
               </div>
             )}
 
+            {/* Last-moment reminder: AI extraction is a draft to verify, not
+                gospel — this is the point where it lands on the timeline. */}
+            <p className="pt-4 text-center text-xs text-[var(--text-muted)]">
+              ⚠️ Please check these against your original document before saving. The AI reader is
+              helpful but not perfect — verify anything you’ll rely on or share with your doctors.
+            </p>
+
             {/* Confirm Actions */}
-            <div className="flex gap-3 justify-center pt-4 border-t border-[var(--border-soft)] flex-wrap">
+            <div className="flex gap-3 justify-center pt-2 border-t border-[var(--border-soft)] flex-wrap">
               <Button
                 onClick={handleConfirmEvents}
                 className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
