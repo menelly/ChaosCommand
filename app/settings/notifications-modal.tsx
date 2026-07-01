@@ -56,6 +56,13 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
   const [desktopBackground, setDesktopBackground] = useState(false)
   const [showDesktopToggle, setShowDesktopToggle] = useState(false)
 
+  // Mobile app (Android/iOS in Tauri) — shows the "reminders when closed"
+  // reliability walkthrough (battery optimization / background activity), which
+  // is where the OS silently kills scheduled alarms. Doesn't apply to desktop
+  // (has its own tray toggle) or web.
+  const [isMobileApp, setIsMobileApp] = useState(false)
+  const [showReliabilitySteps, setShowReliabilitySteps] = useState(false)
+
   // Backup reminder (opt-in, per-PIN, in-app banner — works without OS notifications)
   const [backupReminderEnabled, setBackupReminderEnabled] = useState(false)
   const [backupCadence, setBackupCadence] = useState<BackupCadence>("entries")
@@ -105,7 +112,9 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
     setDesktopBackground(localStorage.getItem('chaos-desktop-background') === 'true')
     // Desktop app only — not web, not the Android/iOS app (which uses the OS schedule).
     const ua = typeof navigator !== 'undefined' ? navigator.userAgent : ''
-    setShowDesktopToggle(isTauri() && !/Android|iPhone|iPad|iPod/i.test(ua))
+    const mobileUA = /Android|iPhone|iPad|iPod/i.test(ua)
+    setShowDesktopToggle(isTauri() && !mobileUA)
+    setIsMobileApp(isTauri() && mobileUA)
   }, [])
 
   // Re-query the real OS permission whenever the modal opens, so the status badge
@@ -375,6 +384,75 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
               </div>
             )}
           </div>
+
+          {/* Mobile reliability walkthrough — reminders when the app is CLOSED.
+              Android/iOS deliver scheduled alarms via the OS, but aggressive
+              battery optimization (esp. Samsung/Xiaomi/Oppo) silently kills them.
+              This isn't an app bug — it's a per-device setting the user has to
+              grant. Steps are OEM-varied, so we guide rather than deep-link
+              (a button to a settings screen that doesn't exist on their phone is
+              worse than clear words). */}
+          {isMobileApp && (
+            <div className="p-4 border rounded-lg border-[var(--accent-orange)]/40 bg-[var(--accent-orange)]/5">
+              <button
+                type="button"
+                onClick={() => setShowReliabilitySteps(v => !v)}
+                className="w-full flex items-center justify-between gap-2 text-left"
+                aria-expanded={showReliabilitySteps}
+              >
+                <div>
+                  <div className="font-medium flex items-center gap-2">
+                    <Bell className="h-4 w-4" />
+                    Getting reminders when the app is closed
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-0.5">
+                    If reminders only arrive when the app is open, your phone is putting it
+                    to sleep to save battery. Two-minute fix — tap to see the steps.
+                  </div>
+                </div>
+                <span className="text-muted-foreground shrink-0">{showReliabilitySteps ? '▲' : '▼'}</span>
+              </button>
+
+              {showReliabilitySteps && (
+                <div className="mt-3 space-y-3 text-sm">
+                  <p className="text-xs text-muted-foreground">
+                    Your reminders are handed to Android/iOS to deliver, so they should fire even
+                    when Chaos Command is fully closed. If they don&apos;t, one of these battery
+                    settings is stopping them — the exact wording varies by phone brand:
+                  </p>
+                  <ol className="list-decimal pl-5 space-y-2">
+                    <li>
+                      <span className="font-medium">Allow notifications.</span> Check the permission
+                      status below says <span className="italic">Allowed</span>. If not, tap Re-check
+                      or enable it in your phone&apos;s Settings → Apps → Chaos Command → Notifications.
+                    </li>
+                    <li>
+                      <span className="font-medium">Turn OFF battery optimization</span> for Chaos
+                      Command. Settings → Apps → Chaos Command → Battery → set it to{" "}
+                      <span className="italic">Unrestricted</span> (or &ldquo;Don&apos;t optimize&rdquo;).
+                      This is the big one — it&apos;s what usually stops closed-app reminders.
+                    </li>
+                    <li>
+                      <span className="font-medium">Allow background activity.</span> Same Battery
+                      screen — make sure &ldquo;Allow background activity&rdquo; is on.
+                    </li>
+                    <li>
+                      <span className="font-medium">Samsung / Xiaomi / Oppo / OnePlus:</span> also
+                      find <span className="italic">Auto-start</span> (or &ldquo;Allow auto
+                      launch&rdquo;) for Chaos Command and turn it on. These brands are the most
+                      aggressive about killing background apps.
+                    </li>
+                  </ol>
+                  <p className="text-xs text-muted-foreground">
+                    After changing these, use <span className="font-medium">Test Notification</span>{" "}
+                    above to confirm, then set a med reminder a few minutes out, fully close the app,
+                    and check it still fires. Nothing about your data or privacy changes — this only
+                    lets the reminder wake your phone.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Backup Reminder — opt-in, in-app banner (does NOT need the master toggle) */}
           <div className="p-4 border rounded-lg space-y-3">

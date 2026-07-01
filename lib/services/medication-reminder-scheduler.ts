@@ -9,7 +9,7 @@
  * does.
  *
  * Reminders are CONSOLIDATED by time: all meds due at the same clock time share
- * ONE recurring alarm (5 morning meds = 1 "morning meds" notification, not 5),
+ * ONE recurring alarm (5 meds at 8:00 AM = 1 "8:00 AM meds" notification, not 5),
  * each firing even when the app is closed (mobile guarantee; desktop fire-when-
  * closed varies). Per-med scheduling is preserved — a BID med joins both its
  * time buckets, a PM-only med just the evening one. Tapping a reminder opens the
@@ -86,12 +86,17 @@ export function parseReminderTime(s: string): { hour: number; minute: number } |
   return null
 }
 
-/** Friendly time-of-day name for a consolidated bucket title ("Morning meds"). */
-function daypartLabel(hour: number): string {
-  if (hour >= 5 && hour < 12) return 'morning'
-  if (hour >= 12 && hour < 17) return 'afternoon'
-  if (hour >= 17 && hour < 21) return 'evening'
-  return 'nighttime'
+/**
+ * Bucket title uses the ACTUAL clock time, not a daypart word. WHY: a daypart
+ * ("morning meds") is ambiguous the moment someone has two buckets in the same
+ * part of day — an 8:00 dose and a 9:30 post-breakfast dose would BOTH read
+ * "morning meds" and you couldn't tell which notification is which. It also
+ * assumes a day shape that's wrong for shift workers (whose "morning" might be
+ * 8 PM). The scheduled time is unambiguous and shift-agnostic. */
+function formatBucketTime(hm: { hour: number; minute: number }): string {
+  const ap = hm.hour < 12 ? 'AM' : 'PM'
+  const h12 = hm.hour % 12 === 0 ? 12 : hm.hour % 12
+  return `${h12}:${String(hm.minute).padStart(2, '0')} ${ap}`
 }
 
 /**
@@ -122,7 +127,7 @@ function buildBucketNotification(
     }
   }
 
-  const title = `💊 Time for your ${daypartLabel(hm.hour)} meds`
+  const title = `💊 Time for your ${formatBucketTime(hm)} meds`
   let what: string
   if (labels.length === 0) {
     what = `You have ${meds.length} doses to take`
