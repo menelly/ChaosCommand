@@ -37,8 +37,8 @@ import { CATEGORIES, SUBCATEGORIES, formatDateForStorage } from '@/lib/database/
 // TEMPORARILY COMMENTED OUT FOR DEBUGGING
 // import { useHybridDatabase, quickSaveMedicalEvent, quickSaveProvider } from '@/lib/database/hybrid-router';
 
-// 🧠 Local NER — Transformers.js, no backend needed
-import { extractMedicalEvents, isModelLoaded } from '@/lib/services/medical-ner';
+// 🧠 Native MedGemma extraction — runs in the Rust process, no backend needed
+import { extractMedicalEvents, AI_VALIDATION_UNAVAILABLE } from '@/lib/services/medical-ner';
 import { extractLabResults, extractLabResultsSmart, labResultsToEvents, extractCollectionDate } from '@/lib/services/lab-parser';
 import { extractDocFromBase64 } from '@/lib/services/text-extractor';
 
@@ -211,10 +211,19 @@ interface DocumentUploaderProps {
    *   'auto'    — legacy behavior: run both. Default for back-compat.
    */
   mode?: 'auto' | 'medical' | 'lab';
+  /**
+   * When true, run NER medical extraction WITH the Qwen validator (raw NER is
+   * never surfaced unvetted). When false, NER is skipped entirely — only the
+   * lab parser runs and the user adds events by hand. Default false: NER medical
+   * extraction only ever runs when AI parsing is explicitly enabled. (The import
+   * page additionally gates the upload until both models are loaded, so by the
+   * time extraction runs the validator is ready.)
+   */
+  aiEnabled?: boolean;
   className?: string;
 }
 
-export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, mode = 'auto', className = "" }: DocumentUploaderProps) {
+export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, mode = 'auto', className = "", aiEnabled = false }: DocumentUploaderProps) {
   // 🚀 Hybrid database integration
   // TEMPORARILY COMMENTED OUT FOR DEBUGGING
   // const hybridDB = useHybridDatabase();
@@ -444,12 +453,26 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
       // Step 2: Run NER (skipped in lab-only mode so panel names like
       // "Myositis Panel" can't be misread as diagnoses).
       let nerEvents: any[] = [];
-      if (mode !== 'lab') {
+      // NER medical extraction runs ONLY when AI parsing is enabled — and when it
+      // does, the Qwen validator vets every NER candidate, so raw NER is never
+      // surfaced unvetted ("psycho", "shock" from boilerplate, etc). AI off →
+      // skip NER entirely; the lab parser + manual entry still work.
+      if (mode !== 'lab' && aiEnabled) {
         try {
-          nerEvents = await extractMedicalEvents(extractedText, file.name, demographics);
+          nerEvents = await extractMedicalEvents(extractedText, file.name, demographics, undefined, { validateWithLLM: true });
         } catch (nerErr) {
           const errMsg = nerErr instanceof Error ? nerErr.message : String(nerErr);
           console.error('NER extraction failed:', nerErr);
+          if (errMsg.includes(AI_VALIDATION_UNAVAILABLE)) {
+            // The validator model wasn't available. Fail SAFE — refuse to surface
+            // raw NER. (The page gates upload until both models load, so this is
+            // a belt-and-suspenders guard for a mid-run model failure.)
+            throw new Error(
+              `AI parsing is on but the reviewer model isn't ready, so medical-event ` +
+              `extraction was skipped rather than show unreviewed results. Wait for the AI ` +
+              `models to finish loading (the upload unlocks when they're ready), or add events by hand.`
+            );
+          }
           if (errMsg.includes('<!DOCTYPE') || errMsg.includes('Unexpected token') || errMsg.includes('not valid JSON')) {
             throw new Error(
               `Medical document parsing isn't available on this device yet. ` +
@@ -937,7 +960,7 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
   const parseTextWithBackend = async (text: string): Promise<ParsedMedicalEvent[]> => {
     try {
       // Respect mode: lab uploader skips NER, medical uploader skips lab parser.
-      const nerEvents = mode === 'lab' ? [] : await extractMedicalEvents(text, 'Pasted Notes');
+      const nerEvents = (mode === 'lab' || !aiEnabled) ? [] : await extractMedicalEvents(text, 'Pasted Notes', undefined, undefined, { validateWithLLM: true });
       const labResults = mode === 'medical' ? [] : extractLabResults(text);
       if (onLabsExtracted && labResults.length > 0) {
         const mapped: ExtractedLabResult[] = labResults.map(l => ({
@@ -1192,23 +1215,10 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
                 <p>
                   💡 <a href="/demographics" className="underline text-[var(--accent-purple)] hover:text-[var(--accent-orange)]">Fill out Demographics first</a> — we use your name and birthday to filter personal info from results.
                 </p>
-                {!isModelLoaded() && (
-                  <div className="mt-2 rounded-lg border border-border bg-muted/60 p-3 text-left text-[var(--text-main)] space-y-2">
-                    <p>
-                      The optional document-parsing feature downloads a medical language model from
-                      Hugging Face the first time it is used. This requires an internet connection and
-                      will contact Hugging Face's servers directly from your device. <strong>No medical
-                      documents, extracted text, or journal content are uploaded</strong> — only the model
-                      itself is downloaded.
-                    </p>
-                    <p>
-                      If you prefer additional privacy, you are encouraged to use a VPN when downloading
-                      the model. 🛡️ This feature is entirely optional; the app functions fully without it,
-                      and data can always be entered manually. We plan to offer a bundled/offline model
-                      option in a future release.
-                    </p>
-                  </div>
-                )}
+                {/* The one-time MedGemma download + its privacy note now live
+                    with the AI-parsing toggle on the Import page, where the
+                    download actually happens (with a progress bar). No model
+                    fetch is triggered from here anymore. */}
               </div>
               
               <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">

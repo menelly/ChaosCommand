@@ -43,7 +43,9 @@ tauri-plugin-fs = "2"
 tauri-plugin-dialog = "2"
 
 tokio = { version = "1.0", features = ["full"] }
-reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+# "stream" feeds the chunked model download in llm.rs (bytes_stream + resume).
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "stream"] }
+futures-util = { version = "0.3", default-features = false, features = ["std"] }
 hostname = "0.4"
 
 # Offline license-key validation via Ed25519 signatures (no network needed)
@@ -63,3 +65,11 @@ getrandom = "0.2"
 # #[cfg(desktop)]-gated to match.
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-autostart = "2"
+
+# Native MedGemma inference for document import (llm.rs). Desktop-only: the
+# upload path doesn't exist on mobile, and llama.cpp adds minutes to the
+# Android build for nothing. Builds llama.cpp from source via cmake.
+llama-cpp-2 = "0.1.150"
+encoding_rs = "0.8"
+# Physical- vs logical-core count for llama.cpp thread tuning (see llm.rs).
+num_cpus = "1.16"

@@ -130,11 +130,27 @@ class StubImpressionRunner implements ImpressionLLMRunner {
 
 let _runner: ImpressionLLMRunner = new StubImpressionRunner();
 
-/** Allow the app to inject a real runner (e.g. one that calls transformers.js
- *  with the Qwen3.5-0.8B-Q4 ONNX, or a Tauri sidecar). Wiring lands separately
- *  so this module can be tested without a model present. */
+/** Allow the app to inject a real runner (the native MedGemma runner in
+ *  llm-tauri.ts). Wiring lands separately so this module can be tested
+ *  without a model present. */
 export function setImpressionLLMRunner(runner: ImpressionLLMRunner): void {
   _runner = runner;
+}
+
+/** Raw access to the active runner for other prompt routes (the MedGemma
+ *  doc-scan and lab name-resolution). Returns null when no model is available
+ *  or the run fails — callers fail safe exactly like the impression path. */
+export async function runImpressionLLMRaw(
+  systemPrompt: string,
+  userPrompt: string,
+  opts?: { maxTokens?: number },
+): Promise<string | null> {
+  try {
+    return await _runner.run(systemPrompt, userPrompt, opts);
+  } catch (e) {
+    console.warn('🧠 raw LLM run threw:', e);
+    return null;
+  }
 }
 
 // ============================================================================
@@ -273,4 +289,135 @@ export async function extractImpressionItemsLLM(
   if (dropped > 0) console.warn(`🧠 impression LLM: dropped ${dropped} UNGROUNDED item(s) (not present in source — confabulation guard)`);
   console.log(`🧠 impression LLM: ${items.length} grounded items extracted in ${Date.now() - t0}ms`);
   return items.length > 0 ? items : null;
+}
+
+// ============================================================================
+// NER-CANDIDATE VALIDATOR  (Ren's "both-AI-or-none" safety design, 2026-06-30)
+// ----------------------------------------------------------------------------
+// The biomedical NER tagger (d4data) has NO world-knowledge: it tags single
+// words from device package inserts ("shock"), lab reference tables ("range",
+// "ratio"), and mental-status CHECKLIST HEADERS ("Mania", "Psychosis" in a
+// NORMAL/euthymic exam) as 90%-confidence findings. We will not ship those.
+// This validator hands each NER candidate (WITH its surrounding context) to the
+// instruct LLM — which DOES know what a package insert / checklist header is —
+// and asks keep/drop. Only KEPT items survive; everything else is dropped, not
+// parked in the review queue.
+//
+// Returns null if no model is available. The CALLER MUST then refuse to surface
+// raw NER (fail safe to manual entry) — never ship NER unvetted. That is the
+// whole point: "you want AI parsing, you get BOTH AI."
+// ============================================================================
+
+export interface NerCandidate {
+  /** Stable index used to map the verdict back to the event. */
+  i: number;
+  /** The entity text NER surfaced (the proposed title). */
+  title: string;
+  /** Mapped event type: diagnosis | finding | lab | medication | test | surgery. */
+  type: string;
+  /** ~150 chars of source text around the entity, so the LLM can judge in context. */
+  context: string;
+}
+
+export interface ValidationVerdict {
+  i: number;
+  keep: boolean;
+  reason: string;
+}
+
+export const VALIDATOR_SYSTEM_PROMPT =
+  'You review items a basic word-tagger pulled from a medical record. You DO NOT diagnose. You ONLY decide if each item is real clinical content about the patient, or non-clinical noise. Output ONLY valid JSON.';
+
+/** Prompt tuned for a small instruct model (explicit rules + drop-when-unsure). */
+export function buildValidatorPrompt(cands: NerCandidate[]): string {
+  const list = cands
+    .map(
+      (c) =>
+        `{"i": ${c.i}, "item": ${JSON.stringify(c.title)}, "type": ${JSON.stringify(
+          c.type,
+        )}, "context": ${JSON.stringify(c.context.slice(0, 160))}}`,
+    )
+    .join('\n');
+  return `A basic word-tagger extracted these candidate items from ONE patient's medical record. Many are GARBAGE the tagger pulled from non-clinical text.
+
+DROP (keep=false) an item if it is:
+- a word from a DEVICE/TEST PACKAGE INSERT or disclaimer (e.g. "shock", "state" sitting inside "should not be used on patients...")
+- a word from a LAB REFERENCE-RANGE table or test metadata (e.g. "range", "ratio", "reference", "nuclei", "wash", "acid")
+- a MENTAL-STATUS or review-of-systems CHECKLIST HEADER not actually asserted about the patient (e.g. "Mania", "Psychosis", "Mood", "Impairment" listed as exam categories — ESPECIALLY when the exam reads normal/euthymic)
+- a section label, heading, demographic, provider name, date, or a single bare anatomy word
+- a lone vague word that is not a specific condition, finding, lab, medication, or procedure
+
+KEEP (keep=true) ONLY if, reading its context, the item is a real clinical finding / diagnosis / lab / medication / procedure that applies to THIS patient.
+
+When unsure, DROP. It is safer to drop a borderline item than to put a scary non-finding (like "psycho") on a patient's medical timeline.
+
+CANDIDATES:
+${list}
+
+For EACH candidate output ONE object: {"i": <number>, "keep": <true|false>, "reason": "<=8 words"}.
+Output ONLY a JSON array of the same length as the input. No prose.
+
+JSON:`;
+}
+
+function parseValidatorResponse(raw: string): ValidationVerdict[] {
+  const start = raw.indexOf('[');
+  const end = raw.lastIndexOf(']');
+  if (start < 0 || end <= start) return [];
+  let arr: any;
+  try {
+    arr = JSON.parse(raw.slice(start, end + 1));
+  } catch {
+    return [];
+  }
+  if (!Array.isArray(arr)) return [];
+  return arr
+    .filter((r) => typeof r?.i === 'number')
+    .map((r) => ({ i: r.i, keep: r.keep === true, reason: typeof r.reason === 'string' ? r.reason : '' }));
+}
+
+/** Validate NER candidates with the instruct LLM. Batched to fit a small model's
+ *  context. Returns a verdict per candidate.
+ *
+ *  RETURNS null when the model is unavailable on the very first batch — the
+ *  caller MUST interpret null as "AI validation unavailable" and refuse to
+ *  surface raw NER (fail safe). For an item with no parseable verdict, or a
+ *  later batch that fails, the verdict defaults to keep=false (drop) — never
+ *  surface an unvetted item. */
+export async function validateNerCandidatesLLM(
+  cands: NerCandidate[],
+): Promise<ValidationVerdict[] | null> {
+  if (cands.length === 0) return [];
+  const BATCH = 15;
+  const verdicts: ValidationVerdict[] = [];
+  for (let b = 0; b < cands.length; b += BATCH) {
+    const batch = cands.slice(b, b + BATCH);
+    let raw: string | null = null;
+    try {
+      raw = await _runner.run(VALIDATOR_SYSTEM_PROMPT, buildValidatorPrompt(batch), { maxTokens: 700 });
+    } catch (e) {
+      console.warn('🧠 NER validator threw:', e);
+      raw = null;
+    }
+    if (!raw) {
+      if (b === 0) {
+        // No model at all → signal unavailable so the caller fails safe.
+        console.log('🧠 NER validator: no model available → returning null (caller must refuse raw NER)');
+        return null;
+      }
+      // A later batch failed — drop those items rather than ship them unvetted.
+      console.warn(`🧠 NER validator: batch starting at ${b} failed → dropping ${batch.length} unvetted items`);
+      for (const c of batch) verdicts.push({ i: c.i, keep: false, reason: 'validator unavailable for batch' });
+      continue;
+    }
+    const byI = new Map(parseValidatorResponse(raw).map((v) => [v.i, v]));
+    for (const c of batch) {
+      const v = byI.get(c.i);
+      // No verdict for this item → DROP (fail safe).
+      verdicts.push(v ? { i: c.i, keep: v.keep, reason: v.reason } : { i: c.i, keep: false, reason: 'no verdict returned' });
+    }
+  }
+  const kept = verdicts.filter((v) => v.keep).length;
+  console.log(`🧠 NER validator: kept ${kept}/${verdicts.length} candidates (${verdicts.length - kept} dropped as non-clinical)`);
+  return verdicts;
 }

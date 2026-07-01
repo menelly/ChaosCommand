@@ -44,7 +44,7 @@ const nextConfig = {
   distDir: 'out',
 
   // Handle ES modules properly
-  transpilePackages: ['canvas-confetti', '@huggingface/transformers'],
+  transpilePackages: ['canvas-confetti'],
 
   // Fix rapid reload issue on Linux - use webpack watchOptions instead
   experimental: {
@@ -98,35 +98,18 @@ const nextConfig = {
         '@img/sharp-wasm32/versions': false,
       }
 
-      // Fix transformers.js Sharp imports
-      config.module.rules.push({
-        test: /node_modules\/@huggingface\/transformers\/.*\.js$/,
-        use: {
-          loader: 'string-replace-loader',
-          options: {
-            search: /require\(['"]sharp['"]\)/g,
-            replace: 'null',
-          },
-        },
-      })
-
       // Exclude problematic externals
       config.externals = config.externals || [];
       config.externals.push({
         'react-native-sqlite-storage': 'react-native-sqlite-storage',
         'better-sqlite3': 'better-sqlite3',
         'sharp': 'sharp',
-        'onnxruntime-node': 'onnxruntime-node',
       });
 
-      // Handle WASM files for ONNX Runtime (used by Transformers.js)
-      config.module.rules.push({
-        test: /\.wasm$/,
-        type: 'asset/resource',
-      });
-
-      // Note: Transformers.js web bundle is imported directly via path in medical-ner.ts
-      // to avoid Next.js package.json exports resolving to the Node.js bundle.
+      // (2026-07-01) The transformers.js Sharp shim + ONNX WASM asset rule
+      // lived here. Both are gone with the transformers.js stack — MedGemma
+      // runs natively in the Rust process (src-tauri/src/llm.rs), so the
+      // webview no longer bundles any model runtime.
     }
 
     // Handle ES module extensions

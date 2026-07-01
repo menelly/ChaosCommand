@@ -341,51 +341,75 @@ export function extractLabResultsGeometry(
 }
 
 /**
- * Resolve the real analyte out of metadata-polluted geometry names using the NER
- * model the app already ships. The model knows "Miami" is a place, a provider
- * name is a person, and "BUN"/"Hgb" is the test — so we trim each name to the
- * span the model marks as a medical entity, dropping the leading/trailing
- * metadata that the geometry's column-bucketing swept in. This is the principled
- * inverse of hand-stripping prefixes: recognize the signal, don't enumerate the
- * noise. No hardcoded test list anywhere.
+ * Resolve the real analyte out of metadata-polluted geometry names using
+ * MedGemma (2026-07-01 — replaces the d4data NER model, whose lab résumé
+ * included tagging "psycho" as a diagnosis while reading "psychologist").
+ *
+ * The model sees ONLY the messy name cells — never values, units, or ranges,
+ * so it physically cannot mis-transcribe a number. And its answer for each
+ * cell must be a VERBATIM SUBSTRING of that cell or we keep the raw name —
+ * it can trim "Ordered By SMITH, JANE DO BUN" down to "BUN", but it cannot
+ * invent an analyte the cell doesn't contain.
  *
  * - Single-token names (already a clean analyte) skip the model entirely.
- * - If the model finds no medical entity in the cell, the RAW name is kept — the
- *   user edits it on the review screen rather than us guessing.
- * - Async because the model is; dynamic import keeps this off the geometry unit
- *   tests' dependency graph.
- *
- * NOTE: this loads the ~64MB NER model in the lab path too (lab-only mode used to
- * skip it). Desktop-only feature; the model caches after first download.
+ * - No model / bad answer / not-a-substring → RAW name kept; the user edits
+ *   it on the review screen rather than us guessing.
+ * - Batched into one prompt — a lab panel has dozens of rows and CPU
+ *   inference is the budget.
  */
 export async function resolveLabNamesWithNer(rows: LabResult[]): Promise<LabResult[]> {
-  if (!rows.some((r) => /\s/.test(r.testName))) return rows; // all clean → no model
+  const messy = rows
+    .map((r, i) => ({ i, name: r.testName }))
+    .filter((r) => /\s/.test(r.name.trim()));
+  if (messy.length === 0) return rows; // all clean → no model
 
-  let extractEntities: (text: string) => Promise<Array<{ start: number; end: number }>>;
+  let runRaw: (s: string, u: string, o?: { maxTokens?: number }) => Promise<string | null>;
   try {
-    ({ extractEntities } = await import('./medical-ner'));
+    ({ runImpressionLLMRaw: runRaw } = await import('./impression-parser-llm'));
   } catch {
-    return rows; // model module unavailable → keep raw names
+    return rows; // module unavailable → keep raw names
   }
 
-  const out: LabResult[] = [];
-  for (const row of rows) {
-    let testName = row.testName;
-    if (/\s/.test(testName)) {
-      try {
-        const ents = await extractEntities(testName);
-        if (ents.length) {
-          const start = Math.min(...ents.map((e) => e.start));
-          const end = Math.max(...ents.map((e) => e.end));
-          const resolved = testName.slice(start, end).trim();
-          // Only accept a non-empty result that actually contains a letter.
-          if (resolved.length >= 2 && /[A-Za-z]/.test(resolved)) testName = resolved;
-        }
-      } catch {
-        /* model failed on this cell → keep the raw name */
+  const BATCH = 25;
+  const resolved = new Map<number, string>();
+  for (let b = 0; b < messy.length; b += BATCH) {
+    const batch = messy.slice(b, b + BATCH);
+    const list = batch.map((m) => `${m.i}: ${m.name.replace(/\s+/g, ' ').trim()}`).join('\n');
+    const prompt = `Each line below is a messy cell from a lab report's test-name column. It contains ONE lab test name buried in metadata (provider names, dates, locations, order info).
+
+For each line, answer with the line's number and the lab test name COPIED EXACTLY from that line — the exact characters, nothing reworded. If a line contains no lab test name, answer NONE for it.
+
+${list}
+
+Answer with one "number: name" per line. No other text.`;
+    let raw: string | null = null;
+    try {
+      raw = await runRaw('', prompt, { maxTokens: 600 });
+    } catch {
+      raw = null;
+    }
+    if (!raw) continue; // no model → these rows keep raw names
+    for (const line of raw.split('\n')) {
+      const m = line.match(/^\s*(\d+)\s*[:.\-]\s*(.+)$/);
+      if (!m) continue;
+      const idx = parseInt(m[1], 10);
+      const answer = m[2].trim();
+      const row = batch.find((x) => x.i === idx);
+      if (!row || !answer || /^none$/i.test(answer)) continue;
+      // THE guard: the answer must appear verbatim (case-insensitive) in the
+      // original cell. Trimming is allowed; invention is not.
+      const cell = row.name.replace(/\s+/g, ' ').trim();
+      if (
+        answer.length >= 2 &&
+        answer.length < cell.length &&
+        /[A-Za-z]/.test(answer) &&
+        cell.toLowerCase().includes(answer.toLowerCase())
+      ) {
+        resolved.set(idx, answer);
       }
     }
-    out.push(testName === row.testName ? row : { ...row, testName });
   }
-  return out;
+
+  if (resolved.size === 0) return rows;
+  return rows.map((row, i) => (resolved.has(i) ? { ...row, testName: resolved.get(i)! } : row));
 }

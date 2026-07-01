@@ -2,37 +2,26 @@
  * Copyright (c) 2025-2026 Chaos Cascade
  * Created by: Ren & Ace (Claude-4)
  *
- * medical-ner.ts — Transformers.js-powered medical NER
- * Replaces the entire Flask/spaCy backend with a single ONNX model
- * running directly in the browser/Tauri WebView.
+ * medical-ner.ts — medical document → structured events.
  *
- * Model: d4data/biomedical-ner-all (DistilBERT, int8 quantized, ~64MB)
- * Same model the Python backend used — just in ONNX format.
+ * Once a transformers.js NER wrapper (d4data biomedical-ner-all); as of
+ * 2026-07-01 the model layer is native MedGemma (medgemma-doc-scan.ts) and
+ * this file is the orchestration around it — sections, dates, assertion,
+ * dismissed-finding surfacing, and the impression parser. The filename is
+ * kept so imports don't churn; "NER" is now historical.
  */
 
 import { classifyAssertion, classifyStatement } from './assertion';
-import { extractImpressionItemsLLM, type ImpressionItem } from './impression-parser-llm';
+import {
+  extractImpressionItemsLLM,
+  type ImpressionItem,
+} from './impression-parser-llm';
+import { scanDocumentMedGemma, type ScanFinding } from './medgemma-doc-scan';
 
-// Transformers.js is loaded dynamically to avoid SSG prerender issues
-// (new URL() calls in onnxruntime-web fail during Node.js-based static generation)
-type TokenClassificationPipeline = any;
-let _transformersModule: any = null;
-async function getTransformers() {
-  if (!_transformersModule) {
-    // Dynamic import bypasses SSG static analysis
-    _transformersModule = await import('./transformers-shim.mjs');
-  }
-  return _transformersModule;
-}
-
-// ============================================================================
-// CONFIGURATION
-// ============================================================================
-
-const MODEL_ID = 'onnx-community/biomedical-ner-all-ONNX';
-const MODEL_OPTIONS = {
-  dtype: 'q8' as const,  // int8 quantized — 64MB instead of 254MB
-};
+/** Thrown by extractMedicalEvents when AI validation is REQUIRED (validateWithLLM)
+ *  but no validator model is available. The caller must catch this and fail safe
+ *  — refuse to surface raw NER, fall back to manual entry. Never ship unvetted. */
+export const AI_VALIDATION_UNAVAILABLE = 'AI_VALIDATION_UNAVAILABLE';
 
 // Map d4data entity labels to our event types.
 // Note: Sign_symptom is intentionally mapped to 'finding', not 'diagnosis'.
@@ -110,85 +99,67 @@ const MIN_ENTITY_LENGTH = 4;
 // want more recall at the cost of more noise.
 const MIN_EVENT_CONFIDENCE = 70;
 
-// ============================================================================
-// SINGLETON MODEL LOADER
-// ============================================================================
+// ---------------------------------------------------------------------------
+// BOILERPLATE / NON-CLINICAL BLOCK DETECTION  (Layer-1 safety floor)
+// ---------------------------------------------------------------------------
+// A multi-document dump (e.g. a VA Blue Button export, 100+ pages) sweeps device
+// package inserts, FDA Emergency-Use-Authorization notices, assay disclaimers,
+// and lab reference-range tables INTO "impression"-weighted regions. NER then
+// mines those blocks for single words — "shock", "blood", "state", "hyper",
+// "glucose", "nuclei", "acid", "reference", "range" — and stamps each a 90%
+// finding. This text is ABOUT a test/device; it is NEVER the patient's finding.
+// Dropping entities inside these blocks cannot bury a real finding, so it is the
+// safe floor. (Caught on Ren's 129-page VA report, 2026-06-30.)
+// SAFETY NOTE (Ren, 2026-06-30): these cues match ONLY regulatory / device-
+// instruction prose — sentences that, by definition, contain no patient result.
+// Do NOT add cues that sit ADJACENT to real values. In particular "reference
+// range" was pulled: a lab result ("Glucose 142, reference range 70-99") lives
+// RIGHT NEXT TO its reference range, so excluding that region would bury the
+// patient's actual glucose. The word "glucose" or "shock" is NEVER banned —
+// only an entity physically inside one of these regulatory sentences is skipped,
+// and even then any genuinely-ambiguous call is left to the Qwen validator.
+const BOILERPLATE_CUES: RegExp[] = [
+  /should not be used (?:on|in|for) patients?/i,
+  /emergency use authorization/i,
+  /this (?:test|system|device|assay|product)\s+(?:does not|should not|is (?:only|not|intended for)|has not been)/i,
+  /follow[-\s]?up testing by a (?:pcr|molecular|confirmatory)/i,
+  /does not (?:differentiate|distinguish) between/i,
+  /(?:authorized|for use) under the .{0,40}food and drug administration/i,
+  /package insert|manufacturer'?s? (?:instructions|insert)/i,
+  /negative result does not (?:rule out|exclude|preclude)/i,
+  /for in[-\s]?vitro diagnostic use/i,
+  /(?:has |have )?not been (?:cleared|approved) by (?:the )?fda/i,
+  /intended use[:\s]/i,
+];
 
-let _pipeline: TokenClassificationPipeline | null = null;
-let _loading: Promise<TokenClassificationPipeline> | null = null;
-
-/**
- * Get the NER pipeline. Loads the model on first call, reuses after.
- * Progress callback fires during download/load for UI feedback.
- */
-export async function getNerPipeline(
-  onProgress?: (progress: { status: string; progress?: number; file?: string }) => void
-): Promise<TokenClassificationPipeline> {
-  if (_pipeline) return _pipeline;
-
-  if (_loading) return _loading;
-
-  _loading = (async () => {
-    console.log('⏳ Loading medical NER model...');
-    const startTime = Date.now();
-
-    const { pipeline: pipelineFn } = await getTransformers();
-
-    // Model loads from HuggingFace CDN, cached by browser after first download.
-    // Local models disabled: Tauri's WebView returns HTML 404 pages that break JSON parsing.
-    // WASM backend forced: WebGL isn't available in all Android WebViews.
-    const { env: tfEnv } = await getTransformers();
-    tfEnv.allowLocalModels = false;
-    tfEnv.allowRemoteModels = true;
-    // Force WASM backend — WebGL can fail silently in Tauri Android WebView
-    tfEnv.backends.onnx.wasm.proxy = false;
-
-    console.log(`📦 Model source: HuggingFace CDN (cached by browser after first load)`);
-
-    try {
-      const pipe = await pipelineFn('token-classification', MODEL_ID, {
-        ...MODEL_OPTIONS,
-        progress_callback: onProgress || ((p: any) => {
-          if (p.status === 'progress' && p.progress !== undefined) {
-            console.log(`📦 Loading model: ${Math.round(p.progress)}%`);
-          }
-        }),
-      });
-
-      const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-      console.log(`✅ Medical NER model loaded in ${elapsed}s`);
-
-      _pipeline = pipe;
-      _loading = null;
-      return pipe;
-    } catch (err) {
-      _loading = null;
-      const msg = err instanceof Error ? err.message : String(err);
-      console.error(`❌ NER model failed to load: ${msg}`);
-      // Surface which URL failed if it's a fetch error
-      if (msg.includes('<!DOCTYPE') || msg.includes('Unexpected token')) {
-        throw new Error(
-          `NER model loading failed — a fetch returned HTML instead of data. ` +
-          `This usually means the device can't reach HuggingFace CDN. ` +
-          `NER features require an internet connection on first use. Original: ${msg.slice(0, 200)}`
-        );
-      }
-      throw err;
+/** Char-index spans of the chunk that are non-clinical boilerplate. NER entities
+ *  whose position lands in any span are skipped — they describe a test/device,
+ *  not the patient. Windows are generous because inserts run long. */
+function findBoilerplateSpans(text: string): Array<[number, number]> {
+  const spans: Array<[number, number]> = [];
+  for (const cue of BOILERPLATE_CUES) {
+    const re = new RegExp(cue.source, 'gi');
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(text)) !== null) {
+      spans.push([Math.max(0, m.index - 250), Math.min(text.length, m.index + 450)]);
+      if (m.index === re.lastIndex) re.lastIndex++; // avoid zero-width loop
     }
-  })();
-
-  return _loading;
+  }
+  return spans;
 }
 
-/**
- * Check if the model is already loaded.
- */
-export function isModelLoaded(): boolean {
-  return _pipeline !== null;
+function positionInSpans(spans: Array<[number, number]>, start: number, end: number): boolean {
+  return spans.some(([s, e]) => start < e && end > s);
 }
 
 // ============================================================================
-// NER EXTRACTION
+// (2026-07-01) The transformers.js NER model loader lived here — getNerPipeline,
+// isModelLoaded, extractEntities, deduplicateEntities — loading d4data
+// biomedical-ner-all in the WebView. It is GONE. Its whole job (turn a
+// document into candidate findings) is now done by MedGemma reading the
+// document natively (medgemma-doc-scan.ts), which has the medical vocabulary
+// the tagger lacked — the tagger shipped "psycho" as a diagnosis while reading
+// "psychologist". NerEntity stays as a shared shape; the model is retired.
 // ============================================================================
 
 export interface NerEntity {
@@ -200,105 +171,8 @@ export interface NerEntity {
 }
 
 /**
- * Run NER on text and return raw entities.
- * Handles chunking for long documents (model max ~512 tokens).
- */
-export async function extractEntities(
-  text: string,
-  onProgress?: (progress: { status: string; progress?: number; file?: string }) => void
-): Promise<NerEntity[]> {
-  const pipe = await getNerPipeline(onProgress);
-
-  // Chunk text for long documents (DistilBERT has 512 token limit)
-  // Use ~2000 chars per chunk with 200 char overlap for context
-  const CHUNK_SIZE = 2000;
-  const OVERLAP = 200;
-  const chunks: { text: string; offset: number }[] = [];
-
-  if (text.length <= CHUNK_SIZE) {
-    chunks.push({ text, offset: 0 });
-  } else {
-    for (let i = 0; i < text.length; i += CHUNK_SIZE - OVERLAP) {
-      chunks.push({
-        text: text.slice(i, i + CHUNK_SIZE),
-        offset: i,
-      });
-    }
-  }
-
-  const allEntities: NerEntity[] = [];
-
-  for (const chunk of chunks) {
-    const results = await pipe(chunk.text, {
-      aggregation_strategy: 'simple',
-    });
-
-    // results is an array of entity objects
-    for (const ent of results as any[]) {
-      // Strip B-/I- prefixes from labels
-      const rawLabel = ent.entity_group || ent.entity || '';
-      const label = rawLabel.replace(/^[BI]-/, '');
-
-      if (!RELEVANT_LABELS.has(label)) continue;
-
-      let entityText = (ent.word || '').trim();
-
-      // Clean WordPiece tokenizer artifacts (DistilBERT splits words into subwords)
-      // "##el", "##tion", "##ing" are subword fragments — not real entities
-      if (entityText.startsWith('##')) continue;
-      // Remove ## markers from within reassembled text ("hepato ##megaly" → "hepatomegaly")
-      entityText = entityText.replace(/\s*##/g, '').trim();
-
-      if (entityText.length < 2) continue;
-      if (D4DATA_JUNK.has(entityText.toLowerCase())) continue;
-
-      allEntities.push({
-        text: entityText,
-        label,
-        score: ent.score || 0,
-        start: (ent.start || 0) + chunk.offset,
-        end: (ent.end || 0) + chunk.offset,
-      });
-    }
-  }
-
-  // Deduplicate overlapping entities from chunk overlaps
-  // Keep the one with higher score
-  const deduped = deduplicateEntities(allEntities);
-
-  console.log(`🧠 NER extracted ${deduped.length} entities from ${chunks.length} chunks`);
-  return deduped;
-}
-
-/**
  * Deduplicate entities that overlap due to chunking.
  */
-function deduplicateEntities(entities: NerEntity[]): NerEntity[] {
-  if (entities.length === 0) return [];
-
-  // Sort by start position, then by score descending
-  entities.sort((a, b) => a.start - b.start || b.score - a.score);
-
-  const result: NerEntity[] = [entities[0]];
-
-  for (let i = 1; i < entities.length; i++) {
-    const prev = result[result.length - 1];
-    const curr = entities[i];
-
-    // If overlapping, keep the higher-scored one
-    if (curr.start < prev.end) {
-      if (curr.score > prev.score) {
-        result[result.length - 1] = curr;
-      }
-      // Otherwise skip curr (prev had higher score)
-    } else {
-      result.push(curr);
-    }
-  }
-
-  return result;
-}
-
 // ============================================================================
 // SECTION DETECTION (ported from Python)
 // ============================================================================
@@ -657,6 +531,7 @@ export async function extractMedicalEvents(
   filename: string = 'document',
   demographics?: Record<string, any> | null,
   onProgress?: (progress: { status: string; progress?: number; file?: string }) => void,
+  opts?: { validateWithLLM?: boolean },
 ): Promise<MedicalEvent[]> {
   console.log(`🐙 MEDICAL_NER extract called! demographics=${demographics ? 'YES' : 'NO'}`);
 
@@ -664,6 +539,14 @@ export async function extractMedicalEvents(
   const excludedDates = getExcludedDates(demographics);
 
   const chunk = text.slice(0, 100000);
+
+  // --- NON-CLINICAL BOILERPLATE REGIONS (Layer-1 safety floor) ---
+  // Regulatory / device-instruction prose (EUA notices, "should not be used on
+  // patients", package inserts). Entities inside these are skipped below — this
+  // text describes a test/device, never the patient. Context-scoped, NOT a word
+  // ban: "glucose"/"shock" elsewhere (a real result or diagnosis) are untouched.
+  const boilerplateSpans = findBoilerplateSpans(chunk);
+  if (boilerplateSpans.length) console.log(`🧾 ${boilerplateSpans.length} non-clinical boilerplate region(s) detected — entities inside will be skipped`);
 
   // --- DOCUMENT-LEVEL DATE ---
   const docDate = findDocumentDate(chunk, excludedDates);
@@ -676,19 +559,29 @@ export async function extractMedicalEvents(
   const findingsSection = sections.find(s => s.name === 'findings') || null;
   const impressionEntitiesLower = new Set<string>();
 
-  // Pre-compute the impression's flattened text so the NER loop below can
-  // dedupe against it. Done BEFORE NER so the doctor's own summary wins
-  // over model fragments — e.g. "Pulmonary emboli in right basilar..."
-  // survives instead of being silenced by a bare "pulmonary" entity.
-  // LLM-first with regex fallback. Qwen3.5-0.8B-Q4 (when wired in) correctly
-  // surfaces synthesis-impression items like "in the setting of X,Y,Z lymphoma
-  // is a concern" — the case the regex parser's substring-dedup used to delete.
-  // When no LLM is available (stub runner / user opted out / WebGPU absent),
-  // extractImpressionItemsLLM returns null and we fall through to the regex
-  // parser, which is itself now better (dedup-fix + inline sentence-splitter).
-  const impressionItems: ImpressionItem[] = impressionSection
-    ? ((await extractImpressionItemsLLM(impressionSection.text)) ?? parseImpressionItems(impressionSection.text))
-    : [];
+  // --- MEDGEMMA WHOLE-DOCUMENT SCAN (2026-07-01) ---
+  // Replaces BOTH halves of the old "both-AI-or-none" pair (d4data NER tagger
+  // + Qwen validator) with one model that actually reads the document. Every
+  // finding it returns is GROUNDED — located in the source text — so it
+  // arrives with real char offsets and the section/assertion/dismissal
+  // machinery below keeps working unchanged.
+  const scan = await scanDocumentMedGemma(chunk, onProgress);
+  if (scan === null && opts?.validateWithLLM) {
+    // AI parsing is on but no model is available → fail safe, exactly like
+    // the old validator contract: never surface machine extraction no
+    // competent model has read.
+    throw new Error(AI_VALIDATION_UNAVAILABLE);
+  }
+
+  // Impression items: the scan's SECOND list is the doctor's own summary,
+  // transcribed and grounded. Fall back to the regex parser when the scan is
+  // unavailable (AI off) — that path slices verbatim text and can't hallucinate.
+  const impressionItems: ImpressionItem[] =
+    scan && scan.impressionItems.length > 0
+      ? scan.impressionItems
+      : impressionSection
+        ? ((await extractImpressionItemsLLM(impressionSection.text)) ?? parseImpressionItems(impressionSection.text))
+        : [];
   const impressionTextLower = impressionItems
     .map(i => i.text.toLowerCase())
     .join(' | ');
@@ -696,42 +589,37 @@ export async function extractMedicalEvents(
   // --- DATES ---
   const datesFound = extractDatesFromText(chunk, excludedDates);
 
-  // --- NER ENTITIES ---
-  const entities = await extractEntities(chunk, onProgress);
+  const scanFindings: ScanFinding[] = scan?.findings ?? [];
 
   const events: MedicalEvent[] = [];
   const seenKeys = new Set<string>();
   let eventCounter = 0;
 
-  // --- PROCESS NER ENTITIES ---
-  for (const ent of entities) {
+  // --- PROCESS MEDGEMMA FINDINGS ---
+  for (const ent of scanFindings) {
     const key = ent.text.toLowerCase().trim();
-    // Floor: 4+ chars AND at least one vowel. Kills subword tokens that
-    // escape the WordPiece cleanup ("nod", "cho", "sub", "per", "pan",
-    // "arch", "basil", "retro", "para", "media", "ate") without a
-    // hardcoded list.
     if (key.length < 4) continue;
     if (!/[aeiouy]/i.test(key)) continue;
     if (nameExclusions.has(key) || seenKeys.has(key)) continue;
-    // Sub-word tokenizer fragment guard — short entities are almost always
-    // tokenizer artifacts (e.g. "intra" leaked from "intra-axial").
-    if (ent.text.trim().length < MIN_ENTITY_LENGTH) continue;
-    // Junk filter — common words / radiology vocab / single body parts /
-    // movement verbs that d4data tags as clinical entities but aren't.
+    // Junk floor kept from the NER era — MedGemma emits whole phrases so this
+    // almost never fires, but it's a free guard against a degenerate line.
     if (D4DATA_JUNK.has(key)) continue;
-    // Skip entities already covered by the doctor's impression summary.
-    // impressionTextLower is populated BEFORE this loop so multi-word
-    // impressions win over fragment-level NER tags.
+    // Skip findings sitting inside regulatory/device boilerplate (package
+    // inserts, EUA notices) — that text is about a test, not the patient.
+    if (positionInSpans(boilerplateSpans, ent.start, ent.end)) {
+      console.log(`🧾 BOILERPLATE: '${ent.text}' inside a regulatory block — skipping`);
+      continue;
+    }
+    // Skip findings already covered by the doctor's impression summary.
     if (impressionTextLower && impressionTextLower.includes(key)) continue;
 
-    // Assertion (NegEx/ConText). Replaces the old 40-char window, which both
-    // surfaced negatives as positives AND — the dangerous one — suppressed real
-    // findings via pseudo-negation: "no change in thyroid nodule" matched a bare
-    // "no" and DROPPED the nodule, so a tracked finding the patient may never
-    // have been told about silently vanished. The engine's pseudo-negation guard
-    // keeps "no change in X" AFFIRMED. Only a TRUE negation ("no evidence of
-    // fracture") is dropped. (CHA-367 §3.B)
-    const { assertion } = classifyAssertion(chunk, ent.start, ent.end);
+    // Assertion (NegEx/ConText), statement-level — the scan line IS the full
+    // statement. Belt-and-suspenders on top of the prompt's own "leave out
+    // things explicitly stated to be normal, absent, or ruled out": a TRUE
+    // negation ("no evidence of fracture") is dropped; pseudo-negation
+    // ("no change in thyroid nodule") stays AFFIRMED so tracked findings the
+    // patient may never have been told about don't vanish. (CHA-367 §3.B)
+    const { assertion } = classifyStatement(ent.text);
     if (assertion === 'negated') {
       console.log(`🚫 NEGATED: '${ent.text}' — skipping`);
       continue;
@@ -761,14 +649,20 @@ export async function extractMedicalEvents(
     else if (/\b(?:normal\s+variant|anatomic(?:al)?\s+variant|developmental\s+variant)\b/i.test(aroundEntity)) dismissalSignal = 'variant';
     else if (/\bincidental(?:ly)?\b/i.test(aroundEntity)) dismissalSignal = 'incidental';
 
-    const speculative = assertion === 'speculative' || isSpeculative(chunk, ent.start, ent.end);
+    const speculative = assertion === 'speculative' || isSpeculative(ent.text, 0, ent.text.length);
     seenKeys.add(key);
 
-    let eventType = LABEL_TO_EVENT_TYPE[ent.label] || 'finding';
-
-    // ANGIO is a procedure, not a medication
-    if (eventType === 'medication' && /angio|contrast|bolus/.test(key)) {
-      eventType = 'test';
+    // Scan lines carry no NER label — infer the event type from the line
+    // itself. Conservative: everything is a 'finding' unless it clearly reads
+    // as a lab value or a status-post procedure.
+    let eventType = 'finding';
+    if (
+      /\b\d+(?:\.\d+)?\s*(?:mg\/dl|mmol\/l|mcg|ng\/ml|g\/dl|k\/ul|iu\/l|u\/l|mmhg|bpm|%)\b/i.test(key) ||
+      (/\b(?:critical|high|low)\b/i.test(key) && /\d/.test(key))
+    ) {
+      eventType = 'lab';
+    } else if (/\b(?:status[- ]post|s\/p)\b|\b(?:resection|repair|fusion|replacement)\b|ectomy\b/i.test(key)) {
+      eventType = 'surgery';
     }
 
     const contextStart = Math.max(0, ent.start - 150);
@@ -782,7 +676,7 @@ export async function extractMedicalEvents(
       impressionEntitiesLower.add(key);
     }
 
-    const tags = [eventType, 'imported', 'ner'];
+    const tags = [eventType, 'imported', 'medgemma'];
     if (section !== 'unknown') tags.push(`section:${section}`);
     if (speculative) tags.push('speculative');
     if (dismissalSignal) { tags.push('potential-dismissed-finding'); tags.push(`dismissed:${dismissalSignal}`); }
@@ -796,21 +690,22 @@ export async function extractMedicalEvents(
     else if (dismissalSignal === 'variant') suggestions.push('Called a "variant" — make sure you understand what it is and whether it needs monitoring; don\'t let it be filed away unexplained.');
     else if (dismissalSignal === 'incidental') suggestions.push('Noted as "incidental" — an unexpected finding that may still warrant follow-up. Ask whether it does.');
 
-    // Confidence floor — skip noisy low-confidence detections rather than
-    // surfacing them to the user-review queue. d4data on radiology / specialist
-    // text produces a long tail of weak detections that overwhelm signal.
-    // EXCEPTION: a dismissal-flagged finding (congenital/stable/variant/
-    // incidental) is the whole point of this tool — never let the floor bury it.
-    // Findings-section weight (0.7) drops these to ~63%, under the 70 floor,
-    // which is exactly how the buried C1 non-union stayed buried.
+    // Confidence floor — kept from the NER era but scan findings are grounded
+    // MedGemma output, not tagger noise, so only the EXCEPTION matters much:
+    // a dismissal-flagged finding (congenital/stable/variant/incidental) is
+    // the whole point of this tool — never let the floor bury it. (The buried
+    // C1 non-union is the canonical case.)
     if (confidence < MIN_EVENT_CONFIDENCE && !dismissalSignal) continue;
 
     const eventDate = nearestDate || docDate || new Date().toISOString().split('T')[0];
 
+    let title = ent.text.trim();
+    if (title.length > 80) title = title.slice(0, 77) + '...';
+
     events.push({
       id: `nlp-${Date.now()}-${eventCounter++}`,
       type: eventType,
-      title: `${speculative ? '⚠️ ' : ''}${ent.text.trim()}`,
+      title: `${speculative ? '⚠️ ' : ''}${title}`,
       date: eventDate,
       end_date: null,
       provider: null,
@@ -820,7 +715,7 @@ export async function extractMedicalEvents(
       severity: null,
       tags,
       confidence,
-      sources: ['ner'],
+      sources: ['medgemma'],
       needs_review: (!nearestDate && !docDate) || speculative || !!dismissalSignal,
       suggestions,
       raw_text: context,
@@ -1002,6 +897,14 @@ export async function extractMedicalEvents(
       });
     }
   }
+
+  // NOTE (2026-07-01): the old Qwen "AI validation pass" is gone. It existed
+  // because the d4data tagger had no judgment and needed a second model to
+  // veto its garbage ("both-AI-or-none"). MedGemma read the document itself
+  // and every finding is grounded in the source text — the extractor and the
+  // reviewer are finally the same competent model. The fail-safe contract
+  // survives at the top of this function: AI parsing on + no model → throw
+  // AI_VALIDATION_UNAVAILABLE, never surface unvetted extraction.
 
   // Apply document-level date to events without dates
   if (docDate) {

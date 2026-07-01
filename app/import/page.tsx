@@ -31,8 +31,15 @@ import {
 } from "@/lib/database"
 import { FileText, CheckCircle, Monitor, FlaskConical, Sparkles } from "lucide-react"
 import { useIsMobilePlatform } from "@/lib/platform"
-import { loadImpressionLLM, isImpressionLLMReady, isImpressionLLMLoading, didImpressionLLMFail } from "@/lib/services/impression-llm-transformers"
-import { getNerPipeline, isModelLoaded as isNerLoaded } from "@/lib/services/medical-ner"
+import {
+  initTauriLlmRunner,
+  getLlmModelStatus,
+  downloadLlmModel,
+  loadLlmModel,
+  isLlmReady,
+  MODEL_TOTAL_BYTES,
+  type LlmDownloadProgress,
+} from "@/lib/services/llm-tauri"
 
 // Shape the uploader hands back (matches components/document-uploader.tsx)
 interface ExtractedEvent {
@@ -71,51 +78,71 @@ export default function ImportRecordsPage() {
     }
   }, [])
 
-  // AI extraction (Qwen3.5-0.8B-ONNX q4, ~440MB one-time download). Opt-in
-  // EAGER LOAD — click downloads the model NOW so the first impression
-  // upload uses Qwen instead of falling through to regex while loading.
-  // Persisted in localStorage so the load auto-resumes on next visit.
-  type AiState = 'idle' | 'loading' | 'ready' | 'failed'
-  const AI_KEY = 'chaos-import-ai-enabled'
+  // AI parsing = ONE native model, MedGemma-4B (~2GB, one-time download, runs
+  // entirely on-device). It replaces the old two-model transformers.js stack
+  // (d4data NER + Qwen validator) — MedGemma has real medical vocabulary, so
+  // the extractor and the reviewer are the same competent model instead of a
+  // dumb tagger needing a babysitter. The "download at setup, not at upload"
+  // rule (Ren, 2026-07-01): the ~2GB fetch happens when you flip AI parsing on,
+  // WITH a progress bar — "5 minutes to install" is normal software; "5 minutes
+  // to upload my PDF" is not. When OFF, the lab number-parser + manual entry
+  // still work with no model at all.
+  //   downloading → fetching the GGUF (bar); loading → reading it into RAM;
+  //   ready → upload unlocked; failed → retry.
+  type AiState = 'idle' | 'downloading' | 'loading' | 'ready' | 'failed'
+  const AI_ENABLED_KEY = 'chaos-ai-enabled'
+  const [aiEnabled, setAiEnabled] = useState(false)
   const [aiState, setAiState] = useState<AiState>('idle')
+  const [dlPct, setDlPct] = useState(0)
+  const aiReady = aiState === 'ready'
 
-  // Load BOTH models in parallel: Qwen (impression LLM) AND d4data NER.
-  // NER auto-loads on first upload anyway but doing it here means the FIRST
-  // upload is just inference, no "model loading 0%..100%" noise mid-import.
-  const startLoad = () => {
-    if (typeof window !== 'undefined') localStorage.setItem(AI_KEY, '1')
-    setAiState('loading')
-    Promise.all([
-      loadImpressionLLM(),
-      getNerPipeline().catch((e) => { console.warn('NER preload failed (will retry on upload):', e); }),
-    ])
-      .then(() => setAiState('ready'))
-      .catch(() => setAiState('failed'))
+  // Register the native runner once so the extraction services can reach it.
+  useEffect(() => { initTauriLlmRunner() }, [])
+
+  // Bring the model up: download (if needed) → load into RAM. Idempotent and
+  // resumable — a partial download continues where it left off.
+  const startLoad = async () => {
+    try {
+      const status = await getLlmModelStatus()
+      if (!status) { setAiState('failed'); return } // not in the desktop app
+      if (!status.downloaded) {
+        setAiState('downloading')
+        setDlPct(status.partial_bytes > 0
+          ? Math.floor((status.partial_bytes / MODEL_TOTAL_BYTES) * 100)
+          : 0)
+        await downloadLlmModel((p: LlmDownloadProgress) => setDlPct(p.pct))
+      }
+      setAiState('loading')
+      await loadLlmModel()
+      setAiState('ready')
+    } catch (e) {
+      console.warn('MedGemma bring-up failed:', e)
+      setAiState('failed')
+    }
   }
 
-  // On mount, if previously opted in, auto-resume the load. Also poll module
-  // state so if HMR or a parallel tab progressed the load, the UI updates.
+  // Flip the toggle. ON → persist + bring the model up (or mark ready if it's
+  // already resident this session). OFF → persist; the model stays in RAM
+  // (cheap) but is simply not used.
+  const toggleAi = (next: boolean) => {
+    setAiEnabled(next)
+    if (typeof window !== 'undefined') localStorage.setItem(AI_ENABLED_KEY, next ? '1' : '0')
+    if (next) {
+      if (isLlmReady()) setAiState('ready')
+      else void startLoad()
+    }
+  }
+
+  // On mount: restore the toggle; if it was ON, resume/establish model state.
   useEffect(() => {
     if (typeof window === 'undefined') return
-    if (isImpressionLLMReady() && isNerLoaded()) { setAiState('ready'); return }
-    if (didImpressionLLMFail()) { setAiState('failed'); return }
-    if (isImpressionLLMLoading()) { setAiState('loading'); return }
-    if (localStorage.getItem(AI_KEY) === '1') {
-      // user previously opted in but model isn't loaded (fresh session) —
-      // resume the download automatically rather than make them click again.
-      startLoad()
-    }
+    const enabled = localStorage.getItem(AI_ENABLED_KEY) === '1'
+    setAiEnabled(enabled)
+    if (!enabled) return
+    if (isLlmReady()) { setAiState('ready'); return }
+    void startLoad()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-
-  useEffect(() => {
-    if (aiState !== 'loading') return
-    const tick = setInterval(() => {
-      // Ready when BOTH are loaded — first upload is then pure inference.
-      if (isImpressionLLMReady() && isNerLoaded()) setAiState('ready')
-      else if (didImpressionLLMFail()) setAiState('failed')
-    }, 1000)
-    return () => clearInterval(tick)
-  }, [aiState])
 
   // Mobile guard — rendered instead of the uploader on mobile builds.
   if (isMobile) {
@@ -331,62 +358,101 @@ export default function ImportRecordsPage() {
           <p className="text-xs text-[var(--text-muted)]">
             {labOnly
               ? "Drop your LabCorp / Quest / hospital lab PDFs here. We read the columns by position — value, unit, reference range, abnormal flag — and surface them on your Labs dashboard with trends. Upload the PDF (don't paste text): the column positions only exist in the file."
-              : "Visit notes, after-visit summaries, imaging reports, lab panels — drop them all here. The parser runs both medical (NER) and lab (number-anchored) extraction on every document, then shows you a review screen with checkboxes so you can uncheck anything that doesn't belong before it lands on your timeline or Lab Results."}
+              : "Visit notes, after-visit summaries, imaging reports, lab panels — drop them all here. The parser runs the lab (number-anchored) extractor on every document, plus the medical (NER) extractor when AI parsing is on, then shows you a review screen with checkboxes so you can uncheck anything that doesn't belong before it lands on your timeline or Lab Results."}
           </p>
+          <div className="rounded-lg border border-[var(--border-soft)] bg-[var(--surface-2)] p-3 text-xs text-[var(--text-muted)] flex items-start gap-2">
+            <FileText className="h-4 w-4 shrink-0 mt-0.5" />
+            <span>
+              <span className="font-medium text-[var(--text-main)]">Large records import best in pieces.</span>{" "}
+              Right now each file is read up to about the first{" "}
+              <span className="font-medium">50 pages (~100,000 characters)</span> — anything past that
+              isn’t imported yet. If your record is longer (a full medical-history export can run 100+
+              pages), split it into a few smaller PDFs and upload them one at a time so nothing gets
+              missed. (We’re working on lifting this so you won’t have to.)
+            </span>
+          </div>
           {!labOnly && !IS_DEMO && (
-            <div className="rounded-lg border border-[var(--border-soft)] bg-[var(--surface-2)] p-3 flex items-center gap-3 flex-wrap">
-              <Sparkles className="h-4 w-4 text-primary shrink-0" />
-              <div className="flex-1 min-w-[200px] text-sm text-[var(--text-main)]">
-                {aiState === 'idle' && (
-                  <>
-                    <span className="font-medium">AI-enhanced extraction (optional)</span>
-                    <div className="text-xs text-[var(--text-muted)] mt-0.5">
-                      Loads BOTH on-device models once: Qwen 2.5 (impression parser, ~250MB) AND the medical NER (~65MB). Local-only. Click Load to download both now — then every upload after that is pure inference, no model-loading mid-import.
+            <div className="rounded-lg border border-[var(--border-soft)] bg-[var(--surface-2)] p-4 space-y-2">
+              <div className="flex items-start gap-3">
+                <Sparkles className="h-4 w-4 text-primary shrink-0 mt-1" />
+                <div className="flex-1 min-w-[200px]">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="font-medium text-[var(--text-main)]">AI parsing</span>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={aiEnabled}
+                      aria-label="Toggle AI parsing"
+                      onClick={() => toggleAi(!aiEnabled)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0 ${aiEnabled ? 'bg-primary' : 'bg-[var(--border-soft)]'}`}
+                    >
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${aiEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                    </button>
+                  </div>
+                  <p className="text-xs text-[var(--text-muted)] mt-1">
+                    Turn this on to pull diagnoses, findings, and labs out of your documents automatically.
+                    The first time you switch it on it downloads a medical AI model
+                    (<span className="font-medium">MedGemma, ~2&nbsp;GB, one time</span>) that then runs{" "}
+                    <span className="font-medium">entirely on your own computer</span> — your records never leave this device.
+                    Like installing any app, the download takes a few minutes; once it’s done, uploads are quick.
+                  </p>
+                  <p className="text-xs text-[var(--text-muted)]">
+                    Works best on a computer from roughly the last 8 years with a few&nbsp;GB of free memory. On
+                    older or low-memory machines it may run slowly — if so, just leave it off and add events by
+                    hand; nothing about the app needs it.
+                  </p>
+
+                  {aiEnabled && (
+                    <div className="mt-3 flex items-center gap-3 flex-wrap">
+                      {aiState === 'idle' && (
+                        <Button onClick={() => void startLoad()} size="sm" className="shrink-0">Set up AI model</Button>
+                      )}
+                      {aiState === 'downloading' && (
+                        <div className="w-full space-y-1">
+                          <div className="flex items-center justify-between text-xs text-[var(--text-muted)]">
+                            <span>⬇️ Downloading MedGemma (one-time setup, ~2&nbsp;GB)…</span>
+                            <span className="font-medium tabular-nums">{dlPct}%</span>
+                          </div>
+                          <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--border-soft)]">
+                            <div className="h-full rounded-full bg-primary transition-[width] duration-300" style={{ width: `${dlPct}%` }} />
+                          </div>
+                          <p className="text-[10px] text-[var(--text-muted)]">You can leave this page open and come back — it resumes if interrupted.</p>
+                        </div>
+                      )}
+                      {aiState === 'loading' && (
+                        <span className="text-xs text-[var(--text-muted)]">
+                          🧠 Starting the AI model… the upload unlocks automatically once it’s ready.
+                        </span>
+                      )}
+                      {aiState === 'ready' && (
+                        <span className="text-xs text-[var(--text-main)] font-medium">🧠 AI model ready — upload unlocked.</span>
+                      )}
+                      {aiState === 'failed' && (
+                        <>
+                          <span className="text-xs text-destructive font-medium">❌ AI model setup failed.</span>
+                          <Button onClick={() => void startLoad()} size="sm" variant="outline" className="shrink-0">Retry</Button>
+                        </>
+                      )}
                     </div>
-                  </>
-                )}
-                {aiState === 'loading' && (
-                  <>
-                    <span className="font-medium">⏳ Loading AI models (Qwen + NER)…</span>
-                    <div className="text-xs text-[var(--text-muted)] mt-0.5">
-                      ~315MB combined, one-time. Open DevTools console (F12) to watch progress. The button flips to &ldquo;ready&rdquo; when BOTH are loaded.
-                    </div>
-                  </>
-                )}
-                {aiState === 'ready' && (
-                  <>
-                    <span className="font-medium">🧠 AI models ready — Qwen + NER loaded</span>
-                    <div className="text-xs text-[var(--text-muted)] mt-0.5">
-                      Impression items extracted with synthesis-detection. Falls back to regex if anything fails.
-                    </div>
-                  </>
-                )}
-                {aiState === 'failed' && (
-                  <>
-                    <span className="font-medium text-destructive">❌ AI model load failed</span>
-                    <div className="text-xs text-[var(--text-muted)] mt-0.5">
-                      Regex parser is still active. Check DevTools console for the error and click Retry to try again.
-                    </div>
-                  </>
-                )}
+                  )}
+                </div>
               </div>
-              {aiState === 'idle' && (
-                <Button onClick={startLoad} size="sm" className="shrink-0">
-                  Load AI Models
-                </Button>
-              )}
-              {aiState === 'failed' && (
-                <Button onClick={startLoad} size="sm" variant="outline" className="shrink-0">
-                  Retry
-                </Button>
-              )}
             </div>
           )}
-          <DocumentUploader
-            mode={labOnly ? "lab" : "auto"}
-            onEventsExtracted={handleEventsExtracted}
-            onLabsExtracted={handleLabsExtracted}
-          />
+          {!labOnly && aiEnabled && !aiReady ? (
+            <div className="rounded-lg border border-dashed border-[var(--border-soft)] bg-[var(--bg-card)] p-6 text-center text-sm text-[var(--text-muted)]">
+              {aiState === 'failed'
+                ? 'The AI model setup failed. Retry above, switch AI parsing off to import lab panels, or add events by hand from Add to Timeline.'
+                : 'Setting up the AI model — the uploader unlocks automatically once it’s ready. (Prefer not to wait? Switch AI parsing off above to import lab panels now, or add events by hand.)'}
+            </div>
+          ) : (
+            <DocumentUploader
+              mode={labOnly ? "lab" : "auto"}
+              aiEnabled={aiEnabled}
+              onEventsExtracted={handleEventsExtracted}
+              onLabsExtracted={handleLabsExtracted}
+            />
+          )}
         </section>
 
         {/*

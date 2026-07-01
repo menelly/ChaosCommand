@@ -7,6 +7,7 @@
  */
 
 mod license;
+mod llm;
 mod peers;
 mod server;
 mod sync;
@@ -48,11 +49,12 @@ pub fn run() {
     .plugin(tauri_plugin_fs::init())
     .plugin(tauri_plugin_dialog::init());
 
-  // Desktop-only: autostart-on-login + close-to-tray. Both gated so the Android
-  // build (which has neither concept) never compiles them.
+  // Desktop-only: autostart-on-login + close-to-tray + native MedGemma state.
+  // All gated so the Android build (which has none of these) never compiles them.
   #[cfg(desktop)]
   {
     builder = builder
+      .manage(llm::LlmState::default())
       .plugin(tauri_plugin_autostart::init(
         tauri_plugin_autostart::MacosLauncher::LaunchAgent,
         None::<Vec<&str>>,
@@ -166,6 +168,12 @@ pub fn run() {
       sync::sync_list_peers,
       sync::sync_remove_peer,
       sync::sync_rename_peer,
+      // Native MedGemma document parsing (desktop; mobile gets error stubs).
+      llm::llm_model_status,
+      llm::llm_download_model,
+      llm::llm_load_model,
+      llm::llm_unload_model,
+      llm::llm_generate,
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
