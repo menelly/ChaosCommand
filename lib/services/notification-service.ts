@@ -361,17 +361,41 @@ async function markReminderStatus(dbId: number, status: ReminderRecord['status']
   })
 }
 
+/**
+ * How long after a reminder's fire time it's still worth showing. A reminder
+ * that came due in the last STALE_GRACE_MS fires normally (you just missed it —
+ * useful). One older than that is marked 'missed' SILENTLY and never shown.
+ *
+ * WHY: the ticker's startup kick (startReminderTicker) runs processReminderQueue
+ * once on every app open. Without this bound, opening the app after it was closed
+ * for hours/days replayed EVERY past-due reminder at once — the "flooded with a
+ * dozen old notifications on open" bug (both platforms). Worse for meds: a 6-hour-
+ * old "time for your 8am dose" firing at 2pm is not just noise, it's misleading.
+ * 60 minutes catches a genuinely-just-missed dose without dumping a backlog.
+ */
+export const STALE_GRACE_MS = 60 * 60 * 1000
+
 export async function processReminderQueue(): Promise<number> {
   const pending = await getPendingReminders()
   const nowTs = Date.now()
   let fired = 0
+  let skippedStale = 0
   for (const { dbId, record } of pending) {
     const due = new Date(record.fireAt).getTime()
-    if (due <= nowTs) {
-      await fireNotification(record.title, record.body)
-      await markReminderStatus(dbId, 'fired')
-      fired++
+    if (due > nowTs) continue // not due yet
+    if (nowTs - due > STALE_GRACE_MS) {
+      // Past the grace window → mark missed, do NOT fire. This is the whole
+      // fix for the open-the-app flood: stale reminders retire silently.
+      await markReminderStatus(dbId, 'missed')
+      skippedStale++
+      continue
     }
+    await fireNotification(record.title, record.body)
+    await markReminderStatus(dbId, 'fired')
+    fired++
+  }
+  if (skippedStale > 0) {
+    console.log(`🔕 Retired ${skippedStale} stale reminder(s) silently (past ${STALE_GRACE_MS / 60000}min grace) — no flood`)
   }
   return fired
 }

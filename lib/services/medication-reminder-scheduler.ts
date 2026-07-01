@@ -8,10 +8,12 @@
  * the form captures it and the PDF surfaces it, but nothing scheduled it. This
  * does.
  *
- * One recurring calendar-matching alarm per (medication × time), so a 3×/day
- * med = 3 daily notifications, each firing even when the app is closed (mobile
- * guarantee; desktop fire-when-closed varies). Tapping a med reminder opens the
- * daily "taken today" checklist.
+ * Reminders are CONSOLIDATED by time: all meds due at the same clock time share
+ * ONE recurring alarm (5 morning meds = 1 "morning meds" notification, not 5),
+ * each firing even when the app is closed (mobile guarantee; desktop fire-when-
+ * closed varies). Per-med scheduling is preserved — a BID med joins both its
+ * time buckets, a PM-only med just the evening one. Tapping a reminder opens the
+ * daily "taken today" checklist (which still lists every individual dose).
  *
  * Gating layers (all must be true for a given time to arm):
  *   - master switch on            (chaos-notifications-enabled)
@@ -84,6 +86,54 @@ export function parseReminderTime(s: string): { hour: number; minute: number } |
   return null
 }
 
+/** Friendly time-of-day name for a consolidated bucket title ("Morning meds"). */
+function daypartLabel(hour: number): string {
+  if (hour >= 5 && hour < 12) return 'morning'
+  if (hour >= 12 && hour < 17) return 'afternoon'
+  if (hour >= 17 && hour < 21) return 'evening'
+  return 'nighttime'
+}
+
+/**
+ * Build ONE notification for all meds due at a given time (the consolidation).
+ *
+ * PRIVACY (unchanged from the per-med version): a real drug name appears ONLY
+ * if the user explicitly typed it as reminderLabel. Every unlabeled med is
+ * counted generically ("and 2 more doses"), never named — so "Lithium" /
+ * "Zyprexa" can't surface on a screen when someone's standing nearby.
+ *
+ * - 1 med  → the personal, dose-carrying phrasing (unchanged behavior).
+ * - N meds → friendly daypart title + a privacy-safe "what to take" line.
+ */
+function buildBucketNotification(
+  hm: { hour: number; minute: number },
+  meds: Medication[],
+): { title: string; body: string } {
+  const labels = meds.map(m => (m.reminderLabel || '').trim()).filter(Boolean)
+  const genericCount = meds.length - labels.length
+
+  if (meds.length === 1) {
+    const only = meds[0]
+    const name = (only.reminderLabel || '').trim() || 'medication'
+    const dose = only.dose ? ` · ${only.dose}` : ''
+    return {
+      title: `💊 Time for your ${name}`,
+      body: `Take your dose${dose}. Tap to mark it taken.`,
+    }
+  }
+
+  const title = `💊 Time for your ${daypartLabel(hm.hour)} meds`
+  let what: string
+  if (labels.length === 0) {
+    what = `You have ${meds.length} doses to take`
+  } else if (genericCount === 0) {
+    what = `Take: ${labels.join(', ')}`
+  } else {
+    what = `Take: ${labels.join(', ')} and ${genericCount} more dose${genericCount === 1 ? '' : 's'}`
+  }
+  return { title, body: `${what}. Tap to mark them taken.` }
+}
+
 function medsCategoryOn(): boolean {
   if (typeof window === 'undefined') return false
   return (
@@ -148,52 +198,57 @@ export async function syncMedicationReminders(medications: Medication[], force =
   const armedKeys: string[] = []
   let armed = 0
 
+  // CONSOLIDATION: bucket every (active med × parseable time) by the CLOCK TIME,
+  // so all meds due at 8:00 AM become ONE notification instead of five. Per-med
+  // scheduling is untouched — a BID med lands in both its buckets, a PM-only med
+  // only in the evening one — because we bucket the DELIVERY, not the schedule.
+  // Map key is "H:M"; value is the list of meds due then.
+  const buckets = new Map<string, { hm: { hour: number; minute: number }; meds: Medication[] }>()
   for (const med of medications) {
     if (!med.enableReminders || med.active === false) continue
-    const times = med.reminderTimes || []
-    if (times.length === 0) continue
-
-    // PRIVACY: the real drug name NEVER goes in a notification unless the user
-    // explicitly typed it as reminderLabel. Default popups say the generic word
-    // "medication" (+ dose), so "Lithium"/"Zyprexa" can't surface on a screen
-    // when someone's nearby. A custom label (e.g. "morning meds") is used verbatim.
-    const label = (med.reminderLabel || '').trim()
-    const displayName = label || 'medication'
-    const dose = med.dose ? ` · ${med.dose}` : ''
-    const title = `💊 Time for your ${displayName}`
-    const body = `Take your dose${dose}. Tap to mark it taken.`
-
-    for (const timeStr of times) {
+    for (const timeStr of med.reminderTimes || []) {
       const hm = parseReminderTime(timeStr)
       if (!hm) {
-        console.warn(`[med-reminder] could not parse time "${timeStr}" for ${displayName} — skipped`)
+        console.warn(`[med-reminder] could not parse time "${timeStr}" for med ${med.id} — skipped`)
         continue
       }
-
-      if (mobile) {
-        // Stable key per med+time → re-syncing an unchanged med re-arms the same
-        // id (cancel-then-add inside the helper = no duplicate).
-        const key = `med-reminder-${med.id}-${hm.hour}-${hm.minute}`
-        const ok = await scheduleRecurringOsNotification({
-          key, title, body,
-          match: { hour: hm.hour, minute: hm.minute },
-          actionTypeId: MED_REMINDER_ACTION_TYPE,
-        })
-        if (ok) { armedKeys.push(key); armed++ }
+      const bk = `${hm.hour}:${hm.minute}`
+      const bucket = buckets.get(bk)
+      if (bucket) {
+        // A med listing the same time twice shouldn't appear twice in one popup.
+        if (!bucket.meds.some(m => m.id === med.id)) bucket.meds.push(med)
       } else {
-        // Desktop in-app ticker: pre-arm a rolling window, fires once per dose.
-        // NEVER schedule a PAST time — it would fire instantly on the ticker's
-        // startup kick and re-fire on every reopen (the constant firing).
-        const now = Date.now()
-        for (let off = 0; off <= DESKTOP_WINDOW_DAYS; off++) {
-          const fire = new Date()
-          fire.setDate(fire.getDate() + off)
-          fire.setHours(hm.hour, hm.minute, 0, 0)
-          if (fire.getTime() <= now) continue
-          const id = `med-reminder-${med.id}-${hm.hour}-${hm.minute}-${fire.toISOString().split('T')[0]}`
-          await scheduleReminder({ id, title, body, fireAt: fire.toISOString(), source: 'med-reminder' })
-          armedKeys.push(id); armed++
-        }
+        buckets.set(bk, { hm, meds: [med] })
+      }
+    }
+  }
+
+  for (const { hm, meds } of buckets.values()) {
+    const { title, body } = buildBucketNotification(hm, meds)
+
+    if (mobile) {
+      // Stable key per TIME bucket → re-syncing unchanged meds re-arms the same
+      // id (cancel-then-add inside the helper = no duplicate).
+      const key = `med-reminder-bucket-${hm.hour}-${hm.minute}`
+      const ok = await scheduleRecurringOsNotification({
+        key, title, body,
+        match: { hour: hm.hour, minute: hm.minute },
+        actionTypeId: MED_REMINDER_ACTION_TYPE,
+      })
+      if (ok) { armedKeys.push(key); armed++ }
+    } else {
+      // Desktop in-app ticker: pre-arm a rolling window, fires once per bucket.
+      // NEVER schedule a PAST time — it would fire instantly on the ticker's
+      // startup kick and re-fire on every reopen (the constant firing).
+      const now = Date.now()
+      for (let off = 0; off <= DESKTOP_WINDOW_DAYS; off++) {
+        const fire = new Date()
+        fire.setDate(fire.getDate() + off)
+        fire.setHours(hm.hour, hm.minute, 0, 0)
+        if (fire.getTime() <= now) continue
+        const id = `med-reminder-bucket-${hm.hour}-${hm.minute}-${fire.toISOString().split('T')[0]}`
+        await scheduleReminder({ id, title, body, fireAt: fire.toISOString(), source: 'med-reminder' })
+        armedKeys.push(id); armed++
       }
     }
   }
