@@ -13,7 +13,6 @@
 
 import { classifyAssertion, classifyStatement } from './assertion';
 import {
-  extractImpressionItemsLLM,
   type ImpressionItem,
 } from './impression-parser-llm';
 import { scanDocumentMedGemma, type ScanFinding } from './medgemma-doc-scan';
@@ -574,14 +573,20 @@ export async function extractMedicalEvents(
   }
 
   // Impression items: the scan's SECOND list is the doctor's own summary,
-  // transcribed and grounded. Fall back to the regex parser when the scan is
-  // unavailable (AI off) — that path slices verbatim text and can't hallucinate.
-  const impressionItems: ImpressionItem[] =
-    scan && scan.impressionItems.length > 0
-      ? scan.impressionItems
-      : impressionSection
-        ? ((await extractImpressionItemsLLM(impressionSection.text)) ?? parseImpressionItems(impressionSection.text))
-        : [];
+  // already transcribed and grounded by the ONE whole-document pass above.
+  //
+  // BUGFIX (2026-07-01): if the scan ran but returned 0 impression items (an
+  // oddly-formatted diagnosis block the second-list parser missed), NEVER fire
+  // extractImpressionItemsLLM — that's a whole SECOND multi-minute MedGemma
+  // pass on top of the scan (the "calling it twice" that doubled every dense
+  // doc's wait). The scan already read the impression; supplement only with the
+  // CHEAP deterministic regex parser. The per-section LLM impression path is
+  // dead now that one pass reads the whole document.
+  const impressionItems: ImpressionItem[] = scan
+    ? (scan.impressionItems.length > 0
+        ? scan.impressionItems
+        : (impressionSection ? parseImpressionItems(impressionSection.text) : []))
+    : (impressionSection ? parseImpressionItems(impressionSection.text) : []);
   const impressionTextLower = impressionItems
     .map(i => i.text.toLowerCase())
     .join(' | ');
