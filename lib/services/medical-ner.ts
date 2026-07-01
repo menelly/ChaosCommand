@@ -626,8 +626,6 @@ export async function extractMedicalEvents(
     }
 
     const section = getSectionAt(sections, ent.start);
-    const weight = SECTION_WEIGHTS[section] ?? 0.5;
-
     if (section === 'technique') continue;
 
     // DISMISSED-FINDING SIGNALS — words clinicians use to WAVE OFF a finding the
@@ -670,7 +668,12 @@ export async function extractMedicalEvents(
     const context = chunk.slice(contextStart, contextEnd).trim();
 
     const nearestDate = findNearestDate(context, datesFound, excludedDates);
-    const confidence = Math.round(0.90 * weight * (speculative ? 0.7 : 1.0) * 100);
+    // A MedGemma finding is grounded model output the model DELIBERATELY
+    // surfaced — not a tagger's stray guess — so it doesn't get the NER-era
+    // section-weight penalty that dragged a real finding down to 63% (under the
+    // floor) just for living in the findings section. Solid fixed confidence;
+    // hedged/speculative wording still knocks it down. (weight is unused now.)
+    const confidence = speculative ? 72 : 88;
 
     if (section === 'impression') {
       impressionEntitiesLower.add(key);
@@ -710,7 +713,10 @@ export async function extractMedicalEvents(
       end_date: null,
       provider: null,
       location: null,
-      description: context.slice(0, 300),
+      // The clean grounded finding line — NOT the raw char-window slice, which
+      // started mid-word ("ent. There is expansion..."). raw_text keeps the
+      // surrounding context for anyone who wants to see it in situ.
+      description: ent.text.trim(),
       status: 'active',
       severity: null,
       tags,
@@ -820,15 +826,15 @@ export async function extractMedicalEvents(
     }
   }
 
-  // --- §3.C SENTENCE-LEVEL FINDINGS SCAN ---
-  // d4data is unreliable on radiology prose, so relying on it to TAG
-  // "congenital nonunion of the posterior arch of C1" is how that finding stayed
-  // buried. This pass reads the FINDINGS section sentence-by-sentence and
-  // surfaces any AFFIRMED finding carrying a dismissal word (congenital / stable
-  // / variant / incidental) whose content does NOT appear in the impression —
-  // regardless of whether NER tagged it. Gated on a dismissal word + not-in-
-  // impression so it stays low-noise (it isn't trying to surface every sentence).
-  if (findingsSection) {
+  // --- §3.C SENTENCE-LEVEL FINDINGS SCAN (LEGACY — only when MedGemma is OFF) ---
+  // This regex sentence-splitter existed because d4data couldn't read radiology
+  // prose, so it crudely swept the FINDINGS section for dismissed findings. Its
+  // splitter breaks mid-sentence ("...superior inferior dimension, but this
+  // appears benign" → a fragment titled "dimension, but this appears benign"),
+  // and MedGemma now reads the whole section properly and catches these itself.
+  // So it ONLY runs as the fallback when the scan didn't (AI parsing off / no
+  // model) — when MedGemma ran, it owns findings and this stays out of the way.
+  if (findingsSection && scan === null) {
     const imprLow = impressionTextLower; // already lowercased, '|'-joined
     const DISMISS_SENT = /\bcongenital\b|\bdevelopmental\b|\bnormal\s+variant\b|\banatomic(?:al)?\s+variant\b|\bincidental(?:ly)?\b|\bno\s+(?:significant\s+)?(?:interval\s+)?change\b|\bunchanged\b|\bstable\b/i;
     // Hard negation that ISN'T pseudo — a real "no evidence of X" is not a finding.
