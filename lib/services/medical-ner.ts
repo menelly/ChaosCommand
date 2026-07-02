@@ -655,14 +655,11 @@ export async function extractMedicalEvents(
     const speculative = assertion === 'speculative' || isSpeculative(ent.text, 0, ent.text.length);
     seenKeys.add(key);
 
-    // Scan lines carry no NER label — infer the event type from the line
-    // itself. Conservative: everything is a 'finding' unless it clearly reads
-    // as a lab value or a status-post procedure.
+    // The doc-scan already adjudicated lab lines: ent.lab carries the analyte,
+    // value, and the CODE-decided direction (deriveLabDirection — flag-first,
+    // never the model's adjective). When present, it's authoritative.
     let eventType = 'finding';
-    if (
-      /\b\d+(?:\.\d+)?\s*(?:mg\/dl|mmol\/l|mcg|ng\/ml|g\/dl|k\/ul|iu\/l|u\/l|mmhg|bpm|%)\b/i.test(key) ||
-      (/\b(?:critical|high|low)\b/i.test(key) && /\d/.test(key))
-    ) {
+    if (ent.lab) {
       eventType = 'lab';
     } else if (/\b(?:status[- ]post|s\/p)\b|\b(?:resection|repair|fusion|replacement)\b|ectomy\b/i.test(key)) {
       eventType = 'surgery';
@@ -707,27 +704,49 @@ export async function extractMedicalEvents(
 
     const eventDate = nearestDate || docDate || new Date().toISOString().split('T')[0];
 
-    let title = ent.text.trim();
+    // For a lab, the DISPLAYED direction is the code verdict, never the model's
+    // word — "Glucose 19 mg/dL — CRITICAL Low", not the note's "hyperglycemia".
+    // For everything else, the clean grounded finding line.
+    let title: string;
+    let description: string;
+    if (ent.lab) {
+      const v = ent.lab.verdict;
+      const unit = ent.lab.unit ? ` ${ent.lab.unit}` : '';
+      const dir = v.severity === 'unknown' ? '' : ` — ${v.label}`;
+      title = `${ent.lab.analyte} ${ent.lab.value}${unit}${dir}`.trim();
+      description = title;
+    } else {
+      title = ent.text.trim();
+      description = ent.text.trim();
+    }
     if (title.length > 80) title = title.slice(0, 77) + '...';
+
+    // A code-confirmed critical lab is the loudest thing in the document — mark
+    // it for review so it can't be scrolled past.
+    const labCritical = ent.lab?.verdict.severity === 'critical';
+    if (ent.lab && ent.lab.verdict.severity !== 'normal') {
+      tags.push(`lab-direction:${ent.lab.verdict.direction}`);
+      if (labCritical) {
+        tags.push('critical-value');
+        suggestions.push(`This value is in a critical range (${ent.lab.verdict.label}). Confirm it was addressed — critical results are exactly what gets lost.`);
+      }
+    }
 
     events.push({
       id: `nlp-${Date.now()}-${eventCounter++}`,
       type: eventType,
-      title: `${speculative ? '⚠️ ' : ''}${title}`,
+      title: `${labCritical ? '🚨 ' : speculative ? '⚠️ ' : ''}${title}`,
       date: eventDate,
       end_date: null,
       provider: null,
       location: null,
-      // The clean grounded finding line — NOT the raw char-window slice, which
-      // started mid-word ("ent. There is expansion..."). raw_text keeps the
-      // surrounding context for anyone who wants to see it in situ.
-      description: ent.text.trim(),
+      description,
       status: 'active',
       severity: null,
       tags,
       confidence,
       sources: ['medgemma'],
-      needs_review: (!nearestDate && !docDate) || speculative || !!dismissalSignal,
+      needs_review: labCritical || (!nearestDate && !docDate) || speculative || !!dismissalSignal,
       suggestions,
       raw_text: context,
       dosage: null,

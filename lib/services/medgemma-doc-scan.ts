@@ -28,6 +28,7 @@
 
 import { runImpressionLLMRaw } from './impression-parser-llm';
 import type { ImpressionItem } from './impression-parser-llm';
+import { deriveLabDirection, parseModelLabLine, type DirectionVerdict } from './lab-sanity-check';
 
 // ============================================================================
 // VALIDATED PROMPTS (do not tweak casually — these survived real-record runs)
@@ -42,7 +43,8 @@ SECOND - IMPRESSION: transcribe every numbered item in the Impression/Conclusion
 
 /** Emergency-department / encounter-note route (labs, vitals, symptoms). */
 export const MEDGEMMA_ED_PROMPT = `You are reading an emergency department note for a patient whose findings often get dismissed. Produce TWO lists IN THIS ORDER, invent nothing:
-FIRST - ABNORMAL FINDINGS AND VALUES: read the WHOLE note and list every abnormal or critical laboratory value (give the value and its flag, e.g. Critical/High/Low), every abnormal vital sign, every abnormal exam finding, and every symptom or complaint the patient reported. ERR TOWARD INCLUDING TOO MUCH - a value flagged Critical/High/Low STILL COUNTS, a reported symptom STILL COUNTS. Only leave out things explicitly stated to be normal, negative, or within normal limits.
+FIRST - ABNORMAL FINDINGS AND VALUES: read the WHOLE note and list every abnormal or critical laboratory value, every abnormal vital sign, every abnormal exam finding, and every symptom or complaint the patient reported. ERR TOWARD INCLUDING TOO MUCH - a flagged value STILL COUNTS, a reported symptom STILL COUNTS. Only leave out things explicitly stated to be normal, negative, or within normal limits.
+For any LABORATORY VALUE, write it as: the analyte name, the value with its units, and — ONLY IF the report itself printed one — the report's own flag word copied EXACTLY (Critical, High, or Low). DO NOT decide, add, or change high/low/normal yourself, and do NOT translate a value into "hyperglycemia"/"hypokalemia"/"elevated"/"decreased" — copy the number and the report's own flag, nothing more. (A separate step decides direction from the number.)
 SECOND - DIAGNOSES AND ASSESSMENT: list the clinician stated diagnoses and their medical-decision-making conclusions, exactly as written.`;
 
 /** Pick the route by document vocabulary. ED notes carry encounter markers a
@@ -71,6 +73,15 @@ export interface ScanFinding {
   start: number;
   end: number;
   route: 'ed' | 'report';
+  /** Present when this finding line parsed as a lab value. The direction is
+   *  decided by CODE (deriveLabDirection), never the model — so even if the
+   *  model editorialized, the verdict here is authoritative. */
+  lab?: {
+    analyte: string;
+    value: number;
+    unit: string;
+    verdict: DirectionVerdict;
+  };
 }
 
 export interface DocScanResult {
@@ -205,6 +216,41 @@ export function groundLine(
 }
 
 // ============================================================================
+// LAB DETECTION — turn a model finding line into a code-adjudicated lab
+// ============================================================================
+
+/** Units that mark a line as a genuine lab value (so "5 mm nodule" — unit "mm"
+ *  — is NOT mistaken for a lab). Includes the OCR-split "K/mc L" shape. */
+const LAB_UNIT_RE = /\b(mg\/dl|mmol\/l|meq\/l|g\/dl|k\/?(?:mc)?\s?l|iu\/l|u\/l|ng\/ml|mcg|pg|fl|ml\/min)\b/i;
+
+/** The report's OWN flag word if it printed one next to the value. NOT the
+ *  model's editorializing ("elevated"/"hyperglycemia") — only the literal
+ *  Critical/High/Low a lab report prints. */
+function printedFlagFromLine(line: string): string | null {
+  const m = line.match(/\b(critical|panic|high|low)\b/i);
+  return m ? m[1] : null;
+}
+
+/** If a finding line is a lab value, return its analyte/value/unit plus the
+ *  CODE-decided direction. Returns null for non-lab findings (nodules, symptoms).
+ *  Gated so only real labs (lab unit present, OR a printed flag beside a number)
+ *  get adjudicated — never a "5 mm nodule". */
+function detectLab(line: string): { analyte: string; value: number; unit: string; verdict: DirectionVerdict } | null {
+  const hasLabUnit = LAB_UNIT_RE.test(line);
+  const flag = printedFlagFromLine(line);
+  if (!hasLabUnit && !flag) return null; // not lab-shaped → leave as a plain finding
+  const parsed = parseModelLabLine(line);
+  if (!parsed) return null;
+  const verdict = deriveLabDirection({
+    name: parsed.analyte,
+    value: parsed.value,
+    unit: parsed.unit,
+    printedFlag: flag,
+  });
+  return { ...parsed, verdict };
+}
+
+// ============================================================================
 // PUBLIC API
 // ============================================================================
 
@@ -246,7 +292,10 @@ export async function scanDocumentMedGemma(
 
     const { first, second } = parseScanResponse(raw);
     for (const line of first) {
-      const key = line.toLowerCase();
+      // Lab lines dedup by analyte+value (the ED note prints the CMP twice —
+      // model dedup failed at this; code never does). Non-labs dedup by text.
+      const lab = detectLab(line);
+      const key = lab ? `lab:${lab.analyte.toLowerCase()}|${lab.value}` : line.toLowerCase();
       if (seenFinding.has(key)) continue;
       const loc = groundLine(line, text, sourceLower);
       if (!loc) {
@@ -255,7 +304,7 @@ export async function scanDocumentMedGemma(
         continue;
       }
       seenFinding.add(key);
-      findings.push({ text: line, start: loc.start, end: loc.end, route });
+      findings.push({ text: line, start: loc.start, end: loc.end, route, ...(lab ? { lab } : {}) });
     }
     for (const line of second) {
       const key = line.toLowerCase();
