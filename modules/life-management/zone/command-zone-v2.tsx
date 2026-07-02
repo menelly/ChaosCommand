@@ -24,6 +24,7 @@
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
+import { getNamespaceId } from '@/lib/database/session-crypto'
 import { getPref, setPref } from '@/lib/prefs'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -304,7 +305,7 @@ export default function CommandZone() {
   // Load data from localStorage (all keys include userPin for multi-user isolation)
   useEffect(() => {
     const today = new Date().toDateString()
-    const userPin = localStorage.getItem('chaos-user-pin') || 'default'
+    const userPin = getNamespaceId() || 'default'
     const savedTasks = localStorage.getItem(`daily-tasks-${userPin}-${today}`)
     const savedGearState = localStorage.getItem(`gear-check-${userPin}-${today}`)
     const savedGearItems = localStorage.getItem(`gear-items-${userPin}`)
@@ -353,13 +354,13 @@ export default function CommandZone() {
 
   const saveTasks = (tasks: DailyTask[]) => {
     const today = new Date().toDateString()
-    const userPin = localStorage.getItem('chaos-user-pin') || 'default'
+    const userPin = getNamespaceId() || 'default'
     localStorage.setItem(`daily-tasks-${userPin}-${today}`, JSON.stringify(tasks))
   }
 
   const saveGear = (gear: GearItem[]) => {
     const today = new Date().toDateString()
-    const userPin = localStorage.getItem('chaos-user-pin') || 'default'
+    const userPin = getNamespaceId() || 'default'
 
     // Save persistent items list (names and essential status) per user
     const gearItems = gear.map(item => ({
@@ -381,7 +382,7 @@ export default function CommandZone() {
   // Self-care persistence
   const saveSelfCare = (items: SelfCareItem[]) => {
     const today = new Date().toDateString()
-    const userPin = localStorage.getItem('chaos-user-pin') || 'default'
+    const userPin = getNamespaceId() || 'default'
     // Save persistent item definitions
     const defs = items.map(({ id, label, link }) => ({ id, label, link }))
     localStorage.setItem(`selfcare-items-${userPin}`, JSON.stringify(defs))
@@ -426,7 +427,7 @@ export default function CommandZone() {
   const selfCareCompleted = selfCare.filter(i => i.checked).length
 
   const saveSchedule = (blocks: ScheduleBlock[]) => {
-    const userPin = localStorage.getItem('chaos-user-pin') || 'default'
+    const userPin = getNamespaceId() || 'default'
     localStorage.setItem(`schedule-${userPin}`, JSON.stringify(blocks))
   }
 

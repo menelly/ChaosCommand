@@ -28,6 +28,7 @@ import { closeDB, initializeDatabase } from '@/lib/database/dexie-db'
 import { isDemoPin, ensureDemoSeeded } from '@/lib/database/demo-profile'
 import { deriveSession, clearSessionKey, clearNamespacePointer } from '@/lib/database/session-crypto'
 import { migratePlaintextProfileIfNeeded } from '@/lib/database/migrate-to-encrypted'
+import { migrateProfileKeys } from '@/lib/prefs'
 
 interface UserContextType {
   userPin: string | null
@@ -69,7 +70,12 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     // 1) Derive the crypto session FIRST: sets the hashed namespace pointer (so
     //    getDB() resolves the right DB) and the AES key (so writes encrypt).
     //    Must complete before any profile data is read or written.
-    await deriveSession(pin)
+    const namespace = await deriveSession(pin)
+
+    // 1b) Rename this profile's UI-pref keys from the old raw-PIN namespace to the
+    //     hashed one, so themes/settings survive the switch (and the raw PIN stops
+    //     appearing in localStorage key names).
+    migrateProfileKeys(pin, namespace)
 
     // 2) One-time, verified, non-destructive migration of any legacy plaintext
     //    profile (`ChaosCommand_<rawPIN>`) into this encrypted namespace DB.
@@ -91,16 +97,16 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     setUserPin(pin)
     setIsLoggedIn(true)
 
-    // Persist current user session.
-    // TODO(sweep): `chaos-user-pin` still holds the raw PIN for the ~30 prefs-
-    // namespacing readers. Those move to getNamespaceId() in the sweep phase, after
-    // which the raw PIN stops being persisted anywhere (closing the last cleartext leak).
+    // Persist the session for auto-resume (stay-logged-in mode). `currentUserPin` is
+    // the raw PIN — INHERENT to auto-unlock: re-deriving the key on refresh needs it.
+    // The lock-on-open setting (TODO) removes this and requires PIN re-entry instead,
+    // which is the actually-secure mode. Prefs/DB no longer namespace by raw PIN, so
+    // this is the ONLY place the raw PIN persists (and only in stay-logged-in mode).
     localStorage.setItem('currentUserPin', pin)
-    localStorage.setItem('chaos-user-pin', pin) // legacy prefs-namespacing key (transitional)
     localStorage.setItem('isLoggedIn', 'true')
 
-    // Per-PIN UI prefs (theme/font/text-size/etc.) key off chaos-user-pin, so now that
-    // it's set, tell ThemeLoader to re-apply THIS profile's appearance. (CHA-226)
+    // Prefs are namespaced by the hashed profile id now; tell ThemeLoader to re-apply
+    // THIS profile's appearance. (CHA-226)
     if (typeof window !== 'undefined') window.dispatchEvent(new Event('chaos-pin-changed'))
 
     // Force initialize the new user's database (deriveSession already set the
@@ -130,7 +136,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
     // Clear current session (but don't delete database data!)
     localStorage.removeItem('currentUserPin')
-    localStorage.removeItem('chaos-user-pin') // legacy prefs-namespacing key (transitional)
     localStorage.removeItem('isLoggedIn')
 
     // PIN cleared → fall back to the global/default appearance for the login screen.

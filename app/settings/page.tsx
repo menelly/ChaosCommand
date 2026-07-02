@@ -24,6 +24,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { getNamespaceId } from "@/lib/database/session-crypto"
 import AppCanvas from "@/components/app-canvas"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -215,7 +216,7 @@ export default function SettingsPage() {
             onClick={() => {
               if (confirm('This will reset your onboarding progress. Continue?')) {
                 localStorage.removeItem('chaos-onboarding-complete')
-                const pin = localStorage.getItem('chaos-user-pin')
+                const pin = getNamespaceId()
                 if (pin) localStorage.removeItem(`chaos-onboarding-complete-${pin}`)
                 window.location.href = '/onboarding'
               }
@@ -227,7 +228,7 @@ export default function SettingsPage() {
                 e.preventDefault()
                 if (confirm('This will reset your onboarding progress. Continue?')) {
                   localStorage.removeItem('chaos-onboarding-complete')
-                  const pin = localStorage.getItem('chaos-user-pin')
+                  const pin = getNamespaceId()
                   if (pin) localStorage.removeItem(`chaos-onboarding-complete-${pin}`)
                   window.location.href = '/onboarding'
                 }

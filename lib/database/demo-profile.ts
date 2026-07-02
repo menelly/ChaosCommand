@@ -25,6 +25,7 @@
  */
 
 import { getDB, initializeDatabase } from './dexie-db'
+import { deriveSession } from './session-crypto'
 import demoFixture from './demo-fixture.json'
 
 /**
@@ -64,18 +65,19 @@ export function isDemoPin(pin: string): boolean {
 }
 
 /**
- * Open the demo DB *coherently*. The catch: initializeDatabase() → ensureDefaultTags() uses
- * the localStorage-driven `db` proxy (it reads 'chaos-user-pin'), while we open with the
- * explicit getDB(DEMO_PIN). PRE-LOGIN no pin is set, so the proxy points at the null-pin DB
- * while getDB points at the demo DB — and the single global Dexie handle thrashes open/close
- * between the two and HANGS (that was the "See demo doesn't click on first start" bug).
- * Pointing 'chaos-user-pin' at the demo first keeps the whole stack on one DB. login(DEMO_PIN)
- * sets the same key again immediately after — harmless.
+ * Open the demo DB *coherently*. deriveSession(DEMO_PIN) sets the hashed namespace +
+ * key BEFORE we open, so the `db` proxy and getDB() both resolve the SAME demo DB.
+ * (Historically this thrashed because the proxy and an explicit getDB(pin) pointed at
+ * different DBs and the single global Dexie handle churned open/close and HANGS — the
+ * "See demo doesn't click on first start" bug. One session → one DB → no thrash.)
  */
 async function openDemoDb() {
-  try { localStorage.setItem('chaos-user-pin', DEMO_PIN) } catch { /* SSR / Safari private */ }
-  await initializeDatabase(DEMO_PIN)
-  return getDB(DEMO_PIN)
+  // Derive the demo session (sets the hashed namespace + key), so the `db` proxy and
+  // getDB() both resolve the demo DB coherently. Demo data is encrypted with the demo
+  // key (PIN 1111 is public, so this is not a secret — just keeps one code path).
+  await deriveSession(DEMO_PIN)
+  await initializeDatabase()
+  return getDB()
 }
 
 /**
@@ -154,34 +156,40 @@ export async function migrateDemoToNewPin(newPin: string): Promise<number> {
   if (np.length < 4) throw new Error('PIN must be at least 4 characters.')
   if (np === DEMO_PIN) throw new Error('Choose a PIN other than 1111 — that one is the public demo.')
 
-  // 1) Read everything currently under 1111.
-  await initializeDatabase(DEMO_PIN)
-  const srcDb = getDB(DEMO_PIN)
+  // 1) Read everything under 1111 (demo key active → decrypted into memory).
+  await deriveSession(DEMO_PIN)
+  await initializeDatabase()
+  const srcDb = getDB()
   const records = await srcDb.daily_data.toArray()
   const tags = await srcDb.user_tags.toArray()
   const blobs = await srcDb.image_blobs.toArray()
 
-  // 2) Open the destination PIN; refuse if it already holds data (never clobber/merge).
-  await initializeDatabase(np)
-  const destDb = getDB(np)
+  // 2) Switch to the destination profile's key; refuse if it already holds data.
+  await deriveSession(np)
+  await initializeDatabase()
+  const destDb = getDB()
   if ((await destDb.daily_data.count()) > 0) {
     throw new Error(`PIN ${np} is already in use. Pick a PIN that hasn't been set up yet.`)
   }
 
-  // 3) Copy verbatim (ids preserved — dest is empty, so links stay intact).
+  // 3) Copy verbatim (ids preserved — dest is empty). Middleware RE-encrypts with the
+  //    destination key on write; the cross-key move is why we switch sessions here.
   if (records.length) await destDb.daily_data.bulkAdd(records as any)
   if (tags.length) await destDb.user_tags.bulkAdd(tags as any)
   if (blobs.length) await destDb.image_blobs.bulkAdd(blobs as any)
 
-  // 4) Only now is it safe to reset 1111 to the public demo.
-  await initializeDatabase(DEMO_PIN)
-  const demoDb = getDB(DEMO_PIN)
+  // 4) Switch back to the demo key and reset 1111 to the public demo.
+  await deriveSession(DEMO_PIN)
+  await initializeDatabase()
+  const demoDb = getDB()
   await demoDb.daily_data.clear()
   await demoDb.daily_data.bulkAdd(fixtureRecords() as any)
   try { localStorage.setItem(DEMO_FIXTURE_VERSION_KEY, FIXTURE_BUILT_AT) } catch { /* SSR */ }
 
-  // 5) Point the session at the user's new PIN so they land in their preserved data.
-  try { localStorage.setItem('chaos-user-pin', np) } catch { /* SSR */ }
+  // 5) Land the session on the new PIN (the caller calls login(np) right after, which
+  //    re-derives + persists the session; we set currentUserPin so resume works too).
+  await deriveSession(np)
+  try { localStorage.setItem('currentUserPin', np) } catch { /* SSR */ }
   return records.length
 }
 

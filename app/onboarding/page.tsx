@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import { getNamespaceId } from '@/lib/database/session-crypto'
 import { getPref, setPref } from '@/lib/prefs'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -792,7 +793,7 @@ export default function OnboardingPage() {
 
     // Mark complete globally AND per-PIN
     localStorage.setItem('chaos-onboarding-complete', 'true')
-    const pin = localStorage.getItem('chaos-user-pin')
+    const pin = getNamespaceId()
     if (pin) {
       localStorage.setItem(`chaos-onboarding-complete-${pin}`, 'true')
       // They set personalization in the "Make It Yours" step — don't re-prompt.
@@ -807,7 +808,7 @@ export default function OnboardingPage() {
 
   const skipOnboarding = () => {
     localStorage.setItem('chaos-onboarding-complete', 'true')
-    const pin = localStorage.getItem('chaos-user-pin')
+    const pin = getNamespaceId()
     if (pin) {
       localStorage.setItem(`chaos-onboarding-complete-${pin}`, 'true')
       localStorage.setItem(`chaos-personalization-prompted-${pin}`, 'true')

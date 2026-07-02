@@ -118,11 +118,12 @@ export default function RootLayout({
               // Load theme immediately to prevent color flash
               (function() {
                 try {
-                  // Per-PIN appearance prefs — mirrors lib/prefs.ts by hand (this inline
-                  // script can't import TS). Namespace by the active PIN (chaos-user-pin);
-                  // before login, or for a value not yet migrated, fall back to the legacy
-                  // global key (and adopt it into the PIN namespace on first read). (CHA-226)
-                  var pin = localStorage.getItem('chaos-user-pin');
+                  // Per-profile appearance prefs — mirrors lib/prefs.ts by hand (this inline
+                  // script can't import TS). Namespace by the HASHED profile id ('cc.ns',
+                  // set by session-crypto), NOT the raw PIN — so the PIN never appears in a
+                  // localStorage key. Before login, or for a not-yet-migrated value, fall back
+                  // to the legacy global key (and adopt it on first read). (CHA-226)
+                  var pin = localStorage.getItem('cc.ns');
                   var readPref = function(k) {
                     if (!pin) return localStorage.getItem(k);
                     var scoped = localStorage.getItem('chaos-pref:' + pin + ':' + k);

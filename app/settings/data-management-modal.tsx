@@ -18,6 +18,7 @@ import { Database, Download, Upload, Trash2 } from "lucide-react"
 import { exportAllData, importData } from "@/lib/database/migration-helper"
 import { encryptBackup, decryptBackup, downloadBackup, ENCRYPTED_BACKUP_FORMAT } from "@/lib/database/encrypted-export"
 import { openImportFile } from "@/lib/export-file"
+import { getNamespaceId, namespaceForPin, clearSessionKey, clearNamespacePointer } from "@/lib/database/session-crypto"
 import { deleteCurrentProfile } from "@/lib/database/dexie-db"
 import { recordBackup } from "@/lib/backup-reminder"
 import { KeyboardAvoidingWrapper } from '@/components/ui/keyboard-avoiding-wrapper'
@@ -134,13 +135,15 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
   const handleDeleteProfile = async () => {
     // PIN GATE: you must re-type the PIN you're logged in with. This proves you know WHOSE data
     // you're deleting — so you can't nuke a kid's/partner's profile thinking it's yours.
-    let currentPin: string | null = null
-    try { currentPin = localStorage.getItem('chaos-user-pin') } catch { /* ignore */ }
-    if (!currentPin) {
+    const activeNs = getNamespaceId()
+    if (!activeNs) {
       setDeletePinError('No profile is logged in — nothing to delete.')
       return
     }
-    if (deleteConfirmPin.trim() !== currentPin) {
+    // Prove the typed PIN belongs to the active profile by comparing HASHES — no raw
+    // PIN is stored anywhere to compare against, and the hash reveals nothing.
+    const typedNs = await namespaceForPin(deleteConfirmPin.trim())
+    if (typedNs !== activeNs) {
       setDeletePinError("That PIN doesn't match the profile you're logged into. Delete cancelled — check whose profile this is.")
       return
     }
@@ -160,9 +163,14 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
     if (!ok) { setDeleteArmed(false); setDeleteConfirmPin(''); return }
     try {
       const dbName = await deleteCurrentProfile()
-      // Drop the session hint so the app reopens at the locked screen, not this profile.
+      // Drop the session so the app reopens at the locked screen, not this profile:
+      // wipe the in-memory key + namespace pointer + persisted session hints.
+      clearSessionKey()
+      clearNamespacePointer()
       try {
-        localStorage.removeItem('chaos-user-pin')
+        localStorage.removeItem('currentUserPin')
+        localStorage.removeItem('chaos-user-pin') // legacy (transitional)
+        localStorage.removeItem('isLoggedIn')
         localStorage.removeItem('chaos-demo-fixture-version')
       } catch { /* ignore */ }
       alert(

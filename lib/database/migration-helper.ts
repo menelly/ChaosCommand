@@ -29,6 +29,7 @@
  */
 
 import { db, DailyDataRecord, CATEGORIES, getCurrentTimestamp } from './dexie-db';
+import { getNamespaceId } from './session-crypto';
 import { parseAndValidateImportPayload } from './import-schema';
 
 /**
@@ -152,7 +153,7 @@ export async function exportAllData(pin?: string): Promise<string> {
     // to whatever the user-context wrote to localStorage. Without a PIN
     // we can't safely walk keys; we simply skip the localStorage block.
     const effectivePin = pin || (typeof window !== 'undefined'
-      ? (localStorage.getItem('chaos-user-pin') || '')
+      ? (getNamespaceId() || '')
       : '');
 
     const exportData = {
