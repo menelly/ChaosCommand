@@ -115,3 +115,18 @@ we fought all day) OR relying on the weak 4B (that thinks 19 is hyperglycemia):
   blocker (incompatible with gmx2024 nvcc check); 3.28 is the known-good combo.
 - Cleaned up: a runaway dedup llama-cli had filled root /tmp with 17GB (killed).
   DISCIPLINE: always pass `-no-cnv` to llama-cli and clean up detached runs.
+
+### CUDA GROMACS — PARKED (fresh diagnosis needed, stop guessing)
+GROMACS 2024.4 CUDA configure fails at gmxManageNvccConfig.cmake:107 "CUDA
+compiler not functional/compatible with host compiler" — with BOTH cmake 4.3
+AND cmake 3.28 (so it's NOT a cmake-version issue; I guessed that wrong, and
+guessed gcc-12 wrong before that). nvcc 11.5 PROVEN working standalone with the
+exact flags (`-std=c++17 --generate-code=arch=compute_70,code=sm_70 -ccbin
+g++-11` compiles clean). So GROMACS's check misfires for a reason not yet found.
+NEXT (fresh head): read the ACTUAL try-compile error in
+gromacs-2024.4/build/CMakeFiles/CMakeError.log (or the TryCompile dir), don't
+guess. Candidates to check: (a) GROMACS wants CUDA >= a version 11.5 lacks for
+a feature; (b) a specific nvcc flag GROMACS adds that 11.5 rejects; (c) try
+-DGMX_NVCC_WORKS=TRUE to bypass (nvcc IS proven working) and see if the real
+build succeeds. NOT urgent — OpenMM in /mnt/arcana/genetics-gpu already does GPU
+MD, so this is a "GROMACS-specifically" nicety.
