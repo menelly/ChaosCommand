@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button'
 import { Smartphone, Wifi, CheckCircle2, AlertCircle, RefreshCw, Upload, Download } from 'lucide-react'
 import { useUser } from '@/lib/contexts/user-context'
-import { exportAllData, importData } from '@/shared/database/migration-helper'
+import { exportAllData, importData } from '@/lib/database/migration-helper'
 import { saveExportFile, openImportFile } from '@/lib/export-file'
 
 interface QRSyncModalProps {

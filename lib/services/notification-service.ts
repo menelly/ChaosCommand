@@ -22,7 +22,7 @@
  */
 "use client"
 
-import { db } from '@/shared/database/dexie-db'
+import { db } from '@/lib/database/dexie-db'
 import { isMobilePlatform } from '@/lib/platform'
 
 const REMINDERS_TABLE = 'daily_data'

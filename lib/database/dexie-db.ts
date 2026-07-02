@@ -35,6 +35,13 @@
  */
 
 import Dexie, { Table } from 'dexie';
+import {
+  getNamespaceId,
+  hasSessionKey,
+  encryptValue,
+  decryptValue,
+  isEncrypted,
+} from './session-crypto';
 
 // ============================================================================
 // DATABASE INTERFACES
@@ -96,6 +103,107 @@ export interface PatternSnapshot {
   is_auto: boolean  // auto-snapshot vs user-triggered
 }
 
+// ============================================================================
+// AT-REST ENCRYPTION (DBCore middleware) — see session-crypto.ts for the model.
+// ============================================================================
+
+const DEFAULT_DB_NAME = 'ChaosCommandCenterDB'; // the no-profile / pre-login DB (not encrypted)
+
+/**
+ * Which fields on which tables hold sensitive content that must be encrypted at
+ * rest. Index keys (date/category/subcategory/tags) are intentionally left
+ * plaintext — IndexedDB queries need them (the standard index-preserving tradeoff).
+ * Store-AGNOSTIC by design: the same field list drives the future SQLite tier, so
+ * encrypted blobs move between stores without re-encryption.
+ * (image_blobs binary + user_tags are v1-excluded; tracked as fast-follows.)
+ */
+const ENCRYPTED_FIELDS: Record<string, string[]> = {
+  daily_data: ['content'],
+  pattern_snapshots: ['snapshot_json'],
+};
+
+async function encryptRow(row: any, fields: string[], encrypted: boolean): Promise<any> {
+  if (!row || !encrypted) return row;
+  if (!hasSessionKey()) {
+    // HARD GUARD: never silently write plaintext into a profile DB. This is the
+    // exact bug from the old (unwired) FieldLevelEncryption hook, done right.
+    throw new Error(
+      'session-crypto: refusing to write to an encrypted profile with no key ' +
+      '(is the profile unlocked?). Nothing was written.'
+    );
+  }
+  const out = { ...row };
+  for (const f of fields) {
+    if (out[f] !== undefined && !isEncrypted(out[f])) {
+      out[f] = await encryptValue(out[f]);
+    }
+  }
+  return out;
+}
+
+async function decryptRow(row: any, fields: string[]): Promise<any> {
+  if (!row) return row;
+  let out = row;
+  for (const f of fields) {
+    if (isEncrypted(out[f])) {
+      if (out === row) out = { ...row }; // copy-on-write only when needed
+      out[f] = await decryptValue(out[f]);
+    }
+  }
+  return out;
+}
+
+/**
+ * Install transparent encryption. Handles the async-clean DBCore paths —
+ * mutate (write), get/getMany/query (indexed reads = the overwhelming majority).
+ *
+ * NOT handled: openCursor. WebCrypto decryption is async but a DBCore cursor's
+ * `.value` is a synchronous getter — they're fundamentally incompatible. So
+ * cursor-driven reads (.filter()/.each()/un-indexed .orderBy()) would surface
+ * ciphertext. Because ciphertext is TAGGED ('enc:v1:'), any such site is loud and
+ * obvious (content literally reads "enc:v1:…") rather than silently wrong. The few
+ * app sites that cursor over content (e.g. searchByContent) are converted to
+ * toArray()+JS-filter so they ride the decrypting query() path instead.
+ */
+function installEncryptionMiddleware(db: Dexie, encrypted: boolean): void {
+  db.use({
+    stack: 'dbcore',
+    name: 'chaos-at-rest-encryption',
+    create(down) {
+      return {
+        ...down,
+        table(tableName: string) {
+          const table = down.table(tableName);
+          const fields = ENCRYPTED_FIELDS[tableName];
+          if (!fields) return table;
+          return {
+            ...table,
+            mutate: async (req: any) => {
+              if ((req.type === 'add' || req.type === 'put') && Array.isArray(req.values)) {
+                const values = await Promise.all(
+                  req.values.map((v: any) => encryptRow(v, fields, encrypted))
+                );
+                return table.mutate({ ...req, values });
+              }
+              return table.mutate(req);
+            },
+            get: async (req: any) => decryptRow(await table.get(req), fields),
+            getMany: async (req: any) => {
+              const rows = await table.getMany(req);
+              return Promise.all(rows.map((r: any) => decryptRow(r, fields)));
+            },
+            query: async (req: any) => {
+              const res = await table.query(req);
+              const result = await Promise.all(res.result.map((r: any) => decryptRow(r, fields)));
+              return { ...res, result };
+            },
+          };
+        },
+      };
+    },
+  });
+}
+
 export class ChaosCommandCenterDB extends Dexie {
   // Main data table - everything organized by date first
   daily_data!: Table<DailyDataRecord>;
@@ -109,10 +217,15 @@ export class ChaosCommandCenterDB extends Dexie {
   // Pattern engine snapshots (v0.4.6+ — persistence + history view)
   pattern_snapshots!: Table<PatternSnapshot>;
 
-  constructor(userPin?: string) {
-    // Use PIN-based database name for multi-user support
-    const dbName = userPin ? `ChaosCommand_${userPin}` : 'ChaosCommandCenterDB';
+  constructor(namespace?: string) {
+    // DB name is derived from the HASHED namespace (session-crypto), never the raw
+    // PIN. `namespace` is already the SHA-256-based id (see getNamespaceId /
+    // namespaceForPin); undefined = the pre-login/default DB.
+    const dbName = namespace ? `ChaosCommand_${namespace}` : DEFAULT_DB_NAME;
     super(dbName);
+
+    // Transparent at-rest encryption for every profile DB (not the default one).
+    installEncryptionMiddleware(this, dbName !== DEFAULT_DB_NAME);
 
     this.version(1).stores({
       // Main data table with compound indexes for efficient queries
@@ -140,28 +253,30 @@ export class ChaosCommandCenterDB extends Dexie {
 // ============================================================================
 
 let _db: ChaosCommandCenterDB | null = null;
-let _currentPin: string | null = null;
+let _currentNs: string | null = null;
 
-export const getDB = (userPin?: string): ChaosCommandCenterDB => {
+/**
+ * Get the Dexie instance for a profile NAMESPACE (the hashed id, not a raw PIN).
+ * With no argument it resolves the CURRENT session's namespace (getNamespaceId),
+ * which reads the in-memory session or the persisted hash pointer — same
+ * resolution the `db` proxy uses, so getDB() and `db` never diverge. (CHA-258
+ * class bug — a getDB/proxy mismatch made every tracker's delete hit the wrong DB.)
+ * Callers needing a SPECIFIC other profile pass a namespace from namespaceForPin().
+ */
+export const getDB = (namespace?: string): ChaosCommandCenterDB => {
   if (typeof window === 'undefined') {
     throw new Error('Database can only be accessed on the client side');
   }
 
-  // When no PIN is passed, fall back to the active PIN from localStorage — same
-  // resolution the `db` proxy uses. Without this, getDB() returned the UNSCOPED
-  // default DB while saveData (via `db`) wrote to ChaosCommand_<pin>, so soft
-  // deletes queried the wrong (empty) database and silently did nothing. (CHA-258
-  // class bug — affected every tracker's delete.)
-  const effectivePin = userPin
-    ?? (typeof window !== 'undefined' ? localStorage.getItem('chaos-user-pin') : null);
+  const effectiveNs = namespace ?? getNamespaceId();
 
-  // If PIN changed (including to/from null), close old DB and create new instance
-  if (effectivePin !== _currentPin || !_db || !_db.isOpen()) {
+  // If namespace changed (including to/from null), close old DB and create new instance
+  if (effectiveNs !== _currentNs || !_db || !_db.isOpen()) {
     if (_db && _db.isOpen()) {
       _db.close();
     }
-    _db = new ChaosCommandCenterDB(effectivePin || undefined);
-    _currentPin = effectivePin;
+    _db = new ChaosCommandCenterDB(effectiveNs || undefined);
+    _currentNs = effectiveNs;
   }
 
   return _db;
@@ -172,7 +287,7 @@ export const closeDB = (): void => {
   if (_db) {
     _db.close();
     _db = null as any;
-    _currentPin = null;
+    _currentNs = null;
   }
 };
 
@@ -193,10 +308,10 @@ export const closeDB = (): void => {
 export async function deleteCurrentProfile(): Promise<string> {
   if (typeof window === 'undefined') throw new Error('deleteCurrentProfile is client-only');
 
-  const pin = (() => { try { return localStorage.getItem('chaos-user-pin'); } catch { return null; } })();
-  if (!pin) throw new Error('No profile is currently logged in — nothing to delete.');
+  const ns = getNamespaceId();
+  if (!ns) throw new Error('No profile is currently logged in — nothing to delete.');
 
-  const dbName = `ChaosCommand_${pin}`;
+  const dbName = `ChaosCommand_${ns}`;
   closeDB(); // release our handle so deletion isn't blocked
 
   await new Promise<void>((resolve, reject) => {
@@ -209,11 +324,10 @@ export async function deleteCurrentProfile(): Promise<string> {
   return dbName;
 }
 
-// For backward compatibility - will use current PIN from localStorage
+// Resolves to the current session's profile DB (by hashed namespace) on every access.
 export const db = new Proxy({} as ChaosCommandCenterDB, {
   get(target, prop) {
-    const currentPin = typeof window !== 'undefined' ? localStorage.getItem('chaos-user-pin') : null;
-    return getDB(currentPin || undefined)[prop as keyof ChaosCommandCenterDB];
+    return getDB()[prop as keyof ChaosCommandCenterDB];
   }
 });
 
@@ -304,11 +418,11 @@ export const SUBCATEGORIES = {
 /**
  * Initialize database and handle any migrations
  */
-export async function initializeDatabase(userPin?: string): Promise<void> {
+export async function initializeDatabase(namespace?: string): Promise<void> {
   try {
-    console.log(`🗃️ DEXIE: Starting database initialization${userPin ? ` for user ${userPin}` : ''}...`);
+    console.log('🗃️ DEXIE: Starting database initialization...');
 
-    const database = getDB(userPin);
+    const database = getDB(namespace);
 
     // Handle Chrome UnknownError with retry logic
     let retries = 3;

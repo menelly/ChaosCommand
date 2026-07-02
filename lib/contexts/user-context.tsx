@@ -26,11 +26,18 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { closeDB, initializeDatabase } from '@/lib/database/dexie-db'
 import { isDemoPin, ensureDemoSeeded } from '@/lib/database/demo-profile'
+import { deriveSession, clearSessionKey, clearNamespacePointer } from '@/lib/database/session-crypto'
+import { migratePlaintextProfileIfNeeded } from '@/lib/database/migrate-to-encrypted'
 
 interface UserContextType {
   userPin: string | null
   isLoggedIn: boolean
-  login: (pin: string) => void
+  /**
+   * Unlock a profile. ASYNC now: derives the encryption key (PBKDF2) and runs the
+   * one-time plaintext→encrypted migration BEFORE resolving, so callers must await
+   * before rendering any data screen (the DB has no key until this resolves).
+   */
+  login: (pin: string) => Promise<void>
   logout: () => void
   switchUser: () => void
 }
@@ -47,48 +54,83 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     const savedLoginState = localStorage.getItem('isLoggedIn')
 
     if (savedPin && savedLoginState === 'true') {
-      setUserPin(savedPin)
-      setIsLoggedIn(true)
+      // Re-derive the encryption key for the resumed session (current default:
+      // stay-logged-in). Without this the DB has no key and every read/write throws.
+      // TODO(UX): the lock-on-open setting will gate this — when enabled, we skip
+      // auto-derive and require PIN re-entry so a grabbed unlocked device stays locked
+      // (with the "you won't get reminders while locked" warning).
+      deriveSession(savedPin)
+        .then(() => { setUserPin(savedPin); setIsLoggedIn(true) })
+        .catch(err => console.error('Session resume failed:', err))
     }
   }, [])
 
-  const login = (pin: string) => {
-    // PIN becomes the database isolation key
-    // Each PIN gets its own completely separate Dexie database
+  const login = async (pin: string) => {
+    // 1) Derive the crypto session FIRST: sets the hashed namespace pointer (so
+    //    getDB() resolves the right DB) and the AES key (so writes encrypt).
+    //    Must complete before any profile data is read or written.
+    await deriveSession(pin)
+
+    // 2) One-time, verified, non-destructive migration of any legacy plaintext
+    //    profile (`ChaosCommand_<rawPIN>`) into this encrypted namespace DB.
+    try {
+      const result = await migratePlaintextProfileIfNeeded(pin)
+      if (result.migrated) {
+        console.log('🔐 Migrated legacy profile to encrypted store:', result.counts)
+      } else {
+        // Diagnostic: if your data DOESN'T appear after login, this reason says why.
+        // 'no-legacy-db' = nothing at ChaosCommand_<rawPIN> (data may be in the default DB);
+        // 'new-db-already-populated' = already migrated (normal on 2nd+ login).
+        console.log('🔐 Migration skipped:', result.reason)
+      }
+    } catch (err) {
+      // Migration verification failed → BOTH DBs left intact. Surface, don't crash.
+      console.error('⚠️ Profile migration did not complete (data preserved in both stores):', err)
+    }
+
     setUserPin(pin)
     setIsLoggedIn(true)
 
-    // Persist current user session - use consistent key with database
+    // Persist current user session.
+    // TODO(sweep): `chaos-user-pin` still holds the raw PIN for the ~30 prefs-
+    // namespacing readers. Those move to getNamespaceId() in the sweep phase, after
+    // which the raw PIN stops being persisted anywhere (closing the last cleartext leak).
     localStorage.setItem('currentUserPin', pin)
-    localStorage.setItem('chaos-user-pin', pin) // Database key
+    localStorage.setItem('chaos-user-pin', pin) // legacy prefs-namespacing key (transitional)
     localStorage.setItem('isLoggedIn', 'true')
 
     // Per-PIN UI prefs (theme/font/text-size/etc.) key off chaos-user-pin, so now that
     // it's set, tell ThemeLoader to re-apply THIS profile's appearance. (CHA-226)
     if (typeof window !== 'undefined') window.dispatchEvent(new Event('chaos-pin-changed'))
 
-    // Force initialize the new user's database.
+    // Force initialize the new user's database (deriveSession already set the
+    // namespace, so no-arg resolves to this profile's encrypted DB).
     if (isDemoPin(pin)) {
       // The public demo profile (1111): seed sample data on first view, so logging in with
       // the openly-documented demo PIN always lands on a populated, mild example dataset.
-      ensureDemoSeeded().catch(console.error)
+      await ensureDemoSeeded().catch(console.error)
     } else {
-      initializeDatabase(pin).catch(console.error)
+      await initializeDatabase().catch(console.error)
     }
 
-    console.log(`🔐 Database isolated for PIN: ${pin.replace(/./g, '*')}`)
+    console.log(`🔐 Profile unlocked (encrypted) for PIN: ${pin.replace(/./g, '*')}`)
   }
 
   const logout = () => {
-    // Close the current DB connection BEFORE clearing the PIN
+    // Close the current DB connection BEFORE clearing the session
     closeDB()
+
+    // Wipe the in-memory encryption key + the persisted namespace pointer so a
+    // locked profile has NO way to read its own ciphertext until re-unlocked.
+    clearSessionKey()
+    clearNamespacePointer()
 
     setUserPin(null)
     setIsLoggedIn(false)
 
     // Clear current session (but don't delete database data!)
     localStorage.removeItem('currentUserPin')
-    localStorage.removeItem('chaos-user-pin') // Database key
+    localStorage.removeItem('chaos-user-pin') // legacy prefs-namespacing key (transitional)
     localStorage.removeItem('isLoggedIn')
 
     // PIN cleared → fall back to the global/default appearance for the login screen.

@@ -338,18 +338,17 @@ export function useDailyData(): UseDailyDataReturn {
   ): Promise<DailyDataRecord[]> => {
     try {
       setError(null);
-      let query = db.daily_data.toCollection();
-      
-      if (category) {
-        query = db.daily_data.where('category').equals(category);
-      }
-      
-      return await query
-        .filter(record => {
-          const contentStr = JSON.stringify(record.content).toLowerCase();
-          return contentStr.includes(searchTerm.toLowerCase());
-        })
-        .toArray();
+      // Fetch via toArray() (the decrypting query path) THEN filter in JS. We can't
+      // use Dexie's .filter() here: it runs on a CURSOR, whose .value the at-rest
+      // encryption middleware can't transparently decrypt (async crypto vs a sync
+      // cursor getter), so it would match against ciphertext and find nothing.
+      const rows = category
+        ? await db.daily_data.where('category').equals(category).toArray()
+        : await db.daily_data.toArray();
+      const needle = searchTerm.toLowerCase();
+      return rows.filter(record =>
+        JSON.stringify(record.content).toLowerCase().includes(needle)
+      );
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to search by content';
       setError(errorMsg);
