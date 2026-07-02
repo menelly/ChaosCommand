@@ -79,3 +79,39 @@ by our own code — the exact thing this feature exists to PREVENT.
 - Deterministic lab parser still whiffs the range-less two-column ED layout
   (only caught the "Sodium Chloride 0.9%" IV bag). Expected; that's why MedGemma
   extracts and code judges.
+
+## PLAN (decided 2026-07-01 night, build fresh — do NOT start tired)
+
+### Urgent: get the "psycho" build off the MS Store
+The Store currently ships the OLD d4data-NER build that emits "psycho" as a
+diagnosis. The new MedGemma path has the direction bug above. BOTH auto-parsers
+are unsafe. So ship a version that DISABLES dangerous auto-parsing (app cannot
+emit wrong findings), replacing the psycho build. MedGemma parsing → slated 1.1
+once deriveLabDirection is fixed.
+
+### The 1.1 direction: "Bring Your Own AI" (Ren's idea, and it's the good answer)
+Instead of bundling a model (the 2GB/HF/llama.cpp/CUDA/service-worker nightmare
+we fought all day) OR relying on the weak 4B (that thinks 19 is hyperglycemia):
+- App shows a "Copy extraction prompt" button → user pastes prompt + their record
+  into THEIR OWN AI (Claude/GPT/etc.) → pastes the returned JSON back → app
+  validates + runs the SAME review screen + grounding guard + deriveLabDirection.
+- Wins: zero model bundling, zero network/HF, AI 100% in the user's hands (great
+  privacy/liability story), and a frontier model gets extraction + direction right
+  where the 4B failed. Reuse ALL the bones (ImpressionItem/MedicalEvent schema,
+  review UI, grounding, deterministic lab direction).
+- Safety refinement: grounding needs source text. Have the prompt emit a verbatim
+  `source_quote` per finding (shown on the review screen), and/or have the user
+  paste the source alongside the JSON. Labs STILL go through deriveLabDirection —
+  code owns direction, not even the user's fancy AI.
+- Keep the MedGemma bones in the tree behind a flag for a later "local model" tier.
+
+### Bonus infra done tonight (2026-07-01, on the Consortium)
+- Isolated GPU genetics env at /mnt/arcana/genetics-gpu (micromamba): PyTorch
+  2.12.1 CUDA-working (sees the V100), OpenMM (GPU MD), MDAnalysis, Biopython,
+  scikit-learn. Separate from codex venv / BabbyBotz. Use:
+  `micromamba run -p /mnt/arcana/genetics-gpu python ...`
+- CUDA GROMACS build in progress at /mnt/arcana/gmx_build (2024.4, cmake 3.28,
+  gcc-11, sm 61;70) → installs to /mnt/arcana/md_env_cuda. cmake 4.x was the
+  blocker (incompatible with gmx2024 nvcc check); 3.28 is the known-good combo.
+- Cleaned up: a runaway dedup llama-cli had filled root /tmp with 17GB (killed).
+  DISCIPLINE: always pass `-no-cnv` to llama-cli and clean up detached runs.
