@@ -186,10 +186,9 @@ export async function migrateDemoToNewPin(newPin: string): Promise<number> {
   await demoDb.daily_data.bulkAdd(fixtureRecords() as any)
   try { localStorage.setItem(DEMO_FIXTURE_VERSION_KEY, FIXTURE_BUILT_AT) } catch { /* SSR */ }
 
-  // 5) Land the session on the new PIN (the caller calls login(np) right after, which
-  //    re-derives + persists the session; we set currentUserPin so resume works too).
+  // 5) Land the in-memory session on the new PIN. The caller calls login(np) right
+  //    after, which re-derives the session; nothing about the PIN is persisted.
   await deriveSession(np)
-  try { localStorage.setItem('currentUserPin', np) } catch { /* SSR */ }
   return records.length
 }
 

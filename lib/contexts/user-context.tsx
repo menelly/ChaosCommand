@@ -28,7 +28,7 @@ import { closeDB, initializeDatabase } from '@/lib/database/dexie-db'
 import { isDemoPin, ensureDemoSeeded } from '@/lib/database/demo-profile'
 import { deriveSession, clearSessionKey, clearNamespacePointer } from '@/lib/database/session-crypto'
 import { migratePlaintextProfileIfNeeded } from '@/lib/database/migrate-to-encrypted'
-import { migrateProfileKeys } from '@/lib/prefs'
+import { migrateProfileKeys, getPref } from '@/lib/prefs'
 
 interface UserContextType {
   userPin: string | null
@@ -49,22 +49,13 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [userPin, setUserPin] = useState<string | null>(null)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
 
-  // Check for existing session on mount
-  useEffect(() => {
-    const savedPin = localStorage.getItem('currentUserPin')
-    const savedLoginState = localStorage.getItem('isLoggedIn')
-
-    if (savedPin && savedLoginState === 'true') {
-      // Re-derive the encryption key for the resumed session (current default:
-      // stay-logged-in). Without this the DB has no key and every read/write throws.
-      // TODO(UX): the lock-on-open setting will gate this — when enabled, we skip
-      // auto-derive and require PIN re-entry so a grabbed unlocked device stays locked
-      // (with the "you won't get reminders while locked" warning).
-      deriveSession(savedPin)
-        .then(() => { setUserPin(savedPin); setIsLoggedIn(true) })
-        .catch(err => console.error('Session resume failed:', err))
-    }
-  }, [])
+  // NO cross-process auto-resume. The encryption key lives ONLY in memory, so:
+  //  • FULL CLOSE (swipe-kill / window X) ends the process → key gone → next launch
+  //    shows the lock screen. That's the user's "make it go away" = logout.
+  //  • APP SWITCH / minimize keeps the process alive → this component stays mounted,
+  //    React state + in-memory key persist → still logged in, no re-entry.
+  // Nothing to restore here, and the raw PIN is persisted NOWHERE. (The optional
+  // "auto-lock in background" setting, below, tightens the app-switch case too.)
 
   const login = async (pin: string) => {
     // 1) Derive the crypto session FIRST: sets the hashed namespace pointer (so
@@ -94,16 +85,11 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       console.error('⚠️ Profile migration did not complete (data preserved in both stores):', err)
     }
 
+    // Session lives in MEMORY only (React state + the in-memory key). Nothing about
+    // the PIN is persisted — the process staying alive IS the "stay logged in", and
+    // the process ending IS the logout. So the raw PIN touches localStorage nowhere.
     setUserPin(pin)
     setIsLoggedIn(true)
-
-    // Persist the session for auto-resume (stay-logged-in mode). `currentUserPin` is
-    // the raw PIN — INHERENT to auto-unlock: re-deriving the key on refresh needs it.
-    // The lock-on-open setting (TODO) removes this and requires PIN re-entry instead,
-    // which is the actually-secure mode. Prefs/DB no longer namespace by raw PIN, so
-    // this is the ONLY place the raw PIN persists (and only in stay-logged-in mode).
-    localStorage.setItem('currentUserPin', pin)
-    localStorage.setItem('isLoggedIn', 'true')
 
     // Prefs are namespaced by the hashed profile id now; tell ThemeLoader to re-apply
     // THIS profile's appearance. (CHA-226)
@@ -134,20 +120,35 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     setUserPin(null)
     setIsLoggedIn(false)
 
-    // Clear current session (but don't delete database data!)
-    localStorage.removeItem('currentUserPin')
-    localStorage.removeItem('isLoggedIn')
+    // Nothing PIN-related is persisted, so there's nothing to strip from storage —
+    // clearing the in-memory key + namespace pointer (above) IS the logout.
 
     // PIN cleared → fall back to the global/default appearance for the login screen.
     if (typeof window !== 'undefined') window.dispatchEvent(new Event('chaos-pin-changed'))
 
-    console.log('🚪 Logged out - database connection closed, data preserved')
+    console.log('🚪 Logged out - key wiped, DB closed, data preserved')
   }
 
   const switchUser = () => {
     // Quick user switching without losing any data
     logout()
   }
+
+  // OPTIONAL "auto-lock in background" — tightens the app-switch case. When enabled,
+  // hiding the app (mobile background / desktop minimize) logs out immediately, so
+  // even a quick app-switch requires the PIN to return. Off by default (the process-
+  // lifecycle model already logs out on full close). NOTE for the UI: while logged
+  // out, background medication/reminder notifications can't fire (no key to read the
+  // schedule) — that's the tradeoff this setting makes, and the toggle must say so.
+  useEffect(() => {
+    if (!isLoggedIn) return
+    if (getPref('chaos-auto-lock-background') !== 'true') return
+    const onHide = () => { if (document.visibilityState === 'hidden') logout() }
+    document.addEventListener('visibilitychange', onHide)
+    return () => document.removeEventListener('visibilitychange', onHide)
+    // logout is stable within a render; re-subscribe only when login state flips.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoggedIn])
 
   const value: UserContextType = {
     userPin,
