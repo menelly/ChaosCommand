@@ -7,8 +7,7 @@
  * Writes to Dexie via useDailyData using the same compound-subcategory
  * pattern as /timeline and /lab-results.
  */
-"use client"
-
+"use client";
 import { useState } from "react"
 import AppCanvas from "@/components/app-canvas"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -36,6 +35,8 @@ import {
   Stethoscope,
   Plus,
 } from "lucide-react"
+
+import Link from "next/link";
 
 // ============================================================================
 // TYPES (mirror /timeline and /lab-results so data stays compatible)
@@ -592,10 +593,10 @@ export default function AddToTimelinePage() {
 
         <div className="flex justify-center gap-4 mt-8 text-sm">
           <Button variant="outline" asChild>
-            <a href="/manage">← Back to Manage</a>
+            <Link href="/manage">← Back to Manage</Link>
           </Button>
         </div>
       </div>
     </AppCanvas>
-  )
+  );
 }

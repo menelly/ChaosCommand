@@ -226,7 +226,14 @@ function AppContent({ children }: AppWrapperProps) {
       // One-time personalization prompt for users who onboarded BEFORE
       // personalization existed (CHA-261). Fires once on next login, then never.
       const personalized = localStorage.getItem(`chaos-personalization-prompted-${userPin}`)
-      if (personalized !== 'true') setShowPersonalize(true)
+      if (personalized !== 'true') {
+        setShowPersonalize(true)
+        // Mark PROMPTED the instant we show it — the flag is "prompted", not
+        // "completed". The panel already saves-as-you-go, so a user who fills it
+        // in and navigates away via the sidebar (without clicking Done/Skip) would
+        // otherwise be re-prompted on every login. Show once, ever.
+        try { localStorage.setItem(`chaos-personalization-prompted-${userPin}`, 'true') } catch {}
+      }
       return
     }
 

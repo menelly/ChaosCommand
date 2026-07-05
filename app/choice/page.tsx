@@ -21,8 +21,7 @@
  *
  * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
  */
-'use client'
-
+'use client';
 import React, { useState, useEffect } from 'react'
 import AppCanvas from '@/components/app-canvas'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -44,9 +43,12 @@ import {
 } from 'lucide-react'
 import { getPref, setPref } from '@/lib/prefs'
 
+import { useRouter } from "next/navigation";
+
 const HIDDEN_TRACKERS_KEY = 'chaos-choice-hidden-trackers'
 
 export default function ChoicePage() {
+  const router = useRouter();
   // Hidden trackers state - persisted to localStorage
   const [hiddenTrackers, setHiddenTrackers] = useState<string[]>([])
   const [isCustomizeOpen, setIsCustomizeOpen] = useState(false)
@@ -144,7 +146,7 @@ export default function ChoicePage() {
   const choiceAreas = allChoiceAreas.filter(area => !hiddenTrackers.includes(area.id))
 
   const handleNavigation = (route: string) => {
-    window.location.href = route
+    router.push(route)
   }
 
   return (
@@ -283,11 +285,11 @@ export default function ChoicePage() {
         </Card>
 
         <div className="mt-8 text-center">
-          <Button variant="outline" onClick={() => window.location.href = '/'}>
+          <Button variant="outline" onClick={() => router.push('/')}>
             ← Back to Command Center
           </Button>
         </div>
       </div>
     </AppCanvas>
-  )
+  );
 }

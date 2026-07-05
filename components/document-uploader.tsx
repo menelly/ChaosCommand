@@ -21,8 +21,7 @@
  *
  * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
  */
-"use client"
-
+"use client";
 import { useState, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -41,6 +40,8 @@ import { CATEGORIES, SUBCATEGORIES, formatDateForStorage } from '@/lib/database/
 import { extractMedicalEvents, AI_VALIDATION_UNAVAILABLE } from '@/lib/services/medical-ner';
 import { extractLabResults, extractLabResultsSmart, labResultsToEvents, extractCollectionDate } from '@/lib/services/lab-parser';
 import { extractDocFromBase64 } from '@/lib/services/text-extractor';
+
+import Link from "next/link";
 
 // Web "try me" demo: file import is gated (see the early return in the component).
 const IS_DEMO = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
@@ -1168,7 +1169,6 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
           </div>
         </DialogContent>
       </Dialog>
-
       {/* 🎨✨ GORGEOUS SPARKLY UPLOAD AREA */}
       <Card className={`border-2 border-dashed transition-all duration-500 transform ${
         isDragOver
@@ -1213,7 +1213,7 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
               {/* Demographics hint + first-time model download */}
               <div className="text-xs text-[var(--text-muted)] mb-4 space-y-1">
                 <p>
-                  💡 <a href="/demographics" className="underline text-[var(--accent-purple)] hover:text-[var(--accent-orange)]">Fill out Demographics first</a> — we use your name and birthday to filter personal info from results.
+                  💡 <Link href="/demographics" className="underline text-[var(--accent-purple)] hover:text-[var(--accent-orange)]">Fill out Demographics first</Link> — we use your name and birthday to filter personal info from results.
                 </p>
                 {/* The one-time MedGemma download + its privacy note now live
                     with the AI-parsing toggle on the Import page, where the
@@ -1386,7 +1386,6 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
           />
         </CardContent>
       </Card>
-
       {/* 📁 UPLOADED FILES STATUS */}
       {files.length > 0 && (
         <Card>
@@ -1492,7 +1491,6 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
           </CardContent>
         </Card>
       )}
-
       {/* 👁️ PREVIEW PARSED EVENTS + LABS */}
       {(allParsedEvents.length > 0 || allParsedLabs.length > 0) && !showPreview && (
         <Card className="border-[var(--accent-orange)]">
@@ -1539,7 +1537,6 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
           </CardContent>
         </Card>
       )}
-
       {/* 📋 DETAILED EVENT PREVIEW & EDITING */}
       {showPreview && (allParsedEvents.length > 0 || allParsedLabs.length > 0) && (
         <Card>

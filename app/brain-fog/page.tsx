@@ -21,8 +21,7 @@
  *
  * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
  */
-'use client'
-
+'use client';
 import { useState, useEffect } from "react"
 import { getPref } from "@/lib/prefs"
 import AppCanvas from "@/components/app-canvas"
@@ -45,6 +44,8 @@ import { celebrate } from '@/lib/particle-physics-engine'
 import { useUser } from '@/lib/contexts/user-context'
 import { isCelebrationEnabled } from '@/lib/celebration-prefs'
 import { EntryDateTimePicker } from '@/components/entry-datetime-picker'
+
+import Link from "next/link";
 
 interface BrainFogEntry {
   id: string
@@ -956,13 +957,13 @@ export default function BrainFogTracker() {
         {/* Back to Mind Button */}
         <div className="flex justify-center pt-4">
           <Button variant="outline" asChild>
-            <a href="/mind">
+            <Link href="/mind">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Mind
-            </a>
+            </Link>
           </Button>
         </div>
       </div>
     </AppCanvas>
-  )
+  );
 }

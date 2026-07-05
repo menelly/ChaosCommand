@@ -9,8 +9,7 @@
  *
  * Mobile users get a redirect card (see route-level guard).
  */
-"use client"
-
+"use client";
 import { useState, useEffect } from "react"
 import AppCanvas from "@/components/app-canvas"
 import { Button } from "@/components/ui/button"
@@ -40,6 +39,8 @@ import {
   MODEL_TOTAL_BYTES,
   type LlmDownloadProgress,
 } from "@/lib/services/llm-tauri"
+
+import Link from "next/link";
 
 // Shape the uploader hands back (matches components/document-uploader.tsx)
 interface ExtractedEvent {
@@ -168,30 +169,30 @@ export default function ImportRecordsPage() {
               <ul className="list-disc pl-5 space-y-1">
                 <li>
                   Add events and lab results by hand from{" "}
-                  <a
+                  <Link
                     href="/add"
                     className="underline text-[var(--text-main)] font-medium"
                   >
                     Add to Timeline
-                  </a>
+                  </Link>
                 </li>
                 <li>
                   View and filter your full timeline from{" "}
-                  <a
+                  <Link
                     href="/timeline"
                     className="underline text-[var(--text-main)] font-medium"
                   >
                     Timeline
-                  </a>
+                  </Link>
                 </li>
                 <li>
                   View lab trends from{" "}
-                  <a
+                  <Link
                     href="/lab-results"
                     className="underline text-[var(--text-main)] font-medium"
                   >
                     Labs
-                  </a>
+                  </Link>
                 </li>
               </ul>
               <p>
@@ -202,7 +203,7 @@ export default function ImportRecordsPage() {
           </Card>
         </div>
       </AppCanvas>
-    )
+    );
   }
 
   // Desktop: full extraction UI
@@ -298,9 +299,9 @@ export default function ImportRecordsPage() {
                 and the lab parser, then a review screen lets you uncheck anything
                 that doesn’t belong before it lands on your timeline or Labs
                 dashboard. Have a pure lab panel?{" "}
-                <a href="/import?mode=lab" className="underline text-[var(--text-main)]">
+                <Link href="/import?mode=lab" className="underline text-[var(--text-main)]">
                   Use the lab-only importer
-                </a>{" "}
+                </Link>{" "}
                 to skip NER. Runs locally — your documents never leave this computer.
               </>
             )}
@@ -316,9 +317,9 @@ export default function ImportRecordsPage() {
                 {savedCount > 0 && (
                   <div className="text-sm text-[var(--text-muted)]">
                     {savedCount} total this session —{" "}
-                    <a href="/timeline" className="underline">
+                    <Link href="/timeline" className="underline">
                       view timeline
-                    </a>
+                    </Link>
                   </div>
                 )}
               </div>
@@ -341,10 +342,10 @@ export default function ImportRecordsPage() {
                 </div>
               </div>
               <Button asChild className="shrink-0">
-                <a href="/lab-results">
+                <Link href="/lab-results">
                   <FlaskConical className="h-4 w-4 mr-2" />
                   Open Lab Results
-                </a>
+                </Link>
               </Button>
             </CardContent>
           </Card>
@@ -429,7 +430,7 @@ export default function ImportRecordsPage() {
                           <span className="text-xs text-[var(--text-main)] font-medium">🧠 AI model ready — upload unlocked.</span>
                           {/* TEMP (prompt-off experiment, delete before ship) */}
                           <Button asChild size="sm" variant="outline" className="shrink-0">
-                            <a href="/import/prompt-off">🧪 Prompt-Off</a>
+                            <Link href="/import/prompt-off">🧪 Prompt-Off</Link>
                           </Button>
                         </>
                       )}
@@ -501,10 +502,10 @@ export default function ImportRecordsPage() {
 
         <div className="flex justify-center gap-4 mt-8 text-sm">
           <Button variant="outline" asChild>
-            <a href="/manage">← Back to Manage</a>
+            <Link href="/manage">← Back to Manage</Link>
           </Button>
         </div>
       </div>
     </AppCanvas>
-  )
+  );
 }

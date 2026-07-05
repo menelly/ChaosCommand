@@ -11,6 +11,8 @@ import AdrenalTracker from './adrenal-tracker'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft } from 'lucide-react'
 
+import Link from "next/link";
+
 export default function AdrenalPage() {
   return (
     <AppCanvas currentPage="body">
@@ -18,12 +20,12 @@ export default function AdrenalPage() {
       {/* Back to Endocrine */}
       <div className="flex justify-center pt-4">
         <Button variant="outline" asChild>
-          <a href="/endocrine">
+          <Link href="/endocrine">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Endocrine
-          </a>
+          </Link>
         </Button>
       </div>
     </AppCanvas>
-  )
+  );
 }

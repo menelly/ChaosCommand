@@ -21,8 +21,7 @@
  *
  * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
  */
-'use client'
-
+'use client';
 import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -30,6 +29,8 @@ import { Target, Heart, Brain } from 'lucide-react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Plus, Package, Clock, Moon, ChevronRight, ChevronDown, Backpack } from 'lucide-react'
+
+import { useRouter } from "next/navigation";
 
 interface DailyTask {
   id: string
@@ -72,6 +73,7 @@ interface SurvivalBoxItem {
 }
 
 export default function CommandZone() {
+  const router = useRouter();
   const [dailyTasks, setDailyTasks] = useState<DailyTask[]>([])
   const [newTask, setNewTask] = useState('')
   const [gearCheck, setGearCheck] = useState<GearItem[]>([
@@ -161,7 +163,6 @@ export default function CommandZone() {
         <h1 className="text-4xl font-bold text-pink-600 mb-2">Command Zone</h1>
         <p className="text-muted-foreground">Your daily quest hub - let's get stuff done! ✨</p>
       </div>
-
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <Card className="bg-muted/50">
@@ -183,7 +184,6 @@ export default function CommandZone() {
           </CardContent>
         </Card>
       </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Daily Tasks */}
         <Card>
@@ -251,7 +251,6 @@ export default function CommandZone() {
           </CardContent>
         </Card>
       </div>
-
       {/* Quick Tracker Access */}
       <Card>
         <CardHeader>
@@ -262,7 +261,7 @@ export default function CommandZone() {
             <Button 
               variant="outline" 
               className="h-20 flex flex-col gap-2 hover:bg-red-50"
-              onClick={() => window.location.href = '/body'}
+              onClick={() => router.push('/body')}
             >
               <Heart className="h-6 w-6 text-red-500" />
               <span>Body Tracker</span>
@@ -270,7 +269,7 @@ export default function CommandZone() {
             <Button 
               variant="outline" 
               className="h-20 flex flex-col gap-2 hover:bg-blue-50"
-              onClick={() => window.location.href = '/mind'}
+              onClick={() => router.push('/mind')}
             >
               <Brain className="h-6 w-6 text-blue-500" />
               <span>Mind Tracker</span>
@@ -278,7 +277,7 @@ export default function CommandZone() {
             <Button 
               variant="outline" 
               className="h-20 flex flex-col gap-2 hover:bg-purple-50"
-              onClick={() => window.location.href = '/choice'}
+              onClick={() => router.push('/choice')}
             >
               <Target className="h-6 w-6 text-purple-500" />
               <span>Choice Tracker</span>
@@ -287,5 +286,5 @@ export default function CommandZone() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

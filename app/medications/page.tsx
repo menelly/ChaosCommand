@@ -29,13 +29,14 @@
  */
 
 'use client';
-
 import { useEffect, useState } from 'react';
 import { Pill } from 'lucide-react';
 import { isTauri } from '@tauri-apps/api/core';
 import { MedicationTracker } from '@/components/medications/medication-tracker';
 import { Button } from '@/components/ui/button';
 import AppCanvas from '@/components/app-canvas';
+
+import Link from "next/link";
 
 export default function MedicationsPage() {
   // Desktop app only (not web, not the phone build). The phone delivers
@@ -74,9 +75,9 @@ export default function MedicationsPage() {
 
         <div className="text-center">
           <Button variant="outline" asChild>
-            <a href="/manage">
+            <Link href="/manage">
               ← Back to Manage
-            </a>
+            </Link>
           </Button>
         </div>
       </div>

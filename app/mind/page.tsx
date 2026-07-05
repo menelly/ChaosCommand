@@ -21,8 +21,7 @@
  *
  * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
  */
-"use client"
-
+"use client";
 import { useState, useEffect } from "react"
 import AppCanvas from "@/components/app-canvas"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -43,6 +42,8 @@ import {
 } from "lucide-react"
 import { getPref, setPref } from "@/lib/prefs"
 
+import { useRouter } from "next/navigation";
+
 const HIDDEN_TRACKERS_KEY = 'chaos-mind-hidden-trackers'
 
 interface TrackerButton {
@@ -56,6 +57,7 @@ interface TrackerButton {
 }
 
 export default function MentalHealthIndex() {
+  const router = useRouter();
   // Hidden trackers state - persisted to localStorage
   const [hiddenTrackers, setHiddenTrackers] = useState<string[]>([])
   const [isCustomizeOpen, setIsCustomizeOpen] = useState(false)
@@ -164,7 +166,7 @@ export default function MentalHealthIndex() {
   const handleTrackerClick = (trackerId: string) => {
     const tracker = allTrackers.find(t => t.id === trackerId)
     if (tracker?.status === 'available' && tracker.href) {
-      window.location.href = tracker.href
+      router.push(tracker.href)
     } else {
       console.log(`Tracker ${trackerId} not yet available`)
     }
@@ -314,11 +316,11 @@ export default function MentalHealthIndex() {
         </Card>
 
         <div className="mt-8 text-center">
-          <Button variant="outline" onClick={() => window.location.href = '/'}>
+          <Button variant="outline" onClick={() => router.push('/')}>
             ← Back to Command Center
           </Button>
         </div>
       </div>
     </AppCanvas>
-  )
+  );
 }

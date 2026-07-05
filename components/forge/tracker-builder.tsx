@@ -22,7 +22,6 @@
  * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
  */
 'use client';
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -55,6 +54,8 @@ import { useDailyData, CATEGORIES } from '@/lib/database';
 import FieldSelector from './field-selector';
 import TrackerPreview from './tracker-preview';
 
+import { useRouter } from "next/navigation";
+
 // 🔨 CUSTOM TRACKER INTERFACES
 export interface TrackerField {
   id: string;
@@ -79,6 +80,7 @@ export interface CustomTracker {
 }
 
 export default function TrackerBuilder({ editId }: { editId?: string }) {
+  const router = useRouter();
   // 🎯 STATE MANAGEMENT
   const [activeTab, setActiveTab] = useState('builder');
   const [tracker, setTracker] = useState<Partial<CustomTracker>>({
@@ -318,7 +320,6 @@ export default function TrackerBuilder({ editId }: { editId?: string }) {
             : 'Build your own medical trackers using smart components and medical dictionaries'}
         </p>
       </header>
-
       {/* ⏳ / ⚠️ EDIT-LOAD STATES */}
       {loadingExisting && (
         <div className="text-center py-6">
@@ -333,7 +334,6 @@ export default function TrackerBuilder({ editId }: { editId?: string }) {
           {loadError}
         </div>
       )}
-
       {/* 🎛️ MAIN BUILDER INTERFACE */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3">
@@ -602,7 +602,7 @@ export default function TrackerBuilder({ editId }: { editId?: string }) {
         <TabsContent value="save" className="space-y-6">
           {deploySuccess ? (
             // 🎉 SUCCESS STATE
-            <Card className="border-success/30 bg-success/10">
+            (<Card className="border-success/30 bg-success/10">
               <CardContent className="pt-6">
                 <div className="text-center space-y-4">
                   <CheckCircle className="h-16 w-16 mx-auto text-success" />
@@ -634,7 +634,7 @@ export default function TrackerBuilder({ editId }: { editId?: string }) {
                   {editingId ? (
                     <div className="flex flex-wrap gap-2 justify-center">
                       <Button
-                        onClick={() => { window.location.href = `/custom-tracker?id=${editingId}`; }}
+                        onClick={() => { router.push(`/custom-tracker?id=${editingId}`); }}
                         className="bg-green-600 hover:bg-green-700"
                       >
                         <Target className="h-4 w-4 mr-2" />
@@ -665,10 +665,10 @@ export default function TrackerBuilder({ editId }: { editId?: string }) {
                   )}
                 </div>
               </CardContent>
-            </Card>
+            </Card>)
           ) : (
             // 🚀 DEPLOY STATE
-            <Card>
+            (<Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   {editingId ? <Save className="h-5 w-5 text-orange-500" /> : <Rocket className="h-5 w-5 text-orange-500" />}
@@ -731,7 +731,7 @@ export default function TrackerBuilder({ editId }: { editId?: string }) {
                   Your tracker will appear in the CUSTOM section immediately after deployment
                 </p>
               </CardContent>
-            </Card>
+            </Card>)
           )}
         </TabsContent>
       </Tabs>

@@ -7,8 +7,7 @@
  *
  * "Weaponize your paperwork." — Past-Ace, May 2025
  */
-"use client"
-
+"use client";
 import { useState, useEffect, useCallback } from "react"
 import AppCanvas from "@/components/app-canvas"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -26,6 +25,8 @@ import {
   Building2, GraduationCap, Heart, Home
 } from "lucide-react"
 import { MissedWorkAnalytics } from "./missed-work-analytics"
+
+import Link from "next/link";
 
 // ============================================================================
 // TYPES
@@ -1322,10 +1323,10 @@ export default function WorkDisabilityPage() {
         {/* Footer */}
         <div className="flex justify-center gap-4 mt-8 text-sm">
           <Button variant="outline" asChild>
-            <a href="/manage">← Back to Manage</a>
+            <Link href="/manage">← Back to Manage</Link>
           </Button>
         </div>
       </div>
     </AppCanvas>
-  )
+  );
 }

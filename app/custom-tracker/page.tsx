@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation';
 import AppCanvas from '@/components/app-canvas'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -31,6 +31,7 @@ interface HistoryEntry {
 }
 
 export default function CustomTrackerPage() {
+  const router = useRouter();
   const searchParams = useSearchParams()
   const trackerId = searchParams.get('id')
   const [tracker, setTracker] = useState<CustomTracker | null>(null)
@@ -434,25 +435,25 @@ export default function CustomTrackerPage() {
         <div className="max-w-2xl mx-auto text-center py-16">
           <h1 className="text-2xl font-bold mb-4">Tracker Not Found</h1>
           <p className="text-muted-foreground mb-6">This custom tracker may have been removed or doesn't exist yet.</p>
-          <Button onClick={() => window.location.href = '/custom'} variant="outline">
+          <Button onClick={() => router.push('/custom')} variant="outline">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Custom Trackers
           </Button>
         </div>
       </AppCanvas>
-    )
+    );
   }
 
   return (
     <AppCanvas currentPage="custom-trackers">
       <div className="max-w-2xl mx-auto space-y-6">
         <div className="flex items-center justify-between mb-4 gap-2">
-          <Button onClick={() => window.location.href = '/custom'} variant="outline">
+          <Button onClick={() => router.push('/custom')} variant="outline">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Custom Trackers
           </Button>
           <Button
-            onClick={() => window.location.href = `/forge?edit=${tracker.id}`}
+            onClick={() => router.push(`/forge?edit=${tracker.id}`)}
             variant="outline"
             title="Add, rename, or remove fields in Forge"
           >
@@ -607,5 +608,5 @@ export default function CustomTrackerPage() {
         </Tabs>
       </div>
     </AppCanvas>
-  )
+  );
 }

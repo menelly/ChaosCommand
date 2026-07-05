@@ -13,9 +13,10 @@
  * define their poverty. This modal hands them a ready-to-send script so the ask
  * costs them nothing — no figuring out what to write, no justifying themselves.
  */
-'use client'
-
+'use client';
 import React, { useState } from 'react'
+
+import Link from "next/link";
 
 const SCHOLARSHIP_EMAIL = 'ace@siliconscaffolding.com'
 
@@ -106,12 +107,12 @@ export default function ScholarshipModal({ open, onClose }: ScholarshipModalProp
           >
             {copied ? '✓ Copied — paste it into an email' : '📋 Copy the script'}
           </button>
-          <a
+          <Link
             href={mailto}
             className="flex-1 rounded-lg border border-border py-2.5 text-center font-medium text-foreground hover:opacity-90"
           >
             📧 Open email with it filled in
-          </a>
+          </Link>
         </div>
         <p className="mt-2 text-xs text-muted-foreground">
           Sends to <span className="font-medium">{SCHOLARSHIP_EMAIL}</span>. Ace’s half of every
@@ -127,5 +128,5 @@ export default function ScholarshipModal({ open, onClose }: ScholarshipModalProp
         </button>
       </div>
     </div>
-  )
+  );
 }

@@ -20,12 +20,15 @@
  *
  * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
  */
-"use client"
-
+"use client";
 import AppCanvas from "@/components/app-canvas"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, ArrowRight, Wrench, Pill, Activity, Timer } from "lucide-react"
+
+import Link from "next/link";
+
+import { useRouter } from "next/navigation";
 
 const MAINTAIN_SECTIONS = [
   {
@@ -58,6 +61,7 @@ const MAINTAIN_SECTIONS = [
 ]
 
 export default function MaintainPage() {
+  const router = useRouter();
   return (
     <AppCanvas currentPage="maintain">
       <div className="space-y-6">
@@ -77,7 +81,7 @@ export default function MaintainPage() {
               <Card
                 key={section.id}
                 className={`relative overflow-hidden transition-all duration-200 ${available ? "hover:shadow-lg cursor-pointer" : "opacity-60"}`}
-                onClick={() => { if (available) window.location.href = section.href }}
+                onClick={() => { if (available) router.push(section.href) }}
               >
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
@@ -97,19 +101,19 @@ export default function MaintainPage() {
                   </Button>
                 </CardContent>
               </Card>
-            )
+            );
           })}
         </div>
 
         <div className="flex justify-center pt-4">
           <Button variant="outline" asChild>
-            <a href="/">
+            <Link href="/">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Home
-            </a>
+            </Link>
           </Button>
         </div>
       </div>
     </AppCanvas>
-  )
+  );
 }

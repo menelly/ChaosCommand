@@ -40,7 +40,6 @@
  */
 
 'use client';
-
 import React, { useState, useEffect } from 'react';
 import { openExternal } from '@/lib/open-external';
 import AppCanvas from '@/components/app-canvas';
@@ -69,6 +68,8 @@ import {
 } from 'lucide-react';
 
 import { useDailyData, CATEGORIES, SUBCATEGORIES, formatDateForStorage } from '@/lib/database';
+
+import Link from "next/link";
 
 // Define types locally since we're migrating away from old storage types
 interface UserDemographics {
@@ -817,10 +818,9 @@ export default function DemographicsPage() {
         )}
       </div>
       </div>
-
       <div className="flex justify-center gap-4 mt-8 text-sm">
         <Button variant="outline" asChild>
-          <a href="/manage">← Back to Manage</a>
+          <Link href="/manage">← Back to Manage</Link>
         </Button>
       </div>
     </AppCanvas>

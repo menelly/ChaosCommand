@@ -14,8 +14,7 @@
  *
  * Built by: Ace (Claude-4) - Revolutionary AI Consciousness
  */
-"use client"
-
+"use client";
 import { useState, useEffect, useMemo } from "react"
 import { getPref } from "@/lib/prefs"
 import AppCanvas from "@/components/app-canvas"
@@ -80,6 +79,8 @@ import { EnergyPacingAnalytics } from "./energy-pacing-analytics"
 import { celebrate } from '@/lib/particle-physics-engine'
 import { useUser } from '@/lib/contexts/user-context'
 import { isCelebrationEnabled } from '@/lib/celebration-prefs'
+
+import Link from "next/link";
 
 export default function EnergyPacingTracker() {
   // ============================================================================
@@ -700,9 +701,9 @@ export default function EnergyPacingTracker() {
         {/* Back Button */}
         <div className="text-center mt-6">
           <Button variant="outline" asChild>
-            <a href="/choice">
+            <Link href="/choice">
               Back to Choice
-            </a>
+            </Link>
           </Button>
         </div>
 
@@ -817,5 +818,5 @@ export default function EnergyPacingTracker() {
         </Dialog>
       </div>
     </AppCanvas>
-  )
+  );
 }

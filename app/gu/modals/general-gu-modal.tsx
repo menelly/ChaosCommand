@@ -10,8 +10,7 @@
  * This wasn't built with compliance. It was built with defiance.
  */
 
-'use client'
-
+'use client';
 import React, { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -41,6 +40,8 @@ import {
 } from '../gu-constants'
 import { EntryDateTimePicker, todayISO, nowTime, dateTimeToISO, isoToDateTime } from '@/components/entry-datetime-picker'
 import { TagInput } from '@/components/tag-input'
+
+import Link from "next/link";
 
 export function GeneralGUModal({ isOpen, onClose, onSave, editingEntry }: GUModalProps) {
   const [entryDate, setEntryDate] = useState(todayISO())
@@ -379,7 +380,7 @@ export function GeneralGUModal({ isOpen, onClose, onSave, editingEntry }: GUModa
                   <div className="flex items-center gap-2">
                     <Checkbox id="cathed" checked={cathedRequired} onCheckedChange={v => setCathedRequired(!!v)} />
                     <Label htmlFor="cathed" className="cursor-pointer text-sm">
-                      Catheterization required — <a href="/maintain" className="underline text-primary inline-flex items-center gap-0.5">manage in Maintain <ExternalLink className="h-3 w-3" /></a>
+                      Catheterization required — <Link href="/maintain" className="underline text-primary inline-flex items-center gap-0.5">manage in Maintain <ExternalLink className="h-3 w-3" /></Link>
                     </Label>
                   </div>
                   {cathedRequired && (
@@ -614,5 +615,5 @@ export function GeneralGUModal({ isOpen, onClose, onSave, editingEntry }: GUModa
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

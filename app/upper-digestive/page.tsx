@@ -21,8 +21,7 @@
  *
  * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
  */
-"use client"
-
+"use client";
 import { useState, useEffect } from "react"
 import { getPref } from "@/lib/prefs"
 import AppCanvas from "@/components/app-canvas"
@@ -45,6 +44,7 @@ import DigestiveFlaskAnalytics from '../../modules/trackers/body/upper-digestive
 import { celebrate } from '@/lib/particle-physics-engine'
 import { useUser } from '@/lib/contexts/user-context'
 import { isCelebrationEnabled } from '@/lib/celebration-prefs'
+import Link from "next/link";
 // GraphAnalytics moved to Patterns page
 
 interface UpperDigestiveEntry {
@@ -787,13 +787,13 @@ export default function UpperDigestiveTracker() {
         {/* Back to Body Button */}
         <div className="flex justify-center pt-4">
           <Button variant="outline" asChild>
-            <a href="/body">
+            <Link href="/body">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Body
-            </a>
+            </Link>
           </Button>
         </div>
       </div>
     </AppCanvas>
-  )
+  );
 }

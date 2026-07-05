@@ -28,7 +28,6 @@
  */
 
 'use client';
-
 import React, { useState, useEffect } from 'react';
 import { useDailyData, CATEGORIES, SUBCATEGORIES, formatDateForStorage } from '@/lib/database';
 import { openExternal } from '@/lib/open-external';
@@ -66,6 +65,10 @@ import { TagInput } from '@/components/tag-input';
 import AppointmentPlanner from '@/components/appointments/appointment-planner';
 import AddToCalendarButton from '@/components/add-to-calendar-button';
 import AppointmentReview from '@/components/appointments/appointment-review';
+
+import Link from "next/link";
+
+import { useRouter } from "next/navigation";
 
 interface Provider {
   id: string;
@@ -120,6 +123,7 @@ interface AppointmentReview {
 
 
 export default function ProvidersPage() {
+  const router = useRouter();
   const [providers, setProviders] = useState<Provider[]>([]);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [inputMethod, setInputMethod] = useState<'manual' | 'paste'>('manual');
@@ -211,7 +215,7 @@ export default function ProvidersPage() {
     };
     loadData();
   }, [getAllCategoryData, saveData, deleteData, isLoading]);
-  
+
   // Form state
   const [formData, setFormData] = useState<Partial<Provider>>({
     name: '',
@@ -906,7 +910,7 @@ export default function ProvidersPage() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => window.location.href = `/timeline?provider=${provider.id}`}
+                        onClick={() => router.push(`/timeline?provider=${provider.id}`)}
                         className="text-purple-600 hover:text-purple-700"
                         title="View Medical Timeline"
                       >
@@ -1046,7 +1050,6 @@ export default function ProvidersPage() {
                               </span>
                               <span>{expandedProviders.has(provider.id) ? '▼' : '▶'}</span>
                             </Button>
-
                             {/* Expanded Appointments List */}
                             {expandedProviders.has(provider.id) && (
                               <div className="space-y-2 mt-2">
@@ -1218,9 +1221,9 @@ export default function ProvidersPage() {
 
         <div className="text-center">
           <Button variant="outline" asChild>
-            <a href="/manage">
+            <Link href="/manage">
               ← Back to Manage
-            </a>
+            </Link>
           </Button>
         </div>
       </div>

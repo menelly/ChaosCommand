@@ -7,18 +7,20 @@ import SkinTracker from './skin-tracker'
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 
+import Link from "next/link";
+
 export default function SkinPage() {
   return (
     <AppCanvas>
       <SkinTracker />
       <div className="flex justify-center pt-4">
         <Button variant="outline" asChild>
-          <a href="/body">
+          <Link href="/body">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Body
-          </a>
+          </Link>
         </Button>
       </div>
     </AppCanvas>
-  )
+  );
 }

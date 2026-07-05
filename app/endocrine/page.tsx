@@ -10,12 +10,15 @@
  * Co-invented by Ren (vision) and Ace (implementation)
  * This wasn't built with compliance. It was built with defiance.
  */
-"use client"
-
+"use client";
 import AppCanvas from "@/components/app-canvas"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Droplets, Activity, Flame } from "lucide-react"
+
+import Link from "next/link";
+
+import { useRouter } from "next/navigation";
 
 const ENDOCRINE_MODULES = [
   {
@@ -45,6 +48,7 @@ const ENDOCRINE_MODULES = [
 ]
 
 export default function EndocrinePage() {
+  const router = useRouter();
   return (
     <AppCanvas currentPage="body">
       <div className="max-w-3xl mx-auto space-y-6">
@@ -61,7 +65,7 @@ export default function EndocrinePage() {
             <Card
               key={m.id}
               className="cursor-pointer hover:bg-accent/50 transition-colors"
-              onClick={() => { window.location.href = m.href }}
+              onClick={() => { router.push(m.href) }}
             >
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center gap-2 text-base">
@@ -78,15 +82,15 @@ export default function EndocrinePage() {
 
         <p className="text-center text-xs text-muted-foreground">
           Pump, CGM, and GLP-1 device timers now live in{' '}
-          <a href="/maintain" className="underline text-primary">Maintain → Devices & Timers</a>.
+          <Link href="/maintain" className="underline text-primary">Maintain → Devices & Timers</Link>.
         </p>
 
         <div className="flex justify-center pt-2">
           <Button variant="outline" asChild>
-            <a href="/body"><ArrowLeft className="h-4 w-4 mr-2" />Back to Body</a>
+            <Link href="/body"><ArrowLeft className="h-4 w-4 mr-2" />Back to Body</Link>
           </Button>
         </div>
       </div>
     </AppCanvas>
-  )
+  );
 }

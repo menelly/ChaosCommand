@@ -21,8 +21,7 @@
  *
  * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
  */
-"use client"
-
+"use client";
 import React, { useState, useEffect, useCallback } from 'react';
 import { useDailyData, CATEGORIES, SUBCATEGORIES, formatDateForStorage, db } from '@/lib/database';
 import { latestLiveBySubcategory } from '@/lib/database/dedupe';
@@ -44,7 +43,7 @@ import {
   Calendar,
   Edit3,
   Trash2,
-  Link,
+  Link as LinkIcon,
   Activity,
   Heart,
   Stethoscope,
@@ -56,6 +55,10 @@ import {
 
 import MedicalTimeline from '@/components/medical-timeline';
 import TagInput from '@/components/tag-input';
+
+import Link from "next/link";
+
+import { useRouter } from "next/navigation";
 
 // 🏥 MEDICAL HISTORY INTERFACES (Updated for hybrid system)
 interface MedicalEvent {
@@ -86,6 +89,7 @@ interface Provider {
 }
 
 export default function TimelinePage() {
+  const router = useRouter();
   // State management
   const [medicalEvents, setMedicalEvents] = useState<MedicalEvent[]>([]);
   const [providers, setProviders] = useState<Provider[]>([]);
@@ -1124,10 +1128,10 @@ export default function TimelinePage() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={(e) => { e.stopPropagation(); window.location.href = `/providers#${event.providerId}` }}
+                                onClick={(e) => { e.stopPropagation(); router.push(`/providers#${event.providerId}`) }}
                                 title="View Provider"
                               >
-                                <Link className="h-4 w-4" />
+                                <LinkIcon className="h-4 w-4" />
                               </Button>
                             )}
                             <Button
@@ -1158,7 +1162,7 @@ export default function TimelinePage() {
           <MedicalTimeline
             events={filteredEvents}
             onEditEvent={handleEditEvent}
-            onViewProvider={(providerId) => window.location.href = `/providers#${providerId}`}
+            onViewProvider={(providerId) => router.push(`/providers#${providerId}`)}
           />
         )}
 
@@ -1174,9 +1178,9 @@ export default function TimelinePage() {
             Print Timeline
           </Button>
           <Button variant="outline" asChild>
-            <a href="/manage">
+            <Link href="/manage">
               ← Back to Manage
-            </a>
+            </Link>
           </Button>
         </div>
       </div>

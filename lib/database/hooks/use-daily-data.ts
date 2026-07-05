@@ -315,15 +315,14 @@ export function useDailyData(): UseDailyDataReturn {
   ): Promise<DailyDataRecord[]> => {
     try {
       setError(null);
-      let query = db.daily_data.where('tags').anyOf(tags);
-      
-      if (dateRange) {
-        query = query.and(record => 
-          record.date >= dateRange.start && record.date <= dateRange.end
-        );
-      }
-      
-      return await query.toArray();
+      // Same cursor/ciphertext issue as searchByContent: .anyOf() (multiEntry) and
+      // .and() run on a CURSOR the at-rest encryption can't decrypt. Read via the
+      // decrypting query path, then match tags + date in JS on the decrypted rows.
+      const rows = await db.daily_data.toArray();
+      return rows.filter(record =>
+        (record.tags ?? []).some(t => tags.includes(t)) &&
+        (!dateRange || (record.date >= dateRange.start && record.date <= dateRange.end))
+      );
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to search by tags';
       setError(errorMsg);
@@ -364,13 +363,12 @@ export function useDailyData(): UseDailyDataReturn {
   ): Promise<DailyDataRecord[]> => {
     try {
       setError(null);
-      let query = db.daily_data.where('date').between(startDate, endDate, true, true);
-      
-      if (category) {
-        query = query.and(record => record.category === category);
-      }
-      
-      return await query.toArray();
+      // Same at-rest-encryption gotcha as searchByContent (above): .and() runs on a
+      // CURSOR whose .value the middleware can't decrypt (async crypto vs sync cursor
+      // getter), so it reads ciphertext and every tracker's history rendered BLANK.
+      // Read via the decrypting index-range query, then filter category in JS.
+      const rows = await db.daily_data.where('date').between(startDate, endDate, true, true).toArray();
+      return category ? rows.filter(record => record.category === category) : rows;
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to get date range';
       setError(errorMsg);

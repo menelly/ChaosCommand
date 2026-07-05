@@ -8,8 +8,7 @@
  * that was suggested by a Linux user on GitHub. Add new sections here as
  * more per-page customizations land.
  */
-"use client"
-
+"use client";
 import AppCanvas from "@/components/app-canvas"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible"
@@ -21,6 +20,8 @@ import SidebarDeclutterPanel from "@/components/customize/sidebar-declutter-pane
 import VisibleTrackersPanel from "@/components/customize/visible-trackers-panel"
 import CelebrateTrackersPanel from "@/components/customize/celebrate-trackers-panel"
 import HiddenCustomTrackersPanel from "@/components/hidden-custom-trackers-panel"
+
+import Link from "next/link";
 
 export default function CustomizePage() {
   return (
@@ -171,10 +172,10 @@ export default function CustomizePage() {
 
         <div className="flex justify-center gap-4 mt-8 text-sm">
           <Button variant="outline" asChild>
-            <a href="/">← Back to Command Center</a>
+            <Link href="/">← Back to Command Center</Link>
           </Button>
         </div>
       </div>
     </AppCanvas>
-  )
+  );
 }

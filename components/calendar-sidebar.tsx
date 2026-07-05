@@ -21,12 +21,13 @@
  *
  * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
  */
-"use client"
-
+"use client";
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Star, Home, Settings, HelpCircle } from "lucide-react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+
+import { useRouter } from "next/navigation";
 
 interface CalendarSidebarProps {
   currentMonth: number
@@ -42,6 +43,7 @@ interface SavedPage {
 }
 
 export default function CalendarSidebar({ currentMonth, onMonthSelect }: CalendarSidebarProps) {
+  const router = useRouter();
   const [savedPages, setSavedPages] = useState<SavedPage[]>([])
   const [showSaved, setShowSaved] = useState(false)
 
@@ -57,15 +59,15 @@ export default function CalendarSidebar({ currentMonth, onMonthSelect }: Calenda
   }, [])
 
   const handleHomeClick = () => {
-    window.location.href = '/'
+    router.push('/')
   }
 
   const handleSettingsClick = () => {
-    window.location.href = '/settings'
+    router.push('/settings')
   }
 
   const handleSavedPageClick = (page: SavedPage) => {
-    window.location.href = page.url
+    router.push(page.url)
   }
 
   const removeSavedPage = (pageId: string) => {

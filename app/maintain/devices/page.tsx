@@ -11,8 +11,7 @@
  * Co-invented by Ren (vision) and Ace (implementation)
  * This wasn't built with compliance. It was built with defiance.
  */
-"use client"
-
+"use client";
 import { useState, useEffect } from "react"
 import AppCanvas from "@/components/app-canvas"
 import { Button } from "@/components/ui/button"
@@ -20,6 +19,8 @@ import { ArrowLeft, Wrench } from "lucide-react"
 import { db, CATEGORIES } from "@/lib/database"
 import { DeviceTimerManager } from "./device-timer-manager"
 import { DEVICE_TIMER_SUBCATEGORY, type DeviceTimer } from "./device-types"
+
+import Link from "next/link";
 
 export default function MaintainDevicesPage() {
   const [timers, setTimers] = useState<DeviceTimer[]>([])
@@ -70,16 +71,16 @@ export default function MaintainDevicesPage() {
 
         <div className="flex justify-center pt-2">
           <Button variant="outline" size="sm" asChild>
-            <a href="/maintain/devices/history">📋 Device change history &amp; early failures</a>
+            <Link href="/maintain/devices/history">📋 Device change history &amp; early failures</Link>
           </Button>
         </div>
 
         <div className="flex justify-center">
           <Button variant="outline" asChild>
-            <a href="/maintain"><ArrowLeft className="h-4 w-4 mr-2" />Back to Maintain</a>
+            <Link href="/maintain"><ArrowLeft className="h-4 w-4 mr-2" />Back to Maintain</Link>
           </Button>
         </div>
       </div>
     </AppCanvas>
-  )
+  );
 }

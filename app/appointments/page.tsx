@@ -28,7 +28,6 @@
  */
 
 'use client';
-
 import React, { useState, useEffect } from 'react';
 import { useDailyData } from '@/lib/database/hooks/use-daily-data';
 import { CATEGORIES, SUBCATEGORIES } from '@/lib/database/dexie-db';
@@ -52,6 +51,8 @@ import {
 
 import AppointmentPlanner from '@/components/appointments/appointment-planner';
 import AppointmentReview from '@/components/appointments/appointment-review';
+
+import { useRouter } from "next/navigation";
 
 interface AppointmentPlan {
   id: string;
@@ -90,6 +91,7 @@ interface AppointmentReview {
 }
 
 export default function AppointmentsPage() {
+  const router = useRouter();
   const [appointmentPlans, setAppointmentPlans] = useState<AppointmentPlan[]>([]);
   const [appointmentReviews, setAppointmentReviews] = useState<AppointmentReview[]>([]);
   const [showPlanDialog, setShowPlanDialog] = useState(false);
@@ -540,9 +542,9 @@ export default function AppointmentsPage() {
             const urlParams = new URLSearchParams(window.location.search);
             const fromProviders = urlParams.get('provider') || document.referrer.includes('/providers');
             if (fromProviders) {
-              window.location.href = '/providers';
+              router.push('/providers');
             } else {
-              window.location.href = '/';
+              router.push('/');
             }
           }}>
             ← Back to {new URLSearchParams(window.location.search).get('provider') || document.referrer.includes('/providers') ? 'Providers' : 'Command Center'}

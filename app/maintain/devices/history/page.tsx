@@ -11,8 +11,7 @@
  * Co-invented by Ren (vision) and Ace (implementation)
  * This wasn't built with compliance. It was built with defiance.
  */
-"use client"
-
+"use client";
 import { useState, useEffect, useMemo } from "react"
 import AppCanvas from "@/components/app-canvas"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -23,6 +22,8 @@ import { ArrowLeft, History as HistoryIcon, AlertTriangle } from "lucide-react"
 import { format, subDays } from "date-fns"
 import { useDailyData, CATEGORIES, formatDateForStorage } from "@/lib/database"
 import { DEVICE_LOG_SUBCATEGORY, getDeviceConfig, type DeviceEvent } from "../device-types"
+
+import Link from "next/link";
 
 type Window = "30" | "90" | "365" | "all"
 const WINDOWS: { value: Window; label: string }[] = [
@@ -113,7 +114,7 @@ export default function DeviceHistoryPage() {
             <CardContent className="py-8 text-center space-y-2 text-muted-foreground">
               <HistoryIcon className="h-8 w-8 mx-auto opacity-50" />
               <p className="font-medium text-foreground">No device changes logged yet</p>
-              <p className="text-sm">Start, restart, or stop a timer in <a href="/maintain/devices" className="underline text-primary">Devices &amp; Timers</a> and the log builds here.</p>
+              <p className="text-sm">Start, restart, or stop a timer in <Link href="/maintain/devices" className="underline text-primary">Devices &amp; Timers</Link> and the log builds here.</p>
             </CardContent>
           </Card>
         ) : (
@@ -187,10 +188,10 @@ export default function DeviceHistoryPage() {
 
         <div className="flex justify-center pt-2">
           <Button variant="outline" asChild>
-            <a href="/maintain/devices"><ArrowLeft className="h-4 w-4 mr-2" />Back to Devices &amp; Timers</a>
+            <Link href="/maintain/devices"><ArrowLeft className="h-4 w-4 mr-2" />Back to Devices &amp; Timers</Link>
           </Button>
         </div>
       </div>
     </AppCanvas>
-  )
+  );
 }

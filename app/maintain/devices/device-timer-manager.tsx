@@ -665,13 +665,13 @@ export function DeviceTimerManager({ timers, onTimersChange, currentUserId }: De
                               compact
                               label="Calendar"
                               event={{
-                                title: `Change ${timer.name} (${config.name})`,
-                                description: `Time to change your ${config.name} (${timer.name}). Started ${new Date(timer.inserted_at).toLocaleDateString()}.`,
+                                title: `Change ${timer.name ?? 'device'} (${config.name})`,
+                                description: `Time to change your ${config.name} (${timer.name ?? 'device'}). Started ${new Date(timer.inserted_at).toLocaleDateString()}.`,
                                 start: timer.expires_at,
                                 durationMinutes: 30,
                                 reminderMinutesBefore: 24 * 60,
                               }}
-                              filename={`change-${timer.type}-${timer.name.replace(/\W+/g, '-').toLowerCase()}.ics`}
+                              filename={`change-${timer.type}-${(timer.name ?? 'timer').replace(/\W+/g, '-').toLowerCase()}.ics`}
                             />
                           )}
                           {isExpired && (

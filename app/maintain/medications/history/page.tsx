@@ -12,8 +12,7 @@
  * Co-invented by Ren (vision) and Ace (implementation)
  * This wasn't built with compliance. It was built with defiance.
  */
-"use client"
-
+"use client";
 import { useState, useEffect, useMemo } from "react"
 import AppCanvas from "@/components/app-canvas"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -28,6 +27,8 @@ import {
   summarizeAdherence,
   type AdherenceRecord,
 } from "@/lib/medications/adherence"
+
+import Link from "next/link";
 
 type Window = "7" | "30" | "90" | "all"
 const WINDOWS: { value: Window; label: string }[] = [
@@ -107,7 +108,7 @@ export default function MedAdherenceHistoryPage() {
             <CardContent className="py-8 text-center space-y-2 text-muted-foreground">
               <Pill className="h-8 w-8 mx-auto opacity-50" />
               <p className="font-medium text-foreground">No adherence logged in this window yet</p>
-              <p className="text-sm">Check meds off in <a href="/maintain/medications" className="underline text-primary">Today's Medications</a> and your history builds here.</p>
+              <p className="text-sm">Check meds off in <Link href="/maintain/medications" className="underline text-primary">Today's Medications</Link> and your history builds here.</p>
             </CardContent>
           </Card>
         ) : (
@@ -176,7 +177,7 @@ export default function MedAdherenceHistoryPage() {
               <CardContent className="p-4 text-sm">
                 <p className="font-medium text-info mb-1">Want to know what a missed med does to you?</p>
                 <p className="text-muted-foreground">
-                  This adherence data feeds the <a href="/patterns" className="underline text-primary">Patterns</a> engine —
+                  This adherence data feeds the <Link href="/patterns" className="underline text-primary">Patterns</Link> engine —
                   so "a skipped dose → worse symptoms the next day" can surface as a real correlation against your symptom trackers, not a hunch.
                 </p>
               </CardContent>
@@ -190,10 +191,10 @@ export default function MedAdherenceHistoryPage() {
 
         <div className="flex justify-center pt-2">
           <Button variant="outline" asChild>
-            <a href="/maintain/medications"><ArrowLeft className="h-4 w-4 mr-2" />Back to Today's Medications</a>
+            <Link href="/maintain/medications"><ArrowLeft className="h-4 w-4 mr-2" />Back to Today's Medications</Link>
           </Button>
         </div>
       </div>
     </AppCanvas>
-  )
+  );
 }

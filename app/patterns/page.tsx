@@ -1,5 +1,4 @@
-'use client'
-
+'use client';
 import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -31,6 +30,8 @@ import { useDailyData } from '@/lib/database'
 import { analyzeAllPatterns, PatternInsight } from '@/lib/pattern-engine'
 import { analyzeV2Patterns } from '@/lib/pattern-engine-v2'
 import { db, PatternSnapshot } from '@/lib/database/dexie-db'
+
+import Link from "next/link";
 
 const TRACKER_SUBCATEGORIES = [
   'upper-digestive', 'pain', 'sleep', 'mental-health', 'brain-fog',
@@ -580,10 +581,10 @@ export default function PatternsPage() {
         </Tabs>
       </div>
       <div className="mt-8 text-center">
-        <a href="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+        <Link href="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
           ← Back to Command Center
-        </a>
+        </Link>
       </div>
     </AppCanvas>
-  )
+  );
 }

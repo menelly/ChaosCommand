@@ -7,12 +7,13 @@
  * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
  */
 
-'use client'
-
+'use client';
 import AppCanvas from '@/components/app-canvas'
 import { HeadPainTracker } from './head-pain-tracker'
 import { Button } from '@/components/ui/button'
 import { ChevronLeft } from 'lucide-react'
+
+import Link from "next/link";
 
 export default function HeadPainPage() {
   return (
@@ -20,12 +21,12 @@ export default function HeadPainPage() {
       <HeadPainTracker />
       <div className="flex justify-center pt-4">
         <Button variant="outline" asChild>
-          <a href="/body">
+          <Link href="/body">
             <ChevronLeft className="h-4 w-4 mr-2" />
             Back to Body
-          </a>
+          </Link>
         </Button>
       </div>
     </AppCanvas>
-  )
+  );
 }

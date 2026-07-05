@@ -21,8 +21,7 @@
  *
  * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
  */
-"use client"
-
+"use client";
 import { useState, useEffect } from "react"
 import { getPref } from "@/lib/prefs"
 import AppCanvas from "@/components/app-canvas"
@@ -45,6 +44,8 @@ import { HydrationForm } from './hydration-form'
 import { celebrate } from '@/lib/particle-physics-engine'
 import { useUser } from '@/lib/contexts/user-context'
 import { isCelebrationEnabled } from '@/lib/celebration-prefs'
+
+import Link from "next/link";
 
 interface HydrationEntry {
   id: string
@@ -707,7 +708,7 @@ export default function HydrationTracker() {
                             )}
                           </CardContent>
                         </Card>
-                      )
+                      );
                     })}
                   </div>
                 )}
@@ -809,7 +810,7 @@ export default function HydrationTracker() {
                                 <Progress value={percentage} className="h-2" />
                               </div>
                             </div>
-                          )
+                          );
                         })}
                     </div>
                   </CardContent>
@@ -866,12 +867,12 @@ export default function HydrationTracker() {
 
         <div className="text-center">
           <Button variant="outline" asChild>
-            <a href="/choice">
+            <Link href="/choice">
               ← Back to Choice
-            </a>
+            </Link>
           </Button>
         </div>
       </div>
     </AppCanvas>
-  )
+  );
 }

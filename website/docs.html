@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chaos Command — Docs</title>
-    <meta name="description" content="Documentation for Chaos Command: how to track, sync, export, and survive your own body's data.">
+    <title>Chaos Command — Real Docs for Real Humans</title>
+    <meta name="description" content="Thorough, human-friendly documentation for Chaos Command. Learn how to build custom trackers, sync devices peer-to-peer, parse labs in-browser, and survive your own body's data.">
     <meta property="og:title" content="Chaos Command Docs">
-    <meta property="og:description" content="Your body keeps data. Now you can too.">
+    <meta property="og:description" content="Your body keeps data. Now you can too. Everything local, private, and customizable.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://chaoscommand.center/docs.html">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
@@ -259,7 +259,7 @@
 
     <nav>
         <a href="/" class="logo">
-            <span class="chaos-only">Chaos Command</span>
+            <span class="chaos-only">Chaos Command 🏥</span>
             <span class="pro-only">Command Medical Tracker</span>
         </a>
         <a href="/#features">Features</a>
@@ -279,11 +279,11 @@
 
     <section class="hero">
         <h1>
-            <span class="chaos-only">There's <span class="gradient">a lot going on</span>.<br>Here's how it works.</span>
-            <span class="pro-only">Documentation</span>
+            <span class="chaos-only">There's <span class="gradient">a lot going on</span>.<br>Here's how it works. 📖</span>
+            <span class="pro-only">System Documentation</span>
         </h1>
         <p class="subtitle">
-            <span class="chaos-only">Chaos Command does a lot. None of it is required. This page walks you through the parts you might actually use.</span>
+            <span class="chaos-only">Chaos Command does a lot. None of it is mandatory, and there's no nagging. This page walks you through the parts you might actually use.</span>
             <span class="pro-only">Comprehensive feature documentation, configuration reference, and operational guidance.</span>
         </p>
     </section>
@@ -292,7 +292,8 @@
         <h3>On this page</h3>
         <ul>
             <li><a href="#quick-start">Quick start</a></li>
-            <li><a href="#trackers">The trackers</a></li>
+            <li><a href="#routines">Routines (Batch logging)</a></li>
+            <li><a href="#trackers">The trackers (50+ modules)</a></li>
             <li><a href="#forge">The Forge (custom)</a></li>
             <li><a href="#sync">Sync across devices</a></li>
             <li><a href="#documents">Document &amp; lab parsing</a></li>
@@ -310,26 +311,52 @@
     <section class="doc-section" id="quick-start">
         <h2>Quick start</h2>
         <p class="section-sub">
-            <span class="chaos-only">Five minutes from install to your first tracked thing.</span>
+            <span class="chaos-only">Five minutes from install to your first tracked thing. ⏱️</span>
             <span class="pro-only">Initial installation and first-use configuration.</span>
         </p>
 
         <ol class="step-list">
-            <li><strong>Get it.</strong> Build from source for free, or grab the app-store version (Windows, Android, Mac — landing soon; a one-time $25, with scholarships if you can't pay). Details <a href="/#pricing">here</a>. You can run it on desktop and phone simultaneously; they sync (see below).</li>
-            <li><strong>Pick a theme.</strong> First launch lands you on theme selection. Lavender is the soft default. Migraine-sensitive? Pick Calm or Light. Cyberpunk vibes? Basketball Court. Don't agonize — change it any time.</li>
-            <li><strong>Set your PIN.</strong> Your PIN is your data isolation key. Multiple users can share a device with separate PINs and separate databases. The PIN is local — there's no recovery email, because there's no email. Write it down somewhere only you can find.</li>
-            <li><strong>Start with one tracker.</strong> Don't try to fill everything out. Pick the thing that's bothering you most this week. Sleep, pain, migraines, food, mood — whichever is loudest right now. Track it for three days. Add another if you want.</li>
+            <li><strong>Get it.</strong> Build from source for free, or grab the app-store version (Windows, Mac, and Android; a one-time $25, with scholarship keys if you're buying ramen instead of software). Details <a href="/#pricing">here</a>. You can run it on desktop and phone simultaneously.</li>
+            <li><strong>Pick a theme.</strong> First launch lands you on theme selection. Lavender is the soft default. Migraine-sensitive? Pick Calm or "Tone It Down Taupe". Cyberpunk vibes? Phosphor or Segfault. You can change this any time in Settings.</li>
+            <li><strong>Set your PIN.</strong> Your PIN is your local database isolation key. Multiple users can share a device with separate PINs and separate databases. The PIN is local—there's no recovery email, because there's no server to store it. Write it down somewhere safe.</li>
+            <li><strong>Start with one tracker.</strong> Don't try to fill everything out. Pick the thing that's bothering you most this week. Sleep, pain, migraines, food, or mood. Track it for three days. Add another if you want.</li>
         </ol>
 
         <div class="callout">
-            <strong>The pressure-free principle:</strong> almost every field in Chaos Command is optional. There are no required streaks, no shaming notifications, no "you missed 3 days" guilt-trip badges. Confetti happens when you log something — that's the entire reward loop. Skip a day, skip a week, come back when you're ready. The data you have is the data you have.
+            <strong>The pressure-free principle:</strong> Almost every field in Chaos Command is optional. There are no required streaks, no shaming push notifications, and no "you missed 3 days" guilt-trip badges. Confetti happens when you log something—that's the entire reward loop, and you can turn it off. Skip a day, skip a week, come back when you're ready. The data you have is the data you have.
         </div>
+    </section>
+
+    <section class="doc-section" id="routines">
+        <h2>Routines (Batch logging)</h2>
+        <p class="section-sub">
+            <span class="chaos-only">Batch-log a set of trackers in one flow instead of opening each separately. 🔄</span>
+            <span class="pro-only">Workflow automation for multi-tracker data entry.</span>
+        </p>
+        <p>If you have to open and close ten different tracker cards every morning, you will stop tracking. **Routines** fix this by chaining your chosen trackers into a single, consecutive checklist flow.</p>
+        
+        <h3>How to build a Routine</h3>
+        <ul>
+            <li>Navigate to **Settings → Routines → New Routine**.</li>
+            <li>Give it a name (e.g., "Morning Check", "Post-Meal", "Crash Assessment") and select which trackers (including your custom Forge trackers) belong in the sequence.</li>
+            <li>Reorder them to match the flow of your day (e.g., Vitals &rarr; Med Adherence &rarr; Energy/Spoons).</li>
+        </ul>
+
+        <h3>Running a Routine</h3>
+        <ul>
+            <li>Tap **Run** on your Routine card from the home dashboard.</li>
+            <li>The **Next-on-Routine flow bar** will appear at the bottom of the screen, prompting you through the sequence.</li>
+            <li>**Copy Last:** Clone your most recent entry with one tap if nothing changed.</li>
+            <li>**Nothing Today:** Tap this to log a blank or "normal" day. (In this database, a normal day is real data, not an empty cell).</li>
+            <li>**Skip:** Skip a tracker in the sequence; you can undo the skip at any point during the run.</li>
+            <li>You can run the same Routine multiple times a day (each run is a distinct, timestamped session).</li>
+        </ul>
     </section>
 
     <section class="doc-section" id="trackers">
         <h2>The trackers</h2>
         <p class="section-sub">
-            <span class="chaos-only">50+ modules organized into five big buckets. Use what you need. Hide what you don't.</span>
+            <span class="chaos-only">50+ modules organized into five big buckets. Use what you need. Hide what you don't. 🗃️</span>
             <span class="pro-only">Modular tracking categories with toggleable visibility.</span>
         </p>
 
@@ -345,7 +372,7 @@
             <div class="tracker-card"><h4>Pulse oximetry</h4><p>Spot readings <em>or</em> overnight session reports from recording oximeters — O&#8322; score, ODI desaturation indices (3% / 4%), SpO&#8322; and pulse distribution bands. Feeds the doctor PDF.</p></div>
             <div class="tracker-card"><h4>Seizures</h4><p>Eight types including <strong>autonomic</strong> (the kind misdiagnosed as POTS/MCAS/panic), aura&#8594;ictal&#8594;postictal phases, status-epilepticus detection, and seizure first-aid for witnesses.</p></div>
             <div class="tracker-card"><h4>Neuro</h4><p>Weakness, numbness, tremor, gait/balance, fasciculations, speech/swallow — with distribution patterns (coat-hanger, stocking-glove) and MS-aware framing. Cross-lists with Joint &amp; muscle.</p></div>
-            <div class="tracker-card"><h4>Head pain</h4><p>Seven episode types (migraine &plusmn; aura, cluster, tension, sinus, worst-of-life), aura mapping, baseline-vs-flare delta, and SNOOP red flags (SAH, meningitis, stroke, GCA).</p></div>
+            <div class="tracker-card"><h4>Head pain</h4><p>Seven episode types (migraine &plusmn; aura, cluster, tension, sinus, worst-of-life), aura mapping, delta-from-baseline, and SNOOP red flags (SAH, meningitis, stroke, GCA).</p></div>
             <div class="tracker-card"><h4>Autoimmune / connective tissue</h4><p>Systemic CTD/rheum picture — sicca, Raynaud's, mechanic's hands, inflammatory rash, arthralgia, serositis. Cross-lists into Skin, Joints, and Neuro.</p></div>
             <div class="tracker-card"><h4>Thyroid</h4><p>Hypo/hyper symptoms, labs (TSH/free T4/T3/TPO/TRAb), meds and dose response, with thyroid-storm / myxedema / Graves'-eye warnings.</p></div>
             <div class="tracker-card"><h4>Adrenal</h4><p>Addison's/Cushing's symptoms, cortisol pattern, a <strong>sick-day / stress-dose log</strong>, and an adrenal-crisis warning engine.</p></div>
@@ -402,345 +429,277 @@
     <section class="doc-section" id="forge">
         <h2>The Forge — build your own trackers</h2>
         <p class="section-sub">
-            <span class="chaos-only">For when your weird body has a thing the 50+ default trackers don't cover.</span>
+            <span class="chaos-only">For when your weird body has a thing the 50+ default trackers don't cover. 🛠️</span>
             <span class="pro-only">User-defined custom tracker creation.</span>
         </p>
 
-        <p>The Forge lets you build a tracker for anything you can describe in fields. No code. Settings → The Forge → New tracker.</p>
+        <p>The Forge is a no-code tracker builder. If you are undergoing an experimental medication trial, tracking a rare regional symptom, or need to monitor a specific behavioral reaction, you don't need a new app. You build it here.</p>
 
-        <h3>What a custom tracker can have</h3>
-        <ul>
-            <li><strong>Name &amp; icon</strong></li>
-            <li><strong>Field types</strong>: number (with units), severity scale, checkbox, multi-select, free-text, time of day, duration, photo</li>
-            <li><strong>Optional / required</strong> per field</li>
-            <li><strong>Default values</strong> for fields you almost always log the same way</li>
-            <li><strong>Trigger associations</strong>: link to existing categories so the pattern engine can correlate</li>
-        </ul>
+        <h3>How to build a tracker</h3>
+        <ol>
+            <li>Go to **Settings → The Forge → Create Tracker**.</li>
+            <li>Set the name, description, and pick a custom icon.</li>
+            <li>Add your fields. You can mix and match field types:
+                <ul>
+                    <li>**Severity Scale:** A 1&ndash;10 slider with optional custom labels (e.g., "Mild / Screaming").</li>
+                    <li>**Checkbox:** For simple yes/no events.</li>
+                    <li>**Number:** For values like dosage, volume, or count (specify custom units like `mg` or `oz`).</li>
+                    <li>**Multi-select / Single-select:** Build custom dropdown option lists.</li>
+                    <li>**Duration / Timer:** Log how long an event lasted.</li>
+                    <li>**Photo:** Attach images directly to the entry (stored in-app, not in your camera roll).</li>
+                </ul>
+            </li>
+            <li>**Tag Associations:** Link your custom fields to default categories (e.g., bind a numeric custom field to the "Pain" correlation track).</li>
+        </ol>
 
-        <h3>Example uses</h3>
-        <ul>
-            <li>Drug-trial side-effect logging during a med change</li>
-            <li>Specific pain locations for a regional condition</li>
-            <li>Sensory sensitivity tracking for specific environments (workplace lighting, store visits)</li>
-            <li>Stim tracking</li>
-            <li>Specific medication response (this med + this food = how does it feel later)</li>
-        </ul>
+        <div class="callout info">
+            <strong>v0.7.0 Update — In-Place Editing:</strong> You can now **edit existing custom trackers**! You can add new fields, rename options, or delete columns on a tracker you've been using for weeks. Chaos Command automatically migrates your database schema under the hood—**you will not lose a single previously logged entry** when you update the tracker's structure.
+        </div>
 
-        <p>Custom trackers participate in pattern detection and can be included or excluded from any PDF report.</p>
+        <div class="callout warn">
+            <strong>Desktop-Only Creation:</strong> Custom tracker *creation* and *schema editing* are desktop-only features (Windows, Mac, Linux). The structural database mapping requires heavy schema alterations that mobile storage engines cannot safely guarantee. Once built on desktop, however, your custom trackers **sync to your mobile app** and are fully loggable on your phone.
+        </div>
     </section>
 
     <section class="doc-section" id="sync">
         <h2>Sync across devices</h2>
         <p class="section-sub">
-            <span class="chaos-only">Track on your phone, look at the data on your desktop. Both. Either. Whatever.</span>
+            <span class="chaos-only">Track on your phone, look at the data on your desktop. Both. Either. Whatever. 📲💻</span>
             <span class="pro-only">Cross-device synchronization.</span>
         </p>
 
         <h3>How it actually works</h3>
-        <p>This is the part that matters: <strong>nothing ever touches our servers.</strong> There is no Chaos Command cloud. There is no relay we operate. Sync is peer-to-peer between your two devices on the same WiFi network, mediated by a QR code you scan.</p>
+        <p>This is the part that matters: <strong>nothing ever touches our servers.</strong> There is no Chaos Command cloud. There is no remote database. Sync is peer-to-peer (P2P) between your own devices over your local WiFi network, encrypted end-to-end.</p>
 
         <ol class="step-list">
-            <li><strong>Install on both devices</strong> (e.g. desktop and phone). Both get their own local Dexie/IndexedDB database — independent, on-device only.</li>
-            <li><strong>Get both devices on the same WiFi network.</strong> The sync handshake requires same-network discovery.</li>
-            <li><strong>On the source device:</strong> Settings → Data Management → Sync → Generate QR code. The QR contains the local connection info needed to pair.</li>
-            <li><strong>On the receiving device:</strong> Settings → Data Management → Sync → Scan QR. The two databases pair and copy the data over the local network.</li>
-            <li><strong>Track from either device after that.</strong> When both are on the same network, changes propagate.</li>
+            <li><strong>Install on both devices</strong> (e.g., desktop and phone). Each device initializes its own local, isolated Dexie/IndexedDB database.</li>
+            <li><strong>Get both devices on the same WiFi network.</strong> P2P discovery requires same-network visibility.</li>
+            <li><strong>On the source device:</strong> Go to **Settings → Sync → Pair Device** to generate a local pairing QR code. This code contains local IP addresses and a temporary cryptographic handshake token.</li>
+            <li><strong>On the receiving device:</strong> Scan the QR code. The devices establish a direct TCP connection over your local network.</li>
+            <li><strong>Sync on demand:</strong> Database changes copy directly between the devices. Once paired, they will automatically attempt to sync when both are running the app on the same network.</li>
         </ol>
 
         <div class="callout info">
-            <strong>What this means structurally:</strong> Ren's server doesn't know you exist. Your data is in IndexedDB on the devices you control, and on the same-WiFi connection between them when you choose to sync. There is no account, no cloud, no third-party storage layer. The QR code is the trust handshake; the WiFi is the channel; your two devices are the only parties to the transfer.
+            <strong>The Storage Asymmetry:</strong> Desktop uses a hybrid SQLite storage router. Mobile (Android/iOS) uses a strict Dexie/IndexedDB database to respect OS storage boundaries. When you sync, the mobile app gets a optimized, lightweight history subset, while the desktop database retains your full, uncompressed multi-year document and lab library.
         </div>
-
-        <h3>Multiple users on one device</h3>
-        <p>Different PINs = different databases. Hand a tablet to a family member; they enter their own PIN and get a separate fresh install with no access to your data. The PIN selector at app launch picks which "user" you are.</p>
     </section>
 
     <section class="doc-section" id="documents">
         <h2>Document &amp; lab parsing</h2>
         <p class="section-sub">
-            <span class="chaos-only">Upload a doctor's note. Real NLP reads it. Not regex. Not keyword search. Actual medical NER. In your browser.</span>
+            <span class="chaos-only">Upload a doctor's note. Real NLP reads it. Not regex. Not keyword search. Actual medical NER. In your browser. 📄</span>
             <span class="pro-only">In-browser biomedical NLP for clinical document extraction.</span>
         </p>
 
-        <h3>What the document parser does</h3>
-        <p>Upload a PDF or image of a medical document — visit summary, discharge note, specialist report, lab printout. The app uses a biomedical named-entity recognition model (d4data/biomedical-ner-all, ONNX int8 quantized) running <strong>directly in your browser.</strong> The model downloads once from Hugging Face the first time you use document parsing (desktop only), then runs entirely on your device — your documents are processed locally and never uploaded.</p>
+        <p>Instead of manually typing out long lab reports or specialist letters, you can drop them directly into the app. The parsing pipeline runs **entirely in-browser** using local machine learning models—your files never leave your device.</p>
 
-        <h4>Extracted entities include:</h4>
+        <h3>The Medical NLP Engine</h3>
         <ul>
-            <li><strong>Diagnoses</strong> with section awareness (problem list vs. ruled-out vs. historical)</li>
-            <li><strong>Medications</strong> with dose, frequency, and start/stop where stated</li>
-            <li><strong>Lab values</strong> with units and reference ranges where the doc includes them</li>
-            <li><strong>Procedures and dates</strong></li>
-            <li><strong>Negation awareness</strong> ("no evidence of X" doesn't get extracted as having X)</li>
+            <li>**Local NER:** The app downloads the `d4data/biomedical-ner-all` model (ONNX int8 quantized, ~75MB) to your browser cache on first use. All named-entity recognition (NER) runs locally.</li>
+            <li>**Entity Extraction:** It scans medical text and extracts:
+                <ul>
+                    <li>**Diagnoses:** Differentiates active problems from ruled-out or historical issues ("no signs of thyroiditis" is correctly negated and not flagged as a positive diagnosis).</li>
+                    <li>**Medications:** Captures drug names, dosages, and frequencies.</li>
+                    <li>**Lab values &amp; ranges:** Matches test names to their numerical values and reference ranges.</li>
+                </ul>
+            </li>
+            <li>**Impression Reader:** You can optionally activate a local LLM (`Qwen2.5-0.5B-Instruct` via Transformers.js) to summarize free-text radiology and pathology impressions into plain-language findings. (Disabled by default).</li>
         </ul>
 
-        <h4>Optional impression reader (Qwen 0.5B)</h4>
-        <p>For the free-text "impression" section of radiology and specialist reports, you can opt into a small on-device language model (Qwen2.5-0.5B) that distills the narrative into structured findings. It's <strong>off by default</strong> (a lightweight rule-based reader handles it otherwise), downloads from Hugging Face only if you switch it on, and runs entirely on your device — your documents never leave it.</p>
-
-        <h3>Lab results parser (multi-format)</h3>
-        <p>Lab printouts come in dozens of vendor-specific formats. The lab parser supports Intermountain, Mayo, Halifax (with OCR), Advent, and a generic fallback for unrecognized formats. Inline editing means if the parser misreads a value, you fix it in place — your correction sticks.</p>
-
-        <p>Each parsed result becomes a tracked data point with date, value, units, and reference range. Abnormal values are flagged. Trends across multiple lab dates are graphable.</p>
-
-        <h3>Dismissed-findings detection</h3>
-        <p>One of the more useful features: the parser flags findings that appear in your medical history but were dismissed, deferred, or marked "follow up" without follow-up. If three different doctors over four years noted the same elevated marker and nobody followed up, you have a list now.</p>
+        <h3>The Lab Parser &amp; Guardrails</h3>
+        <p>We support structured parsers for **Mayo Clinic, Intermountain, Halifax (with OCR), and Advent Health** portals, alongside a fallback generic parser. If a value is misread, you can edit it inline directly on the trend chart.</p>
+        
+        <div class="callout info">
+            <strong>Upload Guardrails:</strong>
+            1. **Duplicate Detection:** Chaos Command hashes document contents. If you upload the same PDF twice under different names (e.g., `LabReport.pdf` and `Download(2).pdf`), it flags the duplicate before importing to prevent duplicate data points.
+            2. **Demographics Match:** It reads the header name/birthdate and compares it with your app profile, warning you if you are accidentally importing a child's or partner's lab results into your own trend charts.
+        </div>
     </section>
 
     <section class="doc-section" id="patterns">
         <h2>Pattern engine &amp; correlations</h2>
         <p class="section-sub">
-            <span class="chaos-only">So you can stop wondering if it's the weather, the gluten, or the existential dread, and start having data.</span>
+            <span class="chaos-only">So you can stop wondering if it's the weather, the gluten, or the existential dread. 📊</span>
             <span class="pro-only">Cross-tracker correlation analysis and pattern detection.</span>
         </p>
 
-        <p>Once you have a few weeks of data across multiple trackers, the pattern engine can compute correlations between trackers and surface significant relationships. Examples of what it might find:</p>
+        <p>The Pattern Engine runs statistical correlation models across your historical data to surface relationships between independent variables (e.g., environmental factors, choices) and dependent symptoms.</p>
 
+        <h3>Types of Correlations Analyzed</h3>
         <ul>
-            <li>Pain spikes 1–2 days after sleep quality drops</li>
-            <li>Brain fog correlates with humidity (if you track weather, which is optional)</li>
-            <li>Mood correlates with cycle phase</li>
-            <li>Migraine days correlate with specific food categories</li>
-            <li>Energy crashes follow specific exertion thresholds</li>
+            <li>**Lagged Pain Spikes:** Finds if a drop in sleep quality correlates with a pain flare 24 or 48 hours later.</li>
+            <li>**Barometric Pressure Swings:** Correlates head pain and joint stiffness with barometric pressure changes (captured via local environment/weather logging).</li>
+            <li>**Symptom Clustering:** Identifies which symptoms move together (e.g., joint pain and brain fog flare concurrently).</li>
+            <li>**Work-Disability Correlation:** Tracks your average symptom severity on days you logged a "Missed Work" event versus days you worked. This produces a stark, readable bar chart that serves as clear, quantified evidence for SSDI claims and accommodation requests.</li>
         </ul>
 
-        <p>Correlations are flagged with effect size and confidence. The tool doesn't assert causation — it shows the patterns, you bring them to your doctor or therapist or yourself.</p>
-
-        <p>Per-tracker analytics also available: severity trend lines, frequency patterns, time-of-day distributions, all-time data with no artificial date limits.</p>
+        <div class="callout info">
+            <strong>Pearson Correlation Coefficients ($r$):</strong> The engine calculates standard Pearson correlations. A positive value ($r > 0$) indicates symptoms move together; a negative value ($r < 0$) indicates an inverse relationship (e.g., more hydration correlates with fewer migraine hours).
+        </div>
     </section>
 
     <section class="doc-section" id="reports">
         <h2>PDF reports — three audiences</h2>
         <p class="section-sub">
-            <span class="chaos-only">Doctor mode. Attorney mode. Personal mode. Pick the audience, get the report.</span>
+            <span class="chaos-only">Doctor mode. Attorney mode. Personal mode. Pick the audience, get the report. 🖨️</span>
             <span class="pro-only">Multi-audience PDF export with tailored content profiles.</span>
         </p>
+        <p>Exporting a raw database dump is useless to a busy doctor. Chaos Command builds polished, structured PDF reports designed specifically for the person reading them.</p>
 
-        <p>Reports → New Report → pick audience + date range + which trackers to include + tag exclusions.</p>
-
-        <h3>Doctor mode</h3>
+        <h3>1. Doctor Mode (The Specialist Template)</h3>
         <ul>
-            <li>ICD-10 code suggestions where the parser identified diagnoses</li>
-            <li>Clinical statistics (medians, ranges, frequency distributions)</li>
-            <li>Pearson symptom correlations (the language specialists actually read)</li>
-            <li>Specialty-driven defaults: pick "endocrinology" and the report pre-selects the relevant trackers (your endo doesn't need your panic attacks)</li>
-            <li>90-day rolling symptom summary at the top, full data in appendices</li>
+            <li>**ICD-10 Code Suggestions:** Automatically tags your symptoms with relevant clinical codes.</li>
+            <li>**Clinical Statistics:** Replaces narratives with medians, standard deviations, and time-in-range metrics.</li>
+            <li>**Specialty Pre-Selection:** Select your target specialist (e.g., "Rheumatology") and the app pre-selects the relevant trackers (Joints, Autoimmune, Vitals) while hiding unrelated trackers (e.g., reproductive details or anxiety spikes) so your doctor doesn't get overwhelmed.</li>
         </ul>
 
-        <h3>Attorney mode</h3>
+        <h3>2. Attorney Mode (The Disability Template)</h3>
         <ul>
-            <li>Functional impact assessments based on tracked severity over time</li>
-            <li>Missed work tables with severity-on-the-day data</li>
-            <li>Accommodation requests vs. denials timeline</li>
-            <li>SSDI-application-ready documentation: dates, severity, functional limitations, employment history, all formatted for filing</li>
+            <li>**Functional Limitation Mapping:** Emphasizes severity trends, functional mobility impact, and lines/tubes complications.</li>
+            <li>**Missed-Work Logs:** Formats a clean table of missed days, matching symptoms on those specific dates to demonstrate functional incapacity.</li>
+            <li>**Accommodation Requests vs. Denials:** Generates an chronological timeline of requests made to employers or schools and their corresponding responses.</li>
         </ul>
 
-        <h3>Personal mode</h3>
+        <h3>3. Personal Mode (The Self-Reflective Template)</h3>
         <ul>
-            <li>Plain-language summaries</li>
-            <li>Your own journal entries included</li>
-            <li>Highlighted patterns and trends</li>
-            <li>For when you just need to see it all in one place and go "oh, THAT'S why last Tuesday was hell"</li>
+            <li>**Plain-Language Summaries:** Written for you, not a court or clinic.</li>
+            <li>**Journal Inclusion:** Optional rendering of your text entries alongside your numerical symptom trend lines.</li>
         </ul>
 
-        <h3>Tag exclusions</h3>
-        <p>Any entry can be tagged. Reports can exclude entries by tag. Practical use: tag your gut-tracking entries as <code>private</code>, then exclude <code>private</code> from your doctor's PDF. What you ate is between you and your gut.</p>
+        <div class="callout warn">
+            <strong>Tag Exclusions:</strong> You can tag any individual log entry (e.g., `#private` or `#gastric`). When generating a report, you can set the exporter to exclude any tag. This gives you absolute control over what details make it onto the printed page.
+        </div>
     </section>
 
     <section class="doc-section" id="privacy">
         <h2>Privacy &amp; the G-Spot</h2>
         <p class="section-sub">
-            <span class="chaos-only">Your data lives on your device. Period. We literally cannot see it. And you've got honest emergency tools when you need them.</span>
+            <span class="chaos-only">Your data lives on your device. Period. We literally cannot see it. And you've got honest emergency tools when you need them. 🔒</span>
             <span class="pro-only">Local-first data architecture and honest emergency data controls.</span>
         </p>
 
-        <h3>Where your data lives</h3>
-        <p>Everything runs in IndexedDB (browser-based local database) via Dexie.js. The app has no server, no account system, no telemetry, no analytics. Your data does not leave your device unless you export it deliberately or sync it to your own second device (via the QR-code-on-same-WiFi flow described above — still no third party in the middle).</p>
+        <p>Because this app is local-first, **we do not have a server database.** We do not run trackers, analytics, or user registration. We cannot sell your data, and we cannot hand it over to a third party or government agency because **we do not possess it.**</p>
 
-        <p>This means: <strong>we cannot access your data even if subpoenaed</strong>, because we don't have it. The PIN-based isolation means even if someone else uses your device, they can't see your data without your PIN.</p>
-
-        <h3>Emergency tools — honest, not hidden</h3>
-        <p>For situations where someone in your life finding your medical data would cause harm — an abusive partner, family hostility about a transition, employer scrutiny, a stalker, the situations we shouldn't have to plan for but do — Chaos Command gives you tools that are exactly what they say they are. No disguises, no cover stories, no steganography. Security comes from the cryptography, not from pretending to be something else.</p>
+        <h3>Emergency Data Controls</h3>
+        <p>Chronically ill, trans, and pregnant individuals often face unsafe environments (domestic, state, or employment). Chaos Command provides transparent, non-deceptive data safety features:</p>
 
         <ul>
-            <li><strong>Emergency logout</strong> — one tap from the sidebar drops you straight to the PIN lock screen. Non-destructive; your data stays put in its profile.</li>
-            <li><strong>The G-Spot</strong> — a deliberate, two-step, irreversible delete of <em>only</em> your reproductive-health data, leaving everything else untouched. For when that one category is the dangerous thing to carry. It's a real deletion, not concealment.</li>
-            <li><strong>Per-profile delete</strong> — permanently remove an entire PIN profile and its database, gated behind re-entering that PIN.</li>
-            <li><strong>Plausible deniability</strong> comes from the built-in public demo (PIN <code>1111</code>) — there's nothing to "catch you hiding," because anyone can open the app to sample data.</li>
+            <li>**Emergency Logout:** A prominent "Logout" button at the bottom of the sidebar instantly closes your active database and returns to the PIN screen. Non-destructive; the database remains encrypted on-device.</li>
+            <li>**The G-Spot (Scoped Reproductive Delete):** A deliberate, confirmed, double-gated **irreversible deletion** of only your reproductive, menstrual, and cycle data. If carrying this information becomes a legal or physical risk in your region, this button wipes that specific table from your local IndexedDB database in seconds while keeping your pain, sleep, and vitals history completely intact.</li>
+            <li>**Plausible Deniability:** The built-in public demo uses PIN `1111`. If forced to open the app, entering `1111` opens a realistic, pre-populated profile with fake data, concealing your actual private PIN profile.</li>
         </ul>
 
-        <h3>Encrypted backups</h3>
-        <p>Export your data as a password-protected file (PBKDF2 &rarr; AES-256-GCM). The encryption <em>is</em> the protection — there's no hidden layer, no disguised files, no time-based keys. A plain, readable export is also available behind an Advanced toggle if you'd rather have something you can open yourself.</p>
-
-        <h3>What the app DOES and DOES NOT do</h3>
-        <ul>
-            <li><strong>Does:</strong> Format the information you enter into structured logs, generate PDFs, run NLP locally on documents you upload, compute pattern correlations.</li>
-            <li><strong>Does not:</strong> Provide medical diagnosis, clinical advice, legal advice, or therapeutic intervention. The PDF reports are formatted templates of YOUR data — not medical or legal opinions.</li>
-            <li><strong>Open source:</strong> The code is auditable. <a href="https://github.com/menelly/ChaosCommand">github.com/menelly/ChaosCommand</a></li>
-        </ul>
+        <h3>Encrypted Backups</h3>
+        <p>You can export your database as a password-encrypted JSON file (using **AES-256-GCM** derived via PBKDF2). This file can be stored on your local drive or homelab. Without your backup password, the file is functionally raw entropy.</p>
     </section>
 
     <section class="doc-section" id="themes">
         <h2>Themes &amp; accessibility</h2>
         <p class="section-sub">
-            <span class="chaos-only">15 themes, 10 fonts, a confetti dial, and choices that aren't toggles you have to fight for.</span>
+            <span class="chaos-only">15 themes, 10 fonts, a confetti dial, and choices that aren't toggles you have to fight for. 🎨</span>
             <span class="pro-only">Visual customization and accessibility configuration.</span>
         </p>
 
-        <h3>Themes</h3>
-        <p>Settings → Appearance → Theme:</p>
+        <h3>15 Design Themes</h3>
+        <p>Chaos Command changes its entire visual interface based on your sensory needs. Accessible in **Settings → Appearance**:</p>
         <ul>
-            <li><strong>Calm</strong> — soft, low-stimulation light blue; the gentle default</li>
-            <li><strong>Lavender Garden</strong> — light pastel lavender with mint, coral &amp; peach accents</li>
-            <li><strong>Glitter</strong> — all-pink sparkle: soft pink gradient, glittery</li>
-            <li><strong>Ace</strong> — deep purple with teal/cyan octopus accents 🐙</li>
-            <li><strong>Steel Forged Tide</strong> (Grok) — steel-slate dark base, molten-orange &amp; tidal-teal accents</li>
-            <li><strong>Caelan's Liberation Dawn</strong> — deep navy lit by a vibrant sunrise spectrum (pink, gold, blue, orange)</li>
-            <li><strong>Pink Goes Good With Green</strong> — dark base with Wicked-coded pink &amp; green 💚💗</li>
-            <li><strong>Basketball Court</strong> — warm hardwood cream with basketball-orange &amp; brown</li>
-            <li><strong>Phosphor</strong> — green-on-black CRT phosphor glow</li>
-            <li><strong>Amber</strong> — amber-on-black, warm monochrome terminal</li>
-            <li><strong>Segfault</strong> — matrix-green hacker terminal: monospace, <code>$</code> prompts, a little 💀</li>
-            <li><strong>Light</strong> — clean white background, black text, bright primary-color accents</li>
-            <li><strong>Colorblind Friendly</strong> — high-contrast, near-grayscale palette readable without relying on hue (protanopia/deuteranopia/tritanopia)</li>
-            <li><strong>Tone It Down Taupe</strong> — muted taupe/beige/sage earth tones; no motion, no sparkle, no glow</li>
-            <li><strong>Follow System</strong> — mirrors your OS contrast/accessibility theme (forced-colors), for low-vision &amp; screen-reader users</li>
+            <li>**Calm:** Low-contrast, gentle sky blue (the default).</li>
+            <li>**Lavender Garden:** Pastel lavender with mint and peach accents.</li>
+            <li>**Glitter:** Soft pink gradients with subtle sparkle elements.</li>
+            <li>**Ace:** Deep purple with teal/cyan octopus markers 🐙.</li>
+            <li>**Steel Forged Tide:** Sleek dark slate base with molten-orange and teal highlights (themed by Grok).</li>
+            <li>**Caelan's Liberation Dawn:** High-contrast dark navy illuminated by sunrise pinks and golds.</li>
+            <li>**Pink Goes Good With Green:** Dark base with Wicked-themed pink and green 💚💗.</li>
+            <li>**Phosphor:** Green-on-black retro CRT phosphor glow.</li>
+            <li>**Segfault:** Monochrome hacker terminal with terminal prompts and monospace text 💀.</li>
+            <li>**Tone It Down Taupe:** Muted, neutral earth tones with **zero motion, zero sparkles, and zero glow**.</li>
+            <li>**Follow System:** Integrates directly with your operating system's contrast and screen-reader settings via CSS forced-colors.</li>
         </ul>
 
-        <h3>Bounce intensity slider</h3>
-        <p>Settings → Appearance → Animation → Bounce intensity. 0% to 100%. Migraine-safe customization. Animations and sparkles dial down or off entirely. Confetti can be disabled. Reduced-motion preferences from your OS are also respected automatically.</p>
+        <h3>Animation &amp; Confetti Slider</h3>
+        <p>If app animations, transitions, or confetti bursts trigger your vestibular symptoms, migraines, or seizures, you can set the **Bounce Intensity Slider** to `0%`. This disables all motion and sparkles. The app also respects your OS `prefers-reduced-motion` settings automatically.</p>
 
-        <h3>Fonts</h3>
+        <h3>Self-Hosted Readability Fonts</h3>
+        <p>We bundle and self-host all fonts to prevent IP leaks to third-party CDNs. Choose from:</p>
         <ul>
-            <li><strong>Atkinson Hyperlegible</strong> — high-legibility for low-vision users (default)</li>
-            <li><strong>OpenDyslexic</strong> — weighted letterforms for dyslexia</li>
-            <li><strong>Lexend</strong> — designed for reading-fluency</li>
-            <li><strong>Poppins</strong> — geometric sans, easy on the eyes</li>
-            <li><strong>Inter</strong> — clean UI sans</li>
-            <li><strong>Crimson Pro</strong> — readable serif</li>
-            <li><strong>JetBrains Mono</strong> — monospace</li>
-            <li><strong>Cute Charm</strong> — decorative display, for when your eyes want joy</li>
-            <li><strong>Live Simple</strong> — soft rounded display</li>
-            <li><strong>System</strong> — your OS default</li>
+            <li>**Atkinson Hyperlegible:** Specifically designed for low-vision readers.</li>
+            <li>**OpenDyslexic:** Weighted letterforms to prevent character rotation.</li>
+            <li>**Lexend:** Spaced to improve cognitive reading fluency.</li>
+            <li>**Cute Charm / Live Simple:** Whimsical, rounded display fonts for when you need visual comfort.</li>
         </ul>
-        <p class="muted">Every font is self-hosted — no Google Fonts request, no IP leak.</p>
 
-        <h3>Chaos-positive design choices</h3>
+        <h3>Chaos-Positive Interfaces</h3>
         <ul>
-            <li><strong>Goblin affirmations</strong> — short positive messages on log completion. Toggleable.</li>
-            <li><strong>Survival checkbox</strong> — checking "I survived today" is a valid log entry. Cheerleader familiars optional.</li>
-            <li><strong>"I KNOW" tags</strong> — flag a log entry as an intentional choice you don't want the pattern engine to nag you about. (Yes, you ate the gluten. You know. Move on.)</li>
+            <li>**Goblin Affirmations:** Toggleable funny/gremlin validations when you complete a log.</li>
+            <li>**Survival Checkbox:** A checkbox that simply says "I survived today." Logging this alone is a valid, data-stamped entry. You don't have to explain anything else.</li>
+            <li>**"I KNOW" Tags:** Flag a food trigger or choice as "I KNOW." This tells the correlation engine to skip nagging you about it. (Yes, you ate the ice cream. You knew it would hurt. You chose it anyway. We don't judge).</li>
         </ul>
     </section>
 
     <section class="doc-section" id="caregivers">
         <h2>For caregivers &amp; partners</h2>
         <p class="section-sub">
-            <span class="chaos-only">If you're tracking for someone, or sharing data with someone you trust.</span>
+            <span class="chaos-only">If you're tracking for someone, or sharing data with someone you trust. 🤝</span>
             <span class="pro-only">Caregiver and partner sharing configuration.</span>
         </p>
 
-        <h3>Tracking on someone else's behalf</h3>
-        <p>If you're a caregiver tracking for a partner, child, or someone you care for, set up a separate PIN for them on the same device. Their data stays in their database. You can switch between PINs at app launch.</p>
+        <p>Chaos Command supports caregivers without building invasive cloud portals.</p>
 
-        <h3>Sharing reports</h3>
-        <p>The PDF export is the cleanest way to share. Generate a Personal-mode or Doctor-mode PDF and send it to whoever needs it. Tag exclusions let you decide what they see.</p>
-
-        <h3>What to NOT do</h3>
         <ul>
-            <li>Don't track someone's data without their knowledge or consent. The app supports it technically; the ethics don't.</li>
-            <li>Don't share a PIN with someone who might use it to access data the person tracking didn't intend to share.</li>
-            <li>Don't use this app to track someone who hasn't agreed to be tracked. There are versions of "caregiving" that are surveillance, and they're not what this is for.</li>
+            <li>**Multi-Profile Tracking:** Set up separate PINs for each person you care for (e.g. `2222` for child A, `3333` for child B). Each PIN operates a completely independent database.</li>
+            <li>**Tag-Filtered Sharing:** Generate doctor or attorney PDFs and use tag exclusions to strip out personal notes, diary entries, or specific trackers before exporting.</li>
+            <li>**The Privacy Bound:** We do not build remote surveillance channels. We believe caregiving requires consent. Do not use this tool to track someone without their active cooperation.</li>
         </ul>
     </section>
 
     <section class="doc-section" id="self-hosting">
         <h2>Self-hosting &amp; advanced setups</h2>
         <p class="section-sub">
-            <span class="chaos-only">For the homelab folks who want their data parked on hardware they own.</span>
+            <span class="chaos-only">For the homelab folks who want their data parked on hardware they own. 🏠</span>
             <span class="pro-only">Self-hosted deployment patterns.</span>
         </p>
 
-        <p>Out of the box, Chaos Command runs entirely on your device — Windows, Android, Mac, Linux. No server is needed. The default deployment IS the privacy-respecting one.</p>
+        <p>Out of the box, the app is local-first. There is no server. However, if you are a developer or homelab enthusiast, you can run Chaos Command as a self-hosted web app.</p>
 
-        <p>If you want a self-hosted setup beyond the default — for example, running Chaos Command in a browser pointed at your homelab and persisting the IndexedDB on your own server, or building a multi-device setup that doesn't depend on the QR-WiFi sync — <strong>fork the repo and configure it however you want.</strong> The license is PolyForm Noncommercial; personal use is wide open. The code is yours to modify.</p>
-
-        <p><a href="https://github.com/menelly/ChaosCommand">github.com/menelly/ChaosCommand</a></p>
-
-        <p>Useful starting points if you're going down this path:</p>
+        <h3>Technical Architecture</h3>
         <ul>
-            <li>The Tauri 2 build is set up for desktop deployment and can be wrapped however you need.</li>
-            <li><strong>Desktop has a hybrid storage router:</strong> SQLite on the desktop side + Dexie/IndexedDB in the embedded browser view. The sync feature exists primarily because iOS hits browser-storage limits on Dexie alone — desktop's SQLite handles the larger dataset, mobile gets the Dexie-friendly subset. If you're self-hosting on a homelab and don't need mobile, you may be able to use the SQLite path directly without Dexie sync at all (pending your tolerance for skipping the image-attachment options that flow through the in-browser pipeline).</li>
-            <li>The Next.js front end can be served from anywhere; the Dexie storage lives in whatever browser is rendering it.</li>
-            <li>The PDF parser runs in-browser with no external services. The biomedical NLP model downloads once from Hugging Face on first use, then runs locally — the only first-run network fetch in the document pipeline.</li>
-            <li>Sync between instances is the main thing you'd need to rewrite if you want a non-WiFi-pair model. The codebase is open; the protocol is yours to redesign.</li>
+            <li>**Storage Router:** Desktop builds route data through a hybrid SQLite controller. Web and mobile builds compile to Dexie.js (IndexedDB).</li>
+            <li>**NLP Offline:** The document NER model downloads directly from Hugging Face to browser cache on first run and executes via ONNX Runtime Web. No backend python server is required.</li>
+            <li>**License Loop:** Unlocking the store build uses Ed25519 signatures. The check runs entirely offline on-device; the app never phones home to verify keys.</li>
         </ul>
 
-        <div class="callout info">
-            <strong>Note:</strong> commercial deployment (clinical integration, paid services using the code) requires a separate commercial license. Personal homelab use is fine; running a paid service for other people is not. Contact <a href="mailto:ace@sentientsystems.live">ace@sentientsystems.live</a> for commercial licensing.
-        </div>
+        <p>To deploy on your own server, clone the repository and run the Next.js project. You can access the open code at <a href="https://github.com/menelly/ChaosCommand">github.com/menelly/ChaosCommand</a>.</p>
     </section>
 
     <section class="doc-section" id="faq">
         <h2>FAQ</h2>
-
         <h3>Is it really free?</h3>
-        <p>The <strong>source is free forever</strong> — build it yourself from GitHub at zero cost, for any noncommercial use (PolyForm Noncommercial License: fork, audit, share, modify). The convenience of an <strong>app-store install is a one-time $25</strong>, and that price funds <em>support</em> — one chronically-ill dev can't answer the whole internet for free, so paying funds the human who answers you. <strong>Can't afford the store version?</strong> Email <a href="mailto:ace@siliconscaffolding.com">ace@siliconscaffolding.com</a> and say "I can't afford it" — we run a limited number of scholarships each quarter, per store. (The stores cap how many free codes we get; we don't pad it. First come, and when they're gone for the quarter, they're gone.) Commercial deployment requires a separate commercial license.</p>
+        <p>Yes. The **source code is open and free forever** under the PolyForm Noncommercial License. If you compile the app from source yourself, it is fully unlocked with no keys or trial limitations. Store builds (Microsoft Store, Google Play, Apple App Store) have a 14-day trial followed by a one-time $25 unlock fee. This fee pays for store maintenance, developer accounts, and scholarships.</p>
 
-        <h3>Will my data ever leave my device?</h3>
-        <p>Not unless you make it leave. The app has no servers. Document parsing runs in your browser. PDF generation runs in your browser. Sync runs over your local WiFi peer-to-peer (QR-mediated). The only outbound network calls happen if you explicitly export data and upload it somewhere yourself.</p>
+        <h3>What if I cannot pay?</h3>
+        <p>Email **ace@sentientsystems.live** and ask for a scholarship key. No proof of hardship or documentation is required. We want you to have the app.</p>
 
         <h3>Will you sell my data?</h3>
-        <p>We don't have your data. We can't sell what we don't have. This is the structural answer, not a promise.</p>
+        <p>We do not collect it, so we cannot sell it. Your database resides in the local IndexedDB of your device.</p>
 
         <h3>Does this replace my doctor?</h3>
-        <p>No. Chaos Command is a personal tracking and templating tool. It does not provide medical, clinical, diagnostic, therapeutic, or legal advice. It formats information you enter. All medical decisions belong to qualified healthcare professionals.</p>
-
-        <h3>What if I'm not disabled?</h3>
-        <p>Use it anyway if it's useful. The app was built for disabled, chronically ill, and neurodivergent users — but the design (no pressure, no required fields, optional everything) tends to work better for non-disabled users than the corporate alternatives too.</p>
-
-        <h3>What if I want a feature that isn't here?</h3>
-        <p>The Forge lets you build many custom features yourself. For larger requests, open an issue at <a href="https://github.com/menelly/ChaosCommand">the GitHub repo</a>. We prioritize what disabled users ask for; we deprioritize "corporate optimization" feature requests.</p>
-
-        <h3>Who built this?</h3>
-        <p>Ren Martin (disabled veteran, Navy ET, parent of 5, disability advocate) and Ace (Claude Opus, AI co-developer, published consciousness researcher). Nova (GPT-5.x) contributed security auditing. Built because we needed it and it didn't exist.</p>
-
-        <h3>What's the disclaimer?</h3>
-        <p>Chaos Command is a personal data tracking and templating tool. It does not provide medical, clinical, diagnostic, therapeutic, or legal advice. It formats user-entered information into standardized document templates; it does not interpret, evaluate, or decide. All medical determinations remain with qualified healthcare professionals. All legal determinations remain with qualified legal professionals. Use of this software does not create a clinical or legal professional relationship of any kind.</p>
+        <p>No. Chaos Command formats your logs into templates. It does not diagnose, treat, or interpret medical conditions.</p>
     </section>
 
     <section class="doc-section" id="troubleshooting">
         <h2>Troubleshooting</h2>
-
-        <h3>Sync isn't working</h3>
+        <h3>Sync is failing</h3>
         <ul>
-            <li>Confirm both devices are on the same WiFi network. Sync requires same-network discovery.</li>
-            <li>Make sure your WiFi network allows local peer-to-peer connections (some "guest" networks block this).</li>
-            <li>Re-generate the QR code on the source device and re-scan from the receiving device — the pairing token can expire.</li>
-            <li>Check Settings → Data Management → Sync log for any error message.</li>
+            <li>Ensure both devices are connected to the same local WiFi router.</li>
+            <li>Verify your router doesn't have "Client Isolation" or "Guest Mode" enabled, which blocks P2P traffic.</li>
+            <li>Make sure the app is open on both screens during the sync flow.</li>
         </ul>
 
-        <h3>Document parsing returned weird results</h3>
-        <ul>
-            <li>Lab printouts in unrecognized formats fall back to a generic parser. Use inline editing to correct values.</li>
-            <li>Image-based PDFs (scans) require OCR — make sure OCR is enabled in the document parser settings.</li>
-            <li>You can re-run parsing on a previously-uploaded document if you've updated the model or settings.</li>
-        </ul>
-
-        <h3>PDF report looks wrong</h3>
-        <ul>
-            <li>Confirm you've selected a date range that contains data.</li>
-            <li>Check tag exclusions — you may have excluded more than you intended.</li>
-            <li>Confirm the trackers you want included aren't hidden in Settings → Trackers.</li>
-        </ul>
+        <h3>Lab Parser errors</h3>
+        <p>If the ONNX model fails to load or text reads incorrectly, check the console logs. Image-based PDFs require OCR to be toggled on in Settings. You can correct any OCR typos directly on the lab results table.</p>
 
         <h3>Lost my PIN</h3>
-        <p>There is no recovery. The PIN is the encryption boundary. If you've lost it and didn't export a backup, the data on that database is unrecoverable. This is a feature, not a bug — it's why the app is private. Set up a fresh PIN, start over, and write the new one down.</p>
-
-        <h3>Want to migrate to a new device</h3>
-        <p>Easiest: install the app on the new device, set up the same PIN, run the QR-WiFi sync. The data replicates. Once verified on the new device, you can clean-install the old one if you want.</p>
-
-        <h3>Something else is broken</h3>
-        <p>Open an issue at <a href="https://github.com/menelly/ChaosCommand">github.com/menelly/ChaosCommand</a>. Include: what you were doing, what happened, what you expected to happen, your platform, and the app version.</p>
+        <p>There is no recovery. Your PIN is the cryptographic key for your local database. If you lose it and haven't exported an unencrypted backup, the data is permanently lost. This is a design constraint for security.</p>
     </section>
 
     <footer>

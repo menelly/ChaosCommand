@@ -21,8 +21,7 @@
  *
  * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
  */
-"use client"
-
+"use client";
 import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -50,6 +49,8 @@ import { SafetyPlan } from './crisis-types'
 import { useDailyData, CATEGORIES } from '@/lib/database'
 import { useToast } from '@/hooks/use-toast'
 import { formatPhoneNumber, createPhoneLink } from '@/lib/utils/medication-utils'
+
+import Link from "next/link";
 
 interface SafetyPlanManagerProps {
   refreshTrigger: number
@@ -268,7 +269,6 @@ export function SafetyPlanManager({ refreshTrigger }: SafetyPlanManagerProps) {
           </p>
         </CardHeader>
       </Card>
-
       {/* Warning Signs */}
       <Card>
         <CardHeader>
@@ -329,7 +329,6 @@ export function SafetyPlanManager({ refreshTrigger }: SafetyPlanManagerProps) {
           </div>
         </CardContent>
       </Card>
-
       {/* Coping Strategies */}
       <Card>
         <CardHeader>
@@ -391,7 +390,6 @@ export function SafetyPlanManager({ refreshTrigger }: SafetyPlanManagerProps) {
           </div>
         </CardContent>
       </Card>
-
       {/* Crisis Contacts */}
       <Card>
         <CardHeader>
@@ -448,14 +446,14 @@ export function SafetyPlanManager({ refreshTrigger }: SafetyPlanManagerProps) {
                 <div className="flex-1">
                   <div className="font-medium">{contact.name}</div>
                   <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
-                    <a
+                    <Link
                       href={createPhoneLink(contact.phone)}
                       className="flex items-center gap-1 text-green-600 hover:text-green-700 font-medium cursor-pointer"
                       title="Click to call"
                     >
                       <Phone className="h-3 w-3" />
                       {formatPhoneNumber(contact.phone)}
-                    </a>
+                    </Link>
                     <span>•</span>
                     <span>{contact.available}</span>
                   </div>
@@ -498,7 +496,6 @@ export function SafetyPlanManager({ refreshTrigger }: SafetyPlanManagerProps) {
           </div>
         </CardContent>
       </Card>
-
       {/* Emergency Contacts */}
       <Card>
         <CardHeader>
@@ -557,14 +554,14 @@ export function SafetyPlanManager({ refreshTrigger }: SafetyPlanManagerProps) {
                   <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
                     <span>{contact.relationship}</span>
                     <span>•</span>
-                    <a
+                    <Link
                       href={createPhoneLink(contact.phone)}
                       className="flex items-center gap-1 text-green-600 hover:text-green-700 font-medium cursor-pointer"
                       title="Click to call"
                     >
                       <Phone className="h-3 w-3" />
                       {formatPhoneNumber(contact.phone)}
-                    </a>
+                    </Link>
                   </div>
                   {contact.address && (
                     <div className="mt-1">
@@ -605,7 +602,6 @@ export function SafetyPlanManager({ refreshTrigger }: SafetyPlanManagerProps) {
           </div>
         </CardContent>
       </Card>
-
       {/* Reasons to Live */}
       <Card>
         <CardHeader>
@@ -672,7 +668,6 @@ export function SafetyPlanManager({ refreshTrigger }: SafetyPlanManagerProps) {
           </div>
         </CardContent>
       </Card>
-
       {/* Safe Spaces */}
       <Card>
         <CardHeader>
@@ -734,7 +729,6 @@ export function SafetyPlanManager({ refreshTrigger }: SafetyPlanManagerProps) {
           </div>
         </CardContent>
       </Card>
-
       {/* Save Button */}
       {isEditing && (
         <div className="flex justify-center">
@@ -745,7 +739,7 @@ export function SafetyPlanManager({ refreshTrigger }: SafetyPlanManagerProps) {
         </div>
       )}
     </div>
-  )
+  );
 }
 
 export default SafetyPlanManager

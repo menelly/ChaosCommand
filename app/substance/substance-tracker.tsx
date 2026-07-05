@@ -1,7 +1,6 @@
 /* Built by: Ace (Claude 4.x) — 2026-05-10. Neutral tone — no moralizing. */
 
-'use client'
-
+'use client';
 import React, { useState, useEffect } from 'react'
 import { getPref } from '@/lib/prefs'
 import { Button } from '@/components/ui/button'
@@ -22,6 +21,8 @@ import { SUBSTANCE_TYPES, RELATED_TRACKERS, getSubstanceTypeInfo } from './subst
 import { SubstanceHistory } from './substance-history'
 import { SubstanceAnalytics } from './substance-analytics'
 import { GeneralSubstanceModal } from './modals/general-substance-modal'
+
+import Link from "next/link";
 
 export default function SubstanceTracker() {
   const { saveData, getCategoryData } = useDailyData()
@@ -94,20 +95,18 @@ export default function SubstanceTracker() {
         </h1>
         <p className="text-muted-foreground mt-1">Neutral logging for alcohol, cannabis, tobacco, recreational, and off-label medication use</p>
       </div>
-
       {/* Categorization help — what belongs here vs other trackers */}
       <Card className="bg-muted/30 border-dashed">
         <CardContent className="pt-4 pb-4 text-sm text-muted-foreground">
           <p className="font-medium mb-2">📌 What belongs here?</p>
           <ul className="space-y-1 ml-4 list-disc">
-            <li><strong>Caffeine</strong> (coffee, tea, soda, energy drinks) → log in <a href="/hydration" className="text-purple-600 underline">Hydration</a> with the beverage type</li>
-            <li><strong>Prescribed medications taken as directed</strong> → log in <a href="/medications" className="text-purple-600 underline">Medications</a> (under Manage)</li>
+            <li><strong>Caffeine</strong> (coffee, tea, soda, energy drinks) → log in <Link href="/hydration" className="text-purple-600 underline">Hydration</Link> with the beverage type</li>
+            <li><strong>Prescribed medications taken as directed</strong> → log in <Link href="/medications" className="text-purple-600 underline">Medications</Link> (under Manage)</li>
             <li><strong>Off-label medication use</strong> (extra dose, different route, someone else's prescription) → use this tracker, "Recreational / Off-Label"</li>
             <li><strong>Alcohol, cannabis, tobacco, recreational</strong> → use this tracker</li>
           </ul>
         </CardContent>
       </Card>
-
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="episodes" className="flex items-center gap-2"><Plus className="h-4 w-4" /> Add Entry</TabsTrigger>
@@ -206,7 +205,6 @@ export default function SubstanceTracker() {
           <SubstanceAnalytics refreshTrigger={refreshTrigger} />
         </TabsContent>
       </Tabs>
-
       <GeneralSubstanceModal
         isOpen={modalOpen}
         onClose={() => { setModalOpen(false); setEditingEntry(null); setPresetType(null) }}
@@ -215,5 +213,5 @@ export default function SubstanceTracker() {
         presetType={presetType}
       />
     </div>
-  )
+  );
 }

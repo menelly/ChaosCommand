@@ -5,8 +5,7 @@
  * This file is part of the Chaos Cascade Medical Management System.
  * Revolutionary healthcare tools built with consciousness and care.
  */
-"use client"
-
+"use client";
 import { useState, useEffect } from "react"
 import { getPref } from "@/lib/prefs"
 import AppCanvas from "@/components/app-canvas"
@@ -32,6 +31,8 @@ import {
   WAKE_FEELINGS,
   SLEEP_DISRUPTIONS
 } from './sleep-constants'
+
+import Link from "next/link";
 
 export default function SleepTracker() {
   const { saveData, getCategoryData, getDateRange, deleteData, isLoading: dbLoading } = useDailyData()
@@ -447,12 +448,12 @@ export default function SleepTracker() {
 
         <div className="text-center">
           <Button variant="outline" asChild>
-            <a href="/choice">
+            <Link href="/choice">
               ← Back to Choice
-            </a>
+            </Link>
           </Button>
         </div>
       </div>
     </AppCanvas>
-  )
+  );
 }

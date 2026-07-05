@@ -21,20 +21,21 @@
  *
  * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
  */
-"use client"
-
+"use client";
 import AppCanvas from "@/components/app-canvas"
 import UnifiedJournal from "@/components/journal/unified-journal"
+
+import Link from "next/link";
 
 export default function JournalPage() {
   return (
     <AppCanvas currentPage="journal">
       <UnifiedJournal />
       <div className="mt-8 text-center">
-        <a href="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+        <Link href="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
           ← Back to Command Center
-        </a>
+        </Link>
       </div>
     </AppCanvas>
-  )
+  );
 }

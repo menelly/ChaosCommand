@@ -21,8 +21,7 @@
  *
  * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
  */
-'use client'
-
+'use client';
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { getPref } from '@/lib/prefs'
 import AppCanvas from '@/components/app-canvas'
@@ -63,6 +62,8 @@ import {
   ChevronRight,
   ChevronLeft
 } from 'lucide-react'
+
+import { useRouter } from "next/navigation";
 
 interface CopingTechnique {
   id: string
@@ -283,6 +284,7 @@ const copingTechniques: CopingTechnique[] = [
 ]
 
 export default function CopingRegulationPage() {
+  const router = useRouter();
   const { userPin } = useUser()
   const { saveData, getSpecificData } = useDailyData()
   // Coping records aren't day-scoped — they're accumulating user lists, stored
@@ -956,12 +958,12 @@ export default function CopingRegulationPage() {
         )}
 
         <div className="text-center">
-          <Button variant="outline" onClick={() => window.location.href = '/choice'}>
+          <Button variant="outline" onClick={() => router.push('/choice')}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Choice
           </Button>
         </div>
       </div>
     </AppCanvas>
-  )
+  );
 }

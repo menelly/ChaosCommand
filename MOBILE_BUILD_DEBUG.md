@@ -1,4 +1,4 @@
-# MOBILE BUILD DEBUG — April 12, 2026
+﻿# MOBILE BUILD DEBUG — April 12, 2026
 
 ## STATUS: Active QA — next session picks up remaining bugs
 
@@ -90,8 +90,8 @@ cp src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-r
 ## SIGNING
 - Keystore: C:\keysRen.jks
 - Alias: key1 (NOT keys1!)
-- Store password: 12151215
-- Key password: 25322532
+- Store password: <REDACTED:android-store-pw>
+- Key password: <REDACTED:android-key-pw>
 
 ## REPOS
 - command-mobile2: mobile build (has Android gen/ folder)

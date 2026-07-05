@@ -21,8 +21,7 @@
  *
  * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
  */
-"use client"
-
+"use client";
 import { useState, useEffect } from "react"
 import { getNamespaceId } from "@/lib/database/session-crypto"
 import AppCanvas from "@/components/app-canvas"
@@ -48,7 +47,10 @@ import { PrintExportModal } from "./print-export-modal"
 // import { QRSyncModal } from "./qr-sync-modal"
 import { UpdateCheckModal } from "./update-check-modal"
 
+import { useRouter } from "next/navigation";
+
 export default function SettingsPage() {
+  const router = useRouter();
   // Modal state management
   const [activeModal, setActiveModal] = useState<string | null>(null)
   const [autoLockBackground, setAutoLockBackground] = useState(false)
@@ -177,13 +179,13 @@ export default function SettingsPage() {
               QR sync was being rewritten. The new bidirectional /sync
               page IS the rewrite, so this now jumps straight there. */}
           <Card
-            onClick={() => { window.location.href = '/sync' }}
+            onClick={() => { router.push('/sync') }}
             role="button"
             tabIndex={0}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault()
-                window.location.href = '/sync'
+                router.push('/sync')
               }
             }}
             className="cursor-pointer hover:shadow-lg hover:ring-2 hover:ring-primary transition-all"
@@ -267,7 +269,7 @@ export default function SettingsPage() {
                 localStorage.removeItem('chaos-onboarding-complete')
                 const pin = getNamespaceId()
                 if (pin) localStorage.removeItem(`chaos-onboarding-complete-${pin}`)
-                window.location.href = '/onboarding'
+                router.push('/onboarding')
               }
             }}
             role="button"
@@ -279,7 +281,7 @@ export default function SettingsPage() {
                   localStorage.removeItem('chaos-onboarding-complete')
                   const pin = getNamespaceId()
                   if (pin) localStorage.removeItem(`chaos-onboarding-complete-${pin}`)
-                  window.location.href = '/onboarding'
+                  router.push('/onboarding')
                 }
               }
             }}
@@ -322,7 +324,7 @@ export default function SettingsPage() {
               the 0.6.x production settings page (Ren caught it 2026-06-11). */}
           {process.env.NODE_ENV === 'development' && (
             <div>
-              <Button variant="ghost" size="sm" onClick={() => { window.location.href = '/theme-lab' }} className="text-muted-foreground">
+              <Button variant="ghost" size="sm" onClick={() => { router.push('/theme-lab') }} className="text-muted-foreground">
                 🧪 Theme Lab (dev)
               </Button>
             </div>
@@ -331,5 +333,5 @@ export default function SettingsPage() {
         </div>
       </AppCanvas>
     </div>
-  )
+  );
 }

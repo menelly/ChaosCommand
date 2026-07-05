@@ -16,8 +16,7 @@
  * Co-invented by Ren (vision) and Ace (implementation)
  * This wasn't built with compliance. It was built with defiance.
  */
-"use client"
-
+"use client";
 import { useState, useEffect, useMemo } from "react"
 import AppCanvas from "@/components/app-canvas"
 import { Card, CardContent } from "@/components/ui/card"
@@ -29,6 +28,8 @@ import { getPref, setPref } from "@/lib/prefs"
 import { MEDICATION_KIND_META, medicationKind } from "@/lib/types/medication-types"
 import { formatDateForStorage, useDailyData, CATEGORIES } from "@/lib/database"
 import { ADHERENCE_SUBCATEGORY } from "@/lib/medications/adherence"
+
+import Link from "next/link";
 
 function takenKey(date: string) { return `med-taken-${date}` }
 
@@ -310,7 +311,7 @@ export default function MaintainMedicationsPage() {
               <Pill className="h-8 w-8 mx-auto opacity-50" />
               <p className="font-medium text-foreground">No daily meds yet</p>
               <p className="text-sm">
-                Add medications in <a href="/medications" className="underline text-primary">Manage → Medications</a> and
+                Add medications in <Link href="/medications" className="underline text-primary">Manage → Medications</Link> and
                 flip on <span className="italic">"Add to my daily Maintain tracker"</span> for the ones you take on a schedule.
               </p>
             </CardContent>
@@ -371,21 +372,21 @@ export default function MaintainMedicationsPage() {
         {ready && dailyMeds.length > 0 && (
           <div className="text-center">
             <Button variant="outline" size="sm" asChild>
-              <a href="/maintain/medications/history">📈 Full adherence history &amp; analytics</a>
+              <Link href="/maintain/medications/history">📈 Full adherence history &amp; analytics</Link>
             </Button>
           </div>
         )}
 
         <div className="text-center">
-          <a href="/medications" className="text-xs text-muted-foreground underline">Manage full medication list →</a>
+          <Link href="/medications" className="text-xs text-muted-foreground underline">Manage full medication list →</Link>
         </div>
 
         <div className="flex justify-center pt-2">
           <Button variant="outline" asChild>
-            <a href="/maintain"><ArrowLeft className="h-4 w-4 mr-2" />Back to Maintain</a>
+            <Link href="/maintain"><ArrowLeft className="h-4 w-4 mr-2" />Back to Maintain</Link>
           </Button>
         </div>
       </div>
     </AppCanvas>
-  )
+  );
 }

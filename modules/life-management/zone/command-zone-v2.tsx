@@ -21,8 +21,7 @@
  *
  * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
  */
-'use client'
-
+'use client';
 import React, { useState, useEffect, useCallback } from 'react'
 import { getNamespaceId } from '@/lib/database/session-crypto'
 import { getPref, setPref } from '@/lib/prefs'
@@ -40,6 +39,8 @@ import DailyPrompts from '@/components/daily-prompts'
 import { useDailyData } from '@/lib/database/hooks/use-daily-data'
 import { CATEGORIES } from '@/lib/database/dexie-db'
 import confetti from 'canvas-confetti'
+
+import { useRouter } from "next/navigation";
 
 interface DailyTask {
   id: string
@@ -154,6 +155,7 @@ function CollapsibleSection({ id, title, icon, sections, children }: {
 }
 
 export default function CommandZone() {
+  const router = useRouter();
   const { confirm, confirmDialog } = useConfirmDialog()
   const sections = useCollapsibleSections()
   const [hiddenSections, setHiddenSections] = useState<string[]>([])
@@ -571,7 +573,6 @@ export default function CommandZone() {
         <h1 className="text-4xl font-bold text-primary mb-2">Command Zone</h1>
         <p className="text-muted-foreground">Your daily quest hub - let's get stuff done! ✨</p>
       </div>
-
       {/* SURVIVAL BOX & DAILY PROMPTS - The heart of it all! */}
       {isSectionVisible('survival') && (
       <div className="mb-8 max-w-6xl mx-auto">
@@ -585,7 +586,6 @@ export default function CommandZone() {
         </div>
       </div>
       )}
-
       {/* Quick Stats */}
       {isSectionVisible('stats') && (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -603,7 +603,6 @@ export default function CommandZone() {
         </Card>
       </div>
       )}
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Daily Schedule */}
         {isSectionVisible('schedule') && (
@@ -836,7 +835,7 @@ export default function CommandZone() {
                       variant="ghost"
                       size="sm"
                       className="h-6 w-6 p-0 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={() => window.location.href = item.link!}
+                      onClick={() => router.push(item.link!)}
                     >
                       <ExternalLink className="h-3 w-3" />
                     </Button>
@@ -879,7 +878,6 @@ export default function CommandZone() {
         </CollapsibleSection>
         )}
       </div>
-
       {/* CUSTOMIZE SECTIONS */}
       <Card className="mt-8">
         <CardHeader>
@@ -956,7 +954,6 @@ export default function CommandZone() {
           </Dialog>
         </CardContent>
       </Card>
-
       {/* Schedule Edit Modal */}
       <Dialog open={isScheduleModalOpen} onOpenChange={setIsScheduleModalOpen}>
         <DialogContent className="sm:max-w-[425px]">
@@ -1006,7 +1003,6 @@ export default function CommandZone() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
       {/* Luka's Epic Celebration Overlay! 🎉🐧 */}
       {celebrationEmojis.length > 0 && (
         <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
@@ -1027,5 +1023,5 @@ export default function CommandZone() {
         </div>
       )}
     </div>
-  )
+  );
 }

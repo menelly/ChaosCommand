@@ -8,8 +8,7 @@
  *
  * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
  */
-"use client"
-
+"use client";
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -23,12 +22,15 @@ import { deleteCurrentProfile } from "@/lib/database/dexie-db"
 import { recordBackup } from "@/lib/backup-reminder"
 import { KeyboardAvoidingWrapper } from '@/components/ui/keyboard-avoiding-wrapper'
 
+import { useRouter } from "next/navigation";
+
 interface DataManagementModalProps {
   isOpen: boolean
   onClose: () => void
 }
 
 export function DataManagementModal({ isOpen, onClose }: DataManagementModalProps) {
+  const router = useRouter();
   const [showImportDialog, setShowImportDialog] = useState(false)
   const [importPassword, setImportPassword] = useState("1234")  // backup-file password (visible, weak default)
   const [exportPassword, setExportPassword] = useState("1234")  // encrypt-export password (visible, weak default)
@@ -179,7 +181,7 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
         'Remember: if you synced this profile to another device, its copy is still there until you delete it there too.'
       )
       // Hard reload → guaranteed clean state, back at the locked/PIN screen.
-      window.location.href = '/'
+      router.push('/')
       window.location.reload()
     } catch (error) {
       console.error('Delete-profile failed:', error)

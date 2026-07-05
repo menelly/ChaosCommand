@@ -5,8 +5,7 @@
  * Gaslight Garage - "No REALLY, and I have proof"
  * Your medical evidence locker.
  */
-"use client"
-
+"use client";
 import { useState, useEffect, useRef, useCallback } from "react"
 import AppCanvas from "@/components/app-canvas"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -22,6 +21,8 @@ import {
   Upload, Image as ImageIcon, X, ChevronDown, ChevronUp,
   Calendar, FileText, Search, Trash2, Edit3, CheckCircle, AlertTriangle
 } from "lucide-react"
+
+import Link from "next/link";
 
 // Quick-add tags for medical gaslighting situations
 const QUICK_TAGS = [
@@ -689,12 +690,12 @@ export default function GaslightGaragePage() {
         {/* Footer */}
         <div className="flex justify-center gap-4 mt-8 text-sm">
           <Button variant="outline" asChild>
-            <a href="/manage">
+            <Link href="/manage">
               ← Back to Manage
-            </a>
+            </Link>
           </Button>
         </div>
       </div>
     </AppCanvas>
-  )
+  );
 }

@@ -9,12 +9,13 @@
  * Co-invented by Ren (vision) and Ace (implementation)
  * This wasn't built with compliance. It was built with defiance.
  */
-"use client"
-
+"use client";
 import AppCanvas from "@/components/app-canvas"
 import LinesTracker from "./lines-tracker"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
+
+import Link from "next/link";
 
 export default function LinesTubesPage() {
   return (
@@ -22,9 +23,9 @@ export default function LinesTubesPage() {
       <LinesTracker />
       <div className="flex justify-center pt-4">
         <Button variant="outline" asChild>
-          <a href="/maintain"><ArrowLeft className="h-4 w-4 mr-2" />Back to Maintain</a>
+          <Link href="/maintain"><ArrowLeft className="h-4 w-4 mr-2" />Back to Maintain</Link>
         </Button>
       </div>
     </AppCanvas>
-  )
+  );
 }

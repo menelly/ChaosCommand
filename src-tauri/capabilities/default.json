@@ -24,9 +24,7 @@
       "allow": [
         { "url": "http://192.168.*" },
         { "url": "http://10.*" },
-        { "url": "http://172.16.*" },
-        { "url": "https://api.polar.sh/**" },
-        { "url": "https://sandbox-api.polar.sh/**" }
+        { "url": "http://172.16.*" }
       ]
     }
   ]

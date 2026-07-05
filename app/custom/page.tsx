@@ -22,7 +22,6 @@
  * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
  */
 'use client';
-
 import AppCanvas from "@/components/app-canvas"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -54,6 +53,8 @@ import { useUser } from '@/lib/contexts/user-context'
 import { useToast } from '@/hooks/use-toast'
 import { hideCustomTracker, getHiddenCustomTrackers } from '@/lib/custom-trackers-hidden'
 import Link from 'next/link'
+
+import { useRouter } from "next/navigation";
 
 interface TrackerButton {
   id: string
@@ -356,14 +357,13 @@ export default function CustomTrackersIndex() {
           </div>
         )}
         <div className="mt-8 text-center">
-          <a href="/">
+          <Link href="/">
             <Button variant="outline">
               ← Back to Command Center
             </Button>
-          </a>
+          </Link>
         </div>
       </div>
-
       {/* HIDE CONFIRMATION DIALOG */}
       <Dialog
         open={pendingHide !== null}
@@ -388,7 +388,7 @@ export default function CustomTrackersIndex() {
         </DialogContent>
       </Dialog>
     </AppCanvas>
-  )
+  );
 }
 
 // 🎯 TRACKER CARD COMPONENT
@@ -399,6 +399,7 @@ function TrackerCard({
   tracker: TrackerButton
   onHide: () => void
 }) {
+  const router = useRouter();
   return (
     <Card className="hover:shadow-md transition-shadow h-full relative">
       <Link href={tracker.href} className="block">
@@ -433,7 +434,7 @@ function TrackerCard({
           onClick={(e) => {
             e.preventDefault()
             e.stopPropagation()
-            window.location.href = `/forge?edit=${tracker.id}`
+            router.push(`/forge?edit=${tracker.id}`)
           }}
         >
           <Pencil className="h-4 w-4" />
@@ -454,7 +455,7 @@ function TrackerCard({
         </Button>
       </div>
     </Card>
-  )
+  );
 }
 
 function getCategoryStyle(category: string) {

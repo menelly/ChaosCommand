@@ -6,14 +6,15 @@
  * because the builder's drag-and-arrange UI needs screen real estate and
  * tap targets that just don't fit on a phone.
  */
-"use client"
-
+"use client";
 import AppCanvas from "@/components/app-canvas"
 import TrackerBuilder from "@/components/forge/tracker-builder"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useIsPhoneOnly } from "@/lib/platform"
 import { Hammer, Tablet } from "lucide-react"
 import { useSearchParams } from "next/navigation"
+
+import Link from "next/link";
 
 export default function ForgePage() {
   const isPhone = useIsPhoneOnly()
@@ -48,26 +49,26 @@ export default function ForgePage() {
                 </li>
                 <li>
                   Use any of the existing trackers normally —{" "}
-                  <a href="/" className="underline text-[var(--text-main)] font-medium">
+                  <Link href="/" className="underline text-[var(--text-main)] font-medium">
                     back to Command Center
-                  </a>
+                  </Link>
                 </li>
               </ul>
             </CardContent>
           </Card>
         </div>
       </AppCanvas>
-    )
+    );
   }
 
   return (
     <AppCanvas currentPage="forge">
       <TrackerBuilder editId={editId} />
       <div className="mt-8 text-center">
-        <a href="/" className="text-sm text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors">
+        <Link href="/" className="text-sm text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors">
           ← Back to Command Center
-        </a>
+        </Link>
       </div>
     </AppCanvas>
-  )
+  );
 }

@@ -30,8 +30,7 @@
  *
  * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
  */
-"use client"
-
+"use client";
 import { useState, useEffect } from "react"
 import AppCanvas from "@/components/app-canvas"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -50,6 +49,8 @@ import { useDailyData, CATEGORIES, formatDateForStorage } from "@/lib/database"
 import { useGoblinMode } from "@/lib/goblin-mode-context"
 import { useToast } from "@/hooks/use-toast"
 import { format } from "date-fns"
+
+import { useRouter } from "next/navigation";
 
 interface UpperDigestiveEntry {
   id: string
@@ -102,10 +103,11 @@ const UPPER_DIGESTIVE_GOBLINISMS = [
 ]
 
 export default function UpperDigestiveTracker() {
+  const router = useRouter();
   const { saveData, getCategoryData, deleteData, getDateRange, isLoading } = useDailyData()
   const { toast } = useToast()
   const { goblinMode } = useGoblinMode()
-  
+
   // Form state
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'))
   const [time, setTime] = useState(format(new Date(), 'HH:mm'))
@@ -116,7 +118,7 @@ export default function UpperDigestiveTracker() {
   const [notes, setNotes] = useState("")
   const [tags, setTags] = useState<string[]>([])
   const [tagInput, setTagInput] = useState("")
-  
+
   // UI state
   const [entries, setEntries] = useState<UpperDigestiveEntry[]>([])
   const [allEntries, setAllEntries] = useState<UpperDigestiveEntry[]>([]) // For history view
@@ -663,7 +665,7 @@ export default function UpperDigestiveTracker() {
         </Tabs>
 
         <div className="text-center mt-6">
-          <Button variant="outline" onClick={() => window.location.href = '/body'}>
+          <Button variant="outline" onClick={() => router.push('/body')}>
             ← Back to Body
           </Button>
         </div>
@@ -829,5 +831,5 @@ export default function UpperDigestiveTracker() {
         </Dialog>
       </div>
     </AppCanvas>
-  )
+  );
 }

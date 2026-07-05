@@ -12,7 +12,8 @@
  * the visitor picks, and must not depend on token CSS being loaded.
  */
 
-"use client"
+"use client";
+import Link from "next/link";
 
 const IS_DEMO = process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
 const SITE_URL = 'https://chaoscommand.center/'
@@ -56,7 +57,7 @@ export function DemoBanner() {
       <span style={{ opacity: 0.9 }}>
         👀 See the setup flow: <strong>Settings → Restart Onboarding.</strong>
       </span>
-      <a
+      <Link
         href={SITE_URL}
         style={{
           color: '#fff',
@@ -66,7 +67,7 @@ export function DemoBanner() {
         }}
       >
         ← Back to the website
-      </a>
+      </Link>
     </div>
-  )
+  );
 }

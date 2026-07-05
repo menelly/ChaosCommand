@@ -21,12 +21,13 @@
  *
  * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
  */
-"use client"
-
+"use client";
 import AppCanvas from "@/components/app-canvas"
 import ReproductiveHealthTracker from "./reproductive-health-tracker"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
+
+import Link from "next/link";
 
 export default function ReproductiveHealthPage() {
   return (
@@ -35,12 +36,12 @@ export default function ReproductiveHealthPage() {
       {/* Back to Body Button */}
       <div className="flex justify-center pt-4">
         <Button variant="outline" asChild>
-          <a href="/body">
+          <Link href="/body">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Body
-          </a>
+          </Link>
         </Button>
       </div>
     </AppCanvas>
-  )
+  );
 }

@@ -21,9 +21,9 @@
  *
  * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
  */
-"use client"
-
+"use client";
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { getPref, setPref } from "@/lib/prefs"
 import AppCanvas from "@/components/app-canvas"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -54,6 +54,8 @@ import {
   ChevronRight
 } from "lucide-react"
 
+import Link from "next/link";
+
 interface TrackerButton {
   id: string
   name: string
@@ -72,6 +74,7 @@ export default function PhysicalHealthIndex() {
   // Test different editions: 'cares' | 'companion' | 'command'
 
   // Hidden trackers state - persisted to localStorage
+  const router = useRouter()
   const [hiddenTrackers, setHiddenTrackers] = useState<string[]>([])
   const [hideFertility, setHideFertility] = useState(false)
   const [isCustomizeOpen, setIsCustomizeOpen] = useState(false)
@@ -408,7 +411,7 @@ export default function PhysicalHealthIndex() {
                           className="pb-3 cursor-pointer"
                           onClick={() => {
                             const href = getTrackerHref(tracker.id)
-                            if (href) window.location.href = href
+                            if (href) router.push(href)
                           }}
                         >
                           <div className="flex items-center justify-between">
@@ -557,14 +560,14 @@ export default function PhysicalHealthIndex() {
         </Card>
 
         <div className="mt-8 text-center">
-          <a href="/">
+          <Link href="/">
             <Button variant="outline">
               ← Back to Command Center
             </Button>
-          </a>
+          </Link>
         </div>
       </div>
     </AppCanvas>
-  )
+  );
 }
 

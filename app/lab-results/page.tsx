@@ -11,8 +11,7 @@
  *
  * "Your ferritin has been 7, 8, 9 for six weeks. This is not 'fine'."
  */
-"use client"
-
+"use client";
 import { useState, useEffect, useCallback } from "react"
 import AppCanvas from "@/components/app-canvas"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -27,6 +26,8 @@ import {
   AlertTriangle, CheckCircle, ChevronDown, ChevronUp, Calendar, Minus, Trash2,
   ClipboardList, Edit3, Save, X, Plus
 } from "lucide-react"
+
+import Link from "next/link";
 
 interface LabResult {
   test_name: string
@@ -360,24 +361,24 @@ export default function LabResultsPage() {
                 asChild
                 className="flex-1 h-12 text-base font-medium"
               >
-                <a href="/add">
+                <Link href="/add">
                   <Plus className="h-5 w-5 mr-2" />
                   Add Result Manually
-                </a>
+                </Link>
               </Button>
               <Button
                 asChild
                 variant="outline"
                 className="flex-1 h-12 text-base border-[var(--border-soft)] text-[var(--text-main)]"
               >
-                <a href="/import?mode=lab">
+                <Link href="/import?mode=lab">
                   <FileText className="h-5 w-5 mr-2" />
                   Import from PDF (desktop)
-                </a>
+                </Link>
               </Button>
             </div>
             <p className="text-xs text-[var(--text-muted)] mt-3">
-              💡 <a href="/demographics" className="underline text-[var(--accent-purple)] hover:text-[var(--accent-orange)]">Fill out Demographics first</a> — we filter your name and personal info from imported results.
+              💡 <Link href="/demographics" className="underline text-[var(--accent-purple)] hover:text-[var(--accent-orange)]">Fill out Demographics first</Link> — we filter your name and personal info from imported results.
             </p>
           </CardContent>
         </Card>
@@ -732,10 +733,10 @@ export default function LabResultsPage() {
         {/* Footer */}
         <div className="flex justify-center gap-4 mt-8 text-sm">
           <Button variant="outline" asChild>
-            <a href="/manage">← Back to Manage</a>
+            <Link href="/manage">← Back to Manage</Link>
           </Button>
         </div>
       </div>
     </AppCanvas>
-  )
+  );
 }

@@ -21,8 +21,7 @@
  *
  * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
  */
-"use client"
-
+"use client";
 import { useState, useEffect } from "react"
 import AppCanvas from "@/components/app-canvas"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -34,6 +33,8 @@ import { useIsMobilePlatform } from "@/lib/platform"
 import { TRACKERS, HIDDEN_TRACKERS_KEY } from "@/lib/manage/trackers-config"
 import { getPref, setPref } from "@/lib/prefs"
 import VisibleTrackersPanel from "@/components/customize/visible-trackers-panel"
+
+import Link from "next/link";
 
 export default function WorkLifeIndex() {
   // Hidden trackers state - persisted to localStorage
@@ -87,7 +88,7 @@ export default function WorkLifeIndex() {
             .filter(tracker => !hiddenTrackers.includes(tracker.id))
             .filter(tracker => !(isMobile && tracker.id === 'import'))
             .map((tracker) => (
-            <a
+            <Link
               key={tracker.id}
               href={getTrackerHref(tracker.id)}
               className="block"
@@ -125,7 +126,7 @@ export default function WorkLifeIndex() {
                 )}
               </CardHeader>
             </Card>
-            </a>
+            </Link>
           ))}
         </div>
 
@@ -152,12 +153,12 @@ export default function WorkLifeIndex() {
           </Dialog>
 
           <Button variant="outline" asChild>
-            <a href="/">
+            <Link href="/">
               ← Back to Command Center
-            </a>
+            </Link>
           </Button>
         </div>
       </div>
     </AppCanvas>
-  )
+  );
 }
