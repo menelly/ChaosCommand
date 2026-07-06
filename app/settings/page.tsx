@@ -25,11 +25,9 @@
 import { useState, useEffect } from "react"
 import { getNamespaceId } from "@/lib/database/session-crypto"
 import AppCanvas from "@/components/app-canvas"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Settings, Database, Palette, Bell, MessageSquare, Globe, HelpCircle, Tag, RotateCcw, Bot, Printer, Smartphone, Cloud, Lock } from "lucide-react"
-import { Switch } from "@/components/ui/switch"
-import { getPref, setPref } from "@/lib/prefs"
 import { APP_VERSION } from "@/lib/app-version"
 
 // Modal components (to be created)
@@ -46,6 +44,7 @@ import { PrintExportModal } from "./print-export-modal"
 // is kept on disk in case the stub-modal flow ever gets revived.
 // import { QRSyncModal } from "./qr-sync-modal"
 import { UpdateCheckModal } from "./update-check-modal"
+import { AutoLockModal } from "./auto-lock-modal"
 
 import { useRouter } from "next/navigation";
 
@@ -53,17 +52,6 @@ export default function SettingsPage() {
   const router = useRouter();
   // Modal state management
   const [activeModal, setActiveModal] = useState<string | null>(null)
-  const [autoLockBackground, setAutoLockBackground] = useState(false)
-
-  // Load the auto-lock-in-background preference (per-profile).
-  useEffect(() => {
-    setAutoLockBackground(getPref('chaos-auto-lock-background') === 'true')
-  }, [])
-
-  const toggleAutoLock = (on: boolean) => {
-    setPref('chaos-auto-lock-background', on ? 'true' : 'false')
-    setAutoLockBackground(on)
-  }
 
   const openModal = (modalName: string) => setActiveModal(modalName)
   const closeModal = () => setActiveModal(null)
@@ -201,9 +189,20 @@ export default function SettingsPage() {
             </CardHeader>
           </Card>
 
-          {/* Auto-lock in background — inline toggle (not a modal). Full close always
-              logs out; this tightens the app-SWITCH case for higher-risk situations. */}
-          <Card>
+          {/* Auto-lock in background — opens as a modal like every other setting
+              (was an inline toggle that stretched full-width + broke on mobile). */}
+          <Card
+            onClick={() => openModal('autolock')}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                openModal('autolock')
+              }
+            }}
+            className="cursor-pointer hover:shadow-lg hover:ring-2 hover:ring-primary transition-all"
+          >
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Lock className="h-5 w-5" />
@@ -213,28 +212,6 @@ export default function SettingsPage() {
                 Require your PIN again whenever you switch away from the app — not just when you fully close it.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center justify-between gap-4">
-                <label htmlFor="auto-lock-bg" className="text-sm text-muted-foreground">
-                  When <strong>on</strong>, minimizing or switching apps logs you out immediately. When{' '}
-                  <strong>off</strong>, you stay logged in while switching apps and only lock when you fully
-                  close the app.
-                </label>
-                <Switch
-                  id="auto-lock-bg"
-                  checked={autoLockBackground}
-                  onCheckedChange={toggleAutoLock}
-                />
-              </div>
-              <p className="text-xs rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-amber-700 dark:text-amber-300">
-                ⚠️ While the app is locked, medication &amp; reminder notifications can’t fire — the app has to
-                be unlocked to read your schedule. Turn this on only if the extra privacy is worth possibly
-                missing a background reminder.
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Fully closing the app (swipe it away / close the window) always logs you out, no matter this setting.
-              </p>
-            </CardContent>
           </Card>
 
           {/* Updates — opt-in only manifest check. Lives at the top level
@@ -315,6 +292,9 @@ export default function SettingsPage() {
 
         {/* Update Check modal (also not in the category array) */}
         <UpdateCheckModal isOpen={activeModal === 'updates'} onClose={closeModal} />
+
+        {/* Auto-lock modal (also not in the category array) */}
+        <AutoLockModal isOpen={activeModal === 'autolock'} onClose={closeModal} />
 
         <div className="mt-8 text-center space-y-3">
           <Button variant="outline" onClick={() => window.history.back()}>

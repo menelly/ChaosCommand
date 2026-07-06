@@ -103,7 +103,7 @@ export function SupportModal({ isOpen, onClose }: SupportModalProps) {
                   <div className="text-xs text-muted-foreground mt-3 leading-relaxed border-t pt-3 w-full">
                     <p className="mb-2"><strong>Patterns</strong> — Shows correlations between symptoms over time. Higher r-values mean stronger relationships.</p>
                     <p className="mb-2"><strong>Trends</strong> — Need at least 2 weeks of data. The engine looks for worsening, improving, or cyclical patterns.</p>
-                    <p><strong>PDF Reports</strong> — Your best tool for appointments. Doctor mode includes ICD-10 suggestions. Attorney mode shows functional impact and missed work.</p>
+                    <p><strong>PDF Reports</strong> — Your best tool for appointments. Doctor mode gives per-system findings and suggested work-ups; Attorney mode shows functional impact and missed work.</p>
                   </div>
                 )}
               </Button>
@@ -385,10 +385,6 @@ export function SupportModal({ isOpen, onClose }: SupportModalProps) {
                   <li>
                     <button className="text-primary underline underline-offset-2" onClick={() => openExternalLink('https://github.com/huggingface/transformers.js')}>Transformers.js</button>
                     {' '}— runs the NER model on-device, no server
-                  </li>
-                  <li>
-                    <button className="text-primary underline underline-offset-2" onClick={() => openExternalLink('https://www.cms.gov/medicare/coding-billing/icd-10-codes')}>ICD-10 codes</button>
-                    {' '}— diagnostic coding (WHO / U.S. CMS) for doctor-mode reports
                   </li>
                 </ul>
               </div>

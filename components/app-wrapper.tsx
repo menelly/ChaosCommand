@@ -9,6 +9,7 @@
 
 import { useState, useEffect } from 'react'
 import { getPref } from '@/lib/prefs'
+import { getNamespaceId } from '@/lib/database/session-crypto'
 import { useDatabase } from '@/lib/database/hooks/use-database'
 import { LicenseProvider } from '@/lib/contexts/license-context'
 import LicenseGate from '@/components/license-gate'
@@ -216,8 +217,14 @@ function AppContent({ children }: AppWrapperProps) {
       return
     }
 
+    // Per-PIN localStorage flags are namespaced by the HASHED profile id (what
+    // onboarding writes and what migrateProfileKeys() renames them to) — NOT the
+    // raw userPin. Using the raw PIN here made the read miss the migrated key, so
+    // "Make It Yours" re-prompted on every single login (CHA-261 regression).
+    const ns = getNamespaceId()
+
     // Check per-PIN onboarding flag
-    const onboardingDone = localStorage.getItem(`chaos-onboarding-complete-${userPin}`)
+    const onboardingDone = ns ? localStorage.getItem(`chaos-onboarding-complete-${ns}`) : null
     // Also check the old global flag (for existing users who already onboarded)
     const globalOnboardingDone = localStorage.getItem('chaos-onboarding-complete')
 
@@ -225,14 +232,14 @@ function AppContent({ children }: AppWrapperProps) {
       setIsNewUser(false)
       // One-time personalization prompt for users who onboarded BEFORE
       // personalization existed (CHA-261). Fires once on next login, then never.
-      const personalized = localStorage.getItem(`chaos-personalization-prompted-${userPin}`)
+      const personalized = ns ? localStorage.getItem(`chaos-personalization-prompted-${ns}`) : 'true'
       if (personalized !== 'true') {
         setShowPersonalize(true)
         // Mark PROMPTED the instant we show it — the flag is "prompted", not
         // "completed". The panel already saves-as-you-go, so a user who fills it
         // in and navigates away via the sidebar (without clicking Done/Skip) would
         // otherwise be re-prompted on every login. Show once, ever.
-        try { localStorage.setItem(`chaos-personalization-prompted-${userPin}`, 'true') } catch {}
+        try { if (ns) localStorage.setItem(`chaos-personalization-prompted-${ns}`, 'true') } catch {}
       }
       return
     }
@@ -310,7 +317,8 @@ function AppContent({ children }: AppWrapperProps) {
     return (
       <PersonalizationWelcome
         onDone={() => {
-          try { localStorage.setItem(`chaos-personalization-prompted-${userPin}`, 'true') } catch {}
+          // Hashed namespace, matching the effect above + onboarding + migration.
+          try { const ns = getNamespaceId(); if (ns) localStorage.setItem(`chaos-personalization-prompted-${ns}`, 'true') } catch {}
           setShowPersonalize(false)
         }}
       />

@@ -158,46 +158,21 @@ function formatLabValue(r: { value_text?: string; unit?: string }): string {
   return `${value} ${unit}`
 }
 
-// ICD-10 mapping for tracked SYMPTOMS / CONDITIONS only.
-// Deliberately NOT coded: lifestyle/wellness/behavior trackers. Logging a healthy behavior
-// or a subjective state is NOT a diagnosis — auto-coding it (food logging → "dietary
-// surveillance", self-care â†’ "disability limitation", drinking water â†’ "dehydration",
-// sleeping â†’ "sleep disorder") can mislead a clinician, follow a patient through their
-// records, and affect insurance. Those trackers render "—" instead.
-// Yeeted 2026-05-28 per Ren (behaviors/disorders → "—"): food-choice, self-care(+tracker),
-// movement, hydration, sleep, coping, crisis-support, mental-health/mood, anxiety, substance, weather.
-// Softened to gentle symptom codes: brain-fog, energy. Real dx will come from the timeline (CHA-241).
-const ICD10_MAP: Record<string, string> = {
-  // â”€â”€ Genuine symptom / condition trackers (a clinician wants these) â”€â”€
-  'pain': 'R52 — Pain, unspecified',
-  'head-pain': 'G43.909 — Migraine, unspecified',
-  'dysautonomia': 'G90.9 — Disorder of autonomic nervous system, unspecified',
-  'seizure': 'R56.9 — Unspecified convulsions / G40.901 — Epilepsy, unspecified',
-  'upper-digestive': 'K30 — Functional dyspepsia',
-  'bathroom': 'R19.7 — Diarrhea / K59.00 — Constipation / N39.0 — UTI',
-  'sensory': 'R44.8 — Sensory perception disturbance',
-  'sensory-tracker': 'R44.8 — Sensory perception disturbance',
-  'reproductive-health': 'N94.6 — Dysmenorrhea, unspecified',
-  'diabetes': 'E11.9 — Type 2 diabetes mellitus without complications',
-  'thyroid': 'E03.9 — Hypothyroidism, unspecified / E05.90 — Thyrotoxicosis, unspecified',
-  'adrenal': 'E27.40 — Adrenocortical insufficiency, unspecified / E27.0 — Adrenocortical overactivity',
-  'cardiac': 'R00.2 — Palpitations / I49.9 — Cardiac arrhythmia, unspecified',
-  'respiratory': 'R06.02 — Shortness of breath / J45.909 — Asthma, unspecified',
-  'skin': 'L29.9 — Pruritus / L50.9 — Urticaria, unspecified',
-  'joint': 'M25.50 — Pain in unspecified joint',
-  'food-allergens': 'T78.40XA — Allergy, unspecified, initial encounter / K90.0 — Celiac disease',
-  'ent': 'H66.90 — Otitis media / H93.19 — Tinnitus / R42 — Dizziness / J32.9 — Chronic sinusitis',
-  'postpartum': 'Z39.2 — Routine postpartum follow-up / O90.9 — Postpartum complication, unspecified / Z76.2 — Health supervision of newborn',
-  'lines-tubes': 'Z45.2 — Adjustment of vascular access device / T82.7XXA — Infection due to vascular device / Z43.9 — Attention to unspecified artificial opening',
-  'medication-adherence': 'Z91.14 — Patient\'s other noncompliance with medication regimen',
-  // ── Subjective SYMPTOM trackers: gentle SYMPTOM codes (R-codes) only — never a disorder dx ──
-  'brain-fog': 'R41.840 — Attention and concentration deficit',  // softened from R41.82 "altered mental status"
-  'energy': 'R53.83 — Other fatigue',
-  // NOTE: mood/Mind&Mood, anxiety, substance, and weather render "—" on purpose. Their only honest
-  // codes are disorder diagnoses (F39, F41.9, F10.10) or non-conditions — auto-assigning those from
-  // tracker type pathologizes the act of tracking. Substance especially: NEVER auto-flag a use disorder.
-  // Real diagnoses will be pulled from the user's medical timeline instead — see CHA-241.
-}
+// NO AUTO ICD-10 CODES. (Removed 2026-07-06 per Ren — the whole category→ICD map is gone.)
+//
+// A category→ICD map is structurally incapable of being right: ICD-10 codes are DIAGNOSES a
+// clinician assigns by integrating findings, but this map assigned them from "which tracker did
+// you tap." That failed three ways AT ONCE — over-assigned (celiac from an apple allergy,
+// "noncompliance" from tracking that you TAKE your meds), mis-specified (E11.9 Type 2 diabetes for
+// any diabetes-tracker user, incl. Type 1s; asthma/epilepsy/migraine minted the same way), and
+// MISSED the patient's real diagnoses (lupus / anti-synthetase / MCTD) that categories can't know.
+// Worst of all it failed SILENTLY and AUTHORITATIVELY — a wrong code in a doctor/legal report reads
+// as clinical fact and can follow a patient through their records.
+//
+// The honest replacement already exists: the per-system descriptive assessments (e.g. the
+// Autoimmune / Connective-Tissue section) report what was actually TRACKED and suggest appropriate
+// WORKUPS, without asserting a diagnosis. Real ICD codes, when we add them, will come from a
+// USER-ENTERED diagnosis list (CHA-241) — sourced from the patient's record, never guessed.
 
 // Display names — fixes the "head-pain" → "Head" truncation bug
 const TRACKER_DISPLAY_NAMES: Record<string, string> = {
@@ -259,7 +234,7 @@ const displayName = (sub: string): string => {
 // base key ("hydration") makes them aggregate into one row. Longest-match-first protects
 // multi-word slugs like "head-pain" from being shortened to "head" (the v1 bug).
 const KNOWN_TRACKER_KEYS = Array.from(
-  new Set([...Object.keys(TRACKER_DISPLAY_NAMES), ...Object.keys(ICD10_MAP)])
+  new Set(Object.keys(TRACKER_DISPLAY_NAMES))
 ).sort((a, b) => b.length - a.length)
 
 const canonicalSub = (sub: string): string => {
@@ -788,7 +763,6 @@ export function generateMedicalReport(data: ReportData): Blob {
   // "Hydration", and "Hydration Hydration" all merge into one "Hydration" row.
   const trackerCounts: Record<string, number> = {}
   const trackerDayCounts: Record<string, Set<string>> = {}
-  const displayToKey: Record<string, string> = {} // remember a canonical key for ICD lookup
 
   for (const r of trackerData) {
     const sub = canonicalSub(r.subcategory || '')   // collapse per-entry suffixes to the base tracker
@@ -797,26 +771,21 @@ export function generateMedicalReport(data: ReportData): Blob {
     trackerCounts[display] = (trackerCounts[display] || 0) + 1
     if (!trackerDayCounts[display]) trackerDayCounts[display] = new Set()
     if (r.date) trackerDayCounts[display].add(r.date)
-    // Prefer a key that maps to ICD10_MAP if any
-    if (!displayToKey[display] || (ICD10_MAP[sub] && !ICD10_MAP[displayToKey[display]])) {
-      displayToKey[display] = sub
-    }
   }
 
   if (isDoctor) {
-    w.sectionHeader('Tracked Conditions (ICD-10)')
+    // No ICD-10 column: we do NOT guess diagnosis codes from tracker categories (that minted wrong
+    // codes AND missed the patient's real dx). This table reports what was TRACKED — frequency and
+    // recency — and the per-system assessments below carry the clinical detail + suggested workups.
+    w.sectionHeader('Tracked Symptoms')
     const sorted = mergeVariants(trackerCounts)
-    const rows = sorted.map(([display, count]) => {
-      const canonicalKey = displayToKey[display]
-      return [
-        display,
-        ICD10_MAP[canonicalKey] || '—',
-        String(trackerDayCounts[display]?.size || 0),
-        String(count),
-      ]
-    })
-    w.table(['Condition', 'ICD-10 Code', 'Days', 'Entries'], rows, [110, 230, 50, 50])
-    w.note('ICD-10 codes shown are suggestions based on tracked symptoms and may not match official diagnoses. Detailed per-system findings follow below.')
+    const rows = sorted.map(([display, count]) => [
+      display,
+      String(trackerDayCounts[display]?.size || 0),
+      String(count),
+    ])
+    w.table(['Symptom / Tracker', 'Days', 'Entries'], rows, [230, 80, 80])
+    w.note('This lists what was tracked and how often — not diagnoses. Detailed per-system findings and suggested work-ups follow below.')
     w.spacer(6)
   } else {
     w.sectionHeader('What Was Tracked')

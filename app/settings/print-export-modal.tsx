@@ -533,7 +533,7 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">
                   {audience === 'doctor'
-                    ? 'ICD-10 codes, clinical stats, medical language your doctor speaks'
+                    ? 'Clinical stats, per-system findings & suggested work-ups, in medical language your doctor speaks'
                     : audience === 'attorney'
                     ? 'Functional limitations, missed work, disability impact — SSDI ready'
                     : 'Plain language summary for your own records'}
