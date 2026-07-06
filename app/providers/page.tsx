@@ -1091,7 +1091,7 @@ export default function ProvidersPage() {
                                                 durationMinutes: 60,
                                                 reminderMinutesBefore: (appointment.reminderDays || 1) * 24 * 60,
                                               }}
-                                              filename={`appt-${appointment.providerName.replace(/\W+/g, '-').toLowerCase()}-${appointment.appointmentDate}.ics`}
+                                              filename={`appt-${(appointment.providerName ?? 'provider').replace(/\W+/g, '-').toLowerCase()}-${appointment.appointmentDate}.ics`}
                                             />
                                           <Button
                                             variant="ghost"

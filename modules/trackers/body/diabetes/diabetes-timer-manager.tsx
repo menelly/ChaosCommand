@@ -732,14 +732,14 @@ export function DiabetesTimerManager({ timers, onTimersChange, currentUserId }: 
                               compact
                               label="Add to Calendar"
                               event={{
-                                title: `Change ${timer.name} (${config.name})`,
-                                description: `Time to change your ${config.name} device (${timer.name}). Started ${new Date(timer.inserted_at).toLocaleDateString()}.`,
+                                title: `Change ${timer.name ?? 'device'} (${config.name})`,
+                                description: `Time to change your ${config.name} device (${timer.name ?? 'device'}). Started ${new Date(timer.inserted_at).toLocaleDateString()}.`,
                                 start: timer.expires_at,
                                 durationMinutes: 30,
                                 // Alert 1 day before so there's time to grab supplies
                                 reminderMinutesBefore: 24 * 60,
                               }}
-                              filename={`change-${timer.type}-${timer.name.replace(/\W+/g, '-').toLowerCase()}.ics`}
+                              filename={`change-${timer.type}-${(timer.name ?? 'timer').replace(/\W+/g, '-').toLowerCase()}.ics`}
                             />
                           )}
                           {isExpired && (
