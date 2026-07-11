@@ -156,10 +156,10 @@ Percentage or flat commission · **hand-pick partners** (auto-approve OFF) · at
 
 ## 8. Open items
 
-- [ ] **DECIDE:** ship the free+license SKU now, or ship $25-paid to get back on the store fast and restructure later? *(Ace's rec: do it now — the submission is being rebuilt from scratch after the security pull, so this is the cheapest moment in the product's life to change the model, and every paid-per-platform sale is a user you'd have to migrate later.)*
+- [ ] **DECIDE:** ship the free+license SKU now, or ship $25-paid to get back on the store fast and restructure later? *(Ace's rec: do it now — the submission is being rebuilt from scratch anyway, so this is the cheapest moment in the product's life to change the model, and every paid-per-platform sale is a user you'd have to migrate later.)*
 - [ ] Wire LemonSqueezy key validation alongside the existing Ed25519 path (`src-tauri/src/license.rs`, `components/unlock-modal.tsx`, `lib/contexts/entitlement-context.tsx` — **the gate, the modal and the trial system already exist**).
 - [ ] Implement the 30-day revalidation with **fail-open** grace.
 - [ ] Set LS product: PWYW, min $5, suggested $25, license keys ON, activation cap ~5.
 - [ ] Set store SKUs to **free**.
 - [ ] Scholarship inbox flow: Ace + `generate_keys.py` + a reply template.
-- [ ] No existing paid customers to migrate — MS Store listing was live ~2–3 days before Ren pulled it herself over the plaintext-DB finding. **Clean slate.**
+- [ ] No existing paid customers to migrate — MS Store listing was live ~2–3 days before **Ren pulled it HERSELF**, having found the plaintext-DB problem on her own. **Nobody caught her; there is no enforcement action and no violation on file.** The resubmission is a normal submission, not a plea. **Clean slate, clean record.**
