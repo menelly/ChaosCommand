@@ -6,8 +6,13 @@
  *
  * Time-blindness is real, and a lock that arrives by surprise is a hostile lock.
  * So at the 3-day and 1-day marks we surface a gentle, acknowledge-once prompt
- * with BOTH off-ramps right there: unlock ($25), or email Ace for a scholarship
- * code. Never a wall — a warning, with choices. Fires at most twice per trial
+ * with BOTH off-ramps right there: enter a licence key, or email Ace for a
+ * scholarship code. Never a wall — a warning, with choices. Fires at most twice per trial
+ *
+ * ⚠️ NO PRICE HERE. NO BUY BUTTON. Chaos Command is a Google "consumption-only"
+ * app — a product "cannot be purchased from within the app". That is the ONE rule
+ * that lets us ship FREE and WORLDWIDE with a single cross-platform licence.
+ * (Said "Unlock — $25 once" until 2026-07-11. Removed on purpose. Don't put it back.)
  * (one per threshold, tracked in localStorage); a paid/expired user never sees
  * it (only state === 'trial').
  */
@@ -80,7 +85,7 @@ export default function TrialReminder() {
           onClick={() => setShowUnlock(true)}
           className="mt-3 w-full rounded-lg bg-primary py-2.5 font-semibold text-primary-foreground hover:opacity-90"
         >
-          Unlock — $25 once, yours forever
+          Unlock with a licence key
         </button>
 
         <button

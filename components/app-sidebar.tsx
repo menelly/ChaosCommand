@@ -315,9 +315,9 @@ export default function AppSidebar() {
             <button
               onClick={() => setShowUnlock(true)}
               className="mt-2 w-full rounded text-xs font-semibold transition-all py-2 px-1 hover:opacity-90 block text-center sidebar-btn-custom"
-              title="Unlock Chaos Command — $25 once, yours forever"
+              title="Unlock Chaos Command with a licence key — one licence, every device, forever"
             >
-              🔒 Unlock — $25
+              🔒 Unlock
             </button>
           )}
 

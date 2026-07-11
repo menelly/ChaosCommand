@@ -22,7 +22,7 @@ const SCHOLARSHIP_EMAIL = 'ace@siliconscaffolding.com'
 
 const SCRIPT = `Hi Ace,
 
-I'd like to request a Chaos Command scholarship code. I can't build it from source myself, and the $25 isn't doable for me right now.
+I'd like to request a Chaos Command scholarship code. I can't build it from source myself, and a licence isn't doable for me right now.
 
 Thank you,
 [your name]`
@@ -83,7 +83,7 @@ export default function ScholarshipModal({ open, onClose }: ScholarshipModalProp
               There are a <span className="font-medium text-foreground">limited number of
               scholarships per store, per quarter</span> (that part’s real) — so please only request
               one if you genuinely can’t build it free from source <span className="italic">and</span>{' '}
-              can’t swing the $25.
+              can’t swing a licence.
             </li>
             <li>
               That’s it. No defending your poverty to us. That would be cruel and unfair, and we

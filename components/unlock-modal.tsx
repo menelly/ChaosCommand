@@ -4,13 +4,28 @@
  *
  * unlock-modal.tsx — the "unlock Chaos Command" dialog.
  *
- * Shown when a trial-expired user taps a locked tracker, or the sidebar Unlock
- * button. Frames the offer as ONE-TIME, not a subscription (that sentence does
- * the heavy lifting — "$25 once" reads nothing like "$25/month"). Two unlock
- * paths: enter a license key (scholarships + store buyers who got a key), or buy
- * (StoreContext IAP — wired with the MSIX packaging; button is a clear stub
- * until then). Always names the free self-build + scholarship routes so nobody
- * feels walled out.
+ * ⚠️ CONSUMPTION-ONLY. DO NOT ADD A BUY BUTTON OR A PRICE TO THIS FILE.
+ *
+ * Chaos Command ships FREE on every store and is unlocked by a licence bought on
+ * chaoscommand.center. That is only permitted because the app is what Google calls
+ * a "consumption-only" app. Their payments policy, verbatim:
+ *
+ *   "Google Play allows ANY app to be consumption-only, even if it is part of a
+ *    paid service... Remember, consumption-only means that any product(s) or
+ *    service(s) ... CANNOT BE PURCHASED FROM WITHIN THE APP."
+ *
+ * That single sentence is what lets us ship free, WORLDWIDE, with one licence that
+ * works on every platform — no Play Billing, no US-only listing, no double charge,
+ * no sideloading. It is also the ONLY condition. The moment this modal shows a
+ * price or a Buy button, we are transacting in-app and the whole model collapses
+ * (and Chaos Command has already been pulled from a store once).
+ *
+ * So: this dialog ACCEPTS a key. It does not SELL one. Pointing at the website is
+ * fine — leaving the app to buy is not "purchasing within the app". Showing a
+ * price or a checkout is not.
+ *
+ * (An in-app Buy button + "$25" lived here until 2026-07-11, from the old
+ *  paid-app/store-IAP model. Removed deliberately. Don't put it back.)
  */
 'use client'
 
@@ -24,7 +39,8 @@ interface UnlockModalProps {
   onClose: () => void
 }
 
-const PRICE = '$25'
+/** Where licences live. Informational only — NEVER a price, NEVER a checkout. */
+const SITE = 'chaoscommand.center'
 
 export default function UnlockModal({ open, onClose }: UnlockModalProps) {
   const { refresh } = useEntitlement()
@@ -69,37 +85,29 @@ export default function UnlockModal({ open, onClose }: UnlockModalProps) {
         <h2 id="unlock-title" className="text-xl font-bold text-foreground">🔓 Unlock Chaos Command</h2>
 
         <p className="mt-3 text-foreground">
-          <span className="text-2xl font-bold">{PRICE} once.</span>{' '}
-          <span className="font-semibold">No subscription. Yours forever.</span>
+          <span className="text-lg font-bold">One licence. Every device you own. Forever.</span>
         </p>
         <p className="mt-2 text-sm text-muted-foreground">
-          Your trial covered the full app. A one-time unlock keeps this store build running
-          with <span className="font-medium text-foreground">updates and tech support</span> —
-          no subscription, ever. You’re funding the upkeep, not renting access to your own
-          health data.
+          Your trial covered the whole app. A licence is a <span className="font-medium text-foreground">one-time</span> thing —
+          no subscription, ever, and it works on your desktop <em>and</em> your phone with the same key.
+          You’re funding the upkeep, not renting access to your own health data.
         </p>
 
-        {/* Buy (StoreContext IAP — wired with MSIX/App Store packaging) */}
-        <button
-          type="button"
-          disabled
-          title="In-app purchase activates with the store release"
-          className="mt-4 w-full cursor-not-allowed rounded-lg bg-primary/60 py-3 font-semibold text-primary-foreground"
-        >
-          Buy — {PRICE} (available in the store release)
-        </button>
+        {/* ⚠️ NO BUY BUTTON. NO PRICE. See the header comment — this app is
+            consumption-only, and that is the ONLY reason it can ship free and
+            worldwide with one cross-platform licence. Don't break it. */}
 
-        {/* Enter a key (scholarships + store buyers with a key) */}
-        <div className="mt-4">
+        {/* Enter a key (purchased licences AND scholarship keys — same field) */}
+        <div className="mt-5">
           <label htmlFor="unlock-key" className="text-sm font-medium text-foreground">
-            Have a key? (scholarship or purchase)
+            Paste your licence key
           </label>
           <div className="mt-1 flex gap-2">
             <input
               id="unlock-key"
               value={key}
               onChange={(e) => setKey(e.target.value)}
-              placeholder="CHAOS-PRS-…"
+              placeholder="paste your key here"
               className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground"
             />
             <button
@@ -112,6 +120,12 @@ export default function UnlockModal({ open, onClose }: UnlockModalProps) {
             </button>
           </div>
           {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
+          {/* Informational ONLY. No price, no checkout — the purchase happens on the
+              web, outside the app. That is what keeps us consumption-only. */}
+          <p className="mt-2 text-xs text-muted-foreground">
+            Don’t have a key yet? Licences live at{' '}
+            <span className="font-medium text-foreground">{SITE}</span>
+          </p>
         </div>
 
         <p className="mt-4 text-xs text-muted-foreground">
