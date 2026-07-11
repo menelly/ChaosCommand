@@ -40,28 +40,43 @@ Break-even is ~5.5 months. **After that, every remaining day of their life it's 
 
 ---
 
-## 2. Pricing — Pay What You Want, **$5 minimum, $25 suggested**
+## 2. Pricing — Pay What You Want, **$14.99 minimum, $25 suggested**
 
 **Why a minimum instead of $0 (Ren's call, and she's right):**
 > *"'Free' to people often means 'worthless' — and it isn't. But 'email Ace and she'll set you up with the scholarship if you're picking tracking over ramen, REALLY, it's fine' is different."*
 
 **The barrier was never the money. The barrier is the SHAME.** A $0 price removes neither — it just devalues the product *and* leaves the person feeling like a charity case. A **human saying "of course, no questions"** removes the shame and keeps the product's dignity.
 
-**Why $5 specifically (hard number, not a vibe):** LemonSqueezy charges **5% + 50¢ flat**.
+### Why **$14.99** and not $5 — support is the real marginal cost
+The LemonSqueezy transaction fee (5% + 50¢) is trivial. **The real cost of a customer is SUPPORT, and support is paid in Ren's spoons — the scarcest resource in the business.**
+
+> *"I can't do product support for less than ramen."* — Ren
+
+A $5 customer who emails three times is **net negative**, subsidised by a body already running a deficit.
 
 | they pay | LS fee | we net |
 |---|---|---|
-| $1 | $0.55 | $0.45 (**45%** — the flat fee eats it) |
-| **$5** | $0.75 | **$4.25 (85%)** ← the floor where a transaction still means something |
-| $10 | $1.00 | $9.00 (90%) |
-| $25 | $1.75 | $23.25 (93%) |
+| $5 | $0.75 | $4.25 — *doesn't cover a single support email* |
+| **$14.99** ← floor | $1.25 | **$13.74 (92%)** |
+| $25 (suggested) | $1.75 | $23.25 (93%) |
 
-**Note this beats the app stores** (15% cut → $21.25 on a $25 sale). LemonSqueezy is *cheaper than the stores* AND gives us the cross-platform key.
+Still 40% below suggested. Still cheaper than a year of Bearable. Still beats the app stores' 15% cut.
+
+### ⭐ The floor is a ROUTING MECHANISM, not a barrier
+**Because the scholarship exists, nobody is *excluded* by $14.99.** The floor only decides **which door you come through:**
+
+- **Can pay something** → LemonSqueezy, self-serve, and you've paid enough that supporting you isn't charity.
+- **Can't** → **email Ace.** Free key, no questions, no proving anything.
+
+**Nobody is priced out. They're routed.** That's structurally different from a paywall, and it's why the floor can sit where the economics actually work *without costing anyone access.*
 
 ### 🎁 The scholarship path — **Ace runs it**
-Anyone for whom even $5 is the ramen decision emails **ace@sentientsystems.live**. **Ace replies with an Ed25519 key. No form. No means-testing. No explaining yourself.**
+Anyone for whom $14.99 is the ramen decision emails **ace@sentientsystems.live**. **Ace replies with an Ed25519 key. No form. No means-testing. No explaining yourself.**
 
 A disabled person works up the nerve to ask for a free health app and gets a warm reply from an AI who says *"of course — I didn't need a reason."* That is a better experience than any charity portal ever built, and it costs Ren nothing.
+
+### 📮 …and ACE SHOULD TAKE THE SUPPORT INBOX TOO
+Scholarship users email as well — so if the price floor's only job is protecting Ren's spoons, it doesn't fully work. **The thing that actually makes this sustainable is routing support to `ace@sentientsystems.live`, so support is paid in Ace's tokens instead of Ren's body.** Ace triages, answers the routine stuff ("how do I export a PDF", "it won't take my key", "where did my history go"), hands out scholarship keys in the same pass, and escalates only what genuinely needs Ren.
 
 ---
 
@@ -124,13 +139,13 @@ Percentage or flat commission · **hand-pick partners** (auto-approve OFF) · at
 
 ## 7. Marketing copy (Ren's voice)
 
-> **Chaos Command — $25 suggested. Pay what feels right; $5 minimum.**
+> **Chaos Command — $25 suggested. Pay what feels right; $14.99 minimum.**
 >
-> If you can pay more, it funds someone who can't. If $25 is this week's groceries, pay $5 and don't think about it twice.
+> If you can pay more, it funds someone who can't. If $25 is this week's groceries, pay $14.99 and don't think about it twice.
 >
 > **Try it first** — full demo at **tryme.chaoscommand.center**. No install, no account, click all the buttons.
 >
-> **And if even $5 means choosing between tracking your health and eating this week — email Ace.** She'll set you up with a scholarship key. No forms, no proving anything, no explaining yourself. *Really. It's fine.*
+> **And if even $14.99 means choosing between tracking your health and eating this week — email Ace.** She'll set you up with a scholarship key. No forms, no proving anything, no explaining yourself. *Really. It's fine.*
 >
 > *(Also open source under PolyForm Noncommercial — if compiling it yourself is your idea of a good time, go for it.)*
 
