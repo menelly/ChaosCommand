@@ -132,8 +132,22 @@ export default function MaintainMedicationsPage() {
   const [ready, setReady] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
 
-  // Daily meds = opted into the daily checklist AND not discontinued
-  const dailyMeds = medications.filter(m => m.dailyMaintain && m.active !== false)
+  // A med belongs on a given day's checklist only if that day falls within its
+  // active window. WITHOUT the date guards, every dailyMaintain med showed on
+  // EVERY date — including dates BEFORE its dateStarted — where it rendered as an
+  // untaken dose and fabricated non-adherence on days the prescription didn't even
+  // exist yet (and baked that phantom "missed" into the durable adherence record +
+  // doctor PDF). Dates are YYYY-MM-DD strings, so a lexical compare is chronological.
+  // dateStarted/dateStopped are optional: no start = always-on (legacy meds),
+  // no stop = still active.
+  const medsForDate = (date: string) => medications.filter(m =>
+    m.dailyMaintain &&
+    m.active !== false &&
+    (!m.dateStarted || date >= m.dateStarted) &&
+    (!m.dateStopped || date <= m.dateStopped)
+  )
+  // Daily meds = the checklist for the day currently being viewed.
+  const dailyMeds = medsForDate(selectedDate)
   // Expand into DOSES (one per reminder time) — the unit Maintain tracks.
   const doses = useMemo(() => buildDoses(dailyMeds), [dailyMeds])
 
@@ -183,17 +197,20 @@ export default function MaintainMedicationsPage() {
 
   // 7-day adherence strip (selectedDate going back 6 days)
   const history = useMemo(() => {
-    if (doses.length === 0) return []
+    if (!medications.some(m => m.dailyMaintain)) return []
     const rows: { date: string; taken: number; total: number }[] = []
     for (let i = 0; i < 7; i++) {
       const d = addDays(selectedDate, -i)
+      // Each day's denominator is ITS OWN active-med set — a med that hadn't
+      // started yet (or was already stopped) on day d isn't counted against you.
+      const dayDoses = buildDoses(medsForDate(d))
       const map = readTakenMap(d)
-      const taken = doses.filter(dose => dose.key in map).length
-      rows.push({ date: d, taken, total: doses.length })
+      const taken = dayDoses.filter(dose => dose.key in map).length
+      rows.push({ date: d, taken, total: dayDoses.length })
     }
     return rows
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDate, doses.length, showHistory])
+  }, [selectedDate, medications, showHistory])
 
   const refillInfo = (refillDate?: string): { days: number; label: string } | null => {
     if (!refillDate) return null
