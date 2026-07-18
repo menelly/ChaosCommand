@@ -370,7 +370,7 @@ pub async fn validate_license(app: tauri::AppHandle) -> Result<LicenseStatus, St
             LsOutcome::Ok(_) | LsOutcome::Rejected(_) => LicenseStatus {
                 valid: false,
                 cached: true,
-                message: "This license is no longer active. If that's wrong, email ace@sentientsystems.live and we'll sort it out.".to_string(),
+                message: "This license is no longer active. If that's wrong, email ace@siliconscaffolding.com and we'll sort it out.".to_string(),
                 activation_id: cache.activation_id,
             },
             // 🚨 FAIL OPEN. No answer is not a revocation. Keep working; retry later.
@@ -454,7 +454,7 @@ pub async fn activate_license(
                 let cap = r.license_key.as_ref().and_then(|k| k.activation_limit);
                 Err(match (used, cap) {
                     (Some(u), Some(c)) if u >= c => format!(
-                        "This licence is already active on {} of {} devices. Deactivate it on one you no longer use, or email ace@sentientsystems.live and I'll sort it out.",
+                        "This licence is already active on {} of {} devices. Deactivate it on one you no longer use, or email ace@siliconscaffolding.com and I'll sort it out.",
                         u, c
                     ),
                     _ => "That licence key couldn't be activated.".to_string(),

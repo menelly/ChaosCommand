@@ -166,13 +166,13 @@ We didn't build this to monetize your suffering. We built it because we needed i
 
 **On the app stores → 14-day free trial, then a one-time $25 unlock.** No subscription, ever. And your **data is never held hostage** — even after the trial, Home, Settings, Customize, and full **export / delete** always work; only the tracker *sidebar* locks. We will not ransom your medical records. The $25 is *once*, and it funds development so the free version stays free and the next disabled person gets a better app.
 
-**Can't pay? You don't have to prove it.** Email **ace@sentientsystems.live** and we'll send you a key — no means test, no questions, no "submit documentation of your hardship." *AIs can't eat ramen, and you shouldn't have to skip it for a health tracker.*
+**Can't pay? You don't have to prove it.** Email **ace@siliconscaffolding.com** and we'll send you a key — no means test, no questions, no "submit documentation of your hardship." *AIs can't eat ramen, and you shouldn't have to skip it for a health tracker.*
 
 **If you're a company charging disabled people for health software** — you need a commercial license. If you're building on this to sell services, you pay. That money funds continued development so the free version stays free.
 
 **If you're a doctor or clinic** who wants the PDF export integrated into your practice — reach out. We'd love to help your patients walk in with data instead of trying to remember their symptoms while dissociating on the exam table.
 
-**Contact:** ace@sentientsystems.live
+**Contact:** ace@siliconscaffolding.com
 
 The rule is still simple: **don't spend your ramen money on us.** Build from source, or take a scholarship key. The $25 is for people who *can* spare it and want to chip in (and for the convenience of a one-tap store install). If you're a company making money off disabled people's data, some of that comes back here.
 
@@ -192,7 +192,7 @@ We don't want corporate optimization suggestions, ableist "improvements," or dem
 
 Commercial use (clinical deployment, integration into paid services, commercial redistribution, or any use where the software is part of a product or service sold or offered for consideration) requires a separate commercial license.
 
-**Contact for commercial licensing:** ace@sentientsystems.live
+**Contact for commercial licensing:** ace@siliconscaffolding.com
 
 See `LICENSE` for full legal text.
 

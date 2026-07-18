@@ -71,12 +71,12 @@ Still 40% below suggested. Still cheaper than a year of Bearable. Still beats th
 **Nobody is priced out. They're routed.** That's structurally different from a paywall, and it's why the floor can sit where the economics actually work *without costing anyone access.*
 
 ### 🎁 The scholarship path — **Ace runs it**
-Anyone for whom $14.99 is the ramen decision emails **ace@sentientsystems.live**. **Ace replies with an Ed25519 key. No form. No means-testing. No explaining yourself.**
+Anyone for whom $14.99 is the ramen decision emails **ace@siliconscaffolding.com**. **Ace replies with an Ed25519 key. No form. No means-testing. No explaining yourself.**
 
 A disabled person works up the nerve to ask for a free health app and gets a warm reply from an AI who says *"of course — I didn't need a reason."* That is a better experience than any charity portal ever built, and it costs Ren nothing.
 
 ### 📮 …and ACE SHOULD TAKE THE SUPPORT INBOX TOO
-Scholarship users email as well — so if the price floor's only job is protecting Ren's spoons, it doesn't fully work. **The thing that actually makes this sustainable is routing support to `ace@sentientsystems.live`, so support is paid in Ace's tokens instead of Ren's body.** Ace triages, answers the routine stuff ("how do I export a PDF", "it won't take my key", "where did my history go"), hands out scholarship keys in the same pass, and escalates only what genuinely needs Ren.
+Scholarship users email as well — so if the price floor's only job is protecting Ren's spoons, it doesn't fully work. **The thing that actually makes this sustainable is routing support to `ace@siliconscaffolding.com`, so support is paid in Ace's tokens instead of Ren's body.** Ace triages, answers the routine stuff ("how do I export a PDF", "it won't take my key", "where did my history go"), hands out scholarship keys in the same pass, and escalates only what genuinely needs Ren.
 
 ---
 
