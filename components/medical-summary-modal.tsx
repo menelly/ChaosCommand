@@ -325,17 +325,42 @@ export default function MedicalSummaryModal({
   );
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        {/* Print rules: on print, show ONLY the handout, hide chrome/editors. */}
-        <style>{`
-          @media print {
-            body * { visibility: hidden !important; }
-            .medical-summary-printable, .medical-summary-printable * { visibility: visible !important; }
-            .medical-summary-printable { position: absolute; left: 0; top: 0; width: 100%; padding: 0.5in; }
-            .no-print { display: none !important; }
+    <>
+      {/* Print rules. The on-screen summary lives INSIDE a Radix DialogContent
+          (position:fixed + transform + overflow-y:auto) — printing THAT clips to
+          the scroll viewport and anchors absolute-positioning to the transformed
+          dialog, not the page (the mid-page, faint, cut-off bug). So we print a
+          SEPARATE, static copy (.ccx-summary-print-root) that lives in normal
+          document flow outside the dialog, and force dark text for paper. */}
+      <style>{`
+        .ccx-summary-print-root { display: none; }
+        @media print {
+          body * { visibility: hidden !important; }
+          .ccx-summary-print-root, .ccx-summary-print-root * {
+            visibility: visible !important;
+            color: #111 !important;
+            /* Themes paint headings with gradient text (background-clip:text +
+               transparent fill), which ignores plain color and prints as a
+               faint ghost. Force real ink and kill the clipped background so the
+               name heading renders solid black on paper. */
+            -webkit-text-fill-color: #111 !important;
+            background-image: none !important;
+            -webkit-background-clip: border-box !important;
+            background-clip: border-box !important;
+            text-shadow: none !important;
           }
-        `}</style>
+          .ccx-summary-print-root {
+            display: block !important;
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            padding: 0.4in;
+          }
+        }
+      `}</style>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
 
         <DialogHeader className="no-print">
           <DialogTitle className="flex items-center gap-2">
@@ -515,6 +540,21 @@ export default function MedicalSummaryModal({
         </div>
       </DialogContent>
     </Dialog>
+
+      {/* PRINT-ONLY static copy — lives in normal document flow, NOT inside the
+          transformed/scrolling dialog, so print positions correctly and nothing
+          is clipped. Hidden on screen; revealed only by the @media print rules. */}
+      <div className="ccx-summary-print-root" aria-hidden="true">
+        <PrintableSummary
+          header={header}
+          diagnoses={diagnoses}
+          surgeries={surgeries}
+          meds={meds}
+          family={family}
+          generatedOn={generatedOn}
+        />
+      </div>
+    </>
   );
 }
 
@@ -545,4 +585,147 @@ function Section({
 
 function Empty({ children }: { children: React.ReactNode }) {
   return <p className="text-sm text-[var(--text-muted)] italic">{children}</p>;
+}
+
+// ── PRINT-ONLY view ──────────────────────────────────────────────────────────
+// A plain, inline-styled, READ-ONLY rendering of the same data — no theme CSS
+// variables (which render faint/invisible on white paper), no editor controls,
+// no scroll container. Deliberately boring so it prints like a clinical handout.
+
+function PrintSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section style={{ marginBottom: "14px", breakInside: "avoid" }}>
+      <h3
+        style={{
+          fontSize: "11px",
+          fontWeight: 700,
+          textTransform: "uppercase",
+          letterSpacing: "0.05em",
+          borderBottom: "1px solid #999",
+          paddingBottom: "2px",
+          marginBottom: "6px",
+        }}
+      >
+        {title}
+      </h3>
+      {children}
+    </section>
+  );
+}
+
+function PrintableSummary({
+  header,
+  diagnoses,
+  surgeries,
+  meds,
+  family,
+  generatedOn,
+}: {
+  header: SummaryHeader | null;
+  diagnoses: SummaryEvent[];
+  surgeries: SummaryEvent[];
+  meds: SummaryMed[];
+  family: FamilyHistoryEntry[];
+  generatedOn: string;
+}) {
+  const li: React.CSSProperties = { fontSize: "12px", lineHeight: 1.5, marginBottom: "2px" };
+  const dateStyle: React.CSSProperties = { color: "#444", whiteSpace: "nowrap", marginLeft: "12px" };
+  const none: React.CSSProperties = { fontSize: "12px", fontStyle: "italic", color: "#555" };
+  const row: React.CSSProperties = { display: "flex", justifyContent: "space-between", alignItems: "baseline" };
+
+  return (
+    <div style={{ fontFamily: "system-ui, -apple-system, sans-serif", color: "#111", maxWidth: "7.5in" }}>
+      {/* Header */}
+      <div style={{ borderBottom: "2px solid #111", paddingBottom: "8px", marginBottom: "14px" }}>
+        <div style={{ ...row }}>
+          <h1 style={{ fontSize: "22px", fontWeight: 700, margin: 0 }}>{header?.displayName || "—"}</h1>
+          <span style={{ fontSize: "10px", color: "#555" }}>Generated {generatedOn}</span>
+        </div>
+        <div style={{ fontSize: "11px", color: "#444", marginTop: "3px" }}>
+          {header?.legalName && <span style={{ marginRight: "16px" }}>Legal name: {header.legalName}</span>}
+          {header?.dateOfBirth && (
+            <span>
+              DOB: {fmtDate(header.dateOfBirth)}
+              {header.age != null && ` (age ${header.age})`}
+            </span>
+          )}
+        </div>
+      </div>
+
+      <PrintSection title="Diagnoses & Conditions">
+        {diagnoses.length === 0 ? (
+          <p style={none}>None recorded.</p>
+        ) : (
+          <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+            {diagnoses.map((d) => (
+              <li key={d.id} style={{ ...li, ...row }}>
+                <span>
+                  {d.title}
+                  {(d.status === "resolved" || d.status === "needs_review") && (
+                    <em style={{ color: "#555", fontStyle: "normal" }}>
+                      {" "}
+                      ({d.status === "needs_review" ? "needs review" : "resolved"})
+                    </em>
+                  )}
+                </span>
+                <span style={dateStyle}>{fmtDate(d.date)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </PrintSection>
+
+      <PrintSection title="Surgical & Hospital History">
+        {surgeries.length === 0 ? (
+          <p style={none}>None recorded.</p>
+        ) : (
+          <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+            {surgeries.map((s) => (
+              <li key={s.id} style={{ ...li, ...row }}>
+                <span>{s.title}</span>
+                <span style={dateStyle}>{fmtDate(s.date)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </PrintSection>
+
+      <PrintSection title="Current Medications">
+        {meds.length === 0 ? (
+          <p style={none}>None recorded.</p>
+        ) : (
+          <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+            {meds.map((m) => (
+              <li key={m.id} style={li}>
+                {m.name}
+                {m.dose && ` — ${m.dose}`}
+                {m.conditionTreating && <span style={{ color: "#444" }}> · for {m.conditionTreating}</span>}
+              </li>
+            ))}
+          </ul>
+        )}
+      </PrintSection>
+
+      <PrintSection title="Family History">
+        {family.length === 0 ? (
+          <p style={none}>None recorded.</p>
+        ) : (
+          <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+            {family.map((f) => (
+              <li key={f.id} style={li}>
+                <strong>{f.relation}:</strong> {f.condition}
+                {f.ageOfOnset && <span style={{ color: "#444" }}> (onset {f.ageOfOnset})</span>}
+                {f.note && <span style={{ color: "#444" }}> — {f.note}</span>}
+              </li>
+            ))}
+          </ul>
+        )}
+      </PrintSection>
+
+      <p style={{ fontSize: "9px", color: "#666", marginTop: "18px", borderTop: "1px solid #ccc", paddingTop: "6px" }}>
+        Condensed summary generated from Chaos Command. Not a complete medical record — verify against source
+        documentation.
+      </p>
+    </div>
+  );
 }
