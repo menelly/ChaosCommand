@@ -28,11 +28,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Briefcase, Settings2 } from "lucide-react"
+import { Briefcase, Settings2, FileText } from "lucide-react"
 import { useIsMobilePlatform } from "@/lib/platform"
 import { TRACKERS, HIDDEN_TRACKERS_KEY } from "@/lib/manage/trackers-config"
 import { getPref, setPref } from "@/lib/prefs"
 import VisibleTrackersPanel from "@/components/customize/visible-trackers-panel"
+import MedicalSummaryModal from "@/components/medical-summary-modal"
 
 import Link from "next/link";
 
@@ -40,6 +41,7 @@ export default function WorkLifeIndex() {
   // Hidden trackers state - persisted to localStorage
   const [hiddenTrackers, setHiddenTrackers] = useState<string[]>([])
   const [isCustomizeOpen, setIsCustomizeOpen] = useState(false)
+  const [showSummary, setShowSummary] = useState(false)
   const isMobile = useIsMobilePlatform()
 
   // Load hidden trackers from localStorage on mount
@@ -82,6 +84,32 @@ export default function WorkLifeIndex() {
             Adulting support for humans who need life management help
           </p>
         </header>
+
+        {/* 🗂️ One-page medical summary — the doctor handout. Read-only view of
+            your timeline + meds + demographics, plus a family-history section.
+            A modal (not a Link card) so a future PIN-exit-lock can trap a nurse
+            in the summary without giving them the run of the app. */}
+        <button
+          type="button"
+          onClick={() => setShowSummary(true)}
+          className="block w-full text-left mb-6"
+        >
+          <Card className="cursor-pointer hover:shadow-md transition-shadow border-primary/40 bg-primary/5">
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-3">
+                <div className="text-primary">
+                  <FileText className="h-6 w-6" />
+                </div>
+                <CardTitle className="text-base leading-tight">🗂️ Medical Summary</CardTitle>
+                <Badge variant="outline" className="text-xs">One-page handout</Badge>
+              </div>
+              <CardDescription className="text-sm mt-2">
+                A printable one-pager for a doctor's visit — your diagnoses, surgical history, current meds, and
+                family history, pulled together from what you've already tracked.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        </button>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {trackers
@@ -159,6 +187,8 @@ export default function WorkLifeIndex() {
           </Button>
         </div>
       </div>
+
+      <MedicalSummaryModal open={showSummary} onOpenChange={setShowSummary} />
     </AppCanvas>
   );
 }

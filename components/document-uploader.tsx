@@ -1558,6 +1558,25 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* ⚠️ PROMINENT AI-OUTPUT WARNING — shown at the HEAD of the review,
+                the moment extraction results appear, not buried in a footer.
+                MedGemma is a small on-device model that CAN miss findings or
+                misread a document; the user must verify against the original
+                before trusting or sharing anything. (Relaunch item #2.) */}
+            <div className="rounded-lg border-2 border-warning/50 bg-warning/10 p-4 flex gap-3">
+              <AlertCircle className="h-5 w-5 text-warning shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="font-semibold text-[var(--text-main)]">
+                  AI analysis — verify before you trust it
+                </p>
+                <p className="text-sm text-[var(--text-muted)]">
+                  This was read by an on-device AI (MedGemma). It <strong className="text-[var(--text-main)]">can miss findings or misread the document</strong> —
+                  dates, values, and diagnoses may be wrong. <strong className="text-[var(--text-main)]">Read your original
+                  document carefully</strong> and confirm anything here before you act on it, rely on it, or hand it to a provider.
+                  This is a helpful draft, not a medical record you can trust unchecked.
+                </p>
+              </div>
+            </div>
             {allParsedEvents.map((event, index) => (
               <div key={event.id} className="border border-[var(--border-soft)] rounded-lg p-4 bg-[var(--surface-1)]">
                 <div className="flex items-start justify-between mb-3">
