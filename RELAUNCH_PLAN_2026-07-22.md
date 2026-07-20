@@ -67,6 +67,46 @@ Swept the **Chaos Command** project (`b286daf9…`, team CHA) + my Command issue
 - **CHA-328 "lab-parser horizontal name-bleed still open" (Medium):** a *known open parsing bug* — reinforces WHY item #2's "verify against your original" MedGemma warning is needed. Context, not a blocker.
 - Backlog/someday (NOT relaunch): CHA-179 (test suite), CHA-218 (raw-PIN security, re-scoped LOW), CHA-217 (demo-data generator), CHA-216 (Laugh Lounge). CHA-246 (PDF export completeness) = ✅ DONE.
 
+## 🔍 Pre-submission code read (2026-07-20 ~01:20, Ace)
+
+Surveyed the entitlement path ahead of the resubmit. **Nothing here is a
+ship-blocker.** Recording it so the pre-submit pass doesn't have to re-derive it.
+
+**The `?entitlement=trial|expired|licensed` URL override** (`lib/contexts/entitlement-context.tsx:68–90`).
+An automated survey flagged this as a shipped gate bypass. **Reading the actual
+code, that framing is wrong and I want it corrected in writing** — the file's own
+comment (lines 40–46) lays out a deliberate, coherent stance: the app is free and
+open-source under PolyForm Noncommercial, a plain `next build` is *intentionally*
+ungated because **building it yourself IS the free product**, and the store
+edition's real gate is the store receipt, which can't be faked on a distributed
+binary. *"We sell convenience + updates + support, not secrecy."* That's a
+considered position, not an oversight, and it's the correct one for this product.
+
+**The one refinement worth making** (small, optional, doesn't touch the
+philosophy): the override is evaluated *before* the `STORE_BUILD` check, so it
+would also fire inside a store build. Moving the override block below the
+`if (!STORE_BUILD)` early-return — or wrapping it in `if (!STORE_BUILD)` —
+confines the QA tool to non-store builds at zero cost to how anything else
+behaves. Roughly three lines. **Not applied** — entitlement logic on a shipping
+medical app wants Ren's eyes, not a 1am unilateral edit.
+
+**Genuinely good things noticed while in there** (worth keeping, don't
+"optimize" them away): the entitlement path **fails open at every single step** —
+unreadable trial clock → treated as in-trial; `validate_license` throws → caught,
+not fatal; LemonSqueezy unreachable/5xx/captive-portal → keeps working, with Rust
+unit tests enforcing it. A sick person never gets locked out of their own medical
+records by a network hiccup. That is the right ethic and it's implemented
+consistently.
+
+**Still worth doing before submit** (from the survey, unrelated to the above):
+- `NEXT_PUBLIC_STORE_BUILD=true` **must** be set for the store build or it ships
+  fully ungated — this is the single easiest thing to forget.
+- macOS `.dmg`: `minimumSystemVersion` 10.13 → `"11.0"` (one line; only if
+  shipping the dmg).
+- `master` is still the old plaintext-PHI + $25 pay-to-download code. HEAD is 34
+  commits ahead with nothing to conflict — **clean fast-forward**, but it has to
+  actually happen.
+
 ## ⬜ OPEN before/at build
 - Reconcile CHA-362 (un-ship-block → parked) + CHA-381 (mark superseded by external-LS) in Linear.
 - Confirm exact LS/Play fee numbers if margin-critical.
