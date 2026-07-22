@@ -561,6 +561,43 @@ mod tests {
         assert!(verify_key(&parsed).is_err());
     }
 
+    /// END-TO-END: a key minted by the real issuer must verify HERE.
+    ///
+    /// Every other test in this module checks that bad keys are REJECTED. None
+    /// of them checked that a good key is ACCEPTED — so a keypair mismatch
+    /// between the signing tool and this binary would have passed the whole
+    /// suite while making every issued key silently worthless. That failure
+    /// lands on a sick person pasting a scholarship key at 2am, which is the
+    /// worst possible place to discover it.
+    ///
+    /// The key is passed via env var rather than embedded, because a real PRS
+    /// key committed to an open-source repo is a free license for the internet.
+    ///
+    ///   python issue_scholarship.py --name "..."   (or generate_keys.py)
+    ///   CHAOS_TEST_KEY="CHAOS-PRS-..." cargo test license::tests -- --nocapture
+    ///
+    /// Skips (does not fail) when unset, so CI without secrets stays green.
+    /// `verify_keypair.py` covers the same ground from the Python side and needs
+    /// no Rust toolchain — run that if this is inconvenient.
+    #[test]
+    fn real_issued_key_is_accepted() {
+        let Ok(key) = std::env::var("CHAOS_TEST_KEY") else {
+            eprintln!("skipping real_issued_key_is_accepted — CHAOS_TEST_KEY not set");
+            return;
+        };
+
+        let parsed = parse_key(&key)
+            .unwrap_or_else(|e| panic!("issued key failed to PARSE: {e}"));
+
+        verify_key(&parsed).unwrap_or_else(|e| {
+            panic!(
+                "issued key failed to VERIFY: {e}\n\
+                 The signing key no longer matches LICENSE_PUBLIC_KEY_BYTES in this \
+                 binary. Every key issued against it is invalid. Run verify_keypair.py."
+            )
+        });
+    }
+
     // ---- key-format routing ----
 
     #[test]

@@ -99,3 +99,23 @@ a11y-report.md
 # Real medical PDFs for NER recon — NEVER COMMIT (PHI). Synthetic fixtures only in tests.
 .phi-scratch/
 .tmp-goldens/
+
+# CODE-SIGNING CERTIFICATES AND KEYS — NEVER COMMIT.
+# This repo is public. A signing cert in a public repo means anyone can ship a
+# binary that Windows says is us — on a MEDICAL app. Found SiliconScaffolding
+# .ChaosCommand_cert.pfx sitting untracked and unignored on 2026-07-21, one
+# `git add -A` from being permanent. Belt and suspenders, by extension.
+*.pfx
+*.p12
+*.snk
+*.keystore
+*.jks
+*.mobileprovision
+*.p8
+# (License SIGNING keys live in E:\Ace\chaos-command-licensing\SECRETS.env,
+#  outside this repo entirely. Only the PUBLIC key belongs in license.rs.)
+
+# Local build scratch / packaging output
+.tmp-migtest/
+.tmp-rp/
+msix/
