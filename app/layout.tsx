@@ -41,6 +41,8 @@ import { Toaster } from "@/components/ui/toaster"
 import { AppWrapper } from "@/components/app-wrapper"
 import RoutineFlowBar from "@/components/routines/routine-flow-bar"
 import MedicalDisclaimerBar from "@/components/medical-disclaimer-bar"
+import PwaSecurityDisclosure from "@/components/pwa-security-disclosure"
+import PwaRuntime from "@/components/pwa-runtime"
 import { DemoBanner } from "@/components/demo-banner"
 // import AddyChatBubble from "@/components/addy-chat-bubble" // Commented out - AI module for later
 
@@ -57,13 +59,20 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* No manifest in the web "try me" demo: it would let Chrome offer a PWA
-            "Install" of the sandboxed demo (no real DB, our security model), and a
-            misbehaving installed demo would read as our fault. Real builds keep it. */}
-        {process.env.NEXT_PUBLIC_DEMO_MODE !== 'true' && (
-          <link rel="manifest" href="/manifest.json" />
-        )}
+        {/* Manifest links on ALL builds now. It was gated off in demo mode during the
+            paid-store era (don't let people "install" the sandboxed demo and blame us
+            for what it can't do). Now the app is free and the PWA ships an explicit
+            security-disclosure interstitial (PwaSecurityDisclosure) that names the
+            browser-sandbox trade-offs up front — so installability is honest, not a trap.
+            This is the iOS stopgap until the native app ships under the business account. */}
+        <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#7c3aed" />
+        {/* iOS home-screen install: WITHOUT these, iOS opens the "installed" PWA in a
+            plain Safari chrome instead of standalone, and uses a screenshot for the icon.
+            apple-touch-icon + status-bar-style already ship above/below. */}
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-title" content="Chaos Command" />
         {/* viewport-fit=cover lets the app paint into the notch/home-indicator area,
             which is what makes env(safe-area-inset-*) return real values. It MUST ship
             together with the safe-area padding on the fixed bars (app-sidebar menu
@@ -120,6 +129,12 @@ export default function RootLayout({
             </Suspense>
             <Toaster />
             <MedicalDisclaimerBar />
+            <PwaSecurityDisclosure />
+            {/* Web/PWA runtime: registers the service worker, requests persistent
+                storage (fights browser eviction of medical data), runs the JS
+                background auto-lock, and shows the iOS "Add to Home Screen" hint.
+                No-ops inside the native Tauri app. */}
+            <PwaRuntime />
             {/* <AddyChatBubble /> */} {/* Commented out - AI module for later */}
           </GoblinModeProvider>
           {/* </LicenseGate></LicenseProvider> */}

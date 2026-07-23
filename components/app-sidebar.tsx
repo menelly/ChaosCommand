@@ -28,6 +28,7 @@ import { X, Menu } from "lucide-react"
 import Link from "next/link"
 import { homeImageData } from "@/lib/home-image"
 import { openDisclaimer } from "@/components/medical-disclaimer-bar"
+import { openPwaSecurity } from "@/components/pwa-security-disclosure"
 import { getPref } from "@/lib/prefs"
 import { SIDEBAR_NAV_ITEMS, SIDEBAR_HIDDEN_KEY, SIDEBAR_NAV_CHANGED_EVENT } from "@/lib/sidebar-nav"
 import { useEntitlement } from "@/lib/contexts/entitlement-context"
@@ -331,6 +332,16 @@ export default function AppSidebar() {
             title="Medical disclaimer"
           >
             ⚕️ Disclaimer
+          </button>
+
+          {/* Web/PWA data-safety notice — re-opens the browser-sandbox disclosure.
+              Auto-shows once on the web build; this lets users re-read it any time. */}
+          <button
+            onClick={() => { openPwaSecurity(); isMobile && setShowSidebar(false) }}
+            className="w-full rounded text-[11px] text-muted-foreground transition-all py-1 px-1 hover:text-foreground block text-center"
+            title="Data & browser safety (web version)"
+          >
+            🔒 Data &amp; browser safety
           </button>
 
           {/* Logout — big, bottom-of-sidebar, one-tap. THE emergency exit: fast and obvious,

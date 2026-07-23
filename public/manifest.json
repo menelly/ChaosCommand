@@ -1,35 +1,42 @@
 {
-  "name": "Chaos Command Center",
+  "name": "Chaos Command — Health Tracking",
   "short_name": "Chaos Command",
-  "description": "Executive function support for chaotic humans",
-  "start_url": "/",
+  "description": "Privacy-first health tracking for chronically ill humans. Your data is encrypted on your device and never leaves it unless you export it. Free, no account, no ads.",
+  "id": "/",
+  "start_url": "/?source=pwa",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#7c3aed",
-  "theme_color": "#f97316",
+  "display_override": ["standalone", "minimal-ui"],
+  "background_color": "#1a1024",
+  "theme_color": "#7c3aed",
   "orientation": "portrait-primary",
   "icons": [
     {
       "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "/icon-512.png", 
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
-  "categories": ["health", "productivity", "lifestyle"],
+  "categories": ["health", "medical", "productivity", "lifestyle"],
   "lang": "en-US",
-  "dir": "ltr",
-  "permissions": [
-    "camera",
-    "storage"
-  ],
-  "features": [
-    "camera",
-    "file-system-access"
-  ]
+  "dir": "ltr"
 }
