@@ -1,0 +1,44 @@
+# Line-ending policy for cross-platform build-from-source.
+# Canonical in-repo is LF; contributors on any OS get consistent checkouts,
+# so `git status` isn't a wall of phantom CRLF changes and builds are reproducible.
+* text=auto eol=lf
+
+# Explicit source types (belt-and-suspenders)
+*.ts    text eol=lf
+*.tsx   text eol=lf
+*.js    text eol=lf
+*.jsx   text eol=lf
+*.json  text eol=lf
+*.css   text eol=lf
+*.html  text eol=lf
+*.md    text eol=lf
+*.rs    text eol=lf
+*.toml  text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.sh    text eol=lf
+
+# Windows-only scripts keep CRLF
+*.ps1   text eol=crlf
+*.cmd   text eol=crlf
+*.bat   text eol=crlf
+
+# Binary — never touch these
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.webp  binary
+*.ico   binary
+*.icns  binary
+*.woff  binary
+*.woff2 binary
+*.ttf   binary
+*.otf   binary
+*.pdf   binary
+*.gguf  binary
+*.wasm  binary
+*.node  binary
+*.dll   binary
+*.so    binary
+*.dylib binary
