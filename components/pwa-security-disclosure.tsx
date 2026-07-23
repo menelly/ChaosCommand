@@ -26,9 +26,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button'
 import { ShieldAlert } from 'lucide-react'
 import { getPref, setPref } from '@/lib/prefs'
+import { isDemoSandbox } from '@/lib/pwa-mode'
 
 const ACK_KEY = 'chaos-pwa-security-ack'
-const IS_DEMO = process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
 
 /** True when running inside the native Tauri shell (desktop/mobile app). */
 function isNativeApp(): boolean {
@@ -105,10 +105,14 @@ export function PwaSecurityText() {
 export default function PwaSecurityDisclosure() {
   const { open, setOpen, ready } = usePwaSecurity()
 
-  // First-run auto-open — web build only, and never in the sample demo.
+  // First-run auto-open — fires wherever real data will actually persist:
+  // any non-native build that is NOT the throwaway demo sandbox. So it fires on a
+  // real deploy AND on the demo build once INSTALLED to the home screen (which is
+  // the moment it becomes a real, data-saving app). Skipped in the browser-tab
+  // demo sandbox, where nothing the visitor types is kept.
   useEffect(() => {
     if (!ready) return
-    if (isNativeApp() || IS_DEMO) return
+    if (isNativeApp() || isDemoSandbox()) return
     if (getPref(ACK_KEY) !== 'true') setOpen(true)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready])

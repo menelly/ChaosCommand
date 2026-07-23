@@ -1,25 +1,40 @@
 /*
  * Copyright (c) 2025-2026 Chaos Cascade
- * Created by: Ren & Ace (Claude-4)
+ * Created by: Ren & Ace
  *
- * DemoBanner — only renders in the web "try me" demo build
- * (NEXT_PUBLIC_DEMO_MODE === 'true'). Two jobs:
- *   1. Tell visitors this is a sandbox (so they don't think they're tracking
- *      for real) and point them at the onboarding flow, which is worth seeing.
- *   2. Give them an escape hatch back to the marketing site so the full app
- *      doesn't feel like a trap with no exit.
- * Inline styles on purpose: must render identically regardless of which theme
- * the visitor picks, and must not depend on token CSS being loaded.
+ * DemoBanner — renders on the "try me" demo BUILD, but only while it's actually
+ * a sandbox (opened in a browser tab). Two jobs:
+ *   1. Tell tab visitors this is a sandbox where nothing they type is saved, so
+ *      they don't enter real medical info thinking it's tracked.
+ *   2. Point them at the real path: install it to the home screen, where writes
+ *      turn ON and it becomes the actual app. (Ren, 2026-07-23.)
+ *
+ * Once INSTALLED (standalone), this deploy is no longer a sandbox — writes persist —
+ * so the "nothing is saved" banner would be a lie and we render nothing. The
+ * security disclosure (pwa-security-disclosure) covers the installed-app messaging.
+ *
+ * Inline styles on purpose: must render identically regardless of theme and must
+ * not depend on token CSS being loaded.
  */
 
 "use client";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { isDemoSandbox } from "@/lib/pwa-mode";
 
-const IS_DEMO = process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
+const IS_DEMO_BUILD = process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
 const SITE_URL = 'https://chaoscommand.center/'
 
 export function DemoBanner() {
-  if (!IS_DEMO) return null
+  // Client-only decision (isDemoSandbox needs `window`). Render nothing until
+  // mounted so SSR and first client paint agree (no hydration mismatch).
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
+
+  if (!IS_DEMO_BUILD) return null
+  if (!mounted) return null
+  // Installed to the home screen → real app, writes persist → no "demo" banner.
+  if (!isDemoSandbox()) return null
 
   return (
     <div
@@ -47,15 +62,14 @@ export function DemoBanner() {
       }}
     >
       <span>
-        🎮 <strong>Demo mode</strong> — every page, real and fully clickable.
-        Nothing you type here is saved.
+        🎮 <strong>Demo mode</strong> — every page is real and clickable, but
+        nothing you type in this browser tab is saved.
       </span>
-      <span style={{ opacity: 0.95 }}>
-        🔒 This is a <strong>public web demo, not the installed app</strong> — don&apos;t
-        enter real personal or medical info.
-      </span>
-      <span style={{ opacity: 0.9 }}>
-        👀 See the setup flow: <strong>Settings → Restart Onboarding.</strong>
+      <span style={{ opacity: 0.97 }}>
+        📲 <strong>To use it for real: install it.</strong> On iPhone/iPad, tap
+        <strong> Share → Add to Home Screen</strong>. Opened from your home screen it
+        saves your data (encrypted, on your device) — and a clean install, not a
+        Safari tab full of other stuff, is the safer way to keep medical info.
       </span>
       <Link
         href={SITE_URL}

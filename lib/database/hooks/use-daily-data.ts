@@ -29,6 +29,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { isDemoSandbox } from '@/lib/pwa-mode';
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
   db,
@@ -154,7 +155,7 @@ export function useDailyData(): UseDailyDataReturn {
     content: any,
     tags?: string[]
   ): Promise<void> => {
-    if (IS_DEMO) return; // demo: don't persist visitor writes
+    if (isDemoSandbox()) return; // demo: don't persist visitor writes
     try {
       setIsLoading(true);
       setError(null);
@@ -207,7 +208,7 @@ export function useDailyData(): UseDailyDataReturn {
   }, [getSpecificData]);
 
   const updateData = useCallback(async (id: number, content: any, tags?: string[]): Promise<void> => {
-    if (IS_DEMO) return; // demo: don't persist visitor writes
+    if (isDemoSandbox()) return; // demo: don't persist visitor writes
     try {
       setIsLoading(true);
       setError(null);
@@ -249,7 +250,7 @@ export function useDailyData(): UseDailyDataReturn {
     category: string,
     subcategory: string
   ): Promise<void> => {
-    if (IS_DEMO) return; // demo: don't persist visitor deletes
+    if (isDemoSandbox()) return; // demo: don't persist visitor deletes
     try {
       setIsLoading(true);
       setError(null);
@@ -277,7 +278,7 @@ export function useDailyData(): UseDailyDataReturn {
   const saveBulkData = useCallback(async (
     records: Omit<DailyDataRecord, 'id' | 'metadata'>[]
   ): Promise<void> => {
-    if (IS_DEMO) return; // demo: don't persist visitor writes
+    if (isDemoSandbox()) return; // demo: don't persist visitor writes
     try {
       setIsLoading(true);
       setError(null);
@@ -384,7 +385,7 @@ export function useDailyData(): UseDailyDataReturn {
   const secureOverwriteAllData = useCallback(async (
     newRecords: Omit<DailyDataRecord, 'id' | 'metadata'>[]
   ): Promise<void> => {
-    if (IS_DEMO) return; // demo: don't wipe/overwrite the seeded sample data
+    if (isDemoSandbox()) return; // demo: don't wipe/overwrite the seeded sample data
     try {
       setIsLoading(true);
       setError(null);
