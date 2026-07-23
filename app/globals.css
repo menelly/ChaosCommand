@@ -18,6 +18,56 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ---------------------------------------------------------------------------
+ * iOS / touch baseline.  Added 2026-07-22 after the first iOS audit.
+ *
+ * WHY EACH LINE IS HERE (none of these are cosmetic):
+ *  - font-size >= 16px on form controls: iOS Safari AUTO-ZOOMS the whole page
+ *    when you focus a control smaller than 16px, and strands you at that zoom.
+ *    The shadcn primitives were already fine; a dozen hand-rolled <select>/<input>
+ *    elements bypassed them, so we set a floor globally instead of chasing each one.
+ *  - touch-action: manipulation: removes the legacy 300ms tap delay and stops
+ *    double-tap-to-zoom firing on buttons.
+ *  - overscroll-behavior: stops in-app scrolls from rubber-banding the whole
+ *    webview, which in a Tauri shell looks like the app peeling off the screen.
+ *  - -webkit-text-size-adjust: stops Safari inflating text in landscape.
+ *
+ * NOT doing user-scalable=no / maximum-scale=1 anywhere. Pinch-zoom is an
+ * accessibility need for this user base, and suppressing it is an App Store ding.
+ * ------------------------------------------------------------------------ */
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    overscroll-behavior-y: none;
+  }
+
+  input,
+  textarea,
+  select {
+    font-size: max(16px, 1rem);
+  }
+
+  button,
+  a,
+  label,
+  input,
+  select,
+  textarea,
+  [role="button"] {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Nested scrollers (modals, long lists) should not chain to the page. */
+  .overflow-y-auto,
+  .overflow-auto {
+    overscroll-behavior-y: contain;
+  }
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;

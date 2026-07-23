@@ -483,7 +483,7 @@ export function DeviceTimerManager({ timers, onTimersChange, currentUserId }: De
               Add Device / Timer
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogContent className="sm:max-w-md max-h-[90dvh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingTimer ? 'Restart Timer' : 'Start New Timer'}</DialogTitle>
               <DialogDescription>

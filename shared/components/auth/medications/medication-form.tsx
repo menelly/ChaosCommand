@@ -312,7 +312,7 @@ export function MedicationForm({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {isEditing ? '✏️ Edit Medication' : '💊 Add New Medication'}

@@ -195,7 +195,7 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-card rounded-lg max-w-2xl max-h-[80vh] overflow-y-auto p-6">
+      <div className="bg-card rounded-lg max-w-2xl max-h-[80dvh] overflow-y-auto p-6">
         <KeyboardAvoidingWrapper>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold flex items-center gap-2">

@@ -170,7 +170,7 @@ export function GeneralThyroidModal({ isOpen, onClose, onSave, editingEntry }: T
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-lg max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <span className="text-xl">🦋</span>

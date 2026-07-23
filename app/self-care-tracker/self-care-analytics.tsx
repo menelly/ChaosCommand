@@ -89,8 +89,10 @@ export function SelfCareAnalytics({ refreshTrigger }: SelfCareAnalyticsProps) {
         })
         .filter((entry): entry is SelfCareEntry => entry !== null)
         .sort((a, b) => {
-          const dateA = a.date && a.time ? new Date(a.date + ' ' + a.time).getTime() : 0
-          const dateB = b.date && b.time ? new Date(b.date + ' ' + b.time).getTime() : 0
+          // Safari returns Invalid Date for the space separator -> NaN comparator
+          // -> sort() no-ops silently. See self-care-history.tsx for the full note.
+          const dateA = a.date && a.time ? parseISO(`${a.date}T${a.time}`).getTime() : 0
+          const dateB = b.date && b.time ? parseISO(`${b.date}T${b.time}`).getTime() : 0
           return dateB - dateA
         })
 

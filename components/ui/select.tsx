@@ -140,7 +140,10 @@ const SelectItem = React.forwardRef<
   <SelectPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-secondary focus:text-secondary-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      // Touch: taller rows + 16px text. Dropdown options were ~30px across 423
+      // usages — the densest mis-tap surface in the app. Desktop keeps the compact row.
+      "relative flex w-full cursor-default select-none items-center rounded-sm pl-8 pr-2 outline-none focus:bg-secondary focus:text-secondary-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      "py-3 text-base sm:py-1.5 sm:text-sm",
       className
     )}
     {...props}

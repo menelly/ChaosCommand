@@ -678,7 +678,7 @@ export default function ProvidersPage() {
                 Add Provider
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-2xl max-h-[90dvh] overflow-y-auto">
               <KeyboardAvoidingWrapper>
               <DialogHeader>
                 <DialogTitle>{editingProvider ? 'Edit Healthcare Provider' : 'Add Healthcare Provider'}</DialogTitle>
@@ -846,7 +846,7 @@ export default function ProvidersPage() {
 
         {/* Parse Dialog */}
         <Dialog open={showParseDialog} onOpenChange={setShowParseDialog}>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-3xl max-h-[90dvh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Sparkles className="h-5 w-5" />
@@ -1183,7 +1183,7 @@ export default function ProvidersPage() {
 
         {/* Appointment Planning Dialog */}
         <Dialog open={showAppointmentDialog} onOpenChange={setShowAppointmentDialog}>
-          <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-6xl max-h-[90dvh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingAppointment ? 'Edit Appointment Plan' : 'Plan New Appointment'}
@@ -1202,7 +1202,7 @@ export default function ProvidersPage() {
 
         {/* Appointment Review Dialog */}
         <Dialog open={showReviewDialog} onOpenChange={setShowReviewDialog}>
-          <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-6xl max-h-[90dvh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingReview ? 'Edit Appointment Review' : 'Review Recent Appointment'}

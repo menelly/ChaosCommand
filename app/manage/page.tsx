@@ -167,7 +167,7 @@ export default function WorkLifeIndex() {
                 Customize View
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+            <DialogContent className="max-w-md max-h-[80dvh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Customize Manage Section</DialogTitle>
                 <DialogDescription>

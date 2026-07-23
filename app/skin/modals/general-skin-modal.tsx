@@ -168,7 +168,7 @@ export function GeneralSkinModal({ isOpen, onClose, onSave, editingEntry, preset
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90dvh] overflow-y-auto">
         <KeyboardAvoidingWrapper>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-pink-500" /> 🧴 Skin Event</DialogTitle>

@@ -709,7 +709,7 @@ export default function EnergyPacingTracker() {
 
         {/* Activity Selection Dialog */}
         <Dialog open={showActivityDialog} onOpenChange={setShowActivityDialog}>
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="max-w-2xl max-h-[80dvh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Log Activity</DialogTitle>
               <DialogDescription>

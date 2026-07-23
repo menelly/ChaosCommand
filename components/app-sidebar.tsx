@@ -177,7 +177,10 @@ export default function AppSidebar() {
       {isMobile && !showSidebar && (
         <button
           onClick={() => setShowSidebar(true)}
-          className="fixed top-4 right-4 z-50 p-2 rounded bg-card border shadow-lg"
+          // top-4 is 16px; the safe top inset on notched/Dynamic Island iPhones is
+          // 47-59px. This is the ONLY way to open navigation on mobile, so it
+          // landing under the island makes the app unnavigable.
+          className="fixed top-[max(1rem,calc(env(safe-area-inset-top)+0.5rem))] right-[max(1rem,env(safe-area-inset-right))] z-50 flex min-h-[44px] min-w-[44px] items-center justify-center rounded bg-card border shadow-lg"
           title="Open menu"
         >
           <Menu className="h-4 w-4" />

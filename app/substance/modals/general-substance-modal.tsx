@@ -113,7 +113,7 @@ export function GeneralSubstanceModal({ isOpen, onClose, onSave, editingEntry, p
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90dvh] overflow-y-auto">
         <KeyboardAvoidingWrapper>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2"><Coffee className="h-5 w-5 text-purple-500" /> Substance Entry</DialogTitle>

@@ -466,7 +466,11 @@ export default function GaslightGaragePage() {
                         />
                         <button
                           onClick={() => removeImage(idx)}
-                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                          // There is no hover on touch: opacity-0 until group-hover made
+                          // this permanently invisible on phones/tablets, so an uploaded
+                          // image could not be removed at all. Visible on touch,
+                          // hover-reveal on desktop, 44pt target either way.
+                          className="absolute -top-2 -right-2 flex min-h-[44px] min-w-[44px] items-center justify-center bg-red-500 text-white rounded-full p-0.5 opacity-100 transition-opacity md:min-h-0 md:min-w-0 md:opacity-0 md:group-hover:opacity-100"
                         >
                           <X className="h-3 w-3" />
                         </button>

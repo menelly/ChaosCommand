@@ -416,7 +416,7 @@ export default function DiabetesTracker() {
                     Add Entry
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogContent className="sm:max-w-2xl max-h-[90dvh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>
                       {editingEntry ? 'Edit Diabetes Entry' : 'Add Diabetes Entry'}

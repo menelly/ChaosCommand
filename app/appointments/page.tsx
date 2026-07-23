@@ -293,7 +293,7 @@ export default function AppointmentsPage() {
                 Plan Appointment
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-6xl max-h-[90dvh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>
                   {editingPlan ? 'Edit Appointment Plan' : 'Plan New Appointment'}
@@ -316,7 +316,7 @@ export default function AppointmentsPage() {
                 Review Appointment
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-6xl max-h-[90dvh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>
                   {editingReview ? 'Edit Appointment Review' : 'Review Recent Appointment'}

@@ -796,7 +796,7 @@ export default function BrainFogTracker() {
 
         {/* Add/Edit Entry Dialog */}
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-2xl max-h-[90dvh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingEntry ? 'Edit Brain Fog Entry' : 'Log Brain Fog Symptoms'}

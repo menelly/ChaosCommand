@@ -474,7 +474,7 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[85dvh] overflow-y-auto">
         <KeyboardAvoidingWrapper>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">

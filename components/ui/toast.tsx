@@ -39,7 +39,10 @@ const ToastViewport = React.forwardRef<
   <ToastPrimitives.Viewport
     ref={ref}
     className={cn(
-      "fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px]",
+      // Phones get the top branch; without safe-area padding the toast renders
+      // behind the status bar / Dynamic Island — and toasts are how the app reports
+      // whether a save succeeded, so an invisible one is a silent failure.
+      "fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 [padding-top:calc(1rem+env(safe-area-inset-top))] sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col sm:[padding-top:1rem] sm:[padding-bottom:calc(1rem+env(safe-area-inset-bottom))] md:max-w-[420px]",
       className
     )}
     {...props}
@@ -100,7 +103,11 @@ const ToastClose = React.forwardRef<
   <ToastPrimitives.Close
     ref={ref}
     className={cn(
-      "absolute right-2 top-2 rounded-md p-1 text-foreground/50 opacity-0 transition-opacity hover:text-foreground focus:opacity-100 focus:outline-none focus:ring-2 group-hover:opacity-100 group-[.destructive]:text-red-300 group-[.destructive]:hover:text-red-50 group-[.destructive]:focus:ring-red-400 group-[.destructive]:focus:ring-offset-red-600",
+      // Was opacity-0 until group-hover. There is NO hover on touch, so on phones
+      // and tablets the dismiss button was invisible and toasts could not be
+      // dismissed at all. focus:opacity-100 doesn't rescue it — you cannot focus
+      // what you cannot see. Visible by default on touch, hover-reveal on desktop.
+      "absolute right-2 top-2 flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md p-1 text-foreground/50 opacity-100 transition-opacity hover:text-foreground focus:opacity-100 focus:outline-none focus:ring-2 md:opacity-0 md:group-hover:opacity-100 group-[.destructive]:text-red-300 group-[.destructive]:hover:text-red-50 group-[.destructive]:focus:ring-red-400 group-[.destructive]:focus:ring-offset-red-600",
       className
     )}
     toast-close=""

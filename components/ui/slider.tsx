@@ -43,7 +43,9 @@ const Slider = React.forwardRef<
     <SliderPrimitive.Track className="slider-track relative h-2 w-full grow overflow-hidden rounded-full bg-secondary">
       <SliderPrimitive.Range className="slider-range absolute h-full bg-primary" />
     </SliderPrimitive.Track>
-    <SliderPrimitive.Thumb className="slider-thumb block h-5 w-5 rounded-full border-2 border-primary bg-background ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50" />
+    {/* Thumb keeps its 20px look but grabs at 44px (::after overlay). These sliders
+        set pain and symptom severity — a 20px thumb is genuinely hard to catch with tremor. */}
+    <SliderPrimitive.Thumb className="slider-thumb relative block h-5 w-5 rounded-full border-2 border-primary bg-background ring-offset-background transition-colors after:absolute after:left-1/2 after:top-1/2 after:h-11 after:w-11 after:-translate-x-1/2 after:-translate-y-1/2 after:rounded-full after:content-[''] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50" />
   </SliderPrimitive.Root>
 ))
 Slider.displayName = SliderPrimitive.Root.displayName

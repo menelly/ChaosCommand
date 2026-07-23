@@ -81,8 +81,13 @@ export function SelfCareHistory({ refreshTrigger, onEdit, onDelete }: SelfCareHi
         })
         .filter((entry): entry is SelfCareEntry => entry !== null)
         .sort((a, b) => {
-          const dateA = a.date && a.time ? new Date(a.date + ' ' + a.time).getTime() : 0
-          const dateB = b.date && b.time ? new Date(b.date + ' ' + b.time).getTime() : 0
+          // `new Date("2026-07-22 14:30")` (space separator) parses in Chrome and
+          // returns Invalid Date in SAFARI -> getTime() is NaN -> the comparator
+          // returns NaN -> .sort() silently no-ops and history renders unordered,
+          // with no error anywhere. The form feeds <input type="date"> + type="time",
+          // so this hit the failing shape every time on iOS. Use ISO with 'T'.
+          const dateA = a.date && a.time ? parseISO(`${a.date}T${a.time}`).getTime() : 0
+          const dateB = b.date && b.time ? parseISO(`${b.date}T${b.time}`).getTime() : 0
           return dateB - dateA
         })
 

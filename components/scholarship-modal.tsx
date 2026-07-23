@@ -61,7 +61,7 @@ export default function ScholarshipModal({ open, onClose }: ScholarshipModalProp
       aria-labelledby="scholarship-title"
     >
       <div
-        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl border border-border bg-background p-6 shadow-2xl"
+        className="max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-xl border border-border bg-background p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 id="scholarship-title" className="text-xl font-bold text-foreground">

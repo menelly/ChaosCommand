@@ -180,7 +180,11 @@ export default function RoutineFlowBar() {
   }
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+    // The home indicator occupies the bottom ~34pt. Without this padding the
+    // Next / Skip / Copy-previous buttons are half-covered AND the bottom strip
+    // of taps is swallowed by the system swipe-up gesture — and this bar is the
+    // primary way to advance a routine.
+    <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 [padding-bottom:env(safe-area-inset-bottom)]">
       {/* Stacks vertically on mobile (identity row over action row) so the
           buttons never run off a narrow screen; single row on sm+. */}
       <div className="max-w-3xl mx-auto flex flex-col gap-2 px-3 py-2 sm:flex-row sm:items-center sm:justify-between">

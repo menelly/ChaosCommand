@@ -834,7 +834,9 @@ export default function CommandZone() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-6 w-6 p-0 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                      // No hover on touch — this open-link control was invisible and
+                      // unreachable on mobile. Visible on touch, hover-reveal on desktop.
+                      className="h-11 w-11 p-0 text-muted-foreground opacity-100 transition-opacity md:h-6 md:w-6 md:opacity-0 md:group-hover:opacity-100"
                       onClick={() => router.push(item.link!)}
                     >
                       <ExternalLink className="h-3 w-3" />
@@ -902,7 +904,7 @@ export default function CommandZone() {
                 Customize Visible Sections
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+            <DialogContent className="max-w-md max-h-[80dvh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   <Settings2 className="h-5 w-5" />

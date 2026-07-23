@@ -64,7 +64,15 @@ export default function RootLayout({
           <link rel="manifest" href="/manifest.json" />
         )}
         <meta name="theme-color" content="#7c3aed" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        {/* viewport-fit=cover lets the app paint into the notch/home-indicator area,
+            which is what makes env(safe-area-inset-*) return real values. It MUST ship
+            together with the safe-area padding on the fixed bars (app-sidebar menu
+            button, routine-flow-bar, toast viewport) — on its own it would push those
+            elements UNDER the island/indicator, breaking a layout that currently works
+            by accident because WKWebView shrinks the viewport when cover is absent.
+            No maximum-scale / user-scalable=no: pinch-zoom is an access need here. */}
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
         {/* Favicon Links */}
         <link rel="icon" href="/favicon.ico" sizes="any" />
@@ -76,13 +84,17 @@ export default function RootLayout({
             not leak the user's IP to Google on every launch. (Ace, 2026-05-26, CHA-229) */}
 
       </head>
-      <body className="h-screen overflow-hidden bg-background font-sans antialiased" suppressHydrationWarning>
+      {/* h-screen (=100vh) on iOS resolves to the LARGE viewport — the height with the
+          URL bar collapsed. Combined with overflow-hidden, the bottom of the app is
+          clipped off-screen with no way to scroll to it. 100dvh tracks the viewport
+          as it actually is (iOS 15.4+, Chrome 108+; both well below our WebView floor). */}
+      <body className="h-[100dvh] overflow-hidden bg-background font-sans antialiased" suppressHydrationWarning>
         <ThemeLoader />
         <AppWrapper>
           {/* <LicenseProvider><LicenseGate> — disabled for free-tier launch, keep for re-enable */}
           <GoblinModeProvider>
-            <div className="flex h-screen">
-              <div className="flex-1 overflow-y-auto overflow-x-hidden">
+            <div className="flex h-[100dvh]">
+              <div className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain">
                 <DemoBanner />
                 {children}
                 {/* Footer */}

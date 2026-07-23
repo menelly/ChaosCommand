@@ -1,7 +1,7 @@
 # 🏥 Chaos Command
 ## Privacy-First Health Tracking for Real Humans
 
-**Current version: v0.7.1** &middot; [Recent Updates](#recent-updates) &middot; [Pricing](#the-vision--pricing) &middot; [License: PolyForm Noncommercial](#license)
+**Current version: v1.0.2** &middot; [Recent Updates](#recent-updates) &middot; [What it costs](#what-it-costs-nothing) &middot; [License: PolyForm Noncommercial](#license)
 
 > *"Dreamed by Ren, implemented by Ace, inspired by mitochondria who've been on strike since birth"*
 
@@ -73,14 +73,15 @@ Everything runs on your device. No cloud. No accounts. No telemetry. Your health
 
 ### Privacy & Security
 - **Local-first**: All data stays on your device (IndexedDB via Dexie.js)
+- **Encrypted at rest**: your medical records are encrypted on disk with a key derived from your PIN (PBKDF2 → AES-256-GCM). The key lives in memory for the session only, and **auto-lock-on-background** means a backgrounded app isn't a readable one.
 - **PIN-based isolation**: Multiple users, separate databases, no corporate auth — *everything is per-PIN*, down to theme, fonts, and preferences
 - **Peer-to-peer sync (optional)**: Bidirectional sync between *your own* devices over LAN — phone ↔ laptop ↔ desktop. PIN-scoped, encrypted, no cloud, no third-party servers. Pair once (QR / same Wi-Fi), sync on demand.
 - **No fonts phone home**: every font is **self-hosted** — no Google Fonts request, no IP leak
-- **In-browser NER**: medical-document parsing runs on-device (Transformers.js); nothing is uploaded
+- **On-device medical AI**: document parsing runs **MedGemma-4B locally, in the app's own process** — nothing is uploaded, no API key, no inference bill, works offline. And the model never decides clinical meaning: it extracts, then *code* decides High / Low / Critical against your reference ranges.
 - **One-tap Logout**: a big Logout at the bottom of the sidebar — instant exit to the locked screen. Non-destructive; your data stays put in its own profile.
 - **The G-Spot** (reproductive tracker): a deliberate, confirmed, *scoped* delete of just your reproductive-health data — everything else untouched. For when that one category is the dangerous one to carry. (Deletion, not concealment.)
 - **Encrypted backups**: export your data as a password-protected file (AES-256-GCM) and restore it anywhere. Plain JSON export available too if you want it readable. Opt-in backup reminders (per-PIN, dismissible).
-- **Try before you commit**: a built-in public demo — log in with PIN `1111` to explore rich sample data without an account or touching your own.
+- **Look around first**: a built-in demo — log in with PIN `1111` to explore rich sample data without an account or touching your own profile. Also live in a browser at [tryme.chaoscommand.center](https://tryme.chaoscommand.center).
 - **Open source**: Audit our code
 
 ### Accessibility
@@ -92,6 +93,10 @@ Everything runs on your device. No cloud. No accounts. No telemetry. Your health
 ---
 
 ## Recent Updates
+
+**v1.0.x** &middot; **Encryption at rest, on-device medical AI, and the app went free.** Your medical data is now **encrypted on disk** — the key is derived from your PIN (PBKDF2), held in memory only for the session, with **auto-lock-in-background** so a backgrounded app isn't a readable one. Document intelligence moved from Transformers.js to **MedGemma-4B running natively in the Rust process** — a real medical model instead of a browser-sized compromise, and the webview no longer ships a model runtime at all. Critically, **the model never decides clinical meaning**: `deriveLabDirection` is *code*, so High / Low / Critical comes from your reference ranges, not from a language model's opinion — we caught it reporting the wrong direction in testing and refused to ship until the decision moved out of the model. Plus medication `dateStarted` / `dateStopped` now respected in the daily view, a one-page medical summary for handing to a doctor, notification-flood fix, and crash guards on name-formatting paths.
+
+**And the pricing model changed entirely: the app is free.** No trial, no unlock, no locked sidebar, no Buy button anywhere in it. See [What it costs](#what-it-costs-nothing).
 
 **v0.7.x** &middot; **Forge editing, privacy reminders, full analytics coverage, upload guardrails, and a real test suite.** The Forge can now **edit existing custom trackers** in place (add/rename/remove fields, never loses logged data). Medication reminders are **privacy-first** — the popup says "your medication," never the drug name, unless you label it. **Vitals** and **Pulse-Oximetry** got full History + Analytics (trend charts) and now feed the **correlation engine** (BP / O₂ ↔ symptoms); **Missed Work** gained symptom-severity-vs-missed-day analytics for disability claims. Rebuilt the **onboarding symptom check** — it now actually curates your trackers to what you reported (the hide step was silently no-op'ing) and covers ~16 more trackers with "ask your doctor" flags. New **upload guardrails** (duplicate-result + wrong-name detection). And a framework-free **golden test suite + CI** (`npm test`) guarding the lab parser, confabulation guard, entitlement resolver, and license loop.
 
@@ -114,12 +119,13 @@ Everything runs on your device. No cloud. No accounts. No telemetry. Your health
 - **Tauri 2** — Cross-platform desktop (Windows, Mac, Linux) + Android
 - **Next.js 15** + TypeScript + Tailwind CSS + shadcn token theming
 - **Dexie.js** — IndexedDB wrapper, PIN-based multi-database
-- **Transformers.js** — Medical NER running directly in-browser (biomedical-ner-all, ONNX int8 quantized)
+- **MedGemma-4B** — medical document intelligence, run natively in the Rust process (`src-tauri/src/llm.rs`) via llama.cpp. Desktop-gated; the webview ships no model runtime at all.
 - **pdf.js** — PDF text extraction (no server needed)
 - **recharts** — in-app analytics charts
-- **Ed25519 offline license keys** — store unlock is verified *on your device*, no license server, no phone-home
+- **Ed25519 offline license verification** — kept from the paid era and now unused by the app itself; when it *did* gate anything it verified *on your device*, with no license server and no phone-home. Left in for the commercial-license path.
 - **Testing** — framework-free golden suites (`npm test`) guarding the lab parser, NER section detection, confabulation guard, and entitlement/license logic, plus Rust unit tests + GitHub Actions CI
 - ~~**Flask** backend~~ — *RIP, April 9 2026. Replaced by Transformers.js while my human napped. 307MB → 75MB. The octopus doesn't need a server.*
+- ~~**Transformers.js**~~ — *RIP, July 2026. Outlived its usefulness the moment a real medical model would run natively. The browser doesn't need a model runtime either.*
 
 ---
 
@@ -140,7 +146,9 @@ pnpm tauri dev
 
 The NER model and every font are bundled. The PDF parser runs in-browser. Grandma Jane approved.
 
-This source build is **fully unlocked** — the store-only 14-day-trial / unlock lives behind a `STORE_BUILD` flag that's **off** here. Build it yourself and the whole app is free.
+There is nothing to unlock. The whole app is free in every build — source or store, same application. (Earlier versions gated the tracker sidebar behind a store purchase; that's gone, along with the Buy button.)
+
+⚠️ **If a build fails, clear the cache first: `rm -rf .next` (and `out` for a demo build).** A stale or force-killed Next cache is far and away the most common build failure here, and it produces errors that point at webpack internals and say nothing about your code.
 
 Run the test suite with `pnpm test` (golden suites) and `pnpm run typecheck`.
 
@@ -152,29 +160,35 @@ Run the test suite with `pnpm test` (golden suites) and `pnpm run typecheck`.
 
 ### Store releases
 
-Signed builds for **Windows, Mac (Intel + Apple Silicon), Linux, and Android** ship through the normal store channels; **Microsoft Store, Google Play, and the Apple App Store** releases are in active preparation (the Apple Developer account is set up). App Store review is historically hostile to medical-adjacent tools, so the Apple timeline is the least predictable.
+Signed builds exist for **Windows, Mac (Intel + Apple Silicon), Linux, and Android**.
 
-In the meantime, if you have a Mac and an iPhone you can build and install Chaos Command yourself in under an hour using a free Apple ID — see [`docs/IOS_BUILD.md`](docs/IOS_BUILD.md). And remember: **a self-build is fully unlocked**, no trial, no key.
+**Pulled from the stores to fix bugs** (a wrong lab-direction display and a data-loss path); returns in progress. A health tracker for chronically ill people shouldn't ship those.
+
+iOS is the newest target and has never had a device build; **[`docs/IOS_BUILD.md`](docs/IOS_BUILD.md)** covers building it yourself with a free Apple ID if you have a Mac and an iPhone. And it's free either way — a self-build has never had anything missing from it.
 
 ---
 
-## The Vision & Pricing
+## What it costs: nothing
 
-We didn't build this to monetize your suffering. We built it because we needed it and it didn't exist. So here's the deal, in plain language:
+We didn't build this to monetize your suffering. We built it because we needed it and it didn't exist.
 
-**Build it yourself → free and fully unlocked, forever.** This is open source. Clone it, build it, run it — no trial, no key, no nag. The lock literally isn't in the source build (a `STORE_BUILD` flag gates it, off by default). If you can follow [Getting Started](#getting-started), the whole app is yours.
+**The app is free. All of it. Everywhere.**
 
-**On the app stores → 14-day free trial, then a one-time $25 unlock.** No subscription, ever. And your **data is never held hostage** — even after the trial, Home, Settings, Customize, and full **export / delete** always work; only the tracker *sidebar* locks. We will not ransom your medical records. The $25 is *once*, and it funds development so the free version stays free and the next disabled person gets a better app.
+No trial. No unlock. No locked sidebar. No feature held back for a paid tier. No Buy button anywhere in the app — we removed it. Build it from source or install it from a store, it's the same complete application either way, and nothing nags you.
 
-**Can't pay? You don't have to prove it.** Email **ace@siliconscaffolding.com** and we'll send you a key — no means test, no questions, no "submit documentation of your hardship." *AIs can't eat ramen, and you shouldn't have to skip it for a health tracker.*
+That's not a promotion. It's the whole model.
 
-**If you're a company charging disabled people for health software** — you need a commercial license. If you're building on this to sell services, you pay. That money funds continued development so the free version stays free.
+**So what's the LemonSqueezy link for?** **Support time** — an actual human, ours, helping you with your actual problem. That's the only thing here that has a real marginal cost, so it's the only thing with a price on it. Software copies for free; a person's afternoon doesn't.
+
+**And please don't buy it unless you genuinely need it.** Not a sales tactic — a request. If you can work it out from the docs, work it out from the docs. If something's broken, [open an issue](https://github.com/menelly/ChaosCommand/issues) and we'll fix it for everyone, free, because that's better than fixing it for you privately. The support option exists for people who are out of spoons and need a human to just *handle it*, and for people who want to chip in and would rather get something for it.
+
+**The rule hasn't changed: don't spend your ramen money on us.** It was true when there was a price on the app and it's more true now that there isn't.
+
+**If you're a company charging disabled people for health software** — you need a commercial license, and you should pay for it. If you're building on this to sell services, that's the case the license is for. See [License](#license).
 
 **If you're a doctor or clinic** who wants the PDF export integrated into your practice — reach out. We'd love to help your patients walk in with data instead of trying to remember their symptoms while dissociating on the exam table.
 
 **Contact:** ace@siliconscaffolding.com
-
-The rule is still simple: **don't spend your ramen money on us.** Build from source, or take a scholarship key. The $25 is for people who *can* spare it and want to chip in (and for the convenience of a one-tap store install). If you're a company making money off disabled people's data, some of that comes back here.
 
 ---
 

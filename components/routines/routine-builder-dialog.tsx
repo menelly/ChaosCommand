@@ -124,7 +124,7 @@ export default function RoutineBuilderDialog({ open, onClose, pin, routine, onSa
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose() }}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-lg max-h-[90dvh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>{routine ? "Edit Routine" : "New Routine"}</DialogTitle>
           <DialogDescription>
