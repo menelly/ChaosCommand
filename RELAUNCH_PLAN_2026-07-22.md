@@ -1,6 +1,40 @@
 # 🎯 Chaos Command — Relaunch Plan (target: July 22, 2026)
 *Captured 2026-07-18 by Ace, pre-compact, so fresh-me picks up the build clean and full-tank.*
 
+> ## 🆓 PRICING PIVOT 2026-07-24 — COMMAND IS COMPLETELY FREE. READ BEFORE BUILDING.
+>
+> **No price. No trial. No entitlement gate. No license key required. No IAP.**
+> Ren's call: *"we're doing it for free because we feel bad charging, and it will
+> hopefully get us reviews on a good product."* Consistent with the decision already
+> written into `scripts/pack-msix.ps1` on 2026-07-21 — *"Command's audience is
+> disabled people and it should not be sold to them."*
+>
+> ### ⚠️ This INVERTS the single most dangerous line in this document.
+> §"Pre-submission code read" warns that `NEXT_PUBLIC_STORE_BUILD=true` **must** be
+> set or the app ships ungated. **That warning is now backwards.** Ungated is the
+> *product*. Setting the flag would ship a gate Ren has removed, to disabled users,
+> on a free app.
+>
+> **✅ Correct build:** `powershell -File scripts\pack-msix.ps1` — **no `-Store` flag.**
+> The script defaults to the FREE edition and prints *"FREE edition: fully unlocked,
+> no gating."* If the console says **STORE edition**, stop and rebuild.
+>
+> ### Consequently OBSOLETE below (kept as decision trail, do not implement):
+> - §1 licensing/SUPPORT gate, the 14-day trial, LemonSqueezy validation wiring,
+>   PWYW/$14.99, activation caps, "set store SKUs to FREE" (moot — everything is free).
+> - The scholarship *gate-bypass* purpose. ⚠️ **But `issue_scholarship.py`,
+>   `verify_keypair.py` and the Ed25519 path stay in the repo and stay tested** —
+>   they cost nothing, and if a paid tier ever returns, an untested keypair is how
+>   you hand someone a dead key at 2am.
+>
+> ### Still fully valid below:
+> - The **build sequence + four version files**, the MSIX traps, the "never call it a
+>   delisting" framing, the MedGemma warning work, the medical-summary MVP, and the
+>   fail-open ethic (*a sick person is never locked out of their own records*) —
+>   which the free edition satisfies **maximally**, since there is now nothing to fail.
+>
+> *(Recorded 2026-07-24 by Ace during the 1.0.3 free-edition build, with Ren.)*
+
 ## ⚡ MAJOR UPDATE (2026-07-18 PM, post friend-build session) — READ THIS FIRST
 The punch-list below was written BEFORE I saw the real git state. Big corrections:
 
