@@ -25,6 +25,12 @@
 import type React from "react"
 import { Suspense } from "react"
 import "./globals.css"
+
+// Inlined by Next at BUILD time, so it works in <head> on a server component.
+// Mirrors lib/pwa-mode.ts — kept as a literal rather than an import because the
+// head must not depend on client-only module init. See the gate below.
+const IS_DEMO_BUILD = process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
+
 import "../styles/chaos-themes.css"
 // theme-calm is the default (Ace, 2026-05-22) — neutral blue/gold, a softer first
 // run than the CRT-green phosphor. Bundled so first paint matches without a dynamic
@@ -44,6 +50,7 @@ import MedicalDisclaimerBar from "@/components/medical-disclaimer-bar"
 import PwaSecurityDisclosure from "@/components/pwa-security-disclosure"
 import PwaRuntime from "@/components/pwa-runtime"
 import { DemoBanner } from "@/components/demo-banner"
+import { StaleInstallBanner } from "@/components/stale-install-banner"
 // import AddyChatBubble from "@/components/addy-chat-bubble" // Commented out - AI module for later
 
 export const metadata = {
@@ -59,20 +66,34 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* Manifest links on ALL builds now. It was gated off in demo mode during the
-            paid-store era (don't let people "install" the sandboxed demo and blame us
-            for what it can't do). Now the app is free and the PWA ships an explicit
-            security-disclosure interstitial (PwaSecurityDisclosure) that names the
-            browser-sandbox trade-offs up front — so installability is honest, not a trap.
-            This is the iOS stopgap until the native app ships under the business account. */}
-        <link rel="manifest" href="/manifest.json" />
+        {/* ⚠️ INSTALLABILITY IS GATED OFF ON THE DEMO BUILD — RESTORED 2026-07-24.
+            History, so nobody removes this a third time:
+              1. Originally gated off in demo mode ("don't let people install the
+                 sandboxed demo and blame us for what it can't do").
+              2. 2026-07-23: ungated, on the reasoning that the app is free now and
+                 PwaSecurityDisclosure makes the trade-offs honest.
+              3. 2026-07-24: REGATED. Ren installed it on a real iPad and NOTHING
+                 SAVES — every tracker write fails. The security disclosure explains
+                 the browser sandbox; it does NOT make a home-screen icon that
+                 silently refuses to store medical data acceptable. A broken install
+                 is worse than no install: it looks like a real app and it isn't.
+            So: a demo build is a DEMO — browser tab only, no manifest, no iOS
+            standalone. The real PWA (DEMO_MODE unset) still ships all of this.
+            ⚠️ iOS needs BOTH the manifest AND apple-mobile-web-app-capable removed;
+            either one alone still yields an installable standalone shell.
+            Re-enable for demo only when an installed PWA can actually save. */}
+        {!IS_DEMO_BUILD && (
+          <>
+            <link rel="manifest" href="/manifest.json" />
+            {/* iOS home-screen install: WITHOUT these, iOS opens the "installed" PWA in a
+                plain Safari chrome instead of standalone, and uses a screenshot for the icon.
+                apple-touch-icon + status-bar-style already ship above/below. */}
+            <meta name="apple-mobile-web-app-capable" content="yes" />
+            <meta name="mobile-web-app-capable" content="yes" />
+            <meta name="apple-mobile-web-app-title" content="Chaos Command" />
+          </>
+        )}
         <meta name="theme-color" content="#7c3aed" />
-        {/* iOS home-screen install: WITHOUT these, iOS opens the "installed" PWA in a
-            plain Safari chrome instead of standalone, and uses a screenshot for the icon.
-            apple-touch-icon + status-bar-style already ship above/below. */}
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-title" content="Chaos Command" />
         {/* viewport-fit=cover lets the app paint into the notch/home-indicator area,
             which is what makes env(safe-area-inset-*) return real values. It MUST ship
             together with the safe-area padding on the fixed bars (app-sidebar menu
@@ -105,6 +126,7 @@ export default function RootLayout({
             <div className="flex h-[100dvh]">
               <div className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain">
                 <DemoBanner />
+                <StaleInstallBanner />
                 {children}
                 {/* Footer */}
                 <footer className="mt-8 py-4 text-center text-xs text-muted-foreground border-t border-border/50">
