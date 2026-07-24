@@ -122,20 +122,40 @@ const ENCRYPTED_FIELDS: Record<string, string[]> = {
   pattern_snapshots: ['snapshot_json'],
 };
 
+/** 🔍 TEMPORARY DIAGNOSTIC (Ace, 2026-07-24) — remove with DebugErrorBanner.
+ *  Every tracker's catch shows a generic "Failed to save X" toast and console.errors
+ *  the REAL reason. On an iPad there is no console, so the diagnosis is unreachable
+ *  exactly where the bug lives. Stash it somewhere the UI can render it. */
+function recordSaveFailure(where: string, err: unknown): void {
+  try {
+    const msg = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
+    localStorage.setItem('chaos-last-save-error', `[${where}] ${msg}`);
+  } catch { /* localStorage unavailable — nothing more we can do */ }
+}
+
 async function encryptRow(row: any, fields: string[], encrypted: boolean): Promise<any> {
   if (!row || !encrypted) return row;
   if (!hasSessionKey()) {
     // HARD GUARD: never silently write plaintext into a profile DB. This is the
     // exact bug from the old (unwired) FieldLevelEncryption hook, done right.
-    throw new Error(
+    const e = new Error(
       'session-crypto: refusing to write to an encrypted profile with no key ' +
       '(is the profile unlocked?). Nothing was written.'
     );
+    recordSaveFailure('encryptRow/no-key', e);
+    throw e;
   }
   const out = { ...row };
   for (const f of fields) {
     if (out[f] !== undefined && !isEncrypted(out[f])) {
-      out[f] = await encryptValue(out[f]);
+      try {
+        out[f] = await encryptValue(out[f]);
+      } catch (err) {
+        // The OTHER way this path dies: the key exists but WebCrypto fails.
+        // Distinguishing "no key" from "encrypt threw" is the whole question.
+        recordSaveFailure(`encryptValue/field:${f}`, err);
+        throw err;
+      }
     }
   }
   return out;
