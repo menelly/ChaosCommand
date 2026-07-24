@@ -63,6 +63,20 @@ function inferMimeType(filters?: ExportFilterSpec[]): string {
 }
 
 /**
+ * True on iPhone / iPad (including iPadOS masquerading as "MacIntel", and an
+ * installed home-screen PWA). iOS WebKit ignores the <a download> attribute on
+ * blob: URLs, so the classic browser download is a silent no-op there and we
+ * must route the save through the Web Share sheet instead.
+ */
+function isIOS(): boolean {
+  if (typeof navigator === 'undefined') return false
+  const ua = navigator.userAgent || ''
+  if (/iP(hone|od|ad)/.test(ua)) return true
+  // iPadOS 13+ reports as a Mac; a touch-capable "MacIntel" is really an iPad.
+  return navigator.platform === 'MacIntel' && (navigator.maxTouchPoints || 0) > 1
+}
+
+/**
  * Save an exported file, prompting the user for a location via the native
  * picker on Tauri (desktop + Android) and falling back to a blob download in a
  * plain browser. Returns whether it saved and where.
@@ -99,11 +113,56 @@ export async function saveExportFile(
     return { saved: true, location: target }
   }
 
-  // --- Plain browser (dev mode / web): classic blob download ---------------
+  // --- Plain browser (dev mode / web / installed PWA) ----------------------
   const blob =
     content instanceof Blob
       ? content
       : new Blob([content as BlobPart], { type: inferMimeType(filters) })
+
+  // iOS Safari + installed iOS PWAs IGNORE the <a download> attribute on a
+  // blob: URL: tapping it shows the raw file in the tab or does nothing, so the
+  // export silently never saves — and the old code still returned saved:true
+  // (the v0.7.1 "we claimed it saved when nothing was written" bug, reborn on
+  // iOS). The export is the ONLY safety valve against the browser evicting the
+  // user's data, so on iOS we route through the Web Share sheet → "Save to
+  // Files", which iOS actually supports. Also: on iOS the <a> click NAVIGATES
+  // the tab to the blob, blowing away PWA state — another reason not to fall
+  // back to it there.
+  if (isIOS()) {
+    const nav = navigator as Navigator & {
+      canShare?: (data?: unknown) => boolean
+      share?: (data?: unknown) => Promise<void>
+    }
+    if (typeof nav.share === 'function') {
+      try {
+        const file = new File([blob], suggestedName, {
+          type: blob.type || inferMimeType(filters),
+        })
+        // canShare may be absent on older iOS; if so, optimistically try share.
+        if (!nav.canShare || nav.canShare({ files: [file] })) {
+          await nav.share({ files: [file], title: suggestedName })
+          // Resolved = the user completed the sheet (Save to Files, sent, etc.).
+          // We can't read WHICH target, but it was not a silent no-op.
+          return { saved: true, location: suggestedName }
+        }
+      } catch (err) {
+        // User dismissed the share sheet → honestly report "not saved".
+        if ((err as { name?: string })?.name === 'AbortError') {
+          return { saved: false, location: null }
+        }
+        // Any other failure (e.g. NotAllowedError if the gesture expired) falls
+        // through to the honest error below — never to the broken <a> path.
+      }
+    }
+    // No usable share path on this iOS browser. Do NOT pretend the anchor
+    // worked (it can't) — surface a truthful error the caller shows the user.
+    throw new Error(
+      "Couldn't save the file on this browser. Update to the latest Safari/iOS, " +
+      'or use the desktop app to export.'
+    )
+  }
+
+  // Desktop + Android browsers honor <a download> → classic blob download.
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
