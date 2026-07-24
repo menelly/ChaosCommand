@@ -47,7 +47,10 @@ export function DemoBanner() {
         justifyContent: 'center',
         gap: '0.5rem 1rem',
         padding: '0.5rem 1rem',
-        background: 'linear-gradient(90deg, #6d28d9, #db2777)',
+        // Warning red, NOT the old purple/pink gradient. This banner's job changed
+        // on 2026-07-24 from "fun demo" to "your data is not being kept" — it has
+        // to read as a warning at a glance. (Ren: make it REALLY clear.)
+        background: 'linear-gradient(90deg, #991b1b, #b91c1c)',
         color: '#fff',
         fontSize: '0.85rem',
         lineHeight: 1.35,
@@ -61,15 +64,26 @@ export function DemoBanner() {
         boxShadow: '0 1px 6px rgba(0,0,0,0.25)',
       }}
     >
-      <span>
-        🎮 <strong>Demo mode</strong> — every page is real and clickable, but
-        nothing you type in this browser tab is saved.
+      {/* ⚠️ COPY CHANGED 2026-07-24 — DO NOT SOFTEN, AND DO NOT RESTORE THE OLD TEXT.
+          The previous version said "To use it for real: install it… opened from your
+          home screen it saves your data." That is FALSE: an installed PWA does not
+          save (CHA-413), and on some browsers a save even shows a SUCCESS TOAST and
+          is gone after logout. We were instructing people to trust it with medical
+          data it silently discards. Installability is now gated off entirely on this
+          build; this copy must not invite it back. Restore the old wording only when
+          an installed PWA demonstrably persists a tracker entry across a relaunch. */}
+      <span style={{ fontSize: '1rem' }}>
+        ⚠️ <strong>DEMO ONLY — NOTHING YOU ENTER HERE IS SAVED.</strong>
       </span>
       <span style={{ opacity: 0.97 }}>
-        📲 <strong>To use it for real: install it.</strong> On iPhone/iPad, tap
-        <strong> Share → Add to Home Screen</strong>. Opened from your home screen it
-        saves your data (encrypted, on your device) — and a clean install, not a
-        Safari tab full of other stuff, is the safer way to keep medical info.
+        Look around, click everything, it&rsquo;s all real. But <strong>every entry
+        disappears</strong> — <strong>even when it says it saved.</strong> Please
+        don&rsquo;t put anything here you need to keep.
+      </span>
+      <span style={{ opacity: 0.97 }}>
+        💻 <strong>To actually track your health, get the real app</strong> — it keeps
+        your data encrypted on your own device. (iPhone/iPad: adding this page to your
+        home screen <strong>will not</strong> make it save. A native iOS app is coming.)
       </span>
       <Link
         href={SITE_URL}
