@@ -26,15 +26,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button'
 import { ShieldAlert } from 'lucide-react'
 import { getPref, setPref } from '@/lib/prefs'
-import { isDemoSandbox } from '@/lib/pwa-mode'
+import { isDemoSandbox, isNativeApp } from '@/lib/pwa-mode'
 
 const ACK_KEY = 'chaos-pwa-security-ack'
-
-/** True when running inside the native Tauri shell (desktop/mobile app). */
-function isNativeApp(): boolean {
-  if (typeof window === 'undefined') return false
-  return '__TAURI__' in window || '__TAURI_INTERNALS__' in window
-}
 
 /**
  * The disclosure body — single source, plain language. Presumes the reader is an

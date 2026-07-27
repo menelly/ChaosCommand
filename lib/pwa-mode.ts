@@ -20,6 +20,39 @@
 
 const IS_DEMO_BUILD = process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
 
+/**
+ * True when running inside the native Tauri shell (desktop or Android app).
+ *
+ * ⚠️ CANONICAL HOME. This check was previously copy-pasted into
+ * pwa-security-disclosure.tsx and pwa-runtime.tsx, which is how the web-only
+ * "Data & browser safety" disclosure ended up reachable from the sidebar of the
+ * NATIVE app — the auto-open was gated on the local copy, the sidebar button
+ * wasn't gated at all, and a Tauri user could open a dialog telling them their
+ * data might be evicted by a browser and that sync and AI import don't work.
+ * All false natively. Import this instead of writing the check again.
+ *
+ * (Several other call sites — sqlite-db, notification-scheduler,
+ * entitlement-context, license-context, llm-tauri — still roll their own and
+ * disagree about whether to test `__TAURI__` or `__TAURI_INTERNALS__`.
+ * Consolidating those is a separate, riskier change; not doing it here.)
+ *
+ * Both globals are tested because which one exists depends on whether
+ * `app.withGlobalTauri` is enabled for the build.
+ */
+export function isNativeApp(): boolean {
+  if (typeof window === 'undefined') return false
+  return '__TAURI__' in window || '__TAURI_INTERNALS__' in window
+}
+
+/**
+ * True when the browser-sandbox caveats actually apply: we are NOT in the native
+ * shell. This is the condition for showing anything that talks about browsers,
+ * data eviction, devtools access, or "the native app will fix this."
+ */
+export function isWebContext(): boolean {
+  return !isNativeApp()
+}
+
 // Once we've EVER seen this instance running installed, we remember it here.
 const PWA_LATCH_KEY = 'chaos-pwa-installed'
 

@@ -20,13 +20,9 @@
 
 import { useEffect, useState } from 'react'
 import { getPref, setPref } from '@/lib/prefs'
+import { isNativeApp } from '@/lib/pwa-mode'
 
 const IOS_HINT_KEY = 'chaos-ios-install-hint-dismissed'
-
-function isNativeApp(): boolean {
-  if (typeof window === 'undefined') return false
-  return '__TAURI__' in window || '__TAURI_INTERNALS__' in window
-}
 
 function isStandalone(): boolean {
   if (typeof window === 'undefined') return false

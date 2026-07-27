@@ -29,6 +29,7 @@ import Link from "next/link"
 import { homeImageData } from "@/lib/home-image"
 import { openDisclaimer } from "@/components/medical-disclaimer-bar"
 import { openPwaSecurity } from "@/components/pwa-security-disclosure"
+import { isWebContext } from "@/lib/pwa-mode"
 import { getPref } from "@/lib/prefs"
 import { SIDEBAR_NAV_ITEMS, SIDEBAR_HIDDEN_KEY, SIDEBAR_NAV_CHANGED_EVENT } from "@/lib/sidebar-nav"
 import { useEntitlement } from "@/lib/contexts/entitlement-context"
@@ -53,6 +54,17 @@ export default function AppSidebar() {
   const [holdingShortcut, setHoldingShortcut] = useState<string | null>(null)
   // Per-PIN list of sidebar nav ids the user has decluttered (hidden).
   const [hiddenNav, setHiddenNav] = useState<string[]>([])
+
+  // WEB-ONLY UI GATE. The "Data & browser safety" disclosure is entirely about
+  // the BROWSER sandbox — devtools access, the browser evicting stored data, no
+  // AI import, no device sync. Every word of it is FALSE inside the native Tauri
+  // app, and the button was rendering there unconditionally: a desktop/Android
+  // user could open it and be told their medical data might be evicted by a
+  // browser they aren't using. Defaults to false so it stays hidden until we
+  // KNOW we're on web — failing closed is right here, since flashing a wrong
+  // security notice is worse than showing a correct one a frame late.
+  const [isWeb, setIsWeb] = useState(false)
+  useEffect(() => { setIsWeb(isWebContext()) }, [])
 
   // Canonical nav list lives in lib/sidebar-nav (shared with the declutter panel).
   const sidebarItems = SIDEBAR_NAV_ITEMS
@@ -335,14 +347,18 @@ export default function AppSidebar() {
           </button>
 
           {/* Web/PWA data-safety notice — re-opens the browser-sandbox disclosure.
-              Auto-shows once on the web build; this lets users re-read it any time. */}
-          <button
-            onClick={() => { openPwaSecurity(); isMobile && setShowSidebar(false) }}
-            className="w-full rounded text-[11px] text-muted-foreground transition-all py-1 px-1 hover:text-foreground block text-center"
-            title="Data & browser safety (web version)"
-          >
-            🔒 Data &amp; browser safety
-          </button>
+              Auto-shows once on the web build; this lets users re-read it any time.
+              🚫 WEB ONLY — see the isWeb gate above. Do not un-gate it: inside the
+              native app this dialog makes four claims that are all false there. */}
+          {isWeb && (
+            <button
+              onClick={() => { openPwaSecurity(); isMobile && setShowSidebar(false) }}
+              className="w-full rounded text-[11px] text-muted-foreground transition-all py-1 px-1 hover:text-foreground block text-center"
+              title="Data & browser safety (web version)"
+            >
+              🔒 Data &amp; browser safety
+            </button>
+          )}
 
           {/* Logout — big, bottom-of-sidebar, one-tap. THE emergency exit: fast and obvious,
               ~2× the height of the other buttons so it's hard to miss and easy to hit. */}
