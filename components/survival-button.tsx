@@ -37,6 +37,7 @@ import { maybeRunAutoSync } from "@/lib/auto-sync"
 import { useToast } from "@/hooks/use-toast"
 import { openExternal } from "@/lib/open-external"
 import { migrateSurvivalFromLocalStorage, loadSurvivalState, recordSurvival, undoSurvival } from "@/lib/survival-check"
+import DailyTouchBase from "@/components/daily-touch-base"
 
 // Gremlinisms from Cares
 const uncheckedGoblinPhrases = [
@@ -493,6 +494,13 @@ export default function SurvivalButton() {
                 {currentLabelPhrase}
               </p>
             )}
+
+            {/* CHA-423 — the daily body/mind touch-base, offered ONLY AFTER the
+                check. The box completes the day on its own; this never gates it,
+                never blocks it, and declining is not a failure state. If survival
+                checks drop after this ships, the coupling is wrong and it comes
+                back out — the check-in is worth less than the check. */}
+            {checked && <DailyTouchBase />}
           </div>
         </div>
 
