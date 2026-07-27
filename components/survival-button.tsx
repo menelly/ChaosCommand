@@ -36,6 +36,7 @@ import { maybeRunAutoUpdateCheck } from "@/lib/auto-update-check"
 import { maybeRunAutoSync } from "@/lib/auto-sync"
 import { useToast } from "@/hooks/use-toast"
 import { openExternal } from "@/lib/open-external"
+import { migrateSurvivalFromLocalStorage, loadSurvivalState, recordSurvival, undoSurvival } from "@/lib/survival-check"
 
 // Gremlinisms from Cares
 const uncheckedGoblinPhrases = [
@@ -186,58 +187,55 @@ export default function SurvivalButton() {
   const { toast } = useToast()
   const [checked, setChecked] = useState(false)
   const [count, setCount] = useState(0)
-  const [lastCheckedDate, setLastCheckedDate] = useState("")
   const [currentPhrase, setCurrentPhrase] = useState("")
   const [currentLabelPhrase, setCurrentLabelPhrase] = useState("")
   const [phraseType, setPhraseType] = useState<'goblin' | 'normal'>('goblin')
   const [showGremlin, setShowGremlin] = useState(false)
   const [currentFamiliar, setCurrentFamiliar] = useState(ALL_FAMILIARS[0].src)
 
-  // PIN-specific storage keys for family member isolation
-  // Stable per-PIN so the state-loading effect below only re-runs on mount / PIN
-  // change — NOT on every render. (When this was a fresh arrow each render, the
-  // load effect re-ran constantly and reset the familiar + phrase back to their
-  // on-load values, so clicks never visibly changed the critter.)
-  const getStorageKey = useCallback((key: string) => userPin ? `${key}_${userPin}` : key, [userPin])
+  // PIN-keyed storage moved into lib/survival-check.ts with the rest of the
+  // persistence (CHA-428). The old getStorageKey helper lived here only to build
+  // localStorage keys, and family-member isolation now comes from the per-profile
+  // database rather than key prefixes. The effect below still depends only on
+  // userPin, which is what kept it from re-running every render and resetting the
+  // familiar + phrase mid-session — that fix is preserved, just simpler.
 
-  // Load saved state
+  // Load saved state.
+  //
+  // CHA-428: this used to read localStorage directly. The streak now lives in
+  // daily_data like every other tracker, so it EXPORTS, SYNCS, and survives a
+  // browser storage clear — none of which were true before. lib/survival-check.ts
+  // owns the storage and keeps a localStorage fallback for one release, so a user
+  // who skips a version never sees a heartbreaking zero.
   useEffect(() => {
-    const savedChecked = localStorage.getItem(getStorageKey("survivalChecked"))
-    const savedCount = localStorage.getItem(getStorageKey("survivalCount"))
-    const savedDate = localStorage.getItem(getStorageKey("lastCheckedDate"))
+    let cancelled = false
+    ;(async () => {
+      // Carry the old localStorage streak forward. Idempotent; retries on failure.
+      await migrateSurvivalFromLocalStorage(userPin ?? null)
+      const state = await loadSurvivalState(userPin ?? null)
+      if (cancelled) return
 
-    // Use local time instead of UTC to properly handle midnight reset
-    const today = new Date()
-    const localToday = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+      setChecked(state.checkedToday)
+      setCount(state.count)
 
-    // Only keep checkbox checked if it was checked today
-    if (savedChecked && savedDate === localToday) {
-      setChecked(savedChecked === "true")
-    } else {
-      // Reset checkbox for new day
-      setChecked(false)
-      localStorage.setItem(getStorageKey("survivalChecked"), "false")
-    }
-
-    if (savedCount) setCount(parseInt(savedCount))
-    if (savedDate) setLastCheckedDate(savedDate)
-
-    // Set initial phrase based on checked state
-    const cnt = savedCount ? parseInt(savedCount) : 0
-    if (savedChecked === "true" && savedDate === localToday) {
-      // Checked today — show a goblin celebration phrase
-      const phraseIndex = cnt % goblinPhrases.length
-      setCurrentPhrase(goblinPhrases[phraseIndex])
-      // Set a familiar based on count, from this profile's chosen set
-      const fam = activeFamiliarSrcs()
-      setCurrentFamiliar(fam[cnt % fam.length])
-    } else {
-      // Not checked — show unchecked prompt
-      const phraseIndex = cnt % uncheckedGoblinPhrases.length
-      setCurrentPhrase(uncheckedGoblinPhrases[phraseIndex])
-      setCurrentLabelPhrase(uncheckedGoblinPhrases[phraseIndex])
-    }
-  }, [userPin, getStorageKey])
+      // Set initial phrase based on checked state
+      const cnt = state.count
+      if (state.checkedToday) {
+        // Checked today — show a goblin celebration phrase
+        const phraseIndex = cnt % goblinPhrases.length
+        setCurrentPhrase(goblinPhrases[phraseIndex])
+        // Set a familiar based on count, from this profile's chosen set
+        const fam = activeFamiliarSrcs()
+        setCurrentFamiliar(fam[cnt % fam.length])
+      } else {
+        // Not checked — show unchecked prompt
+        const phraseIndex = cnt % uncheckedGoblinPhrases.length
+        setCurrentPhrase(uncheckedGoblinPhrases[phraseIndex])
+        setCurrentLabelPhrase(uncheckedGoblinPhrases[phraseIndex])
+      }
+    })()
+    return () => { cancelled = true }
+  }, [userPin])
 
   const triggerConfetti = useCallback(() => {
     // 🎆 EPIC PARTICLE PHYSICS CELEBRATION!
@@ -295,23 +293,19 @@ export default function SurvivalButton() {
   const handleCheckboxChange = useCallback(() => {
     const newChecked = !checked
 
-    // Use local time instead of UTC
-    const todayDate = new Date()
-    const today = `${todayDate.getFullYear()}-${String(todayDate.getMonth() + 1).padStart(2, '0')}-${String(todayDate.getDate()).padStart(2, '0')}`
-
+    // OPTIMISTIC: flip the checkbox and fire the celebration IMMEDIATELY. The
+    // durable write is awaited in the background. On a day where tapping this is
+    // all someone can manage, the confetti must not wait on IndexedDB.
     setChecked(newChecked)
-    localStorage.setItem(getStorageKey("survivalChecked"), newChecked.toString())
 
     let currentCount = count
     if (newChecked) {
-      // Only increment count if it's a new day
-      if (lastCheckedDate !== today && !checked) {
-        currentCount = count + 1
-        setCount(currentCount)
-        localStorage.setItem(getStorageKey("survivalCount"), currentCount.toString())
-        setLastCheckedDate(today)
-        localStorage.setItem(getStorageKey("lastCheckedDate"), today)
-      }
+      // Persist + recount. recordSurvival is idempotent per DATE at the storage
+      // layer, so double-taps cannot inflate the streak — the old code enforced
+      // that only via component state, which a remount could defeat.
+      void recordSurvival(userPin ?? null).then(state => {
+        setCount(state.count)
+      })
 
       // Advance the cycle counter so the familiar + saying change on every click
       // (the count above only moves once per day — this is just the fun part).
@@ -397,12 +391,16 @@ export default function SurvivalButton() {
         })
       }
     } else {
+      // Un-checking: remove today's record so the streak reflects reality.
+      void undoSurvival(userPin ?? null).then(state => {
+        setCount(state.count)
+      })
       // Set unchecked phrase
       const phraseIndex = currentCount % uncheckedGoblinPhrases.length
       setCurrentPhrase(uncheckedGoblinPhrases[phraseIndex])
       setCurrentLabelPhrase(uncheckedGoblinPhrases[phraseIndex])
     }
-  }, [checked, count, lastCheckedDate, triggerConfetti, getStorageKey])
+  }, [checked, count, triggerConfetti, userPin, toast])
 
   // State for today's date to avoid hydration issues
   const [today, setToday] = useState('')
