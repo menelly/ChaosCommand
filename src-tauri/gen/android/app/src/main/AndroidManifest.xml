@@ -6,13 +6,29 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
 
     <!-- EXACT ALARMS for scheduled notifications (medication reminders, daily
-         check-ins). The notification plugin schedules via setExactAndAllowWhileIdle();
-         on Android 12+ that needs an exact-alarm permission or the alarm silently
-         never registers (immediate notifications still work, scheduled ones don't —
-         the bug we hit on v0.7.1). USE_EXACT_ALARM is auto-granted (no runtime prompt)
-         and is the Play-policy-sanctioned choice for a reminder/medication app;
-         SCHEDULE_EXACT_ALARM covers Android 12 (API 31-32). -->
-    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+         check-ins). Android's own docs name medication reminders as a legitimate
+         use of SCHEDULE_EXACT_ALARM, so this is the permission we ARE eligible for.
+
+         🚫 DO NOT ADD android.permission.USE_EXACT_ALARM.
+         It is auto-granted with no runtime prompt, which is why past-me reached for
+         it — but Google Play restricts it to apps whose CORE function is "alarm
+         clock" or "calendar", and blocks upload otherwise (hit 2026-07-25, CHA-417).
+         Chaos Command is a health tracker; declaring either category would be a
+         false declaration. Convenience is not worth lying to the store.
+
+         ✅ Removing it does NOT resurrect the v0.7.1 "scheduled alarms silently never
+         register" bug. Verified in tauri-plugin-notification 2.3.3
+         (android/.../TauriNotificationManager.kt, setExactIfPossible): the plugin
+         already checks canScheduleExactAlarms() and FAILS SOFT to
+         setAndAllowWhileIdle() — inexact, but it still fires through Doze. No
+         SecurityException, no silently-dropped alarm.
+
+         Practical effect: on Android <= 13 nothing changes (SCHEDULE_EXACT_ALARM is
+         granted at install). On Android 14+ targeting API 33+ it is denied by default,
+         so reminders become inexact — delivered late by minutes rather than to the
+         second. A late reminder beats no reminder. An in-app opt-in that sends the
+         user to ACTION_REQUEST_SCHEDULE_EXACT_ALARM would restore exactness; see the
+         follow-up ticket. -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
 
     <!-- Camera is required for QR code scanning on the sync page (html5-qrcode / getUserMedia) -->
