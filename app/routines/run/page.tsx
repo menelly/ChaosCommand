@@ -17,7 +17,7 @@ import AppCanvas from "@/components/app-canvas"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle2, Circle, ArrowLeft, ChevronRight, EyeOff, Eye, MinusCircle, Undo2, CopyPlus, NotebookPen } from "lucide-react"
+import { CheckCircle2, Circle, ArrowLeft, ChevronRight, EyeOff, Eye, ThumbsUp, Undo2, CopyPlus, NotebookPen } from "lucide-react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
@@ -28,6 +28,7 @@ import { type TrackableTracker } from "@/lib/routines/trackable-registry"
 import { loadAllTrackables, indexTrackables } from "@/lib/routines/load-trackables"
 import { buildStatusMap, buildLastLoggedMap, type TrackerLoggedStatus } from "@/lib/routines/routine-status"
 import { getClearedTrackers, markNothingToLog, unmarkNothingToLog } from "@/lib/routines/routine-cleared"
+import { recordZeroReport, removeZeroReport } from "@/lib/routines/zero-reports"
 import { getSkippedTrackers, markSkipped, unmarkSkipped } from "@/lib/routines/routine-skipped"
 import { getRunStart } from "@/lib/routines/routine-session"
 import { copyLastEntryToToday, buildCopyableMap } from "@/lib/routines/copy-last-entry"
@@ -140,15 +141,30 @@ function RoutineRun() {
     unmarkSkipped(pin, routineId, today, id)
     setSkipped(prev => { const n = new Set(prev); n.delete(id); return n })
   }
+  // "Didn't bother me" — a GENUINE ZERO, and now durable data (CHA-427).
+  //
+  // Two writes on purpose, and they are not redundant:
+  //   1. markNothingToLog -> localStorage. The per-RUN checklist state. Wiped on
+  //      the next fresh Run by design, so re-running gives a clean list.
+  //   2. recordZeroReport -> daily_data. The PERMANENT record. Before this, the
+  //      genuine zero only ever existed as (1), so it evaporated on the next run
+  //      and never reached the database or the export. A good day and an unlogged
+  //      day were byte-identical, which left every tracker with no denominator.
+  //
+  // The UI marker is written FIRST and synchronously so the card updates
+  // instantly; the durable write is fire-and-forget and can never block or break
+  // the flow (it swallows its own errors).
   const nothingToLog = (id: string) => {
     markNothingToLog(pin, routineId, today, id)
     setCleared(prev => new Set(prev).add(id))
     unmarkSkipped(pin, routineId, today, id)
     setSkipped(prev => { const n = new Set(prev); n.delete(id); return n })
+    void recordZeroReport(today, id, routineId, 'routine-run')
   }
   const undoNothing = (id: string) => {
     unmarkNothingToLog(pin, routineId, today, id)
     setCleared(prev => { const n = new Set(prev); n.delete(id); return n })
+    void removeZeroReport(today, id)
   }
   const copyYesterday = async (t: TrackableTracker) => {
     const res = await copyLastEntryToToday(t, today, getDateRange, saveData)
@@ -204,7 +220,7 @@ function RoutineRun() {
                         </div>
                       ) : isNothing ? (
                         <div className="text-xs text-green-600 flex items-center gap-1">
-                          <CheckCircle2 className="h-3.5 w-3.5" /> Nothing to log today
+                          <CheckCircle2 className="h-3.5 w-3.5" /> Didn&apos;t bother me today 👍
                         </div>
                       ) : isSkipped ? (
                         <div className="text-xs text-muted-foreground flex items-center gap-1">
@@ -237,10 +253,16 @@ function RoutineRun() {
                             <CopyPlus className="h-4 w-4" /> Copy last
                           </Button>
                         )}
-                        <Button size="sm" variant="ghost" className="gap-1 text-muted-foreground"
-                          title="I checked — nothing to report today. Counts as done."
+                        {/* GENUINE ZERO. The label is load-bearing, not decoration:
+                            "Nothing today" reads as a failure-to-do, so people
+                            reached for the skip instead and the good-day data was
+                            never recorded. This is a WIN — you checked, and it
+                            wasn't a problem — so it says so and it isn't greyed
+                            out like a dismissal. (CHA-427, Ren's design note.) */}
+                        <Button size="sm" variant="ghost" className="gap-1 text-green-600 hover:text-green-700"
+                          title="I checked — this didn't bother me above my baseline today. Counts as done, and it's recorded as a good day."
                           onClick={() => nothingToLog(t.id)}>
-                          <MinusCircle className="h-4 w-4" /> Nothing today
+                          <ThumbsUp className="h-4 w-4" /> Didn&apos;t bother me
                         </Button>
                         <Button size="sm" variant="ghost" className="text-muted-foreground"
                           title="Hide for now — doesn't count, you can unskip" onClick={() => skip(t.id)}>
