@@ -10,7 +10,10 @@ import jsPDF from 'jspdf'
 import { getPersonalization, resolvedPronouns } from '@/lib/personalization'
 // Patterns engines — static imports (the old runtime require() inside a try/catch
 // could fail silently in a client bundle and the whole patterns section vanished).
-import { analyzeAllPatterns } from '@/lib/pattern-engine'
+import {
+  analyzeAllPatterns, computeSymptomTrends, computeTreatmentResponses,
+  type SymptomTrend,
+} from '@/lib/pattern-engine'
 import { analyzeV2Patterns } from '@/lib/pattern-engine-v2'
 // Seizure episode-type canon (single source of truth) so the report collapses
 // the slug ("focal-aware") and the legacy human label ("Focal Aware (Simple
@@ -644,10 +647,183 @@ export function generateMedicalReport(data: ReportData): Blob {
   const uniqueDates = new Set(trackerData.map(r => r.date).filter(Boolean))
   const trackerTypes = new Set(trackerData.map(r => (r.subcategory || '').split('-')[0]))
 
+  // === SYMPTOM TRAJECTORIES — resolved before the summary so the summary can
+  // LEAD with findings instead of volume. Reported by a user (2026-08-02):
+  // nothing in the document was geared to show whether anything was improving,
+  // and improvements being logged into the app never reached the report.
+  //
+  // ⚠️ The snapshot path is deliberately NOT trusted for this. A snapshot taken
+  // before the per-symptom engine existed has no `symptomTrends` at all, and a
+  // report generated from one would silently print nothing — the exact failure
+  // being fixed. When the snapshot predates the field, recompute from the
+  // export's own data rather than showing an empty section.
+  const getSymptomTrends = (): SymptomTrend[] => {
+    const p = getPatterns()
+    const fromSnapshot = p?.v1?.symptomTrends
+    if (Array.isArray(fromSnapshot) && fromSnapshot.length) return fromSnapshot
+    try {
+      const grouped: Record<string, any[]> = {}
+      for (const r of trackerData) {
+        if (!r.subcategory) continue
+        if (!grouped[r.subcategory]) grouped[r.subcategory] = []
+        grouped[r.subcategory].push(r)
+      }
+      return computeSymptomTrends(grouped as any)
+    } catch {
+      return []
+    }
+  }
+
+  // Per-symptom series only. The whole-tracker series is an average OF these, so
+  // listing both would report the same movement twice under two names.
+  const allTrends = getSymptomTrends().filter(t => t.symptomId)
+  const improving = allTrends.filter(t => t.direction === 'improving')
+    .sort((a, b) => Math.abs(b.percentChange) - Math.abs(a.percentChange))
+  const worsening = allTrends.filter(t => t.direction === 'worsening')
+    .sort((a, b) => Math.abs(b.percentChange) - Math.abs(a.percentChange))
+  const flat = allTrends.filter(t => t.direction === 'no-clear-direction')
+
   w.sectionHeader('Executive Summary')
-  let summaryText = `This report covers ${uniqueDates.size} days of tracked health data across ${trackerTypes.size} symptom categories. `
+  // Findings first, volume second. The previous version opened with "N days of
+  // tracked health data across M symptom categories" — which describes the
+  // effort, not the result, and reads to a reviewer as "nothing changed".
+  let summaryText = ''
+  if (improving.length || worsening.length) {
+    const parts: string[] = []
+    if (improving.length) parts.push(`${plural(improving.length, 'symptom')} improving`)
+    if (worsening.length) parts.push(`${plural(worsening.length, 'symptom')} worsening`)
+    if (flat.length) parts.push(`${flat.length} with no clear direction`)
+    summaryText += `Direction of change over the reporting period: ${parts.join(', ')}. `
+    if (improving.length) {
+      const top = improving.slice(0, 3).map(t =>
+        `${t.symptomLabel.toLowerCase()} (${t.earlyAvg.toFixed(1)} → ${t.lateAvg.toFixed(1)})`
+      )
+      summaryText += `Largest improvements: ${top.join('; ')}. `
+    }
+    if (worsening.length) {
+      const top = worsening.slice(0, 3).map(t =>
+        `${t.symptomLabel.toLowerCase()} (${t.earlyAvg.toFixed(1)} → ${t.lateAvg.toFixed(1)})`
+      )
+      summaryText += `Largest deteriorations: ${top.join('; ')}. `
+    }
+  }
+  summaryText += `Based on ${uniqueDates.size} days of tracked health data across ${trackerTypes.size} symptom categories. `
   if (labResults.length) summaryText += `${labResults.length} laboratory result set(s) included. `
   w.body(summaryText)
+
+  // The section a prior-authorization reviewer reads. It exists because a
+  // report that cannot demonstrate benefit cannot defend the therapy that
+  // produced it — and for a patient whose problem is being disbelieved and
+  // under-treated, that is the difference between continued treatment and not.
+  if (allTrends.length) {
+    w.sectionHeader('Direction of Change')
+    w.note(
+      'Each symptom is tracked as its own series. Early-period average vs recent-period ' +
+      'average, with a Mann-Kendall rank test for consistency. Series with few entries are ' +
+      'marked preliminary and should be read as provisional, not dismissed.'
+    )
+
+    // Point change, not percent (a bounded ordinal scale cannot support a
+    // ratio), and the DATE WINDOW — without it a reader cannot tell whether
+    // this moved over six weeks or six months, which changes what it means.
+    const trendRows = (list: SymptomTrend[]) => list.map(t => [
+      t.trackerLabel,
+      t.symptomLabel,
+      `${t.earlyAvg.toFixed(1)} to ${t.lateAvg.toFixed(1)}`,
+      `${t.absoluteChange > 0 ? '+' : ''}${t.absoluteChange.toFixed(1)}`,
+      `${t.firstDate} to ${t.lastDate}`,
+      String(t.n),
+      t.preliminary ? 'preliminary' : t.strength,
+    ])
+    const HEADERS = ['System', 'Symptom', 'Early to recent', 'Change', 'Over', 'n', 'Support']
+    const WIDTHS = [66, 104, 62, 40, 96, 24, 48]
+
+    if (improving.length) {
+      w.subSection(`Improving (${improving.length})`)
+      w.table(HEADERS, trendRows(improving), WIDTHS)
+    }
+    if (worsening.length) {
+      w.subSection(`Worsening (${worsening.length})`)
+      w.table(HEADERS, trendRows(worsening), WIDTHS)
+    }
+    if (flat.length) {
+      // Printed on purpose. Omitting them would leave a silence a reader cannot
+      // distinguish from "not measured", and those are different facts.
+      w.subSection(`No clear direction (${flat.length})`)
+      w.body(
+        'These were analysed and showed no consistent movement in either direction. ' +
+        'They are listed so that stability is recorded as a finding rather than as an absence: ' +
+        flat.map(t => `${t.symptomLabel} (${t.trackerLabel}, n=${t.n})`).join('; ') + '.'
+      )
+    }
+  }
+
+  // === TREATMENT RESPONSE ===
+  // Symptom trajectories aligned to the date each medication was started. This
+  // is the section a prior-authorization reviewer reads: "improved over the
+  // period" is a weak claim, "improved since drug X began on date Y" is the one
+  // that supports continuing therapy.
+  const treatmentResponses = (() => {
+    try {
+      const grouped: Record<string, any[]> = {}
+      for (const r of trackerData) {
+        if (!r.subcategory) continue
+        if (!grouped[r.subcategory]) grouped[r.subcategory] = []
+        grouped[r.subcategory].push(r)
+      }
+      // `data.medications` directly, not the `medications` local — that is
+      // declared further down with the Medications section, and this block runs
+      // near the top of the report on purpose.
+      return computeTreatmentResponses(grouped as any, (data.medications || []) as any)
+    } catch {
+      return []
+    }
+  })()
+
+  if (treatmentResponses.length) {
+    // ⚠️ TIMELINE, NOT ATTRIBUTION — and the section is titled and worded so
+    // that survives skimming. The previous version had a "Medication" column
+    // and a "Direction: IMPROVED" column, which reads as "this drug did this"
+    // no matter what the caveat underneath says.
+    //
+    // Raised by a user reading their own generated report (2026-08-02): a
+    // slow-acting drug was being credited with an improvement it could not yet
+    // have caused, while its well-known side effects went unmentioned.
+    //
+    // The asymmetry is the proof of the error. Some treatments take months to
+    // act, so a change weeks in is almost certainly something else started at
+    // the same time — and a report that assigns benefits while ignoring harms
+    // is not describing the data, it is arguing.
+    w.sectionHeader('Symptom Change Around Treatment Changes')
+    w.note(
+      'A TIMELINE, NOT AN ATTRIBUTION. Symptom severity before vs after the date treatments ' +
+      'were started, compared with a Wilcoxon rank-sum test. Treatments begun within 30 days ' +
+      'of each other are grouped, because this data cannot separate them. Nothing here ' +
+      'identifies WHICH treatment produced a change, and onset times differ widely — a drug ' +
+      'that takes weeks to act cannot explain a change that happened in days. Disease ' +
+      'activity also varies on its own. Clinical judgement required.'
+    )
+    w.table(
+      ['Treatments started', 'From', 'Symptom', 'Before', 'After', 'Change'],
+      treatmentResponses.slice(0, 20).map(t => [
+        t.medications.join(', '),
+        t.startedOn === t.windowEnd ? t.startedOn : `${t.startedOn}–${t.windowEnd}`,
+        `${t.symptomLabel} (${t.trackerLabel})`,
+        `${t.beforeAvg.toFixed(1)} (n=${t.beforeN})`,
+        `${t.sinceAvg.toFixed(1)} (n=${t.sinceN})`,
+        `${t.sinceAvg > t.beforeAvg ? '+' : ''}${(t.sinceAvg - t.beforeAvg).toFixed(1)} pts`,
+      ]),
+      [96, 62, 92, 52, 52, 46]
+    )
+    const strong = treatmentResponses.filter(t => t.pValue < 0.05)
+    if (strong.length) {
+      w.subSection('Changes least likely to be chance')
+      for (const t of strong.slice(0, 6)) w.body(t.summary)
+    }
+    if (treatmentResponses.length > 20) {
+      w.note(`(${treatmentResponses.length - 20} further symptom/window comparisons omitted for length.)`)
+    }
+  }
 
   // Functional impact / work-capacity section. Defined here so it can be
   // called either right after Executive Summary (attorney/SSDI audience —
@@ -854,7 +1030,27 @@ export function generateMedicalReport(data: ReportData): Blob {
     const todayStr = new Date().toISOString().slice(0, 10)
     const pastPlans = plans.filter((p: any) => (p.appointmentDate || '') <= todayStr)
     const upcoming = plans.filter((p: any) => (p.appointmentDate || '') > todayStr)
-    w.body(`${reviews.length} appointment(s) attended and reviewed; ${pastPlans.length} additional past appointment(s) on record; ${upcoming.length} upcoming. Documents consistent engagement with medical care.`)
+    // The engagement claim is EARNED, not boilerplate. It used to print
+    // unconditionally, which produced "0 appointments attended... documents
+    // consistent engagement with medical care" — a sentence that argues against
+    // itself in a document a disability reviewer reads for exactly that claim.
+    // My previous gate was `reviews + pastPlans >= 3`, which still printed
+    // "0 appointments attended and reviewed; 3 additional past appointments on
+    // record... Documents consistent engagement with medical care." A sentence
+    // that opens with zero and closes with "consistent engagement" refutes
+    // itself in front of the exact reader it is meant to persuade. The claim
+    // now needs ATTENDED-AND-REVIEWED visits specifically, and when it can't be
+    // made the text simply reports what is there.
+    let attendanceText =
+      `${plural(reviews.length, 'appointment')} attended and reviewed; ` +
+      `${plural(pastPlans.length, 'additional past appointment')} on record; ` +
+      `${upcoming.length} upcoming.`
+    if (reviews.length >= 3) {
+      attendanceText += ' Documents consistent engagement with medical care.'
+    } else if (reviews.length + pastPlans.length + upcoming.length > 0) {
+      attendanceText += ' Appointment records in this period are incomplete; attendance detail was not logged for every visit.'
+    }
+    w.body(attendanceText)
     if (reviews.length) {
       w.subSection('Attended visits')
       const rows = reviews

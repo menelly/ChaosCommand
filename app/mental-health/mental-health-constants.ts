@@ -113,6 +113,33 @@ export const MOOD_OPTIONS: MoodOption[] = [
   { value: 'awful', emoji: '😭', label: 'Awful', color: 'bg-destructive/10 text-destructive' },
 ]
 
+/**
+ * Ordinal rank for each mood, so the field the user ACTUALLY CHOOSES can be
+ * analysed. HIGHER IS BETTER — 8 is amazing, 1 is awful.
+ *
+ * ⚠️ WHY THIS EXISTS. `mood` is stored as a STRING ('good', 'meh'), and the
+ * pattern engine only reads numbers — so the one field a person deliberately
+ * picks on a general check-in was invisible to every analysis. What the engine
+ * read instead was `anxietyLevel`, simply because it was the first numeric
+ * field present. Ren's check-ins were almost all "Good"; the report said
+ * "Mental Health (overall) — WORSENING 300%", computed from five entries of an
+ * anxiety slider they had not deliberately set, on a 1 -> 4 move whose
+ * percentage is an artifact of the low baseline. Every word of that headline
+ * was wrong.
+ *
+ * Rank, don't score: these are ordered categories, not measurements. The gap
+ * between 'meh' and 'okay' is not claimed to equal the gap between 'great' and
+ * 'amazing' — which is exactly why the engine uses rank tests.
+ */
+export const MOOD_RANK: Record<string, number> = {
+  awful: 1, bad: 2, down: 3, meh: 4, okay: 5, good: 6, great: 7, amazing: 8,
+}
+export const MOOD_RANK_MAX = 8
+
+/** Ordinal for a stored mood string, or null when absent/unrecognised. */
+export const moodRank = (mood: string | undefined | null): number | null =>
+  (mood && MOOD_RANK[String(mood).toLowerCase()]) || null
+
 // Additional Emotional States (can select multiple)
 export const EMOTIONAL_STATES: EmotionalState[] = [
   // Positive

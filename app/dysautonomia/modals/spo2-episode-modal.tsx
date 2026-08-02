@@ -35,7 +35,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Slider } from '@/components/ui/slider'
+import { SeverityInput } from '@/components/ui/severity-input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
@@ -56,7 +56,7 @@ export function SpO2EpisodeModal({ isOpen, onClose, onSave, editingEntry }: Epis
   
   // General episode state
   const [symptoms, setSymptoms] = useState<string[]>([])
-  const [severity, setSeverity] = useState([5])
+  const [severity, setSeverity] = useState<number | undefined>(undefined)
   const [triggers, setTriggers] = useState<string[]>([])
   const [positionChange, setPositionChange] = useState('')
   const [durationValue, setDurationValue] = useState('')
@@ -74,7 +74,7 @@ export function SpO2EpisodeModal({ isOpen, onClose, onSave, editingEntry }: Epis
       setLowestSpO2(editingEntry.lowestSpO2?.toString() || '')
       setSpO2Duration(editingEntry.spO2Duration || '')
       setSymptoms(editingEntry.symptoms || [])
-      setSeverity([editingEntry.severity || 5])
+      setSeverity(editingEntry.severity ?? undefined)
       setTriggers(editingEntry.triggers || [])
       setPositionChange(editingEntry.positionChange || '')
       
@@ -103,7 +103,7 @@ export function SpO2EpisodeModal({ isOpen, onClose, onSave, editingEntry }: Epis
     setSpO2Duration('')
     setTriggerPosition('')
     setSymptoms([])
-    setSeverity([5])
+    setSeverity(undefined)
     setTriggers([])
     setPositionChange('')
     setDurationValue('')
@@ -146,7 +146,7 @@ export function SpO2EpisodeModal({ isOpen, onClose, onSave, editingEntry }: Epis
       lowestSpO2: lowestSpO2 ? parseInt(lowestSpO2) : undefined,
       spO2Duration: spO2Duration || undefined,
       symptoms,
-      severity: severity[0],
+      severity: severity,
       triggers,
       positionChange: positionChange || undefined,
       duration: durationValue && durationUnit ? `${durationValue} ${durationUnit}` : undefined,
@@ -284,15 +284,14 @@ export function SpO2EpisodeModal({ isOpen, onClose, onSave, editingEntry }: Epis
 
           {/* Severity */}
           <div className="space-y-3">
-            <Label>Severity: {severity[0]} - <span className={getSeverityColor(severity[0])}>{getSeverityLabel(severity[0])}</span></Label>
-            <Slider
-              value={severity}
-              onValueChange={setSeverity}
-              max={10}
-              min={1}
-              step={1}
-              className="w-full"
-            />
+            <SeverityInput
+                  value={severity}
+                  onChange={setSeverity}
+                  max={10}
+                  title="Severity"
+                  voiceSlot="dysautonomia:severity"
+                  allowNone={false}
+                />
           </div>
 
           {/* Action Buttons */}

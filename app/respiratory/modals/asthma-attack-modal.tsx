@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Slider } from '@/components/ui/slider'
+import { SeverityInput } from '@/components/ui/severity-input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
@@ -27,7 +28,7 @@ import { EntryDateTimePicker, todayISO, nowTime, dateTimeToISO, isoToDateTime } 
 export function AsthmaAttackModal({ isOpen, onClose, onSave, editingEntry }: RespiratoryModalProps) {
   const [entryDate, setEntryDate] = useState(todayISO())
   const [entryTime, setEntryTime] = useState(nowTime())
-  const [severity, setSeverity] = useState([5])
+  const [severity, setSeverity] = useState<number | undefined>(undefined)
   const [breathingPattern, setBreathingPattern] = useState<string>('')
   const [chestTightness, setChestTightness] = useState([0])
   const [peakFlowReading, setPeakFlowReading] = useState('')
@@ -67,7 +68,7 @@ export function AsthmaAttackModal({ isOpen, onClose, onSave, editingEntry }: Res
       const dt = isoToDateTime(editingEntry.timestamp)
       setEntryDate(editingEntry.date || dt.date)
       setEntryTime(dt.time)
-      setSeverity([editingEntry.severity || 5])
+      setSeverity(editingEntry.severity ?? undefined)
       setBreathingPattern(editingEntry.breathingPattern || '')
       setChestTightness([editingEntry.chestTightness || 0])
       setPeakFlowReading(editingEntry.peakFlowReading?.toString() || '')
@@ -90,7 +91,7 @@ export function AsthmaAttackModal({ isOpen, onClose, onSave, editingEntry }: Res
 
   const reset = () => {
     setEntryDate(todayISO()); setEntryTime(nowTime())
-    setSeverity([5]); setBreathingPattern(''); setChestTightness([0])
+    setSeverity(undefined); setBreathingPattern(''); setChestTightness([0])
     setPeakFlowReading(''); setPeakFlowZone(''); setSpo2Lowest(''); setHrAtEvent('')
     setInhalerUsed(false); setInhalerName(''); setInhalerDoses(''); setInhalerResponse([3])
     setSymptoms([]); setTriggers([]); setTimeToResolutionMin(''); setErVisitRequired(false)
@@ -105,7 +106,7 @@ export function AsthmaAttackModal({ isOpen, onClose, onSave, editingEntry }: Res
       date: entryDate,
       timestamp: dateTimeToISO(entryDate, entryTime),
       episodeType: 'asthma-attack',
-      severity: severity[0],
+      severity: severity,
       breathingPattern: (breathingPattern || undefined) as any,
       chestTightness: chestTightness[0] > 0 ? chestTightness[0] : undefined,
       peakFlowReading: peakFlowReading ? parseInt(peakFlowReading) : undefined,
@@ -138,7 +139,7 @@ export function AsthmaAttackModal({ isOpen, onClose, onSave, editingEntry }: Res
         </DialogHeader>
         <div className="space-y-6">
           {(() => {
-            const shape = { episodeType: 'asthma-attack', severity: severity[0], spo2Lowest: spo2Lowest ? parseInt(spo2Lowest) : undefined, peakFlowZone, symptoms, inhalerResponse: inhalerUsed ? inhalerResponse[0] : undefined }
+            const shape = { episodeType: 'asthma-attack', severity: severity, spo2Lowest: spo2Lowest ? parseInt(spo2Lowest) : undefined, peakFlowZone, symptoms, inhalerResponse: inhalerUsed ? inhalerResponse[0] : undefined }
             const flags = getRedFlagWarnings(shape)
             const measures = getInterimMeasures({ ...shape, episodeType: 'asthma-attack' })
             if (flags.length === 0) return null
@@ -224,8 +225,14 @@ export function AsthmaAttackModal({ isOpen, onClose, onSave, editingEntry }: Res
             </CollapsibleTrigger>
             <CollapsibleContent className="pt-3">
               <div className="space-y-3">
-                <Label>Severity: {severity[0]} - <span className={getSeverityColor(severity[0])}>{getSeverityLabel(severity[0])}</span></Label>
-                <Slider value={severity} onValueChange={setSeverity} max={10} min={1} step={1} />
+                <SeverityInput
+                  value={severity}
+                  onChange={setSeverity}
+                  max={10}
+                  title="Severity"
+                  voiceSlot="respiratory:severity"
+                  allowNone={false}
+                />
               </div>
             </CollapsibleContent>
           </Collapsible>

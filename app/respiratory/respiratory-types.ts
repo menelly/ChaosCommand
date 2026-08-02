@@ -55,7 +55,14 @@ export interface RespiratoryEntry {
   episodeType: RespiratoryEpisodeType
 
   // Severity & character
-  severity: number // 1-10
+  /** THREE STATES since 2026-08-02 (see components/ui/severity-input.tsx):
+   *    undefined -> not reported (not asked / not answered) — excluded from analysis
+   *    0         -> answered: absent. "It didn't bother me" is EVIDENCE, not a blank.
+   *    1-10      -> answered: this bad.
+   *  Previously a REQUIRED number with the form parked at 5, so every save wrote a
+   *  severity whether or not anyone entered one — making a stored 5 impossible to
+   *  tell apart from an untouched control. */
+  severity?: number // 1-10
   breathingPattern?: BreathingPattern
   chestTightness?: number // 1-10
   coughCharacter?: CoughCharacter

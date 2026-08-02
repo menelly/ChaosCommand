@@ -51,7 +51,6 @@ import PwaSecurityDisclosure from "@/components/pwa-security-disclosure"
 import PwaRuntime from "@/components/pwa-runtime"
 import { DemoBanner } from "@/components/demo-banner"
 import { StaleInstallBanner } from "@/components/stale-install-banner"
-import { DebugErrorBanner } from "@/components/debug-error-banner"
 // import AddyChatBubble from "@/components/addy-chat-bubble" // Commented out - AI module for later
 
 export const metadata = {
@@ -128,7 +127,6 @@ export default function RootLayout({
               <div className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain">
                 <DemoBanner />
                 <StaleInstallBanner />
-                <DebugErrorBanner />
                 {children}
                 {/* Footer */}
                 <footer className="mt-8 py-4 text-center text-xs text-muted-foreground border-t border-border/50">

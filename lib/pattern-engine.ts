@@ -12,7 +12,18 @@
  * Co-invented by Ren (vision) and Ace (implementation)
  */
 
-import { DailyDataRecord } from './database/dexie-db'
+// Type-only: importing the Dexie module for real would spin up a browser
+// database just to read a record shape, which breaks every non-browser consumer
+// (the golden suites, any node-side tooling) for no benefit.
+import type { DailyDataRecord } from './database/dexie-db'
+import { symptomLabel, symptomKey } from './symptom-labels'
+import { moodRank } from '../app/mental-health/mental-health-constants'
+import {
+  computeTrend, applyScaleDirection, describeTrend, scaleDirectionForField, mannWhitneyU,
+  type TrendPoint, type SymptomTrend, type TrendDirection, type ScaleDirection,
+} from './trend-analysis'
+
+export type { SymptomTrend } from './trend-analysis'
 
 // ============================================================================
 // TYPES
@@ -108,6 +119,71 @@ function avgEntryField(content: any, pick: (e: any) => any): number | null {
   return vals.reduce((a: number, b: number) => a + b, 0) / vals.length
 }
 
+/**
+ * THE severity vocabulary. One list, used by every extractor in this file.
+ *
+ * ⚠️ THIS IS ONE CONSTANT BECAUSE IT USED TO BE THREE COPIES, AND THEY DRIFTED.
+ * Until 2026-08-02 `extractSeverity` checked twelve fields on a scalar record
+ * but only NINE inside `entries[]` — `mood`, `energyLevel` and `energy` were
+ * missing from the nested branch. Since mental-health, energy and mood trackers
+ * all store their data in `entries[]`, an entry that recorded a mood and
+ * nothing else had no severity at all as far as the engine was concerned. It
+ * was dropped silently, so the tracker looked like it simply had no recent
+ * data. Ren caught it by knowing they had logged mental health that morning and
+ * seeing a series that ended five weeks earlier.
+ *
+ * Order matters: the first field present wins, so specific clinical scales come
+ * before generic ones.
+ *
+ * ⚠️ Adding a field here CHANGES WHAT COUNTS AS SEVERITY EVERYWHERE. If the new
+ * field is one where a HIGHER number is GOOD news, it must also be added to
+ * HIGHER_IS_BETTER_FIELDS in trend-analysis.ts, or every trend on it will be
+ * reported backwards.
+ */
+const SEVERITY_FIELDS = [
+  'severity', 'painLevel', 'intensity', 'level', 'rating',
+  'fogLevel', 'anxietyLevel', 'nausea', 'bloating',
+  'mood', 'energyLevel', 'energy',
+] as const
+
+/** First recorded severity on an object, with the field it came from. The field
+ *  is what lets callers tell a deficit scale from a wellbeing scale. */
+function pickSeverityFrom(obj: any): { value: number; field: string } | null {
+  if (!obj || typeof obj !== 'object') return null
+  for (const f of SEVERITY_FIELDS) {
+    const n = toSev(obj[f])
+    if (n !== null) return { value: n, field: f }
+  }
+  return null
+}
+
+/**
+ * Which severity field a whole record resolved to — needed so a tracker-level
+ * trend on a wellbeing scale (mood, energy) isn't reported upside-down.
+ */
+export function extractSeverityField(record: DailyDataRecord): string | null {
+  const c = record.content
+  if (!c) return null
+  if (record.subcategory === 'vitals') return 'systolic'
+  if (record.subcategory === 'pulse-oximetry') return 'desaturation'
+  if (record.subcategory === 'mind-mood' || record.subcategory === 'mental-health') {
+    const entries: any[] = Array.isArray((c as any).entries) ? (c as any).entries : []
+    if (entries.some(e => moodRank(e?.mood) !== null) || moodRank((c as any).mood) !== null) return 'mood'
+  }
+  const direct = pickSeverityFrom(c)
+  if (direct) return direct.field
+  for (const key of ['entries', 'episodes'] as const) {
+    const arr = (c as any)[key]
+    if (Array.isArray(arr)) {
+      for (const e of arr) {
+        const hit = pickSeverityFrom(e)
+        if (hit) return hit.field
+      }
+    }
+  }
+  return null
+}
+
 /** Extract numeric severity from various tracker formats. Returns null when nothing was recorded.
  *  2026-06-11 unification (Ren-confirmed): field list is now the UNION of this engine's
  *  original list and the richer one the PDF's (deleted) inline Pearson used —
@@ -133,25 +209,32 @@ export function extractSeverity(record: DailyDataRecord): number | null {
     const spo2 = avgEntryField(c, e => e.spo2 ?? e.spo2Min)
     return spo2 === null ? null : Math.max(0, 100 - spo2)
   }
+  // Mind & mood: the headline metric is the MOOD THE PERSON PICKED, ranked.
+  // Without this the generic field order below reaches `anxietyLevel` first and
+  // reports it as the tracker's overall state — which produced Ren's
+  // "Mental Health (overall) WORSENING 300%" off an anxiety slider they hadn't
+  // deliberately touched, while their actual answer ("Good", nine times out of
+  // twelve) was a string and therefore invisible.
+  // ⚠️ HIGHER IS BETTER here; `mood` is in HIGHER_IS_BETTER_FIELDS so trends
+  // aren't reported upside-down.
+  if (record.subcategory === 'mind-mood' || record.subcategory === 'mental-health') {
+    const entries: any[] = Array.isArray(c.entries) ? c.entries : []
+    const ranks = entries.map(e => moodRank(e?.mood)).filter((v): v is number => v !== null)
+    if (ranks.length > 0) return ranks.reduce((a, b) => a + b, 0) / ranks.length
+    const own = moodRank((c as any).mood)
+    if (own !== null) return own
+    // No mood recorded — fall through to the generic fields below.
+  }
 
   // Direct scalar fields (may arrive as a number OR a numeric string)
-  for (const v of [
-    c.severity, c.painLevel, c.intensity, c.level, c.rating,
-    c.fogLevel, c.anxietyLevel, c.nausea, c.bloating,
-    c.mood, c.energyLevel, c.energy,
-  ]) {
-    const n = toSev(v)
-    if (n !== null) return n
-  }
+  const direct = pickSeverityFrom(c)
+  if (direct) return direct.value
   // Nested in entries / episodes — average only the values actually recorded
   for (const key of ['entries', 'episodes'] as const) {
     const arr = (c as any)[key]
     if (Array.isArray(arr)) {
       const severities = arr
-        .map((e: any) => toSev(
-          e.severity ?? e.painLevel ?? e.intensity ?? e.level ?? e.rating ??
-          e.fogLevel ?? e.anxietyLevel ?? e.nausea ?? e.bloating
-        ))
+        .map((e: any) => pickSeverityFrom(e)?.value ?? null)
         .filter((v: number | null): v is number => v !== null)
       if (severities.length > 0) return severities.reduce((a: number, b: number) => a + b, 0) / severities.length
     }
@@ -560,63 +643,417 @@ function findTemporalPatterns(data: TrackerData): PatternInsight[] {
 
 /**
  * Detect whether things are getting better or worse.
- * "Your pain severity has decreased 30% over the last month."
+ *
+ * ⚠️ REWRITTEN 2026-08-02 — the previous version could not see the finding this
+ * whole feature exists for. Three things were wrong with it and all three were
+ * invisible from the code; they only showed up when Ren exported a real report
+ * and read it:
+ *
+ *  1. IT ANALYSED TRACKERS, BUT THE SIGNAL LIVES IN SYMPTOMS. Ren's neuro
+ *     tracker holds weakness (9→5, stubborn) beside swallowing (5→1, an 80%
+ *     recovery on immunosuppressants). Averaged into one series they cancel, the
+ *     tracker "barely moved", and nothing was emitted at all. The most important
+ *     improvement in the dataset was invisible because it shared a category with
+ *     a symptom that didn't budge.
+ *  2. `records.length < 10` SILENCED MOST TRACKERS BY CONSTRUCTION. In Ren's own
+ *     data that gate excluded seizure (9), dysautonomia (8), autoimmune (7),
+ *     upper digestive (6), cardiac (6), movement (6) and respiratory (5) — no
+ *     matter how large the change inside them.
+ *  3. A FLAT 15% THRESHOLD IGNORED SAMPLE SIZE in both directions: a 40% swing
+ *     on four entries passed as fact, a consistent 14% improvement over fifty
+ *     was thrown away.
+ *
+ * Now: per-symptom series, a floor of three, a rank test that carries its own
+ * uncertainty, and — importantly — series with no trend are still RETURNED (see
+ * `computeSymptomTrends`), because a report that omits them lets a reader
+ * mistake "we didn't look" for "nothing changed".
  */
 function findSeverityTrends(data: TrackerData): PatternInsight[] {
   const insights: PatternInsight[] = []
 
-  for (const [tracker, records] of Object.entries(data)) {
-    if (records.length < 10) continue
+  for (const t of computeSymptomTrends(data)) {
+    // Insights are the notable subset. The full table, including the flat
+    // series, goes out separately for the report to print.
+    if (t.direction === 'no-clear-direction') continue
 
-    // Get dated severities, sorted chronologically
-    const dated: { date: string; severity: number }[] = []
+    // Point change, not percent — see describeTrend() for why a bounded ordinal
+    // scale cannot support a meaningful ratio.
+    const pts = Math.abs(t.absoluteChange)
+    const magnitude = `${pts.toFixed(1)} pt${pts === 1 ? '' : 's'}`
+    // Caps, not an emoji, and not an arrow. An arrow describes the NUMBER, and
+    // on a mood or energy scale a rising number is the good news — an icon that
+    // contradicts the word beside it is worse than no icon. Emoji are out
+    // because these titles are rendered into a PDF in Helvetica, where they
+    // arrive as empty boxes.
+    const word = t.direction === 'improving' ? 'IMPROVING' : 'WORSENING'
+
+    // Confidence tracks BOTH how much data there is and how consistent it was,
+    // instead of the old count-only formula that let four entries look certain.
+    const consistency = Math.round((1 - Math.min(1, t.pValue)) * 40)
+    const volume = Math.min(35, t.n * 3)
+    const confidence = Math.max(20, Math.min(92, 20 + consistency + volume))
+
+    insights.push({
+      id: t.symptomId ? `trend-${t.tracker}-${t.symptomId}` : `trend-${t.tracker}`,
+      type: 'trend',
+      title: `${t.symptomLabel} — ${word} ${magnitude}`,
+      description: t.summary,
+      confidence,
+      // A symptom moving 30%+ on real numbers is the headline of the report.
+      // Preliminary series never claim high impact however big the swing.
+      // A 2+ point move on a 10-point scale is a real change. The old gate was
+      // ">=30%", which a 1 -> 1.3 drift satisfied and a 7 -> 5 drop did not.
+      impact: !t.preliminary && pts >= 2 ? 'high' : 'medium',
+      data: {
+        tracker: t.tracker,
+        symptomId: t.symptomId,
+        symptomLabel: t.symptomLabel,
+        earlyAvg: t.earlyAvg,
+        lateAvg: t.lateAvg,
+        absoluteChange: t.absoluteChange,
+        percentChange: t.percentChange,
+        sampleSize: t.n,
+        tau: t.tau,
+        pValue: t.pValue,
+        preliminary: t.preliminary,
+        strength: t.strength,
+        firstDate: t.firstDate,
+        lastDate: t.lastDate,
+        scaleDirection: t.scaleDirection,
+        isImproving: t.direction === 'improving',
+      }
+    })
+  }
+
+  /*
+   * SORT BY THE NUMBER THE READER CAN SEE.
+   *
+   * This used to sort by the preliminary flag and then by percent change, while
+   * the card displayed CONFIDENCE — so an 86% sat below a 70% and the order
+   * looked arbitrary. Ren caught it immediately: "How can we have 70%
+   * confidence in 5 entries and have improving with 86% confidence showing
+   * BELOW?" A list whose visible number does not explain its own ordering reads
+   * as random, and that quietly undermines everything else on the page.
+   *
+   * Confidence first, then point change as the tie-break.
+   */
+  insights.sort((a, b) =>
+    (b.confidence - a.confidence) ||
+    (Math.abs(b.data.absoluteChange ?? 0) - Math.abs(a.data.absoluteChange ?? 0))
+  )
+
+  return insights
+}
+
+// ============================================================================
+// PER-SYMPTOM TREND TABLE
+// ============================================================================
+
+/**
+ * Pull a severity out of one ENTRY (not a whole day's record), reporting which
+ * field it came from so the caller can tell a deficit scale from a wellbeing
+ * scale. Mirrors `extractSeverity`'s field list deliberately — one severity
+ * vocabulary for the whole app, per the 2026-06-11 unification.
+ */
+function pickEntrySeverity(e: any): { value: number; field: string } | null {
+  // Was a third copy of the field list. Now the same SEVERITY_FIELDS everything
+  // else uses — see the warning on that constant for what drift cost us.
+  return pickSeverityFrom(e)
+}
+
+/** The per-entry symptom discriminator. `episodeType` is near-universal across
+ *  trackers; `eventType` and `painType` cover the rest. */
+function pickEntryType(e: any): string | null {
+  const raw = e?.episodeType ?? e?.eventType ?? e?.painType ?? e?.symptomType ?? null
+  return typeof raw === 'string' && raw.trim() ? raw.trim() : null
+}
+
+/**
+ * Every severity series in the dataset, at BOTH resolutions:
+ *   - one series per (tracker, symptom) — where the clinical signal lives
+ *   - one series per tracker overall — which answers a different, still-real
+ *     question ("is my neuro burden going down on the whole?")
+ *
+ * Returns EVERY computable series, including flat ones. Callers decide what to
+ * show; nothing is dropped here, because a dropped series and a stable symptom
+ * look identical downstream and they are not the same fact.
+ */
+export function computeSymptomTrends(data: TrackerData): SymptomTrend[] {
+  const out: SymptomTrend[] = []
+
+  for (const [tracker, records] of Object.entries(data)) {
+    if (!records || records.length === 0) continue
+    const trackerLabel = formatTrackerName(tracker)
+
+    // --- per-symptom series -------------------------------------------------
+    const bySymptom = new Map<string, { points: TrendPoint[]; fields: Set<string> }>()
+    for (const record of records) {
+      const c: any = record.content
+      if (!c) continue
+      const entries: any[] = Array.isArray(c.entries) ? c.entries
+        : Array.isArray(c.episodes) ? c.episodes
+          : Array.isArray(c) ? c
+            : []
+      for (const e of entries) {
+        const type = pickEntryType(e)
+        if (!type) continue
+        const sev = pickEntrySeverity(e)
+        if (!sev) continue
+        const key = symptomKey(tracker, type)
+        let bucket = bySymptom.get(key)
+        if (!bucket) { bucket = { points: [], fields: new Set() }; bySymptom.set(key, bucket) }
+        bucket.points.push({ date: record.date, value: sev.value })
+        bucket.fields.add(sev.field)
+      }
+    }
+
+    for (const [key, bucket] of bySymptom) {
+      const raw = computeTrend(bucket.points)
+      if (!raw) continue
+      // Mixed fields in one series would make the direction ambiguous, so a
+      // single wellbeing-style field is enough to treat the series as one.
+      const field = [...bucket.fields].find(f => scaleDirectionForField(f) === 'higher-is-better') ?? [...bucket.fields][0]
+      const scale = scaleDirectionForField(field)
+      const t = applyScaleDirection(raw, scale)
+      const label = `${trackerLabel} — ${symptomLabel(tracker, key)}`
+      out.push({
+        ...t,
+        tracker,
+        trackerLabel,
+        symptomId: key,
+        symptomLabel: symptomLabel(tracker, key),
+        scaleDirection: scale,
+        summary: describeTrend(label, t),
+      })
+    }
+
+    // --- whole-tracker series ----------------------------------------------
+    const trackerPoints: TrendPoint[] = []
+    const trackerFields = new Set<string>()
     for (const record of records) {
       const sev = extractSeverity(record)
       if (sev !== null) {
-        dated.push({ date: record.date, severity: sev })
+        trackerPoints.push({ date: record.date, value: sev })
+        const f = extractSeverityField(record)
+        if (f) trackerFields.add(f)
       }
     }
-    if (dated.length < 10) continue
-
-    dated.sort((a, b) => a.date.localeCompare(b.date))
-
-    // Compare first third vs last third
-    const third = Math.floor(dated.length / 3)
-    const earlyAvg = dated.slice(0, third).reduce((sum, d) => sum + d.severity, 0) / third
-    const lateAvg = dated.slice(-third).reduce((sum, d) => sum + d.severity, 0) / third
-
-    const change = lateAvg - earlyAvg
-    const pctChange = earlyAvg !== 0 ? (change / earlyAvg) * 100 : 0
-    const absChange = Math.abs(pctChange)
-
-    // Only report meaningful trends (15%+ change)
-    if (absChange >= 15) {
-      const trackerName = formatTrackerName(tracker)
-      const direction = change > 0 ? 'increased' : 'decreased'
-      const emoji = change > 0 ? '📈' : '📉'
-      // For most trackers, decreasing severity is GOOD
-      const isGoodNews = change < 0
-
-      insights.push({
-        id: `trend-${tracker}`,
-        type: 'trend',
-        title: `${trackerName} — ${direction} ${Math.round(absChange)}%`,
-        description: `${trackerName} severity has ${direction} ~${Math.round(absChange)}% over your tracking period (${earlyAvg.toFixed(1)} → ${lateAvg.toFixed(1)} avg). Based on ${dated.length} entries.`,
-        confidence: Math.min(90, 40 + dated.length * 2),
-        impact: absChange >= 30 ? 'high' : 'medium',
-        data: {
-          tracker,
-          earlyAvg,
-          lateAvg,
-          percentChange: pctChange,
-          sampleSize: dated.length,
-          isImproving: isGoodNews
-        }
+    // A single wellbeing-style field is enough to treat the series as one, the
+    // same rule the per-symptom path uses.
+    const trackerField = [...trackerFields].find(f => scaleDirectionForField(f) === 'higher-is-better') ?? [...trackerFields][0] ?? null
+    const rawTracker = computeTrend(trackerPoints)
+    if (rawTracker) {
+      // Direction is NOT automatically higher-is-worse here. A mood or energy
+      // tracker resolves to a wellbeing field, where a rising number is the
+      // good news — reporting that as "worsening" would put a false statement
+      // in a medical document. (vitals/pulse-ox report synthetic field names
+      // that are already normalised so higher = worse.)
+      const trackerScale = scaleDirectionForField(trackerField)
+      const t = applyScaleDirection(rawTracker, trackerScale)
+      out.push({
+        ...t,
+        tracker,
+        trackerLabel,
+        symptomId: null,
+        symptomLabel: `${trackerLabel} (overall)`,
+        scaleDirection: trackerScale,
+        summary: describeTrend(`${trackerLabel} overall`, t),
       })
     }
   }
 
-  return insights
+  return out
+}
+
+// ============================================================================
+// TREATMENT RESPONSE
+// ============================================================================
+
+export interface TreatmentResponse {
+  /** EVERY treatment started in this window, not the one we liked the look of. */
+  medications: string[]
+  /** Earliest start date in the window — where the before/since split falls. */
+  startedOn: string
+  /** Latest start date in the window; equals startedOn for a lone treatment. */
+  windowEnd: string
+  tracker: string
+  trackerLabel: string
+  symptomId: string
+  symptomLabel: string
+  beforeAvg: number
+  sinceAvg: number
+  beforeN: number
+  sinceN: number
+  percentChange: number
+  pValue: number
+  effect: number
+  direction: TrendDirection
+  scaleDirection: ScaleDirection
+  summary: string
+}
+
+/** Enough entries on each side that a comparison means anything at all. */
+const MIN_SIDE_N = 3
+
+/** Whole days between two ISO dates. */
+function daysBetweenISO(a: string, b: string): number {
+  const ms = Date.parse(b) - Date.parse(a)
+  return Number.isFinite(ms) ? Math.abs(Math.round(ms / 86_400_000)) : Number.MAX_SAFE_INTEGER
+}
+
+/**
+ * Compare each symptom BEFORE a medication started against SINCE it started.
+ *
+ * WHY: "severity fell 40% over the tracking period" is a weaker claim than
+ * "this symptom improved from 5.0 to 1.3 since treatment began on 16 July,"
+ * and the second is the only framing a prior-authorization reviewer acts on. The
+ * old engine could not produce it at all — trends ran across the whole window
+ * with nothing aligned to when treatment actually began.
+ *
+ * ⚠️ WHAT THIS IS NOT: proof of causation. Treatments overlap, disease activity
+ * fluctuates on its own, and a person who starts a new drug is usually changing
+ * other things too. This is a documented temporal association and the report
+ * says so in those words. Presenting it as more than that would be dishonest in
+ * a document meant to be relied on.
+ */
+export function computeTreatmentResponses(
+  data: TrackerData,
+  medications: { brandName?: string; genericName?: string; dateStarted?: string; dateStopped?: string; conditionTreating?: string }[],
+): TreatmentResponse[] {
+  const out: TreatmentResponse[] = []
+  if (!Array.isArray(medications) || medications.length === 0) return out
+
+  const started = medications
+    .map(m => ({
+      name: (m.brandName || m.genericName || '').trim(),
+      date: (m.dateStarted || '').trim(),
+    }))
+    .filter(m => m.name && /^\d{4}-\d{2}-\d{2}$/.test(m.date))
+    .sort((a, b) => a.date.localeCompare(b.date))
+
+  if (started.length === 0) return out
+
+  /*
+   * CLUSTER TREATMENTS STARTED CLOSE TOGETHER INTO ONE WINDOW.
+   *
+   * Treatments begun within WINDOW_DAYS of each other cannot be told apart by
+   * this data — with sparse entries the before/since split lands identically,
+   * so they produce the same numbers and reporting them separately manufactures
+   * three findings out of one observation.
+   *
+   * 30 days is deliberately generous. The cost of over-grouping is a vaguer
+   * statement ("something in this window helped"); the cost of under-grouping
+   * is a false attribution to a specific drug, which is far worse in a document
+   * that informs prescribing.
+   */
+  const WINDOW_DAYS = 30
+  const windows: { start: string; end: string; names: string[] }[] = []
+  for (const med of started) {
+    const last = windows[windows.length - 1]
+    if (last && daysBetweenISO(last.start, med.date) <= WINDOW_DAYS) {
+      last.names.push(med.name)
+      last.end = med.date
+    } else {
+      windows.push({ start: med.date, end: med.date, names: [med.name] })
+    }
+  }
+
+  for (const [tracker, records] of Object.entries(data)) {
+    if (!records || records.length === 0) continue
+    const trackerLabel = formatTrackerName(tracker)
+
+    // Same grouping as computeSymptomTrends — per symptom, because a drug that
+    // fixes one symptom and not another is exactly the finding worth having.
+    const bySymptom = new Map<string, { points: TrendPoint[]; fields: Set<string> }>()
+    for (const record of records) {
+      const c: any = record.content
+      if (!c) continue
+      const entries: any[] = Array.isArray(c.entries) ? c.entries
+        : Array.isArray(c.episodes) ? c.episodes
+          : Array.isArray(c) ? c
+            : []
+      for (const e of entries) {
+        const type = pickEntryType(e)
+        if (!type) continue
+        const sev = pickEntrySeverity(e)
+        if (!sev) continue
+        const key = symptomKey(tracker, type)
+        let bucket = bySymptom.get(key)
+        if (!bucket) { bucket = { points: [], fields: new Set() }; bySymptom.set(key, bucket) }
+        bucket.points.push({ date: record.date, value: sev.value })
+        bucket.fields.add(sev.field)
+      }
+    }
+
+    for (const [key, bucket] of bySymptom) {
+      const field = [...bucket.fields].find(f => scaleDirectionForField(f) === 'higher-is-better') ?? [...bucket.fields][0]
+      const scale = scaleDirectionForField(field)
+
+      for (const med of windows) {
+        const before = bucket.points.filter(p => p.date < med.start).map(p => p.value)
+        const since = bucket.points.filter(p => p.date >= med.start).map(p => p.value)
+        // Both sides must be real. A drug started before tracking began has no
+        // "before", and one started last week has no "since" — neither is a
+        // failure, they simply cannot answer the question yet.
+        if (before.length < MIN_SIDE_N || since.length < MIN_SIDE_N) continue
+
+        const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length
+        const beforeAvg = mean(before)
+        const sinceAvg = mean(since)
+        const change = sinceAvg - beforeAvg
+        const pointChange = change
+        const percentChange = beforeAvg !== 0 ? (change / beforeAvg) * 100 : 0
+
+        const { pValue, effect } = mannWhitneyU(before, since)
+        const notable = pValue < 0.10 || Math.abs(percentChange) >= 25
+        let direction: TrendDirection =
+          notable && change !== 0 ? (change < 0 ? 'improving' : 'worsening') : 'no-clear-direction'
+        if (scale === 'higher-is-better' && direction !== 'no-clear-direction') {
+          direction = direction === 'improving' ? 'worsening' : 'improving'
+        }
+        if (direction === 'no-clear-direction') continue
+
+        const label = symptomLabel(tracker, key)
+        const word = direction === 'improving' ? 'improved' : 'worsened'
+        const names = med.names.join(', ')
+        const windowText = med.start === med.end
+          ? `since ${med.start}`
+          : `since ${med.start} (through ${med.end})`
+        out.push({
+          medications: med.names,
+          startedOn: med.start,
+          windowEnd: med.end,
+          tracker,
+          trackerLabel,
+          symptomId: key,
+          symptomLabel: label,
+          beforeAvg, sinceAvg,
+          beforeN: before.length, sinceN: since.length,
+          percentChange, pValue, effect,
+          direction,
+          scaleDirection: scale,
+          // Deliberately passive and un-attributed: the symptom changed ACROSS a
+          // window, and more than one thing may have been started in it. Naming
+          // every treatment lets a clinician weigh onset times we cannot know —
+          // some immunosuppressants take 8-12 weeks to act, so a change two
+          // weeks in is almost certainly something else started in the same
+          // window. We cannot know onset times; a clinician can.
+          summary:
+            `${label} ${word} ${windowText}, during which ${med.names.length > 1 ? 'these treatments were' : 'this treatment was'} started: ${names}. ` +
+            `${beforeAvg.toFixed(1)} before (n=${before.length}) → ${sinceAvg.toFixed(1)} after (n=${since.length}), ` +
+            `${Math.abs(pointChange).toFixed(1)} point${Math.abs(pointChange) === 1 ? '' : 's'}` +
+            (pValue < 0.05 ? ` (p≈${pValue.toFixed(3)}).` : ` (p≈${pValue.toFixed(2)}).`) +
+            (med.names.length > 1
+              ? ' This data cannot distinguish between treatments started in the same window.'
+              : ''),
+        })
+      }
+    }
+  }
+
+  // Strongest, best-supported first.
+  out.sort((a, b) => (a.pValue - b.pValue) || (Math.abs(b.sinceAvg - b.beforeAvg) - Math.abs(a.sinceAvg - a.beforeAvg)))
+  return out
 }
 
 // ============================================================================
@@ -697,12 +1134,18 @@ export function analyzeAllPatterns(data: TrackerData): {
   treatments: PatternInsight[]
   temporal: PatternInsight[]
   trends: PatternInsight[]
+  /** EVERY computable severity series, including the flat ones — so the report
+   *  can print a trajectory line for each system rather than leaving a silence
+   *  the reader will misread as "no improvement". */
+  symptomTrends: SymptomTrend[]
   summary: {
     totalEntries: number
     activeTrackers: number
     daysTracked: number
     topTracker: string
     insightCount: number
+    improvingCount: number
+    worseningCount: number
   }
 } {
   // Count total entries and active trackers
@@ -731,6 +1174,7 @@ export function analyzeAllPatterns(data: TrackerData): {
   const treatments = findTreatmentEffectiveness(data)
   const temporal = findTemporalPatterns(data)
   const trends = findSeverityTrends(data)
+  const symptomTrends = computeSymptomTrends(data)
 
   const all = [...correlations, ...triggers, ...treatments, ...temporal, ...trends]
     .sort((a, b) => {
@@ -748,12 +1192,17 @@ export function analyzeAllPatterns(data: TrackerData): {
     treatments,
     temporal,
     trends,
+    symptomTrends,
     summary: {
       totalEntries,
       activeTrackers,
       daysTracked: allDates.size,
       topTracker: formatTrackerName(topTracker),
-      insightCount: all.length
+      insightCount: all.length,
+      // Counted over per-symptom series only. The whole-tracker series is an
+      // average of these, so including it would double-count the same movement.
+      improvingCount: symptomTrends.filter(t => t.symptomId && t.direction === 'improving').length,
+      worseningCount: symptomTrends.filter(t => t.symptomId && t.direction === 'worsening').length,
     }
   }
 }

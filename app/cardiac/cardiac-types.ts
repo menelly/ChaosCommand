@@ -115,7 +115,9 @@ export interface CardiacEntry {
 
   // SYMPTOMS & TRIGGERS
   symptoms: string[]
-  symptomSeverity: number // 1-10 scale
+  /** THREE STATES since 2026-08-02 (see components/ui/severity-input.tsx):
+   *    undefined -> not reported   0 -> answered: absent   1-10 -> this bad */
+  symptomSeverity?: number // 1-10 scale
   triggers: string[]
   duration?: string // "5 minutes", "30 seconds", etc.
 

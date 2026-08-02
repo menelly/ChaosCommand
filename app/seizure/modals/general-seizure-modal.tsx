@@ -21,7 +21,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Slider } from '@/components/ui/slider'
+import { SeverityInput } from '@/components/ui/severity-input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
@@ -106,7 +106,7 @@ export function GeneralSeizureModal({ isOpen, onClose, onSave, editingEntry, ini
   const [flashingLights, setFlashingLights] = useState(false)
 
   // Severity
-  const [severity, setSeverity] = useState([5])
+  const [severity, setSeverity] = useState<number | undefined>(undefined)
 
   // Attachments / notes
   const [attachmentImages, setAttachmentImages] = useState<string[]>([])
@@ -168,7 +168,7 @@ export function GeneralSeizureModal({ isOpen, onClose, onSave, editingEntry, ini
       setPossibleDehydration(editingEntry.possibleDehydration || false)
       setRecentIllness(editingEntry.recentIllness || false)
       setFlashingLights(editingEntry.flashingLights || false)
-      setSeverity([editingEntry.symptomSeverity || 5])
+      setSeverity(editingEntry.symptomSeverity ?? undefined)
       setAttachmentImages(editingEntry.attachmentImages || [])
       setNotes(editingEntry.notes || '')
       setTags(editingEntry.tags || [])
@@ -212,7 +212,7 @@ export function GeneralSeizureModal({ isOpen, onClose, onSave, editingEntry, ini
     setPossibleDehydration(false)
     setRecentIllness(false)
     setFlashingLights(false)
-    setSeverity([5])
+    setSeverity(undefined)
     setAttachmentImages([])
     setNotes('')
     setTags([])
@@ -267,7 +267,7 @@ export function GeneralSeizureModal({ isOpen, onClose, onSave, editingEntry, ini
       possibleDehydration: possibleDehydration || undefined,
       recentIllness: recentIllness || undefined,
       flashingLights: flashingLights || undefined,
-      symptomSeverity: severity[0],
+      symptomSeverity: severity,
       attachmentImages: attachmentImages.length > 0 ? attachmentImages : undefined,
       notes: notes.trim() || undefined,
       tags: tags.length > 0 ? tags : undefined,
@@ -713,13 +713,22 @@ export function GeneralSeizureModal({ isOpen, onClose, onSave, editingEntry, ini
               <CollapsibleTrigger asChild>
                 <Button variant="outline" className="w-full justify-between h-auto py-3">
                   <span className="font-medium">
-                    Overall severity: {severity[0]} - <span className={getSeverityColor(severity[0])}>{getSeverityLabel(severity[0])}</span>
+                    {severity === undefined
+                      ? <span className="text-muted-foreground italic">Overall severity — not reported</span>
+                      : <>Overall severity: {severity} - <span className={getSeverityColor(severity)}>{getSeverityLabel(severity)}</span></>}
                   </span>
                   {openSections.severity ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                 </Button>
               </CollapsibleTrigger>
               <CollapsibleContent className="pt-3">
-                <Slider value={severity} onValueChange={setSeverity} max={10} min={1} step={1} />
+                <SeverityInput
+                  value={severity}
+                  onChange={setSeverity}
+                  max={10}
+                  title="Severity"
+                  voiceSlot="seizure:severity"
+                  allowNone={false}
+                />
               </CollapsibleContent>
             </Collapsible>
 

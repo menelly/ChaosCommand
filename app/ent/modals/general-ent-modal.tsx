@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Slider } from '@/components/ui/slider'
+import { SeverityInput } from '@/components/ui/severity-input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { AlertTriangle, Ear } from 'lucide-react'
@@ -48,7 +48,7 @@ export function GeneralENTModal({ isOpen, onClose, onSave, editingEntry }: ENTMo
   const [entryDate, setEntryDate] = useState(todayISO())
   const [entryTime, setEntryTime] = useState(nowTime())
   const [episodeType, setEpisodeType] = useState<ENTEpisodeType>('ear')
-  const [severity, setSeverity] = useState(5)
+  const [severity, setSeverity] = useState<number | undefined>(undefined)
 
   // Ear
   const [earSide, setEarSide] = useState<EarSide | ''>('')
@@ -140,7 +140,7 @@ export function GeneralENTModal({ isOpen, onClose, onSave, editingEntry }: ENTMo
       setTags(editingEntry.tags ?? [])
     } else {
       setEntryDate(todayISO()); setEntryTime(nowTime())
-      setEpisodeType('ear'); setSeverity(5)
+      setEpisodeType('ear'); setSeverity(undefined)
       setEarSide(''); setEarSymptoms([]); setDrainageCharacter('')
       setHearingChanged(false); setHearingSudden(false); setHearingWithVertigo(false)
       setTinnitusPresent(false); setTinnitusPulsatile(false)
@@ -433,7 +433,14 @@ export function GeneralENTModal({ isOpen, onClose, onSave, editingEntry }: ENTMo
           {/* SEVERITY */}
           <div className="space-y-2">
             <Label>Overall severity: <span className={severityLabel?.color}>{severity}/10 — {severityLabel?.label}</span></Label>
-            <Slider min={1} max={10} step={1} value={[severity]} onValueChange={([v]) => setSeverity(v)} />
+            <SeverityInput
+                  value={severity}
+                  onChange={setSeverity}
+                  max={10}
+                  title="Severity"
+                  voiceSlot="ent:severity"
+                  allowNone={false}
+                />
           </div>
 
           {/* ACTIONS */}

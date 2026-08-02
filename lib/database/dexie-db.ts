@@ -122,10 +122,19 @@ const ENCRYPTED_FIELDS: Record<string, string[]> = {
   pattern_snapshots: ['snapshot_json'],
 };
 
-/** 🔍 TEMPORARY DIAGNOSTIC (Ace, 2026-07-24) — remove with DebugErrorBanner.
- *  Every tracker's catch shows a generic "Failed to save X" toast and console.errors
- *  the REAL reason. On an iPad there is no console, so the diagnosis is unreachable
- *  exactly where the bug lives. Stash it somewhere the UI can render it. */
+/** 🔍 Records the REAL reason a save failed, where a device with no console can
+ *  still reach it (Ace, 2026-07-24 — the iPad save bug).
+ *
+ *  Every tracker's catch shows a generic "Failed to save X" toast and
+ *  console.errors the actual cause, which is unreachable on exactly the device
+ *  where the bug lives.
+ *
+ *  KEPT after `DebugErrorBanner` was deleted on 2026-08-02. The banner was the
+ *  temporary part — an always-mounted red bar that shipped to production for
+ *  nine days and eventually surfaced an unrelated ACL error to a user mid-task.
+ *  This function is not that: it writes one localStorage key and displays
+ *  nothing, so it costs nothing and keeps the diagnosis retrievable. Read it
+ *  with `localStorage.getItem('chaos-last-save-error')`. */
 function recordSaveFailure(where: string, err: unknown): void {
   try {
     const msg = err instanceof Error ? `${err.name}: ${err.message}` : String(err);

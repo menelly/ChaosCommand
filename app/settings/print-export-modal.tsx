@@ -752,13 +752,17 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
                       </Badge>
                     ))}
                   </div>
+                  {/* A div, not a paragraph: Badge renders a block element,
+                      and a block inside a paragraph is invalid HTML — the browser
+                      closes the paragraph early, so the server and client DOM
+                      disagree and React reports a hydration mismatch. */}
                   {excludedTags.length > 0 && (
-                    <p className="mt-1">
+                    <div className="mt-1">
                       <strong>Excluding tags:</strong>{' '}
                       {excludedTags.map(t => (
                         <Badge key={t} variant="destructive" className="text-xs mr-1">{t}</Badge>
                       ))}
-                    </p>
+                    </div>
                   )}
                   <p className="mt-2">
                     <strong>Includes:</strong>{' '}

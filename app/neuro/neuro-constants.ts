@@ -43,11 +43,23 @@ export const DISTRIBUTION = [
   'Other',
 ]
 
+// ⚠️ RECOVERY IS A PATTERN TOO.
+// Until 2026-08-02 this list offered 'getting worse (progressive)' and no plain
+// counterpart — the closest available was 'relapsing then improving', which
+// asserts a relapse first and is simply the wrong shape for "the treatment is
+// working." Ren had weeks of bulbar recovery on immunosuppressants and no box
+// to tick for it. Same deficit-shaped-vocabulary problem as the severity scales
+// (see touch-base.ts) and the trend engine: the app could describe getting
+// worse and had no words for getting better.
+// Any future option describing deterioration needs its recovery counterpart
+// added at the same time.
 export const CHARACTER_OPTIONS = [
   'constant',
   'comes & goes (intermittent)',
   'getting worse (progressive)',
   'relapsing then improving',
+  'getting better (improving)',
+  'resolved / gone now',
   'worse with heat (Uhthoff)',
   'worse with fatigue / end of day',
   'worse with exertion',

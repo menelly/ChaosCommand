@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Slider } from '@/components/ui/slider'
+import { SeverityInput } from '@/components/ui/severity-input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
@@ -25,7 +25,7 @@ export function GeneralAutoimmuneModal({ isOpen, onClose, onSave, editingEntry, 
   const [entryTime, setEntryTime] = useState(nowTime())
   const [episodeType, setEpisodeType] = useState<AutoimmuneEpisodeType>('sicca-eyes')
   const [affectedAreas, setAffectedAreas] = useState<string[]>([])
-  const [severity, setSeverity] = useState([5])
+  const [severity, setSeverity] = useState<number | undefined>(undefined)
   const [character, setCharacter] = useState<string[]>([])
   const [triggers, setTriggers] = useState<string[]>([])
   const [treatments, setTreatments] = useState<string[]>([])
@@ -48,7 +48,7 @@ export function GeneralAutoimmuneModal({ isOpen, onClose, onSave, editingEntry, 
       setEntryTime(dt.time)
       setEpisodeType(editingEntry.episodeType)
       setAffectedAreas(editingEntry.affectedAreas || [])
-      setSeverity([editingEntry.severity || 5])
+      setSeverity(editingEntry.severity ?? undefined)
       setCharacter(editingEntry.character || [])
       setTriggers(editingEntry.triggers || [])
       setTreatments(editingEntry.treatments || [])
@@ -65,7 +65,7 @@ export function GeneralAutoimmuneModal({ isOpen, onClose, onSave, editingEntry, 
 
   const reset = () => {
     setEntryDate(todayISO()); setEntryTime(nowTime())
-    setEpisodeType('sicca-eyes'); setAffectedAreas([]); setSeverity([5]); setCharacter([])
+    setEpisodeType('sicca-eyes'); setAffectedAreas([]); setSeverity(undefined); setCharacter([])
     setTriggers([]); setTreatments([]); setDuration(''); setErVisitRequired(false)
     setCrossList(false); setNotes(''); setTags([])
   }
@@ -85,7 +85,7 @@ export function GeneralAutoimmuneModal({ isOpen, onClose, onSave, editingEntry, 
       timestamp: dateTimeToISO(entryDate, entryTime),
       episodeType,
       affectedAreas,
-      severity: severity[0],
+      severity: severity,
       character,
       triggers,
       treatments,
@@ -162,8 +162,14 @@ export function GeneralAutoimmuneModal({ isOpen, onClose, onSave, editingEntry, 
             </CollapsibleTrigger>
             <CollapsibleContent className="pt-3">
               <div className="space-y-3">
-                <Label>Severity: {severity[0]} - <span className={getSeverityColor(severity[0])}>{getSeverityLabel(severity[0])}</span></Label>
-                <Slider value={severity} onValueChange={setSeverity} max={10} min={1} step={1} />
+                <SeverityInput
+                  value={severity}
+                  onChange={setSeverity}
+                  max={10}
+                  title="Severity"
+                  voiceSlot="autoimmune:severity"
+                  allowNone={false}
+                />
               </div>
             </CollapsibleContent>
           </Collapsible>

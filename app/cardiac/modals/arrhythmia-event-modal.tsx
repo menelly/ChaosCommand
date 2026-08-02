@@ -28,7 +28,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Slider } from '@/components/ui/slider'
+import { SeverityInput } from '@/components/ui/severity-input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
@@ -64,7 +64,7 @@ export function ArrhythmiaEventModal({ isOpen, onClose, onSave, editingEntry }: 
   const [uWavesNoted, setUWavesNoted] = useState(false)
   const [stChanges, setStChanges] = useState(false)
   const [symptoms, setSymptoms] = useState<string[]>([])
-  const [severity, setSeverity] = useState([5])
+  const [severity, setSeverity] = useState<number | undefined>(undefined)
   const [triggers, setTriggers] = useState<string[]>([])
   const [positionAtOnset, setPositionAtOnset] = useState<string>('')
   const [resolutionMethod, setResolutionMethod] = useState<string>('')
@@ -111,7 +111,7 @@ export function ArrhythmiaEventModal({ isOpen, onClose, onSave, editingEntry }: 
       setUWavesNoted(editingEntry.uWavesNoted || false)
       setStChanges(editingEntry.stChanges || false)
       setSymptoms(editingEntry.symptoms || [])
-      setSeverity([editingEntry.symptomSeverity || 5])
+      setSeverity(editingEntry.symptomSeverity ?? undefined)
       setTriggers(editingEntry.triggers || [])
       setPositionAtOnset(editingEntry.positionAtOnset || '')
       setResolutionMethod(editingEntry.resolutionMethod || '')
@@ -147,7 +147,7 @@ export function ArrhythmiaEventModal({ isOpen, onClose, onSave, editingEntry }: 
     setUWavesNoted(false)
     setStChanges(false)
     setSymptoms([])
-    setSeverity([5])
+    setSeverity(undefined)
     setTriggers([])
     setPositionAtOnset('')
     setResolutionMethod('')
@@ -181,7 +181,7 @@ export function ArrhythmiaEventModal({ isOpen, onClose, onSave, editingEntry }: 
       uWavesNoted,
       stChanges,
       symptoms,
-      symptomSeverity: severity[0],
+      symptomSeverity: severity,
       triggers,
       positionAtOnset: (positionAtOnset || undefined) as any,
       resolutionMethod: (resolutionMethod || undefined) as any,
@@ -223,7 +223,7 @@ export function ArrhythmiaEventModal({ isOpen, onClose, onSave, editingEntry }: 
               rhythmType: rhythmType as RhythmType,
               hrPeak: hrPeak ? parseInt(hrPeak) : undefined,
               spo2AtEvent: spo2AtEvent ? parseInt(spo2AtEvent) : undefined,
-              symptomSeverity: severity[0],
+              symptomSeverity: severity,
               symptoms,
             }
             const redFlags = getRedFlagWarnings(entryShape)
@@ -395,12 +395,18 @@ export function ArrhythmiaEventModal({ isOpen, onClose, onSave, editingEntry }: 
           <Collapsible open={openSections.severity} onOpenChange={() => toggleSection('severity')}>
             <CollapsibleTrigger asChild>
               <Button variant="outline" className="w-full justify-between h-auto py-3">
-                <div className="flex items-center gap-2"><span className="font-medium">Severity: {severity[0]} - <span className={getSeverityColor(severity[0])}>{getSeverityLabel(severity[0])}</span></span></div>
                 {openSections.severity ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
               </Button>
             </CollapsibleTrigger>
             <CollapsibleContent className="pt-3">
-              <Slider value={severity} onValueChange={setSeverity} max={10} min={1} step={1} />
+              <SeverityInput
+                  value={severity}
+                  onChange={setSeverity}
+                  max={10}
+                  title="Severity"
+                  voiceSlot="cardiac:severity"
+                  allowNone={false}
+                />
             </CollapsibleContent>
           </Collapsible>
 

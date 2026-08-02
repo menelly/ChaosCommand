@@ -34,6 +34,7 @@ import {
 } from "../lines-constants"
 import { EntryDateTimePicker, todayISO, nowTime, dateTimeToISO, isoToDateTime } from "@/components/entry-datetime-picker"
 import { TagInput } from "@/components/tag-input"
+import { SeverityInput } from '@/components/ui/severity-input'
 
 export function GeneralLinesModal({ isOpen, onClose, onSave, editingEntry }: LinesModalProps) {
   const [entryDate, setEntryDate] = useState(todayISO())
@@ -42,7 +43,7 @@ export function GeneralLinesModal({ isOpen, onClose, onSave, editingEntry }: Lin
   const [deviceLabel, setDeviceLabel] = useState("")
   const [daysSincePlacement, setDaysSincePlacement] = useState("")
   const [problemType, setProblemType] = useState<ProblemType>("routine-check")
-  const [severity, setSeverity] = useState(3)
+  const [severity, setSeverity] = useState<number | undefined>(undefined)
 
   // Site appearance
   const [redness, setRedness] = useState(false)
@@ -128,7 +129,7 @@ export function GeneralLinesModal({ isOpen, onClose, onSave, editingEntry }: Lin
     } else {
       setEntryDate(todayISO()); setEntryTime(nowTime())
       setDeviceType("picc"); setDeviceLabel(""); setDaysSincePlacement("")
-      setProblemType("routine-check"); setSeverity(3)
+      setProblemType("routine-check"); setSeverity(undefined)
       setRedness(false); setWarmth(false); setSwelling(false)
       setDrainagePresent(false); setDrainageDescription(""); setOdorPresent(false); setFeverPresent(false)
       setFlushes(true); setDraining(true); setFullyDislodged(false); setPartiallyDislodged(false)
@@ -403,7 +404,14 @@ export function GeneralLinesModal({ isOpen, onClose, onSave, editingEntry }: Lin
           {/* Overall severity */}
           <div className="space-y-2">
             <Label>Overall severity: <span className={severityLabel?.color}>{severity}/10 — {severityLabel?.label}</span></Label>
-            <Slider min={1} max={10} step={1} value={[severity]} onValueChange={([v]) => setSeverity(v)} />
+            <SeverityInput
+                  value={severity}
+                  onChange={setSeverity}
+                  max={10}
+                  title="Severity"
+                  voiceSlot="lines-tubes:severity"
+                  allowNone={false}
+                />
           </div>
 
           {/* Actions taken */}

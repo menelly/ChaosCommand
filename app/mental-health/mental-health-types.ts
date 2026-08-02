@@ -41,16 +41,22 @@ export interface MentalHealthEntry {
   
   // Mood & Emotional State
   mood: string // emoji-based mood selection
-  moodIntensity: number // 1-10 scale
+  /* THREE STATES since 2026-08-02 (components/ui/severity-input.tsx):
+   *   undefined -> not reported   0 -> answered: absent   1-10 -> this much.
+   * These were REQUIRED numbers with the form parked at 5, so every general
+   * check-in wrote a full set of levels whether or not anyone touched them —
+   * which is how "Mental Health (overall) WORSENING 300%" got computed from
+   * five entries of an anxiety slider nobody had deliberately moved. */
+  moodIntensity?: number // 1-10 scale
   emotionalState: string[] // multiple emotions can apply
   
   // Mental Health Scales (0-10)
-  anxietyLevel: number
-  depressionLevel: number
-  maniaLevel: number
-  energyLevel: number
-  stressLevel: number
-  brainFogSeverity: number
+  anxietyLevel?: number
+  depressionLevel?: number
+  maniaLevel?: number
+  energyLevel?: number
+  stressLevel?: number
+  brainFogSeverity?: number
 
   // Symptoms & Triggers
   triggers: string[]

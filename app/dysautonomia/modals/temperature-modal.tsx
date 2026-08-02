@@ -35,6 +35,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Slider } from '@/components/ui/slider'
+import { SeverityInput } from '@/components/ui/severity-input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Thermometer, Plus } from 'lucide-react'
@@ -105,7 +106,7 @@ export function TemperatureModal({ isOpen, onClose, onSave, editingEntry }: Epis
   const [temperatureType, setTemperatureType] = useState('')
   const [bodyTemperature, setBodyTemperature] = useState('')
   const [symptoms, setSymptoms] = useState<string[]>([])
-  const [severity, setSeverity] = useState([5])
+  const [severity, setSeverity] = useState<number | undefined>(undefined)
   const [triggers, setTriggers] = useState<string[]>([])
   const [durationValue, setDurationValue] = useState('')
   const [durationUnit, setDurationUnit] = useState('hours')
@@ -126,7 +127,7 @@ export function TemperatureModal({ isOpen, onClose, onSave, editingEntry }: Epis
       setBodyTemperature(bodyTempMatch ? bodyTempMatch[1] : '')
       
       setSymptoms(editingEntry.symptoms || [])
-      setSeverity([editingEntry.severity || 5])
+      setSeverity(editingEntry.severity ?? undefined)
       setTriggers(editingEntry.triggers || [])
       // Parse existing duration like "2 hours" or "30 minutes"
       if (editingEntry.duration) {
@@ -155,7 +156,7 @@ export function TemperatureModal({ isOpen, onClose, onSave, editingEntry }: Epis
     setTemperatureType('')
     setBodyTemperature('')
     setSymptoms([])
-    setSeverity([5])
+    setSeverity(undefined)
     setTriggers([])
     setDurationValue('')
     setDurationUnit('hours')
@@ -202,7 +203,7 @@ export function TemperatureModal({ isOpen, onClose, onSave, editingEntry }: Epis
     const entryData: Omit<DysautonomiaEntry, 'id' | 'timestamp' | 'date'> = {
       episodeType: 'temperature',
       symptoms,
-      severity: severity[0],
+      severity: severity,
       triggers,
       duration: durationValue && durationUnit ? `${durationValue} ${durationUnit}` : undefined,
       interventions,
@@ -281,15 +282,14 @@ export function TemperatureModal({ isOpen, onClose, onSave, editingEntry }: Epis
 
           {/* Severity */}
           <div className="space-y-3">
-            <Label>Severity: {severity[0]} - <span className={getSeverityColor(severity[0])}>{getSeverityLabel(severity[0])}</span></Label>
-            <Slider
-              value={severity}
-              onValueChange={setSeverity}
-              max={10}
-              min={1}
-              step={1}
-              className="w-full"
-            />
+            <SeverityInput
+                  value={severity}
+                  onChange={setSeverity}
+                  max={10}
+                  title="Severity"
+                  voiceSlot="dysautonomia:severity"
+                  allowNone={false}
+                />
           </div>
 
           {/* Duration */}

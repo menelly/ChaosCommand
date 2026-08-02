@@ -48,7 +48,9 @@ export interface DysautonomiaEntry {
   
   // Symptoms (comprehensive list for episode context)
   symptoms: string[]
-  severity: number // 1-10 scale
+  /** THREE STATES since 2026-08-02 (components/ui/severity-input.tsx):
+   *    undefined -> not reported   0 -> answered: absent   1-10 -> this bad */
+  severity?: number // 1-10 scale
   
   // Position & Context
   positionChange?: string // 'lying-to-sitting' | 'sitting-to-standing' | 'prolonged-standing' | 'other'

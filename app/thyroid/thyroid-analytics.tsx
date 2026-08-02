@@ -82,15 +82,23 @@ export function ThyroidAnalytics({ refreshTrigger }: ThyroidAnalyticsProps) {
 
     // Severity distribution
     const severityBuckets = { mild: 0, moderate: 0, severe: 0 }
+    // Only entries where a severity was actually REPORTED. Since 2026-08-02
+    // severity is optional (undefined = not reported, 0 = "didn't bother me"),
+    // and counting a blank as mild would invent data.
     for (const e of allEntries) {
+      if (e.severity === undefined) continue
       if (e.severity <= 3) severityBuckets.mild++
       else if (e.severity <= 6) severityBuckets.moderate++
       else severityBuckets.severe++
     }
 
     // Avg severity
-    const avgSeverity = total > 0
-      ? Math.round(allEntries.reduce((s, e) => s + e.severity, 0) / total * 10) / 10
+    // Averaged over REPORTED severities only. Dividing by `total` would treat
+    // every unanswered entry as a zero and drag the mean down — the same class
+    // of silent under-reporting we spent 2026-08-02 removing.
+    const _sev = allEntries.map(e => e.severity).filter((v): v is number => v !== undefined)
+    const avgSeverity = _sev.length > 0
+      ? Math.round(_sev.reduce((a, b) => a + b, 0) / _sev.length * 10) / 10
       : 0
 
     // Bar chart data: episode type distribution
@@ -108,8 +116,10 @@ export function ThyroidAnalytics({ refreshTrigger }: ThyroidAnalyticsProps) {
     for (const e of allEntries) {
       const d = e.date
       if (!severityByDate[d]) severityByDate[d] = { sum: 0, count: 0 }
-      severityByDate[d].sum += e.severity
-      severityByDate[d].count += 1
+      if (e.severity !== undefined) {
+        severityByDate[d].sum += e.severity
+        severityByDate[d].count += 1
+      }
     }
     const severityLineData = Object.entries(severityByDate)
       .sort(([a], [b]) => a.localeCompare(b))

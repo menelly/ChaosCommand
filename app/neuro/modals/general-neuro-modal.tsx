@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Slider } from '@/components/ui/slider'
+import { SeverityInput } from '@/components/ui/severity-input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
@@ -29,7 +29,10 @@ export function GeneralNeuroModal({ isOpen, onClose, onSave, editingEntry, prese
   const [entryTime, setEntryTime] = useState(nowTime())
   const [episodeType, setEpisodeType] = useState<NeuroEpisodeType>('weakness')
   const [distribution, setDistribution] = useState<string[]>([])
-  const [severity, setSeverity] = useState([5])
+  // undefined = not reported. Deliberately NOT 5: a parked default writes a
+  // value nobody entered, and a stored 5 is then indistinguishable from a
+  // slider that was never touched.
+  const [severity, setSeverity] = useState<number | undefined>(undefined)
   const [character, setCharacter] = useState<string[]>([])
   const [triggers, setTriggers] = useState<string[]>([])
   const [treatments, setTreatments] = useState<string[]>([])
@@ -59,7 +62,7 @@ export function GeneralNeuroModal({ isOpen, onClose, onSave, editingEntry, prese
       setEntryTime(dt.time)
       setEpisodeType(editingEntry.episodeType)
       setDistribution(editingEntry.distribution || [])
-      setSeverity([editingEntry.severity || 5])
+      setSeverity(editingEntry.severity ?? undefined)
       setCharacter(editingEntry.character || [])
       setTriggers(editingEntry.triggers || [])
       setTreatments(editingEntry.treatments || [])
@@ -76,7 +79,7 @@ export function GeneralNeuroModal({ isOpen, onClose, onSave, editingEntry, prese
 
   const reset = () => {
     setEntryDate(todayISO()); setEntryTime(nowTime())
-    setEpisodeType('weakness'); setDistribution([]); setSeverity([5]); setCharacter([])
+    setEpisodeType('weakness'); setDistribution([]); setSeverity(undefined); setCharacter([])
     setTriggers([]); setTreatments([]); setDuration(''); setErVisitRequired(false)
     setCrossList(false); setNotes(''); setTags([])
   }
@@ -92,7 +95,7 @@ export function GeneralNeuroModal({ isOpen, onClose, onSave, editingEntry, prese
       timestamp: dateTimeToISO(entryDate, entryTime),
       episodeType,
       distribution,
-      severity: severity[0],
+      severity,
       character,
       triggers,
       treatments,
@@ -170,8 +173,12 @@ export function GeneralNeuroModal({ isOpen, onClose, onSave, editingEntry, prese
             </CollapsibleTrigger>
             <CollapsibleContent className="pt-3">
               <div className="space-y-3">
-                <Label>Severity: {severity[0]} - <span className={getSeverityColor(severity[0])}>{getSeverityLabel(severity[0])}</span></Label>
-                <Slider value={severity} onValueChange={setSeverity} max={10} min={1} step={1} />
+                <SeverityInput
+                  value={severity}
+                  onChange={setSeverity}
+                  title="Severity"
+                  color={getSeverityColor}
+                />
               </div>
             </CollapsibleContent>
           </Collapsible>

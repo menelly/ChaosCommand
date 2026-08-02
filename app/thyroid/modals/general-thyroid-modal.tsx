@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Slider } from '@/components/ui/slider'
+import { SeverityInput } from '@/components/ui/severity-input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { AlertTriangle } from 'lucide-react'
@@ -42,7 +42,7 @@ export function GeneralThyroidModal({ isOpen, onClose, onSave, editingEntry }: T
   const [entryDate, setEntryDate] = useState(todayISO())
   const [entryTime, setEntryTime] = useState(nowTime())
   const [episodeType, setEpisodeType] = useState<ThyroidEpisodeType>('symptoms')
-  const [severity, setSeverity] = useState(5)
+  const [severity, setSeverity] = useState<number | undefined>(undefined)
 
   // Direction + symptoms
   const [direction, setDirection] = useState<ThyroidDirection | ''>('')
@@ -109,7 +109,7 @@ export function GeneralThyroidModal({ isOpen, onClose, onSave, editingEntry }: T
       setTags(editingEntry.tags ?? [])
     } else {
       setEntryDate(todayISO()); setEntryTime(nowTime())
-      setEpisodeType('symptoms'); setSeverity(5)
+      setEpisodeType('symptoms'); setSeverity(undefined)
       setDirection(''); setHypoSymptoms([]); setHyperSymptoms([])
       setTsh(''); setFreeT4(''); setFreeT3(''); setTpoAntibodies(''); setTrab(''); setLabNotes('')
       setMedName(''); setMedDoseMcg(''); setTakenFasting(false); setRecentDoseChange(false)
@@ -321,7 +321,14 @@ export function GeneralThyroidModal({ isOpen, onClose, onSave, editingEntry }: T
           {/* SEVERITY */}
           <div className="space-y-2">
             <Label>Overall symptom burden: <span className={severityLabel?.color}>{severity}/10 — {severityLabel?.label}</span></Label>
-            <Slider min={1} max={10} step={1} value={[severity]} onValueChange={([v]) => setSeverity(v)} />
+            <SeverityInput
+                  value={severity}
+                  onChange={setSeverity}
+                  max={10}
+                  title="Severity"
+                  voiceSlot="thyroid:severity"
+                  allowNone={false}
+                />
           </div>
 
           {/* ACTIONS */}

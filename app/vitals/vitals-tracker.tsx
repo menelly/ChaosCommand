@@ -244,10 +244,16 @@ export default function VitalsTracker() {
         </TabsContent>
       </Tabs>
 
-      <p className="text-center text-xs text-muted-foreground">
+      {/* A div, not a paragraph: Badge renders a block element, and a block
+          inside a paragraph is invalid HTML. The browser silently closes the
+          paragraph before it, so the DOM the server rendered and the DOM the
+          client builds differ — a hydration mismatch, which React reports as an
+          error and can answer by discarding the server markup and re-rendering
+          the whole subtree. */}
+      <div className="text-center text-xs text-muted-foreground">
         <Badge variant="outline" className="mr-1">📄</Badge>
         These readings save to your record and appear on your doctor PDF export.
-      </p>
+      </div>
     </div>
   )
 }

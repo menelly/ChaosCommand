@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Slider } from '@/components/ui/slider'
+import { SeverityInput } from '@/components/ui/severity-input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
@@ -37,7 +38,7 @@ export function GeneralSkinModal({ isOpen, onClose, onSave, editingEntry, preset
   const [characterDescription, setCharacterDescription] = useState<string[]>([])
   const [spreadingPattern, setSpreadingPattern] = useState<string>('')
   const [sizeDescription, setSizeDescription] = useState('')
-  const [severity, setSeverity] = useState([5])
+  const [severity, setSeverity] = useState<number | undefined>(undefined)
   const [itchiness, setItchiness] = useState([0])
   const [pain, setPain] = useState([0])
   const [swelling, setSwelling] = useState(false)
@@ -93,7 +94,7 @@ export function GeneralSkinModal({ isOpen, onClose, onSave, editingEntry, preset
       setCharacterDescription(editingEntry.characterDescription || [])
       setSpreadingPattern(editingEntry.spreadingPattern || '')
       setSizeDescription(editingEntry.sizeDescription || '')
-      setSeverity([editingEntry.severity || 5])
+      setSeverity(editingEntry.severity ?? undefined)
       setItchiness([editingEntry.itchiness || 0])
       setPain([editingEntry.pain || 0])
       setSwelling(editingEntry.swelling || false)
@@ -126,7 +127,7 @@ export function GeneralSkinModal({ isOpen, onClose, onSave, editingEntry, preset
   const reset = () => {
     setEntryDate(todayISO()); setEntryTime(nowTime())
     setEpisodeType('rash'); setBodyLocation([]); setCharacterDescription([]); setSpreadingPattern('')
-    setSizeDescription(''); setSeverity([5]); setItchiness([0]); setPain([0])
+    setSizeDescription(''); setSeverity(undefined); setItchiness([0]); setPain([0])
     setSwelling(false); setThroatTightness(false); setBreathingDifficulty(false); setHivesPresent(false); setEpinephrineGiven(false)
     setFevePresent(false); setMucousMembraneInvolvement(false); setNewMedicationRecent(false)
     setSuspectedTrigger([]); setTreatmentApplied([]); setTreatmentResponse([3]); setDuration('')
@@ -146,7 +147,7 @@ export function GeneralSkinModal({ isOpen, onClose, onSave, editingEntry, preset
       characterDescription,
       spreadingPattern: (spreadingPattern || undefined) as SpreadingPattern | undefined,
       sizeDescription: sizeDescription || undefined,
-      severity: severity[0],
+      severity: severity,
       itchiness: itchiness[0] > 0 ? itchiness[0] : undefined,
       pain: pain[0] > 0 ? pain[0] : undefined,
       swelling, throatTightness, breathingDifficulty, hivesPresent, epinephrineGiven,
@@ -175,7 +176,7 @@ export function GeneralSkinModal({ isOpen, onClose, onSave, editingEntry, preset
         </DialogHeader>
         <div className="space-y-6">
           {(() => {
-            const flags = getRedFlagWarnings({ episodeType, severity: severity[0], hivesPresent, swelling, throatTightness, breathingDifficulty, fevePresent, mucousMembraneInvolvement, newMedicationRecent, characterDescription, spreadingPattern, asymmetric, borderIrregular, colorVariable, diameterOver6mm, evolving })
+            const flags = getRedFlagWarnings({ episodeType, severity: severity, hivesPresent, swelling, throatTightness, breathingDifficulty, fevePresent, mucousMembraneInvolvement, newMedicationRecent, characterDescription, spreadingPattern, asymmetric, borderIrregular, colorVariable, diameterOver6mm, evolving })
             const measures = getInterimMeasures({ hivesPresent, swelling, throatTightness, breathingDifficulty, episodeType })
             if (flags.length === 0) return null
             return (
@@ -273,8 +274,14 @@ export function GeneralSkinModal({ isOpen, onClose, onSave, editingEntry, preset
             </CollapsibleTrigger>
             <CollapsibleContent className="pt-3">
               <div className="space-y-3">
-                <Label>Severity: {severity[0]} - <span className={getSeverityColor(severity[0])}>{getSeverityLabel(severity[0])}</span></Label>
-                <Slider value={severity} onValueChange={setSeverity} max={10} min={1} step={1} />
+                <SeverityInput
+                  value={severity}
+                  onChange={setSeverity}
+                  max={10}
+                  title="Severity"
+                  voiceSlot="skin:severity"
+                  allowNone={false}
+                />
               </div>
             </CollapsibleContent>
           </Collapsible>

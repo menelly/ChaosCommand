@@ -39,7 +39,6 @@ import { getTimeRemaining, getBGRangeInfo } from './diabetes-constants'
 
 export function DiabetesHistory({}: DiabetesHistoryProps) {
   const [historyEntries, setHistoryEntries] = useState<DiabetesEntry[]>([])
-  const [historyTimers, setHistoryTimers] = useState<Timer[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [dateRange, setDateRange] = useState(7) // Days to look back
 
@@ -56,7 +55,6 @@ export function DiabetesHistory({}: DiabetesHistoryProps) {
       startDate.setDate(startDate.getDate() - dateRange)
 
       const allEntries: DiabetesEntry[] = []
-      const allTimers: Timer[] = []
 
       // Generate array of dates to check
       const dates = []
@@ -78,30 +76,13 @@ export function DiabetesHistory({}: DiabetesHistoryProps) {
         }
       }
 
-      // Load all timers (they persist across dates)
-      const timerRecords = await db.daily_data
-        .where('category')
-        .equals(CATEGORIES.HEALTH)
-        .and(record => record.subcategory === 'diabetes_timers')
-        .toArray()
-
-      timerRecords.forEach(record => {
-        if (record.content) {
-          const recordTimers = Array.isArray(record.content) ? record.content : [record.content]
-          allTimers.push(...recordTimers)
-        }
-      })
-
-      // Remove timer duplicates
-      const uniqueTimers = allTimers.filter((timer, index, self) =>
-        index === self.findIndex(t => t.id === timer.id)
-      )
+      // Timer loading removed with the Timer History card — see the note below.
+      // Maintain -> Devices owns 'diabetes_timers' now (CHA-254).
 
       // Sort entries by created_at (newest first)
       allEntries.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 
       setHistoryEntries(allEntries)
-      setHistoryTimers(uniqueTimers)
 
     } catch (error) {
       console.error('Error loading history data:', error)
@@ -149,37 +130,20 @@ export function DiabetesHistory({}: DiabetesHistoryProps) {
         </div>
       ) : (
         <div className="space-y-6">
-          {/* Timer History */}
-          {historyTimers.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Clock className="h-5 w-5" />
-                  Timer History ({historyTimers.length} timers)
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {historyTimers.map(timer => {
-                    const remaining = getTimeRemaining(timer)
-                    return (
-                      <div key={timer.id} className="flex justify-between items-center p-3 border rounded-lg">
-                        <div>
-                          <div className="font-medium">{timer.name}</div>
-                          <div className="text-sm text-muted-foreground">
-                            Started: {formatTimestamp(timer.inserted_at)}
-                          </div>
-                        </div>
-                        <Badge variant={remaining.expired ? "destructive" : "secondary"}>
-                          {remaining.text}
-                        </Badge>
-                      </div>
-                    )
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+          {/*
+            TIMER HISTORY REMOVED — 2026-08-02.
+
+            Device timers moved to Maintain -> Devices under CHA-254, because
+            they are equipment upkeep rather than glucose data. The move
+            happened; this view did not. It kept reading the same
+            'diabetes_timers' key and choking on records it could no longer
+            parse, rendering "1 timers / Started: Invalid Date / NaNh remaining"
+            and console-erroring "Invalid timestamp: undefined" on every render.
+
+            Nothing is lost by removing it. Maintain's DeviceTimerManager owns
+            create/edit/delete AND schedules real OS notifications through the
+            Tauri plugin — strictly better than what lived here.
+          */}
 
           {/* Entry History */}
           <Card>

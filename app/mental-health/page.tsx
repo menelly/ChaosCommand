@@ -239,8 +239,8 @@ export default function MindMoodPage() {
                                 <span className="text-lg">{info.icon}</span>
                                 <span className="font-semibold">{info.name}</span>
                                 {moodInfo && <Badge variant="secondary">{moodInfo.emoji} {moodInfo.label}</Badge>}
-                                {entry.depressionLevel >= 7 && <Badge variant="destructive">Dep {entry.depressionLevel}</Badge>}
-                                {entry.maniaLevel >= 7 && <Badge variant="destructive">Mania {entry.maniaLevel}</Badge>}
+                                {entry.depressionLevel !== undefined && entry.depressionLevel >= 7 && <Badge variant="destructive">Dep {entry.depressionLevel}</Badge>}
+                                {entry.maniaLevel !== undefined && entry.maniaLevel >= 7 && <Badge variant="destructive">Mania {entry.maniaLevel}</Badge>}
                                 {entry.moodSwingDirection === 'rapid-cycling' && <Badge variant="destructive">Rapid cycling</Badge>}
                                 {entry.meltdownOccurred && <Badge variant="outline" className="bg-info/10 text-info border-info/30">Meltdown</Badge>}
                               </div>

@@ -51,7 +51,6 @@ import { DiabetesEntry, Timer } from './diabetes-types'
 import { INSULIN_TYPES, MOOD_OPTIONS, COMMON_TAGS, getTimeRemaining } from './diabetes-constants'
 import DiabetesFlaskAnalytics from './diabetes-flask-analytics'
 import { DiabetesHistory } from './diabetes-history'
-import { DiabetesTimerManager } from './diabetes-timer-manager'
 import { celebrate } from '@/lib/particle-physics-engine'
 import { useUser } from '@/lib/contexts/user-context'
 import { isCelebrationEnabled } from '@/lib/celebration-prefs'
@@ -61,7 +60,6 @@ export default function DiabetesTracker() {
   const { userPin } = useUser()
   const [activeTab, setActiveTab] = useState('tracking')
   const [entries, setEntries] = useState<DiabetesEntry[]>([])
-  const [timers, setTimers] = useState<Timer[]>([])
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [editingEntry, setEditingEntry] = useState<DiabetesEntry | null>(null)
   const [currentDate, setCurrentDate] = useState(new Date().toISOString().split('T')[0])
@@ -85,38 +83,18 @@ export default function DiabetesTracker() {
   // Load data
   useEffect(() => {
     loadEntries()
-    loadTimers()
   }, [currentDate])
 
-  // Check for expired timers and send notifications
-  useEffect(() => {
-    const checkExpiredTimers = () => {
-      timers.forEach(timer => {
-        const remaining = getTimeRemaining(timer)
-        if (remaining.expired) {
-          // Send browser notification
-          if ('Notification' in window && Notification.permission === 'granted') {
-            new Notification(`${timer.type.toUpperCase()} Timer Expired!`, {
-              body: `Time to change your ${timer.name}`,
-              icon: '/icon-192x192.png',
-              tag: `timer-${timer.id}`
-            })
-          }
-
-          // Show toast notification
-          toast({
-            title: `⚠️ ${timer.type.toUpperCase()} Timer Expired!`,
-            description: `Time to change your ${timer.name}`,
-            variant: "destructive"
-          })
-        }
-      })
-    }
-
-    checkExpiredTimers()
-    const interval = setInterval(checkExpiredTimers, 60000)
-    return () => clearInterval(interval)
-  }, [timers, toast])
+  /*
+   * EXPIRED-TIMER NOTIFICATIONS REMOVED — 2026-08-02.
+   *
+   * Device timers moved to Maintain -> Devices (CHA-254). Its
+   * DeviceTimerManager schedules REAL OS notifications through the Tauri
+   * plugin, which fire whether or not the app is open. What lived here was a
+   * 60-second polling loop that only ran while this page was on screen, and it
+   * re-fired the same toast every minute for as long as you stayed. Strictly
+   * worse, and duplicated. Nothing is lost.
+   */
 
   // Request notification permission on component mount
   useEffect(() => {
@@ -143,35 +121,6 @@ export default function DiabetesTracker() {
       }
     } catch (error) {
       console.error('Error loading diabetes entries:', error)
-    }
-  }
-
-  const loadTimers = async () => {
-    try {
-      const allTimerRecords = await db.daily_data
-        .where('category')
-        .equals(CATEGORIES.HEALTH)
-        .and(record => record.subcategory === 'diabetes_timers')
-        .toArray()
-
-      let allTimers: Timer[] = []
-
-      allTimerRecords.forEach(record => {
-        if (record.content) {
-          const recordTimers = Array.isArray(record.content) ? record.content : [record.content]
-          allTimers = [...allTimers, ...recordTimers]
-        }
-      })
-
-      // Remove duplicates by ID
-      const uniqueTimers = allTimers.filter((timer, index, self) =>
-        index === self.findIndex(t => t.id === timer.id)
-      )
-
-      setTimers(uniqueTimers)
-    } catch (error) {
-      console.error('Error loading timers:', error)
-      setTimers([])
     }
   }
 
@@ -360,14 +309,8 @@ export default function DiabetesTracker() {
       <div className="max-w-4xl mx-auto p-6">
         {/* Header */}
         <div className="text-center mb-6">
-          {/* Expired Timer Alert */}
-          {timers.some(timer => getTimeRemaining(timer).expired) && (
-            <div className="flex items-center justify-center gap-2 px-3 py-1 mb-4 bg-destructive/10 border border-destructive/30 rounded-lg animate-pulse">
-              <span className="text-destructive font-bold text-sm">
-                🚨 {timers.filter(timer => getTimeRemaining(timer).expired).length} Timer(s) Expired!
-              </span>
-            </div>
-          )}
+          {/* Expired-timer alert removed 2026-08-02 — device timers live in
+              Maintain -> Devices (CHA-254), which surfaces expiry there. */}
 
           {/* Centered Title */}
           <div className="text-center">

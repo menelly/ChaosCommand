@@ -93,6 +93,22 @@ export default function CrisisSupport() {
         entryData.tags
       )
 
+      // ⚠️ EDITING AN ENTRY'S DATE USED TO LEAVE A GHOST BEHIND.
+      // Records are keyed on [date + category + subcategory]. Saving under a
+      // NEW date writes a new record and leaves the old one in place, so one
+      // entry existed twice — same id, two dates. The history loads both and
+      // React reports "two children with the same key", which is how Ren found
+      // this (2026-08-02). Worse than the warning: the old, stale copy was
+      // still being counted and analysed.
+      if (editingEntry && editingEntry.date && editingEntry.date !== entryData.date) {
+        try {
+          await deleteData(editingEntry.date, CATEGORIES.TRACKER, `crisis-${crisisEntry.id}`)
+        } catch (e) {
+          // Non-fatal: the new record is already saved, so the entry is safe.
+          console.error('Could not remove the pre-edit crisis record:', e)
+        }
+      }
+
       // Reset editing state and refresh
       setEditingEntry(null)
       setIsFormOpen(false)

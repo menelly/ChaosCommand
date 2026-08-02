@@ -25,8 +25,15 @@ export interface NeuroEntry {
 
   // Where it is — distribution matters diagnostically (proximal vs distal, etc.)
   distribution: string[]
-  // 1-10
-  severity: number
+  /** THREE STATES, and the distinction is clinical:
+   *    undefined -> not reported (not asked / not answered) — excluded from analysis
+   *    0         -> answered: absent. "It didn't bother me today" is EVIDENCE.
+   *    1-10      -> answered: this bad.
+   *  Optional since 2026-08-02. It was previously a required number with the
+   *  form parked at 5, so every save wrote a severity whether or not anyone
+   *  entered one — making a stored 5 indistinguishable from an untouched
+   *  control, and giving the trend engine phantom values to compute over. */
+  severity?: number
   // How it behaves (constant, progressive, heat-worsened, …)
   character: string[]
 

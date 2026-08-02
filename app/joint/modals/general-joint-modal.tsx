@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Slider } from '@/components/ui/slider'
+import { SeverityInput } from '@/components/ui/severity-input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
@@ -31,7 +32,7 @@ export function GeneralJointModal({ isOpen, onClose, onSave, editingEntry, prese
   const [episodeType, setEpisodeType] = useState<JointEpisodeType>('subluxation')
   const [jointAffected, setJointAffected] = useState<string[]>([])
   const [musclesAffected, setMusclesAffected] = useState<string[]>([])
-  const [severity, setSeverity] = useState([5])
+  const [severity, setSeverity] = useState<number | undefined>(undefined)
   const [selfReducedFlag, setSelfReducedFlag] = useState(false)
   const [swellingPresent, setSwellingPresent] = useState(false)
   const [swellingScale, setSwellingScale] = useState([0])
@@ -72,7 +73,7 @@ export function GeneralJointModal({ isOpen, onClose, onSave, editingEntry, prese
       setEpisodeType(editingEntry.episodeType)
       setJointAffected(editingEntry.jointAffected || [])
       setMusclesAffected(editingEntry.musclesAffected || [])
-      setSeverity([editingEntry.severity || 5])
+      setSeverity(editingEntry.severity ?? undefined)
       setSelfReducedFlag(editingEntry.selfReducedFlag || false)
       setSwellingPresent(editingEntry.swellingPresent || false)
       setSwellingScale([editingEntry.swellingScale || 0])
@@ -95,7 +96,7 @@ export function GeneralJointModal({ isOpen, onClose, onSave, editingEntry, prese
 
   const reset = () => {
     setEntryDate(todayISO()); setEntryTime(nowTime())
-    setEpisodeType('subluxation'); setJointAffected([]); setMusclesAffected([]); setSeverity([5])
+    setEpisodeType('subluxation'); setJointAffected([]); setMusclesAffected([]); setSeverity(undefined)
     setSelfReducedFlag(false); setSwellingPresent(false); setSwellingScale([0]); setBruisingPresent(false)
     setRomImpactedPercent([100]); setTriggerActivity([]); setTreatmentApplied([]); setTreatmentResponse([3])
     setDuration(''); setErVisitRequired(false); setAttachmentImages([]); setCrossList(false); setNotes(''); setTags([])
@@ -111,7 +112,7 @@ export function GeneralJointModal({ isOpen, onClose, onSave, editingEntry, prese
       episodeType,
       jointAffected,
       musclesAffected: musclesAffected.length > 0 ? musclesAffected : undefined,
-      severity: severity[0],
+      severity: severity,
       selfReducedFlag,
       swellingPresent,
       swellingScale: swellingPresent && swellingScale[0] > 0 ? swellingScale[0] : undefined,
@@ -204,8 +205,14 @@ export function GeneralJointModal({ isOpen, onClose, onSave, editingEntry, prese
             </CollapsibleTrigger>
             <CollapsibleContent className="pt-3">
               <div className="space-y-3">
-                <Label>Severity: {severity[0]} - <span className={getSeverityColor(severity[0])}>{getSeverityLabel(severity[0])}</span></Label>
-                <Slider value={severity} onValueChange={setSeverity} max={10} min={1} step={1} />
+                <SeverityInput
+                  value={severity}
+                  onChange={setSeverity}
+                  max={10}
+                  title="Severity"
+                  voiceSlot="joint:severity"
+                  allowNone={false}
+                />
               </div>
             </CollapsibleContent>
           </Collapsible>

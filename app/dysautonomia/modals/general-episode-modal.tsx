@@ -35,6 +35,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Slider } from '@/components/ui/slider'
+import { SeverityInput } from '@/components/ui/severity-input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { RotateCcw, Plus } from 'lucide-react'
@@ -52,7 +53,7 @@ export function GeneralEpisodeModal({ isOpen, onClose, onSave, editingEntry }: E
   const [bloodPressureSitting, setBloodPressureSitting] = useState('')
   const [bloodPressureStanding, setBloodPressureStanding] = useState('')
   const [symptoms, setSymptoms] = useState<string[]>([])
-  const [severity, setSeverity] = useState([5])
+  const [severity, setSeverity] = useState<number | undefined>(undefined)
   const [triggers, setTriggers] = useState<string[]>([])
   const [positionChange, setPositionChange] = useState('')
   const [durationValue, setDurationValue] = useState('')
@@ -70,7 +71,7 @@ export function GeneralEpisodeModal({ isOpen, onClose, onSave, editingEntry }: E
       setBloodPressureSitting(editingEntry.bloodPressureSitting || '')
       setBloodPressureStanding(editingEntry.bloodPressureStanding || '')
       setSymptoms(editingEntry.symptoms || [])
-      setSeverity([editingEntry.severity || 5])
+      setSeverity(editingEntry.severity ?? undefined)
       setTriggers(editingEntry.triggers || [])
       setPositionChange(editingEntry.positionChange || '')
 
@@ -104,7 +105,7 @@ export function GeneralEpisodeModal({ isOpen, onClose, onSave, editingEntry }: E
     setBloodPressureSitting('')
     setBloodPressureStanding('')
     setSymptoms([])
-    setSeverity([5])
+    setSeverity(undefined)
     setTriggers([])
     setPositionChange('')
     setDurationValue('')
@@ -152,7 +153,7 @@ export function GeneralEpisodeModal({ isOpen, onClose, onSave, editingEntry }: E
       bloodPressureSitting: bloodPressureSitting || undefined,
       bloodPressureStanding: bloodPressureStanding || undefined,
       symptoms,
-      severity: severity[0],
+      severity: severity,
       triggers,
       positionChange: positionChange || undefined,
       duration: durationValue && durationUnit ? `${durationValue} ${durationUnit}` : undefined,
@@ -254,15 +255,14 @@ export function GeneralEpisodeModal({ isOpen, onClose, onSave, editingEntry }: E
 
           {/* Severity */}
           <div className="space-y-3">
-            <Label>Severity: {severity[0]} - <span className={getSeverityColor(severity[0])}>{getSeverityLabel(severity[0])}</span></Label>
-            <Slider
-              value={severity}
-              onValueChange={setSeverity}
-              max={10}
-              min={1}
-              step={1}
-              className="w-full"
-            />
+            <SeverityInput
+                  value={severity}
+                  onChange={setSeverity}
+                  max={10}
+                  title="Severity"
+                  voiceSlot="dysautonomia:severity"
+                  allowNone={false}
+                />
           </div>
 
           {/* Position Change */}

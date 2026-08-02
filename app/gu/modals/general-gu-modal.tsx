@@ -18,6 +18,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Slider } from '@/components/ui/slider'
+import { SeverityInput } from '@/components/ui/severity-input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { AlertTriangle, Droplets, ChevronDown, ChevronRight, ExternalLink } from 'lucide-react'
@@ -47,7 +48,7 @@ export function GeneralGUModal({ isOpen, onClose, onSave, editingEntry }: GUModa
   const [entryDate, setEntryDate] = useState(todayISO())
   const [entryTime, setEntryTime] = useState(nowTime())
   const [episodeType, setEpisodeType] = useState<GUEpisodeType>('voiding')
-  const [severity, setSeverity] = useState(5)
+  const [severity, setSeverity] = useState<number | undefined>(undefined)
 
   // Voiding
   const [voidingSymptoms, setVoidingSymptoms] = useState<VoidingSymptom[]>([])
@@ -72,7 +73,7 @@ export function GeneralGUModal({ isOpen, onClose, onSave, editingEntry }: GUModa
 
   // Pain
   const [painLocations, setPainLocations] = useState<PainLocation[]>([])
-  const [painSeverity, setPainSeverity] = useState(5)
+  const [painSeverity, setPainSeverity] = useState<number | undefined>(undefined)
   const [dysuria, setDysuria] = useState(false)
   const [flankPain, setFlankPain] = useState(false)
 
@@ -139,7 +140,7 @@ export function GeneralGUModal({ isOpen, onClose, onSave, editingEntry }: GUModa
       setPadUsed(editingEntry.padUsed ?? false)
       setPadsSoaked(editingEntry.padsSoaked?.toString() ?? '')
       setPainLocations(editingEntry.painLocations ?? [])
-      setPainSeverity(editingEntry.painSeverity ?? 5)
+      setPainSeverity(editingEntry.painSeverity ?? undefined)
       setDysuria(editingEntry.dysuria ?? false)
       setFlankPain(editingEntry.flankPain ?? false)
       setInfectionSuspected(editingEntry.infectionSuspected ?? false)
@@ -161,7 +162,7 @@ export function GeneralGUModal({ isOpen, onClose, onSave, editingEntry }: GUModa
       setEntryDate(todayISO())
       setEntryTime(nowTime())
       setEpisodeType('voiding')
-      setSeverity(5)
+      setSeverity(undefined)
       setVoidingSymptoms([])
       setVoidingFrequency('')
       setNocturia('')
@@ -176,7 +177,7 @@ export function GeneralGUModal({ isOpen, onClose, onSave, editingEntry }: GUModa
       setPadUsed(false)
       setPadsSoaked('')
       setPainLocations([])
-      setPainSeverity(5)
+      setPainSeverity(undefined)
       setDysuria(false)
       setFlankPain(false)
       setInfectionSuspected(false)
@@ -476,8 +477,14 @@ export function GeneralGUModal({ isOpen, onClose, onSave, editingEntry }: GUModa
               </div>
               {painLocations.length > 0 && (
                 <div className="space-y-2">
-                  <Label className="text-xs">Pain severity: {painSeverity}/10</Label>
-                  <Slider min={1} max={10} step={1} value={[painSeverity]} onValueChange={([v]) => setPainSeverity(v)} />
+                  <SeverityInput
+                  value={painSeverity}
+                  onChange={setPainSeverity}
+                  max={10}
+                  title="Pain severity"
+                  voiceSlot="gu:painSeverity"
+                  allowNone={false}
+                />
                 </div>
               )}
               <div className="flex items-center gap-2">
@@ -579,8 +586,14 @@ export function GeneralGUModal({ isOpen, onClose, onSave, editingEntry }: GUModa
 
           {/* ── OVERALL SEVERITY ── */}
           <div className="space-y-2">
-            <Label>Overall severity: <span className={SEVERITY_LABELS.find(s => s.level === severity)?.color}>{severity}/10 — {severityLabel?.label}</span></Label>
-            <Slider min={1} max={10} step={1} value={[severity]} onValueChange={([v]) => setSeverity(v)} />
+            <SeverityInput
+                  value={severity}
+                  onChange={setSeverity}
+                  max={10}
+                  title="Severity"
+                  voiceSlot="gu:severity"
+                  allowNone={false}
+                />
           </div>
 
           {/* ── ACTIONS TAKEN ── */}

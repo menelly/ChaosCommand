@@ -20,7 +20,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Slider } from '@/components/ui/slider'
+import { SeverityInput } from '@/components/ui/severity-input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
@@ -47,20 +47,20 @@ export function GeneralMindMoodModal({ isOpen, onClose, onSave, editingEntry, in
   const [episodeType, setEpisodeType] = useState<MindMoodEpisodeType>(initialEpisodeType || 'general')
 
   const [mood, setMood] = useState('okay')
-  const [moodIntensity, setMoodIntensity] = useState([5])
+  const [moodIntensity, setMoodIntensity] = useState<number | undefined>(undefined)
   const [emotionalState, setEmotionalState] = useState<string[]>([])
 
   // Scales (0-10)
-  const [anxietyLevel, setAnxietyLevel] = useState([0])
-  const [depressionLevel, setDepressionLevel] = useState([0])
-  const [maniaLevel, setManiaLevel] = useState([0])
-  const [energyLevel, setEnergyLevel] = useState([5])
-  const [stressLevel, setStressLevel] = useState([5])
-  const [brainFogSeverity, setBrainFogSeverity] = useState([0])
-  const [motivationLevel, setMotivationLevel] = useState([5])
-  const [drivelLevel, setDrivelLevel] = useState([5])
-  const [socialEngagementLevel, setSocialEngagementLevel] = useState([5])
-  const [regulationDifficulty, setRegulationDifficulty] = useState([0])
+  const [anxietyLevel, setAnxietyLevel] = useState<number | undefined>(undefined)
+  const [depressionLevel, setDepressionLevel] = useState<number | undefined>(undefined)
+  const [maniaLevel, setManiaLevel] = useState<number | undefined>(undefined)
+  const [energyLevel, setEnergyLevel] = useState<number | undefined>(undefined)
+  const [stressLevel, setStressLevel] = useState<number | undefined>(undefined)
+  const [brainFogSeverity, setBrainFogSeverity] = useState<number | undefined>(undefined)
+  const [motivationLevel, setMotivationLevel] = useState<number | undefined>(undefined)
+  const [drivelLevel, setDrivelLevel] = useState<number | undefined>(undefined)
+  const [socialEngagementLevel, setSocialEngagementLevel] = useState<number | undefined>(undefined)
+  const [regulationDifficulty, setRegulationDifficulty] = useState<number | undefined>(undefined)
 
   // Mood-specific
   const [moodSwingDirection, setMoodSwingDirection] = useState<string>('stable')
@@ -96,18 +96,18 @@ export function GeneralMindMoodModal({ isOpen, onClose, onSave, editingEntry, in
       }
       setEpisodeType(editingEntry.episodeType || 'general')
       setMood(editingEntry.mood || 'okay')
-      setMoodIntensity([editingEntry.moodIntensity || 5])
+      setMoodIntensity(editingEntry.moodIntensity ?? undefined)
       setEmotionalState(editingEntry.emotionalState || [])
-      setAnxietyLevel([editingEntry.anxietyLevel || 0])
-      setDepressionLevel([editingEntry.depressionLevel || 0])
-      setManiaLevel([editingEntry.maniaLevel || 0])
-      setEnergyLevel([editingEntry.energyLevel || 5])
-      setStressLevel([editingEntry.stressLevel || 5])
-      setBrainFogSeverity([editingEntry.brainFogSeverity || 0])
-      setMotivationLevel([editingEntry.motivationLevel || 5])
-      setDrivelLevel([editingEntry.drivelLevel || 5])
-      setSocialEngagementLevel([editingEntry.socialEngagementLevel || 5])
-      setRegulationDifficulty([editingEntry.regulationDifficulty || 0])
+      setAnxietyLevel(editingEntry.anxietyLevel ?? undefined)
+      setDepressionLevel(editingEntry.depressionLevel ?? undefined)
+      setManiaLevel(editingEntry.maniaLevel ?? undefined)
+      setEnergyLevel(editingEntry.energyLevel ?? undefined)
+      setStressLevel(editingEntry.stressLevel ?? undefined)
+      setBrainFogSeverity(editingEntry.brainFogSeverity ?? undefined)
+      setMotivationLevel(editingEntry.motivationLevel ?? undefined)
+      setDrivelLevel(editingEntry.drivelLevel ?? undefined)
+      setSocialEngagementLevel(editingEntry.socialEngagementLevel ?? undefined)
+      setRegulationDifficulty(editingEntry.regulationDifficulty ?? undefined)
       setMoodSwingDirection(editingEntry.moodSwingDirection || 'stable')
       setCognitiveDomains(editingEntry.cognitiveDomains || [])
       setMeltdownPrecursorsPresent(editingEntry.meltdownPrecursorsPresent || false)
@@ -128,11 +128,11 @@ export function GeneralMindMoodModal({ isOpen, onClose, onSave, editingEntry, in
   const resetForm = () => {
     setEntryDate(todayISO()); setEntryTime(nowTime())
     setEpisodeType(initialEpisodeType || 'general')
-    setMood('okay'); setMoodIntensity([5]); setEmotionalState([])
-    setAnxietyLevel([0]); setDepressionLevel([0]); setManiaLevel([0])
-    setEnergyLevel([5]); setStressLevel([5]); setBrainFogSeverity([0])
-    setMotivationLevel([5]); setDrivelLevel([5]); setSocialEngagementLevel([5])
-    setRegulationDifficulty([0])
+    setMood('okay'); setMoodIntensity(undefined); setEmotionalState([])
+    setAnxietyLevel(undefined); setDepressionLevel(undefined); setManiaLevel(undefined)
+    setEnergyLevel(undefined); setStressLevel(undefined); setBrainFogSeverity(undefined)
+    setMotivationLevel(undefined); setDrivelLevel(undefined); setSocialEngagementLevel(undefined)
+    setRegulationDifficulty(undefined)
     setMoodSwingDirection('stable')
     setCognitiveDomains([])
     setMeltdownPrecursorsPresent(false); setMeltdownOccurred(false)
@@ -151,18 +151,18 @@ export function GeneralMindMoodModal({ isOpen, onClose, onSave, editingEntry, in
       time: entryTime,
       episodeType,
       mood,
-      moodIntensity: moodIntensity[0],
+      moodIntensity: moodIntensity,
       emotionalState,
-      anxietyLevel: anxietyLevel[0],
-      depressionLevel: depressionLevel[0],
-      maniaLevel: maniaLevel[0],
-      energyLevel: energyLevel[0],
-      stressLevel: stressLevel[0],
-      brainFogSeverity: brainFogSeverity[0],
-      motivationLevel: motivationLevel[0],
-      drivelLevel: drivelLevel[0],
-      socialEngagementLevel: socialEngagementLevel[0],
-      regulationDifficulty: regulationDifficulty[0],
+      anxietyLevel: anxietyLevel,
+      depressionLevel: depressionLevel,
+      maniaLevel: maniaLevel,
+      energyLevel: energyLevel,
+      stressLevel: stressLevel,
+      brainFogSeverity: brainFogSeverity,
+      motivationLevel: motivationLevel,
+      drivelLevel: drivelLevel,
+      socialEngagementLevel: socialEngagementLevel,
+      regulationDifficulty: regulationDifficulty,
       moodSwingDirection: (moodSwingDirection || undefined) as any,
       cognitiveDomains: cognitiveDomains.length > 0 ? cognitiveDomains : undefined,
       meltdownPrecursorsPresent: meltdownPrecursorsPresent || undefined,
@@ -186,10 +186,10 @@ export function GeneralMindMoodModal({ isOpen, onClose, onSave, editingEntry, in
 
   const redFlags = getRedFlagWarnings({
     episodeType,
-    depressionLevel: depressionLevel[0],
-    maniaLevel: maniaLevel[0],
-    energyLevel: energyLevel[0],
-    motivationLevel: motivationLevel[0],
+    depressionLevel: depressionLevel,
+    maniaLevel: maniaLevel,
+    energyLevel: energyLevel,
+    motivationLevel: motivationLevel,
     moodSwingDirection,
   })
 
@@ -275,8 +275,14 @@ export function GeneralMindMoodModal({ isOpen, onClose, onSave, editingEntry, in
                     ))}
                   </div>
                   <div>
-                    <Label>Mood intensity: {moodIntensity[0]}/10</Label>
-                    <Slider value={moodIntensity} onValueChange={setMoodIntensity} max={10} min={0} step={1} className="mt-2" />
+                    
+                    <SeverityInput
+                  value={moodIntensity}
+                  onChange={setMoodIntensity}
+                  max={10}
+                  title="Mood intensity"
+                  voiceSlot="mental-health:moodIntensity"
+                />
                   </div>
                   <div>
                     <Label>Mood swing direction</Label>
@@ -300,10 +306,34 @@ export function GeneralMindMoodModal({ isOpen, onClose, onSave, editingEntry, in
                 </Button>
               </CollapsibleTrigger>
               <CollapsibleContent className="pt-3 space-y-3">
-                <div><Label>Depression: {depressionLevel[0]}/10</Label><Slider value={depressionLevel} onValueChange={setDepressionLevel} max={10} min={0} step={1} className="mt-2" /></div>
-                <div><Label>Mania / hypomania: {maniaLevel[0]}/10</Label><Slider value={maniaLevel} onValueChange={setManiaLevel} max={10} min={0} step={1} className="mt-2" /></div>
-                <div><Label>Anxiety: {anxietyLevel[0]}/10</Label><Slider value={anxietyLevel} onValueChange={setAnxietyLevel} max={10} min={0} step={1} className="mt-2" /></div>
-                <div><Label>Stress: {stressLevel[0]}/10</Label><Slider value={stressLevel} onValueChange={setStressLevel} max={10} min={0} step={1} className="mt-2" /></div>
+                <div><SeverityInput
+                  value={depressionLevel}
+                  onChange={setDepressionLevel}
+                  max={10}
+                  title="Depression"
+                  voiceSlot="mental-health:depressionLevel"
+                /></div>
+                <div><SeverityInput
+                  value={maniaLevel}
+                  onChange={setManiaLevel}
+                  max={10}
+                  title="Mania / hypomania"
+                  voiceSlot="mental-health:maniaLevel"
+                /></div>
+                <div><SeverityInput
+                  value={anxietyLevel}
+                  onChange={setAnxietyLevel}
+                  max={10}
+                  title="Anxiety"
+                  voiceSlot="mental-health:anxietyLevel"
+                /></div>
+                <div><SeverityInput
+                  value={stressLevel}
+                  onChange={setStressLevel}
+                  max={10}
+                  title="Stress"
+                  voiceSlot="mental-health:stressLevel"
+                /></div>
               </CollapsibleContent>
             </Collapsible>
 
@@ -317,7 +347,13 @@ export function GeneralMindMoodModal({ isOpen, onClose, onSave, editingEntry, in
                   </Button>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="pt-3 space-y-3">
-                  <div><Label>Brain fog severity: {brainFogSeverity[0]}/10</Label><Slider value={brainFogSeverity} onValueChange={setBrainFogSeverity} max={10} min={0} step={1} className="mt-2" /></div>
+                  <div><SeverityInput
+                  value={brainFogSeverity}
+                  onChange={setBrainFogSeverity}
+                  max={10}
+                  title="Brain fog"
+                  voiceSlot="mental-health:brainFogSeverity"
+                /></div>
                   <div>
                     <Label className="text-xs">Affected cognitive domains</Label>
                     <div className="grid grid-cols-2 gap-2 mt-1 max-h-40 overflow-y-auto">
@@ -343,9 +379,27 @@ export function GeneralMindMoodModal({ isOpen, onClose, onSave, editingEntry, in
                   </Button>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="pt-3 space-y-3">
-                  <div><Label>Mental energy: {energyLevel[0]}/10</Label><Slider value={energyLevel} onValueChange={setEnergyLevel} max={10} min={0} step={1} className="mt-2" /></div>
-                  <div><Label>Motivation: {motivationLevel[0]}/10</Label><Slider value={motivationLevel} onValueChange={setMotivationLevel} max={10} min={0} step={1} className="mt-2" /></div>
-                  <div><Label>Drive (want to do anything): {drivelLevel[0]}/10</Label><Slider value={drivelLevel} onValueChange={setDrivelLevel} max={10} min={0} step={1} className="mt-2" /><p className="text-xs text-muted-foreground mt-1">0 = nothing feels worth doing (anhedonia), 10 = ready to take on the world</p></div>
+                  <div><SeverityInput
+                  value={energyLevel}
+                  onChange={setEnergyLevel}
+                  max={10}
+                  title="Mental energy"
+                  voiceSlot="mental-health:energyLevel"
+                /></div>
+                  <div><SeverityInput
+                  value={motivationLevel}
+                  onChange={setMotivationLevel}
+                  max={10}
+                  title="Motivation"
+                  voiceSlot="mental-health:motivationLevel"
+                /></div>
+                  <div><SeverityInput
+                  value={drivelLevel}
+                  onChange={setDrivelLevel}
+                  max={10}
+                  title="Drive"
+                  voiceSlot="mental-health:drivelLevel"
+                /><p className="text-xs text-muted-foreground mt-1">0 = nothing feels worth doing (anhedonia), 10 = ready to take on the world</p></div>
                 </CollapsibleContent>
               </Collapsible>
             )}
@@ -360,7 +414,13 @@ export function GeneralMindMoodModal({ isOpen, onClose, onSave, editingEntry, in
                   </Button>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="pt-3 space-y-3">
-                  <div><Label>Social engagement: {socialEngagementLevel[0]}/10</Label><Slider value={socialEngagementLevel} onValueChange={setSocialEngagementLevel} max={10} min={0} step={1} className="mt-2" /><p className="text-xs text-muted-foreground mt-1">0 = isolated/lonely, 10 = deeply connected</p></div>
+                  <div><SeverityInput
+                  value={socialEngagementLevel}
+                  onChange={setSocialEngagementLevel}
+                  max={10}
+                  title="Social engagement"
+                  voiceSlot="mental-health:socialEngagementLevel"
+                /><p className="text-xs text-muted-foreground mt-1">0 = isolated/lonely, 10 = deeply connected</p></div>
                 </CollapsibleContent>
               </Collapsible>
             )}
@@ -375,7 +435,13 @@ export function GeneralMindMoodModal({ isOpen, onClose, onSave, editingEntry, in
                   </Button>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="pt-3 space-y-3">
-                  <div><Label>How hard was it to manage emotions: {regulationDifficulty[0]}/10</Label><Slider value={regulationDifficulty} onValueChange={setRegulationDifficulty} max={10} min={0} step={1} className="mt-2" /></div>
+                  <div><SeverityInput
+                  value={regulationDifficulty}
+                  onChange={setRegulationDifficulty}
+                  max={10}
+                  title="Emotional regulation difficulty"
+                  voiceSlot="mental-health:regulationDifficulty"
+                /></div>
                   <div className="flex items-start space-x-2">
                     <Checkbox id="meltprec" checked={meltdownPrecursorsPresent} onCheckedChange={(v) => setMeltdownPrecursorsPresent(!!v)} />
                     <Label htmlFor="meltprec" className="text-sm">Meltdown precursors present (sensory overload, cup-overflowing feeling)</Label>

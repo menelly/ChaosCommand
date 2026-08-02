@@ -98,7 +98,10 @@ export function LinesHistory({ onEdit, onDelete, refreshTrigger }: LinesHistoryP
     const infectionCount = filtered.filter(e => e.problemType === "site-infection" || e.feverPresent).length
     const dislodgedCount = filtered.filter(e => e.fullyDislodged || e.partiallyDislodged).length
     const erCount = filtered.filter(e => e.erVisit).length
-    const avgSeverity = total > 0 ? Math.round(filtered.reduce((s, e) => s + e.severity, 0) / total * 10) / 10 : 0
+    // Averaged over REPORTED severities only — dividing by `total` would treat
+    // an unanswered entry as a zero and drag the mean down.
+    const _sev = filtered.map(e => e.severity).filter((v): v is number => v !== undefined)
+    const avgSeverity = _sev.length > 0 ? Math.round(_sev.reduce((a, b) => a + b, 0) / _sev.length * 10) / 10 : 0
     return { total, infectionCount, dislodgedCount, erCount, avgSeverity }
   }, [filtered])
 

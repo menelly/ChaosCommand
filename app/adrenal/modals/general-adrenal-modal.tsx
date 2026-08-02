@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Slider } from '@/components/ui/slider'
+import { SeverityInput } from '@/components/ui/severity-input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { AlertTriangle, Flame } from 'lucide-react'
@@ -37,7 +37,7 @@ export function GeneralAdrenalModal({ isOpen, onClose, onSave, editingEntry }: A
   const [entryDate, setEntryDate] = useState(todayISO())
   const [entryTime, setEntryTime] = useState(nowTime())
   const [episodeType, setEpisodeType] = useState<AdrenalEpisodeType>('symptoms')
-  const [severity, setSeverity] = useState(5)
+  const [severity, setSeverity] = useState<number | undefined>(undefined)
 
   // Direction + symptoms
   const [direction, setDirection] = useState<AdrenalDirection | ''>('')
@@ -112,7 +112,7 @@ export function GeneralAdrenalModal({ isOpen, onClose, onSave, editingEntry }: A
       setTags(editingEntry.tags ?? [])
     } else {
       setEntryDate(todayISO()); setEntryTime(nowTime())
-      setEpisodeType('symptoms'); setSeverity(5)
+      setEpisodeType('symptoms'); setSeverity(undefined)
       setDirection(''); setInsufficiencySymptoms([]); setExcessSymptoms([])
       setStressDoseGiven(false); setStressDoseMed(''); setStressDoseMg(''); setStressDoseReason(''); setRouteInjection(false)
       setVomiting(false); setSevereWeakness(false); setConfusion(false); setUnableToKeepMedsDown(false); setEmergencyInjectionUsed(false)
@@ -337,7 +337,14 @@ export function GeneralAdrenalModal({ isOpen, onClose, onSave, editingEntry }: A
           {/* SEVERITY */}
           <div className="space-y-2">
             <Label>Overall severity: <span className={severityLabel?.color}>{severity}/10 — {severityLabel?.label}</span></Label>
-            <Slider min={1} max={10} step={1} value={[severity]} onValueChange={([v]) => setSeverity(v)} />
+            <SeverityInput
+                  value={severity}
+                  onChange={setSeverity}
+                  max={10}
+                  title="Severity"
+                  voiceSlot="adrenal:severity"
+                  allowNone={false}
+                />
           </div>
 
           {/* ACTIONS */}

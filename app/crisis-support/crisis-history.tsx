@@ -87,7 +87,28 @@ export function CrisisHistory({ refreshTrigger, onEdit, onDelete }: CrisisHistor
             return dateB.getTime() - dateA.getTime()
           })
 
-        setEntries(crisisEntries)
+        // Defensive dedupe by id, newest `updatedAt` wins.
+        //
+        // The save path no longer orphans a record when an entry's date is
+        // edited (see page.tsx), but ANY DUPLICATE ALREADY IN SOMEONE'S
+        // DATABASE would still render twice and still be counted twice. A fix
+        // that only stops new corruption leaves existing users broken, and this
+        // one is silent — you would see the entry twice and assume you logged
+        // it twice.
+        const byId = new Map<string, CrisisEntry>()
+        for (const e of crisisEntries) {
+          const seen = byId.get(e.id)
+          if (!seen || (e.updatedAt || '') > (seen.updatedAt || '')) byId.set(e.id, e)
+        }
+        const deduped = [...byId.values()]
+        if (deduped.length !== crisisEntries.length) {
+          console.warn(
+            `[crisis] ${crisisEntries.length - deduped.length} duplicate record(s) collapsed — ` +
+            `likely entries whose date was edited before 2026-08-02.`
+          )
+        }
+
+        setEntries(deduped)
       } catch (error) {
         console.error('Error loading crisis entries:', error)
         setEntries([])

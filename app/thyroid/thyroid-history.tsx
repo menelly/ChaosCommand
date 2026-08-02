@@ -118,8 +118,12 @@ export function ThyroidHistory({ onEdit, onDelete, refreshTrigger }: ThyroidHist
     const hypoCount = filtered.filter(e => e.direction === 'hypo' || (e.hypoSymptoms?.length ?? 0) > 0).length
     const stormCount = filtered.filter(e => e.feverPresent && e.confusionAgitation).length
     const erCount = filtered.filter(e => e.erVisit).length
-    const avgSeverity = total > 0
-      ? Math.round(filtered.reduce((sum, e) => sum + e.severity, 0) / total * 10) / 10
+    // Averaged over REPORTED severities only. Dividing by `total` would treat
+    // every unanswered entry as a zero and drag the mean down — the same class
+    // of silent under-reporting we spent 2026-08-02 removing.
+    const _sev = filtered.map(e => e.severity).filter((v): v is number => v !== undefined)
+    const avgSeverity = _sev.length > 0
+      ? Math.round(_sev.reduce((a, b) => a + b, 0) / _sev.length * 10) / 10
       : 0
     return { total, hyperCount, hypoCount, stormCount, erCount, avgSeverity }
   }, [filtered])

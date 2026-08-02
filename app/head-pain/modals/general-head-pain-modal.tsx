@@ -23,6 +23,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Slider } from '@/components/ui/slider'
+import { SeverityInput } from '@/components/ui/severity-input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
@@ -55,7 +56,7 @@ export function GeneralHeadPainModal({ isOpen, onClose, onSave, editingEntry, in
   const [entryTime, setEntryTime] = useState(nowTime())
   const [episodeType, setEpisodeType] = useState<HeadPainEpisodeType>(initialEpisodeType || 'general')
 
-  const [painIntensity, setPainIntensity] = useState([5])
+  const [painIntensity, setPainIntensity] = useState<number | undefined>(undefined)
   const [painLocation, setPainLocation] = useState<string[]>([])
   const [painType, setPainType] = useState<string[]>([])
   const [duration, setDuration] = useState('')
@@ -123,7 +124,7 @@ export function GeneralHeadPainModal({ isOpen, onClose, onSave, editingEntry, in
       setEntryDate(editingEntry.date || dt.date)
       setEntryTime(dt.time)
       setEpisodeType(editingEntry.episodeType || 'general')
-      setPainIntensity([editingEntry.painIntensity || 5])
+      setPainIntensity(editingEntry.painIntensity ?? undefined)
       setPainLocation(editingEntry.painLocation || [])
       setPainType(editingEntry.painType || [])
       setDuration(editingEntry.duration || '')
@@ -169,7 +170,7 @@ export function GeneralHeadPainModal({ isOpen, onClose, onSave, editingEntry, in
   const resetForm = () => {
     setEntryDate(todayISO()); setEntryTime(nowTime())
     setEpisodeType(initialEpisodeType || 'general')
-    setPainIntensity([5]); setPainLocation([]); setPainType([]); setDuration('')
+    setPainIntensity(undefined); setPainLocation([]); setPainType([]); setDuration('')
     setBaselineHeadachePain([3]); setFlareLikelyTrigger('')
     setWorstHeadacheOfLife(false); setThunderclapOnset(false); setSuddenOnset(false)
     setNeckStiffness(false); setFever(false); setFocalNeuroDeficit(false)
@@ -202,7 +203,7 @@ export function GeneralHeadPainModal({ isOpen, onClose, onSave, editingEntry, in
       date: entryDate,
       timestamp: dateTimeToISO(entryDate, entryTime),
       episodeType,
-      painIntensity: painIntensity[0],
+      painIntensity: painIntensity,
       painLocation,
       painType,
       duration: duration.trim() || undefined,
@@ -249,7 +250,7 @@ export function GeneralHeadPainModal({ isOpen, onClose, onSave, editingEntry, in
 
   const entryShape = {
     episodeType,
-    painIntensity: painIntensity[0],
+    painIntensity: painIntensity,
     worstHeadacheOfLife,
     thunderclapOnset,
     suddenOnset,
@@ -338,16 +339,26 @@ export function GeneralHeadPainModal({ isOpen, onClose, onSave, editingEntry, in
               <CollapsibleTrigger asChild>
                 <Button variant="outline" className="w-full justify-between h-auto py-3">
                   <span className="font-medium flex items-center gap-2 flex-wrap">
-                    <span>{getGremlinEmoji(painIntensity[0])} Pain: {painIntensity[0]}/10 —</span>
-                    <span>{getGremlinLabel(painIntensity[0])}</span>
+                    {painIntensity === undefined
+                      ? <span className="text-muted-foreground italic">Pain — not reported</span>
+                      : <>
+                          <span>{getGremlinEmoji(painIntensity)} Pain: {painIntensity}/10 —</span>
+                          <span>{getGremlinLabel(painIntensity)}</span>
+                        </>}
                   </span>
                   {openSections.intensity ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                 </Button>
               </CollapsibleTrigger>
               <CollapsibleContent className="pt-3 space-y-2">
-                <Slider value={painIntensity} onValueChange={setPainIntensity} max={10} min={0} step={1} />
+                <SeverityInput
+                  value={painIntensity}
+                  onChange={setPainIntensity}
+                  max={10}
+                  title="Pain intensity"
+                  voiceSlot="head-pain:painIntensity"
+                />
                 <p className="text-xs text-muted-foreground italic">
-                  Clinical: {getPainIntensityLabel(painIntensity[0])} ({painIntensity[0]}/10)
+                  {painIntensity !== undefined && <>Clinical: {getPainIntensityLabel(painIntensity)} ({painIntensity}/10)</>}
                 </p>
               </CollapsibleContent>
             </Collapsible>

@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Slider } from '@/components/ui/slider'
+import { SeverityInput } from '@/components/ui/severity-input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { AlertTriangle, Baby, Heart } from 'lucide-react'
@@ -38,7 +38,7 @@ export function GeneralPostpartumModal({ isOpen, onClose, onSave, editingEntry, 
   const [entryDate, setEntryDate] = useState(todayISO())
   const [entryTime, setEntryTime] = useState(nowTime())
   const [section, setSection] = useState<PostpartumSection>('recovery')
-  const [severity, setSeverity] = useState(3)
+  const [severity, setSeverity] = useState<number | undefined>(undefined)
 
   // Recovery
   const [lochiaFlow, setLochiaFlow] = useState<LochiaFlow | ''>('')
@@ -91,7 +91,7 @@ export function GeneralPostpartumModal({ isOpen, onClose, onSave, editingEntry, 
       const { date, time } = isoToDateTime(editingEntry.timestamp)
       setEntryDate(date); setEntryTime(time)
       setSection(editingEntry.section)
-      setSeverity(editingEntry.severity ?? 3)
+      setSeverity(editingEntry.severity ?? undefined)
       setLochiaFlow(editingEntry.lochiaFlow ?? '')
       setPadsSoakedPerHour(editingEntry.padsSoakedPerHour?.toString() ?? '')
       setLargeClots(editingEntry.largeClots ?? false)
@@ -123,7 +123,7 @@ export function GeneralPostpartumModal({ isOpen, onClose, onSave, editingEntry, 
       setTags(editingEntry.tags ?? [])
     } else {
       setEntryDate(todayISO()); setEntryTime(nowTime())
-      setSection('recovery'); setSeverity(3)
+      setSection('recovery'); setSeverity(undefined)
       setLochiaFlow(''); setPadsSoakedPerHour(''); setLargeClots(false); setFundusFirmness('')
       setRecoverySymptoms([]); setFeverPresent(false)
       setMoodLow(false); setMoodAnxious(false); setIntrusiveThoughts(false); setThoughtsOfHarm(false)
@@ -408,7 +408,14 @@ export function GeneralPostpartumModal({ isOpen, onClose, onSave, editingEntry, 
           {section === 'recovery' && (
             <div className="space-y-2">
               <Label>Overall discomfort: <span className={severityLabel?.color}>{severity}/10 — {severityLabel?.label}</span></Label>
-              <Slider min={1} max={10} step={1} value={[severity]} onValueChange={([v]) => setSeverity(v)} />
+              <SeverityInput
+                  value={severity}
+                  onChange={setSeverity}
+                  max={10}
+                  title="Severity"
+                  voiceSlot="postpartum:severity"
+                  allowNone={false}
+                />
             </div>
           )}
 

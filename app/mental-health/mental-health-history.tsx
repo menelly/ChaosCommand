@@ -130,11 +130,11 @@ export function MindMoodHistory({ entries, onEdit, onDelete, onAddNew }: Props) 
                           {info.icon} {info.name}
                         </Badge>
                         {moodInfo && <Badge variant="outline">{moodInfo.emoji} {moodInfo.label}</Badge>}
-                        {entry.depressionLevel >= 7 && <Badge variant="destructive">Dep {entry.depressionLevel}</Badge>}
-                        {entry.maniaLevel >= 7 && <Badge variant="destructive">Mania {entry.maniaLevel}</Badge>}
+                        {entry.depressionLevel !== undefined && entry.depressionLevel >= 7 && <Badge variant="destructive">Dep {entry.depressionLevel}</Badge>}
+                        {entry.maniaLevel !== undefined && entry.maniaLevel >= 7 && <Badge variant="destructive">Mania {entry.maniaLevel}</Badge>}
                         {entry.moodSwingDirection === 'rapid-cycling' && <Badge variant="destructive">Rapid cycling</Badge>}
                         {entry.meltdownOccurred && <Badge variant="outline" className="bg-info/10 text-info border-info/30">Meltdown</Badge>}
-                        {entry.brainFogSeverity >= 6 && <Badge variant="outline">Brain fog {entry.brainFogSeverity}</Badge>}
+                        {entry.brainFogSeverity !== undefined && entry.brainFogSeverity >= 6 && <Badge variant="outline">Brain fog {entry.brainFogSeverity}</Badge>}
                       </div>
                       <div className="flex gap-1">
                         <Button variant="ghost" size="sm" onClick={() => onEdit(entry)}><Edit className="h-4 w-4" /></Button>

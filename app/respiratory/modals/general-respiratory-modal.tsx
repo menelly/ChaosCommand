@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Slider } from '@/components/ui/slider'
+import { SeverityInput } from '@/components/ui/severity-input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
@@ -28,7 +28,7 @@ export function GeneralRespiratoryModal({ isOpen, onClose, onSave, editingEntry 
   const [entryDate, setEntryDate] = useState(todayISO())
   const [entryTime, setEntryTime] = useState(nowTime())
   const [episodeType, setEpisodeType] = useState<RespiratoryEpisodeType>('general')
-  const [severity, setSeverity] = useState([5])
+  const [severity, setSeverity] = useState<number | undefined>(undefined)
   const [breathingPattern, setBreathingPattern] = useState<string>('')
   const [chestTightness, setChestTightness] = useState([0])
   const [spo2Lowest, setSpo2Lowest] = useState('')
@@ -66,7 +66,7 @@ export function GeneralRespiratoryModal({ isOpen, onClose, onSave, editingEntry 
       setEntryDate(editingEntry.date || dt.date)
       setEntryTime(dt.time)
       setEpisodeType(editingEntry.episodeType)
-      setSeverity([editingEntry.severity || 5])
+      setSeverity(editingEntry.severity ?? undefined)
       setBreathingPattern(editingEntry.breathingPattern || '')
       setChestTightness([editingEntry.chestTightness || 0])
       setSpo2Lowest(editingEntry.spo2Lowest?.toString() || '')
@@ -87,7 +87,7 @@ export function GeneralRespiratoryModal({ isOpen, onClose, onSave, editingEntry 
 
   const reset = () => {
     setEntryDate(todayISO()); setEntryTime(nowTime())
-    setEpisodeType('general'); setSeverity([5]); setBreathingPattern(''); setChestTightness([0])
+    setEpisodeType('general'); setSeverity(undefined); setBreathingPattern(''); setChestTightness([0])
     setSpo2Lowest(''); setHrAtEvent(''); setSwelling(false); setHivesPresent(false)
     setThroatTightness(false); setEpinephrineGiven(false); setSymptoms([]); setTriggers([])
     setTimeToResolutionMin(''); setErVisitRequired(false); setAttachmentImages([])
@@ -102,7 +102,7 @@ export function GeneralRespiratoryModal({ isOpen, onClose, onSave, editingEntry 
       date: entryDate,
       timestamp: dateTimeToISO(entryDate, entryTime),
       episodeType,
-      severity: severity[0],
+      severity: severity,
       breathingPattern: (breathingPattern || undefined) as any,
       chestTightness: chestTightness[0] > 0 ? chestTightness[0] : undefined,
       spo2Lowest: spo2Lowest ? parseInt(spo2Lowest) : undefined,
@@ -131,7 +131,7 @@ export function GeneralRespiratoryModal({ isOpen, onClose, onSave, editingEntry 
         <div className="space-y-6">
           {/* Red flag banner */}
           {(() => {
-            const shape = { episodeType, severity: severity[0], spo2Lowest: spo2Lowest ? parseInt(spo2Lowest) : undefined, symptoms, swelling, hivesPresent, throatTightness }
+            const shape = { episodeType, severity: severity, spo2Lowest: spo2Lowest ? parseInt(spo2Lowest) : undefined, symptoms, swelling, hivesPresent, throatTightness }
             const flags = getRedFlagWarnings(shape)
             const measures = getInterimMeasures(shape)
             if (flags.length === 0) return null
@@ -213,8 +213,14 @@ export function GeneralRespiratoryModal({ isOpen, onClose, onSave, editingEntry 
             </CollapsibleTrigger>
             <CollapsibleContent className="pt-3">
               <div className="space-y-3">
-                <Label>Severity: {severity[0]} - <span className={getSeverityColor(severity[0])}>{getSeverityLabel(severity[0])}</span></Label>
-                <Slider value={severity} onValueChange={setSeverity} max={10} min={1} step={1} />
+                <SeverityInput
+                  value={severity}
+                  onChange={setSeverity}
+                  max={10}
+                  title="Severity"
+                  voiceSlot="respiratory:severity"
+                  allowNone={false}
+                />
               </div>
             </CollapsibleContent>
           </Collapsible>

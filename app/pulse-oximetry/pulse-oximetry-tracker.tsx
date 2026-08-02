@@ -48,6 +48,20 @@ export interface PulseOxEntry {
   spo2?: number       // single SpO2 %
   pulse?: number      // single pulse /min
   context?: ReadingContext
+  /** What took the reading — "fingertip clip", "ring", "smartwatch", "hospital".
+   *
+   *  Suggested by a user, 2026-08-02. A wrist or ring sensor and a fingertip clip do not
+   *  have the same reliability at the low end, and a clinician looking at an
+   *  implausible number needs to know which one produced it. Recording the
+   *  device lets them judge it.
+   *
+   *  ⚠️ THIS IS ANNOTATION, NOT FILTERING. The reading is stored and reported
+   *  exactly as entered no matter what device it came from — including the wild
+   *  ones. Physiologically "impossible" readings turn out to be real often
+   *  enough that a system quietly hiding them as implausible would eventually
+   *  hide a medical emergency. Give the clinician the provenance and let them
+   *  adjudicate; never adjudicate for them. */
+  device?: string
   // --- Session report (kind: 'session') ---
   startTime?: string  // recording window start "HH:mm"
   endTime?: string    // recording window end "HH:mm" (may cross midnight)
@@ -77,7 +91,7 @@ function num(v: string): number | undefined {
 
 const blankForm = {
   // spot
-  readTime: '', spo2: '', pulse: '',
+  readTime: '', spo2: '', pulse: '', device: '',
   // session
   startTime: '', endTime: '', o2Score: '',
   desat4Count: '', desat4PerHour: '', desat3Count: '', desat3PerHour: '',
@@ -87,6 +101,11 @@ const blankForm = {
 }
 
 const CONTEXTS: ReadingContext[] = ['rest', 'active', 'sleep']
+
+// Common devices, offered as one-tap chips. Free text stays available because
+// this list will never be complete and an unlisted device must still be
+// recordable.
+const DEVICES = ['fingertip clip', 'ring', 'smartwatch', 'hospital monitor'] as const
 
 export default function PulseOximetryTracker() {
   const { saveData, getCategoryData } = useDailyData()
@@ -131,6 +150,7 @@ export default function PulseOximetryTracker() {
         spo2: num(form.spo2),
         pulse: num(form.pulse),
         context,
+        device: form.device.trim() || undefined,
       }
       if (entry.spo2 === undefined && entry.pulse === undefined) {
         toast({ title: 'Nothing to save', description: 'Enter an SpO₂ and/or pulse reading.', variant: 'destructive' })
@@ -189,6 +209,7 @@ export default function PulseOximetryTracker() {
       if (e.spo2 != null) parts.push(`SpO₂ ${e.spo2}%`)
       if (e.pulse != null) parts.push(`HR ${e.pulse}`)
       if (e.context) parts.push(e.context)
+      if (e.device) parts.push(e.device)
     } else {
       if (e.startTime && e.endTime) parts.push(`${e.startTime}–${e.endTime}`)
       if (e.spo2Min != null && e.spo2Max != null) parts.push(`SpO₂ ${e.spo2Min}–${e.spo2Max}%`)
@@ -271,6 +292,25 @@ export default function PulseOximetryTracker() {
                     <Button key={c} type="button" variant={context === c ? 'default' : 'outline'} size="sm" className="capitalize" onClick={() => setContext(c)}>{c}</Button>
                   ))}
                 </div>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Device <span className="text-muted-foreground">(optional)</span></Label>
+                <div className="flex flex-wrap gap-2">
+                  {DEVICES.map(d => (
+                    <Button
+                      key={d}
+                      type="button"
+                      variant={form.device === d ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setForm(f => ({ ...f, device: f.device === d ? '' : d }))}
+                    >{d}</Button>
+                  ))}
+                </div>
+                <Input placeholder="or type another device" value={form.device} onChange={update('device')} />
+                <p className="text-xs text-muted-foreground">
+                  Recorded alongside the reading so a clinician can weigh it. Nothing is ever
+                  hidden or corrected because of the device it came from.
+                </p>
               </div>
             </>
           ) : (
@@ -414,10 +454,14 @@ export default function PulseOximetryTracker() {
         </TabsContent>
       </Tabs>
 
-      <p className="text-center text-xs text-muted-foreground">
+      {/* A div, not a paragraph: Badge renders a block element, and a block
+          inside a paragraph is invalid HTML — the browser closes the paragraph
+          early, so server and client DOM disagree and React reports a hydration
+          mismatch. */}
+      <div className="text-center text-xs text-muted-foreground">
         <Badge variant="outline" className="mr-1">📄</Badge>
         Entries save to your record and appear on your doctor PDF export.
-      </p>
+      </div>
     </div>
   )
 }

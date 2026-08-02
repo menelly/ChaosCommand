@@ -28,28 +28,65 @@ import { useToast } from '@/hooks/use-toast'
 import AppCanvas from '@/components/app-canvas'
 import { useDailyData } from '@/lib/database'
 import { analyzeAllPatterns, PatternInsight } from '@/lib/pattern-engine'
+import { baseTrackerName } from '@/lib/symptom-labels'
 import { analyzeV2Patterns } from '@/lib/pattern-engine-v2'
 import { db, PatternSnapshot } from '@/lib/database/dexie-db'
 
 import Link from "next/link";
 
-const TRACKER_SUBCATEGORIES = [
-  'upper-digestive', 'pain', 'sleep', 'mental-health', 'brain-fog',
-  'movement', 'hydration', 'energy', 'anxiety', 'sensory', 'self-care',
-  'weather', 'food-choice', 'dysautonomia', 'seizure', 'reproductive',
-  'food-allergens', 'bathroom', 'head-pain', 'crisis', 'coping',
-  // v0.4.x trackers
-  'cardiac', 'respiratory', 'skin', 'joint', 'substance',
-  // Clinician-feedback (CHA-251) + Maintain trackers — now READ into the
-  // correlation engine. Deep per-tracker detectors are a follow-up; loading
-  // them here is what lets medication-adherence correlate against symptoms
-  // (e.g. a skipped dose → worse symptoms next day), which is the whole point.
-  'gu', 'ent', 'postpartum', 'thyroid', 'adrenal', 'lines-tubes', 'medication-adherence',
-  // Vitals + pulse-ox: numeric baselines now feed correlations via a headline
-  // metric (systolic BP / SpO2 desaturation) — see extractSeverity in pattern-engine.
-  'vitals', 'pulse-oximetry',
-  'other'
-] as const
+/*
+ * 🚨 THIS USED TO BE AN ALLOWLIST. IT WAS SILENTLY EATING WHOLE TRACKERS.
+ *
+ * Until 2026-08-02 this file held a hand-maintained array of ~36 subcategory
+ * names, and the analysis only ever saw records whose subcategory appeared in
+ * it. Anything absent was dropped before analysis began — no error, no warning,
+ * no empty-state, nothing. A tracker could collect data for months and simply
+ * never exist as far as the Patterns page was concerned.
+ *
+ * WHAT IT WAS EATING, on a real user's data:
+ *   neuro          <- the tracker holding the very recovery the
+ *                     improvement-signal feature was built to surface
+ *   autoimmune     <- the tracker for the condition under active treatment
+ *   mind-mood      <- ('mental-health' was listed; the sibling was not)
+ *   custom-trackers, environmental-allergens
+ *
+ * Every tracker added after someone last remembered to edit this array was
+ * invisible, and the failure is undetectable from the UI: a missing tracker and
+ * a tracker with no patterns render identically. It was found only because a
+ * user noticed their own data missing from a screen that gave no indication
+ * anything was absent.
+ *
+ * THE FIX IS THE INVERSION, NOT A LONGER LIST. Adding 'neuro' would have fixed
+ * today and rebuilt the trap for the next tracker. An allowlist fails CLOSED —
+ * new trackers default to invisible, and nobody finds out. A denylist fails
+ * OPEN — new trackers are analysed automatically, and the worst case is a
+ * useless insight somebody notices and excludes here.
+ *
+ * ⚠️ DO NOT CONVERT THIS BACK TO AN ALLOWLIST. If a tracker is noisy, name it
+ * below with a reason.
+ *
+ * Excluded here = data with no symptom severity to trend: administrative
+ * records, reference material, and settings. They are not symptoms, so they
+ * cannot have a trajectory. (Records with no readable severity are skipped by
+ * the engine anyway — this just keeps them out of the co-occurrence counts,
+ * where "logged my demographics the same day as a flare" is pure noise.)
+ */
+const NON_SYMPTOM_SUBCATEGORIES: readonly string[] = [
+  'demographics',
+  'safety-plan',
+  'hope-reminders',
+  'employment-history',
+  'disability-applications',
+  'missed-work',
+  'gaslight-garage',
+]
+
+/** True when this subcategory holds trackable symptom data. Prefix-aware,
+ *  because several trackers store one record PER ENTRY as `<name>-<id>`. */
+function isSymptomSubcategory(sub: string): boolean {
+  if (!sub) return false
+  return !NON_SYMPTOM_SUBCATEGORIES.some(x => sub === x || sub.startsWith(x + '-'))
+}
 
 export default function PatternsPage() {
   const [isLoading, setIsLoading] = useState(false)
@@ -105,13 +142,32 @@ export default function PatternsPage() {
       // Fetch ALL tracker data in one query, then split by subcategory
       const allRecords = await getDateRange(startDate, endDate, 'tracker')
 
-      // Build tracker data object grouped by subcategory
+      // Group by WHATEVER subcategory each record actually carries — no
+      // allowlist. See NON_SYMPTOM_SUBCATEGORIES above for why this inverted:
+      // the old hardcoded list was silently dropping whole trackers (neuro,
+      // autoimmune, mind-mood) before analysis, and a dropped tracker is
+      // indistinguishable from a tracker with nothing to report.
+      //
+      // Per-entry subcategories (`thyroid-<id>`, `adrenal-<id>`) collapse onto
+      // their base name so one tracker is one series rather than fifty
+      // one-record series that all fail the sample-size floor.
       const trackerData: Record<string, any[]> = {}
-      TRACKER_SUBCATEGORIES.forEach(sub => {
-        trackerData[sub] = allRecords.filter(r =>
-          r.subcategory === sub || r.subcategory.startsWith(sub + '-')
-        )
-      })
+      let droppedNonSymptom = 0
+      for (const r of allRecords) {
+        const sub = r.subcategory || ''
+        if (!isSymptomSubcategory(sub)) { droppedNonSymptom++; continue }
+        const base = baseTrackerName(sub)
+        if (!trackerData[base]) trackerData[base] = []
+        trackerData[base].push(r)
+      }
+      // Loud on purpose. The bug this replaces was invisible for months
+      // precisely because nothing ever said what it had thrown away.
+      console.log(
+        `[patterns] analysing ${Object.keys(trackerData).length} trackers, ` +
+        `${allRecords.length - droppedNonSymptom} records ` +
+        `(${droppedNonSymptom} non-symptom records excluded):`,
+        Object.entries(trackerData).map(([k, v]) => `${k}=${v.length}`).sort().join(' ')
+      )
 
       // Run BOTH engines — v1 for cross-tracker correlations + v2 for semantic red flags
       const v1Results = analyzeAllPatterns(trackerData)

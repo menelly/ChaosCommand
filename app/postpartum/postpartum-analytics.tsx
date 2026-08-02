@@ -125,8 +125,10 @@ export function PostpartumAnalytics({ refreshTrigger }: PostpartumAnalyticsProps
       if (e.severity == null) continue
       const d = e.date
       if (!severityByDate[d]) severityByDate[d] = { sum: 0, count: 0 }
-      severityByDate[d].sum += e.severity
-      severityByDate[d].count += 1
+      if (e.severity !== undefined) {
+        severityByDate[d].sum += e.severity
+        severityByDate[d].count += 1
+      }
     }
     const severityLineData = Object.entries(severityByDate)
       .sort(([a], [b]) => a.localeCompare(b))

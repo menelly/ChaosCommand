@@ -349,9 +349,11 @@ export default function DysautonomiaTracker() {
                         <div>
                           <div className="font-medium">{episodeInfo.name}</div>
                           <div className="text-sm text-muted-foreground">
-                            Severity: <span className={getSeverityColor(entry.severity)}>
-                              {getSeverityLabel(entry.severity)}
-                            </span>
+                            {entry.severity === undefined
+                              ? <span className="italic">Severity not reported</span>
+                              : <>Severity: <span className={getSeverityColor(entry.severity)}>
+                                  {getSeverityLabel(entry.severity)}
+                                </span></>}
                             {entry.symptoms.length > 0 && (
                               <span> • {entry.symptoms.slice(0, 2).join(', ')}</span>
                             )}

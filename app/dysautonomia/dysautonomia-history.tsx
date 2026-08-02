@@ -159,10 +159,18 @@ export function DysautonomiaHistory({ onEdit, onDelete, refreshTrigger }: Dysaut
         <Card>
           <CardContent className="p-4">
             <div className="text-2xl font-bold text-foreground">
-              {historyEntries.length > 0 ? 
-                (historyEntries.reduce((sum, e) => sum + e.severity, 0) / historyEntries.length).toFixed(1) : 
-                '0'
-              }
+              {(() => {
+                // Averaged over REPORTED severities only. Dividing by the full
+                // length would count an unanswered entry as a zero and drag the
+                // mean down — the same silent under-reporting we spent
+                // 2026-08-02 removing from every other tracker.
+                const sev = historyEntries
+                  .map(e => e.severity)
+                  .filter((v): v is number => v !== undefined)
+                return sev.length > 0
+                  ? (sev.reduce((a, b) => a + b, 0) / sev.length).toFixed(1)
+                  : '0'
+              })()}
             </div>
             <div className="text-sm text-muted-foreground">Avg Severity</div>
           </CardContent>
@@ -209,9 +217,11 @@ export function DysautonomiaHistory({ onEdit, onDelete, refreshTrigger }: Dysaut
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-lg">{episodeInfo.icon}</span>
                             <span className="font-medium">{episodeInfo.name}</span>
-                            <Badge variant="outline" className={getSeverityColor(entry.severity)}>
-                              {getSeverityLabel(entry.severity)}
-                            </Badge>
+                            {entry.severity !== undefined && (
+                              <Badge variant="outline" className={getSeverityColor(entry.severity)}>
+                                {getSeverityLabel(entry.severity)}
+                              </Badge>
+                            )}
                           </div>
                           <div className="flex gap-1">
                             <Button

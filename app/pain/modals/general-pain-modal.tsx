@@ -22,6 +22,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Slider } from '@/components/ui/slider'
+import { SeverityInput } from '@/components/ui/severity-input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
@@ -54,7 +55,7 @@ export function GeneralPainModal({ isOpen, onClose, onSave, editingEntry, initia
   const [entryTime, setEntryTime] = useState(nowTime())
   const [episodeType, setEpisodeType] = useState<PainEpisodeType>(initialEpisodeType || 'general')
 
-  const [painLevel, setPainLevel] = useState([5])
+  const [painLevel, setPainLevel] = useState<number | undefined>(undefined)
   const [painLocations, setPainLocations] = useState<string[]>([])
   const [painCharacter, setPainCharacter] = useState<string[]>([])
   const [painPattern, setPainPattern] = useState<string[]>([])
@@ -129,7 +130,7 @@ export function GeneralPainModal({ isOpen, onClose, onSave, editingEntry, initia
       setEntryDate(editingEntry.date || dt.date)
       setEntryTime(dt.time)
       setEpisodeType(editingEntry.episodeType || 'general')
-      setPainLevel([editingEntry.painLevel || 5])
+      setPainLevel(editingEntry.painLevel ?? undefined)
       setPainLocations(editingEntry.painLocations || [])
       // Accept legacy painType / painQuality fields
       setPainCharacter(editingEntry.painCharacter || editingEntry.painType || [])
@@ -170,7 +171,7 @@ export function GeneralPainModal({ isOpen, onClose, onSave, editingEntry, initia
     setEntryDate(todayISO())
     setEntryTime(nowTime())
     setEpisodeType(initialEpisodeType || 'general')
-    setPainLevel([5])
+    setPainLevel(undefined)
     setPainLocations([])
     setPainCharacter([])
     setPainPattern([])
@@ -218,7 +219,7 @@ export function GeneralPainModal({ isOpen, onClose, onSave, editingEntry, initia
       date: entryDate,
       timestamp: dateTimeToISO(entryDate, entryTime),
       episodeType,
-      painLevel: painLevel[0],
+      painLevel: painLevel,
       painLocations,
       painCharacter,
       painPattern,
@@ -258,7 +259,7 @@ export function GeneralPainModal({ isOpen, onClose, onSave, editingEntry, initia
 
   const entryShape = {
     episodeType,
-    painLevel: painLevel[0],
+    painLevel: painLevel,
     painLocations,
     painCharacter,
     painPattern,
@@ -503,16 +504,26 @@ export function GeneralPainModal({ isOpen, onClose, onSave, editingEntry, initia
               <CollapsibleTrigger asChild>
                 <Button variant="outline" className="w-full justify-between h-auto py-3">
                   <span className="font-medium flex items-center gap-2 flex-wrap">
-                    <span>{getGremlinEmoji(painLevel[0])} Pain level: {painLevel[0]}/10 —</span>
-                    <span className={getSeverityColor(painLevel[0])}>{getGremlinLabel(painLevel[0])}</span>
+                    {painLevel === undefined
+                      ? <span className="text-muted-foreground italic">Pain level — not reported</span>
+                      : <>
+                          <span>{getGremlinEmoji(painLevel)} Pain level: {painLevel}/10 —</span>
+                          <span className={getSeverityColor(painLevel)}>{getGremlinLabel(painLevel)}</span>
+                        </>}
                   </span>
                   {openSections.severity ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                 </Button>
               </CollapsibleTrigger>
               <CollapsibleContent className="pt-3 space-y-2">
-                <Slider value={painLevel} onValueChange={setPainLevel} max={10} min={0} step={1} />
+                <SeverityInput
+                  value={painLevel}
+                  onChange={setPainLevel}
+                  max={10}
+                  title="Pain level"
+                  voiceSlot="pain:painLevel"
+                />
                 <p className="text-xs text-muted-foreground italic">
-                  Clinical: <span className={getSeverityColor(painLevel[0])}>{getSeverityLabel(painLevel[0])}</span> ({painLevel[0]}/10)
+                  {painLevel !== undefined && <>Clinical: <span className={getSeverityColor(painLevel)}>{getSeverityLabel(painLevel)}</span> ({painLevel}/10)</>}
                 </p>
               </CollapsibleContent>
             </Collapsible>
