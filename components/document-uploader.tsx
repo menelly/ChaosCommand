@@ -468,10 +468,19 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
             // The validator model wasn't available. Fail SAFE — refuse to surface
             // raw NER. (The page gates upload until both models load, so this is
             // a belt-and-suspenders guard for a mid-run model failure.)
+            // ⚠️ This message used to assert "the reviewer model isn't ready"
+            // as though it knew that. It didn't — it is thrown for ANY reason
+            // the scan came back empty, and it told the user to "wait for the
+            // models to finish loading" even when the model was resident and
+            // the real failure was elsewhere. Advice that cannot work is worse
+            // than no advice: it sends someone to wait for an event that has
+            // already happened. Report what is actually observable and say
+            // plainly that the reason is in the console.
             throw new Error(
-              `AI parsing is on but the reviewer model isn't ready, so medical-event ` +
-              `extraction was skipped rather than show unreviewed results. Wait for the AI ` +
-              `models to finish loading (the upload unlocks when they're ready), or add events by hand.`
+              `AI parsing is on, but the medical-event extractor returned nothing, so ` +
+              `extraction was skipped rather than show unreviewed results. This can mean the ` +
+              `model is still loading, or that it failed mid-run — the console logs (lines ` +
+              `beginning 🧠) say which. Lab-panel parsing and manual entry still work.`
             );
           }
           if (errMsg.includes('<!DOCTYPE') || errMsg.includes('Unexpected token') || errMsg.includes('not valid JSON')) {

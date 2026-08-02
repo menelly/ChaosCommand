@@ -428,10 +428,6 @@ export default function ImportRecordsPage() {
                       {aiState === 'ready' && (
                         <>
                           <span className="text-xs text-[var(--text-main)] font-medium">🧠 AI model ready — upload unlocked.</span>
-                          {/* TEMP (prompt-off experiment, delete before ship) */}
-                          <Button asChild size="sm" variant="outline" className="shrink-0">
-                            <Link href="/import/prompt-off">🧪 Prompt-Off</Link>
-                          </Button>
                         </>
                       )}
                       {aiState === 'failed' && (

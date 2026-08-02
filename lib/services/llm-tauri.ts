@@ -71,36 +71,89 @@ export async function getLlmModelStatus(): Promise<LlmModelStatus | null> {
 
 /** Download the model (resumable, SHA256-verified in Rust). onProgress fires
  *  from the Rust download stream via the llm-download-progress event. */
+// Same collision, higher stakes: Rust rejects a concurrent download with
+// `Err("download already in progress")`, and StrictMode's double-invoke made
+// that a near-certainty. Reporting "setup failed" over a healthy 2GB download
+// is the version of this bug most likely to make someone give up entirely — so
+// the second caller attaches to the first download instead of racing it.
+let _downloadInFlight: Promise<void> | null = null;
+
 export async function downloadLlmModel(
   onProgress?: (p: LlmDownloadProgress) => void,
 ): Promise<void> {
   if (!inTauri()) throw new Error('model download requires the desktop app');
   const { listen } = await import('@tauri-apps/api/event');
+  // Progress listeners attach per CALLER, so a second caller still gets its
+  // percentages even though only one download runs.
   const unlisten = onProgress
     ? await listen<LlmDownloadProgress>('llm-download-progress', (e) => onProgress(e.payload))
     : null;
   try {
-    await invoke<void>('llm_download_model');
+    if (_downloadInFlight) { await _downloadInFlight; return; }
+    _downloadInFlight = invoke<void>('llm_download_model').finally(() => {
+      _downloadInFlight = null;
+    });
+    await _downloadInFlight;
   } finally {
     unlisten?.();
   }
 }
 
 /** Load the downloaded GGUF into RAM. Idempotent; ~3GB resident once loaded. */
+/*
+ * ⚠️ CONCURRENT CALLS MUST SHARE ONE LOAD, NOT RACE AND FAIL.
+ *
+ * The Rust side rejects a second simultaneous load with
+ * `Err("model load already in progress")`. That is correct on its side — but
+ * this function used to pass the rejection straight up, and every caller maps a
+ * throw to "AI model setup failed".
+ *
+ * React StrictMode double-invokes effects in development, and Next enables it by
+ * default, so the import page's mount effect called this TWICE, every time. The
+ * first call loaded the model perfectly; the second collided, threw, and painted
+ * "❌ AI model setup failed" over a model that was busy loading — or, if it
+ * landed after the first finished, overwrote "ready" with "failed". The model
+ * was never broken. The UI was reporting a collision as a failure.
+ *
+ * A collision means WAIT, not FAIL. One in-flight promise, shared by every
+ * caller: the second call now awaits the first instead of starting a fight with
+ * it, which also makes the whole thing idempotent for free.
+ */
+let _loadInFlight: Promise<void> | null = null;
+
 export async function loadLlmModel(): Promise<void> {
   if (!inTauri()) throw new Error('model load requires the desktop app');
   if (_loaded) return;
+  if (_loadInFlight) return _loadInFlight;
+
   _loading = true;
   _failed = false;
-  try {
-    await invoke<void>('llm_load_model');
-    _loaded = true;
-  } catch (e) {
-    _failed = true;
-    throw e;
-  } finally {
-    _loading = false;
-  }
+  _loadInFlight = (async () => {
+    try {
+      await invoke<void>('llm_load_model');
+      _loaded = true;
+    } catch (e) {
+      // Belt and braces. If some OTHER path (a second window, a stale call from
+      // before this dedupe existed) already has a load running, that is still
+      // not a failure — poll until it resolves rather than declaring defeat.
+      const msg = e instanceof Error ? e.message : String(e);
+      if (/already in progress/i.test(msg)) {
+        console.warn('🧠 load collided with one already running — waiting for it');
+        for (let i = 0; i < 120; i++) {              // up to ~2 minutes
+          await new Promise(r => setTimeout(r, 1000));
+          const s = await getLlmModelStatus();
+          if (s?.loaded) { _loaded = true; return; }
+        }
+      }
+      _failed = true;
+      throw e;
+    } finally {
+      _loading = false;
+      _loadInFlight = null;
+    }
+  })();
+
+  return _loadInFlight;
 }
 
 /** Free the model's RAM. The next generate call will need loadLlmModel() again. */
@@ -154,10 +207,42 @@ class TauriLlmRunner implements ImpressionLLMRunner {
     userPrompt: string,
     opts?: { maxTokens?: number },
   ): Promise<string | null> {
+    /*
+     * ⚠️ THE DEADLOCK, AGAIN — one layer further down.
+     *
+     * impression-parser-llm.ts already carries a comment about this exact bug:
+     * gating on isReady() before calling run() meant the load was never KICKED
+     * OFF, because run() was never called, so isReady() stayed false forever.
+     * The fix was to ALWAYS call run() and let the runner decide whether to
+     * "invoke the model, QUEUE A LOAD, or no-op".
+     *
+     * This runner only ever implemented two of those three. It returned null
+     * when the model wasn't resident and never queued anything — so the caller
+     * dutifully called run(), run() dutifully declined, and nothing ever
+     * loaded. Every upload then failed with "the reviewer model isn't ready",
+     * which was true and permanent and gave no way out.
+     *
+     * The page's own load path can miss for several ordinary reasons — the user
+     * navigated straight to the uploader, the model was unloaded to free RAM, a
+     * reload cleared module state while Rust kept running. None of those should
+     * be terminal. So: if the model isn't resident, LOAD IT, then proceed.
+     */
     if (!_loaded) {
-      // Model not resident — callers fall back / fail safe, same as before.
-      console.log('🧠 TauriLlmRunner: model not loaded — returning null');
-      return null;
+      if (!inTauri()) {
+        console.log('🧠 TauriLlmRunner: not in the desktop app — returning null');
+        return null;
+      }
+      try {
+        console.log('🧠 TauriLlmRunner: model not resident — loading it now');
+        await loadLlmModel();          // deduped; safe to call concurrently
+      } catch (e) {
+        console.warn('🧠 TauriLlmRunner: on-demand load failed:', e);
+        return null;
+      }
+      if (!_loaded) {
+        console.warn('🧠 TauriLlmRunner: load reported success but model still not resident');
+        return null;
+      }
     }
     try {
       const t0 = Date.now();
