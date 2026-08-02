@@ -76,7 +76,7 @@ export function GeneralLinesModal({ isOpen, onClose, onSave, editingEntry }: Lin
   const [cantClearSecretions, setCantClearSecretions] = useState(false)
 
   // Pain
-  const [painSeverity, setPainSeverity] = useState(5)
+  const [painSeverity, setPainSeverity] = useState<number | undefined>(undefined)
 
   // Actions
   const [flushedAttempted, setFlushedAttempted] = useState(false)
@@ -118,7 +118,7 @@ export function GeneralLinesModal({ isOpen, onClose, onSave, editingEntry }: Lin
       setVomiting(editingEntry.vomiting ?? false)
       setBreathingDifficulty(editingEntry.breathingDifficulty ?? false)
       setCantClearSecretions(editingEntry.cantClearSecretions ?? false)
-      setPainSeverity(editingEntry.painSeverity ?? 5)
+      setPainSeverity(editingEntry.painSeverity ?? undefined)
       setFlushedAttempted(editingEntry.flushedAttempted ?? false)
       setDressingChanged(editingEntry.dressingChanged ?? false)
       setHomeHealthNotified(editingEntry.homeHealthNotified ?? false)
@@ -136,7 +136,7 @@ export function GeneralLinesModal({ isOpen, onClose, onSave, editingEntry }: Lin
       setOutputMl(""); setOutputColor(""); setNoOutput(false); setOutputBlood(false)
       setAbdominalDistension(false); setCramping(false); setVomiting(false)
       setBreathingDifficulty(false); setCantClearSecretions(false)
-      setPainSeverity(5)
+      setPainSeverity(undefined)
       setFlushedAttempted(false); setDressingChanged(false); setHomeHealthNotified(false); setProviderNotified(false); setErVisit(false)
       setNotes(""); setTags([])
     }
@@ -397,7 +397,14 @@ export function GeneralLinesModal({ isOpen, onClose, onSave, editingEntry }: Lin
           {problemType === "pain" && (
             <div className="space-y-2">
               <Label className="text-xs">Pain severity: {painSeverity}/10</Label>
-              <Slider min={1} max={10} step={1} value={[painSeverity]} onValueChange={([v]) => setPainSeverity(v)} />
+              <SeverityInput
+                  value={painSeverity}
+                  onChange={setPainSeverity}
+                  max={10}
+                  title="Pain severity"
+                  voiceSlot="lines-tubes:painSeverity"
+                  allowNone={false}
+                />
             </div>
           )}
 

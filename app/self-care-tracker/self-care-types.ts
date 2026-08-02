@@ -34,9 +34,9 @@ export interface SelfCareEntry {
   
   // Context & Motivation
   motivation: string[] // why you chose this self-care
-  energyBefore: number // 1-10 energy level before
+  energyBefore?: number // 1-10 energy level before
   moodBefore: string[] // emotions before
-  stressLevelBefore: number // 1-10 stress before
+  stressLevelBefore?: number // 1-10 stress before
   
   // Experience
   enjoyment: number // 1-10 how much you enjoyed it
@@ -45,15 +45,17 @@ export interface SelfCareEntry {
   feltGuilty: boolean // did you feel guilty for taking time?
   
   // Results & Impact
-  energyAfter: number // 1-10 energy level after
+  energyAfter?: number // 1-10 energy level after
   moodAfter: string[] // emotions after
-  stressLevelAfter: number // 1-10 stress after
+  stressLevelAfter?: number // 1-10 stress after
   physicalImpact: string[] // how your body feels
   mentalImpact: string[] // how your mind feels
   emotionalImpact: string[] // how your heart feels
   
   // Effectiveness & Learning
-  effectiveness: number // 1-10 how effective this was
+  /** THREE STATES since 2026-08-02 (components/ui/severity-input.tsx):
+   *    undefined -> not reported   0 -> answered: absent   1-10 -> this much */
+  effectiveness?: number // 1-10 how effective this was
   wouldDoAgain: boolean // would you do this again?
   whatWorked: string[] // what aspects worked well
   whatDidnt: string[] // what could be better

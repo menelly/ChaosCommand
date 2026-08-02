@@ -125,11 +125,11 @@ export function SelfCareHistory({ refreshTrigger, onEdit, onDelete }: SelfCareHi
     // Effectiveness filter
     if (effectivenessFilter !== 'all') {
       if (effectivenessFilter === 'high') {
-        filtered = filtered.filter(entry => entry.effectiveness >= 8)
+        filtered = filtered.filter(entry => entry.effectiveness !== undefined && entry.effectiveness >= 8)
       } else if (effectivenessFilter === 'medium') {
-        filtered = filtered.filter(entry => entry.effectiveness >= 5 && entry.effectiveness < 8)
+        filtered = filtered.filter(entry => entry.effectiveness !== undefined && entry.effectiveness >= 5 && entry.effectiveness < 8)
       } else if (effectivenessFilter === 'low') {
-        filtered = filtered.filter(entry => entry.effectiveness < 5)
+        filtered = filtered.filter(entry => entry.effectiveness !== undefined && entry.effectiveness < 5)
       }
     }
 

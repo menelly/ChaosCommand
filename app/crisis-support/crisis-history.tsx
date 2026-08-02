@@ -146,8 +146,10 @@ export function CrisisHistory({ refreshTrigger, onEdit, onDelete }: CrisisHistor
     // Intensity filter
     if (filterIntensity !== 'all') {
       const intensityRange = filterIntensity.split('-').map(Number)
-      filtered = filtered.filter(entry => 
-        entry.intensityLevel >= intensityRange[0] && 
+      // An unreported intensity matches no range — it is absent, not zero.
+      filtered = filtered.filter(entry =>
+        entry.intensityLevel !== undefined &&
+        entry.intensityLevel >= intensityRange[0] &&
         entry.intensityLevel <= intensityRange[1]
       )
     }
@@ -286,15 +288,15 @@ export function CrisisHistory({ refreshTrigger, onEdit, onDelete }: CrisisHistor
                         {entry.crisisType.replace('-', ' ')}
                       </Badge>
                       <div className="flex items-center gap-1">
-                        <AlertTriangle className={`h-4 w-4 ${getIntensityColor(entry.intensityLevel)}`} />
-                        <span className={`font-medium ${getIntensityColor(entry.intensityLevel)}`}>
-                          Intensity: {entry.intensityLevel}/10
+                        <AlertTriangle className={`h-4 w-4 ${getIntensityColor(entry.intensityLevel ?? 0)}`} />
+                        <span className={`font-medium ${getIntensityColor(entry.intensityLevel ?? 0)}`}>
+                          {entry.intensityLevel === undefined ? 'Intensity not reported' : `Intensity: ${entry.intensityLevel}/10`}
                         </span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <Shield className={`h-4 w-4 ${getSafetyColor(entry.currentSafety)}`} />
-                        <span className={`font-medium ${getSafetyColor(entry.currentSafety)}`}>
-                          Safety: {entry.currentSafety}/10
+                        <Shield className={`h-4 w-4 ${getSafetyColor(entry.currentSafety ?? 0)}`} />
+                        <span className={`font-medium ${getSafetyColor(entry.currentSafety ?? 0)}`}>
+                          {entry.currentSafety === undefined ? 'Safety not reported' : `Safety: ${entry.currentSafety}/10`}
                         </span>
                       </div>
                     </div>

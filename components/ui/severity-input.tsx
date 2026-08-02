@@ -66,7 +66,7 @@
 
 import * as React from 'react'
 import { cn } from '@/lib/utils'
-import { voiceFor, voiceById } from '@/lib/severity-voices'
+import { voiceFor, voiceById, BENEFIT_VOICE } from '@/lib/severity-voices'
 
 export interface SeverityInputProps {
   /** undefined = not reported. 0 = explicitly none. 1..max = reported. */
@@ -85,6 +85,11 @@ export interface SeverityInputProps {
   voiceSlot?: string
   /** Pin a specific voice by id instead of rotating (pain keeps its gremlins). */
   voiceId?: string
+  /** A BENEFIT scale — higher is better ("how much did this help?"). Swaps the
+   *  deficit voices for benefit wording, since "6 — gravity has doubled" is
+   *  nonsense as an effectiveness rating, and drops the "didn't bother me"
+   *  button, which means nothing here. */
+  kind?: 'severity' | 'benefit'
   /** Rendered above the scale. */
   title?: string
   disabled?: boolean
@@ -112,6 +117,7 @@ export function SeverityInput({
   allowNone = true,
   voiceSlot,
   voiceId,
+  kind = 'severity',
   title,
   disabled = false,
   className,
@@ -123,9 +129,14 @@ export function SeverityInput({
   // a label that re-rolls on every render flickers, which is unpleasant
   // generally and worse for anyone with vestibular or attention issues.
   const voice = React.useMemo(
-    () => (voiceId ? voiceById(voiceId) : undefined) ?? voiceFor(voiceSlot ?? title ?? 'severity'),
-    [voiceId, voiceSlot, title],
+    () => kind === 'benefit'
+      ? BENEFIT_VOICE
+      : (voiceId ? voiceById(voiceId) : undefined) ?? voiceFor(voiceSlot ?? title ?? 'severity'),
+    [kind, voiceId, voiceSlot, title],
   )
+  // "Didn't bother me" is meaningless on a benefit scale — 0 there is "not at
+  // all", which is already the first rung.
+  const showNone = allowNone && kind !== 'benefit'
   const labelFor = label ?? ((v: number) => voice.labels[v] ?? String(v))
   const colorFor = color ?? defaultColor
   const reported = value !== undefined
@@ -135,7 +146,7 @@ export function SeverityInput({
   const step = (delta: number) => {
     if (disabled) return
     const next = value === undefined ? (delta > 0 ? 1 : 0) : value + delta
-    const lo = allowNone ? 0 : 1
+    const lo = (allowNone && kind !== 'benefit') ? 0 : 1
     onChange(Math.max(lo, Math.min(max, next)))
   }
 
@@ -144,7 +155,7 @@ export function SeverityInput({
     switch (e.key) {
       case 'ArrowRight': case 'ArrowUp': e.preventDefault(); step(1); break
       case 'ArrowLeft': case 'ArrowDown': e.preventDefault(); step(-1); break
-      case 'Home': e.preventDefault(); onChange(allowNone ? 0 : 1); break
+      case 'Home': e.preventDefault(); onChange((allowNone && kind !== 'benefit') ? 0 : 1); break
       case 'End': e.preventDefault(); onChange(max); break
       // Clearing back to "not reported" must always be reachable. A mis-tap
       // should never force someone to record a severity they did not have.
@@ -246,7 +257,7 @@ export function SeverityInput({
       </p>
 
       <div className="flex flex-wrap items-center gap-2">
-        {allowNone && (
+        {showNone && (
           // An explicit zero is an ANSWER, not a blank. "It was fine today" is
           // evidence, and the app could not previously record it.
           <button

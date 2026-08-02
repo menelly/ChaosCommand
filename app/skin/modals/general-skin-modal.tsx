@@ -39,8 +39,8 @@ export function GeneralSkinModal({ isOpen, onClose, onSave, editingEntry, preset
   const [spreadingPattern, setSpreadingPattern] = useState<string>('')
   const [sizeDescription, setSizeDescription] = useState('')
   const [severity, setSeverity] = useState<number | undefined>(undefined)
-  const [itchiness, setItchiness] = useState([0])
-  const [pain, setPain] = useState([0])
+  const [itchiness, setItchiness] = useState<number | undefined>(undefined)
+  const [pain, setPain] = useState<number | undefined>(undefined)
   const [swelling, setSwelling] = useState(false)
   const [throatTightness, setThroatTightness] = useState(false)
   const [breathingDifficulty, setBreathingDifficulty] = useState(false)
@@ -51,7 +51,7 @@ export function GeneralSkinModal({ isOpen, onClose, onSave, editingEntry, preset
   const [newMedicationRecent, setNewMedicationRecent] = useState(false)
   const [suspectedTrigger, setSuspectedTrigger] = useState<string[]>([])
   const [treatmentApplied, setTreatmentApplied] = useState<string[]>([])
-  const [treatmentResponse, setTreatmentResponse] = useState([3])
+  const [treatmentResponse, setTreatmentResponse] = useState<number | undefined>(undefined)
   const [duration, setDuration] = useState('')
   // ABCDE for moles
   const [asymmetric, setAsymmetric] = useState(false)
@@ -95,8 +95,8 @@ export function GeneralSkinModal({ isOpen, onClose, onSave, editingEntry, preset
       setSpreadingPattern(editingEntry.spreadingPattern || '')
       setSizeDescription(editingEntry.sizeDescription || '')
       setSeverity(editingEntry.severity ?? undefined)
-      setItchiness([editingEntry.itchiness || 0])
-      setPain([editingEntry.pain || 0])
+      setItchiness(editingEntry.itchiness ?? undefined)
+      setPain(editingEntry.pain ?? undefined)
       setSwelling(editingEntry.swelling || false)
       setThroatTightness(editingEntry.throatTightness || false)
       setBreathingDifficulty(editingEntry.breathingDifficulty || false)
@@ -107,7 +107,7 @@ export function GeneralSkinModal({ isOpen, onClose, onSave, editingEntry, preset
       setNewMedicationRecent(editingEntry.newMedicationRecent || false)
       setSuspectedTrigger(editingEntry.suspectedTrigger || [])
       setTreatmentApplied(editingEntry.treatmentApplied || [])
-      setTreatmentResponse([editingEntry.treatmentResponse || 3])
+      setTreatmentResponse(editingEntry.treatmentResponse ?? undefined)
       setDuration(editingEntry.duration || '')
       setAsymmetric(editingEntry.asymmetric || false)
       setBorderIrregular(editingEntry.borderIrregular || false)
@@ -127,10 +127,10 @@ export function GeneralSkinModal({ isOpen, onClose, onSave, editingEntry, preset
   const reset = () => {
     setEntryDate(todayISO()); setEntryTime(nowTime())
     setEpisodeType('rash'); setBodyLocation([]); setCharacterDescription([]); setSpreadingPattern('')
-    setSizeDescription(''); setSeverity(undefined); setItchiness([0]); setPain([0])
+    setSizeDescription(''); setSeverity(undefined); setItchiness(undefined); setPain(undefined)
     setSwelling(false); setThroatTightness(false); setBreathingDifficulty(false); setHivesPresent(false); setEpinephrineGiven(false)
     setFevePresent(false); setMucousMembraneInvolvement(false); setNewMedicationRecent(false)
-    setSuspectedTrigger([]); setTreatmentApplied([]); setTreatmentResponse([3]); setDuration('')
+    setSuspectedTrigger([]); setTreatmentApplied([]); setTreatmentResponse(undefined); setDuration('')
     setAsymmetric(false); setBorderIrregular(false); setColorVariable(false); setDiameterOver6mm(false); setEvolving(false)
     setErVisitRequired(false); setPhotos([]); setNotes(''); setTags([])
   }
@@ -148,13 +148,13 @@ export function GeneralSkinModal({ isOpen, onClose, onSave, editingEntry, preset
       spreadingPattern: (spreadingPattern || undefined) as SpreadingPattern | undefined,
       sizeDescription: sizeDescription || undefined,
       severity: severity,
-      itchiness: itchiness[0] > 0 ? itchiness[0] : undefined,
-      pain: pain[0] > 0 ? pain[0] : undefined,
+      itchiness: itchiness,
+      pain: pain,
       swelling, throatTightness, breathingDifficulty, hivesPresent, epinephrineGiven,
       fevePresent, mucousMembraneInvolvement, newMedicationRecent,
       suspectedTrigger,
       treatmentApplied,
-      treatmentResponse: treatmentApplied.length > 0 ? treatmentResponse[0] : undefined,
+      treatmentResponse: treatmentApplied.length > 0 ? treatmentResponse : undefined,
       duration: duration || undefined,
       asymmetric, borderIrregular, colorVariable, diameterOver6mm, evolving,
       erVisitRequired,
@@ -295,8 +295,20 @@ export function GeneralSkinModal({ isOpen, onClose, onSave, editingEntry, preset
             </CollapsibleTrigger>
             <CollapsibleContent className="pt-3">
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2"><Label>Itchiness: {itchiness[0]}/10</Label><Slider value={itchiness} onValueChange={setItchiness} max={10} min={0} step={1} /></div>
-                <div className="space-y-2"><Label>Pain: {pain[0]}/10</Label><Slider value={pain} onValueChange={setPain} max={10} min={0} step={1} /></div>
+                <div className="space-y-2"><Label>Itchiness: {itchiness}/10</Label><SeverityInput
+                  value={itchiness}
+                  onChange={setItchiness}
+                  max={10}
+                  title="Itchiness"
+                  voiceSlot="skin:itchiness"
+                /></div>
+                <div className="space-y-2"><Label>Pain: {pain}/10</Label><SeverityInput
+                  value={pain}
+                  onChange={setPain}
+                  max={10}
+                  title="Pain"
+                  voiceSlot="skin:pain"
+                /></div>
               </div>
             </CollapsibleContent>
           </Collapsible>
@@ -399,7 +411,15 @@ export function GeneralSkinModal({ isOpen, onClose, onSave, editingEntry, preset
                 </Button>
               </CollapsibleTrigger>
               <CollapsibleContent className="pt-3">
-                <div className="space-y-2"><Label>Treatment helped: {treatmentResponse[0]}/5</Label><Slider value={treatmentResponse} onValueChange={setTreatmentResponse} max={5} min={1} step={1} /></div>
+                <div className="space-y-2"><Label>Treatment helped: {treatmentResponse}/5</Label><SeverityInput
+                  value={treatmentResponse}
+                  kind="benefit"
+                  onChange={setTreatmentResponse}
+                  max={5}
+                  title="How much it helped"
+                  voiceSlot="skin:treatmentResponse"
+                  allowNone={false}
+                /></div>
               </CollapsibleContent>
             </Collapsible>
           )}

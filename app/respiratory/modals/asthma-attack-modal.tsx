@@ -30,7 +30,7 @@ export function AsthmaAttackModal({ isOpen, onClose, onSave, editingEntry }: Res
   const [entryTime, setEntryTime] = useState(nowTime())
   const [severity, setSeverity] = useState<number | undefined>(undefined)
   const [breathingPattern, setBreathingPattern] = useState<string>('')
-  const [chestTightness, setChestTightness] = useState([0])
+  const [chestTightness, setChestTightness] = useState<number | undefined>(undefined)
   const [peakFlowReading, setPeakFlowReading] = useState('')
   const [peakFlowZone, setPeakFlowZone] = useState<string>('')
   const [spo2Lowest, setSpo2Lowest] = useState('')
@@ -38,7 +38,7 @@ export function AsthmaAttackModal({ isOpen, onClose, onSave, editingEntry }: Res
   const [inhalerUsed, setInhalerUsed] = useState(false)
   const [inhalerName, setInhalerName] = useState('')
   const [inhalerDoses, setInhalerDoses] = useState('')
-  const [inhalerResponse, setInhalerResponse] = useState([3])
+  const [inhalerResponse, setInhalerResponse] = useState<number | undefined>(undefined)
   const [symptoms, setSymptoms] = useState<string[]>([])
   const [triggers, setTriggers] = useState<string[]>([])
   const [timeToResolutionMin, setTimeToResolutionMin] = useState('')
@@ -70,7 +70,7 @@ export function AsthmaAttackModal({ isOpen, onClose, onSave, editingEntry }: Res
       setEntryTime(dt.time)
       setSeverity(editingEntry.severity ?? undefined)
       setBreathingPattern(editingEntry.breathingPattern || '')
-      setChestTightness([editingEntry.chestTightness || 0])
+      setChestTightness(editingEntry.chestTightness ?? undefined)
       setPeakFlowReading(editingEntry.peakFlowReading?.toString() || '')
       setPeakFlowZone(editingEntry.peakFlowZone || '')
       setSpo2Lowest(editingEntry.spo2Lowest?.toString() || '')
@@ -78,7 +78,7 @@ export function AsthmaAttackModal({ isOpen, onClose, onSave, editingEntry }: Res
       setInhalerUsed(editingEntry.inhalerUsed || false)
       setInhalerName(editingEntry.inhalerName || '')
       setInhalerDoses(editingEntry.inhalerDoses?.toString() || '')
-      setInhalerResponse([editingEntry.inhalerResponse || 3])
+      setInhalerResponse(editingEntry.inhalerResponse ?? undefined)
       setSymptoms(editingEntry.symptoms || [])
       setTriggers(editingEntry.triggers || [])
       setTimeToResolutionMin(editingEntry.timeToResolutionMin?.toString() || '')
@@ -91,9 +91,9 @@ export function AsthmaAttackModal({ isOpen, onClose, onSave, editingEntry }: Res
 
   const reset = () => {
     setEntryDate(todayISO()); setEntryTime(nowTime())
-    setSeverity(undefined); setBreathingPattern(''); setChestTightness([0])
+    setSeverity(undefined); setBreathingPattern(''); setChestTightness(undefined)
     setPeakFlowReading(''); setPeakFlowZone(''); setSpo2Lowest(''); setHrAtEvent('')
-    setInhalerUsed(false); setInhalerName(''); setInhalerDoses(''); setInhalerResponse([3])
+    setInhalerUsed(false); setInhalerName(''); setInhalerDoses(''); setInhalerResponse(undefined)
     setSymptoms([]); setTriggers([]); setTimeToResolutionMin(''); setErVisitRequired(false)
     setAttachmentImages([]); setNotes(''); setTags([])
   }
@@ -108,7 +108,7 @@ export function AsthmaAttackModal({ isOpen, onClose, onSave, editingEntry }: Res
       episodeType: 'asthma-attack',
       severity: severity,
       breathingPattern: (breathingPattern || undefined) as any,
-      chestTightness: chestTightness[0] > 0 ? chestTightness[0] : undefined,
+      chestTightness: chestTightness,
       peakFlowReading: peakFlowReading ? parseInt(peakFlowReading) : undefined,
       peakFlowZone: (peakFlowZone || undefined) as PeakFlowZone | undefined,
       spo2Lowest: spo2Lowest ? parseInt(spo2Lowest) : undefined,
@@ -116,7 +116,7 @@ export function AsthmaAttackModal({ isOpen, onClose, onSave, editingEntry }: Res
       inhalerUsed,
       inhalerName: inhalerName || undefined,
       inhalerDoses: inhalerDoses ? parseInt(inhalerDoses) : undefined,
-      inhalerResponse: inhalerUsed ? inhalerResponse[0] : undefined,
+      inhalerResponse: inhalerUsed ? inhalerResponse : undefined,
       symptoms,
       triggers,
       timeToResolutionMin: timeToResolutionMin ? parseInt(timeToResolutionMin) : undefined,
@@ -139,7 +139,7 @@ export function AsthmaAttackModal({ isOpen, onClose, onSave, editingEntry }: Res
         </DialogHeader>
         <div className="space-y-6">
           {(() => {
-            const shape = { episodeType: 'asthma-attack', severity: severity, spo2Lowest: spo2Lowest ? parseInt(spo2Lowest) : undefined, peakFlowZone, symptoms, inhalerResponse: inhalerUsed ? inhalerResponse[0] : undefined }
+            const shape = { episodeType: 'asthma-attack', severity: severity, spo2Lowest: spo2Lowest ? parseInt(spo2Lowest) : undefined, peakFlowZone, symptoms, inhalerResponse: inhalerUsed ? inhalerResponse : undefined }
             const flags = getRedFlagWarnings(shape)
             const measures = getInterimMeasures({ ...shape, episodeType: 'asthma-attack' })
             if (flags.length === 0) return null
@@ -246,8 +246,14 @@ export function AsthmaAttackModal({ isOpen, onClose, onSave, editingEntry }: Res
             </CollapsibleTrigger>
             <CollapsibleContent className="pt-3">
               <div className="space-y-3">
-                <Label>Chest Tightness: {chestTightness[0]}/10</Label>
-                <Slider value={chestTightness} onValueChange={setChestTightness} max={10} min={0} step={1} />
+                <Label>Chest Tightness: {chestTightness}/10</Label>
+                <SeverityInput
+                  value={chestTightness}
+                  onChange={setChestTightness}
+                  max={10}
+                  title="Chest tightness"
+                  voiceSlot="respiratory:chestTightness"
+                />
               </div>
             </CollapsibleContent>
           </Collapsible>
@@ -269,8 +275,16 @@ export function AsthmaAttackModal({ isOpen, onClose, onSave, editingEntry }: Res
                       <div><Label>Number of doses</Label><Input type="number" value={inhalerDoses} onChange={(e) => setInhalerDoses(e.target.value)} placeholder="e.g., 2" /></div>
                     </div>
                     <div className="space-y-2">
-                      <Label>How well did it work? {inhalerResponse[0]}/5</Label>
-                      <Slider value={inhalerResponse} onValueChange={setInhalerResponse} max={5} min={1} step={1} />
+                      <Label>How well did it work? {inhalerResponse}/5</Label>
+                      <SeverityInput
+                  value={inhalerResponse}
+                  kind="benefit"
+                  onChange={setInhalerResponse}
+                  max={5}
+                  title="How much the inhaler helped"
+                  voiceSlot="respiratory:inhalerResponse"
+                  allowNone={false}
+                />
                       <p className="text-xs text-muted-foreground">1 = no help, 5 = fully resolved</p>
                     </div>
                   </div>

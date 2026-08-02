@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Slider } from '@/components/ui/slider'
+import { SeverityInput } from '@/components/ui/severity-input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
@@ -35,7 +35,7 @@ export function GeneralBathroomModal({ isOpen, onClose, onSave, editingEntry, in
   const [bristolScale, setBristolScale] = useState('')
   const [bowelCount, setBowelCount] = useState('1')
   const [painLevel, setPainLevel] = useState('None')
-  const [painScore, setPainScore] = useState([0])
+  const [painScore, setPainScore] = useState<number | undefined>(undefined)
 
   const [bloodInStool, setBloodInStool] = useState(false)
   const [bloodColor, setBloodColor] = useState<string>('')
@@ -44,7 +44,7 @@ export function GeneralBathroomModal({ isOpen, onClose, onSave, editingEntry, in
   const [urinaryType, setUrinaryType] = useState<string>('normal')
   const [urineColor, setUrineColor] = useState('')
   const [urineCount, setUrineCount] = useState('')
-  const [urinaryPainScore, setUrinaryPainScore] = useState([0])
+  const [urinaryPainScore, setUrinaryPainScore] = useState<number | undefined>(undefined)
   const [bloodInUrine, setBloodInUrine] = useState(false)
   const [feverWithUrinary, setFeverWithUrinary] = useState(false)
   const [flankPain, setFlankPain] = useState(false)
@@ -81,14 +81,14 @@ export function GeneralBathroomModal({ isOpen, onClose, onSave, editingEntry, in
       setBristolScale(editingEntry.bristolScale || '')
       setBowelCount((editingEntry.bowelCount || editingEntry.count || 1).toString())
       setPainLevel(editingEntry.painLevel || 'None')
-      setPainScore([editingEntry.painScore || 0])
+      setPainScore(editingEntry.painScore ?? undefined)
       setBloodInStool(editingEntry.bloodInStool || false)
       setBloodColor(editingEntry.bloodColor || '')
       setNoStoolDays(editingEntry.noStoolDays?.toString() || '')
       setUrinaryType(editingEntry.urinaryType || 'normal')
       setUrineColor(editingEntry.urineColor || '')
       setUrineCount(editingEntry.urineCount?.toString() || '')
-      setUrinaryPainScore([editingEntry.urinaryPainScore || 0])
+      setUrinaryPainScore(editingEntry.urinaryPainScore ?? undefined)
       setBloodInUrine(editingEntry.bloodInUrine || false)
       setFeverWithUrinary(editingEntry.feverWithUrinary || false)
       setFlankPain(editingEntry.flankPain || false)
@@ -110,10 +110,10 @@ export function GeneralBathroomModal({ isOpen, onClose, onSave, editingEntry, in
   const resetForm = () => {
     setEntryDate(todayISO()); setEntryTime(nowTime())
     setEpisodeType(initialEpisodeType || 'normal-bm')
-    setBristolScale(''); setBowelCount('1'); setPainLevel('None'); setPainScore([0])
+    setBristolScale(''); setBowelCount('1'); setPainLevel('None'); setPainScore(undefined)
     setBloodInStool(false); setBloodColor(''); setNoStoolDays('')
     setUrinaryType('normal'); setUrineColor(''); setUrineCount('')
-    setUrinaryPainScore([0]); setBloodInUrine(false); setFeverWithUrinary(false); setFlankPain(false)
+    setUrinaryPainScore(undefined); setBloodInUrine(false); setFeverWithUrinary(false); setFlankPain(false)
     setSevereAbdominalPain(false); setCantPassGas(false); setVomiting(false)
     setTriggers([]); setRecentDietChange(false); setRecentMedChange(false); setHydrationLevel('good')
     setPhotos([]); setErVisitRequired(false); setEmergencyServicesCalled(false)
@@ -131,14 +131,14 @@ export function GeneralBathroomModal({ isOpen, onClose, onSave, editingEntry, in
       bristolScale: bristolScale || undefined,
       bowelCount: parseInt(bowelCount) || 1,
       painLevel,
-      painScore: painScore[0] > 0 ? painScore[0] : undefined,
+      painScore: painScore,
       bloodInStool: bloodInStool || undefined,
       bloodColor: (bloodColor || undefined) as any,
       noStoolDays: noStoolDays ? parseInt(noStoolDays) : undefined,
       urinaryType: (urinaryType !== 'normal' ? urinaryType : undefined) as any,
       urineColor: urineColor.trim() || undefined,
       urineCount: urineCount ? parseInt(urineCount) : undefined,
-      urinaryPainScore: urinaryPainScore[0] > 0 ? urinaryPainScore[0] : undefined,
+      urinaryPainScore: urinaryPainScore,
       bloodInUrine: bloodInUrine || undefined,
       feverWithUrinary: feverWithUrinary || undefined,
       flankPain: flankPain || undefined,
@@ -167,7 +167,7 @@ export function GeneralBathroomModal({ isOpen, onClose, onSave, editingEntry, in
     episodeType, bloodInStool, bloodColor, bloodInUrine, feverWithUrinary, flankPain,
     severeAbdominalPain, cantPassGas,
     noStoolDays: noStoolDays ? parseInt(noStoolDays) : undefined,
-    vomiting, urinaryType, painScore: painScore[0],
+    vomiting, urinaryType, painScore: painScore,
   }
   const redFlags = getRedFlagWarnings(entryShape)
   const interimMeasures = getInterimMeasures(entryShape)
@@ -267,8 +267,14 @@ export function GeneralBathroomModal({ isOpen, onClose, onSave, editingEntry, in
                     </Select>
                   </div>
                   <div>
-                    <Label>How rude was it? {painScore[0]}/10 (Optional)</Label>
-                    <Slider value={painScore} onValueChange={setPainScore} max={10} min={0} step={1} className="mt-2" />
+                    <Label>How rude was it? {painScore}/10 (Optional)</Label>
+                    <SeverityInput
+                  value={painScore}
+                  onChange={setPainScore}
+                  max={10}
+                  title="Pain"
+                  voiceSlot="bathroom:painScore"
+                />
                   </div>
                   <div className="flex items-center space-x-2">
                     <Checkbox id="blood-stool" checked={bloodInStool} onCheckedChange={(v) => setBloodInStool(!!v)} />
@@ -317,8 +323,14 @@ export function GeneralBathroomModal({ isOpen, onClose, onSave, editingEntry, in
                     <Input value={urineColor} onChange={(e) => setUrineColor(e.target.value)} placeholder="e.g., dark yellow, pink, cloudy" />
                   </div>
                   <div>
-                    <Label>Pain (urination): {urinaryPainScore[0]}/10</Label>
-                    <Slider value={urinaryPainScore} onValueChange={setUrinaryPainScore} max={10} min={0} step={1} className="mt-2" />
+                    <Label>Pain (urination): {urinaryPainScore}/10</Label>
+                    <SeverityInput
+                  value={urinaryPainScore}
+                  onChange={setUrinaryPainScore}
+                  max={10}
+                  title="Urinary pain"
+                  voiceSlot="bathroom:urinaryPainScore"
+                />
                   </div>
                   <div className="flex items-center space-x-2">
                     <Checkbox id="blood-urine" checked={bloodInUrine} onCheckedChange={(v) => setBloodInUrine(!!v)} />

@@ -34,6 +34,7 @@ import { Slider } from "@/components/ui/slider"
 import { Droplets, Heart, Activity, Calendar } from 'lucide-react'
 import { TagInput } from "@/components/tag-input"
 import { ReproductiveHealthEntry, FLOW_LEVELS, MOOD_OPTIONS, SYMPTOM_OPTIONS } from './reproductive-health-tracker'
+import { SeverityInput } from '@/components/ui/severity-input'
 
 interface MenstrualFormProps {
   formData: Partial<ReproductiveHealthEntry>
@@ -122,12 +123,11 @@ export function MenstrualForm({ formData, updateFormData, onSave, isLoading }: M
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <Slider
-              value={[formData.pain || 0]}
-              onValueChange={(value) => updateFormData('pain', value[0])}
-              max={10}
-              step={1}
-              className="w-full"
+            <SeverityInput
+              value={formData.pain}
+              onChange={(v) => updateFormData('pain', v)}
+              title="Pain"
+              voiceSlot="menstrual:pain"
             />
             <div className="flex justify-between text-sm text-muted-foreground">
               <span>No pain</span>
@@ -205,12 +205,18 @@ export function MenstrualForm({ formData, updateFormData, onSave, isLoading }: M
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            <Slider
-              value={[formData.libido || 0]}
-              onValueChange={(value) => updateFormData('libido', value[0])}
-              max={10}
-              step={1}
-              className="w-full"
+            {/* Neutral wording, deliberately. Libido is a LEVEL, not a
+                severity and not a benefit — neither the deficit voices ("the
+                kraken has opinions") nor the benefit voices ("barely touched
+                it") mean anything here. */}
+            <SeverityInput
+              value={formData.libido}
+              onChange={(v) => updateFormData('libido', v)}
+              title="Libido"
+              allowNone={false}
+              label={(v) => ['none', 'very low', 'low', 'lowish', 'below usual',
+                             'middling', 'above usual', 'noticeable', 'high',
+                             'very high', 'extremely high'][v] ?? String(v)}
             />
             <div className="flex justify-between text-sm text-muted-foreground">
               <span>No libido</span>

@@ -29,7 +29,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Slider } from '@/components/ui/slider'
+import { SeverityInput } from '@/components/ui/severity-input'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
@@ -65,7 +65,7 @@ export function SensoryForm({ initialData, onSave, onCancel }: SensoryFormProps)
   const [entryType, setEntryType] = useState<'overload' | 'toolkit'>('overload')
   
   // Overload specific
-  const [overloadLevel, setOverloadLevel] = useState([5])
+  const [overloadLevel, setOverloadLevel] = useState<number | undefined>(undefined)
   const [overloadType, setOverloadType] = useState<string[]>([])
   const [overloadTriggers, setOverloadTriggers] = useState<string[]>([])
   const [overloadSymptoms, setOverloadSymptoms] = useState<string[]>([])
@@ -155,7 +155,7 @@ export function SensoryForm({ initialData, onSave, onCancel }: SensoryFormProps)
       date,
       time,
       entryType,
-      overloadLevel: overloadLevel[0],
+      overloadLevel: overloadLevel,
       overloadType,
       overloadTriggers: finalTriggers,
       overloadSymptoms: finalSymptoms,
@@ -249,15 +249,15 @@ export function SensoryForm({ initialData, onSave, onCancel }: SensoryFormProps)
         {/* Overload Level (if overload type) */}
         {entryType === 'overload' && (
           <div>
-            <Label>Overload Level: {overloadLevel[0]}/10</Label>
-            <Slider
-              value={overloadLevel}
-              onValueChange={setOverloadLevel}
-              max={10}
-              min={1}
-              step={1}
-              className="mt-2"
-            />
+            <Label>Overload Level: {overloadLevel}/10</Label>
+            <SeverityInput
+                  value={overloadLevel}
+                  onChange={setOverloadLevel}
+                  max={10}
+                  title="Overload"
+                  voiceSlot="sensory-tracker:overloadLevel"
+                  allowNone={false}
+                />
             <div className="flex justify-between text-xs text-muted-foreground mt-1">
               <span>Mild</span>
               <span>Overwhelming</span>

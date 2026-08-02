@@ -44,8 +44,10 @@ export interface AnxietyEntry {
   episodeType?: AnxietyEpisodeType  // v2 — falls back to anxietyType for legacy
 
   // Anxiety Levels & Type
-  anxietyLevel: number // 1-10 scale
-  panicLevel: number // 1-10 scale (0 = no panic, 10 = full meltdown)
+  /** THREE STATES since 2026-08-02 (components/ui/severity-input.tsx):
+   *    undefined -> not reported   0 -> answered: absent   1-10 -> this much */
+  anxietyLevel?: number // 1-10 scale
+  panicLevel?: number // 1-10 scale (0 = no panic, 10 = full meltdown)
   anxietyType: string // generalized, social, panic attack, meltdown, etc.
 
   // 🚨 988 / CRISIS MARKERS
@@ -81,7 +83,7 @@ export interface AnxietyEntry {
   
   // Duration & Intensity Timeline
   duration: string // how long it lasted
-  peakIntensity: number // 1-10, highest point reached
+  peakIntensity?: number // 1-10, highest point reached
   onsetSpeed: string // gradual, sudden, etc.
   
   // Coping & Recovery

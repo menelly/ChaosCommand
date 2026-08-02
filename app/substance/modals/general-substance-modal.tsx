@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Slider } from '@/components/ui/slider'
+import { SeverityInput } from '@/components/ui/severity-input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
@@ -31,7 +31,7 @@ export function GeneralSubstanceModal({ isOpen, onClose, onSave, editingEntry, p
   const [methodOfUse, setMethodOfUse] = useState<string>('')
   const [contextWhy, setContextWhy] = useState<string[]>([])
   const [effectsExperienced, setEffectsExperienced] = useState<string[]>([])
-  const [effectIntensity, setEffectIntensity] = useState([5])
+  const [effectIntensity, setEffectIntensity] = useState<number | undefined>(undefined)
   const [timeToOnsetMin, setTimeToOnsetMin] = useState('')
   const [durationOfEffectMin, setDurationOfEffectMin] = useState('')
   const [attachmentImages, setAttachmentImages] = useState<string[]>([])
@@ -65,7 +65,7 @@ export function GeneralSubstanceModal({ isOpen, onClose, onSave, editingEntry, p
       setMethodOfUse(editingEntry.methodOfUse || '')
       setContextWhy(editingEntry.contextWhy || [])
       setEffectsExperienced(editingEntry.effectsExperienced || [])
-      setEffectIntensity([editingEntry.effectIntensity || 5])
+      setEffectIntensity(editingEntry.effectIntensity ?? undefined)
       setTimeToOnsetMin(editingEntry.timeToOnsetMin?.toString() || '')
       setDurationOfEffectMin(editingEntry.durationOfEffectMin?.toString() || '')
       setAttachmentImages(editingEntry.attachmentImages || [])
@@ -80,7 +80,7 @@ export function GeneralSubstanceModal({ isOpen, onClose, onSave, editingEntry, p
   const reset = () => {
     setEntryDate(todayISO()); setEntryTime(nowTime())
     setSubstanceType('alcohol'); setSubstanceName(''); setAmount(''); setUnit('')
-    setMethodOfUse(''); setContextWhy([]); setEffectsExperienced([]); setEffectIntensity([5])
+    setMethodOfUse(''); setContextWhy([]); setEffectsExperienced([]); setEffectIntensity(undefined)
     setTimeToOnsetMin(''); setDurationOfEffectMin(''); setAttachmentImages([])
     setNotes(''); setTags([])
   }
@@ -99,7 +99,7 @@ export function GeneralSubstanceModal({ isOpen, onClose, onSave, editingEntry, p
       methodOfUse: (methodOfUse || undefined) as any,
       contextWhy,
       effectsExperienced,
-      effectIntensity: effectsExperienced.length > 0 ? effectIntensity[0] : undefined,
+      effectIntensity: effectsExperienced.length > 0 ? effectIntensity : undefined,
       timeToOnsetMin: timeToOnsetMin ? parseInt(timeToOnsetMin) : undefined,
       durationOfEffectMin: durationOfEffectMin ? parseInt(durationOfEffectMin) : undefined,
       attachmentImages: attachmentImages.length > 0 ? attachmentImages : undefined,
@@ -228,7 +228,14 @@ export function GeneralSubstanceModal({ isOpen, onClose, onSave, editingEntry, p
                 </Button>
               </CollapsibleTrigger>
               <CollapsibleContent className="pt-3">
-                <div className="space-y-2"><Label>Effect intensity: {effectIntensity[0]}/10</Label><Slider value={effectIntensity} onValueChange={setEffectIntensity} max={10} min={1} step={1} /></div>
+                <div className="space-y-2"><Label>Effect intensity: {effectIntensity}/10</Label><SeverityInput
+                  value={effectIntensity}
+                  onChange={setEffectIntensity}
+                  max={10}
+                  title="Effect intensity"
+                  voiceSlot="substance:effectIntensity"
+                  allowNone={false}
+                /></div>
               </CollapsibleContent>
             </Collapsible>
           )}

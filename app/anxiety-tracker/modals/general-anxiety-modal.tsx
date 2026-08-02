@@ -22,7 +22,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Slider } from '@/components/ui/slider'
+import { SeverityInput } from '@/components/ui/severity-input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
@@ -51,8 +51,8 @@ export function GeneralAnxietyModal({ isOpen, onClose, onSave, editingEntry, ini
   const [entryTime, setEntryTime] = useState(nowTime())
   const [episodeType, setEpisodeType] = useState<AnxietyEpisodeType>(initialEpisodeType || 'generalized')
 
-  const [anxietyLevel, setAnxietyLevel] = useState([5])
-  const [panicLevel, setPanicLevel] = useState([0])
+  const [anxietyLevel, setAnxietyLevel] = useState<number | undefined>(undefined)
+  const [panicLevel, setPanicLevel] = useState<number | undefined>(undefined)
 
   const [physicalSymptoms, setPhysicalSymptoms] = useState<string[]>([])
   const [mentalSymptoms, setMentalSymptoms] = useState<string[]>([])
@@ -62,7 +62,7 @@ export function GeneralAnxietyModal({ isOpen, onClose, onSave, editingEntry, ini
   const [socialContext, setSocialContext] = useState('')
 
   const [duration, setDuration] = useState('')
-  const [peakIntensity, setPeakIntensity] = useState([5])
+  const [peakIntensity, setPeakIntensity] = useState<number | undefined>(undefined)
   const [onsetSpeed, setOnsetSpeed] = useState('')
 
   const [copingStrategies, setCopingStrategies] = useState<string[]>([])
@@ -82,7 +82,7 @@ export function GeneralAnxietyModal({ isOpen, onClose, onSave, editingEntry, ini
   // OCD fields
   const [intrusionTheme, setIntrusionTheme] = useState('')
   const [compulsionsPerformed, setCompulsionsPerformed] = useState<string[]>([])
-  const [resistanceLevel, setResistanceLevel] = useState([5])
+  const [resistanceLevel, setResistanceLevel] = useState<number | undefined>(undefined)
 
   // Phobic fields
   const [phobiaTrigger, setPhobiaTrigger] = useState('')
@@ -110,15 +110,15 @@ export function GeneralAnxietyModal({ isOpen, onClose, onSave, editingEntry, ini
         setEntryTime(editingEntry.time || nowTime())
       }
       setEpisodeType((editingEntry.episodeType || editingEntry.anxietyType || 'generalized') as AnxietyEpisodeType)
-      setAnxietyLevel([editingEntry.anxietyLevel || 5])
-      setPanicLevel([editingEntry.panicLevel || 0])
+      setAnxietyLevel(editingEntry.anxietyLevel ?? undefined)
+      setPanicLevel(editingEntry.panicLevel ?? undefined)
       setPhysicalSymptoms(editingEntry.physicalSymptoms || [])
       setMentalSymptoms(editingEntry.mentalSymptoms || [])
       setTriggers(editingEntry.triggers || [])
       setLocation(editingEntry.location || '')
       setSocialContext(editingEntry.socialContext || '')
       setDuration(editingEntry.duration || '')
-      setPeakIntensity([editingEntry.peakIntensity || 5])
+      setPeakIntensity(editingEntry.peakIntensity ?? undefined)
       setOnsetSpeed(editingEntry.onsetSpeed || '')
       setCopingStrategies(editingEntry.copingStrategies || [])
       setRecoveryTime(editingEntry.recoveryTime || '')
@@ -133,7 +133,7 @@ export function GeneralAnxietyModal({ isOpen, onClose, onSave, editingEntry, ini
       setErVisitRequired(editingEntry.erVisitRequired || false)
       setIntrusionTheme(editingEntry.intrusionTheme || '')
       setCompulsionsPerformed(editingEntry.compulsionsPerformed || [])
-      setResistanceLevel([editingEntry.resistanceLevel || 5])
+      setResistanceLevel(editingEntry.resistanceLevel ?? undefined)
       setPhobiaTrigger(editingEntry.phobiaTrigger || '')
       setAvoidanceUsed(editingEntry.avoidanceUsed || false)
       setAfterEffects(editingEntry.afterEffects || [])
@@ -148,16 +148,16 @@ export function GeneralAnxietyModal({ isOpen, onClose, onSave, editingEntry, ini
   const resetForm = () => {
     setEntryDate(todayISO()); setEntryTime(nowTime())
     setEpisodeType(initialEpisodeType || 'generalized')
-    setAnxietyLevel([5]); setPanicLevel([0])
+    setAnxietyLevel(undefined); setPanicLevel(undefined)
     setPhysicalSymptoms([]); setMentalSymptoms([])
     setTriggers([]); setLocation(''); setSocialContext('')
-    setDuration(''); setPeakIntensity([5]); setOnsetSpeed('')
+    setDuration(''); setPeakIntensity(undefined); setOnsetSpeed('')
     setCopingStrategies([]); setRecoveryTime('')
     setSuicidalIdeation(false); setSelfHarmUrges(false)
     setIntrusiveThoughtsHarm(false); setFeelingHopeless(false)
     setCrisisContactMade(false); setCrisisContactType('')
     setHospitalizationConsidered(false); setEmergencyServicesCalled(false); setErVisitRequired(false)
-    setIntrusionTheme(''); setCompulsionsPerformed([]); setResistanceLevel([5])
+    setIntrusionTheme(''); setCompulsionsPerformed([]); setResistanceLevel(undefined)
     setPhobiaTrigger(''); setAvoidanceUsed(false)
     setAfterEffects([]); setShutdownAfter(false)
     setNotes(''); setTags([])
@@ -172,8 +172,8 @@ export function GeneralAnxietyModal({ isOpen, onClose, onSave, editingEntry, ini
       date: entryDate,
       time: entryTime,
       episodeType,
-      anxietyLevel: anxietyLevel[0],
-      panicLevel: panicLevel[0],
+      anxietyLevel: anxietyLevel,
+      panicLevel: panicLevel,
       anxietyType: episodeType,  // legacy field
       physicalSymptoms,
       mentalSymptoms,
@@ -181,7 +181,7 @@ export function GeneralAnxietyModal({ isOpen, onClose, onSave, editingEntry, ini
       location: location.trim(),
       socialContext: socialContext.trim(),
       duration: duration || '',
-      peakIntensity: peakIntensity[0],
+      peakIntensity: peakIntensity,
       onsetSpeed: onsetSpeed || '',
       copingStrategies,
       copingEffectiveness: {},
@@ -205,7 +205,7 @@ export function GeneralAnxietyModal({ isOpen, onClose, onSave, editingEntry, ini
       erVisitRequired: erVisitRequired || undefined,
       intrusionTheme: intrusionTheme.trim() || undefined,
       compulsionsPerformed: compulsionsPerformed.length > 0 ? compulsionsPerformed : undefined,
-      resistanceLevel: episodeType === 'ocd-shaped' ? resistanceLevel[0] : undefined,
+      resistanceLevel: episodeType === 'ocd-shaped' ? resistanceLevel : undefined,
       phobiaTrigger: phobiaTrigger.trim() || undefined,
       avoidanceUsed: avoidanceUsed || undefined,
       notes: notes.trim(),
@@ -221,8 +221,8 @@ export function GeneralAnxietyModal({ isOpen, onClose, onSave, editingEntry, ini
 
   const entryShape = {
     episodeType,
-    anxietyLevel: anxietyLevel[0],
-    panicLevel: panicLevel[0],
+    anxietyLevel: anxietyLevel,
+    panicLevel: panicLevel,
     suicidalIdeation,
     selfHarmUrges,
     intrusiveThoughtsHarm,
@@ -306,22 +306,40 @@ export function GeneralAnxietyModal({ isOpen, onClose, onSave, editingEntry, ini
             <Collapsible open={openSections.levels} onOpenChange={() => toggleSection('levels')}>
               <CollapsibleTrigger asChild>
                 <Button variant="outline" className="w-full justify-between h-auto py-3">
-                  <span className="font-medium">Anxiety: {anxietyLevel[0]}/10  •  Panic: {panicLevel[0]}/10</span>
+                  <span className="font-medium">Anxiety: {anxietyLevel}/10  •  Panic: {panicLevel}/10</span>
                   {openSections.levels ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                 </Button>
               </CollapsibleTrigger>
               <CollapsibleContent className="pt-3 space-y-4">
                 <div>
-                  <Label>Anxiety level: {anxietyLevel[0]}/10</Label>
-                  <Slider value={anxietyLevel} onValueChange={setAnxietyLevel} max={10} min={0} step={1} className="mt-2" />
+                  <Label>Anxiety level: {anxietyLevel}/10</Label>
+                  <SeverityInput
+                  value={anxietyLevel}
+                  onChange={setAnxietyLevel}
+                  max={10}
+                  title="Anxiety"
+                  voiceSlot="anxiety-tracker:anxietyLevel"
+                />
                 </div>
                 <div>
-                  <Label>Panic level: {panicLevel[0]}/10 (0 = no panic, 10 = full meltdown)</Label>
-                  <Slider value={panicLevel} onValueChange={setPanicLevel} max={10} min={0} step={1} className="mt-2" />
+                  <Label>Panic level: {panicLevel}/10 (0 = no panic, 10 = full meltdown)</Label>
+                  <SeverityInput
+                  value={panicLevel}
+                  onChange={setPanicLevel}
+                  max={10}
+                  title="Panic"
+                  voiceSlot="anxiety-tracker:panicLevel"
+                />
                 </div>
                 <div>
-                  <Label>Peak intensity reached: {peakIntensity[0]}/10</Label>
-                  <Slider value={peakIntensity} onValueChange={setPeakIntensity} max={10} min={0} step={1} className="mt-2" />
+                  <Label>Peak intensity reached: {peakIntensity}/10</Label>
+                  <SeverityInput
+                  value={peakIntensity}
+                  onChange={setPeakIntensity}
+                  max={10}
+                  title="Peak intensity"
+                  voiceSlot="anxiety-tracker:peakIntensity"
+                />
                 </div>
               </CollapsibleContent>
             </Collapsible>
@@ -388,8 +406,14 @@ export function GeneralAnxietyModal({ isOpen, onClose, onSave, editingEntry, ini
                     />
                   </div>
                   <div>
-                    <Label>Resistance level: {resistanceLevel[0]}/10</Label>
-                    <Slider value={resistanceLevel} onValueChange={setResistanceLevel} max={10} min={0} step={1} className="mt-2" />
+                    <Label>Resistance level: {resistanceLevel}/10</Label>
+                    <SeverityInput
+                  value={resistanceLevel}
+                  onChange={setResistanceLevel}
+                  max={10}
+                  title="Resistance"
+                  voiceSlot="anxiety-tracker:resistanceLevel"
+                />
                     <p className="text-xs text-muted-foreground mt-1">0 = couldn't resist, 10 = fully resisted compulsion</p>
                   </div>
                 </CollapsibleContent>

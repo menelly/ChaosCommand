@@ -221,3 +221,32 @@ export function voiceFor(slot: string, date?: string): SeverityVoice {
 export function voiceById(id: string): SeverityVoice | undefined {
   return SEVERITY_VOICES.find(v => v.id === id)
 }
+
+/*
+ * BENEFIT SCALES — where a HIGHER number is GOOD.
+ *
+ * "How well did this work?", "how safe do you feel?", "energy after". The
+ * severity voices above are all deficit-shaped, so putting one of them on a
+ * benefit scale produces nonsense — "effectiveness: 6 — gravity has doubled".
+ *
+ * Same 0-10 shape, opposite meaning: index 0 is the BAD end here, index 10 the
+ * good one. Deliberately plainer than the severity voices: someone rating how
+ * much a treatment helped is usually mid-task and mid-symptom, and this is not
+ * the moment to make them decode a joke.
+ */
+export const BENEFIT_VOICE: SeverityVoice = {
+  id: 'benefit',
+  labels: [
+    'not at all',
+    'barely touched it',
+    'a little',
+    'some help',
+    'moderately',
+    'decently',
+    'quite a bit',
+    'really helped',
+    'a lot',
+    'almost completely',
+    'completely',
+  ],
+}

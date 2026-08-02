@@ -28,12 +28,14 @@ export interface CrisisEntry {
   
   // Crisis Details
   crisisType: 'suicidal' | 'self-harm' | 'panic' | 'breakdown' | 'substance' | 'trauma' | 'psychosis' | 'other'
-  intensityLevel: number // 1-10 how intense the crisis feels
+  /** THREE STATES since 2026-08-02 (components/ui/severity-input.tsx):
+   *    undefined -> not reported   0 -> answered: absent   1-10 -> this much */
+  intensityLevel?: number // 1-10 how intense the crisis feels
   triggerEvent?: string // what triggered this crisis
   warningSignsNoticed: string[] // signs you noticed before crisis
   
   // Safety & Support
-  currentSafety: number // 1-10 how safe you feel right now
+  currentSafety?: number // 1-10 how safe you feel right now
   safetyPlanUsed: boolean // did you use your safety plan?
   supportContacted: string[] // who did you reach out to
   professionalHelpSought: boolean // did you contact professionals
@@ -41,8 +43,8 @@ export interface CrisisEntry {
   
   // Coping & Actions
   copingStrategiesUsed: string[] // what coping tools did you use
-  copingEffectiveness: number // 1-10 how well coping worked
-  currentMood: number // 1-10 current mood level
+  copingEffectiveness?: number // 1-10 how well coping worked
+  currentMood?: number // 1-10 current mood level
   locationDuringCrisis?: string // where were you
   aloneOrWithOthers?: 'alone' | 'with-others'
 

@@ -34,6 +34,7 @@ import { Cloud } from 'lucide-react'
 import { TagInput } from "@/components/tag-input"
 import type { WeatherType, WeatherImpact } from './weather-types'
 import { WEATHER_TYPES, WEATHER_ICONS, IMPACT_ANCHORS, impactToNumber } from './weather-constants'
+import { SeverityInput } from '@/components/ui/severity-input'
 
 interface WeatherFormProps {
   isOpen: boolean
@@ -151,16 +152,16 @@ export function WeatherForm({ isOpen, onClose, onSave, initialData, isEditing = 
 
           {/* Weather Impact — 1–10 scale with the old labels as anchor points */}
           <div className="space-y-3">
-            <Label className="text-base font-medium">
-              Impact on You: {weatherImpact == null ? "— (drag to set)" : `${weatherImpact}/10`}
-            </Label>
-            <Slider
-              value={[weatherImpact ?? 5]}
-              onValueChange={(v) => setWeatherImpact(v[0])}
-              min={1}
-              max={10}
-              step={1}
-              className="w-full"
+            {/* This field was ALREADY three-state — it rendered "— (drag to
+                set)" for null — but a slider cannot express "unset", so the
+                thumb still sat at 5 and any drag committed a value. The tap
+                control can hold the state the data model already had. */}
+            <SeverityInput
+              value={weatherImpact ?? undefined}
+              onChange={(v) => setWeatherImpact(v ?? null)}
+              title="Impact on you"
+              allowNone={false}
+              voiceSlot="weather:impact"
             />
             <div className="flex justify-between text-xs text-muted-foreground">
               {IMPACT_ANCHORS.map((a) => (

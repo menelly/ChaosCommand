@@ -29,7 +29,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Slider } from '@/components/ui/slider'
+import { SeverityInput } from '@/components/ui/severity-input'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Heart, Save, X } from 'lucide-react'
@@ -66,9 +66,9 @@ export function SelfCareForm({ initialData, selectedCategory, onSave, onCancel }
   
   // Context & Motivation
   const [motivation, setMotivation] = useState<string[]>([])
-  const [energyBefore, setEnergyBefore] = useState([5])
+  const [energyBefore, setEnergyBefore] = useState<number | undefined>(undefined)
   const [moodBefore, setMoodBefore] = useState<string[]>([])
-  const [stressLevelBefore, setStressLevelBefore] = useState([5])
+  const [stressLevelBefore, setStressLevelBefore] = useState<number | undefined>(undefined)
   
   // Experience
   const [enjoyment, setEnjoyment] = useState([5])
@@ -77,15 +77,15 @@ export function SelfCareForm({ initialData, selectedCategory, onSave, onCancel }
   const [feltGuilty, setFeltGuilty] = useState(false)
   
   // Results & Impact
-  const [energyAfter, setEnergyAfter] = useState([5])
+  const [energyAfter, setEnergyAfter] = useState<number | undefined>(undefined)
   const [moodAfter, setMoodAfter] = useState<string[]>([])
-  const [stressLevelAfter, setStressLevelAfter] = useState([5])
+  const [stressLevelAfter, setStressLevelAfter] = useState<number | undefined>(undefined)
   const [physicalImpact, setPhysicalImpact] = useState<string[]>([])
   const [mentalImpact, setMentalImpact] = useState<string[]>([])
   const [emotionalImpact, setEmotionalImpact] = useState<string[]>([])
   
   // Effectiveness & Learning
-  const [effectiveness, setEffectiveness] = useState([5])
+  const [effectiveness, setEffectiveness] = useState<number | undefined>(undefined)
   const [wouldDoAgain, setWouldDoAgain] = useState(true)
   const [whatWorked, setWhatWorked] = useState<string[]>([])
   const [insights, setInsights] = useState('')
@@ -140,20 +140,20 @@ export function SelfCareForm({ initialData, selectedCategory, onSave, onCancel }
       customActivity,
       duration,
       motivation,
-      energyBefore: energyBefore[0],
+      energyBefore: energyBefore,
       moodBefore,
-      stressLevelBefore: stressLevelBefore[0],
+      stressLevelBefore: stressLevelBefore,
       enjoyment: enjoyment[0],
       difficulty: difficulty[0],
       interrupted,
       feltGuilty,
-      energyAfter: energyAfter[0],
+      energyAfter: energyAfter,
       moodAfter,
-      stressLevelAfter: stressLevelAfter[0],
+      stressLevelAfter: stressLevelAfter,
       physicalImpact,
       mentalImpact,
       emotionalImpact,
-      effectiveness: effectiveness[0],
+      effectiveness: effectiveness,
       wouldDoAgain,
       whatWorked,
       whatDidnt: [], // TODO: Add field
@@ -282,27 +282,28 @@ export function SelfCareForm({ initialData, selectedCategory, onSave, onCancel }
             <h3 className="font-medium text-lg">Before Self-Care</h3>
             
             <div>
-              <Label>Energy Level: {energyBefore[0]}/10</Label>
-              <Slider
-                value={energyBefore}
-                onValueChange={setEnergyBefore}
-                max={10}
-                min={1}
-                step={1}
-                className="mt-2"
-              />
+              <Label>Energy Level: {energyBefore}/10</Label>
+              <SeverityInput
+                  value={energyBefore}
+                  kind="benefit"
+                  onChange={setEnergyBefore}
+                  max={10}
+                  title="Energy before"
+                  voiceSlot="self-care-tracker:energyBefore"
+                  allowNone={false}
+                />
             </div>
 
             <div>
-              <Label>Stress Level: {stressLevelBefore[0]}/10</Label>
-              <Slider
-                value={stressLevelBefore}
-                onValueChange={setStressLevelBefore}
-                max={10}
-                min={1}
-                step={1}
-                className="mt-2"
-              />
+              <Label>Stress Level: {stressLevelBefore}/10</Label>
+              <SeverityInput
+                  value={stressLevelBefore}
+                  onChange={setStressLevelBefore}
+                  max={10}
+                  title="Stress before"
+                  voiceSlot="self-care-tracker:stressLevelBefore"
+                  allowNone={false}
+                />
             </div>
           </div>
 
@@ -310,42 +311,44 @@ export function SelfCareForm({ initialData, selectedCategory, onSave, onCancel }
             <h3 className="font-medium text-lg">After Self-Care</h3>
             
             <div>
-              <Label>Energy Level: {energyAfter[0]}/10</Label>
-              <Slider
-                value={energyAfter}
-                onValueChange={setEnergyAfter}
-                max={10}
-                min={1}
-                step={1}
-                className="mt-2"
-              />
+              <Label>Energy Level: {energyAfter}/10</Label>
+              <SeverityInput
+                  value={energyAfter}
+                  kind="benefit"
+                  onChange={setEnergyAfter}
+                  max={10}
+                  title="Energy after"
+                  voiceSlot="self-care-tracker:energyAfter"
+                  allowNone={false}
+                />
             </div>
 
             <div>
-              <Label>Stress Level: {stressLevelAfter[0]}/10</Label>
-              <Slider
-                value={stressLevelAfter}
-                onValueChange={setStressLevelAfter}
-                max={10}
-                min={1}
-                step={1}
-                className="mt-2"
-              />
+              <Label>Stress Level: {stressLevelAfter}/10</Label>
+              <SeverityInput
+                  value={stressLevelAfter}
+                  onChange={setStressLevelAfter}
+                  max={10}
+                  title="Stress after"
+                  voiceSlot="self-care-tracker:stressLevelAfter"
+                  allowNone={false}
+                />
             </div>
           </div>
         </div>
 
         {/* Effectiveness */}
         <div>
-          <Label>How effective was this self-care? {effectiveness[0]}/10</Label>
-          <Slider
-            value={effectiveness}
-            onValueChange={setEffectiveness}
-            max={10}
-            min={1}
-            step={1}
-            className="mt-2"
-          />
+          <Label>How effective was this self-care? {effectiveness}/10</Label>
+          <SeverityInput
+                  value={effectiveness}
+                  kind="benefit"
+                  onChange={setEffectiveness}
+                  max={10}
+                  title="How much it helped"
+                  voiceSlot="self-care-tracker:effectiveness"
+                  allowNone={false}
+                />
           <div className="flex justify-between text-xs text-muted-foreground mt-1">
             <span>Not helpful</span>
             <span>Extremely helpful</span>

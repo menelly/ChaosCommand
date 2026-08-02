@@ -84,14 +84,14 @@ export function GeneralPainModal({ isOpen, onClose, onSave, editingEntry, initia
   const [activityAtOnset, setActivityAtOnset] = useState('')
   const [treatments, setTreatments] = useState<string[]>([])
   const [medications, setMedications] = useState<string[]>([])
-  const [effectiveness, setEffectiveness] = useState([0])
+  const [effectiveness, setEffectiveness] = useState<number | undefined>(undefined)
 
   // Post-surgical context
   const [daysPostSurgery, setDaysPostSurgery] = useState('')
   const [surgeryType, setSurgeryType] = useState('')
 
   // Chronic flare context
-  const [baselinePainLevel, setBaselinePainLevel] = useState([3])
+  const [baselinePainLevel, setBaselinePainLevel] = useState<number | undefined>(undefined)
   const [flareLikelyTrigger, setFlareLikelyTrigger] = useState('')
 
   // Emergency / safety
@@ -152,10 +152,10 @@ export function GeneralPainModal({ isOpen, onClose, onSave, editingEntry, initia
       setActivityAtOnset(editingEntry.activityAtOnset || editingEntry.activity || '')
       setTreatments(editingEntry.treatments || [])
       setMedications(editingEntry.medications || [])
-      setEffectiveness([editingEntry.effectiveness || 0])
+      setEffectiveness(editingEntry.effectiveness ?? undefined)
       setDaysPostSurgery(editingEntry.daysPostSurgery?.toString() || '')
       setSurgeryType(editingEntry.surgeryType || '')
-      setBaselinePainLevel([editingEntry.baselinePainLevel || 3])
+      setBaselinePainLevel(editingEntry.baselinePainLevel ?? undefined)
       setFlareLikelyTrigger(editingEntry.flareLikelyTrigger || '')
       setErVisitRequired(editingEntry.erVisitRequired || false)
       setEmergencyServicesCalled(editingEntry.emergencyServicesCalled || false)
@@ -192,10 +192,10 @@ export function GeneralPainModal({ isOpen, onClose, onSave, editingEntry, initia
     setActivityAtOnset('')
     setTreatments([])
     setMedications([])
-    setEffectiveness([0])
+    setEffectiveness(undefined)
     setDaysPostSurgery('')
     setSurgeryType('')
-    setBaselinePainLevel([3])
+    setBaselinePainLevel(undefined)
     setFlareLikelyTrigger('')
     setErVisitRequired(false)
     setEmergencyServicesCalled(false)
@@ -240,10 +240,10 @@ export function GeneralPainModal({ isOpen, onClose, onSave, editingEntry, initia
       activityAtOnset: activityAtOnset.trim() || undefined,
       treatments: treatments.length > 0 ? treatments : undefined,
       medications: medications.length > 0 ? medications : undefined,
-      effectiveness: effectiveness[0] > 0 ? effectiveness[0] : undefined,
+      effectiveness: effectiveness,
       daysPostSurgery: episodeType === 'post-surgical' && daysPostSurgery ? parseInt(daysPostSurgery) : undefined,
       surgeryType: episodeType === 'post-surgical' && surgeryType.trim() ? surgeryType.trim() : undefined,
-      baselinePainLevel: episodeType === 'chronic-flare' ? baselinePainLevel[0] : undefined,
+      baselinePainLevel: episodeType === 'chronic-flare' ? baselinePainLevel : undefined,
       flareLikelyTrigger: episodeType === 'chronic-flare' && flareLikelyTrigger.trim() ? flareLikelyTrigger.trim() : undefined,
       erVisitRequired: erVisitRequired || undefined,
       emergencyServicesCalled: emergencyServicesCalled || undefined,
@@ -580,8 +580,15 @@ export function GeneralPainModal({ isOpen, onClose, onSave, editingEntry, initia
                   </div>
                 </div>
                 <div>
-                  <Label>Effectiveness: {effectiveness[0]}/10</Label>
-                  <Slider value={effectiveness} onValueChange={setEffectiveness} max={10} min={0} step={1} className="mt-2" />
+                  <Label>Effectiveness: {effectiveness}/10</Label>
+                  <SeverityInput
+                  value={effectiveness}
+                  kind="benefit"
+                  onChange={setEffectiveness}
+                  max={10}
+                  title="How much it helped"
+                  voiceSlot="pain:effectiveness"
+                />
                   <p className="text-xs text-muted-foreground mt-1">0 = nothing helped, 10 = full relief</p>
                 </div>
               </CollapsibleContent>
@@ -633,8 +640,14 @@ export function GeneralPainModal({ isOpen, onClose, onSave, editingEntry, initia
                 </CollapsibleTrigger>
                 <CollapsibleContent className="pt-3 space-y-3">
                   <div>
-                    <Label>Your normal-day baseline pain: {baselinePainLevel[0]}/10</Label>
-                    <Slider value={baselinePainLevel} onValueChange={setBaselinePainLevel} max={10} min={0} step={1} className="mt-2" />
+                    <Label>Your normal-day baseline pain: {baselinePainLevel}/10</Label>
+                    <SeverityInput
+                  value={baselinePainLevel}
+                  onChange={setBaselinePainLevel}
+                  max={10}
+                  title="Baseline pain"
+                  voiceSlot="pain:baselinePainLevel"
+                />
                     <p className="text-xs text-muted-foreground mt-1">Lets analytics show flare delta from baseline.</p>
                   </div>
                   <div>

@@ -22,7 +22,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Slider } from '@/components/ui/slider'
+import { SeverityInput } from '@/components/ui/severity-input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
@@ -55,7 +55,7 @@ export function GeneralFoodAllergensModal({ isOpen, onClose, onSave, editingEntr
   const [knownAllergenFlag, setKnownAllergenFlag] = useState(false)
 
   const [reactionSeverity, setReactionSeverity] = useState<ReactionSeverity>('Mild')
-  const [reactionSeverityScore, setReactionSeverityScore] = useState([3])
+  const [reactionSeverityScore, setReactionSeverityScore] = useState<number | undefined>(undefined)
 
   const [reactionTime, setReactionTime] = useState('')
   const [recoveryTime, setRecoveryTime] = useState('')
@@ -112,7 +112,7 @@ export function GeneralFoodAllergensModal({ isOpen, onClose, onSave, editingEntr
       setExposureRoute(editingEntry.exposureRoute || 'ingested')
       setKnownAllergenFlag(editingEntry.knownAllergen || false)
       setReactionSeverity(editingEntry.reactionSeverity || 'Mild')
-      setReactionSeverityScore([editingEntry.reactionSeverityScore || 3])
+      setReactionSeverityScore(editingEntry.reactionSeverityScore ?? undefined)
       setReactionTime(editingEntry.reactionTime || '')
       setRecoveryTime(editingEntry.recoveryTime || '')
       setSymptoms(editingEntry.symptoms || [])
@@ -152,7 +152,7 @@ export function GeneralFoodAllergensModal({ isOpen, onClose, onSave, editingEntr
     setEntryDate(todayISO()); setEntryTime(nowTime())
     setEpisodeType(initialEpisodeType || 'mild')
     setAllergenName(''); setExposureSource(''); setExposureRoute('ingested'); setKnownAllergenFlag(false)
-    setReactionSeverity('Mild'); setReactionSeverityScore([3])
+    setReactionSeverity('Mild'); setReactionSeverityScore(undefined)
     setReactionTime(''); setRecoveryTime('')
     setSymptoms([])
     setHivesPresent(false); setSwellingPresent(false); setThroatTightness(false)
@@ -202,7 +202,7 @@ export function GeneralFoodAllergensModal({ isOpen, onClose, onSave, editingEntr
       exposureRoute: (exposureRoute || undefined) as any,
       knownAllergen: knownAllergenFlag || undefined,
       reactionSeverity,
-      reactionSeverityScore: reactionSeverityScore[0] > 0 ? reactionSeverityScore[0] : undefined,
+      reactionSeverityScore: reactionSeverityScore,
       reactionTime: reactionTime.trim() || undefined,
       recoveryTime: recoveryTime.trim() || undefined,
       symptoms,
@@ -376,7 +376,7 @@ export function GeneralFoodAllergensModal({ isOpen, onClose, onSave, editingEntr
             <Collapsible open={openSections.severity} onOpenChange={() => toggleSection('severity')}>
               <CollapsibleTrigger asChild>
                 <Button variant="outline" className="w-full justify-between h-auto py-3">
-                  <span className="font-medium">Severity: {reactionSeverity} ({reactionSeverityScore[0]}/10)</span>
+                  <span className="font-medium">Severity: {reactionSeverity} ({reactionSeverityScore}/10)</span>
                   {openSections.severity ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                 </Button>
               </CollapsibleTrigger>
@@ -388,8 +388,14 @@ export function GeneralFoodAllergensModal({ isOpen, onClose, onSave, editingEntr
                   </SelectContent>
                 </Select>
                 <div>
-                  <Label>Severity score: {reactionSeverityScore[0]}/10</Label>
-                  <Slider value={reactionSeverityScore} onValueChange={setReactionSeverityScore} max={10} min={0} step={1} className="mt-2" />
+                  <Label>Severity score: {reactionSeverityScore}/10</Label>
+                  <SeverityInput
+                  value={reactionSeverityScore}
+                  onChange={setReactionSeverityScore}
+                  max={10}
+                  title="Reaction severity"
+                  voiceSlot="food-allergens:reactionSeverityScore"
+                />
                 </div>
               </CollapsibleContent>
             </Collapsible>

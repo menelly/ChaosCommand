@@ -30,7 +30,9 @@ export interface SensoryEntry {
   entryType: 'overload' | 'toolkit'
   
   // Overload Specific
-  overloadLevel: number // 1-10 scale
+  /** THREE STATES since 2026-08-02 (components/ui/severity-input.tsx):
+   *    undefined -> not reported   0 -> answered: absent   1-10 -> this much */
+  overloadLevel?: number // 1-10 scale
   overloadType: string[] // auditory, visual, tactile, etc.
   overloadTriggers: string[] // specific triggers that caused overload
   overloadSymptoms: string[] // how it manifested

@@ -254,7 +254,7 @@ export default function AnxietyTrackerPage() {
                                 <span className="text-lg">{info.icon}</span>
                                 <span className="font-semibold">{info.name}</span>
                                 <Badge variant="secondary">Anx {entry.anxietyLevel}/10</Badge>
-                                {entry.panicLevel > 0 && <Badge variant="destructive">Panic {entry.panicLevel}/10</Badge>}
+                                {entry.panicLevel !== undefined && entry.panicLevel > 0 && <Badge variant="destructive">Panic {entry.panicLevel}/10</Badge>}
                                 {entry.suicidalIdeation && <Badge variant="destructive">SI flagged</Badge>}
                                 {entry.crisisContactMade && <Badge variant="outline" className="bg-info/10 text-info border-info/30">988/contacted</Badge>}
                                 {entry.shutdownAfter && <Badge variant="outline">Shutdown after</Badge>}

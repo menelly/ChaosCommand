@@ -106,9 +106,17 @@ export function CrisisAnalytics({ refreshTrigger }: CrisisAnalyticsProps) {
     // Basic stats
     const totalCrises = entries.length
     const recentCrises = recentEntries.length
-    const avgIntensity = entries.reduce((sum, entry) => sum + entry.intensityLevel, 0) / entries.length
-    const avgSafety = entries.reduce((sum, entry) => sum + entry.currentSafety, 0) / entries.length
-    const avgCopingEffectiveness = entries.reduce((sum, entry) => sum + entry.copingEffectiveness, 0) / entries.length
+    // Averaged over ANSWERED values only. Dividing by entries.length counted
+    // every unanswered field as a zero, so these means drifted downward the
+    // more fields people left blank — on a crisis tracker, "average intensity"
+    // would fall precisely because someone was too unwell to fill it in.
+    const meanOf = (pick: (e: typeof entries[number]) => number | undefined) => {
+      const vals = entries.map(pick).filter((v): v is number => v !== undefined)
+      return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0
+    }
+    const avgIntensity = meanOf(e => e.intensityLevel)
+    const avgSafety = meanOf(e => e.currentSafety)
+    const avgCopingEffectiveness = meanOf(e => e.copingEffectiveness)
 
     // Crisis type breakdown
     const typeBreakdown = entries.reduce((acc, entry) => {

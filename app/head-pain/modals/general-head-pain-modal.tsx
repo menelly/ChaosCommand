@@ -62,7 +62,7 @@ export function GeneralHeadPainModal({ isOpen, onClose, onSave, editingEntry, in
   const [duration, setDuration] = useState('')
 
   // Baseline delta (Ren's ask)
-  const [baselineHeadachePain, setBaselineHeadachePain] = useState([3])
+  const [baselineHeadachePain, setBaselineHeadachePain] = useState<number | undefined>(undefined)
   const [flareLikelyTrigger, setFlareLikelyTrigger] = useState('')
 
   // 🚨 Red-flag markers
@@ -94,7 +94,7 @@ export function GeneralHeadPainModal({ isOpen, onClose, onSave, editingEntry, in
 
   // Treatments
   const [treatments, setTreatments] = useState<string[]>([])
-  const [treatmentEffectiveness, setTreatmentEffectiveness] = useState([0])
+  const [treatmentEffectiveness, setTreatmentEffectiveness] = useState<number | undefined>(undefined)
   const [rescueMedicationsTaken, setRescueMedicationsTaken] = useState<string[]>([])
   const [rescueRedosed, setRescueRedosed] = useState(false)
 
@@ -128,7 +128,7 @@ export function GeneralHeadPainModal({ isOpen, onClose, onSave, editingEntry, in
       setPainLocation(editingEntry.painLocation || [])
       setPainType(editingEntry.painType || [])
       setDuration(editingEntry.duration || '')
-      setBaselineHeadachePain([editingEntry.baselineHeadachePain || 3])
+      setBaselineHeadachePain(editingEntry.baselineHeadachePain ?? undefined)
       setFlareLikelyTrigger(editingEntry.flareLikelyTrigger || '')
       setWorstHeadacheOfLife(editingEntry.worstHeadacheOfLife || false)
       setThunderclapOnset(editingEntry.thunderclapOnset || false)
@@ -150,7 +150,7 @@ export function GeneralHeadPainModal({ isOpen, onClose, onSave, editingEntry, in
       setTriggers(editingEntry.triggers || [])
       setWeather(editingEntry.weather || '')
       setTreatments(editingEntry.treatments || [])
-      setTreatmentEffectiveness([editingEntry.treatmentEffectiveness || 0])
+      setTreatmentEffectiveness(editingEntry.treatmentEffectiveness ?? undefined)
       setRescueMedicationsTaken(editingEntry.rescueMedicationsTaken || [])
       setRescueRedosed(editingEntry.rescueRedosed || false)
       setRecoveryTime(editingEntry.recoveryTime || '')
@@ -171,14 +171,14 @@ export function GeneralHeadPainModal({ isOpen, onClose, onSave, editingEntry, in
     setEntryDate(todayISO()); setEntryTime(nowTime())
     setEpisodeType(initialEpisodeType || 'general')
     setPainIntensity(undefined); setPainLocation([]); setPainType([]); setDuration('')
-    setBaselineHeadachePain([3]); setFlareLikelyTrigger('')
+    setBaselineHeadachePain(undefined); setFlareLikelyTrigger('')
     setWorstHeadacheOfLife(false); setThunderclapOnset(false); setSuddenOnset(false)
     setNeckStiffness(false); setFever(false); setFocalNeuroDeficit(false)
     setOneSidedWeakness(false); setSpeechDifficulty(false); setVisionLoss(false)
     setNewAfterAge50(false); setHeadInjuryRecent(false); setPregnancyOrPostpartum(false)
     setAuraPresent(false); setAuraSymptoms([]); setAuraDescription(''); setAuraDurationMinutes('')
     setAssociatedSymptoms([]); setTriggers([]); setWeather('')
-    setTreatments([]); setTreatmentEffectiveness([0]); setRescueMedicationsTaken([]); setRescueRedosed(false)
+    setTreatments([]); setTreatmentEffectiveness(undefined); setRescueMedicationsTaken([]); setRescueRedosed(false)
     setRecoveryTime(''); setResidualSymptoms([])
     setFunctionalImpact('mild'); setWorkImpact('')
     setErVisitRequired(false); setEmergencyServicesCalled(false)
@@ -207,7 +207,7 @@ export function GeneralHeadPainModal({ isOpen, onClose, onSave, editingEntry, in
       painLocation,
       painType,
       duration: duration.trim() || undefined,
-      baselineHeadachePain: baselineHeadachePain[0],
+      baselineHeadachePain: baselineHeadachePain,
       flareLikelyTrigger: flareLikelyTrigger.trim() || undefined,
       worstHeadacheOfLife: worstHeadacheOfLife || undefined,
       thunderclapOnset: thunderclapOnset || undefined,
@@ -229,7 +229,7 @@ export function GeneralHeadPainModal({ isOpen, onClose, onSave, editingEntry, in
       triggers,
       weather: weather.trim() || undefined,
       treatments,
-      treatmentEffectiveness: treatmentEffectiveness[0] > 0 ? treatmentEffectiveness[0] : undefined,
+      treatmentEffectiveness: treatmentEffectiveness,
       rescueMedicationsTaken: rescueMedicationsTaken.length > 0 ? rescueMedicationsTaken : undefined,
       rescueRedosed: rescueRedosed || undefined,
       recoveryTime: recoveryTime.trim() || undefined,
@@ -373,8 +373,14 @@ export function GeneralHeadPainModal({ isOpen, onClose, onSave, editingEntry, in
               </CollapsibleTrigger>
               <CollapsibleContent className="pt-3 space-y-3">
                 <div>
-                  <Label>Your typical-headache-day pain: {baselineHeadachePain[0]}/10</Label>
-                  <Slider value={baselineHeadachePain} onValueChange={setBaselineHeadachePain} max={10} min={0} step={1} className="mt-2" />
+                  <Label>Your typical-headache-day pain: {baselineHeadachePain}/10</Label>
+                  <SeverityInput
+                  value={baselineHeadachePain}
+                  onChange={setBaselineHeadachePain}
+                  max={10}
+                  title="Baseline headache pain"
+                  voiceSlot="head-pain:baselineHeadachePain"
+                />
                   <p className="text-xs text-muted-foreground mt-1">
                     Lets analytics surface "tension HA at 4" vs "needs Nurtec AND Imitrex at 8" — the delta is what your neurologist wants to see.
                   </p>
@@ -558,8 +564,15 @@ export function GeneralHeadPainModal({ isOpen, onClose, onSave, editingEntry, in
                   ))}
                 </div>
                 <div>
-                  <Label>Effectiveness: {treatmentEffectiveness[0]}/10</Label>
-                  <Slider value={treatmentEffectiveness} onValueChange={setTreatmentEffectiveness} max={10} min={0} step={1} className="mt-2" />
+                  <Label>Effectiveness: {treatmentEffectiveness}/10</Label>
+                  <SeverityInput
+                  value={treatmentEffectiveness}
+                  kind="benefit"
+                  onChange={setTreatmentEffectiveness}
+                  max={10}
+                  title="How much it helped"
+                  voiceSlot="head-pain:treatmentEffectiveness"
+                />
                 </div>
                 {rescueMedicationsTaken.length >= 2 && (
                   <div className="flex items-start space-x-2">

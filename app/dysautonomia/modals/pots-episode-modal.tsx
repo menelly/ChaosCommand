@@ -106,7 +106,7 @@ export function PotsEpisodeModal({ isOpen, onClose, onSave, editingEntry }: Epis
   const [durationValue, setDurationValue] = useState('')
   const [durationUnit, setDurationUnit] = useState('hours')
   const [interventions, setInterventions] = useState<string[]>([])
-  const [interventionEffectiveness, setInterventionEffectiveness] = useState([3])
+  const [interventionEffectiveness, setInterventionEffectiveness] = useState<number | undefined>(undefined)
   const [notes, setNotes] = useState('')
   const [tags, setTags] = useState<string[]>([])
 
@@ -137,7 +137,7 @@ export function PotsEpisodeModal({ isOpen, onClose, onSave, editingEntry }: Epis
       }
 
       setInterventions(editingEntry.interventions || [])
-      setInterventionEffectiveness([editingEntry.interventionEffectiveness || 3])
+      setInterventionEffectiveness(editingEntry.interventionEffectiveness ?? undefined)
       setNotes(editingEntry.notes || '')
       setTags(editingEntry.tags || [])
     } else {
@@ -156,7 +156,7 @@ export function PotsEpisodeModal({ isOpen, onClose, onSave, editingEntry }: Epis
     setDurationValue('')
     setDurationUnit('hours')
     setInterventions([])
-    setInterventionEffectiveness([3])
+    setInterventionEffectiveness(undefined)
     setNotes('')
     setTags([])
   }
@@ -203,7 +203,7 @@ export function PotsEpisodeModal({ isOpen, onClose, onSave, editingEntry }: Epis
       positionChange: positionChange || undefined,
       duration: durationValue && durationUnit ? `${durationValue} ${durationUnit}` : undefined,
       interventions,
-      interventionEffectiveness: interventions.length > 0 ? interventionEffectiveness[0] : undefined,
+      interventionEffectiveness: interventions.length > 0 ? interventionEffectiveness : undefined,
       notes: notes.trim() || undefined,
       tags: tags.length > 0 ? tags : undefined
     }
@@ -406,20 +406,21 @@ export function PotsEpisodeModal({ isOpen, onClose, onSave, editingEntry }: Epis
           {interventions.length > 0 && (
             <div className="space-y-3">
               <Label>How well did interventions help? (1-5)</Label>
-              <Slider
-                value={interventionEffectiveness}
-                onValueChange={setInterventionEffectiveness}
-                max={5}
-                min={1}
-                step={1}
-                className="w-full"
-              />
+              <SeverityInput
+                  value={interventionEffectiveness}
+                  kind="benefit"
+                  onChange={setInterventionEffectiveness}
+                  max={5}
+                  title="How much it helped"
+                  voiceSlot="dysautonomia:interventionEffectiveness"
+                  allowNone={false}
+                />
               <div className="text-sm text-muted-foreground">
-                {interventionEffectiveness[0]}/5 - {
-                  interventionEffectiveness[0] === 1 ? 'Not helpful' :
-                  interventionEffectiveness[0] === 2 ? 'Slightly helpful' :
-                  interventionEffectiveness[0] === 3 ? 'Moderately helpful' :
-                  interventionEffectiveness[0] === 4 ? 'Very helpful' :
+                {interventionEffectiveness}/5 - {
+                  interventionEffectiveness === 1 ? 'Not helpful' :
+                  interventionEffectiveness === 2 ? 'Slightly helpful' :
+                  interventionEffectiveness === 3 ? 'Moderately helpful' :
+                  interventionEffectiveness === 4 ? 'Very helpful' :
                   'Extremely helpful'
                 }
               </div>

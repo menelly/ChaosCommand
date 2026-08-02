@@ -233,10 +233,15 @@ export function MovementHistory({
                       )}
 
                       <div className="text-sm">
-                        <strong>Energy:</strong> {entry.energyBefore} → {entry.energyAfter}
-                        {entry.energyAfter > entry.energyBefore && <span className="text-success ml-1">↗️</span>}
-                        {entry.energyAfter < entry.energyBefore && <span className="text-info ml-1">↘️</span>}
-                        {entry.energyAfter === entry.energyBefore && <span className="text-[var(--text-muted)] ml-1">→</span>}
+                        {/* Only compare when BOTH were answered — a missing
+                            reading is not a lower one, and an arrow drawn from
+                            an absence is a claim nobody made. */}
+                        <strong>Energy:</strong> {entry.energyBefore ?? '—'} → {entry.energyAfter ?? '—'}
+                        {entry.energyBefore !== undefined && entry.energyAfter !== undefined && <>
+                          {entry.energyAfter > entry.energyBefore && <span className="text-success ml-1">↗️</span>}
+                          {entry.energyAfter < entry.energyBefore && <span className="text-info ml-1">↘️</span>}
+                          {entry.energyAfter === entry.energyBefore && <span className="text-[var(--text-muted)] ml-1">→</span>}
+                        </>}
                       </div>
 
                       {entry.bodyFeel.length > 0 && (

@@ -28,8 +28,10 @@ export interface MovementEntry {
   type: string
   duration: string
   intensity: string
-  energyBefore: number // 1-10 scale
-  energyAfter: number // 1-10 scale
+  /** THREE STATES since 2026-08-02 (components/ui/severity-input.tsx):
+   *    undefined -> not reported   0 -> answered: absent   1-10 -> this much */
+  energyBefore?: number // 1-10 scale
+  energyAfter?: number // 1-10 scale
   bodyFeel: string[]
   location: string
   notes: string

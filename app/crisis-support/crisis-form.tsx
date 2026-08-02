@@ -31,7 +31,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Slider } from '@/components/ui/slider'
+import { SeverityInput } from '@/components/ui/severity-input'
 import { Badge } from '@/components/ui/badge'
 import { 
   Heart, 
@@ -56,8 +56,8 @@ export function CrisisForm({ initialData, onSave, onCancel }: CrisisFormProps) {
   const [date, setDate] = useState('')
   const [time, setTime] = useState('')
   const [crisisType, setCrisisType] = useState<string>('')
-  const [intensityLevel, setIntensityLevel] = useState([5])
-  const [currentSafety, setCurrentSafety] = useState([5])
+  const [intensityLevel, setIntensityLevel] = useState<number | undefined>(undefined)
+  const [currentSafety, setCurrentSafety] = useState<number | undefined>(undefined)
   const [triggerEvent, setTriggerEvent] = useState('')
   const [warningSignsNoticed, setWarningSignsNoticed] = useState<string[]>([])
   const [newWarningSign, setNewWarningSign] = useState('')
@@ -68,8 +68,8 @@ export function CrisisForm({ initialData, onSave, onCancel }: CrisisFormProps) {
   const [emergencyServicesUsed, setEmergencyServicesUsed] = useState(false)
   const [copingStrategiesUsed, setCopingStrategiesUsed] = useState<string[]>([])
   const [newCopingStrategy, setNewCopingStrategy] = useState('')
-  const [copingEffectiveness, setCopingEffectiveness] = useState([5])
-  const [currentMood, setCurrentMood] = useState([5])
+  const [copingEffectiveness, setCopingEffectiveness] = useState<number | undefined>(undefined)
+  const [currentMood, setCurrentMood] = useState<number | undefined>(undefined)
   const [physicalSymptoms, setPhysicalSymptoms] = useState<string[]>([])
   const [newPhysicalSymptom, setNewPhysicalSymptom] = useState('')
   const [medicationsTaken, setMedicationsTaken] = useState<string[]>([])
@@ -84,8 +84,8 @@ export function CrisisForm({ initialData, onSave, onCancel }: CrisisFormProps) {
       setDate(initialData.date)
       setTime(initialData.time)
       setCrisisType(initialData.crisisType)
-      setIntensityLevel([initialData.intensityLevel])
-      setCurrentSafety([initialData.currentSafety])
+      setIntensityLevel(initialData.intensityLevel ?? undefined)
+      setCurrentSafety(initialData.currentSafety ?? undefined)
       setTriggerEvent(initialData.triggerEvent || '')
       setWarningSignsNoticed(initialData.warningSignsNoticed)
       setSafetyPlanUsed(initialData.safetyPlanUsed)
@@ -93,8 +93,8 @@ export function CrisisForm({ initialData, onSave, onCancel }: CrisisFormProps) {
       setProfessionalHelpSought(initialData.professionalHelpSought)
       setEmergencyServicesUsed(initialData.emergencyServicesUsed)
       setCopingStrategiesUsed(initialData.copingStrategiesUsed)
-      setCopingEffectiveness([initialData.copingEffectiveness])
-      setCurrentMood([initialData.currentMood])
+      setCopingEffectiveness(initialData.copingEffectiveness ?? undefined)
+      setCurrentMood(initialData.currentMood ?? undefined)
       setPhysicalSymptoms(initialData.physicalSymptoms)
       setMedicationsTaken(initialData.medicationsTaken)
       setNotes(initialData.notes || '')
@@ -125,17 +125,17 @@ export function CrisisForm({ initialData, onSave, onCancel }: CrisisFormProps) {
       date,
       time,
       crisisType: crisisType as CrisisEntry['crisisType'],
-      intensityLevel: intensityLevel[0],
+      intensityLevel: intensityLevel,
       triggerEvent: triggerEvent || undefined,
       warningSignsNoticed,
-      currentSafety: currentSafety[0],
+      currentSafety: currentSafety,
       safetyPlanUsed,
       supportContacted,
       professionalHelpSought,
       emergencyServicesUsed,
       copingStrategiesUsed,
-      copingEffectiveness: copingEffectiveness[0],
-      currentMood: currentMood[0],
+      copingEffectiveness: copingEffectiveness,
+      currentMood: currentMood,
       physicalSymptoms,
       medicationsTaken,
       notes: notes || undefined,
@@ -209,16 +209,16 @@ export function CrisisForm({ initialData, onSave, onCancel }: CrisisFormProps) {
           </div>
 
           <div>
-            <Label>Crisis Intensity: {intensityLevel[0]}/10</Label>
+            <Label>Crisis Intensity: {intensityLevel}/10</Label>
             <div className="px-2">
-              <Slider
-                value={intensityLevel}
-                onValueChange={setIntensityLevel}
-                max={10}
-                min={1}
-                step={1}
-                className="w-full"
-              />
+              <SeverityInput
+                  value={intensityLevel}
+                  onChange={setIntensityLevel}
+                  max={10}
+                  title="Intensity"
+                  voiceSlot="crisis-support:intensityLevel"
+                  allowNone={false}
+                />
             </div>
             <div className="text-sm text-muted-foreground mt-1">
               1 = Mild distress → 10 = Maximum crisis intensity
@@ -226,16 +226,17 @@ export function CrisisForm({ initialData, onSave, onCancel }: CrisisFormProps) {
           </div>
 
           <div>
-            <Label>Current Safety Level: {currentSafety[0]}/10</Label>
+            <Label>Current Safety Level: {currentSafety}/10</Label>
             <div className="px-2">
-              <Slider
-                value={currentSafety}
-                onValueChange={setCurrentSafety}
-                max={10}
-                min={1}
-                step={1}
-                className="w-full"
-              />
+              <SeverityInput
+                  value={currentSafety}
+                  kind="benefit"
+                  onChange={setCurrentSafety}
+                  max={10}
+                  title="How safe you feel"
+                  voiceSlot="crisis-support:currentSafety"
+                  allowNone={false}
+                />
             </div>
             <div className="text-sm text-muted-foreground mt-1">
               1 = Very unsafe → 10 = Completely safe
@@ -436,30 +437,32 @@ export function CrisisForm({ initialData, onSave, onCancel }: CrisisFormProps) {
           </div>
 
           <div>
-            <Label>How effective were your coping strategies? {copingEffectiveness[0]}/10</Label>
+            <Label>How effective were your coping strategies? {copingEffectiveness}/10</Label>
             <div className="px-2">
-              <Slider
-                value={copingEffectiveness}
-                onValueChange={setCopingEffectiveness}
-                max={10}
-                min={1}
-                step={1}
-                className="w-full"
-              />
+              <SeverityInput
+                  value={copingEffectiveness}
+                  kind="benefit"
+                  onChange={setCopingEffectiveness}
+                  max={10}
+                  title="How much coping helped"
+                  voiceSlot="crisis-support:copingEffectiveness"
+                  allowNone={false}
+                />
             </div>
           </div>
 
           <div>
-            <Label>Current mood: {currentMood[0]}/10</Label>
+            <Label>Current mood: {currentMood}/10</Label>
             <div className="px-2">
-              <Slider
-                value={currentMood}
-                onValueChange={setCurrentMood}
-                max={10}
-                min={1}
-                step={1}
-                className="w-full"
-              />
+              <SeverityInput
+                  value={currentMood}
+                  kind="benefit"
+                  onChange={setCurrentMood}
+                  max={10}
+                  title="Mood"
+                  voiceSlot="crisis-support:currentMood"
+                  allowNone={false}
+                />
             </div>
             <div className="text-sm text-muted-foreground mt-1">
               1 = Extremely low → 10 = Feeling much better

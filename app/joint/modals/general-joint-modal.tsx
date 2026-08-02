@@ -35,12 +35,12 @@ export function GeneralJointModal({ isOpen, onClose, onSave, editingEntry, prese
   const [severity, setSeverity] = useState<number | undefined>(undefined)
   const [selfReducedFlag, setSelfReducedFlag] = useState(false)
   const [swellingPresent, setSwellingPresent] = useState(false)
-  const [swellingScale, setSwellingScale] = useState([0])
+  const [swellingScale, setSwellingScale] = useState<number | undefined>(undefined)
   const [bruisingPresent, setBruisingPresent] = useState(false)
   const [romImpactedPercent, setRomImpactedPercent] = useState([100])
   const [triggerActivity, setTriggerActivity] = useState<string[]>([])
   const [treatmentApplied, setTreatmentApplied] = useState<string[]>([])
-  const [treatmentResponse, setTreatmentResponse] = useState([3])
+  const [treatmentResponse, setTreatmentResponse] = useState<number | undefined>(undefined)
   const [duration, setDuration] = useState('')
   const [erVisitRequired, setErVisitRequired] = useState(false)
   const [attachmentImages, setAttachmentImages] = useState<string[]>([])
@@ -76,12 +76,12 @@ export function GeneralJointModal({ isOpen, onClose, onSave, editingEntry, prese
       setSeverity(editingEntry.severity ?? undefined)
       setSelfReducedFlag(editingEntry.selfReducedFlag || false)
       setSwellingPresent(editingEntry.swellingPresent || false)
-      setSwellingScale([editingEntry.swellingScale || 0])
+      setSwellingScale(editingEntry.swellingScale ?? undefined)
       setBruisingPresent(editingEntry.bruisingPresent || false)
       setRomImpactedPercent([editingEntry.romImpactedPercent ?? 100])
       setTriggerActivity(editingEntry.triggerActivity || [])
       setTreatmentApplied(editingEntry.treatmentApplied || [])
-      setTreatmentResponse([editingEntry.treatmentResponse || 3])
+      setTreatmentResponse(editingEntry.treatmentResponse ?? undefined)
       setDuration(editingEntry.duration || '')
       setErVisitRequired(editingEntry.erVisitRequired || false)
       setAttachmentImages(editingEntry.attachmentImages || [])
@@ -97,8 +97,8 @@ export function GeneralJointModal({ isOpen, onClose, onSave, editingEntry, prese
   const reset = () => {
     setEntryDate(todayISO()); setEntryTime(nowTime())
     setEpisodeType('subluxation'); setJointAffected([]); setMusclesAffected([]); setSeverity(undefined)
-    setSelfReducedFlag(false); setSwellingPresent(false); setSwellingScale([0]); setBruisingPresent(false)
-    setRomImpactedPercent([100]); setTriggerActivity([]); setTreatmentApplied([]); setTreatmentResponse([3])
+    setSelfReducedFlag(false); setSwellingPresent(false); setSwellingScale(undefined); setBruisingPresent(false)
+    setRomImpactedPercent([100]); setTriggerActivity([]); setTreatmentApplied([]); setTreatmentResponse(undefined)
     setDuration(''); setErVisitRequired(false); setAttachmentImages([]); setCrossList(false); setNotes(''); setTags([])
   }
 
@@ -115,12 +115,15 @@ export function GeneralJointModal({ isOpen, onClose, onSave, editingEntry, prese
       severity: severity,
       selfReducedFlag,
       swellingPresent,
-      swellingScale: swellingPresent && swellingScale[0] > 0 ? swellingScale[0] : undefined,
+      // Keep the value only when swelling was actually reported present. The
+      // `> 0` was standing in for "unset" before undefined existed; now 0 is a
+      // real answer ("swelling present, but none scored") so it must survive.
+      swellingScale: swellingPresent ? swellingScale : undefined,
       bruisingPresent,
       romImpactedPercent: romImpactedPercent[0] !== 100 ? romImpactedPercent[0] : undefined,
       triggerActivity,
       treatmentApplied,
-      treatmentResponse: treatmentApplied.length > 0 ? treatmentResponse[0] : undefined,
+      treatmentResponse: treatmentApplied.length > 0 ? treatmentResponse : undefined,
       duration: duration || undefined,
       erVisitRequired,
       attachmentImages: attachmentImages.length > 0 ? attachmentImages : undefined,
@@ -242,7 +245,13 @@ export function GeneralJointModal({ isOpen, onClose, onSave, editingEntry, prese
               <div className="space-y-3">
                 <div className="flex items-center space-x-2"><Checkbox id="swell" checked={swellingPresent} onCheckedChange={(v) => setSwellingPresent(!!v)} /><Label htmlFor="swell">Swelling present</Label></div>
                 {swellingPresent && (
-                  <div className="pl-6 space-y-2"><Label>Swelling severity: {swellingScale[0]}/5</Label><Slider value={swellingScale} onValueChange={setSwellingScale} max={5} min={0} step={1} /></div>
+                  <div className="pl-6 space-y-2"><Label>Swelling severity: {swellingScale}/5</Label><SeverityInput
+                  value={swellingScale}
+                  onChange={setSwellingScale}
+                  max={5}
+                  title="Swelling"
+                  voiceSlot="joint:swellingScale"
+                /></div>
                 )}
                 <div className="flex items-center space-x-2"><Checkbox id="bruise" checked={bruisingPresent} onCheckedChange={(v) => setBruisingPresent(!!v)} /><Label htmlFor="bruise">Bruising present</Label></div>
               </div>
@@ -306,7 +315,15 @@ export function GeneralJointModal({ isOpen, onClose, onSave, editingEntry, prese
                 </Button>
               </CollapsibleTrigger>
               <CollapsibleContent className="pt-3">
-                <div className="space-y-2"><Label>Treatment helped: {treatmentResponse[0]}/5</Label><Slider value={treatmentResponse} onValueChange={setTreatmentResponse} max={5} min={1} step={1} /></div>
+                <div className="space-y-2"><Label>Treatment helped: {treatmentResponse}/5</Label><SeverityInput
+                  value={treatmentResponse}
+                  kind="benefit"
+                  onChange={setTreatmentResponse}
+                  max={5}
+                  title="How much it helped"
+                  voiceSlot="joint:treatmentResponse"
+                  allowNone={false}
+                /></div>
               </CollapsibleContent>
             </Collapsible>
           )}
