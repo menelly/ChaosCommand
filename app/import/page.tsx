@@ -36,6 +36,7 @@ import {
   downloadLlmModel,
   loadLlmModel,
   isLlmReady,
+  unloadLlmModel,
   MODEL_TOTAL_BYTES,
   type LlmDownloadProgress,
 } from "@/lib/services/llm-tauri"
@@ -99,6 +100,51 @@ export default function ImportRecordsPage() {
 
   // Register the native runner once so the extraction services can reach it.
   useEffect(() => { initTauriLlmRunner() }, [])
+
+  /*
+   * TRUTH FROM RUST, NOT FROM A MODULE FLAG.
+   *
+   * `aiState` is this component's belief about the model. It got out of step
+   * with reality and told the user "model ready — upload unlocked" while every
+   * upload failed for want of a resident model. A status line that can drift
+   * from the thing it describes is worse than no status line, because it is
+   * believed.
+   *
+   * This polls llm_model_status — which reports `loaded` straight off the
+   * actual model handle — so the displayed state cannot disagree with the
+   * process for longer than one tick.
+   */
+  const [modelResident, setModelResident] = useState<boolean | null>(null)
+  const [modelDownloaded, setModelDownloaded] = useState<boolean | null>(null)
+  useEffect(() => {
+    let alive = true
+    const tick = async () => {
+      const s = await getLlmModelStatus()
+      if (!alive) return
+      setModelResident(s ? s.loaded : null)
+      setModelDownloaded(s ? s.downloaded : null)
+      // If Rust says the model IS resident, this component has no business
+      // claiming otherwise — heal the belief rather than argue with the fact.
+      if (s?.loaded) setAiState(prev => (prev === 'ready' ? prev : 'ready'))
+    }
+    void tick()
+    const id = setInterval(tick, 3000)
+    return () => { alive = false; clearInterval(id) }
+  }, [])
+
+  /** Second toggle: keep MedGemma resident, or free its memory. A real choice —
+   *  the model holds ~3GB, and dropping it should not require switching the
+   *  whole feature off. */
+  const toggleModelResident = async (next: boolean) => {
+    if (next) { await startLoad(); return }
+    try {
+      await unloadLlmModel()
+      setModelResident(false)
+      setAiState('idle')
+    } catch (e) {
+      console.warn('unload failed:', e)
+    }
+  }
 
   // Bring the model up: download (if needed) → load into RAM. Idempotent and
   // resumable — a partial download continues where it left off.
@@ -402,6 +448,39 @@ export default function ImportRecordsPage() {
                     older or low-memory machines it may run slowly — if so, just leave it off and add events by
                     hand; nothing about the app needs it.
                   </p>
+
+                  {/* SECOND TOGGLE — model residency. Separate from the
+                      preference above on purpose: one is what you want, the
+                      other is what the machine is currently doing, and a single
+                      control conflating them is what let the UI claim the model
+                      was ready when it was not. */}
+                  {aiEnabled && modelDownloaded !== false && (
+                    <div className="mt-3 flex items-center justify-between gap-3 rounded-md border border-[var(--border-soft)] bg-[var(--surface-1)] px-3 py-2">
+                      <div className="min-w-0">
+                        <span className="text-sm font-medium text-[var(--text-main)]">MedGemma loaded in memory</span>
+                        <p className="text-[11px] text-[var(--text-muted)]">
+                          {modelResident === null
+                            ? 'Checking…'
+                            : modelResident
+                              ? 'Resident and ready (~3\u00a0GB of RAM). Switch off to free the memory — the download is kept.'
+                              : aiState === 'loading'
+                                ? 'Loading into memory…'
+                                : 'Not loaded. Switch on to load it — nothing is downloaded again.'}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={!!modelResident}
+                        aria-label="Keep MedGemma loaded in memory"
+                        disabled={aiState === 'loading' || aiState === 'downloading'}
+                        onClick={() => void toggleModelResident(!modelResident)}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0 disabled:opacity-50 ${modelResident ? 'bg-primary' : 'bg-[var(--border-soft)]'}`}
+                      >
+                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${modelResident ? 'translate-x-6' : 'translate-x-1'}`} />
+                      </button>
+                    </div>
+                  )}
 
                   {aiEnabled && (
                     <div className="mt-3 flex items-center gap-3 flex-wrap">
