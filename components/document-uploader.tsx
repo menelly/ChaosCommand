@@ -493,6 +493,27 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
         extractedText = doc.text;
         pdfTokens = doc.tokens;
         console.log(`📄 Extracted ${extractedText.length} characters (${pdfTokens.length} page(s) of tokens) from ${file.name}`);
+
+        // ⚠️ A SCANNED PDF IS A PICTURE, AND "FOUND NOTHING" IS THE WRONG ANSWER.
+        //
+        // Some PDFs are photocopies in a PDF wrapper with no text layer at all —
+        // a real CBC from a hospital portal extracted SIX characters. Everything
+        // downstream then behaved correctly and found nothing, so the user was
+        // told the document contained no labs. That is true and useless: it
+        // sounds like a parser failure or an empty document, when the actual
+        // situation is "this file contains no text for anyone to read."
+        //
+        // Silence is indistinguishable from failure. Say which it is.
+        const meaningful = extractedText.replace(/\s/g, '').length;
+        if (meaningful < 50) {
+          throw new Error(
+            'This PDF has no readable text — it looks like a scan or photo saved as a PDF, ' +
+            'so there is nothing for the parser to read (found ' + meaningful + ' characters). ' +
+            'Two things that work: re-download it from the portal as a text PDF if that option ' +
+            'exists, or screenshot the page and upload the image instead — images go through ' +
+            'OCR. You can also use Paste Text and paste the values in directly.'
+          );
+        }
       } catch (pdfErr) {
         console.error('PDF extraction failed:', pdfErr);
         throw new Error(`PDF text extraction failed: ${pdfErr instanceof Error ? pdfErr.message : 'Unknown error'}`);
