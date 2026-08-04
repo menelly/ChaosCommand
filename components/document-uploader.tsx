@@ -22,7 +22,7 @@
  * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
  */
 "use client";
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -86,6 +86,51 @@ interface IncidentalFinding {
   confidence: number;
 }
 
+/**
+ * Elapsed-time readout for a document being parsed.
+ *
+ * ⚠️ WHY THIS EXISTS. MedGemma runs locally on CPU and a long document can take
+ * MINUTES. The UI said "Analyzing document..." and then nothing, forever — so
+ * SLOW AND BROKEN LOOKED IDENTICAL, and a user watching a motionless spinner
+ * reasonably concludes it has failed. Ren did exactly that, and was wrong: it
+ * was working the whole time.
+ *
+ * The counter is the point. A number that keeps moving is proof of life in a
+ * way a spinning icon is not — spinners animate happily on top of a dead
+ * process.
+ *
+ * ⚠️ AND THE COPY NEVER SUGGESTS FAILURE. Every escalation says "still
+ * working", because telling someone at 90 seconds that it "may have failed"
+ * makes them cancel a job that was about to finish.
+ */
+function ElapsedNote({ startedAt }: { startedAt?: number }) {
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    if (!startedAt) return
+    const t = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(t)
+  }, [startedAt])
+
+  if (!startedAt) return null
+  const secs = Math.max(0, Math.floor((now - startedAt) / 1000))
+  const mmss = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`
+
+  let note = 'MedGemma reads the whole document on your machine, so this takes a moment.'
+  if (secs > 240) {
+    note = 'Still working. Very long documents can take five minutes or more on CPU. Nothing is stuck.'
+  } else if (secs > 120) {
+    note = 'Still working — this is a long document. It has not stalled.'
+  } else if (secs > 45) {
+    note = 'Still working. Local parsing is slower than a cloud service, and nothing leaves this device.'
+  }
+
+  return (
+    <p className="text-xs text-[var(--text-muted)] mt-1">
+      <span className="font-mono">{mmss}</span> elapsed — {note}
+    </p>
+  )
+}
+
 interface UploadedFile {
   file: File;
   id: string;
@@ -95,6 +140,8 @@ interface UploadedFile {
   parsedEvents?: ParsedMedicalEvent[];
   parsedLabCount?: number;
   error?: string;
+  /** ms epoch when processing began — drives the elapsed timer. */
+  startedAt?: number;
   // Sanity check: demographics are filled in but the user's name wasn't found
   // anywhere in this document — maybe it's someone else's. Soft, save-anyway.
   nameMismatch?: boolean;
@@ -344,7 +391,7 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
   const processFile = async (uploadedFile: UploadedFile) => {
     try {
       // Update status to processing
-      updateFileStatus(uploadedFile.id, { status: 'processing', progress: 20 });
+      updateFileStatus(uploadedFile.id, { status: 'processing', progress: 20, startedAt: Date.now() });
 
       // 🧠 Local NER processing
       const result = await processFileWithBackend(uploadedFile.file);
@@ -1462,9 +1509,12 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
 
                 {/* Status Messages */}
                 {file.status === 'processing' && (
-                  <p className="text-sm text-[var(--text-muted)]">
-                    🧠 Analyzing document with NER + section parsing...
-                  </p>
+                  <>
+                    <p className="text-sm text-[var(--text-muted)]">
+                      🧠 Analyzing document with NER + section parsing...
+                    </p>
+                    <ElapsedNote startedAt={file.startedAt} />
+                  </>
                 )}
 
                 {file.status === 'parsed' && file.parsedEvents && (

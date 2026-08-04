@@ -1553,26 +1553,38 @@ export function generateMedicalReport(data: ReportData): Blob {
       w.body(`Lowest SpO2 per episode: min ${spo2Min}%, mean ${spo2Avg.toFixed(0)}% (n=${spo2Lows.length} recorded).`)
       if (desat) w.finding(`SpO2 below 92% on ${desat}/${spo2Lows.length} recorded episode${desat !== 1 ? 's' : ''}` +
         (spo2Min < 88 ? `; nadir ${spo2Min}% is below the 88% red-flag threshold.` : '.'))
-      // ⚠️ PLAUSIBILITY NOTE — CREDIBILITY-CRITICAL, DO NOT REMOVE.
+      // ⚠️⚠️ READ THIS BEFORE ADDING ANY "THAT VALUE LOOKS IMPOSSIBLE" LOGIC.
       //
-      // A consumer pulse oximeter reports values below ~70% that are, in a
-      // conscious ambulatory person, almost always ARTEFACT: cold hands, poor
-      // peripheral perfusion (common in dysautonomia and Raynaud's), motion,
-      // or nail polish. Printing "nadir 55%" as a clinical finding with no
-      // caveat does not make a clinician worry about the patient — it makes
-      // them stop believing THE WHOLE DOCUMENT, including the findings that
-      // are real and load-bearing.
+      // An earlier version of this note said readings this low are "usually
+      // artefact" and "should be confirmed before being treated as a real
+      // value". Ren killed it, correctly:
       //
-      // The value is still reported, because suppressing patient data is not
-      // ours to do. It is reported WITH the caveat, so the report keeps its
-      // credibility and the reader keeps the number.
-      if (spo2Min < 70) {
+      //   "if you build a plausibility filter on output you'll say my 19mg/dl
+      //    is wrong and IT WAS NOT."
+      //
+      // A blood glucose of 19 mg/dL is below what most references call
+      // survivable. It was real. They drove themselves to the ER with it.
+      // A filter tuned to "that can't be right" would have printed a doubt
+      // notice beside the single most dangerous true number in the record —
+      // and a clinician skims past a number the software already doubted.
+      //
+      // THE PEOPLE THIS APP IS FOR ARE OUTLIERS. That is why they need it.
+      // Their real values routinely look impossible, and being disbelieved
+      // about them is the injury, not the reading. Software that pre-doubts
+      // its user has joined the side that dismisses them.
+      //
+      // ✅ THE RULE: FLAG FOR VERIFICATION, NEVER FOR DISMISSAL. Say the value
+      // is worth confirming and name the ordinary technical causes as
+      // POSSIBILITIES alongside the real one. Never assert which it was — the
+      // report does not know, and the patient does.
+      if (spo2Min < 80) {
         w.body(
-          `Note on the ${spo2Min}% reading: values this low from a fingertip pulse oximeter are ` +
-          `usually artefact — cold hands, poor peripheral perfusion, motion, or nail polish — rather ` +
-          `than true desaturation in someone awake and upright. It is reported here rather than ` +
-          `removed, but it should be confirmed on a repeat reading with a warm hand before it is ` +
-          `treated as a real value. The higher-range readings in this series are the more reliable ones.`,
+          `Believe the patient, then verify the device. The ${spo2Min}% reading is an outlier in this ` +
+          `series and is worth confirming directly — starting by asking how they felt at the time, ` +
+          `which separates a true desaturation from a device artefact faster than any number can. ` +
+          `Fingertip oximetry can under-read with cold hands, vasoconstriction, motion or nail ` +
+          `polish; it can also be exactly right. If a perfusion index was recorded, a strong PI ` +
+          `alongside a low saturation argues the reading is REAL. Do not assume error.`,
         )
       }
     }
