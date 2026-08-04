@@ -24,6 +24,15 @@ import { differenceInDays, format } from 'date-fns'
 import { SeizureEntry } from './seizure-types'
 import { EPISODE_TYPES, getEpisodeTypeInfo, getEpisodeTypeColor } from './seizure-constants'
 
+import {
+  computeFrequencyTrend,
+  computeTrend,
+  type TrackerEntry,
+} from '@/lib/tracker-analytics'
+import { analyticsConfigFor } from '@/lib/tracker-analytics-config'
+
+const SEIZURE_CONFIG = analyticsConfigFor('seizure')
+
 interface Props {
   entries: SeizureEntry[]
 }
@@ -50,6 +59,33 @@ export function SeizureAnalytics({ entries }: Props) {
       try { return differenceInDays(now, new Date(e.date)) <= days } catch { return false }
     })
   }, [entries, timeWindow])
+
+  /**
+   * DIRECTION — added 2026-08-04. This panel was rich in every other respect
+   * (status epilepticus, rescue medication, EMS, injuries, aura, postictal
+   * symptoms) and could not answer the single question that matters most for
+   * an episodic condition: is this happening MORE than it was?
+   *
+   * Frequency rather than severity is deliberate. Seizures do not meaningfully
+   * get milder — they get more or less frequent — so a severity trend would
+   * report "stable" through a doubling in rate because each episode scored the
+   * same. Severity is shown alongside where enough entries carry one.
+   *
+   * ⚠️ This counts LOGGED episodes. The engine refuses to state a direction
+   * unless both halves of the window are independently populated, because
+   * otherwise it reports somebody starting to use the app as a worsening
+   * condition — which, in a document written for a neurologist, is the worst
+   * thing this app could get wrong.
+   */
+  const direction = useMemo(() => {
+    const sorted = [...filtered].sort(
+      (a, b) => new Date(a.timestamp || a.date).getTime() - new Date(b.timestamp || b.date).getTime(),
+    ) as unknown as TrackerEntry[]
+    return {
+      frequency: computeFrequencyTrend(sorted),
+      severity: computeTrend(sorted, SEIZURE_CONFIG),
+    }
+  }, [filtered])
 
   const stats = useMemo(() => {
     const total = filtered.length
@@ -210,6 +246,58 @@ export function SeizureAnalytics({ entries }: Props) {
             <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.erCount}</div><div className="text-xs text-muted-foreground">ER required</div></CardContent></Card>
             <Card><CardContent className="p-3"><div className="text-2xl font-bold">{stats.auraCount}</div><div className="text-xs text-muted-foreground">With aura</div></CardContent></Card>
           </div>
+
+          {/* Direction — the question a rate alone cannot answer */}
+          <Card>
+            <CardHeader><CardTitle className="text-base">Direction</CardTitle></CardHeader>
+            <CardContent className="space-y-2">
+              {direction.frequency.direction ? (
+                <>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-sm font-medium">How often:</span>
+                    <span className={`text-lg font-bold ${
+                      direction.frequency.direction === 'worsening'
+                        ? 'text-destructive'
+                        : direction.frequency.direction === 'improving'
+                          ? 'text-green-600'
+                          : 'text-muted-foreground'
+                    }`}>
+                      {direction.frequency.direction === 'worsening'
+                        ? 'More often'
+                        : direction.frequency.direction === 'improving'
+                          ? 'Less often'
+                          : 'About the same'}
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {direction.frequency.firstHalfMean!.toFixed(1)}/week earlier in this window vs{' '}
+                    {direction.frequency.secondHalfMean!.toFixed(1)}/week more recently.
+                  </p>
+                </>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Not enough episodes in this window to state a direction —{' '}
+                  {direction.frequency.suppressedBecause}. Shown blank rather than guessed.
+                </p>
+              )}
+
+              {direction.severity.direction && (
+                <p className="text-sm text-muted-foreground pt-2 border-t">
+                  Symptom severity {direction.severity.direction === 'stable' ? 'held steady at' : 'moved from'}{' '}
+                  <strong>{direction.severity.firstHalfMean!.toFixed(1)}</strong>
+                  {direction.severity.direction !== 'stable' && (
+                    <> to <strong>{direction.severity.secondHalfMean!.toFixed(1)}</strong></>
+                  )}{' '}
+                  ({direction.severity.n} episodes with a severity recorded).
+                </p>
+              )}
+
+              <p className="text-xs text-muted-foreground pt-1">
+                Counts episodes you logged. If you started tracking more consistently partway
+                through, that shows up here too.
+              </p>
+            </CardContent>
+          </Card>
 
           {/* Episode type breakdown */}
           <Card>
