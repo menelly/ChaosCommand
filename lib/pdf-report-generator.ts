@@ -186,6 +186,20 @@ const TRACKER_DISPLAY_NAMES: Record<string, string> = {
   'pain': 'Pain',
   'head-pain': 'Head Pain',
   'dysautonomia': 'Dysautonomia',
+  // Added 2026-08-04. ⚠️ MISSING ENTRIES HERE CAUSE **TWO** BUGS, NOT ONE.
+  // canonicalSub() collapses per-entry keys by matching against the KEYS of this
+  // map, so a tracker that is absent gets neither a display name nor its
+  // suffixes collapsed — it prints raw, once per entry. A real report showed
+  // "Selfcare Selfcare 1780414637719" as a symptom row, and the autoimmune
+  // tracker — the most clinically important line in the table — rendered
+  // lowercase like a variable name.
+  'autoimmune': 'Autoimmune / Connective Tissue',
+  'neuro': 'Neuro / Neuromuscular',
+  'selfcare': 'Self-Care',
+  'crisis': 'Crisis Support',
+  'pulse-oximetry': 'Pulse Oximetry',
+  'environmental-allergens': 'Environmental Allergens',
+  'hope-reminders': 'Hope Reminders',
   'seizure': 'Seizure',
   'brain-fog': 'Brain Fog',
   'upper-digestive': 'Upper Digestive',
