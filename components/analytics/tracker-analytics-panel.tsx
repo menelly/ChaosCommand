@@ -82,6 +82,7 @@ export function TrackerAnalyticsPanel({
   labelFor = (x: string) => x,
 }: TrackerAnalyticsPanelProps) {
   const t = a.trend
+  const ft = a.frequencyTrend
   const hasSeverity = a.severityN > 0
 
   const TrendIcon =
@@ -146,9 +147,48 @@ export function TrackerAnalyticsPanel({
             </>
           ) : (
             <p className="text-sm text-muted-foreground">
-              Not enough entries yet to state a direction — {t.suppressedBecause}. This stays blank
-              rather than guessing.
+              Not enough entries yet to state a direction in {measureLabel} —{' '}
+              {t.suppressedBecause}. This stays blank rather than guessing.
             </p>
+          )}
+
+          {/* How OFTEN, which for episodic conditions is the question that
+              matters. Kept in the same card so the two directions are read
+              together — they can disagree, and that disagreement is
+              informative: fewer but worse, or more but milder. */}
+          {ft.direction && (
+            <div className="mt-3 pt-3 border-t">
+              <div className="flex items-baseline gap-2">
+                <span className="text-sm font-medium">How often:</span>
+                <span
+                  className={`text-sm font-semibold capitalize ${
+                    ft.direction === 'improving'
+                      ? 'text-green-600'
+                      : ft.direction === 'worsening'
+                        ? 'text-amber-600'
+                        : 'text-muted-foreground'
+                  }`}
+                >
+                  {ft.direction === 'improving'
+                    ? 'less often'
+                    : ft.direction === 'worsening'
+                      ? 'more often'
+                      : 'about the same'}
+                </span>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">
+                {ft.firstHalfMean!.toFixed(1)}/week earlier in this window vs{' '}
+                {ft.secondHalfMean!.toFixed(1)}/week more recently.
+              </p>
+              {/* Non-negotiable caption. This counts LOGGED events, and how
+                  much someone logs changes with how much they are using the
+                  app — especially in the first months. Without saying so, an
+                  adoption curve reads as a worsening condition. */}
+              <p className="text-xs text-muted-foreground mt-1">
+                Counts entries you logged. If you started tracking this more
+                often partway through, that shows up here too.
+              </p>
+            </div>
           )}
         </CardContent>
       </Card>

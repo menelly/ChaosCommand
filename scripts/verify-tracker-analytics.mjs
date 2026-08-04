@@ -90,6 +90,16 @@ for (const key of keys) {
     console.log(`   TREND: suppressed — ${t.suppressedBecause}`)
   }
 
+  const ft = a.frequencyTrend
+  if (ft.direction) {
+    console.log(
+      `   HOW OFTEN: ${ft.direction === 'worsening' ? 'MORE often' : ft.direction === 'improving' ? 'less often' : 'about the same'}  ` +
+        `${ft.firstHalfMean.toFixed(1)}/wk -> ${ft.secondHalfMean.toFixed(1)}/wk (n=${ft.n})`,
+    )
+  } else {
+    console.log(`   HOW OFTEN: suppressed — ${ft.suppressedBecause}`)
+  }
+
   const hist = a.severityHistogram
   if (a.severityN) {
     const peak = Math.max(...hist)

@@ -335,6 +335,16 @@ export interface TrackerAnalytics {
   flags: Record<string, number>
   trend: TrendResult
   /**
+   * Direction of HOW OFTEN, as distinct from how bad.
+   *
+   * For episodic conditions this is the more important of the two and often the
+   * only one that moves. Seizures, dislocations and anaphylaxis do not
+   * meaningfully get milder — they get more or less frequent, and a panel that
+   * can only report severity will call a doubling of seizure frequency
+   * "stable" because each one scored the same.
+   */
+  frequencyTrend: TrendResult
+  /**
    * Honest treatment comparison. EMPTY when no treatment clears the arm floor
    * — an empty section says "not enough data yet", which is true, where a
    * frequency tally says "this one helped most", which may not be.
@@ -516,6 +526,7 @@ export function computeTrackerAnalytics(
     patterns: tally(entries.map(e => firstList(e, list.patterns)), entries.length),
     flags,
     trend: computeTrend(withTime.map(x => x.e), config),
+    frequencyTrend: computeFrequencyTrend(withTime.map(x => x.e)),
     treatmentComparisons: compareTreatments(entries, config),
     ratio,
     attachments: (config.attachmentFields || []).reduce(
@@ -579,6 +590,94 @@ export function computeTrend(
     Math.abs(change) < STABLE_BAND ? 'stable' : gotWorse ? 'worsening' : 'improving'
 
   return { direction, change, firstHalfMean: a, secondHalfMean: b, n: sevs.length }
+}
+
+/**
+ * Is this happening MORE or LESS often?
+ *
+ * Splits the observed span down the middle by TIME (not by entry count — that
+ * would make both halves equal by construction and the answer always "stable")
+ * and compares events per week either side.
+ *
+ * ⚠️ More events is worse, always — `higherIsBetter` describes the SEVERITY
+ * scale, not the event rate. Nobody wants more seizures because higher hours
+ * of sleep are good. This is the one place that flag must not be consulted.
+ *
+ * 🚨 THE ADOPTION ARTEFACT — THE REASON THE FLOOR BELOW IS PER-HALF.
+ *
+ * The first version of this floored only the TOTAL entry count, and against a
+ * real export it reported "more often" for almost every tracker in the app,
+ * typically 0.1/wk rising to 1–4/wk. That was not disease progression. It was
+ * somebody starting to use the tracker: sparse entries months ago, dense
+ * entries recently. The metric was measuring LOGGING BEHAVIOUR and printing it
+ * as SYMPTOM FREQUENCY.
+ *
+ * The giveaway was hydration — nobody drinks thirty-seven times more water,
+ * they just start recording it. Had that shipped, the app would have told
+ * people their seizures were becoming more frequent, in a document intended
+ * for a neurologist, when all that changed was that they started writing them
+ * down.
+ *
+ * So each half must independently clear the floor. One entry in the earlier
+ * half is not a baseline rate, it is a single event with a denominator
+ * attached. And even when both halves qualify, the caller must say out loud
+ * that this reflects logged events — see the panel's caption.
+ *
+ * `entries` must already be sorted by time.
+ */
+export function computeFrequencyTrend(entries: TrackerEntry[]): TrendResult {
+  const times = entries
+    .map(entryTime)
+    .filter((t): t is number => t !== undefined)
+    .sort((a, b) => a - b)
+
+  const spanDays = times.length >= 2 ? (times[times.length - 1] - times[0]) / 86_400_000 : 0
+
+  // Needs both enough events AND enough span. Two weeks of data cannot show a
+  // change in frequency no matter how many events are in it.
+  if (times.length < FLOORS.trend || spanDays < FLOORS.rateDays * 2) {
+    return {
+      direction: null,
+      change: null,
+      firstHalfMean: null,
+      secondHalfMean: null,
+      n: times.length,
+      suppressedBecause:
+        times.length < FLOORS.trend
+          ? `${times.length} of ${FLOORS.trend} entries needed`
+          : `needs at least ${FLOORS.rateDays * 2} days of history`,
+    }
+  }
+
+  const mid = times[0] + (times[times.length - 1] - times[0]) / 2
+  const halfDays = spanDays / 2
+  const firstN = times.filter(t => t < mid).length
+  const secondN = times.length - firstN
+
+  // ⚠️ PER-HALF FLOOR. Without this, a tracker with two entries in its first
+  // three months and twenty in its last three reports a dramatic worsening
+  // that is entirely an artefact of the user adopting the app.
+  if (firstN < FLOORS.comparisonArm || secondN < FLOORS.comparisonArm) {
+    return {
+      direction: null,
+      change: null,
+      firstHalfMean: null,
+      secondHalfMean: null,
+      n: times.length,
+      suppressedBecause: `needs ${FLOORS.comparisonArm}+ entries in each half of the window (have ${firstN} and ${secondN})`,
+    }
+  }
+
+  const first = (firstN / halfDays) * 7
+  const second = (secondN / halfDays) * 7
+
+  const change = second - first
+  // Under a quarter of an event per week is not a change in frequency.
+  const STABLE_BAND = 0.25
+  const direction =
+    Math.abs(change) < STABLE_BAND ? 'stable' : change > 0 ? 'worsening' : 'improving'
+
+  return { direction, change, firstHalfMean: first, secondHalfMean: second, n: times.length }
 }
 
 /**
