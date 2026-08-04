@@ -66,6 +66,12 @@ const TRACKER_OPTIONS = [
   { id: 'movement', label: 'Movement', category: 'choice' },
   { id: 'self-care', label: 'Self-Care', category: 'choice' },
   { id: 'substance', label: 'Substance', category: 'choice' },
+  // Added 2026-08-04: these trackers held real data and had NO export option at
+  // all, so the information simply could not reach a doctor. Pulse oximetry
+  // being unexportable to a pulmonologist is the clearest example.
+  { id: 'vitals', label: 'Vitals', category: 'body' },
+  { id: 'pulse-oximetry', label: 'Pulse Oximetry', category: 'body' },
+  { id: 'environmental-allergens', label: 'Environmental Allergens', category: 'body' },
   { id: 'lines-tubes', label: 'Lines & Tubes', category: 'maintain' },
   { id: 'medication-adherence', label: 'Medication Adherence', category: 'maintain' },
   { id: 'weather', label: 'Weather Impact', category: 'other' },
@@ -80,9 +86,69 @@ const CATEGORY_ORDER: { key: string; label: string }[] = [
   { key: 'other', label: 'Other' },
 ]
 
+/**
+ * ─── SENSITIVE DISCLOSURES ──────────────────────────────────────────────────
+ *
+ * These are NOT "personal" in the embarrassing sense. Handing them to the
+ * wrong clinician carries concrete legal and medical consequences, and the
+ * person is usually disclosing to be HELPFUL about an unrelated complaint.
+ *
+ *   - In Florida the Baker Act permits involuntary psychiatric examination on
+ *     the say-so of a physician — ANY physician, not a psychiatrist. Similar
+ *     statutes exist in every US state. A neurologist reading "3 entries noted
+ *     suicidal thoughts" in a report about seizure frequency can initiate one.
+ *   - Substance entries can end pain management, void a controlled-substance
+ *     agreement, or be reported.
+ *   - Psychiatric history in a chart routinely causes physical symptoms to be
+ *     reattributed to anxiety — the exact dismissal chronically ill people
+ *     spend years fighting. Once it is in the note it does not come out.
+ *
+ * ⚠️ SO THE DEFAULT IS EXCLUDE, AND IT IS NOT A PRIVACY PREFERENCE. It is the
+ * difference between a productive appointment and being committed by somebody
+ * who was treating your nerves. These stay out of every general-audience
+ * preset and must be turned ON deliberately.
+ *
+ * They ARE included by default for psychiatrist and therapist, because that is
+ * the clinician the data is for and withholding it there defeats the purpose.
+ *
+ * (Ren, 2026-08-04: "getting Baker'd at your neuro is bad." Correct, and this
+ * is knowledge from living it, not something a codebase generates on its own.)
+ */
+const SENSITIVE_TRACKERS = ['mental-health', 'anxiety', 'crisis-support', 'substance']
+
+/**
+ * Option id -> the subcategory keys it actually owns in storage.
+ *
+ * ⚠️ FOUND 2026-08-04 BY CHECKING OPTION IDS AGAINST A REAL EXPORT. Several
+ * ids matched nothing at all, and the failure was invisible in both
+ * directions: the toggle rendered, could be switched on, and silently
+ * contributed nothing to the PDF.
+ *
+ * The worst was `crisis-support`, whose stored key is `crisis`. Crisis data
+ * could never be exported — accidentally safe for a neurologist, and broken
+ * for the therapist it was collected for, with no error either way.
+ *
+ * Only ids that DIFFER from their storage key need an entry here.
+ */
+const TRACKER_KEY_ALIASES: Record<string, string[]> = {
+  'crisis-support': ['crisis', 'crisis-support'],
+  'coping': ['coping', 'coping-regulation'],
+  'self-care': ['self-care', 'selfcare'],
+}
+
+/** Every storage key an option id should pull, alias-aware. */
+const storageKeysFor = (id: string): string[] => TRACKER_KEY_ALIASES[id] || [id]
+
+const isSensitive = (id: string) => SENSITIVE_TRACKERS.includes(id)
+
+/** Everything except the disclosures that need a deliberate decision. */
+const ALL_SAFE_TRACKERS = TRACKER_OPTIONS.map(t => t.id).filter(id => !isSensitive(id))
+
 // Smart defaults by specialty
 const SPECIALTY_DEFAULTS: Record<string, string[]> = {
-  'primary': TRACKER_OPTIONS.map(t => t.id),
+  // "Everything" deliberately means everything EXCEPT the sensitive set. A
+  // primary care doctor can Baker Act somebody just as easily as a neurologist.
+  'primary': ALL_SAFE_TRACKERS,
   'endocrinologist': ['diabetes', 'energy', 'food-choice', 'sleep', 'weight', 'lab-results'],
   'neurologist': ['seizure', 'head-pain', 'brain-fog', 'dysautonomia', 'sleep', 'sensory'],
   'gastroenterologist': ['upper-digestive', 'bathroom', 'food-allergens', 'food-choice', 'pain'],
@@ -95,9 +161,17 @@ const SPECIALTY_DEFAULTS: Record<string, string[]> = {
   'allergist': ['food-allergens', 'skin', 'respiratory'],
   'orthopedist': ['joint', 'pain', 'movement'],
   'urologist': ['bathroom', 'pain'],
-  'obgyn': ['reproductive-health', 'pain', 'mental-health'],
-  'ssdi': TRACKER_OPTIONS.map(t => t.id), // attorneys get everything
-  'other': TRACKER_OPTIONS.map(t => t.id),
+  // Mental health deliberately removed. Perinatal mood disorders are a real
+  // reason to share it with an OB — and disclosing suicidal ideation while
+  // pregnant or postpartum is also a documented route to a child-welfare
+  // referral. That has to be the patient's decision, made on purpose, not a
+  // default they never saw.
+  'obgyn': ['reproductive-health', 'pain'],
+  // Disability counsel often DOES want the psychiatric record — it can be
+  // load-bearing for a claim. Still opt-in: it is the claimant's call, and
+  // "attorneys get everything" is not consent.
+  'ssdi': ALL_SAFE_TRACKERS,
+  'other': ALL_SAFE_TRACKERS,
 }
 
 const SPECIALTIES = [
@@ -132,7 +206,10 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
   const [savedProviders, setSavedProviders] = useState<any[]>([])
 
   // Step 2: Content selection
-  const [selectedTrackers, setSelectedTrackers] = useState<string[]>(TRACKER_OPTIONS.map(t => t.id))
+  // Starts WITHOUT the sensitive disclosures — they are opted into, never out
+  // of. See SENSITIVE_TRACKERS above for why this is a safety default and not
+  // a privacy preference.
+  const [selectedTrackers, setSelectedTrackers] = useState<string[]>(ALL_SAFE_TRACKERS)
   const [includePatterns, setIncludePatterns] = useState(true)
   const [includeJournal, setIncludeJournal] = useState(false)
   const [includeLabs, setIncludeLabs] = useState(true)
@@ -248,9 +325,13 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
         : []
       const allHealthData = (await getDateRange(dateRangeStart, dateRangeEnd, 'health')).filter(notDeleted)
 
-      // Filter tracker data to selected trackers
+      // Filter tracker data to selected trackers.
+      // Alias-aware: several option ids do not equal their storage key, and a
+      // straight comparison silently contributed nothing while the toggle sat
+      // there looking like it worked.
+      const wantedKeys = selectedTrackers.flatMap(storageKeysFor)
       let filteredTrackers = allTrackerData.filter(r =>
-        selectedTrackers.some(t => r.subcategory === t || r.subcategory.startsWith(t + '-'))
+        wantedKeys.some(k => r.subcategory === k || r.subcategory.startsWith(k + '-'))
       )
 
       // Apply tag exclusions — filter out entries with excluded tags
@@ -690,6 +771,50 @@ export function PrintExportModal({ isOpen, onClose }: PrintExportModalProps) {
                       </Badge>
                     ))}
                   </div>
+                </div>
+              )}
+
+              {/* ── SENSITIVE DISCLOSURES ────────────────────────────────────
+                  Shown whenever any of them is selected. Not a privacy nag —
+                  it names the specific consequence, because "are you sure?"
+                  teaches people to click yes and a named risk does not. */}
+              {selectedTrackers.some(isSensitive) && (
+                <div className="space-y-2 p-3 border-2 border-destructive/60 rounded-lg bg-destructive/5">
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+                    <div className="space-y-2">
+                      <p className="text-sm font-semibold">
+                        This report will include mental health information
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Including:{' '}
+                        <strong>
+                          {TRACKER_OPTIONS.filter(t => selectedTrackers.includes(t.id) && isSensitive(t.id))
+                            .map(t => t.label)
+                            .join(', ')}
+                        </strong>
+                        .
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Think about who is receiving this. <strong>Any</strong> physician — not
+                        just a psychiatrist — can begin an involuntary psychiatric hold based on
+                        what they read (the Baker Act in Florida; equivalents in every state).
+                        Psychiatric notes also travel: once physical symptoms get reattributed to
+                        anxiety in a chart, that does not come back out.
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Share it with the clinician it is <em>for</em>. There is no downside to
+                        sending your neurologist a report without it.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="text-xs underline text-muted-foreground hover:text-foreground"
+                    onClick={() => setSelectedTrackers(prev => prev.filter(id => !isSensitive(id)))}
+                  >
+                    Remove mental health sections from this report
+                  </button>
                 </div>
               )}
 
