@@ -451,6 +451,23 @@ function parseResultRangeFormat(
     '[ \\t]*Result:\\s*(?<value>[<>]?\\s*\\d+(?:\\.\\d+)?)\\s*(?<unit>' + LAB_UNITS + ')\\s*' +
     '(?:\\((?<flag_paren>[A-Za-z]+)\\)|\\b(?<flag_bare>HIGH|LOW|HH|LL|H|L|CRITICAL|CRIT|ABNORMAL|ABN)\\b)?[ \\t]*\\n' +
     '(?:[ \\t]*\\n)*' +
+    // ⚠️ THE LINE THAT SAYS "High" USED TO BREAK THE PARSE.
+    //
+    // This previously allowed ONLY blank lines between Result: and Reference
+    // range:. Real portal output puts an "Interpretation: High" line in that
+    // gap, so the whole card failed to match, zero labs were extracted, and the
+    // NER pass then scavenged the leftovers - filing "Reference range: 4 - 27
+    // mm/hr" and "Status: Final" as DIAGNOSES while dropping the analyte, the
+    // value, and the abnormal flag. Two junk rows on the timeline and the real
+    // abnormal result discarded, because the most informative line in the block
+    // was treated as noise.
+    //
+    // Interpretation is now CAPTURED - it is the cleanest statement of high/low
+    // anywhere in the card - and a BOUNDED set of other labelled lines is
+    // tolerated in between. Bounded on purpose: a greedy "any line" would let
+    // one card's name bleed into the next card's numbers.
+    '(?:[ \t]*(?:Interpretation|Interp|Abnormal Flag|Flag):[ \t]*(?<flag_interp>[A-Za-z][A-Za-z ]{0,24}?)[ \t]*\n(?:[ \t]*\n)*)?' +
+    '(?:[ \t]*(?:Status|Units?|Performing Lab|Performed By|Collected|Collection Date|Analysis Date|Specimen):[^\n]*\n(?:[ \t]*\n)*){0,4}' +
     '[ \\t]*Reference range:\\s*(?<ref>[^\\n]+?)[ \\t]*\\n',
     'gmi'
   );
