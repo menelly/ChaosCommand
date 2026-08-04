@@ -35,7 +35,7 @@ interface ENTAnalyticsProps {
 
 export function ENTAnalytics({ refreshTrigger }: ENTAnalyticsProps) {
   const { getDateRange } = useDailyData()
-  const [windowDays, setWindowDays] = useState<number>(30)
+  const [windowDays, setWindowDays] = useState<number>(90)
   const [allEntries, setAllEntries] = useState<ENTEntry[]>([])
   const [loading, setLoading] = useState(false)
 

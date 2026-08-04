@@ -46,7 +46,7 @@ function isCrisis(entry: AdrenalEntry): boolean {
 
 export function AdrenalAnalytics({ refreshTrigger }: AdrenalAnalyticsProps) {
   const { getDateRange } = useDailyData()
-  const [windowDays, setWindowDays] = useState<number>(30)
+  const [windowDays, setWindowDays] = useState<number>(90)
   const [allEntries, setAllEntries] = useState<AdrenalEntry[]>([])
   const [loading, setLoading] = useState(false)
 

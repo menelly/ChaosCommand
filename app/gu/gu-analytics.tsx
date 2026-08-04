@@ -35,7 +35,7 @@ interface GUAnalyticsProps {
 
 export function GUAnalytics({ refreshTrigger }: GUAnalyticsProps) {
   const { getDateRange } = useDailyData()
-  const [windowDays, setWindowDays] = useState<number>(30)
+  const [windowDays, setWindowDays] = useState<number>(90)
   const [allEntries, setAllEntries] = useState<GUEntry[]>([])
   const [loading, setLoading] = useState(false)
 

@@ -17,7 +17,7 @@ import { getEpisodeTypeInfo } from './respiratory-constants'
 
 export function RespiratoryAnalytics({ refreshTrigger }: { refreshTrigger: number }) {
   const { getDateRange } = useDailyData()
-  const [windowDays, setWindowDays] = useState(30)
+  const [windowDays, setWindowDays] = useState(90)
   const [allEntries, setAllEntries] = useState<RespiratoryEntry[]>([])
   const [loading, setLoading] = useState(false)
 

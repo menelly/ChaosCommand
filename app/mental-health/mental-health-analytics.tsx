@@ -24,7 +24,7 @@ const TIME_WINDOWS: { value: TimeWindow; label: string }[] = [
 ]
 
 export function MindMoodAnalytics({ entries }: Props) {
-  const [timeWindow, setTimeWindow] = useState<TimeWindow>('30')
+  const [timeWindow, setTimeWindow] = useState<TimeWindow>('90')
 
   const filtered = useMemo(() => {
     if (timeWindow === 'all') return entries

@@ -35,7 +35,7 @@ interface ThyroidAnalyticsProps {
 
 export function ThyroidAnalytics({ refreshTrigger }: ThyroidAnalyticsProps) {
   const { getDateRange } = useDailyData()
-  const [windowDays, setWindowDays] = useState<number>(30)
+  const [windowDays, setWindowDays] = useState<number>(90)
   const [allEntries, setAllEntries] = useState<ThyroidEntry[]>([])
   const [loading, setLoading] = useState(false)
 

@@ -46,7 +46,7 @@ const CONFIG = analyticsConfigFor('autoimmune')
 
 export function AutoimmuneAnalytics({ refreshTrigger }: { refreshTrigger: number }) {
   const { getDateRange } = useDailyData()
-  const [windowDays, setWindowDays] = useState(30)
+  const [windowDays, setWindowDays] = useState(90)
   const [entries, setEntries] = useState<TrackerEntry[]>([])
   const [loading, setLoading] = useState(false)
 

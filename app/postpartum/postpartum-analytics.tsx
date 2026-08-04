@@ -35,7 +35,7 @@ interface PostpartumAnalyticsProps {
 
 export function PostpartumAnalytics({ refreshTrigger }: PostpartumAnalyticsProps) {
   const { getDateRange } = useDailyData()
-  const [windowDays, setWindowDays] = useState<number>(30)
+  const [windowDays, setWindowDays] = useState<number>(90)
   const [allEntries, setAllEntries] = useState<PostpartumEntry[]>([])
   const [loading, setLoading] = useState(false)
 

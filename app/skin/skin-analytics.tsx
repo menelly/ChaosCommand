@@ -12,7 +12,7 @@ import { getEpisodeTypeInfo } from './skin-constants'
 
 export function SkinAnalytics({ refreshTrigger }: { refreshTrigger: number }) {
   const { getDateRange } = useDailyData()
-  const [windowDays, setWindowDays] = useState(30)
+  const [windowDays, setWindowDays] = useState(90)
   const [allEntries, setAllEntries] = useState<SkinEntry[]>([])
   const [loading, setLoading] = useState(false)
 

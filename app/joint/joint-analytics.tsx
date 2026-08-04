@@ -12,7 +12,7 @@ import { getEpisodeTypeInfo } from './joint-constants'
 
 export function JointAnalytics({ refreshTrigger }: { refreshTrigger: number }) {
   const { getDateRange } = useDailyData()
-  const [windowDays, setWindowDays] = useState(30)
+  const [windowDays, setWindowDays] = useState(90)
   const [allEntries, setAllEntries] = useState<JointEntry[]>([])
   const [loading, setLoading] = useState(false)
 

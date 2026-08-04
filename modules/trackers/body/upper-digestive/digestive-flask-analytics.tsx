@@ -120,7 +120,7 @@ function rankCounts(entries: UpperDigestiveEntry[], key: 'symptoms' | 'triggers'
 
 export default function DigestiveFlaskAnalytics({}: Props) {
   const { getDateRange } = useDailyData()
-  const [timeWindow, setTimeWindow] = useState<TimeWindow>('30')
+  const [timeWindow, setTimeWindow] = useState<TimeWindow>('90')
   const [filtered, setFiltered] = useState<UpperDigestiveEntry[]>([])
   const [loading, setLoading] = useState(true)
 
