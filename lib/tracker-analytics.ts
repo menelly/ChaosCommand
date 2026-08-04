@@ -116,6 +116,13 @@ export interface TrackerAnalyticsConfig {
   }
   /** Boolean escalation flags, by display label. */
   flagFields?: Record<string, string>
+  /**
+   * Fields holding attached images. Counted across the window, because "I have
+   * 14 photos of this from the last 3 months" is genuinely useful to bring to
+   * an appointment — a photograph of what a rash or a swelling did three weeks
+   * ago is evidence no severity number can replace.
+   */
+  attachmentFields?: string[]
 }
 
 // ─── ENTRY NORMALISATION ────────────────────────────────────────────────────
@@ -335,6 +342,8 @@ export interface TrackerAnalytics {
   treatmentComparisons: TreatmentComparison[]
   /** Completed-out-of-expected, where the tracker records a pair. */
   ratio: { label: string; completed: number; expected: number; pct: number } | null
+  /** Total attached images across the window. */
+  attachments: number
   /** Mirrors config, so a renderer knows which way to point the arrow. */
   higherIsBetter: boolean
   unit?: string
@@ -509,6 +518,10 @@ export function computeTrackerAnalytics(
     trend: computeTrend(withTime.map(x => x.e), config),
     treatmentComparisons: compareTreatments(entries, config),
     ratio,
+    attachments: (config.attachmentFields || []).reduce(
+      (n, f) => n + entries.reduce((m, e) => m + (Array.isArray(e[f]) ? (e[f] as unknown[]).length : 0), 0),
+      0,
+    ),
     higherIsBetter: !!config.higherIsBetter,
     unit: config.unit,
   }

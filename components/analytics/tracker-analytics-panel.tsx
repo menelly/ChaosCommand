@@ -118,6 +118,7 @@ export function TrackerAnalyticsPanel({
             tone={a.ratio.pct >= 0.8 ? 'text-green-600' : ''}
           />
         )}
+        {a.attachments > 0 && <Tile label="Photos stored" value={a.attachments} />}
         {Object.entries(a.flags).map(([label, n]) => (
           <Tile key={label} label={label} value={n} tone={n > 0 ? 'text-amber-600' : ''} />
         ))}

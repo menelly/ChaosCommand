@@ -128,10 +128,16 @@ export const TRACKER_ANALYTICS: Record<string, TrackerAnalyticsConfig> = {
     episodeTypeField: 'episodeType',
     listFields: {
       treatments: COMMON_TREATMENTS,
-      triggers: COMMON_TRIGGERS,
-      locations: ['affectedAreas', 'bodyAreas'],
+      // `suspectedTrigger` is singular here — a real stored field name, not a
+      // typo to tidy. Renaming it in code would orphan every existing entry.
+      triggers: ['suspectedTrigger', ...COMMON_TRIGGERS],
+      locations: ['bodyLocation', 'affectedAreas', 'bodyAreas'],
       character: ['character', 'appearance'],
     },
+    flagFields: { 'ER visits': 'erVisitRequired', 'Epinephrine given': 'epinephrineGiven' },
+    // Photo documentation matters more here than almost anywhere: a rash three
+    // weeks ago is unreproducible at an appointment.
+    attachmentFields: ['photos'],
   },
 
   neuro: {
@@ -141,9 +147,12 @@ export const TRACKER_ANALYTICS: Record<string, TrackerAnalyticsConfig> = {
     listFields: {
       treatments: COMMON_TREATMENTS,
       triggers: COMMON_TRIGGERS,
-      locations: ['affectedAreas', 'bodyAreas'],
+      // Neurological distribution (dermatomal, glove-and-stocking, etc.) is
+      // this tracker's location analogue.
+      locations: ['distribution', 'affectedAreas', 'bodyAreas'],
       character: ['symptoms'],
     },
+    flagFields: { 'ER visits': 'erVisitRequired' },
   },
 
   anxiety: {
