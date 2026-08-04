@@ -125,15 +125,40 @@ def _write_cargo_lock_version(path: Path, ver: str) -> bool:
 _APPVER_RE = re.compile(r"(APP_VERSION\s*=\s*')([^']+)(')")
 
 
+# Sentinel meaning "this file cannot drift, by construction". Distinct from
+# None, which means "I looked and found nothing" — a real problem.
+DERIVED = "<derived from package.json at build>"
+
+
 def _read_app_version_ts(path: Path) -> str | None:
+    """Read APP_VERSION, or report that it is derived and therefore undriftable.
+
+    ⚠️ THIS USED TO REPORT "NOT FOUND" ON A PERFECTLY HEALTHY FILE.
+    app-version.ts was deliberately changed to read
+    `process.env.NEXT_PUBLIC_APP_VERSION`, injected from package.json at build
+    time, precisely so it can never drift again. The checker went on hunting
+    for a hardcoded constant that no longer exists and flagged its absence as
+    drift — every single run, forever.
+
+    That is not a cosmetic annoyance. A checker that cries wolf on a healthy
+    file teaches you to skim its output, and this one was printing DRIFT
+    DETECTED alongside a REAL finding (the release manifest stranded eight
+    weeks behind) that nobody acted on for two months. The false alarm was
+    camouflage for the true one.
+    """
     if not path.exists():
         return None
-    m = _APPVER_RE.search(path.read_text(encoding="utf-8"))
+    text = path.read_text(encoding="utf-8")
+    if "NEXT_PUBLIC_APP_VERSION" in text:
+        return DERIVED
+    m = _APPVER_RE.search(text)
     return m.group(2) if m else None
 
 
 def _write_app_version_ts(path: Path, ver: str) -> bool:
     text = path.read_text(encoding="utf-8")
+    if "NEXT_PUBLIC_APP_VERSION" in text:
+        return False  # derived at build time; nothing to write, nothing to drift
     new = _APPVER_RE.sub(rf"\g<1>{ver}\g<3>", text, count=1)
     if new != text:
         path.write_text(new, encoding="utf-8")
@@ -255,7 +280,11 @@ def _verify(expected: str | None, check_live: bool, quiet: bool) -> bool:
         found["LIVE version.json"] = live
 
     present = {k: v for k, v in found.items() if v is not None}
-    distinct = set(present.values())
+    # ⚠️ EXCLUDE the derived sentinel from the drift comparison. It is not a
+    # version, it is the ABSENCE of one by design — counting it as a distinct
+    # value made "3 different versions present" out of two real ones, which is
+    # the same cry-wolf failure this function was just fixed for.
+    distinct = {v for v in present.values() if v != DERIVED}
 
     target = expected or (next(iter(distinct)) if len(distinct) == 1 else None)
 
@@ -264,6 +293,10 @@ def _verify(expected: str | None, check_live: bool, quiet: bool) -> bool:
         for label, ver in found.items():
             if ver is None:
                 mark, note = "?", "NOT FOUND"
+            elif ver == DERIVED:
+                # Cannot mismatch a target it does not hold. Flagging this as a
+                # failure is the third face of the same cry-wolf bug.
+                mark, note = "=", "(cannot drift)"
             elif target is not None and ver != target:
                 mark, note = "X", f"!= {target}"
                 all_ok = False
@@ -275,7 +308,13 @@ def _verify(expected: str | None, check_live: bool, quiet: bool) -> bool:
         all_ok = False
         if not quiet:
             print(f"\n  DRIFT: {len(distinct)} different versions present: {sorted(distinct)}")
-    elif expected is not None and any(v != expected for v in present.values()):
+    elif expected is not None and any(
+        v != expected for v in present.values() if v != DERIVED
+    ):
+        # Same exclusion as the table above. The verdict was disagreeing with
+        # its own rows — every line printed "=" and the summary still said
+        # DRIFT DETECTED, which is worse than either answer alone: a checker
+        # whose headline contradicts its detail teaches you to trust neither.
         all_ok = False
 
     return all_ok

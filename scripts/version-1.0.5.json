@@ -1,0 +1,6 @@
+{
+  "version": "1.0.5",
+  "released": "2026-08-04",
+  "url": "https://chaoscommand.center/download",
+  "notes": "1.0.5 - MedGemma document parsing works again. The AI badge could say \"model ready\" while every upload failed, because the runner never queued a load - it is fixed, and the AI controls are now split into two honest toggles: whether you want AI parsing, and whether the model is actually in memory. Analytics rebuilt on one shared engine: every tracker can now show a DIRECTION - improving, worsening or steady - not just totals. Treatment sections compare severity with and without a treatment, showing both sample sizes, instead of ranking by how often something was mentioned. Default analytics window is now 90 days, because 30 cannot hold a monthly cycle. Mental health, anxiety, crisis and substance sections are now OPT-IN for doctor reports rather than included by default."
+}
