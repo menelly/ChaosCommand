@@ -281,7 +281,10 @@ export const TRACKER_ANALYTICS: Record<string, TrackerAnalyticsConfig> = {
     // still supplies mean, trend and rate, which are the useful parts.
     severityMax: 0,
     higherIsBetter: true,
-    unit: 'ml',
+    // Ounces, per `amount: number // in oz` in the hydration form. This said
+    // 'ml' for a few minutes because it was GUESSED, and 30ml of water is a
+    // sip — a wrong unit in a clinical document is worse than no unit.
+    unit: 'oz',
     listFields: { character: ['drinkType'] },
   },
 
@@ -304,7 +307,8 @@ export const TRACKER_ANALYTICS: Record<string, TrackerAnalyticsConfig> = {
     baselineField: 'energyBefore',
     severityMax: 10,
     higherIsBetter: true,
-    unit: 'energy',
+    // No unit: energyBefore/After are a 0-10 scale, and '3.9 energy' reads
+    // like a measurement in a unit that does not exist.
     episodeTypeField: 'type',
     listFields: { character: ['bodyFeel', 'intensity'], locations: ['location'] },
   },

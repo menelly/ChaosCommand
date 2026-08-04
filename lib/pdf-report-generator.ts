@@ -15,6 +15,10 @@ import {
   type SymptomTrend,
 } from '@/lib/pattern-engine'
 import { analyzeV2Patterns } from '@/lib/pattern-engine-v2'
+// Shared analytics engine — the SAME module the in-app tracker panels call,
+// so the report and the app cannot report different numbers for one week.
+import { collectEntries, computeTrackerAnalytics, trackerKeyOf } from '@/lib/tracker-analytics'
+import { analyticsConfigFor } from '@/lib/tracker-analytics-config'
 // Seizure episode-type canon (single source of truth) so the report collapses
 // the slug ("focal-aware") and the legacy human label ("Focal Aware (Simple
 // Partial)") into ONE row instead of fragmenting — a case mergeVariants can't
@@ -757,6 +761,97 @@ export function generateMedicalReport(data: ReportData): Blob {
       )
     }
   }
+
+  // === TRACKER OVERVIEW ===
+  //
+  // ⚠️ THIS SECTION EXISTS SO THE REPORT AND THE APP CANNOT DISAGREE.
+  //
+  // Until now the tracker panels, the pattern engine and this document each
+  // derived their own figures. Three consumers, three answers, and no way for
+  // a reader to tell which one was wrong — a patient pointing at their phone
+  // and a clinician reading this page could legitimately be looking at
+  // different numbers for the same week, which is precisely the situation that
+  // makes a doctor stop trusting patient-collected data.
+  //
+  // Every number below comes from lib/tracker-analytics.ts, the same module
+  // the in-app panels call, so they are the same figures by construction
+  // rather than by two implementations happening to agree.
+  //
+  // Trackers whose sample is too small to support a direction print "—" rather
+  // than a guess. An absent claim is honest; a confident wrong one in a
+  // document that informs treatment decisions is not.
+  ;(() => {
+    const keys = Array.from(
+      new Set(trackerData.map(r => trackerKeyOf(r.subcategory)).filter(Boolean)),
+    ).sort()
+    if (!keys.length) return
+
+    const rows: string[][] = []
+    for (const key of keys) {
+      const entries = collectEntries(trackerData as any, key)
+      if (entries.length < 3) continue
+      const a = computeTrackerAnalytics(entries, analyticsConfigFor(key))
+
+      const dirWord = (d: string | null) =>
+        d === 'improving' ? 'Improving' : d === 'worsening' ? 'Worsening' : d === 'stable' ? 'Steady' : '—'
+
+      // Frequency direction is phrased in plain words. "Worsening" applied to a
+      // rate reads as severity to a clinician skimming a table.
+      const freqWord =
+        a.frequencyTrend.direction === 'worsening'
+          ? 'More often'
+          : a.frequencyTrend.direction === 'improving'
+            ? 'Less often'
+            : a.frequencyTrend.direction === 'stable'
+              ? 'Same'
+              : '—'
+
+      // ⚠️ SKIP ROWS THAT SAY NOTHING. A tracker with no measure and no
+      // direction contributes a line of dashes, and half a dozen of those in a
+      // clinical document is noise a reader has to wade through to find the
+      // findings. Volume is not evidence.
+      const saysSomething =
+        a.severityMean !== null || a.trend.direction || a.frequencyTrend.direction
+      if (!saysSomething) continue
+
+      // ⚠️ UNITS, BECAUSE THE COLUMN IS NOT ALWAYS A SEVERITY. Hydration
+      // records volume and sleep records hours; printing "6.8" under a heading
+      // that implies a 0-10 symptom scale misrepresents it to a clinician
+      // skimming the table. Where the tracker declares a unit, it is shown.
+      const unit = a.unit ? ` ${a.unit}` : ''
+
+      rows.push([
+        TRACKER_DISPLAY_NAMES[key] || key,
+        String(a.entries),
+        a.ratePerWeek === null ? '—' : `${a.ratePerWeek.toFixed(1)}/wk`,
+        a.severityMean === null ? '—' : `${a.severityMean.toFixed(1)}${unit}`,
+        a.severityPeak === null ? '—' : `${a.severityPeak}${unit}`,
+        dirWord(a.trend.direction),
+        freqWord,
+      ])
+    }
+
+    if (!rows.length) return
+
+    w.sectionHeader('Tracker Overview')
+    w.body(
+      'Every tracker with enough entries to say something, over the reporting period. ' +
+      'Direction compares the earlier half of the period against the later half. ' +
+      'Where a tracker had too few entries to support a direction, a dash is shown ' +
+      'rather than an estimate. These figures are the same ones displayed in the app.',
+    )
+    // "Trend", not "Severity" — the column holds a DIRECTION, and for trackers
+    // measuring hours slept or fluid intake it is not a severity at all.
+    w.table(
+      ['Tracker', 'Entries', 'Rate', 'Average', 'Peak', 'Trend', 'Frequency'],
+      rows,
+      [120, 50, 55, 55, 50, 65, 60],
+    )
+    w.body(
+      'Frequency counts logged entries. A change in how often something is recorded ' +
+      'can reflect a change in tracking habits as well as a change in the condition.',
+    )
+  })()
 
   // === TREATMENT RESPONSE ===
   // Symptom trajectories aligned to the date each medication was started. This

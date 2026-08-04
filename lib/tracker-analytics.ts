@@ -246,7 +246,23 @@ export function trackerKeyOf(subcategory: string | undefined | null): string {
   if (parts.length >= 2 && parts[0] === parts[1]) {
     s = [parts[0], ...parts.slice(2)].join('-')
   }
-  return s
+  return KEY_ALIASES[s] || s
+}
+
+/**
+ * Storage keys that are the same tracker spelled two ways.
+ *
+ * Real data carries both `self-care` (33 rows) and `selfcare` (3), which
+ * produced two separate trackers in every consumer — including two rows in a
+ * doctor's report, one of them looking like a tracker barely used. Folded here
+ * rather than in each consumer so the report, the panels and the pattern
+ * engine cannot disagree about how many trackers exist.
+ */
+const KEY_ALIASES: Record<string, string> = {
+  selfcare: 'self-care',
+  'anxiety-tracker': 'anxiety',
+  'sensory-tracker': 'sensory',
+  'crisis': 'crisis-support',
 }
 
 function parseMaybeJson(v: unknown): unknown {
