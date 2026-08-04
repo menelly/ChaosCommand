@@ -113,6 +113,17 @@ for (const key of keys) {
     console.log(`   by hour   0-23: ${spark}`)
   }
 
+  if (a.series.some(x => x.n > 0)) {
+    console.log('   SCALES:')
+    for (const x of a.series.filter(y => y.n > 0)) {
+      const d = x.trend.direction ? x.trend.direction : `— (${x.trend.suppressedBecause})`
+      console.log(
+        `      ${x.label.padEnd(24)} avg ${x.mean.toFixed(1)} peak ${x.peak}  n=${x.n}  ` +
+          `${d}${x.higherIsBetter ? '  [higher=better]' : ''}`,
+      )
+    }
+  }
+
   if (a.treatmentComparisons.length) {
     console.log('   TREATMENT COMPARISON (severity with vs without):')
     for (const c of a.treatmentComparisons.slice(0, 5)) {

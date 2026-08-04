@@ -193,6 +193,50 @@ export function TrackerAnalyticsPanel({
         </CardContent>
       </Card>
 
+      {/* ── parallel scales, each with its own direction ── */}
+      {a.series.some(s => s.n > 0) && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Each scale, and which way it's going</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {a.series
+              .filter(s => s.n > 0)
+              .map(s => {
+                const d = s.trend.direction
+                const tone =
+                  d === 'improving'
+                    ? 'text-green-600'
+                    : d === 'worsening'
+                      ? 'text-amber-600'
+                      : 'text-muted-foreground'
+                return (
+                  <div key={s.label} className="flex items-center justify-between gap-3 text-sm">
+                    <span className="truncate">{s.label}</span>
+                    <span className="flex items-center gap-3 shrink-0">
+                      <span className="text-muted-foreground">
+                        avg {s.mean!.toFixed(1)} · peak {s.peak}
+                      </span>
+                      {d ? (
+                        <span className={`font-semibold capitalize ${tone}`}>
+                          {d === 'stable' ? 'steady' : d}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground italic">
+                          not enough yet
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                )
+              })}
+            <p className="text-xs text-muted-foreground pt-1 border-t">
+              Each scale is judged on its own terms — more energy is good, more mania is not.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
       {/* ── what actually helped, computed honestly ── */}
       {(a.treatmentComparisons.length > 0 || a.treatments.length > 0) && (
         <Card>

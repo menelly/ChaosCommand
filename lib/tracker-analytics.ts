@@ -123,6 +123,22 @@ export interface TrackerAnalyticsConfig {
    * ago is evidence no severity number can replace.
    */
   attachmentFields?: string[]
+  /**
+   * Additional parallel scales this tracker records, each its own series.
+   *
+   * Some trackers do not have ONE severity — a mental-health entry carries
+   * depression, mania, anxiety, energy, brain fog, motivation and social
+   * engagement side by side. Averaging those into a single number would be
+   * meaningless, and showing eight averages with no direction (which is what
+   * they did) answers nothing: "is my depression improving" is the actual
+   * question and it is per-scale.
+   *
+   * Each series gets its own mean, peak and trend. `higherIsBetter` is
+   * per-series because they genuinely differ — more energy is good, more mania
+   * is not, and reading that backwards would tell someone a manic climb was an
+   * improvement.
+   */
+  series?: { field: string; label: string; higherIsBetter?: boolean; max?: number }[]
 }
 
 // ─── ENTRY NORMALISATION ────────────────────────────────────────────────────
@@ -354,6 +370,15 @@ export interface TrackerAnalytics {
   ratio: { label: string; completed: number; expected: number; pct: number } | null
   /** Total attached images across the window. */
   attachments: number
+  /** Per-scale results for trackers recording several parallel measures. */
+  series: {
+    label: string
+    mean: number | null
+    peak: number | null
+    n: number
+    higherIsBetter: boolean
+    trend: TrendResult
+  }[]
   /** Mirrors config, so a renderer knows which way to point the arrow. */
   higherIsBetter: boolean
   unit?: string
@@ -535,6 +560,25 @@ export function computeTrackerAnalytics(
     ),
     higherIsBetter: !!config.higherIsBetter,
     unit: config.unit,
+    series: (config.series || []).map(s => {
+      const vals = entries
+        .map(e => firstNumber(e, [s.field]))
+        .filter((v): v is number => v !== undefined)
+      return {
+        label: s.label,
+        mean: mean(vals),
+        peak: vals.length ? Math.max(...vals) : null,
+        n: vals.length,
+        higherIsBetter: !!s.higherIsBetter,
+        // Each series gets the same split-half treatment and the same floor,
+        // evaluated over time-ordered entries.
+        trend: computeTrend(withTime.map(x => x.e), {
+          ...config,
+          severityFields: [s.field],
+          higherIsBetter: s.higherIsBetter,
+        }),
+      }
+    }),
   }
 }
 

@@ -109,17 +109,34 @@ export const TRACKER_ANALYTICS: Record<string, TrackerAnalyticsConfig> = {
 
   'mental-health': {
     key: 'mental-health',
-    // This tracker records several parallel scales. `moodIntensity` is the one
-    // that means "how strong was this state", so it is the severity spine; the
-    // rest are separate series and belong in their own panel, not averaged
-    // together into a single meaningless number.
+    // `moodIntensity` means "how strong was this state", so it is the spine.
+    // Everything else is its own series — see `series` below.
     severityFields: ['moodIntensity', ...COMMON_SEVERITY],
     episodeTypeField: 'episodeType',
     listFields: {
       treatments: ['copingStrategies', ...COMMON_TREATMENTS],
       triggers: COMMON_TRIGGERS,
-      character: ['emotionalState', 'cognitiveSymptoms'],
+      character: ['emotionalState', 'cognitiveSymptoms', 'cognitiveDomains'],
+      // `mood` and `moodSwingDirection` are single strings rather than arrays;
+      // the engine accepts either, so the mood distribution and swing-direction
+      // cards survive the move without their own bespoke code.
+      patterns: ['moodSwingDirection', 'mood'],
     },
+    // ⚠️ higherIsBetter is set PER SERIES and the values genuinely differ.
+    // More energy is good; more mania is not. Reading that backwards would
+    // tell someone a manic climb was an improvement, which is precisely the
+    // moment an app should not be cheerfully wrong.
+    series: [
+      { field: 'depressionLevel', label: 'Depression' },
+      { field: 'anxietyLevel', label: 'Anxiety' },
+      { field: 'maniaLevel', label: 'Mania' },
+      { field: 'stressLevel', label: 'Stress' },
+      { field: 'brainFogSeverity', label: 'Brain fog' },
+      { field: 'regulationDifficulty', label: 'Regulation difficulty' },
+      { field: 'energyLevel', label: 'Energy', higherIsBetter: true },
+      { field: 'motivationLevel', label: 'Motivation', higherIsBetter: true },
+      { field: 'socialEngagementLevel', label: 'Social engagement', higherIsBetter: true },
+    ],
   },
 
   skin: {
