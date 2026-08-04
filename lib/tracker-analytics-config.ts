@@ -186,8 +186,17 @@ export const TRACKER_ANALYTICS: Record<string, TrackerAnalyticsConfig> = {
     listFields: {
       treatments: ['copingStrategies', ...COMMON_TREATMENTS],
       triggers: COMMON_TRIGGERS,
-      character: ['symptoms', 'physicalSymptoms'],
+      character: ['physicalSymptoms', 'mentalSymptoms', 'symptoms'],
     },
+    series: [
+      { field: 'anxietyLevel', label: 'Anxiety' },
+      { field: 'panicLevel', label: 'Panic' },
+    ],
+    // ⚠️ Safety indicators are DELIBERATELY NOT declared as flagFields here.
+    // flagFields render as ordinary stat tiles in a grid beside things like
+    // swelling and ER visits, and suicidal ideation must never be one tile
+    // among several. The anxiety panel renders them itself, separately and
+    // unmissably, with crisis resources attached. See anxiety-analytics.tsx.
   },
 
   'upper-digestive': {
