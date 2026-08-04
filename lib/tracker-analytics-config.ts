@@ -16,9 +16,18 @@
  */
 
 import type { TrackerAnalyticsConfig } from './tracker-analytics'
+import { SEVERITY_FIELD_VOCABULARY } from './tracker-analytics'
 
-/** Names that have meant "how bad was it" somewhere in this codebase. */
-const COMMON_SEVERITY = ['severity', 'painLevel', 'symptomSeverity', 'severityLevel', 'level']
+/**
+ * Names that have meant "how bad was it" somewhere in this codebase.
+ *
+ * ⚠️ IMPORTED, NOT RE-DECLARED. This was a hand-written five-item list for a
+ * few hours on 2026-08-04 and it silently could not see fogLevel, nausea,
+ * bloating, anxietyLevel, intensity or rating — so those trackers reported no
+ * severity at all, with no error. The pattern engine had made the same mistake
+ * two days earlier. One list, imported everywhere.
+ */
+const COMMON_SEVERITY = [...SEVERITY_FIELD_VOCABULARY]
 
 /** Names that have meant "what did you do about it". */
 const COMMON_TREATMENTS = ['treatments', 'treatmentApplied', 'medications', 'interventions']

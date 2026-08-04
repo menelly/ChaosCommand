@@ -44,6 +44,50 @@
  * absent card is honest. A confident wrong one is not.
  */
 
+// ─── THE SEVERITY VOCABULARY ────────────────────────────────────────────────
+/**
+ * THE list of field names that have ever meant "how bad was it" in this app.
+ *
+ * ⚠️ ONE CONSTANT, IMPORTED EVERYWHERE, BECAUSE COPIES OF IT KEEP DRIFTING AND
+ * THE DRIFT IS ALWAYS SILENT.
+ *
+ * It was three copies until 2026-08-02, when `extractSeverity` checked twelve
+ * fields on a scalar record but only nine inside `entries[]` — so trackers
+ * storing mood or energy had no severity at all as far as the pattern engine
+ * was concerned, and simply looked like they had no recent data. It was caught
+ * by a human noticing a series that ended five weeks before she had last
+ * logged in it.
+ *
+ * On 2026-08-04 it briefly became FOUR: this analytics engine was written with
+ * its own shorter list and could not see fogLevel, nausea, bloating,
+ * anxietyLevel, intensity or rating, while the pattern engine could not see
+ * symptomSeverity or severityLevel. Same bug, same silence, four days later.
+ * Hence: one export, and every consumer imports it.
+ *
+ * ORDER MATTERS — first field present on an entry wins, so specific clinical
+ * scales come before generic ones.
+ *
+ * ⚠️ Adding a field here changes what counts as severity EVERYWHERE. If it is a
+ * field where a HIGHER number is GOOD, it must also be declared as such
+ * wherever direction is computed, or every trend on it reads backwards.
+ */
+export const SEVERITY_FIELD_VOCABULARY = [
+  'severity',
+  'painLevel',
+  'symptomSeverity',
+  'severityLevel',
+  'intensity',
+  'level',
+  'rating',
+  'fogLevel',
+  'anxietyLevel',
+  'nausea',
+  'bloating',
+  'mood',
+  'energyLevel',
+  'energy',
+] as const
+
 // ─── SAMPLE FLOORS ──────────────────────────────────────────────────────────
 // Deliberately conservative. These are not statistical significance thresholds
 // — they are "is it defensible to draw this on a screen a doctor may read".

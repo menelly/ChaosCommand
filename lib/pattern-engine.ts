@@ -17,6 +17,9 @@
 // (the golden suites, any node-side tooling) for no benefit.
 import type { DailyDataRecord } from './database/dexie-db'
 import { symptomLabel, symptomKey } from './symptom-labels'
+// One severity vocabulary for the whole app — see the comment on the constant.
+// Do not replace this with a local list; that has now gone wrong twice.
+import { SEVERITY_FIELD_VOCABULARY } from './tracker-analytics'
 import { moodRank } from '../app/mental-health/mental-health-constants'
 import {
   computeTrend, applyScaleDirection, describeTrend, scaleDirectionForField, mannWhitneyU,
@@ -139,12 +142,15 @@ function avgEntryField(content: any, pick: (e: any) => any): number | null {
  * field is one where a HIGHER number is GOOD news, it must also be added to
  * HIGHER_IS_BETTER_FIELDS in trend-analysis.ts, or every trend on it will be
  * reported backwards.
+ *
+ * 📌 2026-08-04: THIS LIST NOW LIVES IN lib/tracker-analytics.ts AND IS
+ * IMPORTED. It briefly became four copies when the shared analytics engine was
+ * written with its own shorter version — it could not see fogLevel, nausea,
+ * bloating, anxietyLevel, intensity or rating, while this file could not see
+ * symptomSeverity or severityLevel. Same silent divergence as the last time,
+ * two days later. Do not re-declare it here.
  */
-const SEVERITY_FIELDS = [
-  'severity', 'painLevel', 'intensity', 'level', 'rating',
-  'fogLevel', 'anxietyLevel', 'nausea', 'bloating',
-  'mood', 'energyLevel', 'energy',
-] as const
+const SEVERITY_FIELDS = SEVERITY_FIELD_VOCABULARY
 
 /** First recorded severity on an object, with the field it came from. The field
  *  is what lets callers tell a deficit scale from a wellbeing scale. */
