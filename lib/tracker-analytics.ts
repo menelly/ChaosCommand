@@ -618,10 +618,14 @@ export function computeTrend(
   const b = mean(sevs.slice(sevs.length - mid))!
   const change = b - a
 
-  // Under a fifth of a point of movement on a 0-10 scale is not a direction,
-  // it is rounding. Calling it "improving" would be the sort of confident
-  // noise this engine exists to refuse.
-  const STABLE_BAND = 0.2
+  // A third of a point on a 0-10 scale is not a direction, it is rounding.
+  //
+  // ⚠️ WAS 0.2 AND EXCLUSIVE, WHICH IS HOW A +0.2 MOVE OVER TEN ENTRIES GOT
+  // REPORTED AS "WORSENING" — it missed the stable band by one hundredth of a
+  // point. A threshold that a value can land exactly on needs to be inclusive,
+  // and this one needed to be wider besides: at these sample sizes a fifth of
+  // a point is one entry rounding differently.
+  const STABLE_BAND = 0.35
 
   // ⚠️ Direction depends on which way "good" points. For a symptom, a rising
   // number is worse; for hours slept or fluid intake it is better. Getting this
@@ -631,7 +635,7 @@ export function computeTrend(
   const gotWorse = worseWhenRising ? change > 0 : change < 0
 
   const direction =
-    Math.abs(change) < STABLE_BAND ? 'stable' : gotWorse ? 'worsening' : 'improving'
+    Math.abs(change) <= STABLE_BAND ? 'stable' : gotWorse ? 'worsening' : 'improving'
 
   return { direction, change, firstHalfMean: a, secondHalfMean: b, n: sevs.length }
 }

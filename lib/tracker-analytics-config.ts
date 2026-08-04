@@ -109,9 +109,16 @@ export const TRACKER_ANALYTICS: Record<string, TrackerAnalyticsConfig> = {
 
   'mental-health': {
     key: 'mental-health',
-    // `moodIntensity` means "how strong was this state", so it is the spine.
-    // Everything else is its own series — see `series` below.
-    severityFields: ['moodIntensity', ...COMMON_SEVERITY],
+    // ⚠️ DELIBERATELY NO SEVERITY SPINE, and do not "fix" this by adding one.
+    //
+    // `moodIntensity` was used as the spine and it is DIRECTION-NEUTRAL: it
+    // measures how strong a mood was, and a strong GOOD mood scores high. So
+    // "mood intensity worsening" is a meaningless sentence, and the panel
+    // printed it as a headline over nine scales that mostly said the opposite.
+    //
+    // This tracker genuinely has no single severity. The nine scales below ARE
+    // the measurement, and the headline is summarised from them.
+    severityFields: [],
     episodeTypeField: 'episodeType',
     listFields: {
       treatments: ['copingStrategies', ...COMMON_TREATMENTS],

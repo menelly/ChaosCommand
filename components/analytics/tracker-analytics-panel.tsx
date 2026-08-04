@@ -85,6 +85,58 @@ export function TrackerAnalyticsPanel({
   const ft = a.frequencyTrend
   const hasSeverity = a.severityN > 0
 
+  /**
+   * For a tracker with several parallel scales, the headline is a COUNT of
+   * which way they went — never one scale standing in for the rest.
+   *
+   * The tone deliberately follows the balance rather than the worst item. One
+   * scale moving the wrong way while eight improve is a good stretch with a
+   * caveat, and colouring the whole card amber for it would misrepresent the
+   * period to somebody who is living it.
+   */
+  const scaleSummary = React.useMemo(() => {
+    const rated = a.series.filter(s => s.trend.direction)
+    if (rated.length < 2) return null
+
+    const better = rated.filter(s => s.trend.direction === 'improving')
+    const worse = rated.filter(s => s.trend.direction === 'worsening')
+    const steady = rated.length - better.length - worse.length
+
+    const parts: string[] = []
+    if (better.length) parts.push(`${better.length} improving`)
+    if (steady) parts.push(`${steady} steady`)
+    if (worse.length) parts.push(`${worse.length} worsening`)
+
+    let headline: string
+    let tone: string
+    if (!worse.length) {
+      headline = better.length ? 'Improving' : 'Steady'
+      tone = better.length ? 'text-green-600' : 'text-muted-foreground'
+    } else if (!better.length) {
+      headline = 'Worsening'
+      tone = 'text-amber-600'
+    } else if (better.length > worse.length) {
+      headline = 'Mostly improving'
+      tone = 'text-green-600'
+    } else if (worse.length > better.length) {
+      headline = 'Mostly worsening'
+      tone = 'text-amber-600'
+    } else {
+      headline = 'Mixed'
+      tone = 'text-muted-foreground'
+    }
+
+    const named = worse.length && better.length
+      ? ` ${worse.map(s => s.label.toLowerCase()).join(' and ')} ${worse.length === 1 ? 'is' : 'are'} the exception.`
+      : ''
+
+    return {
+      headline,
+      tone,
+      detail: `Across ${rated.length} scales: ${parts.join(', ')}.${named}`,
+    }
+  }, [a.series])
+
   const TrendIcon =
     t.direction === 'improving' ? TrendingDown : t.direction === 'worsening' ? TrendingUp : Minus
   // Colour follows GOOD/BAD, never up/down — on hours slept, down is bad.
@@ -133,7 +185,19 @@ export function TrackerAnalyticsPanel({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {t.direction ? (
+          {/* ── multi-scale trackers summarise their scales ──────────────────
+              A tracker with nine parallel measures has no single severity, and
+              picking one field as a spine produced a headline that CONTRADICTED
+              the detail beneath it — "Worsening" over a list that was eight
+              improving, one worsening, one steady. A summary that disagrees
+              with its own body is worse than no summary. So when scales exist,
+              they ARE the headline. */}
+          {scaleSummary ? (
+            <>
+              <div className={`text-2xl font-bold ${scaleSummary.tone}`}>{scaleSummary.headline}</div>
+              <p className="text-sm text-muted-foreground mt-1">{scaleSummary.detail}</p>
+            </>
+          ) : t.direction ? (
             <>
               <div className={`text-2xl font-bold capitalize ${trendTone}`}>{t.direction}</div>
               <p className="text-sm text-muted-foreground mt-1">
