@@ -258,6 +258,28 @@ const KNOWN_TRACKER_KEYS = Array.from(
   new Set(Object.keys(TRACKER_DISPLAY_NAMES))
 ).sort((a, b) => b.length - a.length)
 
+/**
+ * "(single entry - not yet a pattern)" and friends.
+ *
+ * ⚠️ WHY THIS EXISTS. The trend sections of this report are scrupulous about
+ * sample size - they print p-values, mark series preliminary, and refuse to
+ * state a direction they cannot support. The per-system assessment sections
+ * were written earlier and simply ASSERT: "1 entry. Mean anxiety 3.0/10."
+ *
+ * A mean of one number is that number wearing a lab coat. Presenting it in the
+ * same document, in the same voice, as figures that carry confidence intervals
+ * quietly tells the reader that all of these numbers are the same kind of
+ * thing. They are not, and the report should not imply it.
+ *
+ * Returns '' above the floor so well-populated sections read normally.
+ */
+const nCaveat = (n: number): string => {
+  if (n <= 0) return ''
+  if (n === 1) return ' Based on a single entry - a data point, not yet a pattern.'
+  if (n < 4) return ` Based on ${n} entries - too few to describe a pattern; read as provisional.`
+  return ''
+}
+
 const canonicalSub = (sub: string): string => {
   const s = (sub || '').toLowerCase()
   for (const key of KNOWN_TRACKER_KEYS) {
@@ -1531,6 +1553,28 @@ export function generateMedicalReport(data: ReportData): Blob {
       w.body(`Lowest SpO2 per episode: min ${spo2Min}%, mean ${spo2Avg.toFixed(0)}% (n=${spo2Lows.length} recorded).`)
       if (desat) w.finding(`SpO2 below 92% on ${desat}/${spo2Lows.length} recorded episode${desat !== 1 ? 's' : ''}` +
         (spo2Min < 88 ? `; nadir ${spo2Min}% is below the 88% red-flag threshold.` : '.'))
+      // ⚠️ PLAUSIBILITY NOTE — CREDIBILITY-CRITICAL, DO NOT REMOVE.
+      //
+      // A consumer pulse oximeter reports values below ~70% that are, in a
+      // conscious ambulatory person, almost always ARTEFACT: cold hands, poor
+      // peripheral perfusion (common in dysautonomia and Raynaud's), motion,
+      // or nail polish. Printing "nadir 55%" as a clinical finding with no
+      // caveat does not make a clinician worry about the patient — it makes
+      // them stop believing THE WHOLE DOCUMENT, including the findings that
+      // are real and load-bearing.
+      //
+      // The value is still reported, because suppressing patient data is not
+      // ours to do. It is reported WITH the caveat, so the report keeps its
+      // credibility and the reader keeps the number.
+      if (spo2Min < 70) {
+        w.body(
+          `Note on the ${spo2Min}% reading: values this low from a fingertip pulse oximeter are ` +
+          `usually artefact — cold hands, poor peripheral perfusion, motion, or nail polish — rather ` +
+          `than true desaturation in someone awake and upright. It is reported here rather than ` +
+          `removed, but it should be confirmed on a repeat reading with a warm hand before it is ` +
+          `treated as a real value. The higher-range readings in this series are the more reliable ones.`,
+        )
+      }
     }
     const typeRows = mergeVariants(types).map(([t, c]) => [t, String(c)])
     if (typeRows.length) w.table(['Episode type', 'Count'], typeRows, [240, 80])
@@ -1600,7 +1644,7 @@ export function generateMedicalReport(data: ReportData): Blob {
         if (e.episodeType) types[e.episodeType] = (types[e.episodeType] || 0) + 1
       }
     }
-    w.body(`${plural(total, 'skin event')}. Photos captured: ${photos} (available in app for dermatology consult). ER: ${er}.`)
+    w.body(`${plural(total, 'skin event')}. Photos captured: ${photos} (available in app for dermatology consult). ER: ${er}.` + nCaveat(total))
     if (throatTight > 0) w.finding(`Throat tightness with skin reaction reported ${throatTight}× — anaphylaxis pattern.`)
     if (mucous > 0) w.finding(`Mucous membrane involvement ${mucous}× — SJS/TEN differential if drug-related.`)
     const typeRows = mergeVariants(types).map(([t, c]) => [t, String(c)])
@@ -1958,7 +2002,7 @@ export function generateMedicalReport(data: ReportData): Blob {
     }
     if (anxLevels.length) {
       const avg = anxLevels.reduce((a, b) => a + b, 0) / anxLevels.length
-      w.body(`${plural(total, 'entry', 'entries')}. Mean anxiety ${avg.toFixed(1)}/10. Panic attacks: ${panicAttacks}. Meltdowns: ${meltdowns}.`)
+      w.body(`${plural(total, 'entry', 'entries')}. Mean anxiety ${avg.toFixed(1)}/10. Panic attacks: ${panicAttacks}. Meltdowns: ${meltdowns}.` + nCaveat(total))
     }
     if (si > 0 || sh > 0) {
       w.subSection('Crisis-flagged entries')
@@ -1994,7 +2038,7 @@ export function generateMedicalReport(data: ReportData): Blob {
       }
     }
     const avg = (arr: number[]) => arr.length ? (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1) : '—'
-    w.body(`${plural(total, 'check-in')}. Mean depression ${avg(depLevels)}/10. Mean mania ${avg(maniaLevels)}/10. Mean energy ${avg(energyLevels)}/10. Mean brain fog ${avg(fogLevels)}/10.`)
+    w.body(`${plural(total, 'check-in')}. Mean depression ${avg(depLevels)}/10. Mean mania ${avg(maniaLevels)}/10. Mean energy ${avg(energyLevels)}/10. Mean brain fog ${avg(fogLevels)}/10.` + nCaveat(total))
     if (mixedState > 0) w.finding(`Mixed-state days (high dep + high mania): ${mixedState} — highest suicide-risk window in mood disorders.`)
     if (rapidCycling > 0) w.finding(`Rapid cycling reported ${rapidCycling}× — affects medication choice; consider discussing with prescriber.`)
     const typeRows = mergeVariants(types).map(([t, c]) => [t, String(c)])
@@ -2024,7 +2068,7 @@ export function generateMedicalReport(data: ReportData): Blob {
         ;(e.triggers || []).forEach((t: string) => { triggers[t] = (triggers[t] || 0) + 1 })
         ;(e.treatments || []).forEach((t: string) => { treatments[t] = (treatments[t] || 0) + 1 })
       }
-      w.body(`${plural(ud.length, 'upper-GI episode')}.${sev.length ? ` Mean severity ${meanOf(sev).toFixed(1)}/10 (peak ${Math.max(...sev)}/10).` : ''}`)
+      w.body(`${plural(ud.length, 'upper-GI episode')}.${sev.length ? ` Mean severity ${meanOf(sev).toFixed(1)}/10 (peak ${Math.max(...sev)}/10).` : ''}` + nCaveat(ud.length))
       if (Object.keys(symptoms).length) w.body(`Top symptoms: ${tn(symptoms)}`)
       if (Object.keys(triggers).length) w.body(`Top triggers: ${tn(triggers)}`)
       if (Object.keys(treatments).length) w.body(`Treatments tried: ${tn(treatments)}`)
