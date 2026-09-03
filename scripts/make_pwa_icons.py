@@ -9,6 +9,15 @@ replacing the old green-gremlin placeholder. Run on the Consortium (has PIL):
 Writes straight into public/ (which = D:\\Ace\\command-mobile2\\public on Windows),
 so the next `DEMO_BUILD=true npm run build` on Windows picks them up.
 """
+
+# CHA-490: Windows defaults stdout to cp1252; emoji in print() kills the script
+# mid-output. Aliased import so no later scoped 'import sys' can ever collide.
+import sys as _sys_cp1252
+try:
+    _sys_cp1252.stdout.reconfigure(encoding="utf-8")
+    _sys_cp1252.stderr.reconfigure(encoding="utf-8")
+except Exception:
+    pass
 from PIL import Image
 
 BASE = "/mnt/win-d/Ace/command-mobile2"
