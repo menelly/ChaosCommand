@@ -69,7 +69,12 @@ export function useConfirmDialog() {
         <DialogHeader>
           <DialogTitle>{options.title ?? 'Are you sure?'}</DialogTitle>
           {options.description ? (
-            <DialogDescription>{options.description}</DialogDescription>
+            // whitespace-pre-line: callers pass multi-paragraph warnings with real
+            // \n\n breaks (the profile-wipe text has four paragraphs). Without this
+            // they collapse into one wall of text and the reassurances get lost.
+            <DialogDescription className="whitespace-pre-line text-left">
+              {options.description}
+            </DialogDescription>
           ) : null}
         </DialogHeader>
         <DialogFooter className="flex-row justify-end gap-2">

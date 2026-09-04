@@ -39,6 +39,7 @@ import "../styles/themes/theme-calm.css"
 import ThemeLoader from "@/components/theme-loader"
 
 import { GoblinModeProvider } from "@/lib/goblin-mode-context"
+import { ConfirmHost } from "@/components/ui/confirm-host"
 // License gate disabled for free-tier launch (tip jar model). Re-enable by restoring these imports and the wrapper below.
 // import { LicenseProvider } from "@/lib/contexts/license-context"
 // import LicenseGate from "@/components/license-gate"
@@ -157,6 +158,11 @@ export default function RootLayout({
                 background auto-lock, and shows the iOS "Add to Home Screen" hint.
                 No-ops inside the native Tauri app. */}
             <PwaRuntime />
+            {/* Global confirm dialog host. MUST stay mounted: every destructive action
+                in the app awaits confirmAsync(), because the platform window.confirm()
+                returns a Promise in Tauri desktop (always truthy → deletes on Cancel)
+                and is swallowed entirely on Tauri Android. See components/ui/confirm-host.tsx */}
+            <ConfirmHost />
             {/* <AddyChatBubble /> */} {/* Commented out - AI module for later */}
           </GoblinModeProvider>
           {/* </LicenseGate></LicenseProvider> */}

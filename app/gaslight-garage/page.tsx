@@ -23,6 +23,7 @@ import {
 } from "lucide-react"
 
 import Link from "next/link";
+import { confirmAsync } from "@/components/ui/confirm-host"
 
 // Quick-add tags for medical gaslighting situations
 const QUICK_TAGS = [
@@ -628,9 +629,9 @@ export default function GaslightGaragePage() {
                           variant="ghost"
                           size="sm"
                           className="text-muted-foreground hover:text-red-600"
-                          onClick={(e) => {
+                          onClick={async (e) => {
                             e.stopPropagation()
-                            if (confirm("Delete this evidence? This cannot be undone.")) {
+                            if (await confirmAsync({ title: 'Delete this evidence?', description: 'This cannot be undone.', confirmText: 'Delete', destructive: true })) {
                               deleteEntry(entry)
                             }
                           }}

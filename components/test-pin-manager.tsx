@@ -34,6 +34,7 @@ import { Separator } from '@/components/ui/separator'
 import { Beaker, Database, Trash2, LogIn, Plus } from 'lucide-react'
 import { TestPinManager, createQuickTestPin } from '@/lib/database/test-pin-setup'
 import { useUser } from '@/lib/contexts/user-context'
+import { confirmAsync } from "@/components/ui/confirm-host"
 
 interface TestPinManagerProps {
   onClose?: () => void
@@ -111,8 +112,8 @@ function TestPinManagerComponent({ onClose }: TestPinManagerProps) {
     }
   }
 
-  const handleDeleteTestPin = (pin: string) => {
-    if (confirm(`Delete test PIN "${pin}"?\n\nThis will remove it from the test PIN list but won't delete the database data.`)) {
+  const handleDeleteTestPin = async (pin: string) => {
+    if (await confirmAsync({ title: `Delete test PIN "${pin}"?`, description: "This removes it from the test PIN list. It does NOT delete that profile's database data.", confirmText: 'Delete', destructive: true })) {
       TestPinManager.removeTestPin(pin)
       refreshTestPins()
     }

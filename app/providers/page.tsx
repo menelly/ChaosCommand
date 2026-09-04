@@ -69,6 +69,7 @@ import AppointmentReview from '@/components/appointments/appointment-review';
 import Link from "next/link";
 
 import { useRouter } from "next/navigation";
+import { confirmAsync } from "@/components/ui/confirm-host"
 
 interface Provider {
   id: string;
@@ -536,7 +537,7 @@ export default function ProvidersPage() {
   };
 
   const handleDeleteAppointment = async (appointmentId: string) => {
-    if (!confirm('Are you sure you want to delete this appointment? This action cannot be undone.')) {
+    if (!(await confirmAsync({ title: 'Delete this appointment?', description: 'This action cannot be undone.', confirmText: 'Delete', destructive: true }))) {
       return;
     }
 
@@ -597,7 +598,7 @@ export default function ProvidersPage() {
   };
 
   const handleDeleteReview = async (reviewId: string) => {
-    if (!confirm('Are you sure you want to delete this appointment review? This action cannot be undone.')) {
+    if (!(await confirmAsync({ title: 'Delete this appointment review?', description: 'This action cannot be undone.', confirmText: 'Delete', destructive: true }))) {
       return;
     }
 

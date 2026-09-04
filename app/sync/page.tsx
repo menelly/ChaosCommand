@@ -49,6 +49,7 @@ import {
 } from '@/lib/auto-sync'
 import AutoSyncSection from '@/components/settings/auto-sync-section'
 import { useToast } from '@/hooks/use-toast'
+import { confirmAsync } from "@/components/ui/confirm-host"
 
 type PairMode = 'idle' | 'host' | 'scan' | 'pairing' | 'paired'
 
@@ -288,7 +289,7 @@ export default function SyncPage() {
   }
 
   const handleRemove = async (peer: PeerView) => {
-    if (!confirm(`Unpair ${peer.peer_name}? You'll need to scan a fresh QR to re-pair.`)) return
+    if (!(await confirmAsync({ title: `Unpair ${peer.peer_name}?`, description: "You'll need to scan a fresh QR code to pair these devices again.", confirmText: 'Unpair', destructive: true }))) return
     try {
       await removePeer(peer.peer_id)
       await refreshPeers()

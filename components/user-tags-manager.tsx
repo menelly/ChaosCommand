@@ -35,6 +35,7 @@ import { Trash2, Plus, Edit2, Save, X, Tag, Eye, EyeOff } from "lucide-react"
 import { db } from "@/lib/database"
 import type { UserTag } from "@/lib/database"
 import { toast } from "@/hooks/use-toast"
+import { confirmAsync } from "@/components/ui/confirm-host"
 
 interface UserTagsManagerProps {
   className?: string
@@ -199,7 +200,7 @@ export function UserTagsManagerOLD({ className }: UserTagsManagerProps) {
   }
 
   const deleteTag = async (tagId: number, tagName: string) => {
-    if (!confirm(`Are you sure you want to delete the tag "${tagName}"? This action cannot be undone.`)) {
+    if (!(await confirmAsync({ title: `Delete the tag "${tagName}"?`, description: 'This action cannot be undone.', confirmText: 'Delete', destructive: true }))) {
       return
     }
 

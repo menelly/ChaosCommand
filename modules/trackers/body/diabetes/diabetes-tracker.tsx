@@ -54,6 +54,7 @@ import { DiabetesHistory } from './diabetes-history'
 import { celebrate } from '@/lib/particle-physics-engine'
 import { useUser } from '@/lib/contexts/user-context'
 import { isCelebrationEnabled } from '@/lib/celebration-prefs'
+import { confirmAsync } from "@/components/ui/confirm-host"
 
 export default function DiabetesTracker() {
   const router = useRouter()
@@ -232,7 +233,7 @@ export default function DiabetesTracker() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this entry?')) return
+    if (!(await confirmAsync({ title: 'Delete this entry?', confirmText: 'Delete', destructive: true }))) return
 
     try {
       const updatedEntries = entries.filter(e => e.id !== id)

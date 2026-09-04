@@ -46,6 +46,7 @@ import { isCelebrationEnabled } from '@/lib/celebration-prefs'
 import { EntryDateTimePicker } from '@/components/entry-datetime-picker'
 
 import Link from "next/link";
+import { confirmAsync } from "@/components/ui/confirm-host"
 
 interface BrainFogEntry {
   id: string
@@ -522,7 +523,7 @@ export default function BrainFogTracker() {
   }
 
   const handleDelete = async (entry: BrainFogEntry) => {
-    if (!confirm("Are you sure you want to delete this entry?")) return
+    if (!(await confirmAsync({ title: 'Delete this entry?', description: 'This cannot be undone.', confirmText: 'Delete', destructive: true }))) return
 
     try {
       const records = await getCategoryData(entry.date, CATEGORIES.TRACKER)

@@ -45,6 +45,7 @@ import { celebrate } from '@/lib/particle-physics-engine'
 import { useUser } from '@/lib/contexts/user-context'
 import { isCelebrationEnabled } from '@/lib/celebration-prefs'
 import Link from "next/link";
+import { confirmAsync } from "@/components/ui/confirm-host"
 // GraphAnalytics moved to Patterns page
 
 interface UpperDigestiveEntry {
@@ -313,7 +314,7 @@ export default function UpperDigestiveTracker() {
   }
 
   const handleDelete = async (entry: UpperDigestiveEntry) => {
-    if (!confirm("Are you sure you want to delete this entry?")) return
+    if (!(await confirmAsync({ title: 'Delete this entry?', description: 'This cannot be undone.', confirmText: 'Delete', destructive: true }))) return
 
     try {
       const records = await getCategoryData(entry.date, CATEGORIES.TRACKER)

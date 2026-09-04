@@ -34,6 +34,7 @@ import { useToast } from "@/hooks/use-toast"
 
 import { FoodChoiceEntry } from "./food-choice-types"
 import { EATING_MOODS, FOOD_GROUPS } from "./food-choice-constants"
+import { confirmAsync } from "@/components/ui/confirm-host"
 
 export default function FoodChoiceHistory() {
   const { getCategoryData, getDateRange, deleteData } = useDailyData()
@@ -87,7 +88,7 @@ export default function FoodChoiceHistory() {
   }
 
   const handleDeleteEntry = async (date: string) => {
-    if (!confirm(`Are you sure you want to delete all food data for ${format(new Date(date + 'T12:00:00'), 'MMM d, yyyy')}?`)) return
+    if (!(await confirmAsync({ title: `Delete ALL food data for ${format(new Date(date + 'T12:00:00'), 'MMM d, yyyy')}?`, description: 'Every food entry saved for that day will be permanently removed. This cannot be undone.', confirmText: 'Delete all', destructive: true }))) return
 
     try {
       await deleteData(date, CATEGORIES.TRACKER, 'food-choice')

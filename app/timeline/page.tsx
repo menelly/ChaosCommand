@@ -59,6 +59,7 @@ import TagInput from '@/components/tag-input';
 import Link from "next/link";
 
 import { useRouter } from "next/navigation";
+import { confirmAsync } from "@/components/ui/confirm-host"
 
 // 🏥 MEDICAL HISTORY INTERFACES (Updated for hybrid system)
 interface MedicalEvent {
@@ -392,7 +393,7 @@ export default function TimelinePage() {
   };
 
   const handleDeleteEvent = async (event: MedicalEvent) => {
-    if (!confirm(`Are you sure you want to delete "${event.title}"?`)) return;
+    if (!(await confirmAsync({ title: `Delete "${event.title}"?`, description: 'This cannot be undone.', confirmText: 'Delete', destructive: true }))) return;
 
     try {
       const removed = await deleteEventBySubcategory(event.id);
@@ -434,7 +435,7 @@ export default function TimelinePage() {
 
   const handleBulkDelete = async () => {
     if (selectedIds.size === 0) return;
-    if (!confirm(`Delete ${selectedIds.size} selected event${selectedIds.size === 1 ? '' : 's'}? This cannot be undone.`)) return;
+    if (!(await confirmAsync({ title: `Delete ${selectedIds.size} selected event${selectedIds.size === 1 ? '' : 's'}?`, description: 'This cannot be undone.', confirmText: 'Delete all selected', destructive: true }))) return;
 
     setBulkDeleting(true);
     const toDelete = medicalEvents.filter(e => selectedIds.has(e.id));

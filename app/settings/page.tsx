@@ -47,6 +47,7 @@ import { UpdateCheckModal } from "./update-check-modal"
 import { AutoLockModal } from "./auto-lock-modal"
 
 import { useRouter } from "next/navigation";
+import { confirmAsync } from "@/components/ui/confirm-host"
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -241,8 +242,8 @@ export default function SettingsPage() {
           </Card>
 
           <Card
-            onClick={() => {
-              if (confirm('This will reset your onboarding progress. Continue?')) {
+            onClick={async () => {
+              if (await confirmAsync({ title: 'Reset onboarding progress?', description: 'You will be taken back through the setup walkthrough. Your medical data is not affected.', confirmText: 'Reset' })) {
                 localStorage.removeItem('chaos-onboarding-complete')
                 const pin = getNamespaceId()
                 if (pin) localStorage.removeItem(`chaos-onboarding-complete-${pin}`)
@@ -251,10 +252,10 @@ export default function SettingsPage() {
             }}
             role="button"
             tabIndex={0}
-            onKeyDown={(e) => {
+            onKeyDown={async (e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault()
-                if (confirm('This will reset your onboarding progress. Continue?')) {
+                if (await confirmAsync({ title: 'Reset onboarding progress?', description: 'You will be taken back through the setup walkthrough. Your medical data is not affected.', confirmText: 'Reset' })) {
                   localStorage.removeItem('chaos-onboarding-complete')
                   const pin = getNamespaceId()
                   if (pin) localStorage.removeItem(`chaos-onboarding-complete-${pin}`)

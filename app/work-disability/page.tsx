@@ -27,6 +27,7 @@ import {
 import { MissedWorkAnalytics } from "./missed-work-analytics"
 
 import Link from "next/link";
+import { confirmAsync } from "@/components/ui/confirm-host"
 
 // ============================================================================
 // TYPES
@@ -311,20 +312,20 @@ export default function WorkDisabilityPage() {
   // ============================================================================
 
   const deleteMissedDay = async (day: MissedWorkDay) => {
-    if (!confirm(`Delete missed work entry for ${day.date}?`)) return
+    if (!(await confirmAsync({ title: `Delete missed work entry for ${day.date}?`, description: 'This cannot be undone.', confirmText: 'Delete', destructive: true }))) return
     await deleteData(day.date, CATEGORIES.USER, `missed-work-${day.id}`)
     await loadAllData()
   }
 
   const deleteEmployment = async (emp: Employment) => {
-    if (!confirm(`Delete employment record for ${emp.employer}?`)) return
+    if (!(await confirmAsync({ title: `Delete employment record for ${emp.employer}?`, description: 'This cannot be undone.', confirmText: 'Delete', destructive: true }))) return
     const date = emp.dateStarted || formatDateForStorage(new Date())
     await deleteData(date, CATEGORIES.USER, `employment-history-${emp.id}`)
     await loadAllData()
   }
 
   const deleteApplication = async (app: DisabilityApplication) => {
-    if (!confirm(`Delete ${app.applicationType} application?`)) return
+    if (!(await confirmAsync({ title: `Delete ${app.applicationType} application?`, description: 'This cannot be undone.', confirmText: 'Delete', destructive: true }))) return
     const date = app.dateSubmitted || formatDateForStorage(new Date())
     await deleteData(date, CATEGORIES.USER, `disability-application-${app.id}`)
     await loadAllData()

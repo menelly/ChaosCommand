@@ -28,6 +28,7 @@ import {
 } from "lucide-react"
 
 import Link from "next/link";
+import { confirmAsync } from "@/components/ui/confirm-host"
 
 interface LabResult {
   test_name: string
@@ -118,7 +119,7 @@ export default function LabResultsPage() {
 
   // Delete a lab report
   const handleDeleteReport = async (report: LabReport) => {
-    if (!confirm(`Delete lab report "${report.filename}" from ${report.date}? This cannot be undone.`)) return
+    if (!(await confirmAsync({ title: `Delete lab report "${report.filename}"?`, description: `From ${report.date}. This cannot be undone.`, confirmText: 'Delete', destructive: true }))) return
     try {
       await deleteData(report.date, CATEGORIES.USER, (report as any)._subcategory || `lab-results-${report.id}`)
       await loadReports()

@@ -21,6 +21,7 @@ import { getNamespaceId, namespaceForPin, clearSessionKey, clearNamespacePointer
 import { deleteCurrentProfile } from "@/lib/database/dexie-db"
 import { recordBackup } from "@/lib/backup-reminder"
 import { KeyboardAvoidingWrapper } from '@/components/ui/keyboard-avoiding-wrapper'
+import { useConfirmDialog } from '@/components/ui/confirm-dialog'
 
 import { useRouter } from "next/navigation";
 
@@ -31,6 +32,13 @@ interface DataManagementModalProps {
 
 export function DataManagementModal({ isOpen, onClose }: DataManagementModalProps) {
   const router = useRouter();
+  // NEVER use the global confirm() here. In the Tauri desktop build it is shimmed to an
+  // async IPC call that returns a PROMISE — and a Promise is always truthy, so
+  // `if (!confirm(...))` never fires and the destructive action runs even on Cancel.
+  // On the Tauri Android WebView the native bridge isn't wired and it's swallowed instead,
+  // so the button appears to do nothing. This hook is pure Radix/DOM: identical on web,
+  // desktop and Android, and it is `await`ed. (Found by Justin's audit, 2026-09-04.)
+  const { confirm, confirmDialog } = useConfirmDialog()
   const [showImportDialog, setShowImportDialog] = useState(false)
   const [importPassword, setImportPassword] = useState("1234")  // backup-file password (visible, weak default)
   const [exportPassword, setExportPassword] = useState("1234")  // encrypt-export password (visible, weak default)
@@ -43,13 +51,16 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
   // Plain JSON export — unencrypted, human-readable. Warn first (it's medical data in the
   // clear) and confirm where it saved (otherwise it lands silently in Downloads).
   const handleExportJson = async () => {
-    const ok = confirm(
-      '⚠️ This export is NOT encrypted.\n\n' +
-      'Anyone who opens the file can read all your medical data, and it saves to your ' +
-      'Downloads folder in plain text.\n\n' +
-      'For a protected copy, use "Export Encrypted Backup" instead.\n\n' +
-      'Export unencrypted anyway?'
-    )
+    const ok = await confirm({
+      title: '⚠️ This export is NOT encrypted',
+      description:
+        'Anyone who opens the file can read all your medical data, and it saves to your ' +
+        'Downloads folder in plain text.\n\n' +
+        'For a protected copy, use "Export Encrypted Backup" instead.',
+      confirmText: 'Export unencrypted',
+      cancelText: 'Cancel',
+      destructive: true,
+    })
     if (!ok) return
     try {
       const json = await exportAllData()
@@ -151,17 +162,21 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
     }
     setDeletePinError('')
 
-    const ok = confirm(
-      '⚠️ DELETE THIS PROFILE\'S DATA — PERMANENT\n\n' +
-      'This erases everything saved under the PIN you\'re logged in with right now — every ' +
-      'tracker, every entry, gone. It cannot be undone and there is no backup.\n\n' +
-      '👨‍👩‍👧 Other PINs on this device are NOT affected. If someone else (a kid, a partner) has ' +
-      'their own PIN here, their data stays exactly as it is. This only deletes YOURS.\n\n' +
-      '📱💻 IF YOU SYNC THIS PROFILE TO ANOTHER DEVICE: this only wipes the device you\'re on ' +
-      'right now. Run "Delete This Profile\'s Data" on each device separately — they share data ' +
-      'with each other, not through us, so we can\'t reach the other one for you.\n\n' +
-      'Are you absolutely sure you want to permanently delete this profile\'s data?'
-    )
+    const ok = await confirm({
+      title: '⚠️ Delete this profile\'s data — PERMANENT',
+      description:
+        'This erases everything saved under the PIN you\'re logged in with right now — every ' +
+        'tracker, every entry, gone. It cannot be undone and there is no backup.\n\n' +
+        '👨‍👩‍👧 Other PINs on this device are NOT affected. If someone else (a kid, a partner) has ' +
+        'their own PIN here, their data stays exactly as it is. This only deletes YOURS.\n\n' +
+        '📱💻 IF YOU SYNC THIS PROFILE TO ANOTHER DEVICE: this only wipes the device you\'re on ' +
+        'right now. Run "Delete This Profile\'s Data" on each device separately — they share data ' +
+        'with each other, not through us, so we can\'t reach the other one for you.\n\n' +
+        'Are you absolutely sure you want to permanently delete this profile\'s data?',
+      confirmText: 'Yes, delete permanently',
+      cancelText: 'Cancel — keep my data',
+      destructive: true,
+    })
     if (!ok) { setDeleteArmed(false); setDeleteConfirmPin(''); return }
     try {
       const dbName = await deleteCurrentProfile()
@@ -373,6 +388,9 @@ export function DataManagementModal({ isOpen, onClose }: DataManagementModalProp
           </div>
         </KeyboardAvoidingWrapper>
       </div>
+      {/* Radix portals to <body>, so it paints above this z-50 overlay. Must be rendered
+          for useConfirmDialog's promise to ever resolve — without it the await hangs. */}
+      {confirmDialog}
     </div>
   )
 }
