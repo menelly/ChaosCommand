@@ -29,13 +29,28 @@
 
 import { parseProviderText } from './index';
 
-// Your AdventHealth example
+// SYNTHETIC provider listing. Deliberately fake, and it has to stay that way.
+//
+// ⚠️ THIS FIXTURE USED TO BE A REAL PROVIDER-DIRECTORY PAGE, PASTED VERBATIM FROM A LIVE SEARCH.
+// The clinician's name, clinic address and phone were public business information and were not
+// the problem. The problem was one line the directory generated FOR THE PERSON SEARCHING:
+//
+//     About 2.4 miles away
+//
+// A distance is relative to whoever ran the query. Sitting next to a specific street address in
+// a PUBLIC repo, that line narrows the author's home location to a 2.4-mile radius -- and nobody
+// put it there on purpose. It arrived by paste, as part of a blob nobody re-read, which is
+// exactly the shape this repo's owner keeps getting caught by: a privacy check that inspects
+// prose cannot see a detail that arrives through a copy-paste pipeline. (CHA-599.)
+//
+// KEEP THIS SYNTHETIC. If a parser bug needs a real page to reproduce it, put the real page in
+// .phi-scratch/ -- which is gitignored -- and never in a tracked file.
 const adventHealthExample = `
-Vola H Le Roux, FNP-C
+Jordan A Rivera, FNP-C
 
 Family Medicine
 
- AdventHealth Medical Group
+ Example Health Medical Group
 Provider Networks
  Accepts New Patients
 
@@ -49,14 +64,13 @@ Locations
 Expertise
  Item 5 of 5
 Reviews and Comments
-Locationsfor Vola H Le Roux, FNP-C
-A- Daytona Beach
-Daytona Beach
-About 2.4 miles away
-Directions to AdventHealth Medical Group Family Medicine at Daytona Beach305 Memorial Medical Pkwy
+Locationsfor Jordan A Rivera, FNP-C
+A- Example City
+Example City
+Directions to Example Health Medical Group Family Medicine at Example City1200 Sample Medical Pkwy
 Suite 402
-Daytona Beach, FL  32117
-Call AdventHealth Medical Group Family Medicine at Daytona Beach at386-231-3525
+Example City, ST  00000
+Call Example Health Medical Group Family Medicine at Example City at555-010-0100
 `;
 
 // Test function
