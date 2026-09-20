@@ -119,3 +119,6 @@ a11y-report.md
 .tmp-migtest/
 .tmp-rp/
 msix/
+
+# Build error logs (transient — a failed build writes these, they are not work)
+*.err

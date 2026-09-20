@@ -57,6 +57,38 @@ import { StaleInstallBanner } from "@/components/stale-install-banner"
 export const metadata = {
   title: "Chaos Command Center - Executive Function for Chaotic Humans",
   description: "Your beautifully chaotic life management system - because normal is overrated",
+
+  // ⚠️ DEMO-ONLY on purpose, and this block exists to END a silent divergence.
+  // The link-preview tags for tryme.chaoscommand.center were hand-added to the SERVED
+  // static export at /var/www/tryme.chaoscommand.center/index.html (2026-09-01 and
+  // 2026-09-11). They were never in this repo — so any rebuild-and-redeploy wiped all of
+  // them, with no error and no test failing, and the only symptom is that shared links
+  // silently unfurl as a bare text card. Putting them here means the next build EMITS
+  // them instead of destroying them. Values are copied verbatim from what is live, so
+  // the repo converges on the server rather than inventing new copy. (CHA-614)
+  //
+  // Scoped to the demo build because the strings are demo-specific: the real app must not
+  // advertise itself as "the public demo — sample data." The non-demo build keeps exactly
+  // the behaviour it has today (no openGraph), so this is additive and changes nothing
+  // about what ships to the stores. OG tags are inert inside WKWebView.
+  ...(IS_DEMO_BUILD ? {
+    metadataBase: new URL("https://tryme.chaoscommand.center"),
+    openGraph: {
+      title: "Try Chaos Command",
+      description:
+        "The public demo — sample data, no install, no account. Real data belongs in the app, not here.",
+      url: "https://tryme.chaoscommand.center/",
+      siteName: "Chaos Command",
+      type: "website",
+      images: [{ url: "/og-image.png", width: 1200, height: 630 }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: "Try Chaos Command",
+      description: "The public demo — sample data, no install, no account.",
+      images: ["/og-image.png"],
+    },
+  } : {}),
 }
 
 export default function RootLayout({
