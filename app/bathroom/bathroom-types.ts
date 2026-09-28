@@ -73,6 +73,7 @@ export interface BathroomEntry {
   createdAt?: string
   updatedAt?: string
   count?: number  // legacy
+  repeatTimes?: string[]  // 💩➕ times added by the +1 button (HH:mm), one per extra tap
 }
 
 export interface BathroomModalProps {

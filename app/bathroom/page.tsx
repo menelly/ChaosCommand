@@ -29,6 +29,7 @@ import {
 } from './bathroom-constants'
 import { GeneralBathroomModal } from './modals/general-bathroom-modal'
 import { EmergencyCriteriaCard } from '@/components/emergency-criteria-card'
+import { nowTime } from '@/components/entry-datetime-picker'
 import { useDailyData, CATEGORIES, formatDateForStorage } from '@/lib/database'
 import { celebrate } from '@/lib/particle-physics-engine'
 import { useUser } from '@/lib/contexts/user-context'
@@ -140,6 +141,28 @@ export default function BathroomPage() {
       toast({ title: 'Deleted' })
       setRefreshTrigger(t => t + 1)
     } catch (err) { console.error(err); toast({ title: 'Delete Error', variant: 'destructive' }) }
+  }
+
+  // 💩➕ THE +1 BUTTON (Dad's request, 2026-09-28): "log once, then just tap +1 when it happens again."
+  // Bumps the count on the entry you already made instead of making you fill the whole form again.
+  // Bowel entries count up bowelCount, urinary entries count up urineCount, and every tap stamps
+  // the time into repeatTimes so the history still knows WHEN each extra one happened.
+  const handleIncrementEntry = async (entry: BathroomEntry) => {
+    try {
+      const countField: 'urineCount' | 'bowelCount' = entry.episodeType === 'urinary' ? 'urineCount' : 'bowelCount'
+      const currentCount = entry[countField] || (countField === 'bowelCount' ? entry.count : undefined) || 1
+      const newCount = currentCount + 1
+      const bumped: BathroomEntry = {
+        ...entry,
+        [countField]: newCount,
+        repeatTimes: [...(entry.repeatTimes || []), nowTime()],
+        updatedAt: new Date().toISOString(),
+      }
+      const bucket = entries.filter(e => e.date === entry.date).map(e => e.id === entry.id ? bumped : e)
+      await saveData(entry.date, CATEGORIES.TRACKER, 'bathroom', { entries: bucket }, bumped.tags || [])
+      toast({ title: `+1 logged (×${newCount})`, description: 'Same as before, one more time. Counted. 💩' })
+      setRefreshTrigger(t => t + 1)
+    } catch (err) { console.error(err); toast({ title: 'Could not add +1', variant: 'destructive' }) }
   }
 
   const handleEditEntry = (entry: BathroomEntry) => {
@@ -284,13 +307,17 @@ export default function BathroomPage() {
                                 <span className="text-lg">{info.icon}</span>
                                 <span className="font-semibold">{info.name}</span>
                                 {entry.bristolScale && <Badge variant="outline">Bristol {entry.bristolScale}</Badge>}
+                                {(() => { const n = entry.episodeType === 'urinary' ? entry.urineCount : (entry.bowelCount || entry.count); return n && n > 1 ? <Badge variant="outline">×{n}</Badge> : null })()}
                                 {entry.bloodInStool && <Badge variant="destructive">🩸 Stool</Badge>}
                                 {entry.bloodInUrine && <Badge variant="destructive">🩸 Urine</Badge>}
                                 {entry.erVisitRequired && <Badge variant="destructive">ER</Badge>}
                               </div>
-                              <div className="text-xs text-muted-foreground">{entry.time}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {entry.time}{entry.repeatTimes && entry.repeatTimes.length > 0 && ` · again at ${entry.repeatTimes.join(', ')}`}
+                              </div>
                             </div>
                             <div className="flex gap-1">
+                              <Button size="sm" variant="outline" onClick={() => handleIncrementEntry(entry)} title="Happened again? Tap to count one more" aria-label={`Add one more ${info.name}`}>+1</Button>
                               <Button size="sm" variant="ghost" onClick={() => handleEditEntry(entry)}>Edit</Button>
                               <Button size="sm" variant="ghost" onClick={() => handleDeleteEntry(entry)}>Delete</Button>
                             </div>
@@ -378,7 +405,7 @@ export default function BathroomPage() {
                             </div>
                           </div>
                           <div className="text-sm text-muted-foreground mb-2">
-                            {format(new Date(entry.date), 'EEEE, MMMM d, yyyy')}{entry.time && ` • ${entry.time}`}
+                            {format(new Date(entry.date), 'EEEE, MMMM d, yyyy')}{entry.time && ` • ${entry.time}`}{entry.repeatTimes && entry.repeatTimes.length > 0 && ` · again at ${entry.repeatTimes.join(', ')}`}
                           </div>
                           {entry.urinaryType && entry.urinaryType !== 'normal' && (
                             <div className="text-sm mb-1"><span className="font-medium">Urinary:</span> {entry.urinaryType}{entry.feverWithUrinary && ' + fever'}{entry.flankPain && ' + flank pain'}</div>
