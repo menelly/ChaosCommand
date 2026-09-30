@@ -54,6 +54,20 @@ import { DemoBanner } from "@/components/demo-banner"
 import { StaleInstallBanner } from "@/components/stale-install-banner"
 // import AddyChatBubble from "@/components/addy-chat-bubble" // Commented out - AI module for later
 
+// 📱 CHA-614: the viewport lives HERE, not as a hand-written <meta> in <head>.
+// Next 15 always emits its own default `width=device-width, initial-scale=1` tag, and
+// it landed AFTER ours in the built HTML — and the LAST viewport tag wins. So our
+// viewport-fit=cover was silently thrown away in every build (verified in out/index.html
+// 2026-09-29: two tags, cover in the losing one). Exporting `viewport` makes Next emit
+// exactly ONE tag with cover in it. The safe-area padding on the fixed bars (sidebar
+// menu button, routine-flow-bar, toast, dialog) already ships, so cover is safe to turn on.
+// No maximumScale / userScalable: pinch-zoom is an access need here. 🐙
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+}
+
 export const metadata = {
   title: "Chaos Command Center - Executive Function for Chaotic Humans",
   description: "Your beautifully chaotic life management system - because normal is overrated",
@@ -133,8 +147,9 @@ export default function RootLayout({
             button, routine-flow-bar, toast viewport) — on its own it would push those
             elements UNDER the island/indicator, breaking a layout that currently works
             by accident because WKWebView shrinks the viewport when cover is absent.
-            No maximum-scale / user-scalable=no: pinch-zoom is an access need here. */}
-        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+            No maximum-scale / user-scalable=no: pinch-zoom is an access need here.
+            ➜ The tag itself is now emitted from `export const viewport` at the top of
+            this file (CHA-614) — a hand-written one here got overridden by Next's default. */}
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
         {/* Favicon Links */}
