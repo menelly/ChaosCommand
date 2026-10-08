@@ -52,6 +52,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useDailyData, CATEGORIES } from '@/lib/database';
 import FieldSelector from './field-selector';
+import { type ForgeFieldType, SEVERITY_MAX_CHOICES, severityMaxFor } from '@/lib/services/forge-field-types';
 import TrackerPreview from './tracker-preview';
 
 import { useRouter } from "next/navigation";
@@ -60,7 +61,9 @@ import { useRouter } from "next/navigation";
 export interface TrackerField {
   id: string;
   name: string;
-  type: 'scale' | 'dropdown' | 'checkbox' | 'text' | 'number' | 'percentage' | 'duration' | 'multiselect' | 'tags' | 'date' | 'time' | 'datetime';
+  // 📚 The list of field kinds lives in lib/services/forge-field-types.ts so
+  // analytics, the PDF and this builder can never disagree about it. (CHA-463)
+  type: ForgeFieldType;
   required: boolean;
   options?: string[];
   min?: number;
@@ -501,6 +504,35 @@ export default function TrackerBuilder({ editId }: { editId?: string }) {
                                   onChange={(e) => updateField(field.id, { max: parseInt(e.target.value) || 10 })}
                                   className="h-8 text-sm"
                                 />
+                              </div>
+                            </div>
+                          )}
+
+                          {/* 👆 Tap severity: how many buttons? (CHA-463)
+                              Two big choices instead of a typed number — this is
+                              a builder for people whose hands are a symptom too.
+                              No "min": severity always runs 1..top, with a
+                              separate "Didn't bother me" button for zero. */}
+                          {field.type === 'severity' && (
+                            <div className="space-y-1">
+                              <Label className="text-xs">Buttons</Label>
+                              <div className="flex gap-2" role="radiogroup" aria-label="How many severity buttons">
+                                {SEVERITY_MAX_CHOICES.map(top => {
+                                  const chosen = severityMaxFor(field) === top;
+                                  return (
+                                    <Button
+                                      key={top}
+                                      type="button"
+                                      role="radio"
+                                      aria-checked={chosen}
+                                      variant={chosen ? 'default' : 'outline'}
+                                      className="h-11 flex-1"
+                                      onClick={() => updateField(field.id, { max: top, min: 1 })}
+                                    >
+                                      1–{top}
+                                    </Button>
+                                  );
+                                })}
                               </div>
                             </div>
                           )}

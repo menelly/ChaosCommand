@@ -19,6 +19,7 @@ import { analyzeV2Patterns } from '@/lib/pattern-engine-v2'
 // so the report and the app cannot report different numbers for one week.
 import { collectEntries, computeTrackerAnalytics, trackerKeyOf } from '@/lib/tracker-analytics'
 import { analyticsConfigFor } from '@/lib/tracker-analytics-config'
+import { isNumericFieldType, severityMaxFor, summarizeSeverity } from '@/lib/services/forge-field-types'
 // Seizure episode-type canon (single source of truth) so the report collapses
 // the slug ("focal-aware") and the legacy human label ("Focal Aware (Simple
 // Partial)") into ONE row instead of fragmenting — a case mergeVariants can't
@@ -2737,7 +2738,18 @@ export function generateMedicalReport(data: ReportData): Blob {
             .filter(v => v !== undefined && v !== null && v !== '')
           if (!vals.length) continue
           const t = field.type
-          if (t === 'scale' || t === 'number' || t === 'percentage' || t === 'duration') {
+          if (t === 'severity') {
+            // 👆 Tap severity (CHA-463). Said as "out of N" so the doctor knows
+            // the scale, and explicit "didn't bother me" days are named — a
+            // documented symptom-free day is evidence, not a gap.
+            const sev = summarizeSeverity(vals)
+            if (!sev) continue
+            const top = severityMaxFor(field)
+            const r1 = (n: number) => `${Math.round(n * 10) / 10}`
+            const none = sev.noneCount ? `; reported none on ${plural(sev.noneCount, 'day')}` : ''
+            w.bulletBody(label, `severity mean ${r1(sev.mean)}/${top} (range ${r1(sev.lowest)}-${r1(sev.highest)}, n=${sev.answered}${none})`)
+          } else if (isNumericFieldType(t)) {
+            // scale / number / percentage / duration — unchanged behaviour.
             const nums = vals.map(Number).filter(n => Number.isFinite(n))
             if (!nums.length) continue
             const mean = nums.reduce((a, b) => a + b, 0) / nums.length

@@ -10,6 +10,8 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Slider } from '@/components/ui/slider'
+import { SeverityInput } from '@/components/ui/severity-input'
+import { severityMaxFor } from '@/lib/services/forge-field-types'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -159,8 +161,42 @@ export default function CustomTrackerPage() {
     setValues(prev => ({ ...prev, [fieldId]: value }))
   }
 
+  // 👆 Severity answers can be "not reported", which must be stored as NO KEY
+  // at all — not as 0, not as undefined-that-sometimes-survives. Same shape
+  // the other trackers use: missing = not answered, so nothing downstream
+  // mistakes an untouched field for a real answer.
+  const updateSeverity = (fieldId: string, value: number | undefined) => {
+    setValues(prev => {
+      const next = { ...prev }
+      if (value === undefined) delete next[fieldId]
+      else next[fieldId] = value
+      return next
+    })
+  }
+
   const renderField = (field: TrackerField) => {
     switch (field.type) {
+      // 👆 TAP SEVERITY (CHA-463): ten big buttons, no drag. Starts blank.
+      // Tap a number to pick it, tap it again (or "Clear") to un-pick it,
+      // "Didn't bother me" records an explicit 0. Keyboard: arrows, Home/End,
+      // Backspace clears. All of that lives in SeverityInput, shared with
+      // the 21 built-in trackers, so custom trackers get the same ramp.
+      case 'severity':
+        return (
+          <div key={field.id} className="space-y-2">
+            <Label className="font-medium">{field.name} {field.required && <span className="text-red-500">*</span>}</Label>
+            {field.description && <p className="text-xs text-muted-foreground">{field.description}</p>}
+            <SeverityInput
+              value={typeof values[field.id] === 'number' ? values[field.id] : undefined}
+              onChange={(v) => updateSeverity(field.id, v)}
+              max={severityMaxFor(field)}
+              voiceSlot={`${tracker?.id ?? 'custom'}:${field.id}`}
+              aria-label={field.name}
+            />
+          </div>
+        )
+
+      // 🎚️ Legacy drag slider — deliberately unchanged (CHA-463 adds, never rewrites).
       case 'scale':
         return (
           <div key={field.id} className="space-y-2">
@@ -399,6 +435,12 @@ export default function CustomTrackerPage() {
           )
         }
         return <span>{String(value)}</span>
+      case 'severity':
+        // 0 is a real answer ("didn't bother me"), so say it in words rather
+        // than showing a bare 0 that looks like a missing value.
+        return value === 0
+          ? <span className="font-medium">None (didn&apos;t bother me)</span>
+          : <span className="font-mono font-bold">{value}<span className="text-muted-foreground font-normal">/{severityMaxFor(field)}</span></span>
       case 'scale':
       case 'number':
         return <span className="font-mono font-bold">{value}</span>

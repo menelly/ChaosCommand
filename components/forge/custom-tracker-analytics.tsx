@@ -43,11 +43,15 @@ import {
 } from 'recharts';
 import { useDailyData, CATEGORIES } from '@/lib/database';
 import { CustomTracker } from './tracker-builder';
+import { NUMERIC_FIELD_TYPES, isNumericFieldType } from '@/lib/services/forge-field-types';
 import AnalyticsErrorBoundary from './analytics-error-boundary';
 
 // Line colors for the multi-field trend chart (themed-friendly, distinct).
 const SERIES_COLORS = ['#a855f7', '#22d3ee', '#f472b6', '#34d399', '#fbbf24', '#fb7185'];
-const NUMERIC_TYPES = ['scale', 'number', 'percentage', 'duration'];
+// 🔢 Which field types get averaged + charted. Imported from the ONE shared list
+// (lib/services/forge-field-types.ts) instead of typed here — a hand-copied
+// allowlist is how a new numeric type silently goes missing from the stats.
+const NUMERIC_TYPES = NUMERIC_FIELD_TYPES as readonly string[];
 
 interface CustomTrackerAnalyticsProps {
   tracker: CustomTracker;
@@ -98,6 +102,7 @@ function CustomTrackerAnalyticsInner({ tracker, entries }: CustomTrackerAnalytic
       try {
         switch (field.type) {
           case 'scale':
+          case 'severity': // 👆 tap 1–10 (CHA-463); an explicit 0 counts, a blank never does
           case 'number':
           case 'percentage':
           case 'duration': {
@@ -193,7 +198,14 @@ function CustomTrackerAnalyticsInner({ tracker, entries }: CustomTrackerAnalytic
     }
   };
 
-  const getTrendColor = (trend: string) => {
+  // 🎨 For most fields "going up" is shown green. A SEVERITY field is "how bad
+  // is it", so going up is the bad direction — flip the colours for it so the
+  // badge never paints a worsening symptom as good news. (CHA-463)
+  const getTrendColor = (trend: string, fieldType?: string) => {
+    if (fieldType === 'severity') {
+      if (trend === 'increasing') return 'text-destructive bg-destructive/10 border-destructive/30';
+      if (trend === 'decreasing') return 'text-success bg-success/10 border-success/30';
+    }
     switch (trend) {
       case 'increasing': return 'text-success bg-success/10 border-success/30';
       case 'decreasing': return 'text-destructive bg-destructive/10 border-destructive/30';
@@ -356,7 +368,7 @@ function CustomTrackerAnalyticsInner({ tracker, entries }: CustomTrackerAnalytic
               </CardHeader>
               <CardContent>
                 {/* Numeric Fields (scale / number / percentage / duration) */}
-                {(field.type === 'scale' || field.type === 'number' || field.type === 'percentage' || field.type === 'duration') && fieldStats.average !== undefined && (
+                {isNumericFieldType(field.type) && fieldStats.average !== undefined && (
                   <div className="space-y-3">
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-center">
                       <div>
@@ -373,7 +385,7 @@ function CustomTrackerAnalyticsInner({ tracker, entries }: CustomTrackerAnalytic
                       </div>
                     </div>
                     <div className="flex items-center justify-center gap-2">
-                      <Badge className={getTrendColor(fieldStats.trend)}>
+                      <Badge className={getTrendColor(fieldStats.trend, field.type)}>
                         {getTrendIcon(fieldStats.trend)}
                         Trend: {fieldStats.trend}
                       </Badge>

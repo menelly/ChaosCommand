@@ -32,6 +32,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
+import { SeverityInput } from '@/components/ui/severity-input';
+import { severityMaxFor } from '@/lib/services/forge-field-types';
 import { TagInput } from '@/components/tag-input';
 import {
   Eye,
@@ -56,6 +58,27 @@ export default function TrackerPreview({ tracker }: TrackerPreviewProps) {
     const value = previewData[field.id] || '';
 
     switch (field.type) {
+      // 👆 TAP SEVERITY (CHA-463) — the preview uses the exact same control the
+      // real tracker page does, so what the builder sees is what they'll get.
+      // Note: `value` above is `|| ''`, which would turn an explicit 0 into a
+      // blank — so read the raw preview value here instead.
+      case 'severity': {
+        const raw = previewData[field.id];
+        return (
+          <div className="space-y-2">
+            <Label>{field.name}</Label>
+            <SeverityInput
+              value={typeof raw === 'number' ? raw : undefined}
+              onChange={(v) => setPreviewData(prev => ({ ...prev, [field.id]: v }))}
+              max={severityMaxFor(field)}
+              // same slot as the real page → same wording in preview and in use
+              voiceSlot={`${tracker?.id ?? 'custom'}:${field.id}`}
+              aria-label={field.name}
+            />
+          </div>
+        );
+      }
+
       case 'scale':
         return (
           <div className="space-y-3">

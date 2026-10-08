@@ -45,7 +45,8 @@ import {
   Calendar,
   Clock,
   Percent,
-  Timer
+  Timer,
+  Hand
 } from 'lucide-react';
 import { TrackerField } from './tracker-builder';
 
@@ -75,10 +76,21 @@ const MEDICAL_TERMS = {
 
 // 🎨 FIELD TYPE CONFIGURATIONS
 const FIELD_TYPES = {
+  // 👆 TAP SEVERITY (CHA-463) — listed FIRST and selected by default for new
+  // fields, because a row of big buttons works on bad-hand days and a slider
+  // doesn't. Starts blank ("not reported") — no parked default ever gets saved.
+  severity: {
+    name: 'Tap 1–10',
+    icon: <Hand className="h-4 w-4" />,
+    description: 'Big tappable 1–10 buttons, no dragging. Best for pain, fatigue, any "how bad"',
+    defaultConfig: { min: 1, max: 10 }
+  },
+  // 🎚️ The original drag slider. Kept exactly as it was so trackers people
+  // already built don't change underneath them; still choosable if wanted.
   scale: {
-    name: 'Scale (1-10)',
+    name: 'Slider (drag)',
     icon: <Scale className="h-4 w-4" />,
-    description: 'Rate from 1-10 (perfect for pain, fatigue, etc.)',
+    description: 'Drag a slider along a range (needs press-and-drag)',
     defaultConfig: { min: 1, max: 10 }
   },
   dropdown: {
@@ -157,8 +169,8 @@ export default function FieldSelector({ onAddField }: FieldSelectorProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<keyof typeof MEDICAL_TERMS>('symptoms');
   const [customFieldName, setCustomFieldName] = useState('');
-  const [selectedFieldType, setSelectedFieldType] = useState<keyof typeof FIELD_TYPES>('scale');
-  const [medicalFieldType, setMedicalFieldType] = useState<keyof typeof FIELD_TYPES>('scale');
+  const [selectedFieldType, setSelectedFieldType] = useState<keyof typeof FIELD_TYPES>('severity');
+  const [medicalFieldType, setMedicalFieldType] = useState<keyof typeof FIELD_TYPES>('severity');
 
   // 🔍 FILTER MEDICAL TERMS
   const filteredTerms = MEDICAL_TERMS[selectedCategory].filter(term =>
@@ -245,7 +257,7 @@ export default function FieldSelector({ onAddField }: FieldSelectorProps) {
           <div>
             <Label className="text-xs text-muted-foreground">Add as field type:</Label>
             <div className="flex flex-wrap gap-1 mt-1">
-              {(['scale', 'percentage', 'duration', 'number', 'checkbox', 'dropdown', 'text'] as const).map((type) => (
+              {(['severity', 'scale', 'percentage', 'duration', 'number', 'checkbox', 'dropdown', 'text'] as const).map((type) => (
                 <Button
                   key={type}
                   variant={medicalFieldType === type ? 'default' : 'outline'}
