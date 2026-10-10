@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Edit, Trash2, AlertTriangle, Plus, Brain } from 'lucide-react'
-import { format, differenceInDays } from 'date-fns'
+import { format, differenceInDays, parseISO } from 'date-fns'
 import { HeadPainEntry, HeadPainEpisodeType } from './head-pain-types'
 import { EPISODE_TYPES, getEpisodeTypeInfo, getEpisodeTypeColor, getGremlinEmoji } from './head-pain-constants'
 
@@ -147,7 +147,7 @@ export function HeadPainHistory({ entries, onEdit, onDelete, onAddNew }: Props) 
                       </div>
                     </div>
                     <div className="text-sm text-muted-foreground mb-2">
-                      {format(new Date(entry.date), 'EEEE, MMMM d, yyyy')}
+                      {format(parseISO(entry.date), 'EEEE, MMMM d, yyyy')}
                       {entry.timestamp && ` • ${format(new Date(entry.timestamp), 'h:mm a')}`}
                       {entry.duration && ` • ${entry.duration}`}
                     </div>

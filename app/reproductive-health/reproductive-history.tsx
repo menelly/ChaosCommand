@@ -29,7 +29,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { format } from 'date-fns'
+import { format, parseISO } from 'date-fns'
 import {
   Search,
   Edit,
@@ -123,7 +123,7 @@ export function ReproductiveHistory({ entries, onDelete, onEdit }: ReproductiveH
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
-                    {format(new Date(entry.date), 'EEEE, MMMM d, yyyy')}
+                    {format(parseISO(entry.date), 'EEEE, MMMM d, yyyy')}
                   </CardTitle>
                   <div className="flex items-center gap-2">
                     <Button

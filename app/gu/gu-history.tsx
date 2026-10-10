@@ -21,7 +21,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Edit, Trash2, Droplets, Plus } from 'lucide-react'
-import { format, subDays, differenceInDays } from 'date-fns'
+import { format, subDays, differenceInDays, parseISO } from 'date-fns'
 import { useToast } from '@/hooks/use-toast'
 
 import type { GUEntry, GUEpisodeType } from './gu-types'
@@ -282,7 +282,7 @@ export function GUHistory({ onEdit, onDelete, refreshTrigger }: GUHistoryProps) 
                     </div>
 
                     <div className="text-sm text-muted-foreground mb-2">
-                      {format(new Date(entry.date), 'EEEE, MMMM d, yyyy')}
+                      {format(parseISO(entry.date), 'EEEE, MMMM d, yyyy')}
                       {entry.timestamp && ` • ${format(new Date(entry.timestamp), 'h:mm a')}`}
                     </div>
 

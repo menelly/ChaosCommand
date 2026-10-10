@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Edit, Trash2, Heart, Plus } from 'lucide-react'
-import { format, differenceInDays } from 'date-fns'
+import { format, differenceInDays, parseISO } from 'date-fns'
 import { MentalHealthEntry, MindMoodEpisodeType } from './mental-health-types'
 import { EPISODE_TYPES, getEpisodeTypeInfo, getEpisodeTypeColor, MOOD_OPTIONS } from './mental-health-constants'
 
@@ -142,7 +142,7 @@ export function MindMoodHistory({ entries, onEdit, onDelete, onAddNew }: Props) 
                       </div>
                     </div>
                     <div className="text-sm text-muted-foreground mb-2">
-                      {format(new Date(entry.date), 'EEEE, MMMM d, yyyy')}{entry.time && ` • ${entry.time}`}
+                      {format(parseISO(entry.date), 'EEEE, MMMM d, yyyy')}{entry.time && ` • ${entry.time}`}
                     </div>
                     {entry.cognitiveDomains && entry.cognitiveDomains.length > 0 && (
                       <div className="text-sm mb-1"><span className="font-medium">Cognitive:</span> {entry.cognitiveDomains.join(', ')}</div>

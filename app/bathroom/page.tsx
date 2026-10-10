@@ -20,7 +20,7 @@ import { Plus, Droplet, ArrowLeft, BarChart3, History, ExternalLink, Edit, Trash
 import { useToast } from '@/hooks/use-toast'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { format, differenceInDays } from 'date-fns'
+import { format, differenceInDays, parseISO } from 'date-fns'
 
 import { BathroomEntry, BathroomEpisodeType } from './bathroom-types'
 import {
@@ -178,7 +178,7 @@ export default function BathroomPage() {
     if (timeWindow !== 'all') {
       const days = parseInt(timeWindow)
       const now = new Date()
-      result = result.filter(e => { try { return differenceInDays(now, new Date(e.date)) <= days } catch { return false } })
+      result = result.filter(e => { try { return differenceInDays(now, parseISO(e.date)) <= days } catch { return false } })
     }
     if (typeFilter !== 'all') result = result.filter(e => e.episodeType === typeFilter)
     result.sort((a, b) => new Date(b.timestamp || b.date).getTime() - new Date(a.timestamp || a.date).getTime())
@@ -405,7 +405,7 @@ export default function BathroomPage() {
                             </div>
                           </div>
                           <div className="text-sm text-muted-foreground mb-2">
-                            {format(new Date(entry.date), 'EEEE, MMMM d, yyyy')}{entry.time && ` • ${entry.time}`}{entry.repeatTimes && entry.repeatTimes.length > 0 && ` · again at ${entry.repeatTimes.join(', ')}`}
+                            {format(parseISO(entry.date), 'EEEE, MMMM d, yyyy')}{entry.time && ` • ${entry.time}`}{entry.repeatTimes && entry.repeatTimes.length > 0 && ` · again at ${entry.repeatTimes.join(', ')}`}
                           </div>
                           {entry.urinaryType && entry.urinaryType !== 'normal' && (
                             <div className="text-sm mb-1"><span className="font-medium">Urinary:</span> {entry.urinaryType}{entry.feverWithUrinary && ' + fever'}{entry.flankPain && ' + flank pain'}</div>

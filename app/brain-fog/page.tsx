@@ -39,7 +39,7 @@ import { Cloud, Plus, Edit, Trash2, Calendar, AlertCircle, Info, ArrowLeft, Tren
 import { useDailyData, CATEGORIES } from "@/lib/database"
 import { useGoblinMode } from "@/lib/goblin-mode-context"
 import { useToast } from "@/hooks/use-toast"
-import { format } from "date-fns"
+import { format, parseISO } from "date-fns"
 import { celebrate } from '@/lib/particle-physics-engine'
 import { useUser } from '@/lib/contexts/user-context'
 import { isCelebrationEnabled } from '@/lib/celebration-prefs'
@@ -696,7 +696,7 @@ export default function BrainFogTracker() {
                               {entry.date && entry.time ? format(new Date(`${entry.date}T${entry.time}`), 'MMM d, h:mm a') : 'Invalid Date/Time'}
                             </h3>
                             <p className="text-sm text-muted-foreground">
-                              Severity: {entry.severity}/10 • {entry.date && format(new Date(entry.date), 'EEEE')}
+                              Severity: {entry.severity}/10 • {entry.date && format(parseISO(entry.date), 'EEEE')}
                             </p>
                           </div>
                         </div>

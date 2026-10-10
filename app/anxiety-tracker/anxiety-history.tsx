@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Edit, Trash2, Heart, Plus } from 'lucide-react'
-import { format, differenceInDays } from 'date-fns'
+import { format, differenceInDays, parseISO } from 'date-fns'
 import { AnxietyEntry, AnxietyEpisodeType } from './anxiety-types'
 import { EPISODE_TYPES, getEpisodeTypeInfo, getEpisodeTypeColor } from './anxiety-constants'
 
@@ -136,7 +136,7 @@ export function AnxietyHistory({ entries, onEdit, onDelete, onAddNew }: Props) {
                       </div>
                     </div>
                     <div className="text-sm text-muted-foreground mb-2">
-                      {format(new Date(entry.date), 'EEEE, MMMM d, yyyy')}
+                      {format(parseISO(entry.date), 'EEEE, MMMM d, yyyy')}
                       {entry.time && ` • ${entry.time}`}
                       {entry.duration && ` • ${entry.duration}`}
                       {entry.location && ` • ${entry.location}`}

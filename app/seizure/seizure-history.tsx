@@ -20,7 +20,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Edit, Trash2, AlertTriangle, Shield, Plus } from 'lucide-react'
-import { format, differenceInDays } from 'date-fns'
+import { format, differenceInDays, parseISO } from 'date-fns'
 import { SeizureEntry, SeizureEpisodeType } from './seizure-types'
 import { EPISODE_TYPES, getEpisodeTypeInfo, getEpisodeTypeColor, getSeverityLevel } from './seizure-constants'
 
@@ -213,7 +213,7 @@ export function SeizureHistory({ entries, onEdit, onDelete, onAddNew }: SeizureH
                     </div>
 
                     <div className="text-sm text-muted-foreground mb-2">
-                      {format(new Date(entry.date), 'EEEE, MMMM d, yyyy')}
+                      {format(parseISO(entry.date), 'EEEE, MMMM d, yyyy')}
                       {entry.timestamp && ` • ${format(new Date(entry.timestamp), 'h:mm a')}`}
                       {entry.location && ` • ${entry.location}`}
                       {entry.witnessPresent && ' • Witness present'}
