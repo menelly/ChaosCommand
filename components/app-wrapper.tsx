@@ -33,6 +33,7 @@ import { invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
 import { importData } from '@/lib/database/migration-helper'
 import { useToast } from '@/hooks/use-toast'
+import { answerMcpRequest, type McpRequest } from '@/lib/mcp-bridge'
 
 interface AppWrapperProps {
   children: React.ReactNode
@@ -203,6 +204,40 @@ function AppContent({ children }: AppWrapperProps) {
     })
       .then(fn => { if (cancelled) fn(); else unlisten = fn })
       .catch(err => console.warn('[auto-sync] listen failed:', err))
+
+    return () => {
+      cancelled = true
+      if (unlisten) unlisten()
+    }
+  }, [isLoggedIn, userPin, isInitialized, toast])
+
+  // 🔌 Settings → AI Access. The Rust MCP server hands each tool call to us as an
+  // event because only the unlocked webview can read the (encrypted) database.
+  // Mounted ONLY while logged in, so a locked app simply doesn't answer — the AI
+  // gets told to ask the user to unlock. Every write gets a visible toast.
+  useEffect(() => {
+    if (!isLoggedIn || !userPin || !isInitialized) return
+    let unlisten: (() => void) | undefined
+    let cancelled = false
+
+    listen<McpRequest>('chaos:mcp-request', async (event) => {
+      const req = event.payload
+      try {
+        const result = await answerMcpRequest(req, ({ date, subcategory }) => {
+          toast({
+            title: '🤖 Your AI added an entry',
+            description: `${subcategory} · ${date} (via AI Access). It's marked as AI-added.`,
+            duration: 6000,
+          })
+        })
+        await invoke('mcp_respond', { id: req.id, ok: true, result })
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err)
+        await invoke('mcp_respond', { id: req.id, ok: false, result: message }).catch(() => {})
+      }
+    })
+      .then(fn => { if (cancelled) fn(); else unlisten = fn })
+      .catch(err => console.warn('[mcp] listen failed (not running in Tauri?):', err))
 
     return () => {
       cancelled = true

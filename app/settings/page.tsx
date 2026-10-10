@@ -45,6 +45,8 @@ import { PrintExportModal } from "./print-export-modal"
 // import { QRSyncModal } from "./qr-sync-modal"
 import { UpdateCheckModal } from "./update-check-modal"
 import { AutoLockModal } from "./auto-lock-modal"
+import { AiAccessModal } from "./ai-access-modal"
+import { useIsMobilePlatform } from "@/lib/platform"
 
 import { useRouter } from "next/navigation";
 import { confirmAsync } from "@/components/ui/confirm-host"
@@ -55,6 +57,8 @@ export default function SettingsPage() {
   const [activeModal, setActiveModal] = useState<string | null>(null)
 
   const openModal = (modalName: string) => setActiveModal(modalName)
+  // 🔌 AI Access is desktop-only: an MCP client on a phone isn't a thing yet.
+  const isMobile = useIsMobilePlatform()
   const closeModal = () => setActiveModal(null)
 
   // Deep-link support: /settings?section=<id> opens that section's modal
@@ -215,6 +219,33 @@ export default function SettingsPage() {
             </CardHeader>
           </Card>
 
+          {/* 🔌 AI Access (MCP) — optional door for the user's own AI. Desktop only,
+              off by default; the modal explains exactly what it allows. */}
+          {!isMobile && (
+            <Card
+              onClick={() => openModal('aiaccess')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  openModal('aiaccess')
+                }
+              }}
+              className="cursor-pointer hover:shadow-lg hover:ring-2 hover:ring-primary transition-all"
+            >
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Bot className="h-5 w-5" />
+                  AI Access (MCP)
+                </CardTitle>
+                <CardDescription>
+                  Optional: let an AI assistant you use read your logs and add entries. Off until you turn it on.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          )}
+
           {/* Updates — opt-in only manifest check. Lives at the top level
               (not buried in Data Management) so the "is there a newer
               version?" question gets equal prominence with Device Sync. */}
@@ -296,6 +327,9 @@ export default function SettingsPage() {
 
         {/* Auto-lock modal (also not in the category array) */}
         <AutoLockModal isOpen={activeModal === 'autolock'} onClose={closeModal} />
+
+        {/* 🔌 AI Access modal (desktop only; the card is hidden on phones) */}
+        <AiAccessModal isOpen={activeModal === 'aiaccess'} onClose={closeModal} />
 
         <div className="mt-8 text-center space-y-3">
           <Button variant="outline" onClick={() => window.history.back()}>

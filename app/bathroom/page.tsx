@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Plus, Droplet, ArrowLeft, BarChart3, History, ExternalLink, Edit, Trash2, AlertTriangle } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
+import { MCP_DATA_CHANGED_EVENT } from '@/lib/mcp-bridge'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { format, differenceInDays, parseISO } from 'date-fns'
@@ -58,6 +59,13 @@ export default function BathroomPage() {
   const [typeFilter, setTypeFilter] = useState<BathroomEpisodeType | 'all'>('all')
 
   useEffect(() => { loadEntries() }, [refreshTrigger])
+  // 🔌 An AI added something through AI Access: reload, so the next save here
+  // can't write the old in-memory list back over the AI's entry.
+  useEffect(() => {
+    const onAiWrite = () => setRefreshTrigger(t => t + 1)
+    window.addEventListener(MCP_DATA_CHANGED_EVENT, onAiWrite)
+    return () => window.removeEventListener(MCP_DATA_CHANGED_EVENT, onAiWrite)
+  }, [])
 
   const loadEntries = async () => {
     try {

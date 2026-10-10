@@ -748,7 +748,7 @@ export function generateMedicalReport(data: ReportData): Blob {
       summaryText += `Largest deteriorations: ${top.join('; ')}. `
     }
   }
-  summaryText += `Based on ${uniqueDates.size} days of tracked health data across ${trackerTypes.size} symptom categories. `
+  summaryText += `Based on ${uniqueDates.size} days of tracked health data across ${plural(trackerTypes.size, 'symptom category', 'symptom categories')}. `
   if (labResults.length) summaryText += `${labResults.length} laboratory result set(s) included. `
   w.body(summaryText)
 
@@ -1961,22 +1961,30 @@ export function generateMedicalReport(data: ReportData): Blob {
   if (bathEntries.length && isDoctor) {
     w.sectionHeader('Bathroom Assessment')
     const bristolDist: Record<string, number> = {}
-    let total = 0, blackTarry = 0, bloodUrine = 0, pyelo = 0, obstruction = 0
+    let total = 0, entryCount = 0, blackTarry = 0, bloodUrine = 0, pyelo = 0, obstruction = 0
     const types: Record<string, number> = {}
     for (const r of bathEntries) {
       const entries = Array.isArray(r.content?.entries) ? r.content.entries : [r.content]
       for (const e of entries) {
         if (!e) continue
-        total++
-        if (e.bristolScale) bristolDist[e.bristolScale] = (bristolDist[e.bristolScale] || 0) + 1
+        // The 💩➕ button logs a repeat of the same episode as a time in repeatTimes
+        // instead of a new entry, so one entry can be several episodes.
+        const times = 1 + (Array.isArray(e.repeatTimes) ? e.repeatTimes.length : 0)
+        entryCount++
+        total += times
+        if (e.bristolScale) bristolDist[e.bristolScale] = (bristolDist[e.bristolScale] || 0) + times
         if (e.bloodColor === 'black-tarry') blackTarry++
         if (e.bloodInUrine) bloodUrine++
         if (e.feverWithUrinary && e.flankPain) pyelo++
         if (e.cantPassGas && e.vomiting) obstruction++
-        if (e.episodeType) types[e.episodeType] = (types[e.episodeType] || 0) + 1
+        if (e.episodeType) types[e.episodeType] = (types[e.episodeType] || 0) + times
       }
     }
-    w.body(`${plural(total, 'entry', 'entries')}. Constipation: ${types['constipation'] || 0}. Diarrhea: ${types['diarrhea'] || 0}. Urinary: ${types['urinary'] || 0}.`)
+    const repeatNote = total > entryCount ? ` (${plural(entryCount, 'logged entry', 'logged entries')}, counting repeats tapped with +1)` : ''
+    w.body(`${plural(total, 'episode', 'episodes')}${repeatNote}. Constipation: ${types['constipation'] || 0}. Diarrhea: ${types['diarrhea'] || 0}. Urinary: ${types['urinary'] || 0}.`)
+    // Episode type and Bristol type are chosen separately, so the two sets of counts
+    // can look contradictory side by side. Say so, so a doctor doesn't read it as an error.
+    w.body('Note: "constipation"/"diarrhea" counts come from the episode type the patient chose; the Bristol distribution below comes from the stool type they recorded. The two are logged separately and need not match.')
     if (blackTarry > 0) w.finding(`Black tarry stool reported ${blackTarry}× — upper GI bleed differential, GI eval indicated.`)
     if (pyelo > 0) w.finding(`Pyelonephritis pattern (UTI + fever + flank) ${pyelo}× — recurrent suggests urology workup for structural cause.`)
     if (obstruction > 0) w.finding(`Obstruction pattern (no gas + vomiting) ${obstruction}× — surgical evaluation if recent and unevaluated.`)

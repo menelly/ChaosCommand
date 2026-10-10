@@ -8,6 +8,7 @@
 
 mod license;
 mod llm;
+mod mcp;
 mod peers;
 mod server;
 mod sync;
@@ -98,6 +99,15 @@ pub fn run() {
       app.manage(server_state);
       app.manage(peer_store);
 
+      // 🔌 MCP holes (Settings → AI Access). Off by default; if the user left it on,
+      // reopen the localhost door now. Best-effort: a busy port must not crash the app.
+      let mcp_state = mcp::McpState::load(&app_data_dir);
+      mcp_state.set_app_handle(app.handle().clone());
+      if let Err(e) = mcp::start_if_enabled(&mcp_state) {
+        eprintln!("[chaos-mcp] couldn't start AI access: {}", e);
+      }
+      app.manage(mcp_state);
+
       // Desktop tray: lets the user reopen the window after close-to-tray, and
       // fully quit. Built unconditionally on desktop (cheap); the window only
       // actually hides-to-tray when the user opted into background reminders.
@@ -174,6 +184,11 @@ pub fn run() {
       llm::llm_load_model,
       llm::llm_unload_model,
       llm::llm_generate,
+      // 🔌 Optional AI access over MCP (localhost only, off by default).
+      mcp::mcp_get_status,
+      mcp::mcp_set_enabled,
+      mcp::mcp_regenerate_token,
+      mcp::mcp_respond,
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
