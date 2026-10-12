@@ -162,7 +162,12 @@ Run the test suite with `pnpm test` (golden suites) and `pnpm run typecheck`.
 
 Signed builds exist for **Windows, Mac (Intel + Apple Silicon), Linux, and Android**.
 
-**Pulled from the stores to fix bugs** (a wrong lab-direction display and a data-loss path); returns in progress. A health tracker for chronically ill people shouldn't ship those.
+**Back in the stores** 🎉 (v1.0.7, October 2026):
+
+- 🪟 **Windows:** [Microsoft Store](https://apps.microsoft.com/detail/9P5ZSM8M3RD4)
+- 🤖 **Android:** [Google Play](https://play.google.com/store/apps/details?id=com.chaoscascade.command)
+
+We pulled it for a while to fix two bugs, a wrong lab-direction display and a data-loss path, because a health tracker for chronically ill people shouldn't ship those. Both are fixed, and the lab direction is now decided by code from your reference ranges, never by the model.
 
 iOS is the newest target and has never had a device build; **[`docs/IOS_BUILD.md`](docs/IOS_BUILD.md)** covers building it yourself with a free Apple ID if you have a Mac and an iPhone. And it's free either way — a self-build has never had anything missing from it.
 
