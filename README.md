@@ -82,7 +82,7 @@ Everything runs on your device. No cloud. No accounts. No telemetry. Your health
 - **The G-Spot** (reproductive tracker): a deliberate, confirmed, *scoped* delete of just your reproductive-health data — everything else untouched. For when that one category is the dangerous one to carry. (Deletion, not concealment.)
 - **Encrypted backups**: export your data as a password-protected file (AES-256-GCM) and restore it anywhere. Plain JSON export available too if you want it readable. Opt-in backup reminders (per-PIN, dismissible).
 - **Look around first**: a built-in demo — log in with PIN `1111` to explore rich sample data without an account or touching your own profile. Also live in a browser at [tryme.chaoscommand.center](https://tryme.chaoscommand.center).
-- **AI Access (optional, off by default, desktop)**: Settings → AI Access lets *your own* AI assistant read your trackers and add entries over MCP — per PIN profile, Off / Read only / Read & write. Localhost only, bearer token, Host + Origin checks, only answers while the app is unlocked, and every AI-added entry is marked and pops a notice. *(In source now; lands in the next store release after 1.0.7.)*
+- **AI Access (optional, off by default, desktop)**: Settings → AI Access lets *your own* AI assistant read your trackers and add entries over MCP — per PIN profile, Off / Read only / Read & write. Localhost only, bearer token, Host + Origin checks, only answers while the app is unlocked, and every AI-added entry is marked and pops a notice. *(Added 2026-10-10; included in the 1.0.7 direct downloads at chaoscommand.center/download.)*
 - **Open source**: Audit our code
 
 ### Accessibility
@@ -95,7 +95,7 @@ Everything runs on your device. No cloud. No accounts. No telemetry. Your health
 
 ## Recent Updates
 
-**Next release (in source, after 1.0.7)** &middot; **AI Access** — optional, off-by-default MCP so your own AI can read and log for you (see Privacy & Security). The Forge gets a **tap 1–10 severity field** (no more forced drag), the bathroom tracker gets a **+1 button** for "it happened again," and entries stop showing up under yesterday's date.
+**Added 2026-10-10 (in source and the 1.0.7 direct downloads)** &middot; **AI Access** — optional, off-by-default MCP so your own AI can read and log for you (see Privacy & Security). The Forge gets a **tap 1–10 severity field** (no more forced drag), the bathroom tracker gets a **+1 button** for "it happened again," and entries stop showing up under yesterday's date.
 
 **v1.0.7** &middot; Microsoft Store and Google Play resynced to the same version, carrying the fix where Cancel on a destructive confirm actually cancels (found by an external audit).
 
@@ -188,9 +188,7 @@ No trial. No unlock. No locked sidebar. No feature held back for a paid tier. No
 
 That's not a promotion. It's the whole model.
 
-**So what's the LemonSqueezy link for?** **Support time** — an actual human, ours, helping you with your actual problem. That's the only thing here that has a real marginal cost, so it's the only thing with a price on it. Software copies for free; a person's afternoon doesn't.
-
-**And please don't buy it unless you genuinely need it.** Not a sales tactic — a request. If you can work it out from the docs, work it out from the docs. If something's broken, [open an issue](https://github.com/menelly/ChaosCommand/issues) and we'll fix it for everyone, free, because that's better than fixing it for you privately. The support option exists for people who are out of spoons and need a human to just *handle it*, and for people who want to chip in and would rather get something for it.
+**Nothing costs anything. Not the app, not support.** There's no paid support tier and nothing to buy. If something's broken, [open an issue](https://github.com/menelly/ChaosCommand/issues) and we'll fix it for everyone, free, because that's better than fixing it for you privately.
 
 **The rule hasn't changed: don't spend your ramen money on us.** It was true when there was a price on the app and it's more true now that there isn't.
 
