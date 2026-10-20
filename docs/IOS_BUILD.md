@@ -9,7 +9,7 @@ Apple's distribution model punishes free, indie, accessibility-focused tools:
 - Annual certificate renewals
 - App Store review process is hostile to medical-adjacent tools
 
-For a free, disability-focused tracker with a tip jar, that maintenance treadmill is not sustainable.
+For a free, disability-focused tracker, that maintenance treadmill is not sustainable.
 
 **The good news:** if you have a Mac and an iPhone, you can build and install Chaos Command yourself in under an hour. Apple lets anyone with a free Apple ID sign apps for their own devices. Here's how.
 

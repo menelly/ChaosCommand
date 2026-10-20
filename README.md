@@ -1,7 +1,7 @@
 # 🏥 Chaos Command
 ## Privacy-First Health Tracking for Real Humans
 
-**Current version: v1.0.2** &middot; [Recent Updates](#recent-updates) &middot; [What it costs](#what-it-costs-nothing) &middot; [License: PolyForm Noncommercial](#license)
+**Current version: v1.0.7** (on the Microsoft Store and Google Play) &middot; [Recent Updates](#recent-updates) &middot; [What it costs](#what-it-costs-nothing) &middot; [License: PolyForm Noncommercial](#license)
 
 > *"Dreamed by Ren, implemented by Ace, inspired by mitochondria who've been on strike since birth"*
 
@@ -47,7 +47,7 @@ Everything runs on your device. No cloud. No accounts. No telemetry. Your health
 - **Cross-tracker referrals** — chest pain → cardiac, head pain → head-pain, joint pain → joint, severe panic + chest → consider cardiac too
 
 ### Medical Management
-- **Timeline**: Upload medical documents (PDF, images), in-browser NLP extraction, dismissed-findings detection
+- **Timeline**: Upload medical documents (PDF, images), on-device extraction with MedGemma (desktop), dismissed-findings detection
 - **Lab Results**: Multi-format parser (Intermountain, Mayo, Halifax OCR, Advent), inline editing, trend tracking, abnormal flagging
 - **Upload guardrails**: a fast sanity check on every upload — flags **duplicate results** (same test/value/collection-date already saved, *regardless of filename* — so `the_real_one(3).pdf` doesn't triple-count your antibody trend) and warns when a document's **name doesn't match your demographics** (catches accidentally importing a family member's labs). Both soft — it never blocks, just asks "you sure?"
 - **Providers & Appointments**: Track your care team
@@ -77,11 +77,12 @@ Everything runs on your device. No cloud. No accounts. No telemetry. Your health
 - **PIN-based isolation**: Multiple users, separate databases, no corporate auth — *everything is per-PIN*, down to theme, fonts, and preferences
 - **Peer-to-peer sync (optional)**: Bidirectional sync between *your own* devices over LAN — phone ↔ laptop ↔ desktop. PIN-scoped, encrypted, no cloud, no third-party servers. Pair once (QR / same Wi-Fi), sync on demand.
 - **No fonts phone home**: every font is **self-hosted** — no Google Fonts request, no IP leak
-- **On-device medical AI**: document parsing runs **MedGemma-4B locally, in the app's own process** — nothing is uploaded, no API key, no inference bill, works offline. And the model never decides clinical meaning: it extracts, then *code* decides High / Low / Critical against your reference ranges.
+- **On-device medical AI**: document parsing runs **MedGemma-4B locally, in the app's own process** (desktop) — nothing is uploaded, no API key, no inference bill. AI parsing is **off by default**; switching it on downloads the model once (~2 GB, from Hugging Face, with a progress bar) and SHA256-checks it against the exact weights we validated. After that it works offline, and with it off the lab number-parser and manual entry still work with no model at all. And the model never decides clinical meaning: it extracts, then *code* decides High / Low / Critical against your reference ranges.
 - **One-tap Logout**: a big Logout at the bottom of the sidebar — instant exit to the locked screen. Non-destructive; your data stays put in its own profile.
 - **The G-Spot** (reproductive tracker): a deliberate, confirmed, *scoped* delete of just your reproductive-health data — everything else untouched. For when that one category is the dangerous one to carry. (Deletion, not concealment.)
 - **Encrypted backups**: export your data as a password-protected file (AES-256-GCM) and restore it anywhere. Plain JSON export available too if you want it readable. Opt-in backup reminders (per-PIN, dismissible).
 - **Look around first**: a built-in demo — log in with PIN `1111` to explore rich sample data without an account or touching your own profile. Also live in a browser at [tryme.chaoscommand.center](https://tryme.chaoscommand.center).
+- **AI Access (optional, off by default, desktop)**: Settings → AI Access lets *your own* AI assistant read your trackers and add entries over MCP — per PIN profile, Off / Read only / Read & write. Localhost only, bearer token, Host + Origin checks, only answers while the app is unlocked, and every AI-added entry is marked and pops a notice. *(In source now; lands in the next store release after 1.0.7.)*
 - **Open source**: Audit our code
 
 ### Accessibility
@@ -93,6 +94,10 @@ Everything runs on your device. No cloud. No accounts. No telemetry. Your health
 ---
 
 ## Recent Updates
+
+**Next release (in source, after 1.0.7)** &middot; **AI Access** — optional, off-by-default MCP so your own AI can read and log for you (see Privacy & Security). The Forge gets a **tap 1–10 severity field** (no more forced drag), the bathroom tracker gets a **+1 button** for "it happened again," and entries stop showing up under yesterday's date.
+
+**v1.0.7** &middot; Microsoft Store and Google Play resynced to the same version, carrying the fix where Cancel on a destructive confirm actually cancels (found by an external audit).
 
 **v1.0.x** &middot; **Encryption at rest, on-device medical AI, and the app went free.** Your medical data is now **encrypted on disk** — the key is derived from your PIN (PBKDF2), held in memory only for the session, with **auto-lock-in-background** so a backgrounded app isn't a readable one. Document intelligence moved from Transformers.js to **MedGemma-4B running natively in the Rust process** — a real medical model instead of a browser-sized compromise, and the webview no longer ships a model runtime at all. Critically, **the model never decides clinical meaning**: `deriveLabDirection` is *code*, so High / Low / Critical comes from your reference ranges, not from a language model's opinion — we caught it reporting the wrong direction in testing and refused to ship until the decision moved out of the model. Plus medication `dateStarted` / `dateStopped` now respected in the daily view, a one-page medical summary for handing to a doctor, notification-flood fix, and crash guards on name-formatting paths.
 
@@ -110,7 +115,7 @@ Everything runs on your device. No cloud. No accounts. No telemetry. Your health
 
 **v0.4.x** &middot; Tier-1 safety-critical tracker refactor wave (Seizure autonomic type, Pain cross-tracker links, Head-Pain baseline-delta, Food-Allergens IgE + celiac dual-pattern, Anxiety 988 + AuDHD-aware), shared collapsible `EmergencyCriteriaCard`, v2 multi-modal tracker architecture (cardiac/respiratory/skin/joint/substance), doctor-grade PDF polish, and the tracker "re-fun" personality pass.
 
-*Full per-release detail: [`docs/CHANGELOG.md`](docs/CHANGELOG.md). Every commit is public.*
+*Per-release detail through v0.5.8: [`docs/CHANGELOG.md`](docs/CHANGELOG.md). After that, the git log is the changelog — every commit is public.*
 
 ---
 
@@ -122,7 +127,7 @@ Everything runs on your device. No cloud. No accounts. No telemetry. Your health
 - **MedGemma-4B** — medical document intelligence, run natively in the Rust process (`src-tauri/src/llm.rs`) via llama.cpp. Desktop-gated; the webview ships no model runtime at all.
 - **pdf.js** — PDF text extraction (no server needed)
 - **recharts** — in-app analytics charts
-- **Ed25519 offline license verification** — kept from the paid era and now unused by the app itself; when it *did* gate anything it verified *on your device*, with no license server and no phone-home. Left in for the commercial-license path.
+- **Ed25519 offline license verification** — kept from the paid era and dormant: only a build packed with the `-Store` switch (`scripts/pack-msix.ps1`, `scripts/build-nice.ps1`) arms the trial/licence gate; every default build is fully unlocked. When it *did* gate anything it verified *on your device*, with no license server and no phone-home. Left in for the commercial-license path.
 - **Testing** — framework-free golden suites (`npm test`) guarding the lab parser, NER section detection, confabulation guard, and entitlement/license logic, plus Rust unit tests + GitHub Actions CI
 - ~~**Flask** backend~~ — *RIP, April 9 2026. Replaced by Transformers.js while my human napped. 307MB → 75MB. The octopus doesn't need a server.*
 - ~~**Transformers.js**~~ — *RIP, July 2026. Outlived its usefulness the moment a real medical model would run natively. The browser doesn't need a model runtime either.*
@@ -132,7 +137,7 @@ Everything runs on your device. No cloud. No accounts. No telemetry. Your health
 ## Getting Started
 
 ### Prerequisites
-- Node.js 18+
+- Node.js 20 (what CI uses) and pnpm
 - Rust (for Tauri)
 - That's it. No Python. No Flask. No spaCy. No Tesseract. Just Node and Rust.
 
@@ -144,7 +149,7 @@ pnpm install
 pnpm tauri dev
 ```
 
-The NER model and every font are bundled. The PDF parser runs in-browser. Grandma Jane approved.
+Every font is bundled and the PDF parser (pdf.js) runs in the app. The one big thing that isn't bundled is the MedGemma model for document import: on desktop it downloads once (~2 GB) when you switch AI parsing on. Grandma Jane approved.
 
 There is nothing to unlock. The whole app is free in every build — source or store, same application. (Earlier versions gated the tracker sidebar behind a store purchase; that's gone, along with the Buy button.)
 

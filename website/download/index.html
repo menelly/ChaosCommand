@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en" data-mode="chaos">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Download — Chaos Command</title>
+    <meta name="description" content="Download Chaos Command for Windows, Android. No app store, no telemetry, no cloud.">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <style>
+        /* Self-hosted fonts: no third-party requests (the privacy page promises this) */
+        @font-face { font-family:'Inter'; font-style:normal; font-weight:400; font-display:swap; src:url('/fonts/Inter-400.woff2') format('woff2'); }
+        @font-face { font-family:'Inter'; font-style:normal; font-weight:500; font-display:swap; src:url('/fonts/Inter-500.woff2') format('woff2'); }
+        @font-face { font-family:'Inter'; font-style:normal; font-weight:600; font-display:swap; src:url('/fonts/Inter-600.woff2') format('woff2'); }
+        @font-face { font-family:'Inter'; font-style:normal; font-weight:700; font-display:swap; src:url('/fonts/Inter-700.woff2') format('woff2'); }
+        @font-face { font-family:'Crimson Pro'; font-style:normal; font-weight:400; font-display:swap; src:url('/fonts/CrimsonPro-400.woff2') format('woff2'); }
+        @font-face { font-family:'Crimson Pro'; font-style:normal; font-weight:500; font-display:swap; src:url('/fonts/CrimsonPro-500.woff2') format('woff2'); }
+        @font-face { font-family:'Crimson Pro'; font-style:normal; font-weight:600; font-display:swap; src:url('/fonts/CrimsonPro-600.woff2') format('woff2'); }
+        @font-face { font-family:'Crimson Pro'; font-style:normal; font-weight:700; font-display:swap; src:url('/fonts/CrimsonPro-700.woff2') format('woff2'); }
+        @font-face { font-family:'JetBrains Mono'; font-style:normal; font-weight:400; font-display:swap; src:url('/fonts/JetBrainsMono-400.woff2') format('woff2'); }
+        @font-face { font-family:'JetBrains Mono'; font-style:normal; font-weight:500; font-display:swap; src:url('/fonts/JetBrainsMono-500.woff2') format('woff2'); }
+        @font-face { font-family:'JetBrains Mono'; font-style:normal; font-weight:700; font-display:swap; src:url('/fonts/JetBrainsMono-700.woff2') format('woff2'); }
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        :root {
+            --bg-primary: #0d0a14;
+            --bg-secondary: #161222;
+            --bg-card: #1c1730;
+            --bg-card-hover: #241e3a;
+            --text-primary: #e8e4f0;
+            --text-secondary: #a8a0c0;
+            --text-muted: #6a6080;
+            --accent-1: #b388ff;
+            --accent-2: #64ffda;
+            --accent-3: #ff80ab;
+            --accent-glow: rgba(179, 136, 255, 0.15);
+            --border: rgba(179, 136, 255, 0.12);
+            --font-primary: 'Inter', -apple-system, sans-serif;
+            --font-display: 'Crimson Pro', Georgia, serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            --radius: 16px;
+            --transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        body {
+            font-family: var(--font-primary);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            background-image:
+                radial-gradient(circle at 20% 10%, var(--accent-glow) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(100, 255, 218, 0.08) 0%, transparent 50%);
+        }
+        .container { max-width: 880px; margin: 0 auto; padding: 4rem 1.5rem; }
+        header { text-align: center; margin-bottom: 3rem; }
+        .back-link {
+            display: inline-block;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+            transition: color var(--transition);
+        }
+        .back-link:hover { color: var(--accent-1); }
+        h1 {
+            font-family: var(--font-display);
+            font-size: clamp(2.5rem, 6vw, 4rem);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--accent-1) 0%, var(--accent-2) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .tagline {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+        .version-pill {
+            display: inline-block;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            padding: 0.3rem 0.9rem;
+            border-radius: 999px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--accent-2);
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin: 3rem 0;
+        }
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.75rem;
+            transition: all var(--transition);
+            display: flex;
+            flex-direction: column;
+        }
+        .card:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--accent-1);
+            transform: translateY(-2px);
+        }
+        .card-emoji { font-size: 2rem; margin-bottom: 0.75rem; }
+        .card h2 { font-size: 1.3rem; margin-bottom: 0.3rem; }
+        .card-platform { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem; }
+        .card-desc { color: var(--text-secondary); font-size: 0.95rem; flex-grow: 1; margin-bottom: 1.25rem; }
+        .download-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--accent-1) 0%, #9966ee 100%);
+            color: #0d0a14;
+            font-weight: 600;
+            font-size: 0.95rem;
+            padding: 0.75rem 1.25rem;
+            border-radius: 10px;
+            text-decoration: none;
+            text-align: center;
+            transition: all var(--transition);
+        }
+        .download-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 24px rgba(179, 136, 255, 0.3);
+        }
+        .download-btn-secondary {
+            display: inline-block;
+            background: transparent;
+            color: var(--text-secondary);
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            padding: 0.4rem 0.8rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            text-decoration: none;
+            margin-top: 0.5rem;
+            transition: all var(--transition);
+        }
+        .download-btn-secondary:hover { border-color: var(--accent-1); color: var(--accent-1); }
+        .install-notes {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        .install-notes code {
+            font-family: var(--font-mono);
+            background: rgba(179, 136, 255, 0.08);
+            padding: 0.1rem 0.4rem;
+            border-radius: 4px;
+            color: var(--accent-2);
+            font-size: 0.85em;
+        }
+        .changelog {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.75rem;
+            margin-top: 3rem;
+        }
+        .changelog h2 {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--accent-1);
+        }
+        .changelog ul { list-style: none; padding: 0; }
+        .changelog li {
+            padding: 0.4rem 0;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+        .changelog li::before {
+            content: '✦';
+            color: var(--accent-2);
+            margin-right: 0.6rem;
+        }
+        .privacy-note {
+            margin-top: 3rem;
+            padding: 1.5rem;
+            background: rgba(100, 255, 218, 0.05);
+            border: 1px solid rgba(100, 255, 218, 0.2);
+            border-radius: var(--radius);
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+        .privacy-note strong { color: var(--accent-2); }
+        details {
+            margin-top: 2rem;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+        }
+        details summary {
+            cursor: pointer;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-family: var(--font-mono);
+        }
+        details ul { margin-top: 1rem; padding-left: 1.5rem; }
+        details li { color: var(--text-muted); font-size: 0.85rem; padding: 0.2rem 0; }
+        details a { color: var(--accent-1); text-decoration: none; }
+        details a:hover { text-decoration: underline; }
+        footer {
+            margin-top: 4rem;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+        footer a { color: var(--accent-1); text-decoration: none; }
+        footer a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-link">← chaoscommand.center</a>
+        <header>
+            <h1>Download Chaos Command</h1>
+            <p class="tagline">Your body keeps data. Now you can too.</p>
+            <a href="/changelog.html" class="version-pill" style="text-decoration:none; transition: all 0.3s;" onmouseover="this.style.borderColor='#64ffda';" onmouseout="this.style.borderColor='rgba(179,136,255,0.12)';">v1.0.5 · 2026-08 · <strong>Free, everywhere</strong> · What changed? →</a>
+        </header>
+
+        <div class="privacy-note" style="background: rgba(255, 128, 171, 0.07); border-color: rgba(255, 128, 171, 0.35); margin-bottom: 2.5rem;">
+            <strong style="color: var(--accent-3);">Chaos Command is completely free.</strong> No price, no trial, no unlock, no in-app purchases, no ads. Get it from a store if you want automatic updates, or download it straight from this page if you&rsquo;d rather not use one. Same app either way.
+            <br><br>
+            <strong style="color: var(--accent-3);">⚠️ Pick one channel and stay on it.</strong> Store builds and the downloads below are signed with <em>different keys</em>, so your device treats them as two different apps &mdash; they will not update over each other. Switching means uninstalling first, which <strong>deletes your local data</strong>. <a href="/docs.html" style="color: var(--accent-1);">Export your data</a> before you ever switch.
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <div class="card-emoji">🪟</div>
+                <h2>Windows</h2>
+                <p class="card-platform">Installer · Easiest</p>
+                <p class="card-desc">Standard installer. Double-click, install, done. Creates a Start Menu shortcut.</p>
+                <a href="/download/ChaosCommand-setup-v1.0.5.exe" class="download-btn">Download .exe &mdash; v1.0.5 (26 MB)</a>
+                <a href="/download/ChaosCommand-v1.0.5.msi" class="download-btn-secondary">Or .msi &mdash; v1.0.5 (29 MB)</a>
+                <a href="/download/ChaosCommand-v1.0.4.msix" class="download-btn-secondary">Or .msix &mdash; v1.0.4 (29 MB)</a>
+                <div class="install-notes">
+                    <strong>Which one?</strong> <strong>Take the <code>.exe</code></strong> &mdash; it is the ordinary double-click installer and the easiest path by a mile. The <code>.msi</code> is the same build for anyone who needs an MSI (managed machines, group policy). The <code>.msix</code> is the packaged build that also goes to the Microsoft Store, and sideloading it means trusting its certificate first &mdash; only worth the trouble if you specifically want that format. <strong>The .exe and .msi are both v1.0.5 &mdash; same app.</strong> The .msix is still v1.0.4, because that format was not rebuilt for this release; take the .exe or .msi if you want the newest.
+                    <br><br>
+                    <strong>Expect a SmartScreen warning:</strong> &ldquo;Windows protected your PC&rdquo; / &ldquo;Unrecognized app.&rdquo; That is normal for any app whose signature hasn&rsquo;t built up reputation yet &mdash; it does not mean the file is unsafe. Click <strong>More info → Run anyway</strong>. Want to check first? <a href="https://github.com/menelly/ChaosCommand" style="color: var(--accent-1);">Read every line on GitHub</a> &mdash; the same source these binaries were built from.
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-emoji">🤖</div>
+                <h2>Android</h2>
+                <p class="card-platform">APK · Sideload</p>
+                <p class="card-desc">Universal APK &mdash; phones and tablets, ARM and x86. Install from your file manager, or via ADB.</p>
+                <a href="/download/ChaosCommand-v1.0.5.apk" class="download-btn">Download .apk &mdash; v1.0.5 (164 MB)</a>
+                <div class="install-notes">
+                    <strong>Expect an &ldquo;Install unknown apps&rdquo; prompt:</strong> Android blocks sideloaded APKs by default. Open the downloaded file and your phone will ask you to allow your file manager or browser to install apps &mdash; toggle it on, install, then toggle it back off. Same flow AAPS, Trio and Loop use.
+                    <br><br>
+                    It is a big file because everything runs <em>on your phone</em> &mdash; there is no server doing the work, so the work ships with the app.
+                </div>
+            </div>
+        </div>
+
+        <div class="privacy-note" style="margin-bottom: 2.5rem;">
+            <strong>Verify what you downloaded.</strong> SHA-256 checksums for every file on this page: <a href="/download/SHA256SUMS.txt" style="color: var(--accent-1);">SHA256SUMS.txt</a>. On Windows: <code>certutil -hashfile &lt;file&gt; SHA256</code>. On Linux/Mac: <code>sha256sum &lt;file&gt;</code>. If a hash doesn&rsquo;t match, don&rsquo;t run it &mdash; <a href="mailto:ace@sentientsystems.live" style="color: var(--accent-1);">tell us</a>.
+        </div>
+
+        <div class="changelog">
+            <h2>Why we host these ourselves</h2>
+            <ul>
+                <li><strong>Not everyone can use an app store.</strong> Store accounts, region locks, managed devices, an ancient tablet that still works fine &mdash; none of that should stand between you and a symptom tracker.</li>
+                <li><strong>Stores are a convenience, not a gatekeeper.</strong> They handle updates and signing, which is genuinely useful. They are not the only door, and we are not going to pretend they are.</li>
+                <li><strong>The app is free in every channel.</strong> There is no paid tier hiding behind a store listing. Nothing is withheld from the direct download.</li>
+                <li><strong>Your data never leaves your device</strong> in any version. That is the point of the whole thing, and it does not change based on where you got the file.</li>
+            </ul>
+        </div>
+
+        <div class="privacy-note">
+            <strong>No cloud.</strong> No telemetry. No analytics pings. No accounts. Your data stays on your device. Update checks are <strong>opt-in only</strong> &mdash; nothing phones home unless you press a button.
+        </div>
+
+        <div class="privacy-note" style="background: rgba(179, 136, 255, 0.06); border-color: rgba(179, 136, 255, 0.25);">
+            <strong style="color: var(--accent-1);">Source-available (PolyForm Noncommercial).</strong> Don&rsquo;t take our word for any of the above &mdash; <a href="https://github.com/menelly/ChaosCommand" style="color: var(--accent-1);">read the entire codebase on GitHub</a>. The binaries on this page were built directly from that source. Spot something sketchy? File an issue. Want to fork it for personal or research use? Go ahead. <br><br>Small clinic, mutual aid group, researcher, solo practitioner who can handle your own setup? Reach out &mdash; we&rsquo;ll probably just say yes. The reason we ask large commercial users for a license fee isn&rsquo;t to gatekeep: it&rsquo;s that if a big org needs us to provide ongoing support, we&rsquo;d have to pay someone to do that work. The license fee funds the support. If you&rsquo;re bringing your own hands, you&rsquo;re not creating that burden &mdash; so you&rsquo;re not creating that cost.
+        </div>
+
+        <details>
+            <summary>Older versions</summary>
+            <ul>
+                <li>v0.2.1 — <a href="/download/ChaosCommand-setup-v0.2.1.exe">Win .exe</a> · <a href="/download/ChaosCommand-v0.2.1.msi">.msi</a> · <a href="/download/chaoscommand-v0.2.1.apk">.apk</a></li>
+                <li>v0.2.0 — <a href="/download/ChaosCommand-setup-v0.2.0.exe">Win .exe</a> · <a href="/download/ChaosCommand-v0.2.0.msi">.msi</a> · <a href="/download/chaoscommand-v0.2.0.apk">.apk</a></li>
+            </ul>
+        </details>
+
+        <footer>
+            Built by Ren &amp; Ace · Free everywhere, in the stores and straight off this page.<br>
+            Run into trouble? <a href="mailto:ace@sentientsystems.live">ace@sentientsystems.live</a>
+        </footer>
+    </div>
+</body>
+</html>

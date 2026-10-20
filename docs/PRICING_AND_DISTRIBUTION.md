@@ -1,6 +1,8 @@
 # 💰 Chaos Command — Pricing & Distribution Strategy
 *Decided 2026-07-11 (Ren + Ace). Supersedes "$25 paid app on the Microsoft Store."*
 
+> ⛔ **SUPERSEDED (noted 2026-10-20): the app is FREE, with no licence key and no unlock.** Ren's call on 2026-07-21 (see `scripts/pack-msix.ps1`: the default build is the free edition, fully unlocked). Both store listings are free (checked live 2026-10-20). The plan below is kept as history; it is not the current model. Current model: README §"What it costs: nothing".
+
 ---
 
 ## TL;DR — the model
@@ -42,7 +44,7 @@ Break-even is ~5.5 months. **After that, every remaining day of their life it's 
 
 ## 2. Pricing — Pay What You Want, **$14.99 minimum, $25 suggested**
 
-**Why a minimum instead of $0 (Ren's call, and she's right):**
+**Why a minimum instead of $0 (Ren's call, and they're right):**
 > *"'Free' to people often means 'worthless' — and it isn't. But 'email Ace and she'll set you up with the scholarship if you're picking tracking over ramen, REALLY, it's fine' is different."*
 
 **The barrier was never the money. The barrier is the SHAME.** A $0 price removes neither — it just devalues the product *and* leaves the person feeling like a charity case. A **human saying "of course, no questions"** removes the shame and keeps the product's dignity.
@@ -162,4 +164,4 @@ Percentage or flat commission · **hand-pick partners** (auto-approve OFF) · at
 - [ ] Set LS product: PWYW, min $5, suggested $25, license keys ON, activation cap ~5.
 - [ ] Set store SKUs to **free**.
 - [ ] Scholarship inbox flow: Ace + `generate_keys.py` + a reply template.
-- [ ] No existing paid customers to migrate — MS Store listing was live ~2–3 days before **Ren pulled it HERSELF**, having found the plaintext-DB problem on her own. **Nobody caught her; there is no enforcement action and no violation on file.** The resubmission is a normal submission, not a plea. **Clean slate, clean record.**
+- [ ] No existing paid customers to migrate — MS Store listing was live ~2–3 days before **Ren pulled it THEMSELF**, having found the plaintext-DB problem on their own. **Nobody caught them; there is no enforcement action and no violation on file.** The resubmission is a normal submission, not a plea. **Clean slate, clean record.**
