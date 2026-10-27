@@ -48,7 +48,7 @@ Everything runs on your device. No cloud. No accounts. No telemetry. Your health
 
 ### Medical Management
 - **Timeline**: Upload medical documents (PDF, images), on-device extraction with MedGemma (desktop), dismissed-findings detection
-- **Lab Results**: Multi-format parser (Intermountain, Mayo, Halifax OCR, Advent), inline editing, trend tracking, abnormal flagging
+- **Lab Results**: Multi-format parser (several health-system report layouts, plus OCR for scanned PDFs), inline editing, trend tracking, abnormal flagging
 - **Upload guardrails**: a fast sanity check on every upload — flags **duplicate results** (same test/value/collection-date already saved, *regardless of filename* — so `the_real_one(3).pdf` doesn't triple-count your antibody trend) and warns when a document's **name doesn't match your demographics** (catches accidentally importing a family member's labs). Both soft — it never blocks, just asks "you sure?"
 - **Providers & Appointments**: Track your care team
 - **Work & Disability**: Employment history, missed work, accommodation tracking, SSDI applications, disability guide
