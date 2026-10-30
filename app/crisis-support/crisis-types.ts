@@ -165,7 +165,7 @@ export interface CrisisResource {
   id: string
   name: string
   type: 'hotline' | 'text' | 'chat' | 'app' | 'website' | 'local'
-  category: 'suicide' | 'crisis' | 'mental-health' | 'substance' | 'trauma' | 'lgbtq' | 'youth' | 'veterans' | 'general'
+  category: 'suicide' | 'crisis' | 'mental-health' | 'substance' | 'trauma' | 'lgbtq' | 'youth' | 'veterans' | 'poison' | 'general'
   
   // Contact Info
   phone?: string

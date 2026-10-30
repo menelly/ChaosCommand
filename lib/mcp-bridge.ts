@@ -30,6 +30,7 @@ import { hasSessionKey, getNamespaceId } from '@/lib/database/session-crypto'
 import { getPref } from '@/lib/prefs'
 import { isDemoSandbox } from '@/lib/pwa-mode'
 import { format, parseISO, isValid } from 'date-fns'
+import { checkEntryShape } from '@/lib/services/mcp-entry-shape'
 
 export interface McpRequest {
   id: number
@@ -194,6 +195,17 @@ export async function answerMcpRequest(
             `"${category}/${subcategory}" has no days with an entries list yet, so nothing was added. ` +
             `Call chaos_list_trackers to see the exact names; only trackers with keeps_entry_list: true can be added to.`,
           )
+        }
+
+        // 📐 CHA-772: "copy the shape" used to be a request in prose. Episodes added without
+        // a level showed up as "🌈 /10". Now a number field the app always fills in must be
+        // a number, or an explicit null ("not recorded"); otherwise nothing is saved.
+        const shapeProblems = checkEntryShape(
+          entry as Record<string, any>,
+          sameTracker.flatMap(r => entriesOf(r.content) || []),
+        )
+        if (shapeProblems.length > 0) {
+          throw new Error(`Nothing was added to "${subcategory}". ${shapeProblems.join(' ')}`)
         }
 
         const rowsThatDay = sameTracker.filter(r => r.date === date)

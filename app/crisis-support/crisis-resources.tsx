@@ -25,6 +25,8 @@
 
 import React, { useState } from 'react'
 import { openExternal } from '@/lib/open-external'
+import { useReachOut, TapToCall } from '@/components/tap-to-reach'
+import { telHref, smsHref, parseTextInstruction } from '@/lib/services/crisis-contact'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -41,7 +43,8 @@ import {
   Search,
   ExternalLink,
   Star,
-  Lock
+  Lock,
+  MessageSquare
 } from 'lucide-react'
 import { CRISIS_RESOURCES } from './crisis-constants'
 import { CrisisResource } from './crisis-types'
@@ -90,12 +93,20 @@ export function CrisisResources() {
       case 'youth': return 'bg-green-100 text-green-800'
       case 'veterans': return 'bg-indigo-100 text-indigo-800'
       case 'eating-disorders': return 'bg-yellow-100 text-yellow-800'
+      case 'poison': return 'bg-emerald-100 text-emerald-800'
       default: return 'bg-[var(--surface-1,#f3f4f6)] text-[var(--text-main)]'
     }
   }
 
+  // 📞 dialer on a phone; on a desktop it also copies the number (CHA-771)
+  const reachOut = useReachOut()
   const openPhone = (phone: string) => {
-    openExternal(`tel:${phone}`)
+    void reachOut(telHref(phone), phone, 'call')
+  }
+  // 💬 "Text HOME to 741741" opens the messages app with HOME already typed
+  const openText = (text: string) => {
+    const t = parseTextInstruction(text)
+    if (t) void reachOut(smsHref(t.number, t.keyword), t.number, 'text', t.keyword)
   }
 
   const openWebsite = (url: string) => {
@@ -203,6 +214,7 @@ export function CrisisResources() {
                   <SelectItem value="youth">Youth Support</SelectItem>
                   <SelectItem value="veterans">Veterans</SelectItem>
                   <SelectItem value="eating-disorders">Eating Disorders</SelectItem>
+                  <SelectItem value="poison">Poison / Overdose</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -286,6 +298,16 @@ export function CrisisResources() {
                         Call
                       </Button>
                     )}
+                    {resource.text && parseTextInstruction(resource.text) && (
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => openText(resource.text!)}
+                      >
+                        <MessageSquare className="h-4 w-4 mr-2" />
+                        Text
+                      </Button>
+                    )}
                     {resource.website && (
                       <Button
                         variant="outline"
@@ -304,9 +326,15 @@ export function CrisisResources() {
                   {/* Contact Info */}
                   <div className="flex flex-wrap gap-4 text-sm">
                     {resource.phone && (
-                      <div className="flex items-center gap-1">
+                      <TapToCall phone={resource.phone} className="flex items-center gap-1 underline underline-offset-2">
                         <Phone className="h-3 w-3" />
                         <span className="font-mono">{resource.phone}</span>
+                      </TapToCall>
+                    )}
+                    {resource.text && (
+                      <div className="flex items-center gap-1">
+                        <MessageSquare className="h-3 w-3" />
+                        <span>{resource.text}</span>
                       </div>
                     )}
                     {resource.hours && (

@@ -26,6 +26,29 @@ import { readTokenHex, contrastRatio } from '@/lib/color'
 
 const FALLBACK = '#808080'
 
+// 🕰️ Wait for the theme's stylesheet to actually ARRIVE before reading its colors.
+// Themes load by <link> tag, asynchronously, and the theme name changes before the CSS
+// lands. Reading right away got the bundled calm theme instead: white cards, black text,
+// on Ace Mode. Reset worked because by then the sheet had loaded. (Ren found it,
+// 2026-10-30: "if you hit 'reset' it fills properly?") Returns a cancel function.
+function whenThemeSheetReady(theme: string, ready: () => void): () => void {
+  let cancelled = false
+  const go = () => requestAnimationFrame(() => { if (!cancelled) ready() })
+  const link = document.querySelector<HTMLLinkElement>(`link[data-theme="${theme}"]`)
+  if (!link || link.sheet) {
+    // theme-calm is bundled (no link), or the sheet already loaded: read now.
+    go()
+    return () => { cancelled = true }
+  }
+  link.addEventListener('load', go, { once: true })
+  link.addEventListener('error', go, { once: true }) // failed sheet falls back to calm; read that
+  return () => {
+    cancelled = true
+    link.removeEventListener('load', go)
+    link.removeEventListener('error', go)
+  }
+}
+
 export default function ColorCustomizer({ theme }: { theme: string }) {
   const [colors, setColors] = useState<CustomColorMap>({})
   const [swatches, setSwatches] = useState<Record<BucketKey, string>>({} as Record<BucketKey, string>)
@@ -49,8 +72,11 @@ export default function ColorCustomizer({ theme }: { theme: string }) {
     clearAppliedCustomColors()
     applyCustomColors(saved)
     setColors(saved)
-    seedSwatches(saved)
-    setHydrated(true)
+    // Seed only once the theme's CSS is really here (see whenThemeSheetReady above).
+    return whenThemeSheetReady(theme, () => {
+      seedSwatches(saved)
+      setHydrated(true)
+    })
   }, [theme])
 
   const handleChange = (key: BucketKey, hex: string) => {

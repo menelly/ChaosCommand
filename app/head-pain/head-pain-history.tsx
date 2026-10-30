@@ -54,8 +54,11 @@ export function HeadPainHistory({ entries, onEdit, onDelete, onAddNew }: Props) 
 
   const stats = useMemo(() => {
     const total = filtered.length
-    const avg = total > 0 ? filtered.reduce((s, e) => s + (e.painIntensity || 0), 0) / total : 0
-    const peak = total > 0 ? Math.max(...filtered.map(e => e.painIntensity || 0)) : 0
+    // CHA-772: average only the episodes that HAVE a level. Counting "not recorded" as 0
+    // dragged the average down, so the card under-reported how bad the headaches were.
+    const levels = filtered.map(e => e.painIntensity).filter((v): v is number => typeof v === 'number')
+    const avg = levels.length > 0 ? levels.reduce((s, v) => s + v, 0) / levels.length : 0
+    const peak = levels.length > 0 ? Math.max(...levels) : 0
     const auraCount = filtered.filter(e => e.auraPresent).length
     const erCount = filtered.filter(e => e.erVisitRequired).length
     const flagsCount = filtered.filter(e =>
@@ -119,8 +122,8 @@ export function HeadPainHistory({ entries, onEdit, onDelete, onAddNew }: Props) 
             <div className="space-y-3">
               {filtered.map(entry => {
                 const info = getEpisodeTypeInfo(entry.episodeType)
-                const delta = entry.baselineHeadachePain !== undefined
-                  ? (entry.painIntensity || 0) - entry.baselineHeadachePain
+                const delta = entry.baselineHeadachePain !== undefined && typeof entry.painIntensity === 'number'
+                  ? entry.painIntensity - entry.baselineHeadachePain
                   : null
                 return (
                   <div key={entry.id} className="border-l-4 pl-4 py-3 border border-border rounded-r-lg" style={{ borderLeftColor: getEpisodeTypeColor(entry.episodeType) }}>
@@ -129,7 +132,10 @@ export function HeadPainHistory({ entries, onEdit, onDelete, onAddNew }: Props) 
                         <Badge variant="secondary" style={{ backgroundColor: getEpisodeTypeColor(entry.episodeType) + '20' }}>
                           {info.icon} {info.name}
                         </Badge>
-                        <Badge variant="destructive">{getGremlinEmoji(entry.painIntensity || 0)} {entry.painIntensity}/10</Badge>
+                        {/* CHA-772: a missing level said "🌈 /10". Say what's true instead. */}
+                        {typeof entry.painIntensity === 'number'
+                          ? <Badge variant="destructive">{getGremlinEmoji(entry.painIntensity)} {entry.painIntensity}/10</Badge>
+                          : <Badge variant="outline" className="text-muted-foreground">level not recorded</Badge>}
                         {delta !== null && delta > 0 && <Badge variant="outline">+{delta} flare</Badge>}
                         {entry.auraPresent && <Badge variant="outline" className="bg-info/10 text-info border-info/30">Aura</Badge>}
                         {entry.rescueRedosed && <Badge variant="outline" className="bg-warning/10 text-warning border-warning/30">Multi-rescue</Badge>}

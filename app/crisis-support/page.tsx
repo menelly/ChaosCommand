@@ -25,7 +25,6 @@
 
 import React, { useState, useEffect } from 'react'
 import { getPref } from '@/lib/prefs'
-import { openExternal } from '@/lib/open-external'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -41,8 +40,11 @@ import {
   Users,
   FileText,
   BarChart3,
-  Star
+  Star,
+  FlaskConical
 } from 'lucide-react'
+import { useReachOut } from '@/components/tap-to-reach'
+import { telHref, smsHref, POISON_HELP } from '@/lib/services/crisis-contact'
 import { useToast } from '@/hooks/use-toast'
 import AppCanvas from '@/components/app-canvas'
 import Link from 'next/link'
@@ -162,9 +164,14 @@ export default function CrisisSupport() {
     }
   }
 
-  // Emergency call function
+  // 📞 Emergency call: dialer on a phone; on a desktop it also copies the number (CHA-771)
+  const reachOut = useReachOut()
   const handleEmergencyCall = (number: string) => {
-    openExternal(`tel:${number}`)
+    void reachOut(telHref(number), number, 'call')
+  }
+  // 💬 Crisis Text Line is a TEXT, not a call. This used to open tel:741741, which dials.
+  const handleCrisisText = () => {
+    void reachOut(smsHref('741741', 'HOME'), '741741', 'text', 'HOME')
   }
 
   return (
@@ -240,7 +247,7 @@ export default function CrisisSupport() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <Button
                 onClick={() => handleEmergencyCall('988')}
                 className="crisis-emergency-btn crisis-emergency-988 h-auto py-4 flex flex-col items-center gap-1 bg-destructive hover:bg-destructive/90 text-destructive-foreground"
@@ -251,7 +258,7 @@ export default function CrisisSupport() {
               </Button>
 
               <Button
-                onClick={() => handleEmergencyCall('741741')}
+                onClick={handleCrisisText}
                 variant="outline"
                 className="crisis-emergency-btn crisis-emergency-text h-auto py-4 flex flex-col items-center gap-1 border-warning text-warning hover:bg-warning hover:text-white"
               >
@@ -269,7 +276,24 @@ export default function CrisisSupport() {
                 <span className="font-semibold">911 Emergency</span>
                 <span className="text-xs opacity-90">Life-threatening</span>
               </Button>
+
+              {/* 🧪 CHA-770: the gentlest door for "I took something." Not a crisis line and
+                  not a funnel to admission: you call and ask whether you're okay, and they
+                  tell you whether it needs an ER. Number verified at the source; see POISON_HELP. */}
+              <Button
+                onClick={() => handleEmergencyCall(POISON_HELP.tel)}
+                variant="outline"
+                className="crisis-emergency-btn crisis-emergency-poison h-auto py-4 flex flex-col items-center gap-1 border-success text-success hover:bg-success hover:text-white"
+              >
+                <FlaskConical className="h-6 w-6" />
+                <span className="font-semibold">Poison Help</span>
+                <span className="text-xs opacity-90">Took something? Ask if you're okay.</span>
+                <span className="text-xs opacity-90 font-mono">{POISON_HELP.display}</span>
+              </Button>
             </div>
+            <p className="text-xs text-muted-foreground mt-3 text-center">
+              Poison Help is free and 24/7 in the US. Outside the US, use your local poison centre or emergency number.
+            </p>
           </CardContent>
         </Card>
 
