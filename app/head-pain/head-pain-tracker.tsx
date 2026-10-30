@@ -244,7 +244,10 @@ export function HeadPainTracker() {
                             <div className="flex items-center gap-2 mb-1 flex-wrap">
                               <span className="text-lg">{info.icon}</span>
                               <span className="font-semibold">{info.name}</span>
-                              <Badge variant="destructive">{getGremlinEmoji(entry.painIntensity || 0)} {entry.painIntensity}/10</Badge>
+                              {/* CHA-772: a missing level said "🌈 /10". Say what's true instead. */}
+                              {typeof entry.painIntensity === 'number'
+                                ? <Badge variant="destructive">{getGremlinEmoji(entry.painIntensity)} {entry.painIntensity}/10</Badge>
+                                : <Badge variant="outline" className="text-muted-foreground">level not recorded</Badge>}
                               {entry.auraPresent && <Badge variant="outline" className="bg-info/10 text-info border-info/30">Aura</Badge>}
                               {entry.rescueRedosed && <Badge variant="outline" className="bg-warning/10 text-warning border-warning/30">Multi-rescue</Badge>}
                               {entry.worstHeadacheOfLife && <Badge variant="destructive">WHOL</Badge>}

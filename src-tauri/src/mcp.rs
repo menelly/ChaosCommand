@@ -463,7 +463,7 @@ fn tool_definitions() -> Value {
         },
         {
             "name": "chaos_add_entry",
-            "description": "Add ONE entry to a tracker's list for a day. Read a recent day of that tracker first and mirror an existing entry's fields. The app gives it an id, timestamps it, marks it as added by an AI, and shows the user a notice.",
+            "description": "Add ONE entry to a tracker's list for a day. Read a recent day of that tracker first and mirror an existing entry's fields. Number fields the app always fills in (e.g. painIntensity) must be sent as numbers, or as null if the user didn't give one; never guess a number. An entry missing one is refused, with a message naming it. The app gives it an id, timestamps it, marks it as added by an AI, and shows the user a notice.",
             "inputSchema": {
                 "type": "object",
                 "properties": {

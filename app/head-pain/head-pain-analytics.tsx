@@ -52,8 +52,11 @@ export function HeadPainAnalytics({ entries }: Props) {
 
   const stats = useMemo(() => {
     const total = filtered.length
-    const avg = total > 0 ? filtered.reduce((s, e) => s + (e.painIntensity || 0), 0) / total : 0
-    const peak = total > 0 ? Math.max(...filtered.map(e => e.painIntensity || 0)) : 0
+    // CHA-772: average only the episodes that HAVE a level. Counting "not recorded" as 0
+    // dragged the average down, so the card under-reported how bad the headaches were.
+    const levels = filtered.map(e => e.painIntensity).filter((v): v is number => typeof v === 'number')
+    const avg = levels.length > 0 ? levels.reduce((s, v) => s + v, 0) / levels.length : 0
+    const peak = levels.length > 0 ? Math.max(...levels) : 0
     const auraCount = filtered.filter(e => e.auraPresent).length
     const erCount = filtered.filter(e => e.erVisitRequired).length
     const emsCount = filtered.filter(e => e.emergencyServicesCalled).length
@@ -105,7 +108,7 @@ export function HeadPainAnalytics({ entries }: Props) {
       .slice(0, 10)
 
     // BASELINE-DELTA ANALYSIS (Ren's idea)
-    const flareEntries = filtered.filter(e => e.baselineHeadachePain !== undefined)
+    const flareEntries = filtered.filter(e => e.baselineHeadachePain !== undefined && typeof e.painIntensity === 'number')
     const avgFlareDelta = flareEntries.length > 0
       ? flareEntries.reduce((s, e) => s + ((e.painIntensity || 0) - (e.baselineHeadachePain || 0)), 0) / flareEntries.length
       : null
@@ -141,12 +144,15 @@ export function HeadPainAnalytics({ entries }: Props) {
     // TRIGGER → outcome correlation. For each trigger logged ≥2×: avg pain intensity of
     // those episodes + the associated symptoms that co-occurred. Co-occurrence, NOT proven
     // cause — but the doctor-useful pattern ("stress → nausea, avg 7.5/10").
-    const trigStats: Record<string, { count: number; intensitySum: number; syms: Record<string, number> }> = {}
+    const trigStats: Record<string, { count: number; intensitySum: number; rated: number; syms: Record<string, number> }> = {}
     filtered.forEach(e => {
       (e.triggers || []).forEach(t => {
-        if (!trigStats[t]) trigStats[t] = { count: 0, intensitySum: 0, syms: {} }
+        if (!trigStats[t]) trigStats[t] = { count: 0, intensitySum: 0, rated: 0, syms: {} }
         trigStats[t].count += 1
-        trigStats[t].intensitySum += (e.painIntensity || 0)
+        if (typeof e.painIntensity === 'number') { // unrated episodes count, but not as a 0
+          trigStats[t].intensitySum += e.painIntensity
+          trigStats[t].rated += 1
+        }
         ;(e.associatedSymptoms || []).forEach(s => { trigStats[t].syms[s] = (trigStats[t].syms[s] || 0) + 1 })
       })
     })
@@ -155,7 +161,7 @@ export function HeadPainAnalytics({ entries }: Props) {
       .map(([trigger, v]) => ({
         trigger: labelFor(trigger, TRIGGERS),
         count: v.count,
-        avgIntensity: Math.round((v.intensitySum / v.count) * 10) / 10,
+        avgIntensity: v.rated > 0 ? Math.round((v.intensitySum / v.rated) * 10) / 10 : 0,
         top: Object.entries(v.syms)
           .map(([sym, n]) => ({ sym: labelFor(sym, ASSOCIATED_SYMPTOMS), n, pct: Math.round((n / v.count) * 100) }))
           .sort((a, b) => b.n - a.n)
