@@ -42,7 +42,7 @@ export function useReachOut() {
       toast({
         title: copied ? `📋 Copied ${display}` : `📞 ${display}`,
         description: kind === 'text'
-          ? `If your messages app didn't open: text ${keyword ?? ''} to ${display} from your phone.`
+          ? `If your messages app didn't open: ${keyword ? `text ${keyword} to ${display}` : `text ${display}`} from your phone.`
           : `If nothing opened to dial it: call ${display} from your phone.`,
       })
     }

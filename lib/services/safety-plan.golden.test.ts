@@ -136,6 +136,8 @@ check(telHref('') === '' && telHref(undefined) === '' && telHref('call me') === 
 check(smsHref('741741', 'HOME') === 'sms:741741?body=HOME', 'sms with keyword')
 check(eq(parseTextInstruction('Text HOME to 741741'), { keyword: 'HOME', number: '741741' }), 'parses "Text HOME to 741741"')
 check(parseTextInstruction('Chat online') === null, 'non-text instruction → null')
+check(eq(parseTextInstruction('Text 838255'), { keyword: '', number: '838255' }), 'parses bare "Text 838255" (Veterans Crisis Line)')
+check(smsHref('838255', '') === 'sms:838255', 'bare text number → plain sms: link, nothing pre-typed')
 check(phoneDigits(' (555) 010-0100 ') === '5550100100', 'phoneDigits')
 
 // ── CHA-770 Poison Help: one number, everywhere

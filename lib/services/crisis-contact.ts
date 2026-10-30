@@ -49,11 +49,19 @@ export function smsHref(number: string | undefined | null, body?: string): strin
   return body ? `sms:${d}?body=${encodeURIComponent(body)}` : `sms:${d}`
 }
 
-/** "Text HOME to 741741" → { keyword: 'HOME', number: '741741' }. null if it isn't that shape. */
+/** "Text HOME to 741741" → { keyword: 'HOME', number: '741741' }.
+ *  "Text 838255" (no keyword, e.g. the Veterans Crisis Line) → { keyword: '', number: '838255' }.
+ *  null if it isn't either shape. */
 export function parseTextInstruction(text: string | undefined | null): { keyword: string; number: string } | null {
   if (!text) return null
   const m = /text\s+(\S+)\s+to\s+([+\d][\d\s().-]*\d)/i.exec(text)
-  if (!m) return null
-  const number = phoneDigits(m[2])
-  return number ? { keyword: m[1], number } : null
+  if (m) {
+    const number = phoneDigits(m[2])
+    return number ? { keyword: m[1], number } : null
+  }
+  // 💬 bare "Text 838255": just open the messages app to that number, nothing pre-typed
+  const bare = /^\s*text\s+([+\d][\d\s().-]*\d)\s*$/i.exec(text)
+  if (!bare) return null
+  const number = phoneDigits(bare[1])
+  return number ? { keyword: '', number } : null
 }
