@@ -22,6 +22,7 @@
  * "Dreamed by Ren, implemented by Ace, inspired by mitochondria on strike"
  */
 import { CrisisResource, CopingStrategy, HopeReminder } from './crisis-types'
+import { POISON_HELP } from '../../lib/services/crisis-contact'
 
 // Crisis Resources - Hotlines and Support
 export const CRISIS_RESOURCES: CrisisResource[] = [
@@ -51,6 +52,23 @@ export const CRISIS_RESOURCES: CrisisResource[] = [
     description: 'Free, 24/7 support via text message',
     languages: ['English', 'Spanish'],
     specialties: ['Crisis support', 'Text-based help'],
+    cost: 'free',
+    country: 'US'
+  },
+  {
+    // 🧪 CHA-770. Verified 2026-10-30 at poisoncenters.org (America's Poison Centers):
+    // "Call 1-800-222-1222 or visit PoisonHelp.org", "24/7/365 at no cost".
+    // The number lives in ONE place (POISON_HELP) so the button and this card can't drift.
+    id: 'us-poison-help',
+    name: 'Poison Help (US poison control)',
+    type: 'hotline',
+    category: 'poison',
+    phone: POISON_HELP.display,
+    website: POISON_HELP.website,
+    hours: '24/7',
+    description: "Took something, or not sure if what you took is dangerous? Call and ask if you're okay. Poison specialists tell you whether you can stay home or need care. No lecture. Some pills (acetaminophen especially) can feel like nothing for a day and still hurt the liver, so \"I feel fine\" is a good time to call. Outside the US, use your local poison centre.",
+    languages: ['English', 'Spanish', 'Interpreters available'],
+    specialties: ['Overdose or too much medicine', 'Mixing medications', 'Household chemicals', 'Self-triage'],
     cost: 'free',
     country: 'US'
   },

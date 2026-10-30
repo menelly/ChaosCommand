@@ -48,9 +48,26 @@ import {
 import { SafetyPlan } from './crisis-types'
 import { useDailyData, CATEGORIES } from '@/lib/database'
 import { useToast } from '@/hooks/use-toast'
-import { formatPhoneNumber, createPhoneLink } from '@/lib/utils/medication-utils'
+import { formatPhoneNumber } from '@/lib/utils/medication-utils'
+import { format } from 'date-fns'
+import { isDemoSandbox } from '@/lib/pwa-mode'
+import { TapToCall } from '@/components/tap-to-reach'
+import {
+  createDefaultSafetyPlan,
+  normalizeSafetyPlan,
+  pickSafetyPlanRecord,
+  commitPendingInputs,
+  missingAfterSave,
+} from '@/lib/services/safety-plan'
 
-import Link from "next/link";
+/** 🫥 What an empty section says in view mode, instead of a blank box that looks broken. */
+function NothingYet({ what }: { what: string }) {
+  return (
+    <p className="text-sm text-muted-foreground italic mt-2">
+      No {what} added yet. Tap <span className="font-medium not-italic">Edit Plan</span> to add some.
+    </p>
+  )
+}
 
 interface SafetyPlanManagerProps {
   refreshTrigger: number
@@ -78,55 +95,34 @@ export function SafetyPlanManager({ refreshTrigger }: SafetyPlanManagerProps) {
   const [newCrisisContact, setNewCrisisContact] = useState({ name: '', phone: '', available: '', notes: '', address: '' })
   const [newEmergencyContact, setNewEmergencyContact] = useState({ name: '', relationship: '', phone: '', notes: '', address: '' })
 
-  const { getAllCategoryData, saveData } = useDailyData()
+  const { getAllCategoryData, getSpecificData, saveData } = useDailyData()
   const { toast } = useToast()
+
+  // 📅 The date the plan's ONE record lives under. The plan isn't a daily log: saving it
+  // under "today" every time made a new row per day, and the loader then picked the
+  // oldest. So once a plan exists we keep writing to its row. (CHA-771)
+  const [planDate, setPlanDate] = useState<string | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
+
+  // 🧷 A reload while someone is mid-edit would swap their unsaved additions for the
+  // stored copy. Read through a ref so the loader can see editing without re-running.
+  const isEditingRef = React.useRef(isEditing)
+  useEffect(() => { isEditingRef.current = isEditing }, [isEditing])
 
   // Load safety plan
   useEffect(() => {
     const loadSafetyPlan = async () => {
+      if (isEditingRef.current) return
       try {
         setIsLoading(true)
         const data = await getAllCategoryData(CATEGORIES.TRACKER)
-        
-        const safetyPlanData = data.find(item => item.subcategory === 'safety-plan')
-        if (safetyPlanData) {
-          const plan = typeof safetyPlanData.content === 'string' 
-            ? JSON.parse(safetyPlanData.content) 
-            : safetyPlanData.content
-          setSafetyPlan(plan)
+        const record = pickSafetyPlanRecord(data)
+        if (record) {
+          setSafetyPlan(normalizeSafetyPlan(record.content, new Date().toISOString()))
+          setPlanDate(record.date)
         } else {
-          // Create default safety plan
-          const defaultPlan: SafetyPlan = {
-            id: 'safety-plan-default',
-            name: 'My Safety Plan',
-            isActive: true,
-            warningSignsPersonal: [],
-            warningSignsExternal: [],
-            copingStrategiesAlone: [],
-            copingStrategiesSocial: [],
-            copingStrategiesDistraction: [],
-            supportPeopleInformal: [],
-            supportPeopleProfessional: [],
-            crisisHotlines: [
-              {
-                name: '988 Suicide & Crisis Lifeline',
-                phone: '988',
-                available: '24/7',
-                notes: 'Free, confidential support'
-              }
-            ],
-            emergencyContacts: [],
-            environmentChanges: [],
-            itemsToRemove: [],
-            safeSpaces: [],
-            reasonsToLive: [],
-            hopefulMemories: [],
-            futureGoals: [],
-            peopleWhoCare: [],
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          }
-          setSafetyPlan(defaultPlan)
+          setSafetyPlan(createDefaultSafetyPlan(new Date().toISOString()))
+          setPlanDate(null)
         }
       } catch (error) {
         console.error('Error loading safety plan:', error)
@@ -138,22 +134,68 @@ export function SafetyPlanManager({ refreshTrigger }: SafetyPlanManagerProps) {
     loadSafetyPlan()
   }, [refreshTrigger, getAllCategoryData])
 
+  /**
+   * 💾 Save, then PROVE it saved. The old version toasted "saved" after writing a plan
+   * that didn't contain what had been typed (CHA-771). Now:
+   *   1. anything still typed in an input gets added, the way "+" would;
+   *   2. a half-finished contact stops the save and says what's missing;
+   *   3. after the write we read the row back, and only a read-back that contains
+   *      everything we meant to store earns the "saved" toast.
+   */
   const saveSafetyPlan = async (updatedPlan: SafetyPlan) => {
+    if (isSaving) return
+    const { plan: withPending, problems } = commitPendingInputs(updatedPlan, {
+      lists: {
+        warningSignsPersonal: warningSignsInput,
+        copingStrategiesAlone: copingStrategiesInput,
+        reasonsToLive: reasonsToLiveInput,
+        safeSpaces: safeSpacesInput,
+      },
+      emergencyContact: newEmergencyContact,
+      crisisContact: newCrisisContact,
+    })
+    if (problems.length > 0) {
+      toast({ title: "Not saved yet", description: problems.join(' '), variant: "destructive" })
+      return
+    }
+
+    if (isDemoSandbox()) {
+      setSafetyPlan(withPending)
+      setIsEditing(false)
+      toast({ title: "Demo mode", description: "The demo never saves anything, so this plan disappears when you leave." })
+      return
+    }
+
+    setIsSaving(true)
     try {
-      const planToSave = {
-        ...updatedPlan,
-        updatedAt: new Date().toISOString()
+      const planToSave = { ...withPending, updatedAt: new Date().toISOString() }
+      const date = planDate || format(new Date(), 'yyyy-MM-dd') // LOCAL date, not UTC
+
+      await saveData(date, CATEGORIES.TRACKER, 'safety-plan', planToSave, ['safety-plan', 'crisis-support'])
+
+      // 🔍 Read it back. The toast describes the STORAGE, not our intentions.
+      const back = await getSpecificData(date, CATEGORIES.TRACKER, 'safety-plan')
+      const stored = back ? normalizeSafetyPlan(back.content, planToSave.updatedAt) : null
+      const missing = missingAfterSave(planToSave, stored)
+      if (missing.length > 0) {
+        // Keep them in edit mode with everything still on screen, so nothing is lost.
+        setSafetyPlan(withPending)
+        toast({
+          title: "Your safety plan did NOT fully save",
+          description: `Missing after saving: ${missing.join(', ')}. Everything you typed is still here; please try Save again.`,
+          variant: "destructive",
+        })
+        return
       }
 
-      await saveData(
-        new Date().toISOString().split('T')[0],
-        CATEGORIES.TRACKER,
-        'safety-plan',
-        planToSave,
-        ['safety-plan', 'crisis-support']
-      )
-
-      setSafetyPlan(planToSave)
+      setSafetyPlan(stored!)
+      setPlanDate(date)
+      setWarningSignsInput('')
+      setCopingStrategiesInput('')
+      setReasonsToLiveInput('')
+      setSafeSpacesInput('')
+      setNewCrisisContact({ name: '', phone: '', available: '', notes: '', address: '' })
+      setNewEmergencyContact({ name: '', relationship: '', phone: '', notes: '', address: '' })
       setIsEditing(false)
 
       toast({
@@ -162,11 +204,14 @@ export function SafetyPlanManager({ refreshTrigger }: SafetyPlanManagerProps) {
       })
     } catch (error) {
       console.error('Error saving safety plan:', error)
+      setSafetyPlan(withPending)
       toast({
         title: "Error saving safety plan",
-        description: "Please try again.",
+        description: "Nothing was lost from the screen. Please try again.",
         variant: "destructive"
       })
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -247,9 +292,11 @@ export function SafetyPlanManager({ refreshTrigger }: SafetyPlanManagerProps) {
               <Shield className="h-5 w-5 text-blue-500" />
               Your Personal Safety Plan
             </CardTitle>
+            {/* This said "Save Changes" and only LEFT edit mode, writing nothing (CHA-771). */}
             <Button
               variant="outline"
-              onClick={() => setIsEditing(!isEditing)}
+              disabled={isSaving}
+              onClick={() => (isEditing ? saveSafetyPlan(safetyPlan) : setIsEditing(true))}
             >
               {isEditing ? (
                 <>
@@ -313,6 +360,7 @@ export function SafetyPlanManager({ refreshTrigger }: SafetyPlanManagerProps) {
           ) : null}
           
           <div className="flex flex-wrap gap-2 mt-2">
+            {!isEditing && safetyPlan.warningSignsPersonal.length === 0 && <NothingYet what="personal warning signs" />}
             {safetyPlan.warningSignsPersonal.map((sign, index) => (
               <Badge key={index} variant="outline" className="flex items-center gap-1">
                 {sign}
@@ -373,6 +421,7 @@ export function SafetyPlanManager({ refreshTrigger }: SafetyPlanManagerProps) {
           ) : null}
           
           <div className="flex flex-wrap gap-2 mt-2">
+            {!isEditing && safetyPlan.copingStrategiesAlone.length === 0 && <NothingYet what="coping strategies" />}
             {safetyPlan.copingStrategiesAlone.map((strategy, index) => (
               <Badge key={index} variant="secondary" className="flex items-center gap-1">
                 <Star className="h-3 w-3" />
@@ -441,21 +490,26 @@ export function SafetyPlanManager({ refreshTrigger }: SafetyPlanManagerProps) {
           )}
 
           <div className="space-y-2">
+            {!isEditing && safetyPlan.crisisHotlines.length === 0 && <NothingYet what="crisis lines or professional contacts" />}
             {safetyPlan.crisisHotlines.map((contact, index) => (
               <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                 <div className="flex-1">
                   <div className="font-medium">{contact.name}</div>
                   <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
-                    <Link
-                      href={createPhoneLink(contact.phone)}
-                      className="flex items-center gap-1 text-green-600 hover:text-green-700 font-medium cursor-pointer"
-                      title="Click to call"
+                    <TapToCall
+                      phone={contact.phone}
+                      className="flex items-center gap-1 text-green-600 hover:text-green-700 font-medium cursor-pointer underline underline-offset-2 min-h-11"
+                      title={`Call ${contact.name}`}
                     >
                       <Phone className="h-3 w-3" />
                       {formatPhoneNumber(contact.phone)}
-                    </Link>
-                    <span>•</span>
-                    <span>{contact.available}</span>
+                    </TapToCall>
+                    {contact.available && (
+                      <>
+                        <span>•</span>
+                        <span>{contact.available}</span>
+                      </>
+                    )}
                   </div>
                   {contact.address && (
                     <div className="mt-1">
@@ -547,21 +601,26 @@ export function SafetyPlanManager({ refreshTrigger }: SafetyPlanManagerProps) {
           )}
 
           <div className="space-y-2">
+            {!isEditing && safetyPlan.emergencyContacts.length === 0 && <NothingYet what="personal emergency contacts" />}
             {safetyPlan.emergencyContacts.map((contact, index) => (
               <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                 <div className="flex-1">
                   <div className="font-medium">{contact.name}</div>
                   <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
-                    <span>{contact.relationship}</span>
-                    <span>•</span>
-                    <Link
-                      href={createPhoneLink(contact.phone)}
-                      className="flex items-center gap-1 text-green-600 hover:text-green-700 font-medium cursor-pointer"
-                      title="Click to call"
+                    {contact.relationship && (
+                      <>
+                        <span>{contact.relationship}</span>
+                        <span>•</span>
+                      </>
+                    )}
+                    <TapToCall
+                      phone={contact.phone}
+                      className="flex items-center gap-1 text-green-600 hover:text-green-700 font-medium cursor-pointer underline underline-offset-2 min-h-11"
+                      title={`Call ${contact.name}`}
                     >
                       <Phone className="h-3 w-3" />
                       {formatPhoneNumber(contact.phone)}
-                    </Link>
+                    </TapToCall>
                   </div>
                   {contact.address && (
                     <div className="mt-1">
@@ -646,6 +705,7 @@ export function SafetyPlanManager({ refreshTrigger }: SafetyPlanManagerProps) {
           ) : null}
           
           <div className="space-y-2 mt-2">
+            {!isEditing && safetyPlan.reasonsToLive.length === 0 && <NothingYet what="reasons to keep living" />}
             {safetyPlan.reasonsToLive.map((reason, index) => (
               <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                 <div className="flex items-center gap-2">
@@ -712,6 +772,7 @@ export function SafetyPlanManager({ refreshTrigger }: SafetyPlanManagerProps) {
           ) : null}
           
           <div className="flex flex-wrap gap-2 mt-2">
+            {!isEditing && safetyPlan.safeSpaces.length === 0 && <NothingYet what="safe spaces" />}
             {safetyPlan.safeSpaces.map((space, index) => (
               <Badge key={index} variant="secondary" className="flex items-center gap-1">
                 <Home className="h-3 w-3" />
@@ -732,9 +793,9 @@ export function SafetyPlanManager({ refreshTrigger }: SafetyPlanManagerProps) {
       {/* Save Button */}
       {isEditing && (
         <div className="flex justify-center">
-          <Button onClick={() => saveSafetyPlan(safetyPlan)} className="w-full max-w-md">
+          <Button onClick={() => saveSafetyPlan(safetyPlan)} className="w-full max-w-md" disabled={isSaving}>
             <Save className="h-4 w-4 mr-2" />
-            Save Safety Plan
+            {isSaving ? 'Saving…' : 'Save Safety Plan'}
           </Button>
         </div>
       )}
