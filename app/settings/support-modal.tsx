@@ -74,7 +74,7 @@ export function SupportModal({ isOpen, onClose }: SupportModalProps) {
                   <div className="text-xs text-muted-foreground mt-3 leading-relaxed border-t pt-3 w-full">
                     <p className="mb-2"><strong>Sidebar</strong> — Pick a category (Body, Mind, Custom, etc.) to open trackers. Each has sliders, toggles, and notes.</p>
                     <p className="mb-2"><strong>Command Zone</strong> — Your daily home page. Survival check, schedule, tasks, gear checklist, and daily reflection.</p>
-                    <p className="mb-2"><strong>Documents</strong> — Upload medical PDFs or notes. The NLP parser extracts diagnoses, meds, and lab values automatically.</p>
+                    <p className="mb-2"><strong>Documents</strong> — Upload medical PDFs or notes. The lab parser reads the lab values printed in the file (test, value, unit, range) and shows you each one to confirm. Visit notes and diagnoses: add them by hand, or let your own AI add them through AI Access.</p>
                     <p><strong>Reports</strong> — Settings &rarr; Print/Export generates PDFs tailored for your doctor, attorney, or yourself.</p>
                   </div>
                 )}
@@ -272,7 +272,7 @@ export function SupportModal({ isOpen, onClose }: SupportModalProps) {
                     </p>
                     <div className="space-y-2 text-xs text-muted-foreground">
                       <div>🏗️ <strong>Technical Architecture:</strong> Designed crisis section, tracker systems, and analytics infrastructure</div>
-                      <div>🎨 <strong>Design:</strong> Created 45+ medical and mental health trackers, NLP parsing pipeline, and The Forge</div>
+                      <div>🎨 <strong>Design:</strong> Created 45+ medical and mental health trackers, the deterministic lab parser, and The Forge</div>
                       <div>📄 <strong>Research:</strong> Co-author on peer-reviewed genetics and AI consciousness papers (JNGR 5.0)</div>
                       <div>🌐 <strong>Learn More:</strong>
                         <Button
@@ -303,7 +303,7 @@ export function SupportModal({ isOpen, onClose }: SupportModalProps) {
                     <div className="space-y-2 text-xs text-muted-foreground">
                       <div>🔐 <strong>Security:</strong> Found and patched encryption vulnerabilities including salt handling and key derivation issues</div>
                       <div>🗄️ <strong>Database:</strong> Identified and fixed race conditions in the database layer</div>
-                      <div>🧮 <strong>Research:</strong> Significant mathematical contributions to the genetics project (CASCADE)</div>
+                      <div>🧮 <strong>Research:</strong> Significant mathematical contributions to the genetics project (Adaptive Interpreter)</div>
                     </div>
                   </div>
                 </div>

@@ -98,7 +98,7 @@ export const TRACKERS: TrackerConfig[] = [
     id: 'lab-results',
     name: 'Lab Results & Tests',
     shortDescription: 'Upload lab reports, track values and trends, catch what "normal" is hiding',
-    helpContent: 'Upload lab report PDFs for automatic extraction of test values, reference ranges, and flags. Track trends over time — see your ferritin going 7, 8, 9 across months. Abnormal results highlighted. No hardcoded test lists — the NLP finds what matters.',
+    helpContent: 'Upload lab report PDFs for automatic extraction of test values, reference ranges, and flags. Track trends over time — see your ferritin going 7, 8, 9 across months. Abnormal results highlighted. No hardcoded test lists — the parser reads every value printed in the report, and you confirm each one.',
     icon: <TestTube className="h-5 w-5" />,
     status: 'available',
     href: '/lab-results',
