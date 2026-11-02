@@ -395,7 +395,9 @@ export function ArrhythmiaEventModal({ isOpen, onClose, onSave, editingEntry }: 
           <Collapsible open={openSections.severity} onOpenChange={() => toggleSection('severity')}>
             <CollapsibleTrigger asChild>
               <Button variant="outline" className="w-full justify-between h-auto py-3">
-                {openSections.severity ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                {/* 🏷️ the label went missing here once and the row was a lonely chevron (Ren spotted it 11/2) */}
+                <div className="flex items-center gap-2"><span className="font-medium">Severity{severity !== undefined ? `: ${severity}/10` : ''}</span></div>
+                {openSections.severity ?<ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
               </Button>
             </CollapsibleTrigger>
             <CollapsibleContent className="pt-3">
