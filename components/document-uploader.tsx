@@ -515,7 +515,7 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
       }
 
       // (Step 2 used to be the MedGemma/NER medical-event extractor. Removed in
-      // CHA-466: it hallucinated. Freeform notes → add by hand, or your own AI
+      // CHA-466: she hallucinated. Freeform notes → add by hand, or your own AI
       // adds them through the Chaos Command MCP.)
 
       // Step 3: Extract lab results (skipped in medical-only mode — lab

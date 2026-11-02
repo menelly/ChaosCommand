@@ -70,7 +70,7 @@ export function AiAccessModal({ isOpen, onClose }: AiAccessModalProps) {
   const regenerate = async () => {
     const yes = await confirmAsync({
       title: "Make a new token?",
-      description: "Any AI using the old token loses access right away. You'll paste the new one into its settings.",
+      description: "Any AI using the old token loses access right away. You'll paste the new one into your AI's settings.",
       confirmText: "New token",
     })
     if (!yes) return
@@ -158,8 +158,8 @@ export function AiAccessModal({ isOpen, onClose }: AiAccessModalProps) {
               <li>Only programs on <strong>this computer</strong> that have your token can reach it. Anything that can read your files could find the token, so treat it like a password.</li>
               <li>It works while Chaos Command is <strong>running and unlocked</strong>, including minimized or tucked in the tray. Lock or quit the app and the AI is told to ask you.</li>
               <li>Each profile decides for itself. Turning it on here doesn't open anyone else's profile on this computer.</li>
-              <li>The AI can <strong>read everything</strong> in this profile (journals and therapy notes included). With <strong>Read &amp; write</strong> it can also <strong>add</strong> entries; anything it adds is marked as AI-added, and you'll see a notice.</li>
-              <li>What the AI does with what it reads is up to that AI's service. Only connect ones you trust with medical information, and be careful with an AI that also browses the web: a web page could try to talk it into doing things.</li>
+              <li>The AI can <strong>read everything</strong> in this profile (journals and therapy notes included). With <strong>Read &amp; write</strong> they can also <strong>add</strong> entries; anything they add is marked as AI-added, and you'll see a notice.</li>
+              <li>What your AI does with what they read is up to their service. Only connect ones you trust with medical information, and be careful with an AI that also browses the web: a web page could try to talk them into doing things.</li>
             </ul>
 
             {on && (
