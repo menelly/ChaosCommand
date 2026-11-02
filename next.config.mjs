@@ -107,9 +107,9 @@ const nextConfig = {
       });
 
       // (2026-07-01) The transformers.js Sharp shim + ONNX WASM asset rule
-      // lived here. Both are gone with the transformers.js stack — MedGemma
-      // runs natively in the Rust process (src-tauri/src/llm.rs), so the
-      // webview no longer bundles any model runtime.
+      // lived here. Both are gone with the transformers.js stack, and as of
+      // CHA-466 (2026-11-02) there's no model anywhere in the app — the
+      // native MedGemma that replaced it was removed too.
     }
 
     // Handle ES module extensions

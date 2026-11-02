@@ -161,8 +161,8 @@ function parseRefBounds(range: string): { low: number | null; high: number | nul
  *  name column. A date is a STRUCTURED field (one universal shape on every report
  *  — NOT a semantic judgment like "is this word a place"), so we parse it
  *  directly: this both CAPTURES the real collection date and removes the field
- *  from the name. (Semantic pollution — provider/location — is left to the NER
- *  model; this only touches the date.) Returns the ISO date + the de-dated name. */
+ *  from the name. (Semantic pollution — provider/location — stays in the name for
+ *  the user to trim on review; this only touches the date.) Returns the ISO date + the de-dated name. */
 function extractDateFromName(name: string): { date: string | null; name: string } {
   const m = name.match(
     /Date\/?Time\s*(\d{1,2})\/(\d{1,2})\/(\d{2,4})(?:\s+\d{1,2}:\d{2}(?::\d{2})?\s*(?:AM|PM)?)?/i,
@@ -218,8 +218,9 @@ function parsePageGeometry(
 
     // Raw name straight from the columns. Geometry's job is COLUMNS, not name
     // cleaning — a metadata-polluted cell ("Ordered By … DO BUN") is honest
-    // geometry output. Resolving the SEMANTIC analyte out of that noise is the
-    // NER model's job (see resolveLabNamesWithNer). The one thing we parse here
+    // geometry output, and it goes to the review screen as-is for the user to
+    // trim (the model that used to "resolve" it was removed in CHA-466 — a
+    // raw-but-real name beats a tidy-but-maybe-invented one). The one thing we parse here
     // is the STRUCTURED date field (universal shape, and it's the real collection
     // date) — pulling it out also de-pollutes the name.
     const { date: rowDate, name: deDated } = extractDateFromName(buckets.name.join(' ').trim());
@@ -323,10 +324,9 @@ function parsePageGeometry(
  * extractPdfTokens). Returns [] when no grid header is found — that's the
  * dispatcher's cue to fall through to the inline text parsers.
  *
- * Names come out RAW here (metadata and all). Name cleaning is a separate,
- * NER-powered step (resolveLabNamesWithNer) — geometry does columns, the model
- * does "which of these words is the actual analyte." Kept sync + model-free so
- * the golden suite stays hermetic.
+ * Names come out RAW here (metadata and all); the user trims them on the
+ * review screen. Sync + model-free, so the golden suite stays hermetic (and
+ * since CHA-466, so does the whole import path).
  */
 export function extractLabResultsGeometry(
   pages: PdfToken[][],
@@ -338,78 +338,4 @@ export function extractLabResultsGeometry(
     results.push(...parsePageGeometry(rowsFromPage(page), nameExclusions, seenTests));
   }
   return results;
-}
-
-/**
- * Resolve the real analyte out of metadata-polluted geometry names using
- * MedGemma (2026-07-01 — replaces the d4data NER model, whose lab résumé
- * included tagging "psycho" as a diagnosis while reading "psychologist").
- *
- * The model sees ONLY the messy name cells — never values, units, or ranges,
- * so it physically cannot mis-transcribe a number. And its answer for each
- * cell must be a VERBATIM SUBSTRING of that cell or we keep the raw name —
- * it can trim "Ordered By SMITH, JANE DO BUN" down to "BUN", but it cannot
- * invent an analyte the cell doesn't contain.
- *
- * - Single-token names (already a clean analyte) skip the model entirely.
- * - No model / bad answer / not-a-substring → RAW name kept; the user edits
- *   it on the review screen rather than us guessing.
- * - Batched into one prompt — a lab panel has dozens of rows and CPU
- *   inference is the budget.
- */
-export async function resolveLabNamesWithNer(rows: LabResult[]): Promise<LabResult[]> {
-  const messy = rows
-    .map((r, i) => ({ i, name: r.testName }))
-    .filter((r) => /\s/.test(r.name.trim()));
-  if (messy.length === 0) return rows; // all clean → no model
-
-  let runRaw: (s: string, u: string, o?: { maxTokens?: number }) => Promise<string | null>;
-  try {
-    ({ runImpressionLLMRaw: runRaw } = await import('./impression-parser-llm'));
-  } catch {
-    return rows; // module unavailable → keep raw names
-  }
-
-  const BATCH = 25;
-  const resolved = new Map<number, string>();
-  for (let b = 0; b < messy.length; b += BATCH) {
-    const batch = messy.slice(b, b + BATCH);
-    const list = batch.map((m) => `${m.i}: ${m.name.replace(/\s+/g, ' ').trim()}`).join('\n');
-    const prompt = `Each line below is a messy cell from a lab report's test-name column. It contains ONE lab test name buried in metadata (provider names, dates, locations, order info).
-
-For each line, answer with the line's number and the lab test name COPIED EXACTLY from that line — the exact characters, nothing reworded. If a line contains no lab test name, answer NONE for it.
-
-${list}
-
-Answer with one "number: name" per line. No other text.`;
-    let raw: string | null = null;
-    try {
-      raw = await runRaw('', prompt, { maxTokens: 600 });
-    } catch {
-      raw = null;
-    }
-    if (!raw) continue; // no model → these rows keep raw names
-    for (const line of raw.split('\n')) {
-      const m = line.match(/^\s*(\d+)\s*[:.\-]\s*(.+)$/);
-      if (!m) continue;
-      const idx = parseInt(m[1], 10);
-      const answer = m[2].trim();
-      const row = batch.find((x) => x.i === idx);
-      if (!row || !answer || /^none$/i.test(answer)) continue;
-      // THE guard: the answer must appear verbatim (case-insensitive) in the
-      // original cell. Trimming is allowed; invention is not.
-      const cell = row.name.replace(/\s+/g, ' ').trim();
-      if (
-        answer.length >= 2 &&
-        answer.length < cell.length &&
-        /[A-Za-z]/.test(answer) &&
-        cell.toLowerCase().includes(answer.toLowerCase())
-      ) {
-        resolved.set(idx, answer);
-      }
-    }
-  }
-
-  if (resolved.size === 0) return rows;
-  return rows.map((row, i) => (resolved.has(i) ? { ...row, testName: resolved.get(i)! } : row));
 }

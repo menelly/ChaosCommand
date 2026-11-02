@@ -36,8 +36,12 @@ import { CATEGORIES, SUBCATEGORIES, formatDateForStorage } from '@/lib/database/
 // TEMPORARILY COMMENTED OUT FOR DEBUGGING
 // import { useHybridDatabase, quickSaveMedicalEvent, quickSaveProvider } from '@/lib/database/hybrid-router';
 
-// 🧠 Native MedGemma extraction — runs in the Rust process, no backend needed
-import { extractMedicalEvents, AI_VALIDATION_UNAVAILABLE } from '@/lib/services/medical-ner';
+// 🧮 Deterministic parsing only (CHA-466, 2026-11-02). MedGemma + the NER
+// extractor are GONE — a small model that invents a potassium of 5.8 is worse
+// than no model, because nothing downstream can tell an invented number from a
+// measured one. What's left reads numbers that are actually printed on the page,
+// and the user checks every one before it saves. For freeform notes: add by
+// hand, or have your own AI (Claude/Codex) add them through the Chaos Command MCP.
 import { extractLabResults, extractLabResultsSmart, labResultsToEvents, extractCollectionDate } from '@/lib/services/lab-parser';
 import { extractDocFromBase64 } from '@/lib/services/text-extractor';
 
@@ -89,8 +93,9 @@ interface IncidentalFinding {
 /**
  * Elapsed-time readout for a document being parsed.
  *
- * ⚠️ WHY THIS EXISTS. MedGemma runs locally on CPU and a long document can take
- * MINUTES. The UI said "Analyzing document..." and then nothing, forever — so
+ * ⚠️ WHY THIS EXISTS. (Born when MedGemma ran on CPU and a long document took
+ * MINUTES; the deterministic parser is much faster, but a 50-page PDF still
+ * takes a beat, so the proof-of-life counter stays.) The UI said "Analyzing document..." and then nothing, forever — so
  * SLOW AND BROKEN LOOKED IDENTICAL, and a user watching a motionless spinner
  * reasonably concludes it has failed. Ren did exactly that, and was wrong: it
  * was working the whole time.
@@ -115,9 +120,9 @@ function ElapsedNote({ startedAt }: { startedAt?: number }) {
   const secs = Math.max(0, Math.floor((now - startedAt) / 1000))
   const mmss = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`
 
-  let note = 'MedGemma reads the whole document on your machine, so this takes a moment.'
+  let note = 'Reading the document on your machine, so this takes a moment.'
   if (secs > 240) {
-    note = 'Still working. Very long documents can take five minutes or more on CPU. Nothing is stuck.'
+    note = 'Still working. Very long documents take a while. Nothing is stuck.'
   } else if (secs > 120) {
     note = 'Still working — this is a long document. It has not stalled.'
   } else if (secs > 45) {
@@ -252,26 +257,16 @@ interface DocumentUploaderProps {
   onLabsExtracted?: (batch: ExtractedLabBatch) => void;
   /**
    * Routing mode for uploaded files:
-   *   'medical' — run NER only (visit notes, summaries). Skip lab parser.
-   *   'lab'     — run lab parser only (panels, blood work). Skip NER, so the
-   *               panel name (e.g. "Myositis Panel") can't be misread as a
-   *               diagnosis.
-   *   'auto'    — legacy behavior: run both. Default for back-compat.
+   *   'medical' — skip the lab parser (paste-text events only). Files find
+   *               nothing here now that the NER extractor is gone (CHA-466).
+   *   'lab'     — lab parser only, results saved straight to the Labs dashboard.
+   *   'auto'    — lab parser + the review-with-checkboxes screen. Default.
    */
   mode?: 'auto' | 'medical' | 'lab';
-  /**
-   * When true, run NER medical extraction WITH the Qwen validator (raw NER is
-   * never surfaced unvetted). When false, NER is skipped entirely — only the
-   * lab parser runs and the user adds events by hand. Default false: NER medical
-   * extraction only ever runs when AI parsing is explicitly enabled. (The import
-   * page additionally gates the upload until both models are loaded, so by the
-   * time extraction runs the validator is ready.)
-   */
-  aiEnabled?: boolean;
   className?: string;
 }
 
-export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, mode = 'auto', className = "", aiEnabled = false }: DocumentUploaderProps) {
+export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, mode = 'auto', className = "" }: DocumentUploaderProps) {
   // 🚀 Hybrid database integration
   // TEMPORARILY COMMENTED OUT FOR DEBUGGING
   // const hybridDB = useHybridDatabase();
@@ -393,7 +388,7 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
       // Update status to processing
       updateFileStatus(uploadedFile.id, { status: 'processing', progress: 20, startedAt: Date.now() });
 
-      // 🧠 Local NER processing
+      // 🧮 Local deterministic parsing (text layer → number-anchored labs)
       const result = await processFileWithBackend(uploadedFile.file);
 
       updateFileStatus(uploadedFile.id, {
@@ -450,8 +445,8 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
     }
   };
 
-  // 🔥 LOCAL NER PROCESSING — Browser-side, no sidecar, no port, no CORS!
-  // Transformers.js runs the same d4data/biomedical-ner-all model directly in the browser.
+  // 🔥 LOCAL PARSING — on-device, no model, no sidecar, no port, no CORS!
+  // pdf.js pulls the text layer; the lab parser reads values that are printed there.
   const processFileWithBackend = async (file: File): Promise<{extractedText: string, events: ParsedMedicalEvent[], labCount: number, mappedLabs: ExtractedLabResult[], nameMismatch: boolean}> => {
     try {
       // Read file to base64
@@ -463,7 +458,7 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
       }
       const base64Data = btoa(binary);
 
-      console.log(`🧠 Processing ${file.name} (${(bytes.length / 1024).toFixed(1)} KB) locally with Transformers.js...`);
+      console.log(`🧮 Processing ${file.name} (${(bytes.length / 1024).toFixed(1)} KB) locally...`);
 
       // 🛡️ Fetch demographics for personal info filtering (name, DOB, etc.)
       let demographics = null;
@@ -484,7 +479,7 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
       }
 
       // Step 1: Extract text from file. One pdf.js pass yields BOTH the
-      // flattened text (for NER) and the positioned tokens (for the geometry
+      // flattened text (for the text lab parsers) and the positioned tokens (for the geometry
       // lab-grid extractor).
       let extractedText: string;
       let pdfTokens: import('@/lib/services/text-extractor').PdfToken[][] = [];
@@ -509,9 +504,9 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
           throw new Error(
             'This PDF has no readable text — it looks like a scan or photo saved as a PDF, ' +
             'so there is nothing for the parser to read (found ' + meaningful + ' characters). ' +
-            'Two things that work: re-download it from the portal as a text PDF if that option ' +
-            'exists, or screenshot the page and upload the image instead — images go through ' +
-            'OCR. You can also use Paste Text and paste the values in directly.'
+            'Things that work: re-download it from the portal as a text PDF if that option ' +
+            'exists, add the values by hand from Add to Timeline, or ask your own AI (Claude/Codex, ' +
+            'via AI Access in Settings) to read it and add the entries for you.'
           );
         }
       } catch (pdfErr) {
@@ -519,48 +514,9 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
         throw new Error(`PDF text extraction failed: ${pdfErr instanceof Error ? pdfErr.message : 'Unknown error'}`);
       }
 
-      // Step 2: Run NER (skipped in lab-only mode so panel names like
-      // "Myositis Panel" can't be misread as diagnoses).
-      let nerEvents: any[] = [];
-      // NER medical extraction runs ONLY when AI parsing is enabled — and when it
-      // does, the Qwen validator vets every NER candidate, so raw NER is never
-      // surfaced unvetted ("psycho", "shock" from boilerplate, etc). AI off →
-      // skip NER entirely; the lab parser + manual entry still work.
-      if (mode !== 'lab' && aiEnabled) {
-        try {
-          nerEvents = await extractMedicalEvents(extractedText, file.name, demographics, undefined, { validateWithLLM: true });
-        } catch (nerErr) {
-          const errMsg = nerErr instanceof Error ? nerErr.message : String(nerErr);
-          console.error('NER extraction failed:', nerErr);
-          if (errMsg.includes(AI_VALIDATION_UNAVAILABLE)) {
-            // The validator model wasn't available. Fail SAFE — refuse to surface
-            // raw NER. (The page gates upload until both models load, so this is
-            // a belt-and-suspenders guard for a mid-run model failure.)
-            // ⚠️ This message used to assert "the reviewer model isn't ready"
-            // as though it knew that. It didn't — it is thrown for ANY reason
-            // the scan came back empty, and it told the user to "wait for the
-            // models to finish loading" even when the model was resident and
-            // the real failure was elsewhere. Advice that cannot work is worse
-            // than no advice: it sends someone to wait for an event that has
-            // already happened. Report what is actually observable and say
-            // plainly that the reason is in the console.
-            throw new Error(
-              `AI parsing is on, but the medical-event extractor returned nothing, so ` +
-              `extraction was skipped rather than show unreviewed results. This can mean the ` +
-              `model is still loading, or that it failed mid-run — the console logs (lines ` +
-              `beginning 🧠) say which. Lab-panel parsing and manual entry still work.`
-            );
-          }
-          if (errMsg.includes('<!DOCTYPE') || errMsg.includes('Unexpected token') || errMsg.includes('not valid JSON')) {
-            throw new Error(
-              `Medical document parsing isn't available on this device yet. ` +
-              `Upload documents on desktop and sync to your phone. ` +
-              `(The NER model requires a one-time 64MB download that some mobile browsers block.)`
-            );
-          }
-          throw new Error(`NER model failed: ${errMsg}`);
-        }
-      }
+      // (Step 2 used to be the MedGemma/NER medical-event extractor. Removed in
+      // CHA-466: it hallucinated. Freeform notes → add by hand, or your own AI
+      // adds them through the Chaos Command MCP.)
 
       // Step 3: Extract lab results (skipped in medical-only mode — lab
       // panels go through their own dedicated upload path).
@@ -608,10 +564,10 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
 
       // When no lab-aware consumer exists at all, fold labs into events as a
       // fallback so they at least show up somewhere.
-      const allEvents = [...nerEvents];
+      const allEvents: any[] = [];
       if (!onLabsExtracted && mode !== 'medical') {
         const labEvents = labResultsToEvents(labResults);
-        const seenTitles = new Set(nerEvents.map(e => e.title.toLowerCase()));
+        const seenTitles = new Set<string>();
         for (const labEvent of labEvents) {
           if (!seenTitles.has(labEvent.title.toLowerCase())) {
             allEvents.push(labEvent);
@@ -620,7 +576,7 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
         }
       }
 
-      console.log(`🎉 LOCAL NER SUCCESS: ${allEvents.length} events + ${mappedLabs.length} labs from ${file.name}`);
+      console.log(`🎉 Local parse done: ${allEvents.length} events + ${mappedLabs.length} labs from ${file.name}`);
 
       // Wrong-name guard: demographics filled in but the user's first name is
       // nowhere in the doc → maybe it's someone else's (a relative's labs).
@@ -636,7 +592,7 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
       };
 
     } catch (error) {
-      console.error('Local NER error:', error);
+      console.error('Local parse error:', error);
       throw new Error(`Failed to process document: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
@@ -754,7 +710,7 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
         }
       }
 
-      // Add the NER events + the abnormal-lab summary events to the timeline.
+      // Add the reviewed events + the abnormal-lab summary events to the timeline.
       onEventsExtracted([...allParsedEvents, ...labTimelineEvents]);
 
       // Build a success message that reflects what ACTUALLY happened — no more
@@ -1034,11 +990,10 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
     return events;
   };
 
-  // 🔥 LOCAL NER TEXT PARSING - Same model, no server needed!
+  // 🧮 PASTED TEXT → labs via the same deterministic parser (no model).
   const parseTextWithBackend = async (text: string): Promise<ParsedMedicalEvent[]> => {
     try {
-      // Respect mode: lab uploader skips NER, medical uploader skips lab parser.
-      const nerEvents = (mode === 'lab' || !aiEnabled) ? [] : await extractMedicalEvents(text, 'Pasted Notes', undefined, undefined, { validateWithLLM: true });
+      // Respect mode: medical uploader skips the lab parser.
       const labResults = mode === 'medical' ? [] : extractLabResults(text);
       if (onLabsExtracted && labResults.length > 0) {
         const mapped: ExtractedLabResult[] = labResults.map(l => ({
@@ -1065,10 +1020,10 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
         });
       }
 
-      const allEvents = [...nerEvents];
+      const allEvents: any[] = [];
       if (!onLabsExtracted) {
         const labEvents = labResultsToEvents(labResults);
-        const seenTitles = new Set(nerEvents.map(e => e.title.toLowerCase()));
+        const seenTitles = new Set<string>();
         for (const labEvent of labEvents) {
           if (!seenTitles.has(labEvent.title.toLowerCase())) {
             allEvents.push(labEvent);
@@ -1077,11 +1032,11 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
         }
       }
 
-      console.log(`🎉 LOCAL NER TEXT PARSE SUCCESS: ${allEvents.length} events`);
+      console.log(`🎉 Pasted-text lab parse done: ${allEvents.length} events`);
       return allEvents as any;
 
     } catch (error) {
-      console.warn('Local NER text parsing failed, falling back to client-side:', error);
+      console.warn('Pasted-text lab parsing failed, falling back to the line splitter:', error);
       return parseTextFromPaste(text);
     }
   };
@@ -1093,13 +1048,12 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
     setParseError(null);
 
     try {
-      // Try backend parsing first (much more powerful!)
+      // Lab parser first (numbers it can anchor), then the line splitter.
       let events = await parseTextWithBackend(pastedText);
 
       if (events.length === 0) {
-        // NER found nothing structured — terse history lists ("Diabetic - 2022
-        // Lupus (SLE) - 2020 MCTD - 2012 …") aren't the prose the model is tuned
-        // for. Fall back to the line/pattern splitter, which turns each entry
+        // Nothing lab-shaped — terse history lists ("Diabetic - 2022
+        // Lupus (SLE) - 2020 MCTD - 2012 …") aren't lab rows. Fall back to the line/pattern splitter, which turns each entry
         // into its own event (and dates it from its year). Only if THAT also
         // finds nothing do we keep the whole note as a single reviewable event.
         const splitEvents = parseTextFromPaste(pastedText);
@@ -1150,9 +1104,8 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
     return <FileText className="h-5 w-5" />;
   };
 
-  // Web "try me" demo: gate file import. The parser would pull a ~64MB NER model
-  // into the visitor's browser, and real medical records must never be uploaded to
-  // a public page. Everything else stays fully clickable; this one feature points
+  // Web "try me" demo: gate file import. Real medical records must never be
+  // uploaded to a public page. Everything else stays fully clickable; this one feature points
   // people to the installed app, which runs the parsing entirely on their device.
   if (IS_DEMO) {
     return (
@@ -1165,8 +1118,7 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
               Uploading lab results &amp; medical records and auto-parsing them works in the
               downloadable Chaos Command — it runs entirely on <em>your</em> device, nothing
               uploaded anywhere. It&apos;s switched off in this public web demo so nothing
-              leaves your browser (and so you don&apos;t download a large parsing model just
-              to look around).
+              leaves your browser.
             </p>
             <p className="text-sm text-muted-foreground">
               Everything else here is fully clickable — explore away.
@@ -1281,21 +1233,17 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
               </h3>
               <p className="text-[var(--text-muted)] mb-2">
                 {mode === 'lab'
-                  ? 'Upload lab panels and blood work. Pulls test names, values, units, and reference ranges into your Labs dashboard. Skips the diagnosis-extraction model so a panel name (like "Myositis Panel") never gets mistaken for a diagnosis.'
+                  ? 'Upload lab panels and blood work. Pulls test names, values, units, and reference ranges into your Labs dashboard — only numbers that are actually printed in the file.'
                   : mode === 'medical'
-                    ? 'Upload visit notes, after-visit summaries, imaging reports, or other medical records. MedGemma reads the whole document, extracts events, flags dismissed findings, and builds your timeline. For lab panels, use the Lab Result uploader instead.'
-                    : 'Upload medical documents, lab reports, imaging results, or any medical records. MedGemma reads the whole document, extracts events, flags dismissed findings, and builds your timeline.'}
+                    ? 'Paste a list of diagnoses, surgeries, or history and we split it into entries for you to review. For freeform visit notes, add things by hand from Add to Timeline, or have your own AI add them through the Chaos Command MCP.'
+                    : 'Upload lab reports and other medical PDFs. We read the lab values that are printed in the file — value, unit, reference range, flag — and show you each one to confirm before anything saves. Nothing is guessed or made up.'}
               </p>
 
-              {/* Demographics hint + first-time model download */}
+              {/* Demographics hint */}
               <div className="text-xs text-[var(--text-muted)] mb-4 space-y-1">
                 <p>
                   💡 <Link href="/demographics" className="underline text-[var(--accent-purple)] hover:text-[var(--accent-orange)]">Fill out Demographics first</Link> — we use your name and birthday to filter personal info from results.
                 </p>
-                {/* The one-time MedGemma download + its privacy note now live
-                    with the AI-parsing toggle on the Import page, where the
-                    download actually happens (with a progress bar). No model
-                    fetch is triggered from here anymore. */}
               </div>
               
               <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
@@ -1307,9 +1255,9 @@ export default function DocumentUploader({ onEventsExtracted, onLabsExtracted, m
                   Choose Files
                 </Button>
 
-                {/* 📋 PASTE TEXT — Google Keep / notes apps / MyChart. Medical-event
-                    extraction (NER) only runs in the medical importer; lab-only mode
-                    is PDF-geometry (pasted text has no column positions), so paste is
+                {/* 📋 PASTE TEXT — Google Keep / notes apps / MyChart. A deterministic
+                    line splitter turns a pasted list into reviewable entries; lab-only
+                    mode is PDF-geometry (pasted text has no column positions), so paste is
                     hidden there to avoid offering extraction it won't perform. */}
                 <Dialog open={showPasteModal} onOpenChange={(open) => {
                   setShowPasteModal(open);
@@ -1532,7 +1480,7 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
                 {file.status === 'processing' && (
                   <>
                     <p className="text-sm text-[var(--text-muted)]">
-                      🧠 Analyzing document with NER + section parsing...
+                      🧮 Reading the document and looking for lab values...
                     </p>
                     <ElapsedNote startedAt={file.startedAt} />
                   </>
@@ -1543,9 +1491,9 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
                     ✅ {(() => {
                       const eventCount = file.parsedEvents.length
                       const labCount = file.parsedLabCount ?? 0
-                      // In lab mode the NER step is intentionally skipped, so the
-                      // events count is always 0 and would mislead the reader.
-                      // Show whichever counts are non-zero; if both, show both.
+                      // Files only yield labs now (no event extractor since
+                      // CHA-466), so an "events" count is usually 0 and would
+                      // mislead. Show whichever counts are non-zero.
                       if (mode === 'lab') {
                         return `Found ${labCount} lab result${labCount === 1 ? '' : 's'}`
                       }
@@ -1554,8 +1502,8 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
                       }
                       // mixed mode — surface both
                       const parts: string[] = []
-                      parts.push(`${eventCount} medical event${eventCount === 1 ? '' : 's'}`)
-                      if (labCount > 0) parts.push(`${labCount} lab result${labCount === 1 ? '' : 's'}`)
+                      if (eventCount > 0) parts.push(`${eventCount} medical event${eventCount === 1 ? '' : 's'}`)
+                      parts.push(`${labCount} lab result${labCount === 1 ? '' : 's'}`)
                       return `Found ${parts.join(' + ')}`
                     })()}
                   </p>
@@ -1638,22 +1586,25 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* ⚠️ PROMINENT AI-OUTPUT WARNING — shown at the HEAD of the review,
-                the moment extraction results appear, not buried in a footer.
-                MedGemma is a small on-device model that CAN miss findings or
-                misread a document; the user must verify against the original
-                before trusting or sharing anything. (Relaunch item #2.) */}
+            {/* ✅ REVIEW HEADER — shown at the HEAD of the review. No AI reads
+                your documents anymore (CHA-466): every lab row below is a value
+                that is printed in the file. (Showing each row's source line —
+                the ticket's "show the work" idea — is NOT built yet; `context`
+                is carried on each row for it.) A parser can still mis-read a column, so the ask
+                stays "glance at each one", just without pretending anything was
+                understood. (Relaunch item #2, rewritten 2026-11-02.) */}
             <div className="rounded-lg border-2 border-warning/50 bg-warning/10 p-4 flex gap-3">
               <AlertCircle className="h-5 w-5 text-warning shrink-0 mt-0.5" />
               <div className="space-y-1">
                 <p className="font-semibold text-[var(--text-main)]">
-                  AI analysis — verify before you trust it
+                  Check each one before you save
                 </p>
                 <p className="text-sm text-[var(--text-muted)]">
-                  This was read by an on-device AI (MedGemma). It <strong className="text-[var(--text-main)]">can miss findings or misread the document</strong> —
-                  dates, values, and diagnoses may be wrong. <strong className="text-[var(--text-main)]">Read your original
-                  document carefully</strong> and confirm anything here before you act on it, rely on it, or hand it to a provider.
-                  This is a helpful draft, not a medical record you can trust unchecked.
+                  These were read straight off your document — only values that are actually printed there, nothing
+                  guessed or made up. A table can still get read into the wrong column now and then, so{" "}
+                  <strong className="text-[var(--text-main)]">give each row a glance against the original</strong> and
+                  uncheck anything that doesn&apos;t belong. Missing something (a visit note, a diagnosis)? Add it by hand
+                  from Add to Timeline, or ask your own AI to add it through the Chaos Command MCP.
                 </p>
               </div>
             </div>
@@ -2097,11 +2048,10 @@ Or just paste your whole Google Keep note - we'll figure it out!`}
               </div>
             )}
 
-            {/* Last-moment reminder: AI extraction is a draft to verify, not
-                gospel — this is the point where it lands on the timeline. */}
+            {/* Last-moment reminder — this is the point where it lands on the timeline. */}
             <p className="pt-4 text-center text-xs text-[var(--text-muted)]">
-              ⚠️ Please check these against your original document before saving. The AI reader is
-              helpful but not perfect — verify anything you’ll rely on or share with your doctors.
+              ⚠️ Quick check against your original document before saving — the parser reads columns,
+              and columns occasionally line up wrong.
             </p>
 
             {/* Confirm Actions */}

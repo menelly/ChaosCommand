@@ -375,19 +375,10 @@ export function SupportModal({ isOpen, onClose }: SupportModalProps) {
                 </ul>
               </div>
 
-              <div>
-                <div className="font-medium text-foreground mb-1">🧠 Language &amp; medical data</div>
-                <ul className="space-y-1 text-muted-foreground">
-                  <li>
-                    <button className="text-primary underline underline-offset-2" onClick={() => openExternalLink('https://huggingface.co/d4data/biomedical-ner-all')}>biomedical-ner-all</button>
-                    {' '}— medical entity recognition model (d4data, via Hugging Face), used for document parsing on desktop
-                  </li>
-                  <li>
-                    <button className="text-primary underline underline-offset-2" onClick={() => openExternalLink('https://github.com/huggingface/transformers.js')}>Transformers.js</button>
-                    {' '}— runs the NER model on-device, no server
-                  </li>
-                </ul>
-              </div>
+              {/* (The "🧠 Language & medical data" credits — d4data NER +
+                  Transformers.js — lived here. Both left the app long ago and
+                  the MedGemma that replaced them is gone too, CHA-466. No model
+                  ships, so there's nothing to credit in this slot.) */}
             </div>
           </div>
 

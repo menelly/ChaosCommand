@@ -10,11 +10,14 @@
  * 2. Vertical (MyChart/Epic/Intermountain): Card layout
  * 3. Mayo/graphical: Two-column "Normal range:" layout
  *
- * The NER model finds WHAT (test names). Regex finds HOW MUCH (values, units, ranges).
+ * 🧮 Fully deterministic (CHA-466, 2026-11-02): regex + column geometry find
+ * both WHAT (test names) and HOW MUCH (values, units, ranges). There used to be
+ * a model in the loop (d4data NER, then MedGemma) for names; it's gone. A
+ * messy name comes through raw and the user fixes it on the review screen —
+ * slow-and-honest beats fast-and-maybe-fictional near medical data.
  */
 
-import { buildExclusionSet, type MedicalEvent } from './medical-ner';
-import { extractLabResultsGeometry, resolveLabNamesWithNer } from './lab-geometry';
+import { extractLabResultsGeometry } from './lab-geometry';
 import { checkLabValueSanity } from './lab-sanity-check';
 import type { PdfToken } from './text-extractor';
 
@@ -35,8 +38,77 @@ function applySanityChecks(results: LabResult[]): LabResult[] {
 }
 
 // ============================================================================
+// DEMOGRAPHICS FILTER — so the user's own name/address/phone never gets read
+// as a lab test name. (Moved here from medical-ner.ts when that file was
+// deleted in CHA-466; logic unchanged.)
+// ============================================================================
+
+export function buildExclusionSet(demographics?: Record<string, any> | null): Set<string> {
+  const exclusions = new Set<string>();
+  if (!demographics) return exclusions;
+
+  for (const nameField of ['legalName', 'preferredName']) {
+    const name = demographics[nameField] || '';
+    if (name) {
+      exclusions.add(name.toLowerCase().trim());
+      for (const part of name.split(/[,\s]+/)) {
+        const p = part.trim().toLowerCase();
+        if (p.length >= 3) exclusions.add(p);
+      }
+    }
+  }
+
+  const address = demographics.address || {};
+  for (const field of ['street', 'city', 'state', 'zipCode']) {
+    const val = address[field] || '';
+    if (val && val.length >= 3) exclusions.add(val.toLowerCase().trim());
+  }
+
+  for (const field of ['phone', 'email']) {
+    const val = demographics[field] || '';
+    if (val) exclusions.add(val.toLowerCase().trim());
+  }
+
+  for (const contact of demographics.emergencyContacts || []) {
+    const name = contact.name || '';
+    if (name) {
+      exclusions.add(name.toLowerCase().trim());
+      for (const part of name.split(/[,\s]+/)) {
+        const p = part.trim().toLowerCase();
+        if (p.length >= 3) exclusions.add(p);
+      }
+    }
+  }
+
+  return exclusions;
+}
+
+// ============================================================================
 // TYPES
 // ============================================================================
+
+/** Timeline-event shape that labResultsToEvents() emits (moved here from
+ *  medical-ner.ts, CHA-466). */
+export interface MedicalEvent {
+  id: string;
+  type: string;
+  title: string;
+  date: string;
+  end_date: string | null;
+  provider: string | null;
+  location: string | null;
+  description: string;
+  status: string;
+  severity: string | null;
+  tags: string[];
+  confidence: number;
+  sources: string[];
+  needs_review: boolean;
+  suggestions: string[];
+  raw_text: string;
+  dosage: string | null;
+  incidental_findings: string[];
+}
 
 export interface LabResult {
   testName: string;
@@ -708,12 +780,11 @@ export async function extractLabResultsSmart(
   demographics?: Record<string, any> | null
 ): Promise<LabResult[]> {
   const nameExclusions = buildExclusionSet(demographics);
-  const rawGeometry =
-    tokens.length > 0 ? extractLabResultsGeometry(tokens, nameExclusions) : [];
-  // Clean metadata-polluted names with the NER model (geometry does columns; the
-  // model decides which token is the analyte). Falls back to raw names on failure.
+  // Names come through RAW from the columns (no model trims them anymore —
+  // CHA-466). A metadata-polluted name is visible and editable on review; a
+  // model "cleaning" it was a place an invention could hide.
   const geometryResults =
-    rawGeometry.length > 0 ? await resolveLabNamesWithNer(rawGeometry) : [];
+    tokens.length > 0 ? extractLabResultsGeometry(tokens, nameExclusions) : [];
 
   if (geometryResults.length > 0) {
     // Persist a diagnostic trace so the import page can show geometry won and

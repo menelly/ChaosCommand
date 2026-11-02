@@ -7,7 +7,7 @@
  *
  * Adding results:
  *   - Manual entry → /add (Lab Result tab, works on mobile + desktop)
- *   - PDF import → /import (desktop only, runs NER locally)
+ *   - PDF import → /import (desktop only, deterministic lab parser, no AI model)
  *
  * "Your ferritin has been 7, 8, 9 for six weeks. This is not 'fine'."
  */

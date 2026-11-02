@@ -47,8 +47,8 @@ Everything runs on your device. No cloud. No accounts. No telemetry. Your health
 - **Cross-tracker referrals** — chest pain → cardiac, head pain → head-pain, joint pain → joint, severe panic + chest → consider cardiac too
 
 ### Medical Management
-- **Timeline**: Upload medical documents (PDF, images), on-device extraction with MedGemma (desktop), dismissed-findings detection
-- **Lab Results**: Multi-format parser (several health-system report layouts, plus OCR for scanned PDFs), inline editing, trend tracking, abnormal flagging
+- **Timeline**: Add events by hand, paste a history list and have it split into entries, or let your own AI add them (see AI Access below)
+- **Lab Results**: Deterministic multi-format PDF parser (several health-system report layouts) that only ever reads values printed in the file, a review-with-checkboxes screen before anything saves, inline editing, trend tracking, abnormal flagging. Scanned/image-only PDFs get an honest "no text to read" instead of a guess.
 - **Upload guardrails**: a fast sanity check on every upload — flags **duplicate results** (same test/value/collection-date already saved, *regardless of filename* — so `the_real_one(3).pdf` doesn't triple-count your antibody trend) and warns when a document's **name doesn't match your demographics** (catches accidentally importing a family member's labs). Both soft — it never blocks, just asks "you sure?"
 - **Providers & Appointments**: Track your care team
 - **Work & Disability**: Employment history, missed work, accommodation tracking, SSDI applications, disability guide
@@ -77,7 +77,7 @@ Everything runs on your device. No cloud. No accounts. No telemetry. Your health
 - **PIN-based isolation**: Multiple users, separate databases, no corporate auth — *everything is per-PIN*, down to theme, fonts, and preferences
 - **Peer-to-peer sync (optional)**: Bidirectional sync between *your own* devices over LAN — phone ↔ laptop ↔ desktop. PIN-scoped, encrypted, no cloud, no third-party servers. Pair once (QR / same Wi-Fi), sync on demand.
 - **No fonts phone home**: every font is **self-hosted** — no Google Fonts request, no IP leak
-- **On-device medical AI**: document parsing runs **MedGemma-4B locally, in the app's own process** (desktop) — nothing is uploaded, no API key, no inference bill. AI parsing is **off by default**; switching it on downloads the model once (~2 GB, from Hugging Face, with a progress bar) and SHA256-checks it against the exact weights we validated. After that it works offline, and with it off the lab number-parser and manual entry still work with no model at all. And the model never decides clinical meaning: it extracts, then *code* decides High / Low / Critical against your reference ranges.
+- **No AI reads your records, on purpose**: document import is deterministic — regex + column geometry against the numbers printed in the file, and *code* decides High / Low / Critical against the reference range printed beside them. We used to ship an on-device medical model (MedGemma-4B); we removed it in November 2026 because a small model will sometimes invent a lab value, and an invented potassium looks exactly like a measured one once it's on a trend chart. Slow-and-honest beats fast-and-maybe-fictional near medical data. Want an AI to help with freeform notes? Use **your own** (Claude, Codex…) through **AI Access** (a local MCP server, off by default) — it adds entries the same way you would, and every one is marked as AI-added.
 - **One-tap Logout**: a big Logout at the bottom of the sidebar — instant exit to the locked screen. Non-destructive; your data stays put in its own profile.
 - **The G-Spot** (reproductive tracker): a deliberate, confirmed, *scoped* delete of just your reproductive-health data — everything else untouched. For when that one category is the dangerous one to carry. (Deletion, not concealment.)
 - **Encrypted backups**: export your data as a password-protected file (AES-256-GCM) and restore it anywhere. Plain JSON export available too if you want it readable. Opt-in backup reminders (per-PIN, dismissible).
@@ -124,13 +124,13 @@ Everything runs on your device. No cloud. No accounts. No telemetry. Your health
 - **Tauri 2** — Cross-platform desktop (Windows, Mac, Linux) + Android
 - **Next.js 15** + TypeScript + Tailwind CSS + shadcn token theming
 - **Dexie.js** — IndexedDB wrapper, PIN-based multi-database
-- **MedGemma-4B** — medical document intelligence, run natively in the Rust process (`src-tauri/src/llm.rs`) via llama.cpp. Desktop-gated; the webview ships no model runtime at all.
 - **pdf.js** — PDF text extraction (no server needed)
 - **recharts** — in-app analytics charts
 - **Ed25519 offline license verification** — kept from the paid era and dormant: only a build packed with the `-Store` switch (`scripts/pack-msix.ps1`, `scripts/build-nice.ps1`) arms the trial/licence gate; every default build is fully unlocked. When it *did* gate anything it verified *on your device*, with no license server and no phone-home. Left in for the commercial-license path.
-- **Testing** — framework-free golden suites (`npm test`) guarding the lab parser, NER section detection, confabulation guard, and entitlement/license logic, plus Rust unit tests + GitHub Actions CI
+- **Testing** — framework-free golden suites (`npm test`) guarding the lab parser, lab geometry, analytics, safety plan, and entitlement/license logic, plus Rust unit tests + GitHub Actions CI
 - ~~**Flask** backend~~ — *RIP, April 9 2026. Replaced by Transformers.js while my human napped. 307MB → 75MB. The octopus doesn't need a server.*
 - ~~**Transformers.js**~~ — *RIP, July 2026. Outlived its usefulness the moment a real medical model would run natively. The browser doesn't need a model runtime either.*
+- ~~**MedGemma-4B**~~ — *RIP, November 2026. She kept hallucinating, and "send it to your own Claude/Codex and have them add it" turned out to be more reliable than any 4B model on a laptop CPU. Took llama.cpp (and its cmake build) with her.*
 
 ---
 
@@ -149,7 +149,7 @@ pnpm install
 pnpm tauri dev
 ```
 
-Every font is bundled and the PDF parser (pdf.js) runs in the app. The one big thing that isn't bundled is the MedGemma model for document import: on desktop it downloads once (~2 GB) when you switch AI parsing on. Grandma Jane approved.
+Every font is bundled and the PDF parser (pdf.js) runs in the app. Nothing downloads after install — there's no model to fetch anymore. Grandma Jane approved.
 
 There is nothing to unlock. The whole app is free in every build — source or store, same application. (Earlier versions gated the tracker sidebar behind a store purchase; that's gone, along with the Buy button.)
 

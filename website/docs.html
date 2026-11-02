@@ -458,27 +458,24 @@
     <section class="doc-section" id="documents">
         <h2>Document &amp; lab parsing</h2>
         <p class="section-sub">
-            <span class="chaos-only">Upload a doctor's note. A real medical model reads it. Not regex. Not keyword search. MedGemma, on your own computer.</span>
-            <span class="pro-only">On-device medical language model (MedGemma-4B) for clinical document extraction.</span>
+            <span class="chaos-only">Upload a lab PDF. We read the numbers that are actually printed on it. Nothing guessed, nothing invented, nothing uploaded.</span>
+            <span class="pro-only">Deterministic, on-device lab-value extraction with per-item review. No language model in the import path.</span>
         </p>
 
         <h3>What the document parser does</h3>
-        <p>Upload a PDF or image of a medical document — visit summary, discharge note, specialist report, lab printout. When <strong>AI parsing</strong> is on, the app runs <strong>MedGemma-4B</strong> (a medical language model, Q3_K_M quantized) <strong>natively inside the app on your computer</strong> (desktop only). AI parsing is off by default; switching it on downloads the model once (~2 GB, from Hugging Face, with a progress bar) and checks it against a pinned SHA256, then it runs entirely on your device — your documents are processed locally and never uploaded. With AI parsing off, the lab number-parser and manual entry still work with no model at all. And the model never decides clinical meaning: High / Low / Critical is decided by code against your reference ranges.</p>
+        <p>Upload a PDF (desktop only). The importer pulls the text layer out of the file and reads <strong>structured lab values</strong> &mdash; test, value, unit, reference range, flag &mdash; using regex and the column positions on the page. It is fully <strong>deterministic</strong>: if a number isn't printed in the file, it can't show up in your import. High / Low / Critical is decided by code against the reference range printed in the document. Then you get a <strong>review screen with a checkbox on every row</strong> before anything is saved. Everything runs on your device; your documents never leave it.</p>
 
-        <h4>Extracted entities include:</h4>
-        <ul>
-            <li><strong>Diagnoses</strong> with section awareness (problem list vs. ruled-out vs. historical)</li>
-            <li><strong>Medications</strong> with dose, frequency, and start/stop where stated</li>
-            <li><strong>Lab values</strong> with units and reference ranges where the doc includes them</li>
-            <li><strong>Procedures and dates</strong></li>
-            <li><strong>Negation awareness</strong> ("no evidence of X" doesn't get extracted as having X)</li>
-        </ul>
+        <h4>Why there's no AI model in here anymore</h4>
+        <p>Earlier versions shipped an on-device medical language model (MedGemma-4B) to pull diagnoses and findings out of visit notes. We removed it in November 2026. A small model will sometimes <em>invent</em> a value, and once an invented potassium is on a trend chart nothing can tell it apart from a measured one. Manual entry is slower, but it&rsquo;s visibly incomplete instead of invisibly wrong.</p>
 
-        <h4>Impression sections</h4>
-        <p>The free-text "impression" section of radiology and specialist reports is read by the same MedGemma model when AI parsing is on (a lightweight rule-based reader handles it otherwise). Either way it runs entirely on your device — your documents never leave it.</p>
+        <h4>Visit notes, diagnoses, anything freeform</h4>
+        <p>Add them by hand from <strong>Add to Timeline</strong>, paste a history list (the paste tool splits it into one entry per line for you to review), or turn on <strong>AI Access</strong> in Settings and let <em>your own</em> AI &mdash; Claude, Codex, whatever you use &mdash; read the note and add the entries through the Chaos Command MCP server. Entries an AI adds are marked as AI-added.</p>
+
+        <h4>What it can't read</h4>
+        <p>Scanned PDFs, photos and screenshots have no text layer, so there&rsquo;s nothing for the parser to read. The importer tells you that plainly instead of guessing.</p>
 
         <h3>Lab results parser (multi-format)</h3>
-        <p>Lab printouts come in dozens of vendor-specific formats. The lab parser supports Intermountain, Mayo, Halifax (with OCR), Advent, and a generic fallback for unrecognized formats. Inline editing means if the parser misreads a value, you fix it in place — your correction sticks.</p>
+        <p>Lab printouts come in dozens of vendor-specific formats. The lab parser reads grid layouts (the big commercial labs and patient-portal printouts) by column position, plus result/reference-range cards (hospital, government and specialist panels) and a generic fallback for unrecognized formats. Inline editing means if the parser misreads a value, you fix it in place — your correction sticks.</p>
 
         <p>Each parsed result becomes a tracked data point with date, value, units, and reference range. Abnormal values are flagged. Trends across multiple lab dates are graphable.</p>
 
@@ -572,7 +569,7 @@
 
         <h3>What the app DOES and DOES NOT do</h3>
         <ul>
-            <li><strong>Does:</strong> Format the information you enter into structured logs, generate PDFs, run NLP locally on documents you upload, compute pattern correlations.</li>
+            <li><strong>Does:</strong> Format the information you enter into structured logs, generate PDFs, read lab values locally from documents you upload, compute pattern correlations.</li>
             <li><strong>Does not:</strong> Provide medical diagnosis, clinical advice, legal advice, or therapeutic intervention. The PDF reports are formatted templates of YOUR data — not medical or legal opinions.</li>
             <li><strong>Open source:</strong> The code is auditable. <a href="https://github.com/menelly/ChaosCommand">github.com/menelly/ChaosCommand</a></li>
         </ul>
@@ -670,7 +667,7 @@
             <li>The Tauri 2 build is set up for desktop deployment and can be wrapped however you need.</li>
             <li><strong>Desktop has a hybrid storage router:</strong> SQLite on the desktop side + Dexie/IndexedDB in the embedded browser view. The sync feature exists primarily because iOS hits browser-storage limits on Dexie alone — desktop's SQLite handles the larger dataset, mobile gets the Dexie-friendly subset. If you're self-hosting on a homelab and don't need mobile, you may be able to use the SQLite path directly without Dexie sync at all (pending your tolerance for skipping the image-attachment options that flow through the in-browser pipeline).</li>
             <li>The Next.js front end can be served from anywhere; the Dexie storage lives in whatever browser is rendering it.</li>
-            <li>The PDF parser runs inside the app with no external services. The MedGemma model downloads once from Hugging Face when you switch AI parsing on, then runs locally — the only network fetch in the document pipeline.</li>
+            <li>The PDF parser runs inside the app with no external services and no model download &mdash; the document pipeline makes no network requests at all.</li>
             <li>Sync between instances is the main thing you'd need to rewrite if you want a non-WiFi-pair model. The codebase is open; the protocol is yours to redesign.</li>
         </ul>
 
@@ -723,7 +720,7 @@
         <h3>Document parsing returned weird results</h3>
         <ul>
             <li>Lab printouts in unrecognized formats fall back to a generic parser. Use inline editing to correct values.</li>
-            <li>Image-based PDFs (scans) require OCR — make sure OCR is enabled in the document parser settings.</li>
+            <li>Image-based PDFs (scans) have no text layer, so the importer can't read them. Re-download a text PDF from your portal if it offers one, add the values by hand, or ask your own AI to add them via AI Access.</li>
             <li>You can re-run parsing on a previously-uploaded document if you've updated the model or settings.</li>
         </ul>
 

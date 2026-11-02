@@ -218,37 +218,3 @@ export function deriveLabDirection(input: DirectionInput): DirectionVerdict {
   // 5. Nothing to compare against — never guess a direction.
   return verdict('unknown', 'unknown', 'none');
 }
-
-/** Pull {analyte, value, unit} out of a model-emitted lab line, discarding any
- *  editorializing adjective the model prepended. Handles the shapes MedGemma
- *  produced: "Elevated Glucose (19 mg/dL)", "Hypoglycemia (Glucose 19 mg/dL)",
- *  "Potassium 2.8 mmol/L", "Low Creatinine (0.77 mg/dL)". Returns null if no
- *  number is present. The adjective is intentionally NOT returned — code, not
- *  the model, decides direction. */
-export function parseModelLabLine(line: string): { analyte: string; value: number; unit: string } | null {
-  // Editorializing words the model prepends — stripped so they can't leak into
-  // the analyte name or be mistaken for the truth.
-  const EDITORIAL = /\b(elevated|high|low|critical|hypo|hyper|abnormal|decreased|increased)\w*\b/gi;
-  // First number with an optional unit.
-  const m = line.match(/(-?\d+(?:\.\d+)?)\s*([A-Za-z%µ/]+(?:\/[A-Za-z%µ]+)?)?/);
-  if (!m) return null;
-  const value = parseFloat(m[1]);
-  if (isNaN(value)) return null;
-  const unit = (m[2] || '').trim();
-  // Analyte: text before the number and the parenthetical, minus editorial words
-  // and any leading diagnosis restatement.
-  let analyte = line.slice(0, m.index ?? 0)
-    .replace(/[()]/g, ' ')
-    .replace(EDITORIAL, ' ')
-    .replace(/\b(glucose|potassium|sodium|chloride|calcium|magnesium|creatinine|bun|hemoglobin|hematocrit|platelets?|wbc|co2|bicarbonate|lactate|troponin|inr|tsh|albumin|bilirubin|ast|alt|anion gap)\b/i, (w) => w)
-    .replace(/[^A-Za-z0-9 %\/-]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-  // If stripping left nothing (e.g. "Potassium 2.8" → number-first with analyte
-  // trailing), grab the alphabetic run right after the number instead.
-  if (!analyte) {
-    const after = line.slice((m.index ?? 0) + m[0].length).replace(EDITORIAL, ' ');
-    analyte = (after.match(/[A-Za-z][A-Za-z ]{1,30}/)?.[0] || '').trim();
-  }
-  return analyte ? { analyte, value, unit } : null;
-}

@@ -50,7 +50,7 @@ function cleanExtractedText(text: string): string {
   // names from the camelCase fix below. Without this, "mg/dL" becomes
   // "mg/d L", "dsDNA" becomes "ds DNA", "mRNA" becomes "m RNA", etc. —
   // which silently breaks the lab parser (units no longer match LAB_UNITS)
-  // and the NER (test names get mangled). Stash them under sentinels,
+  // and test names get mangled. Stash them under sentinels,
   // run the camelCase fix, then restore.
   //
   // Pattern matches:
@@ -128,8 +128,8 @@ export interface PdfToken {
 
 /**
  * Core single pass over a PDF. ONE getDocument + ONE page loop produces BOTH
- * products: `text` (flattened, spatially-aware, unit-protected — for NER / rad
- * findings) and `tokens` (raw per-page {x,y,str}, PRE-clean — for the geometry
+ * products: `text` (flattened, spatially-aware, unit-protected — for the text
+ * lab parsers) and `tokens` (raw per-page {x,y,str}, PRE-clean — for the geometry
  * lab-grid extractor). Built this way on purpose so a big PDF is only parsed
  * once even though two very different consumers need two different views of it.
  */
@@ -221,7 +221,7 @@ function base64ToBytes(base64Data: string): Uint8Array {
 
 /**
  * Extract BOTH products from a base64 file in one pass: flattened `text` (for
- * NER/rad findings) and per-page `tokens` (for the geometry lab extractor).
+ * lab parsers) and per-page `tokens` (for the geometry lab extractor).
  * Non-PDF inputs return their text with `tokens: []` (geometry needs a PDF).
  * This is the entry point the document uploader uses so the file is parsed once.
  */

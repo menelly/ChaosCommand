@@ -154,7 +154,7 @@ console.log('\n📐 lab-geometry golden suite\n');
 // FIXTURE 5 — per-result Date/Time field (structured date extraction)
 //   "Date/Time 09/18/2020 8:32 AM Ferritin" → name "Ferritin" + date 2020-09-18.
 //   The date is a STRUCTURED field: parse it (capturing the real collection
-//   date) and remove it from the name. (Semantic pollution stays NER's job.)
+//   date) and remove it from the name. (Semantic pollution stays for the user to trim on review.)
 // ============================================================================
 {
   const p = page(

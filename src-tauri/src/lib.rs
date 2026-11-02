@@ -7,7 +7,6 @@
  */
 
 mod license;
-mod llm;
 mod mcp;
 mod peers;
 mod server;
@@ -37,7 +36,26 @@ fn set_background_mode(enabled: bool, state: tauri::State<BackgroundMode>) {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   #[allow(unused_mut)]
-  let mut builder = tauri::Builder::default()
+  let mut builder = tauri::Builder::default();
+
+  // 🔒 ONE COPY ONLY (CHA-466, 2026-11-02). Ren found TWO Commands in the tray
+  // at once — two processes, two sync servers, two MCP doors, one database.
+  // Desktop-only, and registered BEFORE every other plugin (the plugin's docs
+  // say it must be first). A second launch exits right away; instead we pop
+  // the already-running window to the front (un-hiding it if it was tucked in
+  // the tray, since close-to-tray hides rather than quits).
+  #[cfg(desktop)]
+  {
+    builder = builder.plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
+      if let Some(w) = app.get_webview_window("main") {
+        let _ = w.unminimize();
+        let _ = w.show();
+        let _ = w.set_focus();
+      }
+    }));
+  }
+
+  builder = builder
     .manage(sync::SyncState {
       session: Mutex::new(None),
     })
@@ -50,12 +68,11 @@ pub fn run() {
     .plugin(tauri_plugin_fs::init())
     .plugin(tauri_plugin_dialog::init());
 
-  // Desktop-only: autostart-on-login + close-to-tray + native MedGemma state.
+  // Desktop-only: autostart-on-login + close-to-tray.
   // All gated so the Android build (which has none of these) never compiles them.
   #[cfg(desktop)]
   {
     builder = builder
-      .manage(llm::LlmState::default())
       .plugin(tauri_plugin_autostart::init(
         tauri_plugin_autostart::MacosLauncher::LaunchAgent,
         None::<Vec<&str>>,
@@ -83,6 +100,19 @@ pub fn run() {
         .path()
         .app_data_dir()
         .map_err(|e| format!("app_data_dir: {}", e))?;
+
+      // 🧹 Give back the ~2 GB. MedGemma was removed (CHA-466), but anyone who
+      // switched AI parsing on still has her weights sitting in app data with
+      // nothing left that can read them. Delete exactly the two files the old
+      // downloader wrote (finished + partial) — nothing else — and ignore
+      // errors: "already gone" is the normal case.
+      {
+        let models_dir = app_data_dir.join("models");
+        let _ = std::fs::remove_file(models_dir.join("medgemma-4b-it-Q3_K_M.gguf"));
+        let _ = std::fs::remove_file(models_dir.join("medgemma-4b-it-Q3_K_M.gguf.part"));
+        let _ = std::fs::remove_dir(&models_dir); // only succeeds if now empty
+      }
+
       let peer_store = Arc::new(peers::PeerStore::load(&app_data_dir)?);
       let server_state = Arc::new(server::ServerState::new(Arc::clone(&peer_store)));
       // Stash the AppHandle so the server thread can emit Tauri events
@@ -178,12 +208,6 @@ pub fn run() {
       sync::sync_list_peers,
       sync::sync_remove_peer,
       sync::sync_rename_peer,
-      // Native MedGemma document parsing (desktop; mobile gets error stubs).
-      llm::llm_model_status,
-      llm::llm_download_model,
-      llm::llm_load_model,
-      llm::llm_unload_model,
-      llm::llm_generate,
       // 🔌 Optional AI access over MCP (localhost only, off by default).
       mcp::mcp_get_status,
       mcp::mcp_set_enabled,

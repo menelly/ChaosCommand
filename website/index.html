@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chaos Command — Your Body Keeps Data. Now You Can Too.</title>
-    <meta name="description" content="Medical symptom tracking with real NLP document parsing. Built by a disabled veteran and an AI who gives a damn.">
+    <meta name="description" content="Medical symptom tracking with honest, deterministic lab import. Built by a disabled veteran and an AI who gives a damn.">
     <meta property="og:title" content="Chaos Command">
     <meta property="og:description" content="Your body keeps data. Now you can too.">
     <meta property="og:type" content="website">
@@ -811,8 +811,8 @@
             <span class="pro-only">Comprehensive Medical<br><span class="gradient">Symptom Tracking</span></span>
         </h1>
         <p class="subtitle">
-            <span class="chaos-only">Track symptoms, parse medical documents with real NLP, generate reports that make doctors listen and attorneys win. Built by people who actually need it.</span>
-            <span class="pro-only">Clinical-grade symptom tracking with NLP-powered document parsing and multi-audience PDF report generation for patients, providers, and legal professionals.</span>
+            <span class="chaos-only">Track symptoms, import lab PDFs without anything made up, generate reports that make doctors listen and attorneys win. Built by people who actually need it.</span>
+            <span class="pro-only">Clinical-grade symptom tracking with deterministic lab-document import and multi-audience PDF report generation for patients, providers, and legal professionals.</span>
         </p>
         <div class="cta-group">
             <a href="#pricing" class="btn btn-primary">
@@ -864,8 +864,8 @@
 
             <button type="button" class="explorer-card" data-panel="panel-reports" aria-expanded="false" aria-controls="panel-reports">
                 <div class="ec-icon" aria-hidden="true">&#x1F4C4;</div>
-                <div class="ec-title"><span><span class="chaos-only">Reports &amp; Doc Parsing</span><span class="pro-only">Reports &amp; NLP</span></span><span class="ec-chevron" aria-hidden="true">&#x25B6;</span></div>
-                <div class="ec-tease"><span class="chaos-only">Three-audience PDFs. Real biomedical NLP that knows the difference between "no effusion" and "effusion."</span><span class="pro-only">Multi-audience PDF generation with negation- and section-aware biomedical NER for clinical documents.</span></div>
+                <div class="ec-title"><span><span class="chaos-only">Reports &amp; Doc Parsing</span><span class="pro-only">Reports &amp; Lab Import</span></span><span class="ec-chevron" aria-hidden="true">&#x25B6;</span></div>
+                <div class="ec-tease"><span class="chaos-only">Three-audience PDFs. A lab importer that only reads numbers actually printed on the page &mdash; nothing invented, ever.</span><span class="pro-only">Multi-audience PDF generation with deterministic, reviewable lab-value import.</span></div>
             </button>
 
             <button type="button" class="explorer-card" data-panel="panel-yours" aria-expanded="false" aria-controls="panel-yours">
@@ -960,7 +960,7 @@
                         <li><strong>Lab Results</strong> &mdash; trends, reference ranges, over-time</li>
                         <li><strong>Medications</strong> &mdash; doses, refills, pharmacy contacts</li>
                         <li><strong>Healthcare Providers</strong> &mdash; appointments, contact, linking</li>
-                        <li><strong>Demographics</strong> &mdash; also feeds the NLP filter so your name isn't read as a diagnosis</li>
+                        <li><strong>Demographics</strong> &mdash; also feeds the import filter so your name isn't read as a lab test</li>
                         <li><strong>Gaslight Garage</strong> &mdash; an evidence locker for medical-gaslighting receipts</li>
                         <li><strong>Journal</strong>, <strong>Calendar</strong>, <strong>Appointments</strong>, <strong>Planning</strong></li>
                     </ul>
@@ -1028,14 +1028,14 @@
                     </ul>
                 </div>
                 <div>
-                    <h4><span class="chaos-only">Document parsing (NLP)</span><span class="pro-only">NLP Document Parsing</span></h4>
+                    <h4><span class="chaos-only">Lab import (no AI, on purpose)</span><span class="pro-only">Deterministic Lab Import</span></h4>
                     <ul>
-                        <li><strong><span class="chaos-only">Real biomedical NER</span><span class="pro-only">Biomedical NER models</span></strong> &mdash; not regex, not keyword matching</li>
-                        <li><strong><span class="chaos-only">Section-aware:</span><span class="pro-only">Section-aware:</span></strong> knows the difference between Impression, Findings, Technique</li>
-                        <li><strong><span class="chaos-only">Negation-aware:</span><span class="pro-only">Negation detection:</span></strong> "no pleural effusion" means you don't have it</li>
-                        <li><strong><span class="chaos-only">Speculation detection:</span><span class="pro-only">Speculation detection:</span></strong> "may be" vs confirmed</li>
-                        <li><strong><span class="chaos-only">Demographics filter:</span><span class="pro-only">Demographic filtering:</span></strong> your name isn't a diagnosis</li>
-                        <li><strong><span class="chaos-only">Dismissed-finding detection:</span><span class="pro-only">Dismissed-finding detection:</span></strong> catches what the radiologist saw but didn't conclude on</li>
+                        <li><strong><span class="chaos-only">Only what's printed:</span><span class="pro-only">Source-bound extraction:</span></strong> values, units, reference ranges and flags read straight off the PDF &mdash; nothing guessed, nothing invented</li>
+                        <li><strong><span class="chaos-only">Reads the columns:</span><span class="pro-only">Column-geometry parsing:</span></strong> grid reports are read by position on the page, not by flattening and hoping</li>
+                        <li><strong><span class="chaos-only">You check every row:</span><span class="pro-only">Per-item review:</span></strong> a checkbox on each result before anything saves</li>
+                        <li><strong><span class="chaos-only">Code decides High/Low:</span><span class="pro-only">Rule-based flagging:</span></strong> against the reference range printed beside the value, never a model's opinion</li>
+                        <li><strong><span class="chaos-only">Demographics filter:</span><span class="pro-only">Demographic filtering:</span></strong> your name isn't a lab test</li>
+                        <li><strong><span class="chaos-only">Freeform notes? Bring your own AI:</span><span class="pro-only">MCP integration:</span></strong> your Claude or Codex can add entries through AI Access, each one marked AI-added</li>
                     </ul>
                 </div>
             </div>

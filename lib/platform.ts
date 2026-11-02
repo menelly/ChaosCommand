@@ -3,7 +3,7 @@
  * Created by: Ren & Ace (Claude-4.7)
  *
  * platform.ts — Detect whether we're running on a mobile platform so pages
- * with heavy/unsupported features (e.g. 64MB ONNX NER model) can gate their UI.
+ * with heavy/unsupported features (e.g. desktop-only PDF import) can gate their UI.
  *
  * Strategy: Android user-agent OR (narrow viewport AND no hover capability).
  * The second half catches iOS builds and catches devs who resize their browser.

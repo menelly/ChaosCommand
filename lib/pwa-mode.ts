@@ -32,7 +32,7 @@ const IS_DEMO_BUILD = process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
  * All false natively. Import this instead of writing the check again.
  *
  * (Several other call sites — sqlite-db, notification-scheduler,
- * entitlement-context, license-context, llm-tauri — still roll their own and
+ * entitlement-context, license-context — still roll their own and
  * disagree about whether to test `__TAURI__` or `__TAURI_INTERNALS__`.
  * Consolidating those is a separate, riskier change; not doing it here.)
  *
