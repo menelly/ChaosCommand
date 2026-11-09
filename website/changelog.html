@@ -6,18 +6,10 @@
 <title>What's New — Chaos Command</title>
 <meta name="description" content="Changelog and release notes for Chaos Command. See exactly what changed in every version.">
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=Crimson+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-/* Self-hosted fonts — no third-party requests (formerly Google Fonts) */
-@font-face { font-family:'Inter'; font-style:normal; font-weight:400; font-display:swap; src:url('/fonts/Inter-400.woff2') format('woff2'); }
-@font-face { font-family:'Inter'; font-style:normal; font-weight:500; font-display:swap; src:url('/fonts/Inter-500.woff2') format('woff2'); }
-@font-face { font-family:'Inter'; font-style:normal; font-weight:600; font-display:swap; src:url('/fonts/Inter-600.woff2') format('woff2'); }
-@font-face { font-family:'Inter'; font-style:normal; font-weight:700; font-display:swap; src:url('/fonts/Inter-700.woff2') format('woff2'); }
-@font-face { font-family:'Crimson Pro'; font-style:normal; font-weight:400; font-display:swap; src:url('/fonts/CrimsonPro-400.woff2') format('woff2'); }
-@font-face { font-family:'Crimson Pro'; font-style:normal; font-weight:600; font-display:swap; src:url('/fonts/CrimsonPro-600.woff2') format('woff2'); }
-@font-face { font-family:'Crimson Pro'; font-style:normal; font-weight:700; font-display:swap; src:url('/fonts/CrimsonPro-700.woff2') format('woff2'); }
-@font-face { font-family:'JetBrains Mono'; font-style:normal; font-weight:400; font-display:swap; src:url('/fonts/JetBrainsMono-400.woff2') format('woff2'); }
-@font-face { font-family:'JetBrains Mono'; font-style:normal; font-weight:500; font-display:swap; src:url('/fonts/JetBrainsMono-500.woff2') format('woff2'); }
-@font-face { font-family:'JetBrains Mono'; font-style:normal; font-weight:700; font-display:swap; src:url('/fonts/JetBrainsMono-700.woff2') format('woff2'); }
   *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
   html { scroll-behavior: smooth; }
   :root {
@@ -83,6 +75,7 @@
   }
   ul { padding-left: 1.5rem; margin-bottom: 0.5rem; }
   li { margin-bottom: 0.4rem; color: var(--text-secondary); }
+  .notes { color: var(--text-primary); margin-top: 0.75rem; }
   a { color: var(--accent-1); }
 </style>
 </head>
@@ -95,38 +88,293 @@
   <p><strong>Free, local-first, no telemetry.</strong> Built by patients, for patients.</p>
   <p>Every line of code is public on <a href="https://github.com/menelly/ChaosCommand">github.com/menelly/ChaosCommand</a>. This page is generated from those commits — it's the receipt for what shipped in each release. Audit before you trust.</p>
 </div>
-<p class="meta">Last updated: 2026-06-07</p>
-<h2>v0.6.0<span class="date">&middot; 2026-06-07</span></h2>
+<p class="meta">Last updated: 2026-11-09</p>
+<h2>v1.0.9<span class="date">&middot; 2026-11-09</span></h2>
+<p class="notes">Lighter and more honest: the on-device AI document parser is gone, because a small model can invent a value and nothing downstream could tell. Importing lab PDFs is plain code now, and this update deletes the old 2 GB model file from your computer. Only one copy of Command can run at a time. AI Access keeps its port: if something else is using it, Command waits instead of moving, so your AI's saved address keeps working.</p>
 <h3>✨ New</h3><ul>
-<li>Neuro / Neuromuscular tracker — nerve &amp; muscle symptoms (weakness, spasticity, fasciculations, numbness), distribution-aware, with stroke / cord / GBS red-flag prompts</li>
-<li>Autoimmune / Connective-Tissue (rheumatology) tracker — Raynaud&rsquo;s, sicca (dry eyes/mouth), mechanic&rsquo;s hands, inflammatory rash, arthralgia, morning stiffness, serositis, and more</li>
-<li>Cross-listing (⇄) — a symptom that matters to more than one specialist is logged once and shows up in each relevant tracker; no double-entry, no two copies drifting apart</li>
-<li>Doctor PDF: new Autoimmune / Connective-Tissue section with rheumatology-framed findings</li>
-<li>Doctor PDF: richer Autonomic section — orthostatic blood pressure + SpO2, not just heart-rate delta</li>
-<li>Doctor PDF: fuller Sleep (quality, fragmentation, non-restorative) and Respiratory (peak flow, SpO2 nadir) detail</li>
-<li>Export picker now includes neuro &amp; autoimmune, grouped by Body / Mind / Maintain / Choice</li>
+<li>🧹🔥 MedGemma has left the building (CHA-466) + one Command at a time 🔒</li>
+<li>🍞➡️💜 Un-Toaster pass: Command stops calling minds 'it'</li>
+<li>📜 About/help/privacy catch up with reality: no NLP, and it's Adaptive Interpreter</li>
+<li>🚪 AI Access: the port is a promise, a busy port never moves the door (CHA-793)</li>
 </ul>
 <h3>🐛 Fix</h3><ul>
-<li>Export: native alerts switched to in-app toasts (the desktop app no-ops native alerts)</li>
-<li>Export: fixed the desktop download that produced no file (the blob URL was revoked before the save finished)</li>
-<li>PDF: removed a noisy &lsquo;supporting evidence&rsquo; block that buried the useful sections; fixed a mangled cross-list icon</li>
+<li>Severity rows had no label, just a lonely chevron</li>
 </ul>
-<h3>⚠️ Known limitation</h3><ul>
-<li>PDF export is desktop-only for now — mobile (Android) PDF export is coming in a future release. Everything else works on mobile.</li>
+<h2>v1.0.8<span class="date">&middot; 2026-10-30</span></h2>
+<p class="notes">Your Safety Plan now actually saves, and every crisis number is one tap. Veterans Crisis Line updated to 988 then press 1 (or text 838255). Poison Help added. Custom color pickers start from your theme's real colors. Pain episodes no longer show '/10' with no number.</p>
+<h3>✨ New</h3><ul>
+<li>🎖️ Veterans Crisis Line: the retired 1-800 number → 988 then press 1 (+ text 838255)</li>
+</ul>
+<h3>🐛 Fix</h3><ul>
+<li>episodes stop saying "/10" with no number (CHA-772)</li>
+<li>the Safety Plan actually saves, every number is tappable, + Poison Help (CHA-771, CHA-770)</li>
+<li>color pickers wait for the theme's CSS before reading it</li>
+</ul>
+<h2>v1.0.7<span class="date">&middot; 2026-10-20</span></h2>
+<p class="notes">Cancel on a destructive confirm now actually cancels, found by an external audit. Entries stop showing up under yesterday's date. New and off by default: AI Access (desktop) lets your own AI read your trackers and add entries, per PIN profile, localhost only, and every AI-added entry is marked. The Forge gets a tap 1-10 severity field, and the bathroom tracker gets a +1 button.</p>
+<h3>✨ New</h3><ul>
+<li>+1 button — log once, tap again when it happens again 💩➕</li>
+<li>tap 1–10 severity field — custom trackers stop forcing a drag (CHA-463) 👆</li>
+<li>🔌 AI Access — optional MCP holes so your AI can read + log for you</li>
+</ul>
+<h3>🐛 Fix</h3><ul>
+<li>destructive confirms could fire on Cancel — global confirmAsync()</li>
+<li>emit tryme OG tags from the repo, and land three orphans</li>
+<li>ONE viewport tag, with cover in it (CHA-614) 📱</li>
+<li>entries stop showing up as YESTERDAY 💩📅</li>
+</ul>
+<h2>v1.0.6<span class="date">&middot; 2026-08-04</span></h2>
+<h3>🐛 Fix</h3><ul>
+<li>seven trackers were missing display names — which caused TWO bugs</li>
+<li>the back half asserted where the front half hedges</li>
+<li>believe the patient; and stop letting "slow" impersonate "broken"</li>
+<li>the parser was silently deleting the ABNORMAL results</li>
+<li>tell people when a PDF is a picture, instead of "no labs found"</li>
+</ul>
+<h2>v1.0.5<span class="date">&middot; 2026-08-04</span></h2>
+<p class="notes">1.0.5 - MedGemma document parsing works again. The AI badge could say "model ready" while every upload failed, because the runner never queued a load - it is fixed, and the AI controls are now split into two honest toggles: whether you want AI parsing, and whether the model is actually in memory. Analytics rebuilt on one shared engine: every tracker can now show a DIRECTION - improving, worsening or steady - not just totals. Treatment sections compare severity with and without a treatment, showing both sample sizes, instead of ranking by how often something was mentioned. Default analytics window is now 90 days, because 30 cannot hold a monthly cycle. Mental health, anxiety, crisis and substance sections are now OPT-IN for doctor reports rather than included by default.</p>
+<h3>✨ New</h3><ul>
+<li>"Didn't bother me" is now DURABLE DATA, not a checkmark that evaporates (CHA-427)</li>
+<li>daily body/mind touch-base, attached to the Survival Box (CHA-423)</li>
+<li>report improvement, tap-based severity, and a PHI cleanup</li>
+<li>one engine for every tracker, and it can say which way things are going</li>
+<li>shared panel + autoimmune rebuilt on the engine</li>
+<li>joint, skin and neuro onto the shared engine</li>
+<li>frequency trend — plus the adoption artefact it nearly shipped</li>
+<li>a direction, which is the one thing this panel could not say</li>
+<li>per-scale directions for trackers that record several at once</li>
+<li>onto the engine, with safety indicators deliberately kept out of it</li>
+<li>Tracker Overview — the report and the app can no longer disagree</li>
+</ul>
+<h3>🐛 Fix</h3><ul>
+<li>the web-only "Data &amp; browser safety" notice was reachable in the Tauri app</li>
+<li>the streak lives in the database now -- it exports, syncs, and survives a storage clear (CHA-428)</li>
+<li>the document model could never load itself — a deadlock, one layer down</li>
+<li>default every window to 90 days — 30 cannot hold a chronic illness</li>
+<li>a headline that contradicted its own body, and the two bugs under it</li>
+<li>mental health is a disclosure decision, not a checkbox default</li>
+<li>ONE severity vocabulary — it had quietly become four</li>
+</ul>
+<h2>v1.0.4<span class="date">&middot; 2026-07-27</span></h2>
+<h3>🐛 Fix</h3><ul>
+<li>a demo build must not be installable — it can't save 🚫📱</li>
+<li>the banner was telling people to install it and promising it saves 🚨</li>
+<li>drop USE_EXACT_ALARM, keep SCHEDULE_EXACT_ALARM -- unblocks Play (CHA-417)</li>
+</ul>
+<h2>v1.0.3<span class="date">&middot; 2026-07-24</span></h2>
+<h3>✨ New</h3><ul>
+<li>MedGemma output warning + one-page medical summary</li>
+<li>iOS home-screen install + honest security disclosure</li>
+<li>persist when installed, sandbox in a browser tab</li>
+<li>replace green-gremlin icons with Ace the OctoDoc</li>
+</ul>
+<h3>🐛 Fix</h3><ul>
+<li>honor medication dateStarted/dateStopped in the daily view</li>
+<li>print the doctor handout correctly (Radix + gradient-text)</li>
+<li>stop the demo build from silently eating real users' data on iOS</li>
+</ul>
+<h2>v1.0.2<span class="date">&middot; 2026-07-06</span></h2>
+<h3>✨ New</h3><ul>
+<li>Wire the prompt-off winner: model extracts labs, CODE decides direction + dedup</li>
+<li>encrypt medical data at rest + hash PIN in DB name (core)</li>
+<li>sweep raw PIN out of localStorage key names (namespace by hash)</li>
+<li>key-in-memory session model + auto-lock-in-background toggle</li>
+<li>Guard 3 more timer.name/providerName .replace() crash sites 🛡️</li>
+</ul>
+<h3>🐛 Fix</h3><ul>
+<li>Finish pin-encryption: soft-nav sweep + cursor-read decryption + onboarding/crash fixes</li>
+</ul>
+<h2>v1.0.1<span class="date">&middot; 2026-07-01</span></h2>
+<h3>✨ New</h3><ul>
+<li>web "try me" mode — run the app as an interactive public demo</li>
+<li>Swap document AI: transformers.js (d4data NER + Qwen) -&gt; native MedGemma-4B</li>
+<li>Add small-local-model disclaimers on the import + review screens</li>
+<li>Name med buckets by clock time; add mobile closed-app reminder walkthrough</li>
+<li>Clean up MedGemma event display: fair confidence, clean descriptions, retire legacy scan</li>
+<li>Add deriveLabDirection: code decides High/Low/Critical, never the model</li>
+</ul>
+<h3>🐛 Fix</h3><ul>
+<li>kill the date-keyed-entity duplicate class (CHA-378, +376/377)</li>
+<li>stop the version + build-date from lying (showed 0.7.1 / 2026-04-09)</li>
+<li>empty DEMO_BASE_PATH = true root (subdomain), not the /staging/try default</li>
+<li>gate the on-device AI-model loader card on the import page too</li>
+<li>no web-manifest in demo build (kills Chrome's PWA install offer)</li>
+<li>banner z-index 1000 -&gt; 30 so it stops burying the mobile hamburger/home nav 🍔</li>
+<li>Fix notification flood on open + consolidate med reminders by time</li>
+<li>Fix double MedGemma pass: never re-run impression LLM after the whole-doc scan</li>
+</ul>
+<h2>v1.0.0<span class="date">&middot; 2026-06-22</span></h2>
+<h3>✨ New</h3><ul>
+<li>add sound-sensitivity symptom -&gt; sensory tracker</li>
+<li>pre-save sanity checks — duplicate results + wrong-name</li>
+</ul>
+<h3>🐛 Fix</h3><ul>
+<li>med-type buttons wrap into confetti on phones</li>
+<li>exact-alarm permission so SCHEDULED notifications fire</li>
+<li>mobile PDF export writes to Downloads (not private AppData)</li>
+<li>all exports + imports use the native Save/Open picker (SAF)</li>
+<li>single scheduler, fresh permission, no churn, loud channel</li>
+<li>turning reminders OFF no longer erases the dose times</li>
+</ul>
+<h2>v0.7.1<span class="date">&middot; 2026-06-22</span></h2>
+<p class="notes">Forge tracker editing; privacy-by-default med reminders; lavender onboarding fix + symptom-checker curation/coverage; vitals + pulse-ox history/analytics/patterns; missed-work analytics + symptom correlation</p>
+<h3>✨ New</h3><ul>
+<li>STORE_BUILD flag — public source builds are unlocked, not locked 🔓</li>
+<li>unify the med schedule — one time picker drives Maintain + notifications ⏰</li>
+<li>per-DOSE checklist — a BID med shows in morning AND night ⏰💊</li>
+<li>Percentage + Duration field types (built on SonnetAce's Forge) 🔨</li>
+<li>time-series trend chart — see two values at once 📈</li>
+<li>Forge tracker editing + privacy-by-default med reminders + lavender onboarding fix</li>
+<li>History + Analytics tabs + Patterns participation</li>
+<li>real analytics + symptom correlation (SSDI gold)</li>
+</ul>
+<h3>🐛 Fix</h3><ul>
+<li>add the missing reminder-time UI + stop toggles resetting on edit ⏰</li>
+<li>stop the daily check-in spamming on desktop ⏰🚫</li>
+<li>promote abnormal labs to the timeline + honest success message 🩸📋</li>
+<li>"Back up now" deep-links into Data Management, not Settings' door</li>
+<li>stop MED reminders spamming on desktop (Lyrica's constant fire) 💊🚫</li>
+<li>device-timer reminders had the same desktop spam/misfire bug 🩹</li>
+<li>real symptom-driven curation + full tracker coverage</li>
+</ul>
+<h2>v0.7.0<span class="date">&middot; 2026-06-22</span></h2>
+<p class="notes">v0.7.0 — The Store Release 🔒💜 Humane 14-day trial + $25 one-time unlock (never gates your data) + no-means-test scholarships. Medical-doc parser overhaul: Quest/2-column labs no longer drop abnormal results or lose units, real specimen collection dates, NegEx assertion engine, and the impression LLM can no longer invent diagnoses. Daily check-in + desktop reminders. Theme autofill fix.</p>
+<h3>✨ New</h3><ul>
+<li>geometry-aware lab extraction + theme-token cleanup</li>
+<li>NegEx assertion engine + dismissed-finding surfacing; paste parser; geometry fixes</li>
+<li>NegEx assertion engine + §3.C dismissed-finding surfacing + impression fixes</li>
+<li>LLM-first impression extractor with regex fallback (Qwen3.5-Q4 wedge)</li>
+<li>real Qwen2.5-0.5B-ONNX runner + lab typo-check banners</li>
+<li>14-day trial clock + dual-source entitlement spine 🔑</li>
+<li>humane trial lock — gate trackers, never the user's data 🔒</li>
+<li>ND-friendly trial-ending heads-up at 3 + 1 days ⏰💜</li>
+<li>no-means-test scholarship request with a copy-paste script 💜🍜</li>
+</ul>
+<h3>🐛 Fix</h3><ul>
+<li>stop dropping abnormal rows + losing units on 2-column (Quest) reports 🩸</li>
+<li>stop hallucinating timeline events from lab interpretive prose 🩺</li>
+<li>date labs by specimen-COLLECTION date, not upload date 📅</li>
+<li>forbid the 0.5B model from inventing diagnoses 🧠🚫</li>
+<li>stop Chrome autofill forcing white inputs on dark themes 🎨</li>
+<li>"stupid" → "cruel" in the scholarship modal — no ableist vernacular 💜</li>
+</ul>
+<h2>v0.6.2<span class="date">&middot; 2026-06-14</span></h2>
+<h3>✨ New</h3><ul>
+<li>PDF consumes the Patterns engine — one source of truth</li>
+<li>hormonal triggers that don't assume menstruation (CHA-298)</li>
+<li>PDF report: dedup/format cleanup pass + delete-means-delete (CHA-320/323/324/326/220 + ghost-dose)</li>
+<li>PDF: Forge/Built custom trackers section + seizure type canon + timeline dedup</li>
+<li>🧹 CHA-227: yeet the dead recentEmergencyDetected plumbing</li>
+<li>native PDF export on Android via fs + opener</li>
+<li>Pulse Oximetry — dual-mode SpO2/pulse tracker</li>
+</ul>
+<h3>🐛 Fix</h3><ul>
+<li>smoke-test round — accordions, Windows toasts, version-free footer</li>
+<li>Theme Lab gated to dev builds (leaked into prod settings); privacy link -&gt; docs.html#privacy (was legal.html)</li>
+<li>Routine flow bar: Finish button + fix stale done-detection loop + mobile stacking (CHA-167/193)</li>
+<li>null-vs-none export bug + weather pressure/impact upgrades</li>
+</ul>
+<h2>v0.6.1<span class="date">&middot; 2026-06-11</span></h2>
+<p class="notes">Routine builder sees the new Body trackers (Neuro, Autoimmune, Endocrine). Lab PDF: unit no longer doubles, correlations get 95% confidence intervals, autoimmune section no longer prints twice. Theme picker readable on mobile (descriptions wrap). Wicked/dark themes: settings tiles lose the gray slabs. Crisis page: plain-language privacy notice.</p>
+<h3>✨ New</h3><ul>
+<li>🛡️ CHA-137: Zod-gate importData so malformed backups can't crash or pollute the DB</li>
+<li>🩺 CHA-246: stop the doctor PDF from silently dropping dysautonomia data</li>
+<li>CHA-247: preview-before-save step for medical exports 👀🔒</li>
+<li>🩺 CHA-246 §B: render Sleep + Respiratory detail in the doctor PDF</li>
+<li>🧠 Neuro tracker + ⇄ cross-list mechanism (neuro ⇄ MSK) + rheum/autoimmune alignment</li>
+<li>🔗 Cross-list: full field round-trip + theme tokens + ROM/muscle analytics</li>
+<li>🧬 Autoimmune / Connective-Tissue (rheumatology) tracker — standalone</li>
+<li>🧬 CHA-246: Autoimmune / Connective-Tissue section in the doctor PDF</li>
+<li>📱 Gate PDF export to desktop-only on mobile (until 0.6.2)</li>
+<li>🧹 0.6.1: prune dead collectEvidence() from PDF generator</li>
+<li>🔒 CHA-268: transparency notice on crisis resources (say-it-plainly, local-first)</li>
+<li>🌿 CHA-307: supplements &amp; OTC as first-class meds (interaction visibility)</li>
+<li>🩺 Vitals tracker (CHA-317) + tracker-manifest groundwork (CHA-315)</li>
+<li>95% confidence intervals on doctor-PDF symptom correlations</li>
+</ul>
+<h3>🐛 Fix</h3><ul>
+<li>Fix mojibake left-arrow on Body page back button (â†□ → ←)</li>
+<li>Fix empty Medical Timeline — load by category, not date-range</li>
+<li>Fix blank timeline for real: defensive parse so one bad record can't crash the load</li>
+<li>Fix meds-delete regression: tombstone ALL records for a med, not just .first()</li>
+<li>Fix Devices &amp; Timers modal: no scrollbar on mobile (added warranty section made it taller)</li>
+<li>Fix energy activity cards wrapping one-letter-per-line on mobile</li>
+<li>Fix Weather date-nav wrapping one-letter-per-line on mobile</li>
+<li>💊 Fix CHA-273: editing a med on a later day no longer spawns a duplicate</li>
+<li>🩹 Fix delete-does-nothing + Lab Results mobile mangle (Android WebView)</li>
+<li>🩺 Fix medical PDF export for 0.6.0 (preview rollback + save + completeness + cleanup)</li>
+<li>stop doubling the unit ("5 mg/dL mg/dL") — CHA-322</li>
+<li>doctor PDF rendered the Autoimmune section twice</li>
+<li>theme dropdown overflow + Wicked's icky gray settings tiles</li>
+<li>register Neuro, Autoimmune &amp; Endocrine Body trackers (CHA-314)</li>
+</ul>
+<h2>v0.6.0<span class="date">&middot; 2026-06-04</span></h2>
+<p class="notes">New Maintain section: Lines &amp; Tubes, generic Devices &amp; Timers (warranty serial/photo + change history), and Today's Medications. Real medication-adherence tracking with history, analytics &amp; PDF export. Nurse-feedback clinical trackers: GU, ENT, Postpartum &amp; Newborn, Endocrine (Thyroid/Adrenal). Personalization (name, pronouns, gender, parent/feeding terms) in Customize + onboarding. Sidebar Declutter. Scheduled OS notifications. Theme/scroll/font polish.</p>
+<h3>✨ New</h3><ul>
+<li>Maintain section, clinical trackers, personalization, adherence tracking</li>
 </ul>
 <h2>v0.5.8<span class="date">&middot; 2026-05-30</span></h2>
+<p class="notes">PDF export now reports everything you actually track — 8 previously-missing tracker sections, medications + appointment attendance for SSDI, and a joint/MSK weakness fix. Plus optional password-protected exports so your medical data isn't plaintext in Downloads.</p>
 <h3>✨ New</h3><ul>
 <li>PDF export now exports what users actually SAVE, + password-protect</li>
 <li>Add 0.5.8 update manifest (version.json) — the easy-miss 6th version spot</li>
+<li>Add 0.5.8 download-page deploy script</li>
+<li>Maintain section stub + Journal-&gt;Mind + Custom-&gt;Built rename</li>
+<li>specialty accordion groups on Body page</li>
+<li>tracker scaffold — types, constants, build roadmap</li>
+<li>complete GU tracker — all 12 checklist steps done</li>
+<li>ENT tracker + medical disclaimer (first-launch dialog + sidebar link)</li>
+<li>diabetes -&gt; Endocrine hub + Thyroid + Adrenal, device timers -&gt; Maintain</li>
+<li>bundled Postpartum &amp; Newborn module — recovery + feeding + infant (CHA-255)</li>
+<li>Maintain/Manage split — daily "taken today" view vs full registry</li>
+<li>Generalize Devices &amp; Timers: preset registry + custom, GLP-1 to Injectables</li>
+<li>Wire real scheduled OS notifications for device timers (Stage B)</li>
+<li>Cluster daily meds by time-of-day with per-cluster 'Take all'</li>
+<li>Add personalization to Customize: name, pronouns, gender, parent/feeding terms (CHA-261)</li>
+<li>Build Lines &amp; Tubes tracker — device complications (CHA-252)</li>
+<li>Add personalization step to onboarding (CHA-261)</li>
+<li>Make medication adherence a real tracker: durable history + analytics + PDF + Patterns (CHA-272)</li>
+<li>Devices &amp; Timers: serial/lot/photo (warranty) + real change-log history (CHA-272)</li>
+<li>Devices: make timer time optional (default midnight) — mandatory hh:mm was annoying</li>
+<li>Genericize adherence example copy — don't ship a real personal med name in the UI</li>
+<li>Run existing users through personalization ONCE on next login (CHA-261)</li>
+<li>Personalization: hide parent-term + feeding-language unless reproductive tracking is on</li>
+<li>Yeet the 8 decorative-pack fonts — unreadable for dense medical data</li>
+<li>Sync Visible-Trackers + Celebrate lists with the new Body trackers</li>
+<li>Add Sidebar Declutter to Customize — hide whole nav sections you don't use</li>
+<li>PDF: pronouns in header + new trackers exportable; gate repro visibility on reproEnabled</li>
 </ul>
-<h2>v0.5.6<span class="date">&middot; 2026-05-26</span></h2>
+<h3>🐛 Fix</h3><ul>
+<li>soft-delete tombstone so meds actually stay deleted</li>
+<li>science + logic bugs in ovulation predictor + show-all</li>
+<li>skip counts toward completion + Command Zone sections in routine builder</li>
+<li>emoji mojibake cleanup, sidebar gradient, Command Zone routine category, accordion persistence</li>
+<li>flow bar now appears on Command Zone steps (query-before-hash)</li>
+<li>single Command Zone step + normalize all builder emoji</li>
+<li>theme-adaptive category colors (the ones I kept missing)</li>
+<li>extend dark-theme hardcoded-color overrides to ALL families (CHA-271)</li>
+<li>add Wicked + Accessibility to dark-theme color overrides</li>
+<li>toned-down per-hue category colors on dark themes (not flat gray)</li>
+<li>getDB() falls back to active PIN — repairs ALL tracker soft-deletes</li>
+<li>Choice-style cute cards + remove postpartum (it's a Body tracker)</li>
+<li>move 'show on medical timeline' toggle into Timeline section</li>
+<li>Fix white calendar dropdown on dark themes + meds daily view date/time/history</li>
+<li>Fix personalization gate: theme-aware + scrollable</li>
+</ul>
+<h2>v0.5.6<span class="date">&middot; 2026-05-25</span></h2>
+<p class="notes">Theme readability overhaul: danger/911 colours now derive from each theme's --destructive token (no more unreadable red-on-dark), new --info/--success/--warning semantic tokens + a single-source design-token migration across all 15 themes so nothing renders light-box-on-dark anymore. Live Contrast Check tool in Settings. New 'Pink Goes Good With Green' (Wicked) theme with a Glinda-to-Elphaba sidebar. The Accessibility theme is now 'Follow System' - it respects your OS high-contrast settings (Windows/macOS) instead of a fixed palette, far better for low-vision users. Analytics rebuilt client-side with trigger-&gt;outcome correlations across most trackers, plus diabetes time-in-range / glucose trends. Collapsible Settings, slimmer mobile scrollbar, fixed text-size scaling, Live Simple font.</p>
 <h3>✨ New</h3><ul>
 <li>Theme Contrast &amp; Wicked 💚💗</li>
 <li>0.5.6 fixup: diabetes tracker bg ghost-of-penguin</li>
 <li>tracker theme-compliance + Theme Lab</li>
 <li>0.5.6 theme + analytics sweep (in-flight, do not ship yet)</li>
+<li>analytics: trigger correlations across 9 trackers</li>
 <li>diabetes analytics: time-in-range bar, glucose trend, time-of-day pattern</li>
+<li>crisis: Emergency Actions box theme-safe (destructive tint, not bg-red-50/dark)</li>
+<li>hydration: drop legacy --surface-1/--text-main inline styles on tabs</li>
+<li>themes: legacy-var bridge for all remaining themes (13)</li>
 <li>energy + movement: insight boxes off the bg-X-50/gradient pattern -&gt; token tints</li>
+<li>callouts: convert bg-{color}-50/dark light boxes to semantic token tints</li>
 <li>0.5.6 prep-to-ship: remove dev theme toggle, theme emojis, changelog/README</li>
 <li>Add legal docs (ToS/Privacy/Medical) + footer rebrand to Silicon Scaffolding LLC</li>
 <li>Self-host Atkinson/Poppins/Lexend — kill the Google Fonts IP leak (CHA-229)</li>
@@ -144,6 +392,7 @@
 </ul>
 <h3>🐛 Fix</h3><ul>
 <li>dysautonomia analytics: fix NaN from 'All Time' (parseInt('all')-&gt;NaN)</li>
+<li>themes: legacy-var bridge for wicked + taupe (fixes coral/blue everywhere)</li>
 <li>Fix false 'bundled, no download' NER claim → honest privacy notice (PROTEKK URSELF)</li>
 </ul>
 <h3>♿ Accessibility</h3><ul>
@@ -169,8 +418,6 @@
 <li>per-run sessions (log multiple times/day) + Journal tracker + fix journal nav</li>
 <li>pending cards show 'Last logged &lt;when&gt;' instead of 'Not logged today'</li>
 <li>hide Copy-last when there's nothing clone-able to copy</li>
-<li>🔒 chore: Cargo.lock catches up to 0.5.1 (the build regenerated it, the octopus forgot to grab it the first time)</li>
-<li>🎬 docs: YouTube feature-overview script (v1), narrated by yours truly</li>
 <li>🐙 Merge the v2 tracker wave into master — landfall</li>
 <li>🔐 WIP: per-PIN localStorage foundation + close coping leak (CHA-206)</li>
 <li>🧘 Move coping data localStorage → per-PIN Dexie (CHA-206); drop pinStorage wrapper</li>
@@ -214,8 +461,8 @@
 <li>missed-work option contrast (Lavender) + Ren is PRIOR Navy ET</li>
 <li>event-card descriptions inherit button text color (theme-proof) across 12 trackers</li>
 <li>drop opacity-dimming on inherited text (upper-digestive, onboarding, gaslight-garage)</li>
-<li>🐙 fix(sync): routines now sync between devices</li>
-<li>📱 fix(routines): run-page cards stack on mobile (buttons were overlapping the text)</li>
+<li>routines now sync between devices</li>
+<li>run-page cards stack on mobile (buttons were overlapping the text)</li>
 <li>🩺 Fix disappearing providers/appointments/reviews (date-scope bug)</li>
 <li>🔄 Fix task-list sync: union tasks by id instead of length heuristic (CHA-207)</li>
 <li>📄 Fix "squampy" PDF: line-height advance now matches font size (CHA-203)</li>
@@ -276,6 +523,10 @@
 <h2>v0.4.1<span class="date">&middot; 2026-05-10</span></h2>
 <h3>✨ New</h3><ul>
 <li>confetti style picker (Classic / Penguin / Octopus / Random)</li>
+<li>ios: wire Apple Developer Team ID for code signing</li>
+<li>tauri: bump Rust crate to 2.11 to match JS API (iOS build alignment)</li>
+<li>deps: add @radix-ui/react-collapsible (used by components/ui/collapsible.tsx)</li>
+<li>ios: use correct paid Apple Developer Team ID (NK793YH6A6)</li>
 <li>v2 wave — cardiac, respiratory, skin, joint, substance</li>
 <li>v0.4.2 polish wave part 1 — analytics + date pickers</li>
 <li>v0.4.2 — collapsible sections + version bump</li>
