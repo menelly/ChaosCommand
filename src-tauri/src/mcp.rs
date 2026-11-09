@@ -42,6 +42,8 @@ const DEFAULT_PORT: u16 = 47320;
 const MAX_BODY_BYTES: usize = 1024 * 1024; // 1 MiB is plenty for a JSON-RPC call
 const FRONTEND_TIMEOUT: Duration = Duration::from_secs(20);
 const CONFIG_FILE: &str = "mcp_access.json";
+/// How often to re-try the saved port when something else is sitting on it.
+const PORT_RETRY_EVERY: Duration = Duration::from_secs(2);
 
 // =============================================================================
 // 📦 PERSISTED CONFIG — so "on" survives a restart and the token stays the same
@@ -72,6 +74,10 @@ pub struct McpState {
     running: AtomicBool,
     stop: Mutex<Arc<AtomicBool>>,
     bound_port: Mutex<Option<u16>>,
+    /// Plain-language reason the door isn't open yet. Shown in Settings.
+    port_error: Mutex<Option<String>>,
+    /// True while the background "keep trying the saved port" thread is alive (one at a time).
+    retrying: Arc<AtomicBool>,
     app_handle: Mutex<Option<AppHandle>>,
     next_id: AtomicU64,
     /// Tool calls waiting for the frontend's answer, keyed by request id.
@@ -91,6 +97,8 @@ impl McpState {
             running: AtomicBool::new(false),
             stop: Mutex::new(Arc::new(AtomicBool::new(false))),
             bound_port: Mutex::new(None),
+            port_error: Mutex::new(None),
+            retrying: Arc::new(AtomicBool::new(false)),
             app_handle: Mutex::new(None),
             next_id: AtomicU64::new(1),
             pending: Mutex::new(HashMap::new()),
@@ -127,31 +135,65 @@ impl McpState {
 // =============================================================================
 
 /// Called at app start (only does anything if the user left it on) and from the toggle.
+///
+/// 🚪 THE PORT IS A PROMISE. The user pasted this address into their AI's settings, and they may
+/// not know how to change it. So a busy port never moves the door: we keep trying the saved port in
+/// the background, say so in Settings, and only change it when the user presses "Move to a new
+/// port" (CHA-793: a reboot once silently moved a working install to a random port, and the AI
+/// just got "connection refused" while the app looked perfectly fine).
 pub fn start_if_enabled(state: &Arc<McpState>) -> Result<(), String> {
-    let enabled = state.config.lock().map_err(|e| e.to_string())?.enabled;
-    if enabled && !state.running.load(Ordering::SeqCst) {
-        start(state)?;
-    }
-    Ok(())
-}
-
-fn start(state: &Arc<McpState>) -> Result<(), String> {
     // Desktop only, enforced here too: the Settings card can flash on a phone's first render.
     if cfg!(mobile) {
         return Err("AI Access is only available in the desktop app.".into());
     }
+    let enabled = state.config.lock().map_err(|e| e.to_string())?.enabled;
+    if enabled && !state.running.load(Ordering::SeqCst) {
+        if let Err(reason) = start(state) {
+            if let Ok(mut e) = state.port_error.lock() { *e = Some(reason); }
+            keep_trying_saved_port(state);
+        }
+    }
+    Ok(())
+}
+
+/// 🔁 Something else has the port. Knock every couple of seconds until it's free, until the user
+/// turns AI Access off, or until they move to a new port. Costs next to nothing.
+fn keep_trying_saved_port(state: &Arc<McpState>) {
+    if state.retrying.swap(true, Ordering::SeqCst) {
+        return; // one is already on it
+    }
+    let for_thread = Arc::clone(state);
+    let spawned = std::thread::Builder::new()
+        .name("chaos-mcp-port-retry".into())
+        .spawn(move || {
+            loop {
+                std::thread::sleep(PORT_RETRY_EVERY);
+                let enabled = for_thread.config.lock().map(|c| c.enabled).unwrap_or(false);
+                if !enabled || for_thread.running.load(Ordering::SeqCst) || start(&for_thread).is_ok() {
+                    break;
+                }
+            }
+            if let Ok(mut e) = for_thread.port_error.lock() { *e = None; }
+            for_thread.retrying.store(false, Ordering::SeqCst);
+        });
+    if spawned.is_err() {
+        state.retrying.store(false, Ordering::SeqCst);
+    }
+}
+
+fn start(state: &Arc<McpState>) -> Result<(), String> {
     let preferred = state.config.lock().map_err(|e| e.to_string())?.port;
-    // Retry the same port briefly: a just-switched-off listener needs ~150 ms to let go,
-    // and a port that changes under the user would break their saved AI config.
+    // Retry the same port briefly: a just-switched-off listener needs ~150 ms to let go.
     let mut first_try = TcpListener::bind(("127.0.0.1", preferred));
     for _ in 0..6 {
         if first_try.is_ok() { break; }
         std::thread::sleep(Duration::from_millis(100));
         first_try = TcpListener::bind(("127.0.0.1", preferred));
     }
-    let listener = first_try
-        .or_else(|_| TcpListener::bind(("127.0.0.1", 0)))
-        .map_err(|e| format!("Couldn't open the AI access port: {}", e))?;
+    let listener = first_try.map_err(|_| format!(
+        "Port {} is being used by something else on this computer. Chaos Command will keep trying it, so your AI's saved address will work again once it's free.",
+        preferred
+    ))?;
     let port = listener.local_addr().map_err(|e| e.to_string())?.port();
     // Non-blocking so the loop can notice `stop` and actually release the port.
     listener.set_nonblocking(true).map_err(|e| e.to_string())?;
@@ -162,6 +204,7 @@ fn start(state: &Arc<McpState>) -> Result<(), String> {
     }
     state.save()?;
     *state.bound_port.lock().map_err(|e| e.to_string())? = Some(port);
+    if let Ok(mut e) = state.port_error.lock() { *e = None; }
 
     // A fresh stop flag for this listener generation; the old one (if any) is already tripped.
     let stop = Arc::new(AtomicBool::new(false));
@@ -513,6 +556,10 @@ pub struct McpStatus {
     enabled: bool,
     running: bool,
     port: Option<u16>,
+    /// The port saved in settings: the address the user's AI was given, open or not.
+    saved_port: u16,
+    /// Plain-language reason the door isn't open yet, if there is one.
+    port_error: Option<String>,
     token: String,
     url: Option<String>,
 }
@@ -524,6 +571,8 @@ fn status_of(state: &Arc<McpState>) -> McpStatus {
         enabled: cfg.enabled,
         running: state.running.load(Ordering::SeqCst),
         port,
+        saved_port: cfg.port,
+        port_error: state.port_error.lock().ok().and_then(|e| e.clone()),
         token: cfg.token,
         url: port.map(|p| format!("http://127.0.0.1:{}/mcp", p)),
     }
@@ -547,6 +596,27 @@ pub async fn mcp_set_enabled(enabled: bool, state: tauri::State<'_, Arc<McpState
     } else {
         stop_listener(&state);
     }
+    Ok(status_of(&state))
+}
+
+/// 🚚 The ONLY way the port ever changes: the user asked. Prefers the fixed default, which sits
+/// below the range Windows hands out and reserves on its own; otherwise any free port.
+#[tauri::command]
+pub async fn mcp_move_port(state: tauri::State<'_, Arc<McpState>>) -> Result<McpStatus, String> {
+    let current = state.config.lock().map_err(|e| e.to_string())?.port;
+    let free = |p: u16| TcpListener::bind(("127.0.0.1", p)).and_then(|l| l.local_addr()).map(|a| a.port());
+    let next = match free(DEFAULT_PORT) {
+        Ok(p) if p != current => p,
+        _ => free(0).map_err(|e| format!("Couldn't find a free port: {}", e))?,
+    };
+    stop_listener(&state);
+    {
+        let mut cfg = state.config.lock().map_err(|e| e.to_string())?;
+        cfg.port = next;
+    }
+    state.save()?;
+    if let Ok(mut e) = state.port_error.lock() { *e = None; }
+    start_if_enabled(&state)?;
     Ok(status_of(&state))
 }
 
@@ -649,5 +719,55 @@ mod tests {
         stop_listener(&st);
         std::thread::sleep(Duration::from_millis(500));
         assert!(TcpStream::connect(("127.0.0.1", port)).is_err(), "port still open after switching off");
+    }
+
+    /// 🚪 CHA-793: a busy port must NOT move the door. The saved address stays, the app says why,
+    /// and it opens on the same port by itself once the port is free.
+    #[test]
+    fn busy_port_waits_instead_of_moving() {
+        let blocker = TcpListener::bind(("127.0.0.1", 0)).unwrap();
+        let wanted = blocker.local_addr().unwrap().port();
+        let st = fresh_state("busyport");
+        {
+            let mut cfg = st.config.lock().unwrap();
+            cfg.port = wanted;
+            cfg.enabled = true;
+        }
+        start_if_enabled(&st).unwrap();
+        let status = status_of(&st);
+        assert!(!status.running, "the port is taken, so the door can't be open");
+        assert_eq!(status.saved_port, wanted, "the saved address must not change");
+        assert!(status.port_error.is_some(), "Settings has to be able to say why");
+
+        drop(blocker);
+        let mut waited = Duration::ZERO;
+        while !st.running.load(Ordering::SeqCst) && waited < Duration::from_secs(10) {
+            std::thread::sleep(Duration::from_millis(100));
+            waited += Duration::from_millis(100);
+        }
+        let status = status_of(&st);
+        assert!(status.running, "should open by itself once the port is free");
+        assert_eq!(status.port, Some(wanted), "and on the SAME port");
+        assert!(status.port_error.is_none());
+        stop_listener(&st);
+    }
+
+    /// Turning it off while waiting has to end the waiting.
+    #[test]
+    fn switching_off_stops_the_retrying() {
+        let blocker = TcpListener::bind(("127.0.0.1", 0)).unwrap();
+        let wanted = blocker.local_addr().unwrap().port();
+        let st = fresh_state("busyoff");
+        {
+            let mut cfg = st.config.lock().unwrap();
+            cfg.port = wanted;
+            cfg.enabled = true;
+        }
+        start_if_enabled(&st).unwrap();
+        st.config.lock().unwrap().enabled = false;
+        drop(blocker);
+        std::thread::sleep(PORT_RETRY_EVERY + Duration::from_secs(1));
+        assert!(!st.running.load(Ordering::SeqCst), "off means off, even with the port free");
+        assert!(!st.retrying.load(Ordering::SeqCst), "and the retry thread has gone home");
     }
 }

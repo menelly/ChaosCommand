@@ -212,6 +212,7 @@ pub fn run() {
       mcp::mcp_get_status,
       mcp::mcp_set_enabled,
       mcp::mcp_regenerate_token,
+      mcp::mcp_move_port,
       mcp::mcp_respond,
     ])
     .run(tauri::generate_context!())

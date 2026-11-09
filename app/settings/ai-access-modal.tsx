@@ -26,6 +26,8 @@ interface McpStatus {
   enabled: boolean
   running: boolean
   port: number | null
+  saved_port: number
+  port_error: string | null
   token: string
   url: string | null
 }
@@ -67,6 +69,23 @@ export function AiAccessModal({ isOpen, onClose }: AiAccessModalProps) {
     }
   }
 
+  // 🚚 Only ever on purpose: the AI's saved address has to change too, so the user sees the new one.
+  const movePort = async () => {
+    const yes = await confirmAsync({
+      title: "Move to a new port?",
+      description: "Your AI's saved address will stop working. You'll need to paste the new setup below into your AI's settings.",
+      confirmText: "Move it",
+    })
+    if (!yes) return
+    try {
+      setStatus(await invoke<McpStatus>("mcp_move_port"))
+      setError(null)
+      toast({ title: "Moved", description: "Copy the new setup below into your AI's settings." })
+    } catch (err) {
+      setError(String(err))
+    }
+  }
+
   const regenerate = async () => {
     const yes = await confirmAsync({
       title: "Make a new token?",
@@ -91,7 +110,7 @@ export function AiAccessModal({ isOpen, onClose }: AiAccessModalProps) {
     }
   }
 
-  const url = status?.url || `http://127.0.0.1:${status?.port ?? 47320}/mcp`
+  const url = status?.url || `http://127.0.0.1:${status?.saved_port ?? 47320}/mcp`
   const token = status?.token || ""
   const masked = token ? `${token.slice(0, 6)}…${token.slice(-4)}` : ""
   // Copy buttons always copy the REAL token; what's on screen stays masked until "Show",
@@ -150,8 +169,15 @@ export function AiAccessModal({ isOpen, onClose }: AiAccessModalProps) {
               </div>
               <p className="text-sm text-muted-foreground">
                 {LEVELS.find(l => l.value === (on ? level : "off"))?.hint}
-                {on && !status.running && " (The door couldn't open: try Off, then on again.)"}
               </p>
+              {on && !status.running && (
+                <div className="text-sm rounded border border-border p-2 space-y-2">
+                  <p>{status.port_error ?? "Opening the door for your AI…"}</p>
+                  {status.port_error && (
+                    <Button size="sm" variant="outline" onClick={movePort}>Move to a new port</Button>
+                  )}
+                </div>
+              )}
             </div>
 
             <ul className="text-xs text-muted-foreground list-disc pl-5 space-y-1">
