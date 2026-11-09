@@ -11,16 +11,20 @@ Usage:
     python scripts/gen_changelog.py --since=v0.3.0  # restrict range
 """
 import re
+import json
 import subprocess
 import argparse
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 from collections import defaultdict
 
 REPO = Path(__file__).resolve().parent.parent  # command-mobile2 root
 
-# Patterns we extract from commit messages
-# Only Chaos Command versions (0.X.Y). Tauri 2.x and PolyForm 1.x are noise.
+# 🧊 THE FROZEN CHART (CHA-780): these two patterns only know 0.x, because back
+# then "1.x" in a commit message meant PolyForm or Tauri. The day Command turned
+# 1.0 every release stopped matching and the page silently froze at June.
+# They still read the OLD history (up to LEGACY_LAST), which never had anything
+# better. Everything newer asks package.json instead: see version_boundaries().
 VERSION_PAT = re.compile(r"^\s*v?(0\.\d+\.\d+)\b", re.MULTILINE)
 WAVE_PAT = re.compile(r"^\s*v?(0\.\d+\.\d+)\s+wave\s+(\d+)", re.IGNORECASE)
 
@@ -37,10 +41,65 @@ HIDE_PATTERNS = [
 ]
 
 
-def get_git_log():
+# The last version the commit-message patterns above are allowed to speak for.
+LEGACY_LAST = "0.6.0"
+
+# Stuff that's true and public but isn't "what changed in the app you installed".
+# Only applied to the package.json era, so the old pages don't get rewritten.
+# 💜 A subject naming Ren never renders here. Those lines are honest in a git log
+# and wrong on a public What's New page: Ren's body and life are Ren's to share.
+INTERNAL_SUBJECT = re.compile(
+    r"\bRen\b|\b(readme|repo_visibility|website|changelog|ci|pnpm-lock|test plan|roadmap"
+    r"|direct downloads|release notes|fixture|deploy|patent|gromacs|tomorrow's plan|pricing"
+    r"|pwyw|lemonsqueezy|consumption-only|correct the docs|census|harness|build-nice)\b"
+    r"|^\W*(merge|release|note|wip|diag)\b",
+    re.I,
+)
+
+
+def git(*args: str) -> str:
+    return subprocess.check_output(["git", *args], cwd=REPO, text=True, encoding="utf-8")
+
+
+def version_boundaries() -> list[tuple[str, str]]:
+    """📏 Read the world: the commit where master first became each version.
+
+    Walks master's first-parent line, asks package.json what version the app
+    WAS at each commit that touched it, and keeps every new high. No guessing from
+    commit messages, so "PolyForm 1.0.0" can't pretend to be a release.
+    Returns [(version, full_hash)] oldest first.
+    """
+    out, top = [], ()
+    for h in git("log", "--reverse", "--first-parent", "--format=%H", "--", "package.json").split():
+        try:
+            v = json.loads(git("show", f"{h}:package.json")).get("version", "")
+        except (subprocess.CalledProcessError, json.JSONDecodeError):
+            continue
+        if not re.fullmatch(r"\d+\.\d+\.\d+", v):
+            continue
+        if version_key(v) > top:
+            top = version_key(v)
+            out.append((v, h))
+    return out
+
+
+def current_version() -> str:
+    """What the app says it is right now, on disk."""
+    return json.loads((REPO / "package.json").read_text(encoding="utf-8"))["version"]
+
+
+def manifest_for(v: str) -> dict:
+    """The human-written blurb + release date for a version, if we have one."""
+    f = REPO / "scripts" / f"version-{v}.json"
+    if not f.exists():
+        return {}
+    return json.loads(f.read_text(encoding="utf-8"))
+
+
+def get_git_log(rev: str = "HEAD"):
     """Return list of (hash, date, message) tuples in reverse chronological order."""
     out = subprocess.check_output(
-        ["git", "log", "--pretty=format:%h|%ad|%s", "--date=short"],
+        ["git", "log", rev, "--pretty=format:%h|%ad|%s", "--date=short"],
         cwd=REPO, text=True, encoding="utf-8",
     )
     rows = []
@@ -57,8 +116,8 @@ def classify_message(msg: str) -> tuple[str, str]:
     # Version-prefixed release commits → treat as feat (release rollup)
     if re.match(r"^\s*v?\d+\.\d+\.\d+", msg):
         return "feat", msg
-    m = re.match(r"^(\w+)(?:\([^)]+\))?\s*[:!]\s*(.+)$", msg)
-    if m:
+    m = re.match(r"^[^\w(]*(\w+)(?:\([^)]+\))?\s*[:!]\s*(.+)$", msg)
+    if m and m.group(1).lower() in KEEP_TYPES | HIDE_TYPES:
         return m.group(1).lower(), m.group(2).strip()
     # Emoji-prefixed commits (no conventional prefix) — heuristic by content
     lower = msg.lower()
@@ -87,12 +146,16 @@ def extract_version(msg: str) -> str | None:
 def humanize(msg: str) -> str:
     """Strip leading 'v0.4.4 wave 1: ' style prefixes for the bullet text."""
     msg = re.sub(r"^v?\d+\.\d+\.\d+(?:\s+wave\s+\d+)?\s*[:.\-—]\s*", "", msg, flags=re.I)
-    msg = re.sub(r"^\w+(?:\([^)]+\))?\s*[:!]\s*", "", msg)
+    types = "|".join(sorted(KEEP_TYPES | HIDE_TYPES))
+    msg = re.sub(rf"^[^\w(]*(?:{types})(?:\([^)]+\))?\s*[:!]\s*", "", msg, flags=re.I)
     return msg.strip()
 
 
 def build_versioned_changelog():
-    rows = get_git_log()
+    boundaries = version_boundaries()
+    legacy_tip = dict(boundaries).get(LEGACY_LAST, "HEAD")
+    # The old era stops at LEGACY_LAST's commit, so carry-forward can't swallow 1.x.
+    rows = get_git_log(legacy_tip)
     by_version = defaultdict(list)  # version -> list of (date, type, cleaned_subject)
     no_version = []
     current_version = None  # carry-forward for commits without explicit version tag
@@ -115,7 +178,40 @@ def build_versioned_changelog():
         else:
             no_version.append((d, ctype, humanize(msg)))
 
+    # 🌳 The package.json era: a commit belongs to the FIRST version whose commit
+    # contains it. Ancestry, not date order, so a branch merged late lands in the
+    # release that actually shipped it. Commits newer than the newest bump aren't
+    # released yet, so they aren't listed yet.
+    seen_legacy = False
+    prev = None
+    for v, h in boundaries:
+        if not seen_legacy:
+            seen_legacy = v == LEGACY_LAST
+            prev = h
+            continue
+        # A manifest can say a version kept shipping past its bump (1.0.7's direct
+        # downloads went out six weeks after the Store build, with AI Access in them).
+        h = manifest_for(v).get("last_commit") or h
+        rng = git("log", "--no-merges", "--format=%h|%ad|%s", "--date=short", h, f"^{prev}")
+        for line in reversed(rng.strip().split("\n")):
+            if line.count("|") < 2:
+                continue
+            _, d, msg = line.split("|", 2)
+            ctype, _ = classify_message(msg)
+            if ctype in HIDE_TYPES or INTERNAL_SUBJECT.search(msg):
+                continue
+            if any(p.search(msg) for p in HIDE_PATTERNS):
+                continue
+            by_version[v].append((d, ctype, humanize(msg)))
+        by_version[v]  # a release with only internal commits still gets its header + blurb
+        prev = h
+
     return by_version, no_version
+
+
+def release_date(v: str, entries: list) -> str:
+    """The manifest's release date if there is one, else the newest commit's."""
+    return manifest_for(v).get("released") or (max(e[0] for e in entries) if entries else "")
 
 
 def version_key(v: str) -> tuple:
@@ -141,7 +237,7 @@ def render_markdown(by_version, no_version) -> str:
         "",
         "_Free, local-first, no telemetry. Built by patients, for patients._",
         "",
-        f"_Last updated: {datetime.utcnow():%Y-%m-%d}_",
+        f"_Last updated: {datetime.now(timezone.utc):%Y-%m-%d}_",
         "",
         "Each release ships fixes, new trackers, and accessibility improvements.",
         "Want to know exactly what changed? Every commit is public:",
@@ -150,11 +246,14 @@ def render_markdown(by_version, no_version) -> str:
     ]
     for v in sorted(by_version.keys(), key=version_key, reverse=True):
         entries = by_version[v]
-        if not entries:
+        notes = manifest_for(v).get("notes", "")
+        if not entries and not notes:
             continue
-        latest_date = max(e[0] for e in entries)
-        out.append(f"## v{v} — {latest_date}")
+        out.append(f"## v{v} — {release_date(v, entries)}")
         out.append("")
+        if notes:
+            out.append(notes)
+            out.append("")
         # Group by type
         by_type = defaultdict(list)
         for d, t, m in entries:
@@ -248,6 +347,7 @@ def render_html(by_version, no_version) -> str:
   }
   ul { padding-left: 1.5rem; margin-bottom: 0.5rem; }
   li { margin-bottom: 0.4rem; color: var(--text-secondary); }
+  .notes { color: var(--text-primary); margin-top: 0.75rem; }
   a { color: var(--accent-1); }
 </style>
 </head>
@@ -262,13 +362,16 @@ def render_html(by_version, no_version) -> str:
 </div>
 """
     body = []
-    body.append(f'<p class="meta">Last updated: {datetime.utcnow():%Y-%m-%d}</p>')
+    body.append(f'<p class="meta">Last updated: {datetime.now(timezone.utc):%Y-%m-%d}</p>')
     for v in sorted(by_version.keys(), key=version_key, reverse=True):
         entries = by_version[v]
-        if not entries:
+        notes = manifest_for(v).get("notes", "")
+        if not entries and not notes:
             continue
-        latest_date = max(e[0] for e in entries)
-        body.append(f'<h2>v{v}<span class="date">&middot; {latest_date}</span></h2>')
+        body.append(f'<h2>v{v}<span class="date">&middot; {release_date(v, entries)}</span></h2>')
+        if notes:
+            safe_notes = notes.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+            body.append(f'<p class="notes">{safe_notes}</p>')
         by_type = defaultdict(list)
         for d, t, m in entries:
             by_type[t].append(m)
@@ -292,6 +395,16 @@ def main():
     args = ap.parse_args()
 
     by_version, no_version = build_versioned_changelog()
+
+    # 🚨 The check this file never had (CHA-780): the page's newest version MUST be
+    # the version the app says it is. A silent freeze is how June lasted 5 months.
+    newest = max(by_version, key=version_key)
+    if newest != current_version():
+        raise SystemExit(
+            f"CHANGELOG WOULD LIE: newest entry is v{newest} but package.json says "
+            f"v{current_version()}. Commit the bump first, then regenerate. Nothing written."
+        )
+
     out_dir = Path(args.out_dir)
     out_dir.mkdir(exist_ok=True, parents=True)
 

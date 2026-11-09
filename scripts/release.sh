@@ -35,9 +35,9 @@ fi
 NEW_VERSION="$1"
 COMMIT_MSG="$2"
 
-# Validate version format (0.X.Y)
-if ! [[ "$NEW_VERSION" =~ ^0\.[0-9]+\.[0-9]+$ ]]; then
-    echo "❌ Version must match 0.X.Y format (saw: $NEW_VERSION)"
+# Validate version format (X.Y.Z). Was 0.X.Y only: same frozen chart as CHA-780.
+if ! [[ "$NEW_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    echo "❌ Version must match X.Y.Z format (saw: $NEW_VERSION)"
     exit 1
 fi
 
@@ -121,7 +121,7 @@ ssh "$SERVER" "sudo install -m 644 /tmp/changelog.html /var/www/chaoscommand.cen
 # 10. Update the version pill on /download page
 echo "→ Updating version pill on /download page"
 TODAY=$(date +%Y-%m-%d)
-ssh "$SERVER" "sudo sed -i -E 's|(v0\\.[0-9]+\\.[0-9]+) · [0-9]{4}-[0-9]{2}-[0-9]{2} · What changed\\?|v$NEW_VERSION · $TODAY · What changed?|' /var/www/chaoscommand.center/download/index.html"
+ssh "$SERVER" "sudo sed -i -E 's|(v[0-9]+\\.[0-9]+\\.[0-9]+) · [0-9]{4}-[0-9]{2}-[0-9]{2} · What changed\\?|v$NEW_VERSION · $TODAY · What changed?|' /var/www/chaoscommand.center/download/index.html"
 
 # 10b. Bump the INLINE "What's new in vX" heading on the /download page.
 #      ⚠️ THE BULLETS UNDER THIS HEADING ARE HAND-WRITTEN, BENEFIT-FRAMED PROSE —
@@ -131,7 +131,7 @@ ssh "$SERVER" "sudo sed -i -E 's|(v0\\.[0-9]+\\.[0-9]+) · [0-9]{4}-[0-9]{2}-[0-
 #      (This is the exact gap that bit us in 0.6.0: version.json + binaries shipped,
 #       but the /download page still said "What's new in v0.5.8" with 0.5.8 bullets.)
 echo "→ Bumping inline 'What's new' heading on /download page"
-ssh "$SERVER" "sudo sed -i -E 's|(What.rsquo.s new in )v0\\.[0-9]+\\.[0-9]+|\\1v$NEW_VERSION|' /var/www/chaoscommand.center/download/index.html"
+ssh "$SERVER" "sudo sed -i -E 's|(What.rsquo.s new in )v[0-9]+\\.[0-9]+\\.[0-9]+|\\1v$NEW_VERSION|' /var/www/chaoscommand.center/download/index.html"
 
 echo ""
 echo "✅ Release v$NEW_VERSION shipped:"

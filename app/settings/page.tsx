@@ -240,7 +240,7 @@ export default function SettingsPage() {
                   AI Access (MCP)
                 </CardTitle>
                 <CardDescription>
-                  Optional: let an AI assistant you use read your logs and add entries. Off until you turn it on.
+                  Optional: let an AI you work with read your logs and add entries. Off until you turn it on.
                 </CardDescription>
               </CardHeader>
             </Card>

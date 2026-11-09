@@ -1,0 +1,7 @@
+{
+  "version": "1.0.7",
+  "released": "2026-10-20",
+  "url": "https://chaoscommand.center/download",
+  "last_commit": "852de72",
+  "notes": "Cancel on a destructive confirm now actually cancels, found by an external audit. Entries stop showing up under yesterday's date. New and off by default: AI Access (desktop) lets your own AI read your trackers and add entries, per PIN profile, localhost only, and every AI-added entry is marked. The Forge gets a tap 1-10 severity field, and the bathroom tracker gets a +1 button."
+}

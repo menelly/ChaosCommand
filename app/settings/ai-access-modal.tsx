@@ -138,7 +138,7 @@ export function AiAccessModal({ isOpen, onClose }: AiAccessModalProps) {
             AI Access (MCP)
           </DialogTitle>
           <DialogDescription>
-            Let an AI assistant you use (like Claude) read your logs and add entries for you. Completely optional, and off
+            Let an AI you work with (like Claude) read your logs and add entries for you. Completely optional, and off
             until you turn it on.
           </DialogDescription>
         </DialogHeader>

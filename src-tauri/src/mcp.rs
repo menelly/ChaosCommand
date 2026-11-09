@@ -191,7 +191,7 @@ fn start(state: &Arc<McpState>) -> Result<(), String> {
         first_try = TcpListener::bind(("127.0.0.1", preferred));
     }
     let listener = first_try.map_err(|_| format!(
-        "Port {} is being used by something else on this computer. Chaos Command will keep trying it, so your AI's saved address will work again once it's free.",
+        "Port {} is being used by something else on this computer. Chaos Command will keep trying it, so your AI's saved address will work again once the port is free.",
         preferred
     ))?;
     let port = listener.local_addr().map_err(|e| e.to_string())?.port();
