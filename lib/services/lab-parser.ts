@@ -12,7 +12,7 @@
  *
  * 🧮 Fully deterministic (CHA-466, 2026-11-02): regex + column geometry find
  * both WHAT (test names) and HOW MUCH (values, units, ranges). There used to be
- * a model in the loop (d4data NER, then MedGemma) for names; it's gone. A
+ * a model in the loop (d4data NER, then MedGemma) for names; both are gone. A
  * messy name comes through raw and the user fixes it on the review screen —
  * slow-and-honest beats fast-and-maybe-fictional near medical data.
  */
