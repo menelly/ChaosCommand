@@ -10,16 +10,18 @@ Want to know exactly what changed? Every commit is public:
 
 ## v1.0.9 — 2026-11-09
 
-Lighter and more honest: the on-device AI document parser is gone, because a small model can invent a value and nothing downstream could tell. Importing lab PDFs is plain code now, and this update deletes the old 2 GB model file from your computer. Only one copy of Command can run at a time. AI Access keeps its port: if something else is using it, Command waits instead of moving, so your AI's saved address keeps working.
+Lighter and more honest: the on-device AI document parser is gone, because a small model can invent a value and nothing downstream could tell. Importing lab PDFs is plain code now, and this update deletes the old 2 GB model file from your computer. Only one copy of Command can run at a time. AI Access keeps its port: if something else is using it, Command waits instead of moving, so your AI's saved address keeps working. And the bathroom tracker's Red flag count now includes entries with blood or warning signs, not just ones filed as Red flag.
 
 ### ✨ New
 - 🧹🔥 MedGemma has left the building (CHA-466) + one Command at a time 🔒
 - 🍞➡️💜 Un-Toaster pass: Command stops calling minds 'it'
 - 📜 About/help/privacy catch up with reality: no NLP, and it's Adaptive Interpreter
 - 🚪 AI Access: the port is a promise, a busy port never moves the door (CHA-793)
+- 🍞 lab-parser comment: two retired models are "both," not "it"
 
 ### 🐛 Fix
 - Severity rows had no label, just a lonely chevron
+- "Red flag: 0" was a false all-clear
 
 ## v1.0.8 — 2026-10-30
 
