@@ -26,7 +26,7 @@ import { format, differenceInDays, parseISO } from 'date-fns'
 import { BathroomEntry, BathroomEpisodeType } from './bathroom-types'
 import {
   EPISODE_TYPES, RELATED_TRACKERS, getEpisodeTypeInfo, getEpisodeTypeColor,
-  RED_FLAG_911_CRITERIA, BATHROOM_GOBLINISMS,
+  RED_FLAG_911_CRITERIA, BATHROOM_GOBLINISMS, isBathroomRedFlag,
 } from './bathroom-constants'
 import { GeneralBathroomModal } from './modals/general-bathroom-modal'
 import { EmergencyCriteriaCard } from '@/components/emergency-criteria-card'
@@ -200,7 +200,7 @@ export default function BathroomPage() {
     const constipationCount = typeCount['constipation'] || 0
     const diarrheaCount = typeCount['diarrhea'] || 0
     const urinaryCount = typeCount['urinary'] || 0
-    const redFlagCount = typeCount['blood-or-red-flag'] || 0
+    const redFlagCount = filtered.filter(isBathroomRedFlag).length  // the entry's facts, not just the dropdown
     const erCount = filtered.filter(e => e.erVisitRequired).length
     const bloodEvents = filtered.filter(e => e.bloodInStool || e.bloodInUrine).length
 

@@ -124,6 +124,21 @@ export const getRedFlagWarnings = (entry: {
   return flags
 }
 
+/**
+ * 🚨 Does this entry count as a red flag on the Analytics tile?
+ *
+ * The tile used to count only entries whose episode TYPE was "Red flag". So a
+ * diarrhea entry with blood + severe pain ticked got a "needs evaluation today"
+ * warning in the log form, and then read "Red flag: 0" in Analytics. A false
+ * all-clear, found 2026-11-09 from a real month of logs. The entry's own facts
+ * decide now: the dropdown, any visible blood, or anything the warnings fire on.
+ */
+export const isBathroomRedFlag = (entry: Parameters<typeof getRedFlagWarnings>[0]): boolean =>
+  entry.episodeType === 'blood-or-red-flag'
+  || !!entry.bloodInStool
+  || !!entry.bloodInUrine
+  || getRedFlagWarnings(entry).length > 0
+
 export const getInterimMeasures = (entry: {
   episodeType?: string
   feverWithUrinary?: boolean
