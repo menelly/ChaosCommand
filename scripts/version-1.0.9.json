@@ -1,0 +1,6 @@
+{
+  "version": "1.0.9",
+  "released": "2026-11-09",
+  "url": "https://chaoscommand.center/download",
+  "notes": "Lighter and more honest: the on-device AI document parser is gone, because a small model can invent a value and nothing downstream could tell. Importing lab PDFs is plain code now, and this update deletes the old 2 GB model file from your computer. Only one copy of Command can run at a time. AI Access keeps its port: if something else is using it, Command waits instead of moving, so your AI's saved address keeps working."
+}
